@@ -72,7 +72,7 @@ On windows you can use the `setup.cmd` to run the following steps automatically!
 
    1. `.\.venv\Scripts\python.exe -m pip install -U pip setuptools`
    2. `.\.venv\Scripts\python.exe -m pip install uv`
-   3. `.\.venv\Scripts\python.exe -m uv pip install -r pyproject.toml`
+   3. `.\.venv\Scripts\python.exe -m uv pip install -r pyproject.toml --group dev`
 
 Verify correct setup with `./build.cmd runtests` ✨
 

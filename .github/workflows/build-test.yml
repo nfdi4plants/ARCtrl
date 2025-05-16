@@ -51,13 +51,13 @@ jobs:
       run: |
           .\.venv\Scripts\python.exe -m pip install -U pip setuptools
           .\.venv\Scripts\python.exe -m pip install uv
-          .\.venv\Scripts\python.exe -m uv pip install -r pyproject.toml
+          .\.venv\Scripts\python.exe -m uv pip install -r pyproject.toml --group dev
     - name: Setup Poetry Unix
       if: matrix.os == 'ubuntu-latest'
       run: |
           ./.venv/bin/python -m pip install -U pip setuptools
           ./.venv/bin/python -m pip install uv
-          ./.venv/bin/python -m uv pip install -r pyproject.toml
+          ./.venv/bin/python -m uv pip install -r pyproject.toml --group dev
 
     # BUILD
     - name: make script executable
