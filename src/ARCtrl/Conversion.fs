@@ -1492,6 +1492,24 @@ module TypeExtensions =
     
         static member fromROCrateInvestigation (a : LDNode, ?graph : LDGraph, ?context : LDContext) = InvestigationConversion.decomposeInvestigation(a, ?graph = graph, ?context = context)
 
+    [<Fable.Core.AttachMembers>]
+    type Conversion =
+
+        static member arcAssayToDataset(a : ArcAssay) = a.ToROCrateAssay()
+
+        static member datasetToArcAssay(a : LDNode, ?graph : LDGraph, ?context : LDContext) =
+            ArcAssay.fromROCrateAssay(a, ?graph = graph, ?context = context)
+
+        static member arcStudyToDataset(a : ArcStudy) = a.ToROCrateStudy()
+
+        static member datasetToArcStudy(a : LDNode, ?graph : LDGraph, ?context : LDContext) =
+            ArcStudy.fromROCrateStudy(a, ?graph = graph, ?context = context)
+
+        static member arcInvestigationToDataset(a : ArcInvestigation) = a.ToROCrateInvestigation()
+
+        static member datasetToArcInvestigation(a : LDNode, ?graph : LDGraph, ?context : LDContext) =
+            ArcInvestigation.fromROCrateInvestigation(a, ?graph = graph, ?context = context)       
+
     type Dataset with
         static member toArcAssay(a : LDNode, ?graph : LDGraph, ?context : LDContext) = AssayConversion.decomposeAssay(a, ?graph = graph, ?context = context)
 
