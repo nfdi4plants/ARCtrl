@@ -1622,7 +1622,7 @@ let tests_Investigation =
         // This test is meant to check, that two processes created from two different tables with the same name are distinctly named
         // This is important to ensure they are not merged
         // https://github.com/nfdi4plants/ARCtrl/issues/514
-        ftestCase "DistinctProcessNaming" (fun () ->
+        testCase "DistinctProcessIDGeneration" (fun () ->
             // Setup
             let arc = ArcInvestigation("MyArc", title = "MyTitle")
             let study1 = arc.InitStudy "Study1"
