@@ -1,5 +1,5 @@
 import { equal, deepEqual } from 'assert';
-import { WebController } from "./index.js";
+import { WebController } from "../../src/ARCtrl/index.ts";
 import { expect, it, describe } from 'vitest';
 
 describe.skip('Template.Web', function () {

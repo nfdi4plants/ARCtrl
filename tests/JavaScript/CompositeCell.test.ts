@@ -1,6 +1,5 @@
 import { equal, deepEqual, notEqual } from 'assert';
-import { CompositeCell } from "./index.js"
-import { OntologyAnnotation } from './index.js';
+import { CompositeCell, OntologyAnnotation } from "../../src/ARCtrl/index.ts"
 import { expect, it, describe } from 'vitest';
 
 describe('CompositeCell', function () {

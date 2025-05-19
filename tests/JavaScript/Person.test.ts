@@ -1,5 +1,5 @@
 import { equal, deepEqual } from 'assert';
-import { Person, Comment } from "./index.js";
+import { Person, Comment } from "../../src/ARCtrl/index.ts";
 import { expect, it, describe } from 'vitest';
 
 describe('Person', function () {
