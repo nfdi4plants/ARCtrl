@@ -1,3 +1,18 @@
+### 3.0.0-alpha.3+ae0e326 (Released 2025-5-19)
+
+- Switch from poetry to uv for python project management
+- make native tests actually use core transpilations
+- improve imports in python and js
+
+* Additions:
+    * [[#1ecbc2e](https://github.com/nfdi4plants/ARCtrl/commit/1ecbc2e4d3b2e7e5af6e4b6255f0f0ba9da6bbea)] make jsnative tests use core transpilation
+    * [[#e6a61c1](https://github.com/nfdi4plants/ARCtrl/commit/e6a61c1632983d84eaeb821b6114ae57197f08a7)] make pynative tests use core transpilation
+    * [[#8d3c511](https://github.com/nfdi4plants/ARCtrl/commit/8d3c511dc4be4ffd60d86a8522882c2920812f47)] switch from poetry to uv for python project management
+    * [[#44d0a76](https://github.com/nfdi4plants/ARCtrl/commit/44d0a7690b98cd91d040e194e3602860a374972b)] improve python package accessibility
+    * [[#593866c](https://github.com/nfdi4plants/ARCtrl/commit/593866c59b41a3fb86b52d99bd1f23eba4ae5669)] add rocrate module to typescript package
+* Bugfixes:
+    * [[#753528d](https://github.com/nfdi4plants/ARCtrl/commit/753528df643e9cac8adc1e8739fc5e957ef410e1)] small fix to include dev dependencies in python setup
+
 ### 3.0.0-alpha.2+4273dfa (Released 2025-5-15)
 
 Fix critical typescript error

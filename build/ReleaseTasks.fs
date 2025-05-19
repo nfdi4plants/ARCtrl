@@ -63,10 +63,11 @@ let publishPyPi = BuildTask.create "PublishPyPi" [clean; build; runTests; packPy
     let msg = sprintf "[PyPi] release package with version %s?" tag
     if promptYesNo msg then
         let apikey = Environment.environVarOrNone "PYPI_KEY"
-        match apikey with
-        | Some key -> 
-            run python $"-m poetry config pypi-token.pypi {key}" "."
-        | None -> ()
-        run python $"-m poetry publish --dist-dir {pyPkgDir}" "."
+        let token = 
+            match apikey with
+            | Some key -> 
+                 $"--username __token__ --password {key}"
+            | None -> ""
+        run python $"-m twine upload {token} {pyPkgDir}/*" "."
     else failwith "aborted"
 }
