@@ -1629,16 +1629,21 @@ let tests_Investigation =
             let study2 = arc.InitStudy "Study2"
             let table1 = study1.InitTable("Growth")
             let table2 = study2.InitTable("Growth")
-            table1.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
+            table1.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source1"; CompositeCell.createFreeText "Source2"|])
             table2.AddColumn(CompositeHeader.Input(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
             // Check Json LD
             let ro_Investigation = InvestigationConversion.composeInvestigation arc
             let subDatasets = ro_Investigation |> LDDataset.getHasPartsAsDataset
             let s1 = Expect.wantSome (subDatasets |> Seq.tryFind (fun s -> s.Id = "studies/Study1/")) "Study1 should exist"
             let s2 = Expect.wantSome (subDatasets |> Seq.tryFind (fun s -> s.Id = "studies/Study2/")) "Study2 should exist"
-            let p1 = Expect.wantSome (s1 |> LDDataset.getAboutsAsLabProcess |> Seq.tryExactlyOne) "Study1 should have a process"
+            let s1ps = s1 |> LDDataset.getAboutsAsLabProcess
+            Expect.hasLength s1ps 2 "Study1 should have two processes"
+            let s1p1 = s1ps.[0]
+            let s1p2 = s1ps.[1]
             let p2 = Expect.wantSome (s2 |> LDDataset.getAboutsAsLabProcess |> Seq.tryExactlyOne) "Study2 should have a process"
-            Expect.notEqual p1.Id p2.Id "Processes should have different Ids"
+            Expect.notEqual s1p1.Id s1p2.Id "Processes should have different Ids (1)"
+            Expect.notEqual s1p1.Id p2.Id "Processes should have different Ids (2)"
+            Expect.notEqual s1p2.Id p2.Id "Processes should have different Ids (3)"
             // Check reparsed scaffold
             let arc' = InvestigationConversion.decomposeInvestigation(ro_Investigation)
             let study1' = Expect.wantSome (arc'.TryGetStudy("Study1")) "Study1 should exist"

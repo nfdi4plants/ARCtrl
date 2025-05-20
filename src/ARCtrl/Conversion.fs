@@ -6,6 +6,30 @@ open ARCtrl.Helper
 open System.Collections.Generic
 //open ColumnIndex
 
+module HashHelper =
+
+    let rnd = System.Random()
+
+    let byteToHexString (b : byte) =
+        System.String.Format("{0:X}", b)
+
+    let intToBytes (i : int) =
+        System.BitConverter.GetBytes(i)
+
+    let bytesToHexString (bytes : byte[]) =
+        bytes
+        |> Array.map byteToHexString
+        |> String.concat ""
+
+    let get32bitHash () =
+        let bytes = intToBytes (rnd.Next())
+        bytesToHexString bytes
+
+    let get64bitHash () =
+        let bytes = intToBytes (rnd.Next())
+        let bytes2 = intToBytes (rnd.Next())
+        System.String.Concat(bytesToHexString bytes, bytesToHexString bytes2)
+
 module DateTime =
 
     let tryFromString (s : string) =
@@ -613,6 +637,8 @@ type ProcessConversion =
 
             let components = componentGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
 
+            let id = $"#Process_{processNameRoot}_{HashHelper.get64bitHash()}"
+            
             let protocol : LDNode option =
                 let name = (protocolREFGetter |> Option.map (fun f -> f matrix i))
                 let protocolId = LDLabProtocol.genId(?name = name, processName = processNameRoot)
@@ -636,6 +662,7 @@ type ProcessConversion =
                 name = pn,
                 objects = input,
                 results = output,
+                id = id,
                 ?agent = agent,
                 ?executesLabProtocol = protocol,
                 ?parameterValues = paramvalues,
