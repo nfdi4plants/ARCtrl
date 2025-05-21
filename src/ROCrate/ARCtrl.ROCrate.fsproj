@@ -30,6 +30,7 @@
     <Compile Include="Generic\Dataset.fs" />
     <Compile Include="Generic\SoftwareApplication.fs" />
     <Compile Include="Generic\FormalParameter.fs" />
+    <Compile Include="Generic\ComputationalWorkflow.fs" />
 
     <!-- ISA Profile types -->
     <Compile Include="ISAProfile\Dataset.fs" />
@@ -43,12 +44,6 @@
     <Compile Include="ISAProfile\PropertyValue.fs" />
     <Compile Include="ISAProfile\Person.fs" />
     <Compile Include="ISAProfile\ScholarlyArticle.fs" />
-
-    <!-- Workflow Profile types -->
-    <Compile Include="WorkflowProfile\WorkflowProtocol.fs" />
-    <Compile Include="WorkflowProfile\WorkflowInvocation.fs" />
-    <Compile Include="WorkflowProfile\Workflow.fs" />
-    <Compile Include="WorkflowProfile\ARCRun.fs" />
 
     <!-- Main module -->
     <Compile Include="ArcROCrateMetadata.fs" />
