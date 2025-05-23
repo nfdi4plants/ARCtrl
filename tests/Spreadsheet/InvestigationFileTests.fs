@@ -117,6 +117,27 @@ let private testInvestigationFile =
 
             Expect.isError readingSuccess "Reading the investigation file should fail if the sheet name is wrong"
         )
+        testCase "ReaderSuccess1MadeUpKeyAtTop" (fun () ->
+
+            let readingSuccess = 
+                try 
+                    ArcInvestigation.fromFsWorkbook Investigation.BII_I_1.fullInvestigation1MadeUpKey |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
+
+            Expect.isOk readingSuccess (Result.getMessage readingSuccess)
+        )
+        testCase "1MadeUpKeyAtTopInvestigationIdentifierPresent" (fun () ->
+
+            let arcInv = 
+                try 
+                    ArcInvestigation.fromFsWorkbook Investigation.BII_I_1.fullInvestigation1MadeUpKey
+                with
+                | _ -> ArcInvestigation.create ""
+
+            Expect.equal arcInv.Identifier "investigation1MadeUpKey" "Did not retrieve the correct Investigation identifier"
+        )
         testCase "WriterSuccess" (fun () ->
 
             let i = ArcInvestigation.fromFsWorkbook Investigation.BII_I_1.fullInvestigation
