@@ -896,7 +896,6 @@ let private tests_ArcTableProcess =
             let expectedTable = t
             Expect.arcTableEqual table expectedTable "Table should be equal"
         )
-
     ]
 
 let private tests_DataContext =
@@ -1619,6 +1618,78 @@ let tests_Investigation =
             Expect.isSome p'.PublicReleaseDate "PublicReleaseDate default value should be set"
             p'.PublicReleaseDate <- None // As a default value is used otherwise
             Expect.equal p' p "Investigation should match"
+        )
+        // This test is meant to check, that two processes created from two different tables with the same name are distinctly named
+        // This is important to ensure they are not merged
+        // https://github.com/nfdi4plants/ARCtrl/issues/514
+        testCase "DistinctProcessIDGeneration" (fun () ->
+            // Setup
+            let arc = ArcInvestigation("MyArc", title = "MyTitle")
+            let study1 = arc.InitStudy "Study1"
+            let study2 = arc.InitStudy "Study2"
+            let table1 = study1.InitTable("Growth")
+            let table2 = study2.InitTable("Growth")
+            table1.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source1"; CompositeCell.createFreeText "Source2"|])
+            table2.AddColumn(CompositeHeader.Input(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
+            // Check Json LD
+            let ro_Investigation = InvestigationConversion.composeInvestigation arc
+            let subDatasets = ro_Investigation |> LDDataset.getHasPartsAsDataset
+            let s1 = Expect.wantSome (subDatasets |> Seq.tryFind (fun s -> s.Id = "studies/Study1/")) "Study1 should exist"
+            let s2 = Expect.wantSome (subDatasets |> Seq.tryFind (fun s -> s.Id = "studies/Study2/")) "Study2 should exist"
+            let s1ps = s1 |> LDDataset.getAboutsAsLabProcess
+            Expect.hasLength s1ps 2 "Study1 should have two processes"
+            let s1p1 = s1ps.[0]
+            let s1p2 = s1ps.[1]
+            let p2 = Expect.wantSome (s2 |> LDDataset.getAboutsAsLabProcess |> Seq.tryExactlyOne) "Study2 should have a process"
+            Expect.notEqual s1p1.Id s1p2.Id "Processes should have different Ids (1)"
+            Expect.notEqual s1p1.Id p2.Id "Processes should have different Ids (2)"
+            Expect.notEqual s1p2.Id p2.Id "Processes should have different Ids (3)"
+            // Check reparsed scaffold
+            let arc' = InvestigationConversion.decomposeInvestigation(ro_Investigation)
+            let study1' = Expect.wantSome (arc'.TryGetStudy("Study1")) "Study1 should exist"
+            let study2' = Expect.wantSome (arc'.TryGetStudy("Study2")) "Study2 should exist"
+            Expect.equal study1'.TableCount 1 "Study1 should have one table"
+            Expect.equal study2'.TableCount 1 "Study2 should have one table"
+            let table1' = study1'.GetTable("Growth")
+            let table2' = study2'.GetTable("Growth")
+            Expect.arcTableEqual table1' table1 "Table1 should match"
+            Expect.arcTableEqual table2' table2 "Table2 should match"
+        )
+                // This test is meant to check, that two processes created from two different tables with the same name are distinctly named
+        // This is important to ensure they are not merged
+        // https://github.com/nfdi4plants/ARCtrl/issues/514
+        testCase "DistinctProcessID_AssayAndStudySameName" (fun () ->
+            // Setup
+            let arc = ArcInvestigation("MyArc", title = "MyTitle")
+            let study = arc.InitStudy "Dataset"
+            let assay = arc.InitAssay "Dataset"
+            let table1 = study.InitTable("Growth")
+            let table2 = assay.InitTable("Growth")
+            table1.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source1"; CompositeCell.createFreeText "Source2"|])
+            table2.AddColumn(CompositeHeader.Input(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
+            // Check Json LD
+            let ro_Investigation = InvestigationConversion.composeInvestigation arc
+            let subDatasets = ro_Investigation |> LDDataset.getHasPartsAsDataset
+            let s = Expect.wantSome (subDatasets |> Seq.tryFind (fun s -> s.Id = "studies/Dataset/")) "Study should exist"
+            let a = Expect.wantSome (subDatasets |> Seq.tryFind (fun s -> s.Id = "assays/Dataset/")) "Assay should exist"
+            let sps = s |> LDDataset.getAboutsAsLabProcess
+            Expect.hasLength sps 2 "Study should have two processes"
+            let sp1 = sps.[0]
+            let sp2 = sps.[1]
+            let ap = Expect.wantSome (a |> LDDataset.getAboutsAsLabProcess |> Seq.tryExactlyOne) "Assay should have a process"
+            Expect.notEqual sp1.Id sp2.Id "Processes should have different Ids (1)"
+            Expect.notEqual sp1.Id ap.Id "Processes should have different Ids (2)"
+            Expect.notEqual sp2.Id ap.Id "Processes should have different Ids (3)"
+            // Check reparsed scaffold
+            let arc' = InvestigationConversion.decomposeInvestigation(ro_Investigation)
+            let study' = Expect.wantSome (arc'.TryGetStudy("Dataset")) "Study should exist"
+            let assay' = Expect.wantSome (arc'.TryGetAssay("Dataset")) "Assay should exist"
+            Expect.equal study'.TableCount 1 "Study should have one table"
+            Expect.equal assay'.TableCount 1 "Assay should have one table"
+            let table1' = study'.GetTable("Growth")
+            let table2' = assay'.GetTable("Growth")
+            Expect.arcTableEqual table1' table1 "Table1 should match"
+            Expect.arcTableEqual table2' table2 "Table2 should match"
         )
     ]
 
