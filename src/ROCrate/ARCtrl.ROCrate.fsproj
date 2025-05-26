@@ -33,6 +33,7 @@
     <Compile Include="Generic\FormalParameter.fs" />
     <Compile Include="Generic\ComputationalWorkflow.fs" />
     <Compile Include="Generic\SoftwareSourceCode.fs" />
+    <Compile Include="Generic\WorkflowProtocol.fs" />
 
     <!-- ISA Profile types -->
     <Compile Include="ISAProfile\Dataset.fs" />
