@@ -126,9 +126,9 @@ type LDLabProcess =
 
     static member genId(name, ?assayName, ?studyName) =
         match assayName, studyName with
-        | Some assay, Some study -> $"#Process_{study}_{assay}_{name}"
-        | Some assay, None -> $"#Process_{assay}_{name}"
-        | None, Some study -> $"#Process_{study}_{name}"
+        | Some assay, Some study -> $"#Process_S_{study}_A_{assay}_{name}"
+        | Some assay, None -> $"#Process_A_{assay}_{name}"
+        | None, Some study -> $"#Process_S_{study}_{name}"
         | _ -> $"#Process_{name}"
         |> Helper.ID.clean
 

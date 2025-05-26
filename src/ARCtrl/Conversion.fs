@@ -6,30 +6,6 @@ open ARCtrl.Helper
 open System.Collections.Generic
 //open ColumnIndex
 
-module HashHelper =
-
-    let rnd = System.Random()
-
-    let byteToHexString (b : byte) =
-        System.String.Format("{0:X}", b)
-
-    let intToBytes (i : int) =
-        System.BitConverter.GetBytes(i)
-
-    let bytesToHexString (bytes : byte[]) =
-        bytes
-        |> Array.map byteToHexString
-        |> String.concat ""
-
-    let get32bitHash () =
-        let bytes = intToBytes (rnd.Next())
-        bytesToHexString bytes
-
-    let get64bitHash () =
-        let bytes = intToBytes (rnd.Next())
-        let bytes2 = intToBytes (rnd.Next())
-        System.String.Concat(bytesToHexString bytes, bytesToHexString bytes2)
-
 module DateTime =
 
     let tryFromString (s : string) =
@@ -527,7 +503,7 @@ type ProcessConversion =
         | _ -> None
 
     /// Given the header sequence of an ArcTable, returns a function for parsing each row of the table to a process
-    static member getProcessGetter (processNameRoot : string) (headers : CompositeHeader seq) =
+    static member getProcessGetter (assayName: string option) (studyName : string option) (processNameRoot : string) (headers : CompositeHeader seq) =
     
         let headers = 
             headers
@@ -637,7 +613,7 @@ type ProcessConversion =
 
             let components = componentGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
 
-            let id = $"#Process_{processNameRoot}_{HashHelper.get64bitHash()}"
+            let id = LDLabProcess.genId(processNameRoot,?assayName = assayName, ?studyName = studyName) + $"_{i}"
             
             let protocol : LDNode option =
                 let name = (protocolREFGetter |> Option.map (fun f -> f matrix i))
@@ -947,14 +923,14 @@ module TableTypeExtensions =
                 |> List.distinct
 
         /// Returns the list of processes specidified in this ArcTable
-        member this.GetProcesses() : LDNode list = 
+        member this.GetProcesses(?assayName, ?studyName) : LDNode list = 
             if this.RowCount = 0 then
                 //let input = ResizeArray [Sample.createSample(name = $"{this.Name}_Input", additionalProperties = ResizeArray [])]
                 //let output = ResizeArray [Sample.createSample(name = $"{this.Name}_Output", additionalProperties = ResizeArray [])]
                 LDLabProcess.create(name = this.Name(*, objects = input, results = output*))
                 |> List.singleton
             else
-                let getter = ProcessConversion.getProcessGetter this.Name this.Headers          
+                let getter = ProcessConversion.getProcessGetter assayName studyName this.Name this.Headers          
                 [
                     for i in 0..this.RowCount-1 do
                         yield getter this.Values i        
@@ -976,10 +952,10 @@ module TableTypeExtensions =
     type ArcTables with
 
         /// Return a list of all the processes in all the tables.
-        member this.GetProcesses() : LDNode list = 
+        member this.GetProcesses(?assayName, ?studyName) : LDNode list = 
             this.Tables
             |> Seq.toList
-            |> List.collect (fun t -> t.GetProcesses())
+            |> List.collect (fun t -> t.GetProcesses(?assayName = assayName, ?studyName = studyName))
 
         /// Create a collection of tables from a list of processes.
         ///
@@ -1267,7 +1243,7 @@ type AssayConversion =
             |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
             |> Option.fromSeq
         let processSequence = 
-            ArcTables(assay.Tables).GetProcesses()
+            ArcTables(assay.Tables).GetProcesses(assayName = assay.Identifier)
             |> ResizeArray
             |> Option.fromSeq
         let fragmentDescriptors =
@@ -1350,7 +1326,7 @@ type StudyConversion =
             |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
             |> Option.fromSeq
         let processSequence = 
-            ArcTables(study.Tables).GetProcesses()
+            ArcTables(study.Tables).GetProcesses(studyName = study.Identifier)
             |> ResizeArray
             |> Option.fromSeq
         let fragmentDescriptors =
