@@ -4,19 +4,6 @@ open System.Collections.Generic
 open ARCtrl.Helper
 open Fable.Core
 
-module Dictionary = 
-
-    let ofSeq (s : seq<'Key*'T>) = 
-        let dict = Dictionary()
-        s
-        |> Seq.iter dict.Add
-        dict
-
-    let tryFind (key : 'Key) (dict : Dictionary<'Key,'T>) =
-        let b,v = dict.TryGetValue key
-        if b then Some v 
-        else None
-
 module IRIHelper =
 
     open ARCtrl.Helper.Regex
@@ -67,20 +54,20 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
     let compactReverseMappings : Dictionary<string,string*string> = Dictionary()
 
     let addReverseMapping (key : string) (value : string) =
-        Dictionary.addOrUpdate value key reverseMappings
+        StringDictionary.addOrUpdate value key reverseMappings
         match value with
         | IRIHelper.CompactIri (prefix,suffix) ->
-            Dictionary.addOrUpdate prefix (suffix,key) compactReverseMappings
-            match Dictionary.tryFind prefix mappings with
+            StringDictionary.addOrUpdate prefix (suffix,key) compactReverseMappings
+            match StringDictionary.tryFind prefix mappings with
             | Some prefix ->
                 let iri = IRIHelper.combine prefix suffix
-                Dictionary.addOrUpdate iri key reverseMappings
+                StringDictionary.addOrUpdate iri key reverseMappings
             | None -> ()
         | _ ->
-            match Dictionary.tryFind key compactReverseMappings with
+            match StringDictionary.tryFind key compactReverseMappings with
             | Some (suffix,term) ->
                 let iri = IRIHelper.combine value suffix
-                Dictionary.addOrUpdate iri term reverseMappings
+                StringDictionary.addOrUpdate iri term reverseMappings
             | None -> ()
 
     do for kvp in mappings do
@@ -88,7 +75,7 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
 
     let rec tryFindTerm (term : string) : string option =
         let definition = 
-            match Dictionary.tryFind term mappings with
+            match StringDictionary.tryFind term mappings with
             | Some v -> Some v
             | None ->
                 baseContexts
@@ -103,7 +90,7 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
         | None -> None
 
     let tryFindIri (iri : string) =
-        match Dictionary.tryFind iri reverseMappings with
+        match StringDictionary.tryFind iri reverseMappings with
         | Some v -> Some v
         | None -> 
             baseContexts
@@ -124,7 +111,7 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
         and set(value) = name <- value
 
     member this.AddMapping(term,definition) =
-        Dictionary.addOrUpdate term definition mappings
+        StringDictionary.addOrUpdate term definition mappings
         addReverseMapping term definition
         
     member this.TryResolveTerm(term : string) =
@@ -151,7 +138,7 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
             | _ -> false
 
     static member fromMappingSeq(mappings : seq<string*string>) =
-        LDContext(Dictionary.ofSeq mappings)
+        LDContext(StringDictionary.ofSeq mappings)
 
     /// Append first context as base context to the second one inplace
     static member combine_InPlace (baseContext : LDContext) (specificContext : LDContext) : LDContext =

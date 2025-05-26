@@ -88,6 +88,32 @@ module Dictionary =
             )
         dict
 
+
+module StringDictionary = 
+
+    open System.Collections.Generic
+
+    let ofSeq (s : seq<string*string>) : Dictionary<string,string> = 
+        s
+        |> dict
+        #if !FABLE_COMPILER
+        |> Dictionary
+        #else 
+        |> unbox
+        #endif
+
+    let inline tryFind (key : string) (dict : Dictionary<string,'T>) =
+        let b,v = dict.TryGetValue key
+        if b then Some v 
+        else None
+
+    let inline addOrUpdate (key : string) (value : 'T) (dict : Dictionary<string,'T>) =
+        if dict.ContainsKey key then
+            dict.[key] <- value
+        else
+            dict.Add(key,value)
+
+
 module ResizeArray =  
 
     open System.Collections.Generic

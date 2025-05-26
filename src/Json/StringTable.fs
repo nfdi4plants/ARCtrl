@@ -1,4 +1,4 @@
-﻿namespace rec ARCtrl.Json
+namespace rec ARCtrl.Json
 
 open Thoth.Json.Core
 
@@ -27,7 +27,7 @@ module StringTable =
         Decode.array Decode.string
         
     let encodeString (otm : StringTableMap) (s : string) =
-        match Dictionary.tryFind s otm with
+        match StringDictionary.tryFind s otm with
         | Some i -> Encode.int i
         | None ->
             let i = otm.Count
