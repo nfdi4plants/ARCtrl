@@ -1,6 +1,7 @@
 namespace ARCtrl.Json
 
 open ARCtrl
+open ARCtrl.Helper
 open System.Collections.Generic
 open Thoth.Json.Core
 
@@ -29,11 +30,11 @@ module ArcTableExtensions =
                 )
             Decode.fromJsonString decoder jsonString
 
-        member this.ToCompressedJsonString(?spaces) : string =
+        member this.ToCompressedJsonString(?spaces) : string =          
             let spaces = Encode.defaultSpaces spaces
-            let stringTable = Dictionary()
-            let oaTable = Dictionary()
-            let cellTable = Dictionary()
+            let stringTable = Dictionary.init()
+            let oaTable = Dictionary.init()
+            let cellTable = Dictionary.init()
             let arcTable = ArcTable.encoderCompressed stringTable oaTable cellTable this
             let jObject = 
                 Encode.object [

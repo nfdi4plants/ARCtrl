@@ -1,5 +1,7 @@
 namespace ARCtrl.Helper
 
+open Fable.Core
+
 module Seq = 
     let inline compare (a: seq<'a>) (b: seq<'a>) =
         if Seq.length a = Seq.length b then
@@ -61,15 +63,6 @@ module Dictionary =
         |> Seq.iter dict.Add
         dict
 
-    ///// <summary>Lookup an element in the dictionary, returning a <c>Some</c> value if the element is in the domain 
-    ///// of the dictionary and <c>None</c> if not.</summary>
-    ///// <param name="key">The input key.</param>
-    ///// <returns>The mapped value, or None if the key is not in the dictionary.</returns>
-    //let tryFind key (table:IDictionary<_,_>) =
-    //    match table.ContainsKey(key) with
-    //    | true -> Some table.[key]
-    //    | false -> None
-
     let tryFind (key : 'Key) (dict : Dictionary<'Key,'T>) =
         let b,v = dict.TryGetValue key
         if b then Some v 
@@ -88,6 +81,19 @@ module Dictionary =
             )
         dict
 
+    let init () : Dictionary<'Key,'T> =
+        #if FABLE_COMPILER_PYTHON
+        Fable.Core.PyInterop.emitPyExpr () "dict()"
+        #else
+        Dictionary<'Key,'T>()
+        #endif
+
+    let items (dict : Dictionary<'Key,'T>) : seq<KeyValuePair<'Key, 'T>> =
+        #if FABLE_COMPILER_PYTHON
+        Fable.Core.PyInterop.emitPyExpr (dict) "$0.items()"
+        #else
+        dict
+        #endif
 
 module StringDictionary = 
 

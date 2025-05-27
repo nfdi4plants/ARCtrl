@@ -1,9 +1,33 @@
-﻿module ARCtrl.ArcTableAux
+module ARCtrl.ArcTableAux
 
 open ARCtrl
 open ARCtrl.Helper
 open System.Collections.Generic
 open Fable.Core
+
+module CellDictionary = 
+
+    open System.Collections.Generic
+
+    let addOrUpdate (key : (int*int)) (value : CompositeCell) (dict : Dictionary<int*int,CompositeCell>) =
+        if dict.ContainsKey key then
+            dict.[key] <- value
+        else
+            dict.Add(key,value)
+
+    let ofSeq (s : seq<(int*int)*CompositeCell>) : Dictionary<int*int,CompositeCell> = 
+        s
+        |> dict
+        #if !FABLE_COMPILER
+        |> Dictionary
+        #else 
+        |> unbox
+        #endif
+
+    let tryFind (key : (int*int)) (dict : Dictionary<int*int,CompositeCell>) =
+        let b,v = dict.TryGetValue key
+        if b then Some v 
+        else None
 
 let getColumnCount (headers:ResizeArray<CompositeHeader>) = 
     headers.Count
@@ -128,7 +152,7 @@ module SanityChecks =
 module Unchecked =
         
     let tryGetCellAt (column: int,row: int) (cells:System.Collections.Generic.Dictionary<int*int,CompositeCell>) = 
-        Dictionary.tryFind (column, row) cells
+        CellDictionary.tryFind (column, row) cells
 
     /// Add or update a cell in the dictionary.
     let setCellAt(columnIndex, rowIndex,c : CompositeCell) (cells:Dictionary<int*int,CompositeCell>) = 
@@ -139,7 +163,7 @@ module Unchecked =
         cells.Add((columnIndex,rowIndex),c)
 
     let moveCellTo (fromCol:int,fromRow:int,toCol:int,toRow:int) (cells:Dictionary<int*int,CompositeCell>) =
-        match Dictionary.tryFind (fromCol, fromRow) cells with
+        match CellDictionary.tryFind (fromCol, fromRow) cells with
         | Some c ->
             // Remove value. This is necessary in the following scenario:
             //
