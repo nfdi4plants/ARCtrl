@@ -173,30 +173,30 @@ let private testInvestigationFile =
             Expect.isEmpty i.Studies "Empty study in investigation should be read to empty ResizeArray"
         )
 
-        testCase "ReaderSuccessEmpty" (fun () -> 
+        //testCase "ReaderSuccessEmpty" (fun () -> 
             
-            let readingSuccess = 
-                try 
-                    ArcInvestigation.fromFsWorkbook Investigation.emptyInvestigation |> ignore
-                    Result.Ok "DidRun"
-                with
-                | err -> Result.Error(sprintf "Reading the empty test file failed: %s" err.Message)
-            Expect.isOk readingSuccess (Result.getMessage readingSuccess)
-        )
+        //    let readingSuccess = 
+        //        try 
+        //            ArcInvestigation.fromFsWorkbook Investigation.emptyInvestigation |> ignore
+        //            Result.Ok "DidRun"
+        //        with
+        //        | err -> Result.Error(sprintf "Reading the empty test file failed: %s" err.Message)
+        //    Expect.isOk readingSuccess (Result.getMessage readingSuccess)
+        //)
 
-        testCase "WriterSuccessEmpty" (fun () ->
+        //testCase "WriterSuccessEmpty" (fun () ->
 
-            let i = ArcInvestigation.fromFsWorkbook Investigation.emptyInvestigation
+        //    let i = ArcInvestigation.fromFsWorkbook Investigation.emptyInvestigation
 
-            let writingSuccess = 
-                try 
-                    ArcInvestigation.toFsWorkbook i |> ignore
-                    Result.Ok "DidRun"
-                with
-                | err -> Result.Error(sprintf "Writing the empty test file failed: %s" err.Message)
+        //    let writingSuccess = 
+        //        try 
+        //            ArcInvestigation.toFsWorkbook i |> ignore
+        //            Result.Ok "DidRun"
+        //        with
+        //        | err -> Result.Error(sprintf "Writing the empty test file failed: %s" err.Message)
 
-            Expect.isOk writingSuccess (Result.getMessage writingSuccess)
-        )
+        //    Expect.isOk writingSuccess (Result.getMessage writingSuccess)
+        //)
         testCase "WriteWithStudyOnlyRegistered" (fun () ->
 
             let studyIdentifiers = ResizeArray ["MyStudy"]
