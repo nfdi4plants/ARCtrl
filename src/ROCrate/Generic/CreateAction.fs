@@ -12,6 +12,8 @@ type LDCreateAction =
 
     static member name = "http://schema.org/name"
 
+    static member instrument = "http://schema.org/instrument"
+
     static member agent = "http://schema.org/agent"
 
     static member object_ = "http://schema.org/object"
@@ -38,6 +40,14 @@ type LDCreateAction =
     static member setNameAsString(ca : LDNode, name : string, ?context : LDContext) =
         ca.SetProperty(LDCreateAction.name, name, ?context = context)
 
+    static member getInstruments(ca : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        ca.GetPropertyNodes(LDCreateAction.instrument, ?graph = graph, ?context = context)
+    static member getInstrumentsAsComputationalWorkflow(ca : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        let filter ldObject context = LDComputationalWorkflow.validate(ldObject, ?context = context)
+        ca.GetPropertyNodes(LDCreateAction.instrument, filter = filter, ?graph = graph, ?context = context)
+    static member setInstruments(ca : LDNode, instruments : ResizeArray<LDNode>, ?context : LDContext) =
+        ca.SetProperty(LDCreateAction.instrument, instruments, ?context = context)
+        
     static member tryGetAgent(ca : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let filter ldObject context = LDPerson.validate(ldObject, ?context = context)
         match ca.TryGetPropertyAsSingleNode(LDCreateAction.agent, ?graph = graph, ?context = context) with
@@ -107,11 +117,12 @@ type LDCreateAction =
 
     static member validate(ca : LDNode, ?context : LDContext) =
         ca.HasType(LDCreateAction.schemaType, ?context = context)
-        //&& ca.HasProperty(LDCreateAction.agent, ?context = context)
-        //&& ca.HasProperty(LDCreateAction.object_, ?context = context)
-        //&& ca.HasProperty(LDCreateAction.result, ?context = context)
+        && ca.HasProperty(LDCreateAction.agent, ?context = context)
+        && ca.HasProperty(LDCreateAction.object_, ?context = context)
+        && ca.HasProperty(LDCreateAction.result, ?context = context)
+        && ca.HasProperty(LDCreateAction.instrument, ?context = context)
 
-    static member create(name : string, ?objects : ResizeArray<LDNode>, ?results : ResizeArray<LDNode>, ?description : string, ?id : string, ?agent : LDNode, ?endTime : System.DateTime, ?disambiguatingDescriptions : ResizeArray<string>, ?context : LDContext) =
+    static member create(name : string, agent : LDNode, instrument : LDNode, ?objects : ResizeArray<LDNode>, ?results : ResizeArray<LDNode>, ?description : string, ?id : string, ?endTime : System.DateTime, ?disambiguatingDescriptions : ResizeArray<string>, ?context : LDContext) =
         let id =
             match id with
             | Some i -> i
@@ -120,9 +131,10 @@ type LDCreateAction =
         let results = Option.defaultValue (ResizeArray []) results
         let ca = LDNode(id, ResizeArray [LDCreateAction.schemaType], ?context = context)
         ca.SetProperty(LDCreateAction.name, name, ?context = context)
-        ca.SetOptionalProperty(LDCreateAction.agent, agent, ?context = context) // Optional?
+        ca.SetProperty(LDCreateAction.agent, agent, ?context = context)
         ca.SetProperty(LDCreateAction.object_, objects, ?context = context)
         ca.SetProperty(LDCreateAction.result, results, ?context = context)
+        ca.SetProperty(LDCreateAction.instrument, instrument, ?context = context)
         ca.SetOptionalProperty(LDCreateAction.description, description, ?context = context)
         ca.SetOptionalProperty(LDCreateAction.endTime, endTime, ?context = context)
         ca.SetOptionalProperty(LDCreateAction.disambiguatingDescription, disambiguatingDescriptions, ?context = context)
