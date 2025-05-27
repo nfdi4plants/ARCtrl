@@ -28,12 +28,12 @@
     <Compile Include="Generic\LabProcess.fs" />
     <Compile Include="Generic\CreateAction.fs" />
     <Compile Include="Generic\CreativeWork.fs" />
-    <Compile Include="Generic\Dataset.fs" />
     <Compile Include="Generic\SoftwareApplication.fs" />
     <Compile Include="Generic\FormalParameter.fs" />
     <Compile Include="Generic\ComputationalWorkflow.fs" />
     <Compile Include="Generic\SoftwareSourceCode.fs" />
     <Compile Include="Generic\WorkflowProtocol.fs" />
+    <Compile Include="Generic\Dataset.fs" />
 
     <!-- ISA Profile types -->
     <Compile Include="ISAProfile\Dataset.fs" />
