@@ -117,7 +117,7 @@ module ArcInvestigation =
             (ResizeArray remarks)
 
     let fromRows (rows : seq<SparseRow>) =
-        if Seq.isEmpty rows then failwith "Investigation file is empty"
+        if Seq.isEmpty rows then failwith "isa_investigation sheet in Investigation file is empty"
 
         let en = rows.GetEnumerator()              
         

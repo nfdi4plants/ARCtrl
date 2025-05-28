@@ -10,25 +10,30 @@ open TestObjects.Spreadsheet
 
 let private testInvestigationWriterComponents = 
     // Test the single components of invesigation file writing
-    testList "InvestigationWriterPartTests" [       
+    testList "InvestigationWriterPartTests" [
+
         testCase "CreateEmptyWorkbook" (fun () ->
             let wb = new FsWorkbook()
             Expect.isTrue true "Workbook could not be initialized"
         )
+
         testCase "CreateSheet" (fun () ->
             let sheet = FsWorksheet("Investigation")
             Expect.equal sheet.Name "Investigation" "Worksheet could not be initialized"
         )
+
         testCase "InvestigationToRows" (fun () ->
             let i = ArcInvestigation.init("My Investigation")
             let rows = i |> ArcInvestigation.toRows
             Expect.isTrue (rows |> Seq.length |> (<) 0) "Investigation should have at least one row"
         )
+
         testCase "AddEmptyWorksheet" (fun () ->
             let wb = new FsWorkbook()
             let sheet = FsWorksheet("Investigation")
             wb.AddWorksheet(sheet)                                    
         )
+
         testCase "FillWorksheet" (fun () ->
             let i = ArcInvestigation.init("My Identifier")
             let sheet = FsWorksheet("Investigation")
@@ -37,6 +42,7 @@ let private testInvestigationWriterComponents =
             |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet) 
             Expect.isTrue (sheet.Rows |> Seq.length |> (<) 0) "Worksheet should have at least one row"
         )
+
         testCase "AddFilledWorksheet" (fun () ->
             let i = ArcInvestigation.init("My Identifier")
             let wb = new FsWorkbook()
@@ -47,6 +53,7 @@ let private testInvestigationWriterComponents =
             wb.AddWorksheet(sheet)
             Expect.isSome (wb.TryGetWorksheetByName "Investigation") "Worksheet should be added to workbook"
         )
+
         testCase "OnlyConsiderRegisteredStudies" (fun () ->
             let isa = ArcInvestigation("MyInvestigation")
             let registeredStudyIdentifier = "RegisteredStudy"
@@ -92,8 +99,8 @@ let private testInvestigationFile =
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
 
             Expect.isOk readingSuccess (Result.getMessage readingSuccess)
-
         )
+
         testCase "ReaderSuccessDeprecatedSheetName" (fun () -> 
             
             let readingSuccess = 
@@ -104,8 +111,8 @@ let private testInvestigationFile =
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
 
             Expect.isOk readingSuccess (Result.getMessage readingSuccess)
-
         )
+
         testCase "ReaderFailureWrongSheetName" (fun () -> 
             
             let readingSuccess = 
@@ -117,6 +124,7 @@ let private testInvestigationFile =
 
             Expect.isError readingSuccess "Reading the investigation file should fail if the sheet name is wrong"
         )
+
         testCase "ReaderSuccess1MadeUpKeyAtTop" (fun () ->
 
             let readingSuccess = 
@@ -128,6 +136,7 @@ let private testInvestigationFile =
 
             Expect.isOk readingSuccess (Result.getMessage readingSuccess)
         )
+
         testCase "1MadeUpKeyAtTopInvestigationIdentifierPresent" (fun () ->
 
             let arcInv = 
@@ -138,6 +147,7 @@ let private testInvestigationFile =
 
             Expect.equal arcInv.Identifier "investigation1MadeUpKey" "Did not retrieve the correct Investigation identifier"
         )
+
         testCase "WriterSuccess" (fun () ->
 
             let i = ArcInvestigation.fromFsWorkbook Investigation.BII_I_1.fullInvestigation
@@ -173,30 +183,28 @@ let private testInvestigationFile =
             Expect.isEmpty i.Studies "Empty study in investigation should be read to empty ResizeArray"
         )
 
-        //testCase "ReaderSuccessEmpty" (fun () -> 
-            
-        //    let readingSuccess = 
-        //        try 
-        //            ArcInvestigation.fromFsWorkbook Investigation.emptyInvestigation |> ignore
-        //            Result.Ok "DidRun"
-        //        with
-        //        | err -> Result.Error(sprintf "Reading the empty test file failed: %s" err.Message)
-        //    Expect.isOk readingSuccess (Result.getMessage readingSuccess)
-        //)
+        testCase "ReaderFailureEmpty" (fun () -> 
+            let readingSuccess = 
+                try 
+                    ArcInvestigation.fromFsWorkbook Investigation.emptyInvestigation |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error(sprintf "Reading the empty test file failed: %s" err.Message)
+            Expect.isError readingSuccess (Result.getMessage readingSuccess)
+        )
 
-        //testCase "WriterSuccessEmpty" (fun () ->
+        testCase "WriterFailureEmpty" (fun () ->
+            let writingSuccess = 
+                try 
+                    let i = ArcInvestigation.fromFsWorkbook Investigation.emptyInvestigation
+                    ArcInvestigation.toFsWorkbook i |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error(sprintf "Writing the empty test file failed: %s" err.Message)
 
-        //    let i = ArcInvestigation.fromFsWorkbook Investigation.emptyInvestigation
+            Expect.isError writingSuccess (Result.getMessage writingSuccess)
+        )
 
-        //    let writingSuccess = 
-        //        try 
-        //            ArcInvestigation.toFsWorkbook i |> ignore
-        //            Result.Ok "DidRun"
-        //        with
-        //        | err -> Result.Error(sprintf "Writing the empty test file failed: %s" err.Message)
-
-        //    Expect.isOk writingSuccess (Result.getMessage writingSuccess)
-        //)
         testCase "WriteWithStudyOnlyRegistered" (fun () ->
 
             let studyIdentifiers = ResizeArray ["MyStudy"]
@@ -206,6 +214,7 @@ let private testInvestigationFile =
                 |> ArcInvestigation.fromFsWorkbook
             Expect.sequenceEqual i.RegisteredStudyIdentifiers studyIdentifiers "Registered study Identifier were not written and read correctly"
         )
+
         testCase "TestMetadataCollection" (fun () ->
 
             let investigation =
