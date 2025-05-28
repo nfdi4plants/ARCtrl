@@ -1,4 +1,4 @@
-﻿namespace rec ARCtrl.Json
+namespace rec ARCtrl.Json
 
 open Thoth.Json.Core
 
@@ -19,6 +19,7 @@ module CellTable =
 
     let arrayFromMap (otm : CellTableMap) : CellTableArray=
         otm
+        |> Dictionary.items
         |> Seq.sortBy (fun kv -> kv.Value)
         |> Seq.map (fun kv -> kv.Key)
         |> Seq.toArray

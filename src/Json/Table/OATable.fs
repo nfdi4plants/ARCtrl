@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
@@ -12,8 +12,9 @@ module OATable =
 
     type OATableArray = array<OntologyAnnotation>
 
-    let arrayFromMap (otm : OATableMap) : OATableArray=
+    let arrayFromMap (otm : OATableMap) : OATableArray =
         otm
+        |> Dictionary.items
         |> Seq.sortBy (fun kv -> kv.Value)
         |> Seq.map (fun kv -> kv.Key)
         |> Seq.toArray

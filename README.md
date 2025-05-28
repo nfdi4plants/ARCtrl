@@ -1,4 +1,4 @@
-﻿
+
 ![logo](logos/ARCtrl_horizontal.png)
 
 # ARCtrl
@@ -90,11 +90,11 @@ Measured on 13th Gen Intel(R) Core(TM) i7-13800H
 
 | Name | Description | FSharp Time (ms) | JavaScript Time (ms) | Python Time (ms) |
 | --- | --- | --- | --- | --- |
-| Table_GetHashCode | From a table with 1 column and 10000 rows, retrieve the Hash Code |  5 | 21 | 226 |
-| Table_AddRows | Add 10000 rows to a table with 4 columns. |  15 | 22 | 289 |
-| Table_fillMissingCells | For a table 6 columns and 20000 rows, where each row has one missing value, fill those values with default values. | 49 | 108 | 4813 |
-| Table_ToJson | Serialize a table with 5 columns and 10000 rows to json. |  1099 | 481 | 6833 |
-| Table_ToCompressedJson | Serialize a table with 5 columns and 10000 rows to compressed json. |  261 |  2266 | 717334 |
-| Assay_toJson | Parse an assay with one table with 10000 rows and 6 columns to json |  915 | 2459 | 28799 |
-| Study_FromWorkbook | Parse a workbook with one study with 10000 rows and 6 columns to an ArcStudy |  97 | 87 | 1249 |
-| Investigation_ToWorkbook_ManyStudies | Parse an investigation with 1500 studies to a workbook |  621 | 379 | 9974 |
+| Table_GetHashCode | From a table with 1 column and 10000 rows, retrieve the Hash Code |  2 ± 0 | 9 ± 7 | 133 ± 7 |
+| Table_AddRows | Add 10000 rows to a table with 4 columns. |  40 ± 9 | 20 ± 8 | 309 ± 26 |
+| Table_fillMissingCells | For a table 6 columns and 20000 rows, where each row has one missing value, fill those values with default values. | 55 ± 31 | 101 ± 11 | 3375 ± 221 |
+| Table_ToJson | Serialize a table with 5 columns and 10000 rows to json. |  1027 ± 200 | 293 ± 56 | 17990 ± 1482 |
+| Table_ToCompressedJson | Serialize a table with 5 columns and 10000 rows to compressed json. |  216 ± 19 |  4552 ± 326 | 6188 ± 839 |
+| Assay_toJson | Parse an assay with one table with 10000 rows and 6 columns to json |  856 ± 42 | 271 ± 55 | 19278 ± 1289 |
+| Study_FromWorkbook | Parse a workbook with one study with 10000 rows and 6 columns to an ArcStudy |  84 ± 29 | 96 ± 12 | 1787 ± 1410 |
+| Investigation_ToWorkbook_ManyStudies | Parse an investigation with 1500 studies to a workbook |  387 ± 71 | 442 ± 61 | 6305 ± 660 |

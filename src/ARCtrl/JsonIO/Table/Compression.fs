@@ -3,6 +3,7 @@ namespace ARCtrl.Json
 
 open Thoth.Json.Core
 open ARCtrl
+open ARCtrl.Helper
 open ARCtrl.Process
 open System.Collections.Generic
 
@@ -10,9 +11,9 @@ open System.Collections.Generic
 module Compression =
 
     let encode (encoder: Dictionary<string, int> -> Dictionary<OntologyAnnotation, int> -> Dictionary<CompositeCell, int> -> 'A -> IEncodable) (obj: 'A) = 
-        let stringTable = Dictionary<string, int>()
-        let oaTable = Dictionary<OntologyAnnotation, int>()
-        let cellTable = Dictionary<CompositeCell, int>()
+        let stringTable = Dictionary.init()
+        let oaTable = Dictionary.init()
+        let cellTable = Dictionary.init()
         let object = encoder stringTable oaTable cellTable obj
         object |> Encode.toJsonString 0 |> ignore
         let encodedCellTable = CellTable.arrayFromMap cellTable |> CellTable.encoder stringTable oaTable
