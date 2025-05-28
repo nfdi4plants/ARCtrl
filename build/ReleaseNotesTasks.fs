@@ -1,4 +1,4 @@
-﻿module ReleaseNotesTasks
+module ReleaseNotesTasks
 
 open Fake.Extensions.Release
 open BlackFox.Fake
@@ -50,7 +50,7 @@ let updatePreReleaseNotes = BuildTask.createFn "PreReleaseNotes" [] (fun config 
     Trace.trace "Finish updating package.json version"
 
     Trace.trace "Start updating pyproject.toml version"   
-    run python $"-m uc version {versionController.PyTag}" "."
+    run python $"-m uv version {versionController.PyTag}" "."
     Trace.trace "Finish updating pyproject.toml version"
 
     printfn "updated version to %s" versionController.NugetTag

@@ -1,9 +1,20 @@
+### 3.0.0-alpha.4+16a8bb6 (Released 2025-5-28)
+    * Python performance improvements
+    * Fix duplicate Process IDs for Tables with same name
+* Additions:
+    * [[#e0e5f6e](https://github.com/nfdi4plants/ARCtrl/commit/e0e5f6e79fa02b7557a5f310c0471f950ad1b69f)] improve performance import to include preparation and repeated testing
+    * [[#81d65c5](https://github.com/nfdi4plants/ARCtrl/commit/81d65c5e23b1bc035ed48549ca93f940f3ceb829)] force python dict usage in compressed json writing
+    * [[#1a73116](https://github.com/nfdi4plants/ARCtrl/commit/1a73116b7abb37f9d8f95ace81442005feb9c542)] improve LDContext Dictionary access speed
+    * [[#311603c](https://github.com/nfdi4plants/ARCtrl/commit/311603c28dfd3129f43360955939757e1b15c896)] change ro-crate labprocess id generation to include study or assay name
+    * [[#4d1bb7a](https://github.com/nfdi4plants/ARCtrl/commit/4d1bb7ac94fb19b49af640b84fda76418df31220)] add test against distinct ro-crate process ids for same table names
+* Bugfixes:
+    * [[#7696eeb](https://github.com/nfdi4plants/ARCtrl/commit/7696eebcf756a8d66ca603ff03476bf60a1d1ce5)] fix duplicate Process IDs for Tables with same name
+    * [[#1321320](https://github.com/nfdi4plants/ARCtrl/commit/1321320cab48e8af993a22fbc2f7b5b8a0d688dd)] small name fix of test
+
 ### 3.0.0-alpha.3+ae0e326 (Released 2025-5-19)
-
-- Switch from poetry to uv for python project management
-- make native tests actually use core transpilations
-- improve imports in python and js
-
+    * Switch from poetry to uv for python project management
+    * make native tests actually use core transpilations
+    * improve imports in python and js
 * Additions:
     * [[#1ecbc2e](https://github.com/nfdi4plants/ARCtrl/commit/1ecbc2e4d3b2e7e5af6e4b6255f0f0ba9da6bbea)] make jsnative tests use core transpilation
     * [[#e6a61c1](https://github.com/nfdi4plants/ARCtrl/commit/e6a61c1632983d84eaeb821b6114ae57197f08a7)] make pynative tests use core transpilation
@@ -14,19 +25,15 @@
     * [[#753528d](https://github.com/nfdi4plants/ARCtrl/commit/753528df643e9cac8adc1e8739fc5e957ef410e1)] small fix to include dev dependencies in python setup
 
 ### 3.0.0-alpha.2+4273dfa (Released 2025-5-15)
-
-Fix critical typescript error
-
+    * Fix critical typescript error
 * Bugfixes:
     * [[#4273dfa](https://github.com/nfdi4plants/ARCtrl/commit/4273dfad4308d97b48ce257b2118f256255c35f5)] fix typescript type declarations not being exported
 
 ### 3.0.0-alpha.1+a081b85 (Released 2025-5-15)
-
-- Add Run and Workflow isa xlsx files
-- Add fields to Assay
-- Add fields to Datamap
-- Flattened ArcInvestigation into ARC class
-
+    * Add Run and Workflow isa xlsx files
+    * Add fields to Assay
+    * Add fields to Datamap
+    * Flattened ArcInvestigation into ARC class
 * Additions:
     * [[#d33f5a0](https://github.com/nfdi4plants/ARCtrl/commit/d33f5a02e40e301017991e6b6985344b0afd6363)] cleanup version control and release tag generation
     * [[#0de2c57](https://github.com/nfdi4plants/ARCtrl/commit/0de2c579e0a181a013e994238906b4cd9199fed6)] bump node version in ci to 18
