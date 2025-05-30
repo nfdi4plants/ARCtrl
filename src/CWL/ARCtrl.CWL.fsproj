@@ -15,6 +15,7 @@
     <Compile Include="WorkflowSteps.fs" /> 
     <Compile Include="ToolDescription.fs" /> 
     <Compile Include="WorkflowDescription.fs" /> 
+    <Compile Include="CWLDescription.fs" /> 
     <Compile Include="Decode.fs" />
     <Compile Include="Encode.fs" />
   </ItemGroup>
