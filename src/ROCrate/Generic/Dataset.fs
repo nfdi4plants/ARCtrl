@@ -50,8 +50,6 @@ type LDDataset =
 
     static member mainEntity = "http://schema.org/mainEntity"
 
-    static member version = "http://schema.org/version"
-
     static member tryGetIdentifierAsString(lp : LDNode, ?context : LDContext) =
         match lp.TryGetPropertyAsSingleton(LDDataset.identifier, ?context = context) with
         | Some (:? string as n) -> Some n
@@ -284,14 +282,6 @@ type LDDataset =
     static member setMainEntities(lp : LDNode, mainEntities : ResizeArray<LDNode>, ?context : LDContext) =
         lp.SetProperty(LDDataset.mainEntity, mainEntities, ?context = context)
 
-    static member tryGetVersionAsString(lp : LDNode, ?context : LDContext) =
-        match lp.TryGetPropertyAsSingleton(LDDataset.version, ?context = context) with
-        | Some (:? string as n) -> Some n
-        | _ -> None
-
-    static member setVersionAsString(lp : LDNode, version : string, ?context : LDContext) =
-        lp.SetProperty(LDDataset.version, version, ?context = context)
-
     static member genIDInvesigation() =
         "./"
 
@@ -324,12 +314,12 @@ type LDDataset =
 
     static member validateARCWorkflow (lp : LDNode, ?context : LDContext) =
         LDDataset.validate(lp, ?context = context)
-        && lp.AdditionalType.Contains("ARC Workflow")
+        && lp.AdditionalType.Contains("Workflow")
         && LDDataset.getMainEntities(lp, ?context = context).Exists(fun ld' -> LDWorkflowProtocol.validate(ld', ?context = context))
 
     static member validateARCRun (lp : LDNode, ?context : LDContext) =
         LDDataset.validate(lp, ?context = context)
-        && lp.AdditionalType.Contains("ARC Run")
+        && lp.AdditionalType.Contains("Run")
 
     static member create(id : string, ?identier : string, ?creators : ResizeArray<LDNode>, ?dateCreated : System.DateTime, ?datePublished : System.DateTime, ?dateModified : System.DateTime, ?description : string, ?hasParts : ResizeArray<LDNode>, ?name : string, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?url : string, ?abouts : ResizeArray<LDNode>, ?measurementMethod : LDNode, ?measurementTechnique : LDNode, ?variableMeasureds : ResizeArray<LDNode>, ?context : LDContext) =
         let s = LDNode(id, ResizeArray [LDDataset.schemaType], ?context = context)
@@ -375,14 +365,13 @@ type LDDataset =
         s.AdditionalType <- ResizeArray ["Assay"]
         s
 
-    static member createARCWorkflow(identifier : string, mainEntities: ResizeArray<LDNode>, ?id : string, ?name : string, ?description : string, ?creators : ResizeArray<LDNode>, ?hasParts : ResizeArray<LDNode>, ?measurementMethod : LDNode, ?measurementTechnique : LDNode, ?variableMeasureds : ResizeArray<LDNode>, ?abouts : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?context : LDContext, ?version : string) =
+    static member createARCWorkflow(identifier : string, mainEntities: ResizeArray<LDNode>, ?id : string, ?name : string, ?description : string, ?creators : ResizeArray<LDNode>, ?hasParts : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?context : LDContext) =
         let id = match id with
                  | Some i -> i
                  | None -> LDDataset.genIDARCWorkflow(identifier)
-        let s = LDDataset.create(id, identier = identifier, ?name = name, ?description = description, ?creators = creators, ?hasParts = hasParts, ?measurementMethod = measurementMethod, ?measurementTechnique = measurementTechnique, ?variableMeasureds = variableMeasureds, ?abouts = abouts, ?comments = comments, ?context = context)
-        s.AdditionalType <- ResizeArray ["ARC Workflow"]
+        let s = LDDataset.create(id, identier = identifier, ?name = name, ?description = description, ?creators = creators, ?hasParts = hasParts, ?comments = comments, ?context = context)
+        s.AdditionalType <- ResizeArray ["Workflow"]
         s.SetProperty(LDDataset.mainEntity, mainEntities, ?context = context)
-        s.SetOptionalProperty(LDDataset.version, version, ?context = context)
         s
 
     static member createARCRun(identifier : string, ?id : string, ?name : string, ?description : string, ?creators : ResizeArray<LDNode>, ?hasParts : ResizeArray<LDNode>, ?measurementMethod : LDNode, ?measurementTechnique : LDNode, ?variableMeasureds : ResizeArray<LDNode>, ?abouts : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?context : LDContext) =
@@ -390,5 +379,5 @@ type LDDataset =
                  | Some i -> i
                  | None -> LDDataset.genIDARCRun(identifier)
         let s = LDDataset.create(id, identier = identifier, ?name = name, ?description = description, ?creators = creators, ?hasParts = hasParts, ?measurementMethod = measurementMethod, ?measurementTechnique = measurementTechnique, ?variableMeasureds = variableMeasureds, ?abouts = abouts, ?comments = comments, ?context = context)
-        s.AdditionalType <- ResizeArray ["ARC Run"]
+        s.AdditionalType <- ResizeArray ["Run"]
         s
