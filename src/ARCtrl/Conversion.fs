@@ -1458,6 +1458,109 @@ type StudyConversion =
             comments = comments
         )
 
+type WorkflowConversion =
+
+    static member composeAdditionalType (t : CWL.CWLType) : string =
+        t.ToString().ToLowerInvariant() 
+
+    static member composeFormalParameterFromInput (inp : CWL.CWLInput) =
+        let additionalType =
+            match inp.Type_ with
+            | Some t -> WorkflowConversion.composeAdditionalType t
+            | None -> failwith "Input must have a type"
+        let valueRequired = inp.Optional |> Option.defaultValue false |> not
+        LDFormalParameter.create(
+            additionalType = additionalType,
+            name = inp.Name,
+            valueRequired = valueRequired
+        )
+
+    static member composeFormalParameterFromOutput (out : CWL.CWLOutput) =
+        let additionalType =
+            match out.Type_ with
+            | Some t -> WorkflowConversion.composeAdditionalType t
+            | None -> failwith "Output must have a type"
+        LDFormalParameter.create(
+            additionalType = additionalType,
+            name = out.Name
+        )
+
+    static member composeWorkflowProtocolFromToolDescription (filePath : string, workflow : CWL.CWLToolDescription) =
+        let inputs = workflow.Inputs |> Option.map (ResizeArray.map WorkflowConversion.composeFormalParameterFromInput)
+        let outputs = workflow.Outputs |> ResizeArray.map WorkflowConversion.composeFormalParameterFromOutput
+        LDWorkflowProtocol.create(
+            id = filePath,
+            ?inputs = inputs,
+            outputs = outputs
+        )
+
+    static member composeWorkflowProtocolFromWorkflow (filePath : string, workflow : CWL.CWLWorkflowDescription) =
+        let inputs = workflow.Inputs |> ResizeArray.map WorkflowConversion.composeFormalParameterFromInput
+        let outputs = workflow.Outputs |> ResizeArray.map WorkflowConversion.composeFormalParameterFromOutput
+        LDWorkflowProtocol.create(
+            id = filePath,
+            inputs = inputs,
+            outputs = outputs
+        )
+
+    static member composeComputationalTool (tool : Process.Component) =
+        let n, na =
+            match tool.ComponentType with
+            | Some c when c.Name.IsSome -> c.Name.Value, c.TermAccessionNumber
+            | _ -> failwith "Component must have a type"
+        let v,va =
+            match tool.ComponentValue with
+            | Some (Value.Name s) -> Some s, None
+            | Some (Value.Float f) -> Some (f.ToString()), None
+            | Some (Value.Int i) -> Some (i.ToString()), None
+            | Some (Value.Ontology oa) -> oa.Name, oa.TermAccessionNumber
+            | None -> None, None
+        let u,ua =
+            match tool.ComponentUnit with
+            | Some oa -> oa.Name, oa.TermAccessionNumber
+            | None -> None, None
+        LDPropertyValue.createComponent(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
+
+    static member composeWorkflow (workflow : ArcWorkflow) =
+        let workflowProtocol = 
+            LDWorkflowProtocol.create() // Replace by composeWorkflowProtocolFromToolDescription or composeWorkflowProtocolFromWorkflow
+        if workflow.Version.IsSome then
+            LDLabProtocol.setVersionAsString(workflowProtocol, workflow.Version.Value)
+        if workflow.URI.IsSome then
+            LDLabProtocol.setUrl(workflowProtocol, workflow.URI.Value)
+        //if workflow.Parameters.Count > 0 then
+        //    let parameters = 
+        //        workflow.Parameters
+        //        |> ResizeArray.choose (fun p ->
+        //            p.ParameterName |> Option.map BaseTypes.composeDefinedTerm
+        //        )
+        //    LDLabProtocol.set(workflowProtocol, inputs)
+        if workflow.Components.Count > 0 then
+            let softwareTools =
+                workflow.Components
+                |> ResizeArray.map WorkflowConversion.composeComputationalTool
+            LDLabProtocol.setComputationalTools(workflowProtocol, softwareTools)
+        let creators =
+            workflow.Contacts
+            |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
+            |> Option.fromSeq
+        let hasParts =
+            ResizeArray()
+            |> Option.fromSeq
+        let comments =
+            workflow.Comments
+            |> ResizeArray.map (fun c -> BaseTypes.composeComment c)
+            |> Option.fromSeq
+        LDDataset.createARCWorkflow(
+            identifier = workflow.Identifier,
+            mainEntities = ResizeArray.singleton workflowProtocol,
+            ?name = workflow.Title,
+            ?description = workflow.Description,
+            ?creators = creators,
+            ?hasParts = hasParts,
+            ?comments = comments
+        )
+
 type InvestigationConversion =
 
     static member composeInvestigation (investigation : ArcInvestigation, ?fs : FileSystem) =
