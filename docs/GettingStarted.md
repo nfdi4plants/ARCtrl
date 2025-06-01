@@ -75,26 +75,18 @@ console.log(ARC) // [class ARC]
 
 ## Setup - Python
 
-1. Install [python >3.11.x](https://www.python.org/downloads/)
-2. Create folder and put an `requirements.txt` file inside.
-3. Write `arctrl` and `fsspreadsheet` in two separate lines into it
-   ```
-   arctrl
-   fsspreadsheet
-   ```
-4. run `py -m pip install -r requirements.txt`
-
-   Of course you can replace the command `py` with anything that leads to the python executable of your liking.
+1. Install [python >=3.12](https://www.python.org/downloads/)
+2. Run `pip install arctrl`
 
 Thats it! 🎉
 
-You can now reference ARCtrl in any `.py` file and run it with `py path/to/Any.py`.
+You can now reference ARCtrl in any `.py` file and run it with `python path/to/Any.py`.
 
-Verify correct setup by creating `ARCTest.py` file with the content from below in the same folder, which contains your `requirements.txt`. Then run `py ./ArcTest.py`. This will print `<class 'arctrl.arc.ARC'>` into the console.
+Verify a correct setup by creating a file `ARCTest.py` (anywhere). Then run `python path/to/ArcTest.py`. This will print `<class 'arctrl.arc.ARC'>` into the console.
 
-```python
+```py
 # ARCTest.py
-from arctrl.arctrl import ARC;
+from arctrl.arctrl import ARC
 
 print(ARC) # <class 'arctrl.arc.ARC'>
 ```
