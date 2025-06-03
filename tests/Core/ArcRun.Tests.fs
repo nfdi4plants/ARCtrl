@@ -163,6 +163,7 @@ let private test_create =
                     tables
                     None
                     performers
+                    None
                     comments
 
             Expect.equal actual.Identifier identifier "Identifier"
@@ -690,6 +691,7 @@ let private tests_GetHashCode = testList "GetHashCode" [
             (ResizeArray([ArcTable.init("My Table"); ArcTable.Tests.create_testTable()]))
             None
             (ResizeArray [|Person(firstName="John",lastName="Doe"); Person(firstName="Jane",lastName="Doe")|])
+            None
             (ResizeArray [|Comment("Hello", "World"); Comment("ByeBye", "World") |])
     testCase "passing" <| fun _ ->
         let actual = ArcRun.init("MyRun")
