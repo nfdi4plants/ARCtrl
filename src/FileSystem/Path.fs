@@ -11,13 +11,16 @@ let [<Literal>] DataMapFileName = "isa.datamap.xlsx"
 let [<Literal>] AssayFileName = "isa.assay.xlsx"
 let [<Literal>] StudyFileName = "isa.study.xlsx"
 let [<Literal>] WorkflowFileName = "isa.workflow.xlsx"
+let [<Literal>] WorkflowCWLFileName = "workflow.cwl"
 let [<Literal>] RunFileName = "isa.run.xlsx"
+let [<Literal>] RunCWLFileName = "run.cwl"
 let [<Literal>] InvestigationFileName = "isa.investigation.xlsx"
 let [<Literal>] GitKeepFileName = ".gitkeep"
 let [<Literal>] READMEFileName = "README.md"
 let [<Literal>] ValidationPackagesYamlFileName = "validation_packages.yml"
 let [<Literal>] LICENSEFileName = "LICENSE"
 let alternativeLICENSEFileNames = ["LICENSE.txt"; "LICENSE.md"; "LICENSE.rst"]
+
 
 
 // Folder
