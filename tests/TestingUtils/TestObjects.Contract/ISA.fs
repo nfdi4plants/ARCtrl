@@ -156,6 +156,14 @@ module SimpleISA =
                 dtoType = DTOType.ISA_Workflow,
                 dto = DTO.Spreadsheet proteomicsWB)
 
+        let proteomicsCWLContract =
+            Contract.create(
+                Operation.READ,
+                path = Identifier.Workflow.cwlFileNameFromIdentifier Workflow.Proteomics.workflowIdentifier,
+                dtoType = DTOType.CWL,
+                dto = DTO.Text TestObjects.CWL.CommandLineTool.cwlFile
+            )
+
     module Run =
 
         let proteomicsWorksheet = Run.Proteomics.runMetadata
@@ -171,6 +179,14 @@ module SimpleISA =
                 path = Identifier.Run.fileNameFromIdentifier Run.Proteomics.runIdentifier,
                 dtoType = DTOType.ISA_Run,
                 dto = DTO.Spreadsheet proteomicsWB)
+
+        let proteomicsCWLContract =
+            Contract.create(
+                Operation.READ,
+                path = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier,
+                dtoType = DTOType.CWL,
+                dto = DTO.Text TestObjects.CWL.Workflow.workflowFile
+            )
 
     module Investigation = 
 

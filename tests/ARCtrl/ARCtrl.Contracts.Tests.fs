@@ -72,6 +72,84 @@ let tests_tryFromContract = testList "tryFromContract" [
         |]
         let datamap = ARCAux.getAssayDataMapFromContracts assayName contracts
         Expect.isNone datamap "Datamap should not have been parsed"
+    testCase "WorkflowCWL" <| fun _ ->
+        let cwl = TestObjects.CWL.CommandLineTool.cwlFile
+        let workflowName = "myWorkflow"
+        let contracts = [|
+            Contract.create(
+                READ, 
+                $"workflows/{workflowName}/workflow.cwl", 
+                DTOType.CWL, 
+                DTO.Text cwl
+            )
+            |]
+        let workflow = ARCAux.getWorkflowCWLFromContracts workflowName contracts
+        Expect.isSome workflow "Workflow should have been parsed"
+    testCase "WorkflowCWL_WrongIdentifier" <| fun _ ->
+        let cwl = TestObjects.CWL.CommandLineTool.cwlFile
+        let workflowName = "myWorkflow"
+        let contracts = [|
+            Contract.create(
+                READ, 
+                $"workflows/{workflowName}/workflow.cwl", 
+                DTOType.CWL, 
+                DTO.Text cwl
+            )
+            |]
+        let workflow = ARCAux.getWorkflowCWLFromContracts "wrongWorkflow" contracts
+        Expect.isNone workflow "Workflow should not have been parsed"
+    testCase "WorkflowCWL_WrongType" <| fun _ ->
+        let cwl = TestObjects.CWL.CommandLineTool.cwlFile
+        let workflowName = "myWorkflow"
+        let contracts = [|
+            Contract.create(
+                READ, 
+                $"workflows/{workflowName}/workflow.cwl", 
+                DTOType.ISA_Assay, 
+                DTO.Text cwl
+            )
+            |]
+        let workflow = ARCAux.getWorkflowCWLFromContracts workflowName contracts
+        Expect.isNone workflow "Workflow should not have been parsed"
+    testCase "WorkflowCWL_WrongPath" <| fun _ ->
+        let cwl = TestObjects.CWL.CommandLineTool.cwlFile
+        let workflowName = "myWorkflow"
+        let contracts = [|
+            Contract.create(
+                READ, 
+                $"workflows/{workflowName}/workflow.json", 
+                DTOType.CWL, 
+                DTO.Text cwl
+            )
+            |]
+        let workflow = ARCAux.getWorkflowCWLFromContracts workflowName contracts
+        Expect.isNone workflow "Workflow should not have been parsed"
+    testCase "RunCWL" <| fun _ ->
+        let cwl = TestObjects.CWL.Workflow.workflowFile
+        let runName = "myRun"
+        let contracts = [|
+            Contract.create(
+                READ, 
+                $"runs/{runName}/run.cwl", 
+                DTOType.CWL, 
+                DTO.Text cwl
+            )
+            |]
+        let run = ARCAux.getRunCWLFromContracts runName contracts
+        Expect.isSome run "Run should have been parsed"
+    testCase "RunCWL_WrongIdentifier" <| fun _ ->
+        let cwl = TestObjects.CWL.Workflow.workflowFile
+        let runName = "myRun"
+        let contracts = [|
+            Contract.create(
+                READ, 
+                $"runs/{runName}/run.cwl", 
+                DTOType.CWL, 
+                DTO.Text cwl
+            )
+            |]
+        let run = ARCAux.getRunCWLFromContracts "wrongRun" contracts
+        Expect.isNone run "Run should not have been parsed"
 ]
 
 let tests_gitContracts = testList "gitContracts" [
