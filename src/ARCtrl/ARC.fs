@@ -47,6 +47,13 @@ module ARCAux =
         contracts 
         |> Array.tryPick (DataMap.tryFromReadContractForRun runIdentifier)
 
+    let getWorkflowCWLFromContracts (workflowIdentifier) (contracts: Contract []) = 
+        contracts 
+        |> Array.tryPick (ArcWorkflow.tryCWLFromReadContract workflowIdentifier)
+
+    let getRunCWLFromContracts (runIdentifier) (contracts: Contract []) = 
+        contracts 
+        |> Array.tryPick (ArcRun.tryCWLFromReadContract runIdentifier)
 
     let getArcInvestigationFromContracts (contracts: Contract []) =
         match contracts |> Array.choose ArcInvestigation.tryFromReadContract with
@@ -75,14 +82,6 @@ module ARCAux =
         let investigation = FileSystemTree.createInvestigationFile()
         let tree = 
             FileSystemTree.createRootFolder [|investigation;assaysFolder;studiesFolder; workflowsFolder; runsFolder|]
-            |> FileSystem.create
-        fs.Union(tree)
-
-    let updateFSByCWL (cwl : unit option) (fs : FileSystem) =       
-        let workflows = FileSystemTree.createWorkflowsFolder [||]
-        let runs = FileSystemTree.createRunsFolder [||]       
-        let tree = 
-            FileSystemTree.createRootFolder [|workflows;runs|]
             |> FileSystem.create
         fs.Union(tree)
 
@@ -502,15 +501,19 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         )
         workflows |> Array.iter (fun workflow ->
             let datamap = ARCAux.getWorkflowDataMapFromContracts workflow.Identifier contracts
+            let cwl = ARCAux.getWorkflowCWLFromContracts workflow.Identifier contracts
             if workflow.DataMap.IsNone then
                 workflow.DataMap <- datamap
+            workflow.CWLDescription <- cwl
             this.AddWorkflow(workflow)
             workflow.StaticHash <- workflow.GetLightHashCode()
         )
         runs |> Array.iter (fun run ->
             let datamap = ARCAux.getRunDataMapFromContracts run.Identifier contracts
+            let cwl = ARCAux.getRunCWLFromContracts run.Identifier contracts
             if run.DataMap.IsNone then
                 run.DataMap <- datamap
+            run.CWLDescription <- cwl
             this.AddRun(run)
             run.StaticHash <- run.GetLightHashCode()
         )
