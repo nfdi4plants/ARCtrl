@@ -432,9 +432,7 @@ module Decode =
             steps
         )
 
-    /// Decode a CWL file string written in the YAML format into a CWLToolDescription
-    let decodeCommandLineTool (cwl: string) =
-        let yamlCWL = Decode.read cwl
+    let commandLineToolDecoder (yamlCWL : YAMLElement) =
         let cwlVersion = versionDecoder yamlCWL
         let outputs = outputsDecoder yamlCWL
         let inputs = inputsDecoder yamlCWL
@@ -506,9 +504,13 @@ module Decode =
             description.Metadata <- Some metadata
         description
 
-    /// Decode a CWL file string written in the YAML format into a CWLWorkflowDescription
-    let decodeWorkflow (cwl: string) =
+
+    /// Decode a CWL file string written in the YAML format into a CWLToolDescription
+    let decodeCommandLineTool (cwl: string) =
         let yamlCWL = Decode.read cwl
+        commandLineToolDecoder yamlCWL
+
+    let workflowDecoder (yamlCWL: YAMLElement) =
         let cwlVersion = versionDecoder yamlCWL
         let outputs = outputsDecoder yamlCWL
         let inputs =
@@ -566,3 +568,17 @@ module Decode =
         if metadata.GetProperties(false) |> Seq.length > 0 then
             description.Metadata <- Some metadata
         description
+
+
+    /// Decode a CWL file string written in the YAML format into a CWLWorkflowDescription
+    let decodeWorkflow (cwl: string) =
+        let yamlCWL = Decode.read cwl
+        workflowDecoder yamlCWL
+
+    let decodeCWLProcessingUnit (cwl:string) =
+        let yamlCWL = Decode.read cwl
+        let cls = classDecoder yamlCWL
+        match cls with
+        | "CommandLineTool" -> CommandLineTool (commandLineToolDecoder yamlCWL)
+        | "Workflow" -> Workflow (workflowDecoder yamlCWL)
+        | _ -> failwithf "Invalid CWL class: %s" cls
