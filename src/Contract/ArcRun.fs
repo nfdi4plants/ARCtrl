@@ -18,6 +18,13 @@ module RunContractExtensions =
             Some path
         | _ -> None
 
+    let (|RunCWLPath|_|) (input) =
+        match input with
+        | [|RunsFolderName; anyRunName; RunCWLFileName|] -> 
+            let path = combineMany input
+            Some path
+        | _ -> None
+
     type ArcRun with
 
         member this.ToCreateContract (?WithFolder) =
@@ -29,6 +36,10 @@ module RunContractExtensions =
                     let folderFS =  FileSystemTree.createRunsFolder([|FileSystemTree.createRunFolder this.Identifier|])
                     for p in folderFS.ToFilePaths(false) do
                         if p <> path && p <> "runs/.gitkeep" then Contract.createCreate(p, DTOType.PlainText)
+                if this.CWLDescription.IsSome then
+                    let path = Identifier.Run.cwlFileNameFromIdentifier this.Identifier
+                    let dto = CWL.Encode.encodeCWLProcessingUnit this.CWLDescription.Value
+                    Contract.createCreate(path, DTOType.CWL, DTO.Text dto)
                 c
             |]
 
@@ -58,4 +69,11 @@ module RunContractExtensions =
                 fsworkbook :?> FsWorkbook
                 |> ArcRun.fromFsWorkbook
                 |> Some 
+            | _ -> None
+
+        static member tryCWLFromReadContract (runIdentifier : string) (c:Contract) =
+            let p = Identifier.Run.cwlFileNameFromIdentifier runIdentifier
+            match c with
+            | {Operation = READ; DTOType = Some DTOType.CWL; DTO = Some (DTO.Text text)} when c.Path = p ->
+                CWL.Decode.decodeCWLProcessingUnit text |> Some
             | _ -> None

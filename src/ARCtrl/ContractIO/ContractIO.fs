@@ -25,6 +25,11 @@ let fulfillReadContractAsync basePath (c : Contract) =
                 let! text = FileSystemHelper.readFileTextAsync path
                 let dto = text |> DTO.Text
                 return Ok {c with DTO = Some dto}
+            | Some DTOType.CWL ->
+                let path = ArcPathHelper.combine basePath c.Path
+                let! text = FileSystemHelper.readFileTextAsync path
+                let dto = text |> DTO.Text
+                return Ok {c with DTO = Some dto}
             | _ -> 
                 return Error (sprintf "Contract %s is neither an ISA nor a freetext contract" c.Path)
         with

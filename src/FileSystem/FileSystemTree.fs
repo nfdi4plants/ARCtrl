@@ -244,25 +244,29 @@ type FileSystemTree =
         else
             FileSystemTree.createFolder(studyName, [|resources; protocols; studyFile; readme|])
 
-    static member createWorkflowFolder(workflowName : string, ?hasDataMap) = 
+    static member createWorkflowFolder(workflowName : string, ?hasCWL, ?hasDataMap) = 
         let hasDataMap = defaultArg hasDataMap false
+        let hasCWL = defaultArg hasCWL false
         let readme = FileSystemTree.createReadmeFile()
         let workflowFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.WorkflowFileName
-        if hasDataMap then
-            let dataMapFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.DataMapFileName
-            FileSystemTree.createFolder(workflowName, [|workflowFile; readme; dataMapFile|])
-        else
-            FileSystemTree.createFolder(workflowName, [|workflowFile; readme|])
+        FileSystemTree.createFolder(workflowName, [|
+            workflowFile;
+            readme;
+            if hasCWL then FileSystemTree.createFile ARCtrl.ArcPathHelper.WorkflowCWLFileName
+            if hasDataMap then FileSystemTree.createFile ARCtrl.ArcPathHelper.DataMapFileName
+        |])
 
-    static member createRunFolder(runName : string, ?hasDataMap) = 
+    static member createRunFolder(runName : string, ?hasCWL, ?hasDataMap) = 
         let hasDataMap = defaultArg hasDataMap false
+        let hasCWL = defaultArg hasCWL false
         let readme = FileSystemTree.createReadmeFile()
         let runFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.RunFileName
-        if hasDataMap then
-            let dataMapFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.DataMapFileName
-            FileSystemTree.createFolder(runName, [|runFile; readme; dataMapFile|])
-        else
-            FileSystemTree.createFolder(runName, [|runFile; readme|])
+        FileSystemTree.createFolder(runName,[|
+            runFile;
+            readme;
+            if hasCWL then FileSystemTree.createFile ARCtrl.ArcPathHelper.RunCWLFileName
+            if hasDataMap then FileSystemTree.createFile ARCtrl.ArcPathHelper.DataMapFileName
+        |])
 
     static member createInvestigationFile() = 
         FileSystemTree.createFile ARCtrl.ArcPathHelper.InvestigationFileName

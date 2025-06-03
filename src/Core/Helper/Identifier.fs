@@ -227,6 +227,24 @@ module Workflow =
         else None
 
     /// <summary>
+    /// On writing a cwl file we unify our output to a relative path to ARC root. So: `workflows/workflowIdentifier/workflow.cwl`.
+    /// </summary>
+    /// <param name="identifier">Any correct workflow identifier</param>
+    let cwlFileNameFromIdentifier (identifier: string) : string =
+        checkValidCharacters (identifier)
+        ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.WorkflowsFolderName; identifier; ARCtrl.ArcPathHelper.WorkflowCWLFileName|]
+
+    /// <summary>
+    /// On writing a cwl file we unify our output to a relative path to ARC root. So: `workflows/workflowIdentifier/workflow.cwl`.
+    /// </summary>
+    /// <param name="identifier">Any correct workflow identifier</param>
+    let tryCwlFileNameFromIdentifier (identifier: string) : string option =
+        if tryCheckValidCharacters (identifier) then
+            ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.WorkflowsFolderName; identifier; ARCtrl.ArcPathHelper.WorkflowCWLFileName|]
+            |> Some
+        else None
+
+    /// <summary>
     /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `workflows/workflowIdentifier/isa.datamap.xlsx`.
     /// </summary>
     /// <param name="identifier">Any correct workflow identifier</param>
@@ -288,6 +306,24 @@ module Run =
     let tryFileNameFromIdentifier (identifier: string) : string option =
         if tryCheckValidCharacters (identifier) then
             ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.RunsFolderName; identifier; ARCtrl.ArcPathHelper.RunFileName|]
+            |> Some
+        else None
+
+    /// <summar>
+    /// On writing a cwl file we unify our output to a relative path to ARC root. So: `runs/runIdentifier/run.cwl`.
+    /// </summary>
+    /// <param name="identifier">Any correct run identifier</param>
+    let cwlFileNameFromIdentifier (identifier: string) : string =
+        checkValidCharacters (identifier)
+        ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.RunsFolderName; identifier; ARCtrl.ArcPathHelper.RunCWLFileName|]
+
+    /// <summary>
+    /// On writing a cwl file we unify our output to a relative path to ARC root. So: `runs/runIdentifier/run.cwl`.
+    /// </summary>
+    /// <param name="identifier">Any correct run identifier</param>
+    let tryCwlFileNameFromIdentifier (identifier: string) : string option =
+        if tryCheckValidCharacters (identifier) then
+            ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.RunsFolderName; identifier; ARCtrl.ArcPathHelper.RunCWLFileName|]
             |> Some
         else None
 

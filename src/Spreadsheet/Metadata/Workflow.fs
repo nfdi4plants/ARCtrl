@@ -85,6 +85,7 @@ module Workflow =
             components
             None
             (ResizeArray())
+            None
             comments
 
     let fromSparseTable (matrix : SparseTable) =
