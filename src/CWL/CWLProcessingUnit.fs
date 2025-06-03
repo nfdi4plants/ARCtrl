@@ -1,5 +1,5 @@
 namespace ARCtrl.CWL
 
-type CWLDescription =
+type CWLProcessingUnit =
     | CommandLineTool of CWLToolDescription
     | Workflow of CWLWorkflowDescription
