@@ -81,8 +81,19 @@ let private simpleISAWithWRContracts =
         SimpleISA.Run.proteomicsReadContract
     |]
 
+let private simpleISAWithWRContracts_WithCWL = 
+    [|
+        SimpleISA.Investigation.investigationReadContract
+        SimpleISA.Study.bII_S_1ReadContract
+        SimpleISA.Assay.proteomeReadContract
+        SimpleISA.Workflow.proteomicsReadContract
+        SimpleISA.Workflow.proteomicsCWLContract
+        SimpleISA.Run.proteomicsReadContract
+        SimpleISA.Run.proteomicsCWLContract
+    |]
+
 let private tests_read_contracts = testList "read_contracts" [
-    testCase "simpleISAWithWR" (fun () -> 
+    testCase "simpleISAWithWR_NoCWL" (fun () -> 
         let input = 
             [|@"isa.investigation.xlsx"; @".arc\.gitkeep"; @".git\config";
             // assay
@@ -166,7 +177,69 @@ let private tests_read_contracts = testList "read_contracts" [
         Expect.equal licenseContract.Operation Operation.READ "license contract should be a read contract"
         Expect.equal licenseContract.DTOType (Some DTOType.PlainText) "license contract should have the correct DTO type"
     )
+    testCase "simpleISAWithWR_WithCWL" (fun () -> 
+        let input = 
+            [|@"isa.investigation.xlsx"; @".arc\.gitkeep"; @".git\config";
+            // assay
+            @"assays\TestAssay\isa.assay.xlsx";
+            @"assays\TestAssay\README.md";
+            @"assays\TestAssay\dataset\.gitkeep";
+            @"assays\TestAssay\protocols\.gitkeep";
+            // study
+            @"studies\TestStudy\isa.study.xlsx";
+            @"studies\TestStudy\README.md";
+            @"studies\TestStudy\isa.study.xlsx";
+            @"studies\TestStudy\protocols\.gitkeep";
+            // workflow
+            @"workflows\TestWorkflow\isa.workflow.xlsx";
+            @"workflows\TestWorkflow\workflow.cwl";
+            @"workflows\TestWorkflow\README.md";
+            // run
+            @"runs\TestRun\isa.run.xlsx";
+            @"runs\TestRun\run.cwl";
+            @"runs\TestRun\README.md";
+            |]
+            |> Array.map (fun x -> x.Replace(@"\","/"))
+            |> Array.sort
+        let arc = ARC.fromFilePaths(input)
+        let contracts = arc.GetReadContracts()
+        Expect.hasLength contracts 7 "should have read 7 read contracts"
 
+        let investigationContractOpt = contracts |> Array.tryFind (fun c -> c.Path = "isa.investigation.xlsx")
+        let investigationContract = Expect.wantSome investigationContractOpt "investigation contract should be present"
+        Expect.equal investigationContract.Operation Operation.READ "investigation contract should be a read contract"
+        Expect.equal investigationContract.DTOType (Some DTOType.ISA_Investigation) "investigation contract should have the correct DTO type"
+
+        let studyContractOpt = contracts |> Array.tryFind (fun c -> c.Path = "studies/TestStudy/isa.study.xlsx")
+        let studyContract = Expect.wantSome studyContractOpt "study contract should be present"
+        Expect.equal studyContract.Operation Operation.READ "study contract should be a read contract"
+        Expect.equal studyContract.DTOType (Some DTOType.ISA_Study) "study contract should have the correct DTO type"
+
+        let assayContractOpt = contracts |> Array.tryFind (fun c -> c.Path = "assays/TestAssay/isa.assay.xlsx")
+        let assayContract = Expect.wantSome assayContractOpt "assay contract should be present"
+        Expect.equal assayContract.Operation Operation.READ "assay contract should be a read contract"
+        Expect.equal assayContract.DTOType (Some DTOType.ISA_Assay) "assay contract should have the correct DTO type"
+
+        let workflowContractOpt = contracts |> Array.tryFind (fun c -> c.Path = "workflows/TestWorkflow/isa.workflow.xlsx")
+        let workflowContract = Expect.wantSome workflowContractOpt "workflow contract should be present"
+        Expect.equal workflowContract.Operation Operation.READ "workflow contract should be a read contract"
+        Expect.equal workflowContract.DTOType (Some DTOType.ISA_Workflow) "workflow contract should have the correct DTO type"
+
+        let workflowCWLContractOpt = contracts |> Array.tryFind (fun c -> c.Path = "workflows/TestWorkflow/workflow.cwl")
+        let workflowCWLContract = Expect.wantSome workflowCWLContractOpt "workflow cwl contract should be present"
+        Expect.equal workflowCWLContract.Operation Operation.READ "workflow cwl contract should be a read contract"
+        Expect.equal workflowCWLContract.DTOType (Some DTOType.CWL) "workflow cwl contract should have the correct DTO type"
+
+        let runContractOpt = contracts |> Array.tryFind (fun c -> c.Path = "runs/TestRun/isa.run.xlsx")
+        let runContract = Expect.wantSome runContractOpt "run contract should be present"
+        Expect.equal runContract.Operation Operation.READ "run contract should be a read contract"
+        Expect.equal runContract.DTOType (Some DTOType.ISA_Run) "run contract should have the correct DTO type"
+
+        let runCWLContractOpt = contracts |> Array.tryFind (fun c -> c.Path = "runs/TestRun/run.cwl")
+        let runCWLContract = Expect.wantSome runCWLContractOpt "run cwl contract should be present"
+        Expect.equal runCWLContract.Operation Operation.READ "run cwl contract should be a read contract"
+        Expect.equal runCWLContract.DTOType (Some DTOType.CWL) "run cwl contract should have the correct DTO type"
+    )
     ]
 
 let private tests_SetISAFromContracts = testList "SetISAFromContracts" [
@@ -187,7 +260,7 @@ let private tests_SetISAFromContracts = testList "SetISAFromContracts" [
         Expect.equal assay1.Identifier Assay.Proteome.assayIdentifier "assay 1 identifier should have been read from assay contract"
         Expect.equal assay1.TableCount 1 "assay 1 should have read one table"   
     )
-    testCase "simpleISAWithWR" (fun () -> 
+    testCase "simpleISAWithWR_NoCWL" (fun () -> 
         let arc = ARC("MyIdentifier")
         arc.SetISAFromContracts simpleISAWithWRContracts
         Expect.equal arc.Identifier Investigation.BII_I_1.investigationIdentifier "investigation identifier should have been read from investigation contract"
@@ -200,9 +273,30 @@ let private tests_SetISAFromContracts = testList "SetISAFromContracts" [
 
         Expect.equal arc.WorkflowCount 1 "should have read one workflow"
         Expect.equal arc.Workflows.[0].Identifier Workflow.Proteomics.workflowIdentifier "Workflow Identifier"
+        Expect.isNone arc.Workflows.[0].CWLDescription "Workflow CWL should not be present"
 
         Expect.equal arc.RunCount 1 "should have read one run"
-        Expect.equal arc.Runs.[0].Identifier Run.Proteomics.runIdentifier "Run Identifier"   
+        Expect.equal arc.Runs.[0].Identifier Run.Proteomics.runIdentifier "Run Identifier"
+        Expect.isNone arc.Runs.[0].CWLDescription "Run CWL should not be present"
+    )
+    testCase "simpleISAWithWR_WithCWL" (fun () -> 
+        let arc = ARC("MyIdentifier")
+        arc.SetISAFromContracts simpleISAWithWRContracts_WithCWL
+        Expect.equal arc.Identifier Investigation.BII_I_1.investigationIdentifier "investigation identifier should have been read from investigation contract"
+
+        Expect.equal arc.StudyCount 1 "should have read two studies"
+        Expect.equal  arc.Studies.[0].Identifier Study.BII_S_1.studyIdentifier "Study Identifier"
+
+        Expect.equal arc.AssayCount 1 "should have read one assay"
+        Expect.equal arc.Assays.[0].Identifier Assay.Proteome.assayIdentifier "Assay Identifier"
+
+        Expect.equal arc.WorkflowCount 1 "should have read one workflow"
+        Expect.equal arc.Workflows.[0].Identifier Workflow.Proteomics.workflowIdentifier "Workflow Identifier"
+        Expect.isSome arc.Workflows.[0].CWLDescription "Workflow CWL should be present"
+
+        Expect.equal arc.RunCount 1 "should have read one run"
+        Expect.equal arc.Runs.[0].Identifier Run.Proteomics.runIdentifier "Run Identifier"
+        Expect.isSome arc.Runs.[0].CWLDescription "Run CWL should be present"
     )
     testCase "GetStudyRemoveContractsOnlyRegistered" (fun () -> // set to pending, until performance issues in Study.fromFsWorkbook is resolved.
         let arc = ARC("MyIdentifier")
