@@ -130,6 +130,7 @@ let private test_create =
                     components
                     None
                     contacts
+                    None
                     comments
 
             Expect.equal actual.Identifier identifier "identifier"
