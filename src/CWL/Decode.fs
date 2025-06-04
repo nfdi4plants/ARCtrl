@@ -582,3 +582,37 @@ module Decode =
         | "CommandLineTool" -> CommandLineTool (commandLineToolDecoder yamlCWL)
         | "Workflow" -> Workflow (workflowDecoder yamlCWL)
         | _ -> failwithf "Invalid CWL class: %s" cls
+
+module DecodeParameters =
+
+    let cwlParameterReferenceDecoder (key: string) (yEle: YAMLElement): CWLParameterReference =
+        match yEle with
+        | YAMLElement.Object[YAMLElement.Value v] ->
+            {
+                Key = key
+                Values = ResizeArray [v.Value]
+                Type = None
+            }
+        | YAMLElement.Object[YAMLElement.Mapping (_,YAMLElement.Object [YAMLElement.Value v1]) ; YAMLElement.Mapping (_,YAMLElement.Object [YAMLElement.Value v2])] ->
+            {
+                Key = key
+                Values = ResizeArray [v2.Value]
+                Type = Some v1.Value
+            }
+        | YAMLElement.Object[YAMLElement.Sequence s] ->
+            {
+                Key = key
+                Values = Decode.resizearray Decode.string (YAMLElement.Sequence s)
+                Type = None
+            }
+        | _ -> failwith $"{yEle}"
+
+    let cwlparameterReferenceArrayDecoder: YAMLElement -> ResizeArray<CWLParameterReference> =
+        Decode.object (fun get ->
+            let dict = get.Overflow.FieldList []
+            [|
+                for ele in dict do
+                    cwlParameterReferenceDecoder ele.Key ele.Value
+            |]
+            |> ResizeArray
+        )

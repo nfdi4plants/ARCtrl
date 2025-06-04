@@ -5,6 +5,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="TestObjects.CWL\YAMLParameterFile.fs" />
     <Compile Include="TestObjects.CWL\WorkflowSteps.fs" />
     <Compile Include="TestObjects.CWL\Workflow.fs" />
     <Compile Include="TestObjects.CWL\CommandLineTool.fs" />
