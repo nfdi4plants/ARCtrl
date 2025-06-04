@@ -117,8 +117,10 @@ module ArcInvestigation =
             (ResizeArray remarks)
 
     let fromRows (rows : seq<SparseRow>) =
-        let en = rows.GetEnumerator()              
-        
+        if Seq.isEmpty rows then failwith "isa_investigation sheet in Investigation file is empty"
+
+        let en = rows.GetEnumerator()
+
         let emptyInvestigationInfo = InvestigationInfo.create "" "" "" "" "" []
 
         let rec loop lastLine ontologySourceReferences investigationInfo publications contacts studies remarks lineNumber =
@@ -147,23 +149,30 @@ module ArcInvestigation =
                 else 
                     loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
 
-            | _ -> 
-                let studies, assays = 
-                    studies 
-                    |> List.unzip 
-                    |> fun (s, a) -> 
-                        s |> List.rev, 
-                        a |> List.concat |> List.distinctBy (fun a -> a.Identifier)
-                fromParts investigationInfo ontologySourceReferences publications contacts studies assays remarks
+            | _ ->
+                match en.MoveNext() with
+                | true ->
+                    let currentLine = en.Current |> SparseRow.tryGetValueAt 0
+                    loop currentLine ontologySourceReferences investigationInfo publications contacts studies remarks lineNumber
+                | false ->
+                    let studies, assays = 
+                        studies 
+                        |> List.unzip 
+                        |> fun (s, a) -> 
+                            s |> List.rev, 
+                            a |> List.concat |> List.distinctBy (fun a -> a.Identifier)
+                    fromParts investigationInfo ontologySourceReferences publications contacts studies assays remarks
 
-        if en.MoveNext () then
+        let arcInvestigation =
+            en.MoveNext() |> ignore
             let currentLine = en.Current |> SparseRow.tryGetValueAt 0
             loop currentLine [] emptyInvestigationInfo [] [] [] [] 1
-            
-        else
-            failwith "emptyInvestigationFile"
+
+        if arcInvestigation.Identifier.Equals System.String.Empty then failwith "Mandatory Investigation identifier is not present"
+
+        arcInvestigation
  
-   
+
     let toRows (investigation : ArcInvestigation) : seq<SparseRow> =
         let insertRemarks (remarks : Remark list) (rows : seq<SparseRow>) = 
             try 
