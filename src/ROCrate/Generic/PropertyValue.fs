@@ -41,6 +41,8 @@ type LDPropertyValue =
 
     static member pubmedIDURL = "http://purl.obolibrary.org/obo/OBI_0001617"
 
+    static member exampleOfWork = "http://schema.org/exampleOfWork"
+
     static member tryGetNameAsString(pv : LDNode, ?context : LDContext) =
         match pv.TryGetPropertyAsSingleton(LDPropertyValue.name, ?context = context) with
         | Some (:? string as n) -> Some n
@@ -169,6 +171,11 @@ type LDPropertyValue =
         && LDPropertyValue.getNameAsString(pv, ?context = context) = "FragmentDescriptor"
         //&& LDPropertyValue.tryGetPropertyIDAsString(pv, ?context = context) = (Some "URLToFragmentDescriptor")
 
+    static member validateCWLParameter (pv : LDNode, ?context : LDContext) =
+        LDPropertyValue.validate(pv, ?context = context)
+        && pv.HasProperty(LDPropertyValue.exampleOfWork, ?context = context)
+        && pv.HasProperty(LDPropertyValue.value, ?context = context)
+
     static member validateDOI (pv : LDNode, ?context : LDContext) =
         LDPropertyValue.validate(pv, ?context = context)
         && 
@@ -214,6 +221,13 @@ type LDPropertyValue =
 
     static member genIdFragmentDescriptor(fileName : string) =
         $"#Descriptor_{fileName}"
+
+    static member genIdCWLParameter(name : string, values : string ResizeArray) =
+        let valuesIdString = 
+            if values.Count > 0 then
+                values |> ResizeArray.map (fun v -> v.Replace(" ", "_")) |> String.concat "_"
+            else ""
+        $"#WorkflowParameter_{name}_{valuesIdString}"
 
     static member create(name, ?value, ?id : string, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
         let id = match id with
@@ -275,6 +289,19 @@ type LDPropertyValue =
         if disambiguatingDescriptions.IsSome then LDPropertyValue.setDisambiguatingDescriptionsAsString(fd, disambiguatingDescriptions.Value, ?context = context)
         if subjectOf.IsSome then LDPropertyValue.setSubjectOf(fd, subjectOf.Value, ?context = context)
         fd
+
+    static member createCWLParameter(formalParameterID : string, name : string, values : string ResizeArray, ?context : LDContext) =
+        let id = LDPropertyValue.genIdCWLParameter(name, values)
+        let pv = 
+            LDPropertyValue.create(
+                name = name,
+                id = id,
+                ?context = context
+            )
+        if values.Count > 0 then
+            pv.SetProperty(LDPropertyValue.value, values, ?context = context)
+        pv.SetProperty(LDPropertyValue.exampleOfWork, LDRef(formalParameterID), ?context = context)
+        pv
 
     static member createDOI(value, ?context : LDContext) =
         let id = value

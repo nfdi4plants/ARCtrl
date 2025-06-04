@@ -8,27 +8,34 @@ open ARCtrl.Helper
 [<AttachMembers>]
 type LDWorkflowInvocation =
 
+    static member schemaType = ResizeArray [LDCreateAction.schemaType; LDLabProcess.schemaType]
+
+    static member genID(name : string, ?runName : string) =
+        match runName with
+        | Some rn -> $"#WorkflowInvocation_R_{rn}_{name}" |> Helper.ID.clean
+        | None -> $"#WorkflowInvocation_{name}" |> Helper.ID.clean
+
     static member validate (wp : LDNode, ?context : LDContext) =
         LDCreateAction.validate(wp, ?context = context)
         && LDLabProcess.validate(wp, ?context = context)
 
-    static member create(name : string, agent : LDNode, instrument : LDNode, ?objects : ResizeArray<LDNode>, ?results : ResizeArray<LDNode>, ?description : string, ?id : string, ?endTime : System.DateTime, ?disambiguatingDescriptions : ResizeArray<string>, ?executesLabProtocol : LDNode, ?parameterValue : LDNode, ?context : LDContext) =
+    static member create(name : string, instrument : LDNode, ?objects : ResizeArray<LDNode>, ?results : ResizeArray<LDNode>, ?description : string, ?agents : ResizeArray<LDNode>, ?id : string, ?endTime : System.DateTime, ?disambiguatingDescriptions : ResizeArray<string>, ?executesLabProtocol : LDNode, ?parameterValues : ResizeArray<LDNode>, ?context : LDContext) =
         let id =
             match id with
             | Some i -> i
-            | None -> $"#WorkflowInvocation_{ARCtrl.Helper.Identifier.createMissingIdentifier()}" |> Helper.ID.clean
+            | None -> LDWorkflowInvocation.genID(name)
         let objects = Option.defaultValue (ResizeArray []) objects
         let results = Option.defaultValue (ResizeArray []) results
-        let ca = LDNode(id, ResizeArray [LDCreateAction.schemaType], ?context = context)
+        let ca = LDNode(id, LDWorkflowInvocation.schemaType, ?context = context)
         ca.SetProperty(LDCreateAction.name, name, ?context = context)
-        ca.SetProperty(LDCreateAction.agent, agent, ?context = context)
         ca.SetProperty(LDCreateAction.object_, objects, ?context = context)
         ca.SetProperty(LDCreateAction.result, results, ?context = context)
         ca.SetProperty(LDCreateAction.instrument, instrument, ?context = context)
+        ca.SetOptionalProperty(LDCreateAction.agent, agents, ?context = context)
         ca.SetOptionalProperty(LDCreateAction.description, description, ?context = context)
         ca.SetOptionalProperty(LDCreateAction.endTime, endTime, ?context = context)
         ca.SetOptionalProperty(LDCreateAction.disambiguatingDescription, disambiguatingDescriptions, ?context = context)
         ca.SetOptionalProperty(LDLabProcess.executesLabProtocol, executesLabProtocol, ?context = context)
-        ca.SetOptionalProperty(LDLabProcess.parameterValue, parameterValue, ?context = context)
+        ca.SetOptionalProperty(LDLabProcess.parameterValue, parameterValues, ?context = context)
         ca
     

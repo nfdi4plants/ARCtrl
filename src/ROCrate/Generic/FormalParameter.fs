@@ -46,6 +46,12 @@ type LDFormalParameter =
         | Some (:? string as n) -> Some n
         | _ -> None
 
+    static member getNameAsString(fp : LDNode, ?context : LDContext) =
+        match fp.TryGetPropertyAsSingleton(LDFormalParameter.name, ?context = context) with
+        | Some (:? string as n) -> n
+        | Some _ -> failwith $"Property of `name` of object with @id `{fp.Id}` was not a string"
+        | _ -> failwith $"Could not access property `name` of object with @id `{fp.Id}`"
+
     static member setNameAsString(fp : LDNode, name : string, ?context : LDContext) =
         fp.SetProperty(LDFormalParameter.name, name, ?context = context)
 
@@ -141,6 +147,14 @@ type LDFormalParameter =
 
     static member setDisambiguatingDescriptionAsString(fp : LDNode, disambiguatingDescription : string, ?context : LDContext) =
         fp.SetProperty(LDFormalParameter.disambiguatingDescription, disambiguatingDescription, ?context = context)
+
+    static member genID(name : string, ?workflowName : string, ?runName : string) =
+        match workflowName, runName with
+        | Some workflow, Some run -> $"#FormalParameter_W_{workflow}_R_{run}_{name}"
+        | Some workflow, None -> $"#Process_W_{workflow}_{name}"
+        | None, Some run -> $"#Process_R_{run}_{name}"
+        | _ -> $"#Process_{name}_{ARCtrl.Helper.Identifier.createMissingIdentifier()}"
+        |> Helper.ID.clean
 
     static member validate(fp : LDNode, ?context : LDContext) =
         fp.HasType(LDFormalParameter.schemaType, ?context = context)
