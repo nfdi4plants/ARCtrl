@@ -13,6 +13,7 @@
     <Compile Include="Outputs.fs" /> 
     <Compile Include="Inputs.fs" /> 
     <Compile Include="WorkflowSteps.fs" /> 
+    <Compile Include="ParameterReference.fs" /> 
     <Compile Include="ToolDescription.fs" /> 
     <Compile Include="WorkflowDescription.fs" /> 
     <Compile Include="CWLProcessingUnit.fs" /> 
