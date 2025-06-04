@@ -164,6 +164,7 @@ let private test_create =
                     None
                     performers
                     None
+                    (ResizeArray())
                     comments
 
             Expect.equal actual.Identifier identifier "Identifier"
@@ -692,6 +693,7 @@ let private tests_GetHashCode = testList "GetHashCode" [
             None
             (ResizeArray [|Person(firstName="John",lastName="Doe"); Person(firstName="Jane",lastName="Doe")|])
             None
+            (ResizeArray())
             (ResizeArray [|Comment("Hello", "World"); Comment("ByeBye", "World") |])
     testCase "passing" <| fun _ ->
         let actual = ArcRun.init("MyRun")
