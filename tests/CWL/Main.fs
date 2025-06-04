@@ -10,6 +10,7 @@ let all = testSequenced <| testList "CWL" [
     Tests.Inputs.main
     Tests.Requirements.main
     Tests.WorkflowSteps.main
+    Tests.YAMLParameterFile.main
 ]
 
 #if !TESTS_ALL
