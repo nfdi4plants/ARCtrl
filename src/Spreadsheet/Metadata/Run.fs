@@ -65,6 +65,7 @@ module Run =
             None
             (ResizeArray())
             None
+            (ResizeArray())
             (comments)
         
     let fromSparseTable (matrix : SparseTable) : ArcRun =

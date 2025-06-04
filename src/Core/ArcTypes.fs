@@ -1443,12 +1443,13 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
 
 
 [<AttachMembers>]
-type ArcRun(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?comments : ResizeArray<Comment>) = 
+type ArcRun(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?cwlInput : ResizeArray<CWL.CWLParameterReference>, ?comments : ResizeArray<Comment>) = 
     inherit ArcTables(defaultArg tables <| ResizeArray())
 
     let performers = defaultArg performers <| ResizeArray()
     let comments = defaultArg comments <| ResizeArray()
     let workflowIdentifiers = defaultArg workflowIdentifiers <| ResizeArray()
+    let cwlInput = defaultArg cwlInput <| ResizeArray()
     let mutable identifier : string =
         let identifier = identifier.Trim()
         Helper.Identifier.checkValidCharacters identifier
@@ -1463,6 +1464,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     let mutable dataMap : DataMap option = datamap
     let mutable performers = performers
     let mutable cwlDescription = cwlDescription
+    let mutable cwlInput : ResizeArray<CWL.CWLParameterReference> = cwlInput
     let mutable comments  = comments
     let mutable staticHash : int = 0
 
@@ -1479,12 +1481,13 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     member this.DataMap with get() = dataMap and set(n) = dataMap <- n
     member this.Performers with get() = performers and set(n) = performers <- n
     member this.CWLDescription with get() = cwlDescription and set(n) = cwlDescription <- n
+    member this.CWLInput with get() = cwlInput and set(n) = cwlInput <- n
     member this.Comments with get() = comments and set(n) = comments <- n
     member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
 
     static member init (identifier : string) = ArcRun(identifier)
-    static member create (identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit,  ?comments : ResizeArray<Comment>) = 
-        ArcRun(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?workflowIdentifiers = workflowIdentifiers, ?tables =tables, ?datamap = datamap, ?performers = performers, ?cwlDescription = cwlDescription, ?comments = comments)
+    static member create (identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?cwlInput : ResizeArray<CWL.CWLParameterReference>,  ?comments : ResizeArray<Comment>) = 
+        ArcRun(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?workflowIdentifiers = workflowIdentifiers, ?tables =tables, ?datamap = datamap, ?performers = performers, ?cwlDescription = cwlDescription, ?cwlInput = cwlInput, ?comments = comments)
 
     static member make
         (identifier : string)
@@ -1498,8 +1501,9 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
         (datamap : DataMap option)
         (performers : ResizeArray<Person>)
         (cwlDescription : CWL.CWLProcessingUnit option)
+        (cwlInput : ResizeArray<CWL.CWLParameterReference>)
         (comments : ResizeArray<Comment>) = 
-        ArcRun(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, workflowIdentifiers = workflowIdentifiers, tables =tables, ?datamap = datamap, performers = performers, ?cwlDescription = cwlDescription, comments = comments)
+        ArcRun(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, workflowIdentifiers = workflowIdentifiers, tables =tables, ?datamap = datamap, performers = performers, ?cwlDescription = cwlDescription, cwlInput = cwlInput, comments = comments)
 
     static member FileName = ARCtrl.ArcPathHelper.RunFileName
 
@@ -1768,6 +1772,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             nextDataMap
             nextPerformers
             this.CWLDescription
+            this.CWLInput
             nextComments
 
     /// <summary>
@@ -1803,6 +1808,9 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             this.Performers <- s
         if run.CWLDescription.IsSome || updateAlways then
             this.CWLDescription <- run.CWLDescription
+        if run.CWLInput.Count <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.CWLInput run.CWLInput
+            this.CWLInput <- s
         if run.Comments.Count <> 0 || updateAlways then
             let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Comments run.Comments
             this.Comments <- s
@@ -1853,9 +1861,10 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
         let tables = Seq.compare this.Tables other.Tables
         let perf = Seq.compare this.Performers other.Performers
         let cwl = this.CWLDescription = other.CWLDescription
+        let cwli = Seq.compare this.CWLInput other.CWLInput
         let comments = Seq.compare this.Comments other.Comments
         // Todo maybe add reflection check to prove that all members are compared?
-        [|i; t; d; mst; tt; tp; wf; dm; tables; perf; cwl; comments|] |> Seq.forall (fun x -> x = true)
+        [|i; t; d; mst; tt; tp; wf; dm; tables; perf; cwl; cwli; comments|] |> Seq.forall (fun x -> x = true)
 
     /// <summary>
     /// Use this function to check if this ArcRun and the input ArcRun refer to the same object.
@@ -1902,6 +1911,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             HashCodes.boxHashSeq this.Tables
             HashCodes.boxHashSeq this.Performers
             HashCodes.boxHashOption this.CWLDescription
+            HashCodes.boxHashSeq this.CWLInput
             HashCodes.boxHashSeq this.Comments
         |]
         |> HashCodes.boxHashArray

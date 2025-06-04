@@ -309,7 +309,7 @@ module Run =
             |> Some
         else None
 
-    /// <summar>
+    /// <summary>
     /// On writing a cwl file we unify our output to a relative path to ARC root. So: `runs/runIdentifier/run.cwl`.
     /// </summary>
     /// <param name="identifier">Any correct run identifier</param>
@@ -326,6 +326,25 @@ module Run =
             ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.RunsFolderName; identifier; ARCtrl.ArcPathHelper.RunCWLFileName|]
             |> Some
         else None
+
+    /// <summary>
+    /// On writing a yml file we unify our output to a relative path to ARC root. So: `runs/runIdentifier/run.yml`.
+    /// </summary>
+    /// <param name="identifier">Any correct run identifier</param>
+    let ymlFileNameFromIdentifier (identifier: string) : string =
+        checkValidCharacters (identifier)
+        ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.RunsFolderName; identifier; ARCtrl.ArcPathHelper.RunYMLFileName|]
+
+    /// <summary>
+    /// On writing a yml file we unify our output to a relative path to ARC root. So: `runs/runIdentifier/run.yml`.
+    /// </summary>
+    /// <param name="identifier">Any correct run identifier</param>
+    let tryYmlFileNameFromIdentifier (identifier: string) : string option =
+        if tryCheckValidCharacters (identifier) then
+            ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.RunsFolderName; identifier; ARCtrl.ArcPathHelper.RunYMLFileName|]
+            |> Some
+        else None
+
 
     /// <summary>
     /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `runs/runIdentifier/isa.datamap.xlsx`.

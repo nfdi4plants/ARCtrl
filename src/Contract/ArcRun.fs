@@ -25,6 +25,13 @@ module RunContractExtensions =
             Some path
         | _ -> None
 
+    let (|RunYMLPath|_|) (input) =
+        match input with
+        | [|RunsFolderName; anyRunName; RunYMLFileName|] -> 
+            let path = combineMany input
+            Some path
+        | _ -> None
+
     type ArcRun with
 
         member this.ToCreateContract (?WithFolder) =
@@ -76,4 +83,11 @@ module RunContractExtensions =
             match c with
             | {Operation = READ; DTOType = Some DTOType.CWL; DTO = Some (DTO.Text text)} when c.Path = p ->
                 CWL.Decode.decodeCWLProcessingUnit text |> Some
+            | _ -> None
+
+        static member tryYMLFromReadContract (runIdentifier : string) (c:Contract) =
+            let p = Identifier.Run.ymlFileNameFromIdentifier runIdentifier
+            match c with
+            | {Operation = READ; DTOType = Some DTOType.YAML; DTO = Some (DTO.Text text)} when c.Path = p ->
+                CWL.DecodeParameters.decodeYAMLParameterFile text |> Some
             | _ -> None

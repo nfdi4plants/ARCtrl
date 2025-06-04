@@ -256,15 +256,17 @@ type FileSystemTree =
             if hasDataMap then FileSystemTree.createFile ARCtrl.ArcPathHelper.DataMapFileName
         |])
 
-    static member createRunFolder(runName : string, ?hasCWL, ?hasDataMap) = 
+    static member createRunFolder(runName : string, ?hasCWL, ?hasYML, ?hasDataMap) = 
         let hasDataMap = defaultArg hasDataMap false
         let hasCWL = defaultArg hasCWL false
+        let hasYML = defaultArg hasYML false
         let readme = FileSystemTree.createReadmeFile()
         let runFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.RunFileName
         FileSystemTree.createFolder(runName,[|
             runFile;
             readme;
             if hasCWL then FileSystemTree.createFile ARCtrl.ArcPathHelper.RunCWLFileName
+            if hasYML then FileSystemTree.createFile ARCtrl.ArcPathHelper.RunYMLFileName
             if hasDataMap then FileSystemTree.createFile ARCtrl.ArcPathHelper.DataMapFileName
         |])
 

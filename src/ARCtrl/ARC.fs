@@ -55,6 +55,10 @@ module ARCAux =
         contracts 
         |> Array.tryPick (ArcRun.tryCWLFromReadContract runIdentifier)
 
+    let getRunYMLFromContracts (runIdentifier) (contracts: Contract []) = 
+        contracts 
+        |> Array.tryPick (ArcRun.tryYMLFromReadContract runIdentifier)
+
     let getArcInvestigationFromContracts (contracts: Contract []) =
         match contracts |> Array.choose ArcInvestigation.tryFromReadContract with
         | [|inv|] -> inv
@@ -79,11 +83,18 @@ module ARCAux =
             |> FileSystemTree.createStudiesFolder
         let workflowsFolder =
             isa.Workflows |> Seq.toArray
-            |> Array.map (fun w -> FileSystemTree.createWorkflowFolder(w.Identifier,w.DataMap.IsSome))
+            |> Array.map (fun w -> FileSystemTree.createWorkflowFolder(w.Identifier,w.CWLDescription.IsSome, w.DataMap.IsSome))
             |> FileSystemTree.createWorkflowsFolder
         let runsFolder =
             isa.Runs |> Seq.toArray
-            |> Array.map (fun r -> FileSystemTree.createRunFolder(r.Identifier,r.DataMap.IsSome))
+            |> Array.map (fun r ->
+                FileSystemTree.createRunFolder(
+                    runName = r.Identifier,
+                    hasCWL = r.CWLDescription.IsSome,
+                    hasYML = (r.CWLInput.Count > 0),
+                    hasDataMap = r.DataMap.IsSome
+                )
+            )
             |> FileSystemTree.createRunsFolder
         let investigation = FileSystemTree.createInvestigationFile()
         let tree = 
@@ -662,8 +673,10 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         runs |> Array.iter (fun run ->
             let datamap = ARCAux.getRunDataMapFromContracts run.Identifier contracts
             let cwl = ARCAux.getRunCWLFromContracts run.Identifier contracts
+            let yml = ARCAux.getRunYMLFromContracts run.Identifier contracts
             if run.DataMap.IsNone then
                 run.DataMap <- datamap
+            run.CWLInput <- yml |> Option.defaultValue (ResizeArray())
             run.CWLDescription <- cwl
             this.AddRun(run)
             run.StaticHash <- run.GetLightHashCode()
@@ -731,6 +744,8 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                 Identifier.Workflow.fileNameFromIdentifier w.Identifier,
                 (DTOType.ISA_Workflow, ArcWorkflow.toFsWorkbook w |> box |> DTO.Spreadsheet)
             )
+            if w.CWLDescription.IsSome then
+                failwith "Not implemented yet: CWL description in ARC.GetWriteContracts"
             if w.DataMap.IsSome (*&& datamapFile*) then 
                 let dm = w.DataMap.Value
                 dm.StaticHash <- dm.GetHashCode()
@@ -746,6 +761,10 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                 Identifier.Run.fileNameFromIdentifier r.Identifier,
                 (DTOType.ISA_Run, ArcRun.toFsWorkbook r |> box |> DTO.Spreadsheet)
             )
+            if r.CWLDescription.IsSome then
+                failwith "Not implemented yet: CWL description in ARC.GetWriteContracts"
+            if r.CWLInput.Count > 0 then
+                failwith "Not implemented yet: CWL YAML input in ARC.GetWriteContracts"
             if r.DataMap.IsSome (*&& datamapFile*) then 
                 let dm = r.DataMap.Value
                 dm.StaticHash <- dm.GetHashCode()
