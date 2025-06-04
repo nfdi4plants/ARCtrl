@@ -616,3 +616,7 @@ module DecodeParameters =
             |]
             |> ResizeArray
         )
+
+    let decodeYAMLParameterFile (yaml: string) =
+        let yEle = Decode.read yaml
+        cwlparameterReferenceArrayDecoder yEle
