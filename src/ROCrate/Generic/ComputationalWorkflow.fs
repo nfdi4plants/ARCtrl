@@ -10,8 +10,8 @@ type LDComputationalWorkflow =
 
     static member schemaType = "https://bioschemas.org/ComputationalWorkflow"
     // Recommended properties
-    static member input = "http://schema.org/input"
-    static member output = "http://schema.org/output"
+    static member input = "https://bioschemas.org/input"
+    static member output = "https://bioschemas.org/output"
     static member creator = "http://schema.org/creator"
     static member dateCreated = "http://schema.org/dateCreated"
     static member license = "http://schema.org/license"

@@ -8,6 +8,9 @@ open ARCtrl.Helper
 [<AttachMembers>]
 type LDWorkflowProtocol =
 
+    static member schemaType =
+        ResizeArray [LDFile.schemaType; LDComputationalWorkflow.schemaType; LDSoftwareSourceCode.schemaType; LDLabProtocol.schemaType]
+
     static member validate (wp : LDNode, ?context : LDContext) =
         LDComputationalWorkflow.validate(wp, ?context = context)
         && LDSoftwareSourceCode.validate(wp, ?context = context)
@@ -37,7 +40,7 @@ type LDWorkflowProtocol =
             match id with
             | Some i -> i
             | None -> $"#ComputationalWorkflow_{ARCtrl.Helper.Identifier.createMissingIdentifier()}" |> Helper.ID.clean
-        let wp = LDNode(id, ResizeArray [LDComputationalWorkflow.schemaType], ?context = context)
+        let wp = LDNode(id, LDWorkflowProtocol.schemaType, ?context = context)
         wp.SetOptionalProperty(LDComputationalWorkflow.input, inputs, ?context = context)
         wp.SetOptionalProperty(LDComputationalWorkflow.output, outputs, ?context = context)
         wp.SetOptionalProperty(LDComputationalWorkflow.creator, creator, ?context = context)

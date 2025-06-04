@@ -24,6 +24,8 @@ type LDFile =
 
     static member about = "http://schema.org/about"
 
+    static member exampleOfWork = "http://schema.org/exampleOfWork"
+
     static member tryGetNameAsString(dt : LDNode, ?context : LDContext) =
         match dt.TryGetPropertyAsSingleton(LDFile.name, ?context = context) with
         | Some (:? string as n) -> Some n
@@ -91,6 +93,10 @@ type LDFile =
         dt.HasType(LDFile.schemaType, ?context = context)
         && dt.HasProperty(LDFile.name, ?context = context)
 
+    static member validateCWLParameter(dt : LDNode, ?context : LDContext) =
+        LDFile.validate(dt, ?context = context)
+        && dt.HasProperty(LDFile.exampleOfWork, ?context = context)
+
     static member create(name : string, ?id : string, ?comments : ResizeArray<LDNode>, ?disambiguatingDescription : string, ?encodingFormat : string, ?usageInfo : string, ?context : LDContext) =
         let id = match id with
                  | Some i -> i
@@ -102,6 +108,13 @@ type LDFile =
         dt.SetOptionalProperty(LDFile.encodingFormat, encodingFormat, ?context = context)
         dt.SetOptionalProperty(LDFile.usageInfo, usageInfo, ?context = context)
         dt
+
+    static member createCWLParameter(name : string, exampleOfWork : string, ?context : LDContext) =
+        let dt = LDNode(name, ResizeArray [LDFile.schemaType], ?context = context)
+        let exampleOfWork = LDRef(exampleOfWork)
+        dt.SetProperty(LDFile.name, name, ?context = context)
+        dt.SetProperty(LDFile.exampleOfWork, exampleOfWork, ?context = context)
+        dt      
 
     //static member tryGetTermCodeAsString(dt : LDNode, ?context : LDContext) =
     //    match dt.TryGetProperty(DefinedTerm.termCode, ?context = context) with

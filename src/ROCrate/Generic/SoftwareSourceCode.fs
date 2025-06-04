@@ -8,7 +8,7 @@ open ARCtrl.Helper
 [<AttachMembers>]
 type LDSoftwareSourceCode =
 
-    static member schemaType = "https://schema.org/SoftwareSourceCode"
+    static member schemaType = "http://schema.org/SoftwareSourceCode"
     // Recommended properties
     static member creator = "http://schema.org/creator"
     static member dateCreated = "http://schema.org/dateCreated"
