@@ -1463,44 +1463,31 @@ type WorkflowConversion =
     static member composeAdditionalType (t : CWL.CWLType) : string =
         t.ToString().ToLowerInvariant() 
 
-    static member composeFormalParameterFromInput (inp : CWL.CWLInput) =
+    static member composeFormalParameterFromInput (inp : CWL.CWLInput, ?workflowName : string, ?runName) =
+        
         let additionalType =
             match inp.Type_ with
             | Some t -> WorkflowConversion.composeAdditionalType t
             | None -> failwith "Input must have a type"
         let valueRequired = inp.Optional |> Option.defaultValue false |> not
+        let id = LDFormalParameter.genID(name = inp.Name, ?workflowName = workflowName, ?runName = runName)
         LDFormalParameter.create(
             additionalType = additionalType,
+            id = id,
             name = inp.Name,
             valueRequired = valueRequired
         )
 
-    static member composeFormalParameterFromOutput (out : CWL.CWLOutput) =
+    static member composeFormalParameterFromOutput (out : CWL.CWLOutput, ?workflowName : string, ?runName) =
         let additionalType =
             match out.Type_ with
             | Some t -> WorkflowConversion.composeAdditionalType t
             | None -> failwith "Output must have a type"
+        let id = LDFormalParameter.genID(name = out.Name, ?workflowName = workflowName, ?runName = runName)
         LDFormalParameter.create(
             additionalType = additionalType,
+            id = id,
             name = out.Name
-        )
-
-    static member composeWorkflowProtocolFromToolDescription (filePath : string, workflow : CWL.CWLToolDescription) =
-        let inputs = workflow.Inputs |> Option.map (ResizeArray.map WorkflowConversion.composeFormalParameterFromInput)
-        let outputs = workflow.Outputs |> ResizeArray.map WorkflowConversion.composeFormalParameterFromOutput
-        LDWorkflowProtocol.create(
-            id = filePath,
-            ?inputs = inputs,
-            outputs = outputs
-        )
-
-    static member composeWorkflowProtocolFromWorkflow (filePath : string, workflow : CWL.CWLWorkflowDescription) =
-        let inputs = workflow.Inputs |> ResizeArray.map WorkflowConversion.composeFormalParameterFromInput
-        let outputs = workflow.Outputs |> ResizeArray.map WorkflowConversion.composeFormalParameterFromOutput
-        LDWorkflowProtocol.create(
-            id = filePath,
-            inputs = inputs,
-            outputs = outputs
         )
 
     static member composeComputationalTool (tool : Process.Component) =
@@ -1521,9 +1508,45 @@ type WorkflowConversion =
             | None -> None, None
         LDPropertyValue.createComponent(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
 
-    static member composeWorkflow (workflow : ArcWorkflow) =
-        let workflowProtocol = 
-            LDWorkflowProtocol.create() // Replace by composeWorkflowProtocolFromToolDescription or composeWorkflowProtocolFromWorkflow
+    static member composeWorkflowProtocolFromToolDescription (filePath : string, workflow : CWL.CWLToolDescription, ?workflowName : string, ?runName : string) =
+        let inputs =
+            workflow.Inputs
+            |> Option.map (ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName)))
+        let outputs =
+            workflow.Outputs
+            |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
+        LDWorkflowProtocol.create(
+            id = filePath,
+            ?inputs = inputs,
+            outputs = outputs
+        )
+
+    static member composeWorkflowProtocolFromWorkflow (filePath : string, workflow : CWL.CWLWorkflowDescription, ?workflowName : string, ?runName : string) =
+        let inputs =
+            workflow.Inputs
+            |> ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName))
+        let outputs =
+            workflow.Outputs
+            |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
+        LDWorkflowProtocol.create(
+            id = filePath,
+            inputs = inputs,
+            outputs = outputs
+        )
+
+    static member composeWorkflowProtocolFromProcessingUnit (filePath, pu : CWL.CWLProcessingUnit, ?workflowName : string, ?runName : string) =
+        match pu with
+        | CWL.CommandLineTool tool ->
+            WorkflowConversion.composeWorkflowProtocolFromToolDescription(filePath, tool, ?workflowName = workflowName, ?runName = runName)
+        | CWL.Workflow wf -> 
+            WorkflowConversion.composeWorkflowProtocolFromWorkflow(filePath, wf, ?workflowName = workflowName, ?runName = runName)
+
+    static member composeWorkflowFromArcWorkflow (workflow : ArcWorkflow) =
+        let workflowProtocol =
+            let workflowFilePath = Identifier.Workflow.cwlFileNameFromIdentifier workflow.Identifier
+            match workflow.CWLDescription with
+            | Some pu -> WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(workflowFilePath, pu, workflowName = workflow.Identifier)
+            | None -> failwithf "Workflow %s must have a CWL description" workflow.Identifier
         if workflow.Version.IsSome then
             LDLabProtocol.setVersionAsString(workflowProtocol, workflow.Version.Value)
         if workflow.URI.IsSome then
@@ -1561,6 +1584,124 @@ type WorkflowConversion =
             ?comments = comments
         )
 
+    /// File paths in CWL files are relative to the file itself. In RO-Crate, we use relative paths from the root of the crate.
+    ///
+    /// This function replaces the relative paths in the CWL input file with paths relative to the root of the crate.
+    static member composeCWLInputFilePath (path : string, runName : string) =
+        if path.StartsWith("../..") then
+            path.Replace("../../","").Replace("../..","")
+        else
+            ArcPathHelper.combineMany [| "runs"; runName ; path|]
+
+    static member composeCWLInputValue (input : CWL.CWLParameterReference, exampleOfWork : string, runName : string) =
+        match input.Type with
+        | Some "File" when input.Values.Count = 1 ->
+            let path = WorkflowConversion.composeCWLInputFilePath(input.Values[0], runName)
+            LDFile.createCWLParameter(path, exampleOfWork = exampleOfWork)
+        | _ ->
+            LDPropertyValue.createCWLParameter(
+                exampleOfWork,
+                input.Key,
+                input.Values
+            )
+
+    static member composeWorkflowInvocationFromArcRun (run : ArcRun) =
+        let workflowProtocol =
+            let workflowFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
+            match run.CWLDescription with
+            | Some pu -> WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(workflowFilePath, pu, runName = run.Identifier)
+            | None -> failwithf "Run %s must have a CWL description" run.Identifier
+        let inputParams =
+            LDComputationalWorkflow.getInputsAsFormalParameters(workflowProtocol, ?context = workflowProtocol.TryGetContext())
+            |> ResizeArray.map (fun i ->
+                let name = LDFormalParameter.getNameAsString(i, ?context = workflowProtocol.TryGetContext())
+                let paramRef =
+                    run.CWLInput
+                    |> Seq.tryPick (fun i ->
+                        if i.Key = name then Some i
+                        else None
+                    )
+                match paramRef with
+                | Some pr ->
+                    WorkflowConversion.composeCWLInputValue(pr, exampleOfWork = i.Id, runName = run.Identifier)
+                | None ->
+                    failwith $"Could not create workflow invocation for run \"{run.Identifier}\": Workflow parameter \"name\" had no assigned value."
+            )
+        let processSequence =
+            ArcTables(run.Tables).GetProcesses()
+            |> ResizeArray
+        if processSequence.Count = 0 then
+            LDWorkflowInvocation.create(
+                name = run.Identifier,
+                instrument = workflowProtocol,
+                objects = inputParams,
+                executesLabProtocol = workflowProtocol
+            )
+            |> ResizeArray.singleton
+        else
+            processSequence
+            |> ResizeArray.map (fun p ->
+                let id = p.Id.Replace("Process", $"WorkflowInvocation_{run.Identifier}")
+                let inputs = LDLabProcess.getObjects(p) |> ResizeArray.append inputParams
+                let results = LDLabProcess.getResults(p) |> Option.fromSeq
+                let parameterValues = LDLabProcess.getParameterValues(p) |> Option.fromSeq
+                let agents = LDLabProcess.tryGetAgent(p) |> Option.map ResizeArray.singleton
+                let disambiguatingDescriptions = LDLabProcess.getDisambiguatingDescriptionsAsString(p) |> Option.fromSeq
+                LDWorkflowInvocation.create(
+                    name = run.Identifier,
+                    id = id,
+                    instrument = workflowProtocol,
+                    executesLabProtocol = workflowProtocol,
+                    objects = inputs,
+                    ?results = results,
+                    ?parameterValues = parameterValues,
+                    ?agents = agents,
+                    ?disambiguatingDescriptions = disambiguatingDescriptions
+                )
+            )
+            
+    static member composeRunFromArcRun (run : ArcRun) =
+        let workflowInvocations =
+            WorkflowConversion.composeWorkflowInvocationFromArcRun run
+            |> Option.fromSeq
+        let measurementMethod = run.TechnologyType |> Option.map BaseTypes.composeDefinedTerm
+        let measurementTechnique = run.TechnologyPlatform |> Option.map BaseTypes.composeDefinedTerm
+        let variableMeasured = run.MeasurementType |> Option.map BaseTypes.composePropertyValueFromOA
+        let creators = 
+            run.Performers
+            |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
+            |> Option.fromSeq
+        let fragmentDescriptors =
+            run.DataMap
+            |> Option.map DatamapConversion.composeFragmentDescriptors
+        let dataFiles = 
+            workflowInvocations
+            |> Option.map (fun ps -> AssayConversion.getDataFilesFromProcesses(ps, ?fragmentDescriptors = fragmentDescriptors))
+        let variableMeasureds =
+            match variableMeasured, fragmentDescriptors with
+            | Some vm, Some fds -> ResizeArray.appendSingleton vm fds |> Some
+            | Some vm, None -> ResizeArray.singleton vm |> Some
+            | None, Some fds -> fds |> Some
+            | None, None -> None
+        let comments = 
+            run.Comments
+            |> ResizeArray.map (fun c -> BaseTypes.composeComment c)
+            |> Option.fromSeq
+        LDDataset.createARCRun(
+            identifier = run.Identifier,
+            ?name = run.Title,
+            ?description = run.Description, 
+            ?creators = creators,
+            ?hasParts = dataFiles,
+            ?measurementMethod = measurementMethod,
+            ?measurementTechnique = measurementTechnique,
+            ?variableMeasureds = variableMeasureds,
+            ?abouts = workflowInvocations,
+            ?mentions = workflowInvocations,
+            ?comments = comments
+        )
+
+
 type InvestigationConversion =
 
     static member composeInvestigation (investigation : ArcInvestigation, ?fs : FileSystem) =
@@ -1584,9 +1725,13 @@ type InvestigationConversion =
             |> ResizeArray.map (fun c -> BaseTypes.composeComment c)
             |> Option.fromSeq
         let hasParts =
-            investigation.Assays
-            |> ResizeArray.map (fun a -> AssayConversion.composeAssay(a, ?fs = fs))
-            |> ResizeArray.append (investigation.Studies |> ResizeArray.map (fun s -> StudyConversion.composeStudy(s, ?fs = fs)))
+            [
+                yield! (investigation.Assays |> ResizeArray.map (fun a -> AssayConversion.composeAssay a, ?fs = fs))
+                yield! (investigation.Studies |> ResizeArray.map (fun s -> StudyConversion.composeStudy s, ?fs = fs))
+                yield! (investigation.Workflows |> ResizeArray.map (fun w -> WorkflowConversion.composeWorkflowFromArcWorkflow w, ?fs = fs))
+                yield! (investigation.Runs |> ResizeArray.map (fun r -> WorkflowConversion.composeRunFromArcRun r, ?fs = fs))
+            ]
+            |> ResizeArray
             |> Option.fromSeq
         let mentions =
             ResizeArray [] // TODO
