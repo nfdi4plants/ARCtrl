@@ -40,7 +40,8 @@ type LDWorkflowProtocol =
             match id with
             | Some i -> i
             | None -> $"#ComputationalWorkflow_{ARCtrl.Helper.Identifier.createMissingIdentifier()}" |> Helper.ID.clean
-        let wp = LDNode(id, LDWorkflowProtocol.schemaType, ?context = context)
+        let at = ResizeArray ["WorkflowProtocol"]
+        let wp = LDNode(id, LDWorkflowProtocol.schemaType, additionalType = at, ?context = context)
         wp.SetOptionalProperty(LDComputationalWorkflow.input, inputs, ?context = context)
         wp.SetOptionalProperty(LDComputationalWorkflow.output, outputs, ?context = context)
         wp.SetOptionalProperty(LDComputationalWorkflow.creator, creator, ?context = context)

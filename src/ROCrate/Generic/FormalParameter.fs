@@ -151,9 +151,9 @@ type LDFormalParameter =
     static member genID(name : string, ?workflowName : string, ?runName : string) =
         match workflowName, runName with
         | Some workflow, Some run -> $"#FormalParameter_W_{workflow}_R_{run}_{name}"
-        | Some workflow, None -> $"#Process_W_{workflow}_{name}"
-        | None, Some run -> $"#Process_R_{run}_{name}"
-        | _ -> $"#Process_{name}_{ARCtrl.Helper.Identifier.createMissingIdentifier()}"
+        | Some workflow, None -> $"#FormalParameter_W_{workflow}_{name}"
+        | None, Some run -> $"#FormalParameter_R_{run}_{name}"
+        | _ -> $"#FormalParameter_{name}_{ARCtrl.Helper.Identifier.createMissingIdentifier()}"
         |> Helper.ID.clean
 
     static member validate(fp : LDNode, ?context : LDContext) =
