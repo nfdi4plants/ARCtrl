@@ -24,12 +24,11 @@ type LDWorkflowInvocation =
             match id with
             | Some i -> i
             | None -> LDWorkflowInvocation.genID(name)
-        let objects = Option.defaultValue (ResizeArray []) objects
-        let results = Option.defaultValue (ResizeArray []) results
-        let ca = LDNode(id, LDWorkflowInvocation.schemaType, ?context = context)
+        let at = ResizeArray ["WorkflowInvocation"]
+        let ca = LDNode(id, LDWorkflowInvocation.schemaType, additionalType = at, ?context = context)
         ca.SetProperty(LDCreateAction.name, name, ?context = context)
-        ca.SetProperty(LDCreateAction.object_, objects, ?context = context)
-        ca.SetProperty(LDCreateAction.result, results, ?context = context)
+        ca.SetOptionalProperty(LDCreateAction.object_, objects, ?context = context)
+        ca.SetOptionalProperty(LDCreateAction.result, results, ?context = context)
         ca.SetProperty(LDCreateAction.instrument, instrument, ?context = context)
         ca.SetOptionalProperty(LDCreateAction.agent, agents, ?context = context)
         ca.SetOptionalProperty(LDCreateAction.description, description, ?context = context)

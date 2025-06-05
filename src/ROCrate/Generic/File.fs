@@ -109,8 +109,9 @@ type LDFile =
         dt.SetOptionalProperty(LDFile.usageInfo, usageInfo, ?context = context)
         dt
 
-    static member createCWLParameter(name : string, exampleOfWork : string, ?context : LDContext) =
-        let dt = LDNode(name, ResizeArray [LDFile.schemaType], ?context = context)
+    static member createCWLParameter(name : string, exampleOfWork : string, ?id : string,  ?context : LDContext) =
+        let id = Option.defaultValue name id
+        let dt = LDNode(id, ResizeArray [LDFile.schemaType], ?context = context)
         let exampleOfWork = LDRef(exampleOfWork)
         dt.SetProperty(LDFile.name, name, ?context = context)
         dt.SetProperty(LDFile.exampleOfWork, exampleOfWork, ?context = context)

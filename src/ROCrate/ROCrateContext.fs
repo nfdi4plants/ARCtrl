@@ -5555,6 +5555,11 @@ module Context =
                 "parameterValue", "https://bioschemas.org/parameterValue"
                 "LabProcess","https://bioschemas.org/LabProcess"
                 "measurementMethod", "http://schema.org/measurementMethod"
+                "FormalParameter", "https://bioschemas.org/FormalParameter"
+                "ComputationalWorkflow", "https://bioschemas.org/ComputationalWorkflow"
+                "SoftwareSourceCode", "http://schema.org/SoftwareSourceCode"
+                "input", "https://bioschemas.org/input"
+                "output", "https://bioschemas.org/output"
             ]
         let c = LDContext.fromMappingSeq terms
         c
