@@ -1541,7 +1541,7 @@ type WorkflowConversion =
         | CWL.Workflow wf -> 
             WorkflowConversion.composeWorkflowProtocolFromWorkflow(filePath, wf, ?workflowName = workflowName, ?runName = runName)
 
-    static member composeWorkflowFromArcWorkflow (workflow : ArcWorkflow) =
+    static member composeWorkflow (workflow : ArcWorkflow) =
         let workflowProtocol =
             let workflowFilePath = Identifier.Workflow.cwlFileNameFromIdentifier workflow.Identifier
             match workflow.CWLDescription with
@@ -1584,6 +1584,8 @@ type WorkflowConversion =
             ?comments = comments
         )
 
+type RunConversion = 
+
     /// File paths in CWL files are relative to the file itself. In RO-Crate, we use relative paths from the root of the crate.
     ///
     /// This function replaces the relative paths in the CWL input file with paths relative to the root of the crate.
@@ -1596,7 +1598,7 @@ type WorkflowConversion =
     static member composeCWLInputValue (input : CWL.CWLParameterReference, exampleOfWork : string, runName : string) =
         match input.Type with
         | Some "File" when input.Values.Count = 1 ->
-            let path = WorkflowConversion.composeCWLInputFilePath(input.Values[0], runName)
+            let path = RunConversion.composeCWLInputFilePath(input.Values[0], runName)
             LDFile.createCWLParameter(path, exampleOfWork = exampleOfWork)
         | _ ->
             LDPropertyValue.createCWLParameter(
@@ -1623,7 +1625,7 @@ type WorkflowConversion =
                     )
                 match paramRef with
                 | Some pr ->
-                    WorkflowConversion.composeCWLInputValue(pr, exampleOfWork = i.Id, runName = run.Identifier)
+                    RunConversion.composeCWLInputValue(pr, exampleOfWork = i.Id, runName = run.Identifier)
                 | None ->
                     failwith $"Could not create workflow invocation for run \"{run.Identifier}\": Workflow parameter \"name\" had no assigned value."
             )
@@ -1660,9 +1662,9 @@ type WorkflowConversion =
                 )
             )
             
-    static member composeRunFromArcRun (run : ArcRun) =
+    static member composeRun (run : ArcRun) =
         let workflowInvocations =
-            WorkflowConversion.composeWorkflowInvocationFromArcRun run
+            RunConversion.composeWorkflowInvocationFromArcRun run
             |> Option.fromSeq
         let measurementMethod = run.TechnologyType |> Option.map BaseTypes.composeDefinedTerm
         let measurementTechnique = run.TechnologyPlatform |> Option.map BaseTypes.composeDefinedTerm
