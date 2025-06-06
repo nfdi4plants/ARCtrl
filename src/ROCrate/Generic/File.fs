@@ -63,6 +63,18 @@ type LDFile =
     static member setEncodingFormatAsString(dt : LDNode, encodingFormat : string, ?context : LDContext) =
         dt.SetProperty(LDFile.encodingFormat, encodingFormat, ?context = context)
 
+    static member tryGetExampleOfWork(dt : LDNode, ?context : LDContext) =
+        dt.TryGetPropertyAsSingleton(LDFile.exampleOfWork, ?context = context)
+
+    static member tryGetExampleOfWorkAsFormalParameter(dt : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        match dt.TryGetPropertyAsSingleNode(LDFile.exampleOfWork, ?graph = graph, ?context = context) with
+        | Some fp when LDFormalParameter.validate(fp, ?context = context) -> Some fp
+        | Some _ -> failwith $"Property of `exampleOfWork` of object with @id `{dt.Id}` was not a FormalParameter"
+        | _ -> None
+
+    static member setExampleOfWork(pv : LDNode, exampleOfWork : LDNode, ?context : LDContext) =
+        pv.SetProperty(LDFile.exampleOfWork, exampleOfWork, ?context = context)
+
     static member tryGetUsageInfoAsString(dt : LDNode, ?context : LDContext) =
         match dt.TryGetPropertyAsSingleton(LDFile.usageInfo, ?context = context) with
         | Some (:? string as ui) -> Some ui
