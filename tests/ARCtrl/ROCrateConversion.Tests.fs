@@ -1478,6 +1478,99 @@ let tests_GetDataFilesFromProcesses =
         )
     ]
 
+open ARCtrl.CWL
+
+let tests_FormalParameter =
+    testList "FormalParameter" [
+        testCase "SimpleFromInput" (fun () ->
+            let name = "MyInput"
+            let t = CWLType.String
+            let input = CWL.CWLInput(name = name, type_ = t)
+            let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+            let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
+            Expect.equal name' name "FormalParameter name should match input name"
+            let isRequired = Expect.wantSome (LDFormalParameter.tryGetValueRequiredAsBoolean formalParameter) "FormalParameter should have valueRequired"
+            Expect.isTrue isRequired "FormalParameter should be required"
+            //let t' = Expect.wantExactlyOne (formalParameter.AdditionalType) "FormalParameter should have an additionalType"
+            //Expect.equal t' t "FormalParameter type should match input type"
+        )
+        testCase "SimpleFromInput_Optional" (fun () ->
+            let name = "MyInput"
+            let t = CWLType.String
+            let input = CWL.CWLInput(name = name, type_ = t, optional = true)
+            let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+            let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
+            Expect.equal name' name "FormalParameter name should match input name"
+            let isRequired = Expect.wantSome (LDFormalParameter.tryGetValueRequiredAsBoolean formalParameter) "FormalParameter should have valueRequired"
+            Expect.isFalse isRequired "FormalParameter should not be required"          
+        )
+        testCase "SimpleFromOutput" (fun () ->
+            let name = "MyOutput"
+            let t = CWLType.String
+            let output = CWL.CWLOutput(name = name, type_ = t)
+            let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
+            let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
+            Expect.equal name' name "FormalParameter name should match output name"
+            let isRequired = Expect.wantSome (LDFormalParameter.tryGetValueRequiredAsBoolean formalParameter) "FormalParameter should have valueRequired"
+            Expect.isTrue isRequired "FormalParameter should be required"
+        )
+    ]
+
+let tests_CWLInput =
+    testList "CWLInput" [
+        testCase "SimpleFileInRun" (fun () ->
+            let name = "MyInput"
+            let runName = "MyRun"
+            let filePath = ResizeArray.singleton "myfile.txt"
+            let paramRef = CWLParameterReference.create(name, values = filePath, type_ = "File")
+            let file = RunConversion.composeCWLInputValue(paramRef, name, runName)
+            Expect.sequenceEqual file.SchemaType [LDFile.schemaType] "File should have correct schema type"
+            let expectedID = $"runs/{runName}/{filePath}"
+            Expect.equal file.Id expectedID "File ID should match run and file path"
+            let name' = Expect.wantSome (LDFile.tryGetNameAsString file) "File should have a name"
+            Expect.equal name' expectedID "File name should match run and file path"
+            let exampleOfWork = Expect.wantSome (LDFile.tryGetExampleOfWork file) "File should have an exampleOfWork"
+            let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryUnbox exampleOfWork) "ExampleOfWork should be a reference"
+            Expect.equal exampleOfWorkAsRef.Id name "ExampleOfWork ID should match name"
+        )
+        testCase "SimpleFileInAssay" (fun () ->
+            let name = "MyInput"
+            let runName = "MyRun"
+            let fileName = "myfile.txt"
+            let filePath = ResizeArray.singleton $"../../assays/MyAssay/dataset/{fileName}"
+            let paramRef = CWLParameterReference.create(name, values = filePath, type_ = "File")
+            let file = RunConversion.composeCWLInputValue(paramRef, name, runName)
+            Expect.sequenceEqual file.SchemaType [LDFile.schemaType] "File should have correct schema type"
+            let expectedID = $"assays/MyAssay/dataset/{fileName}"
+            Expect.equal file.Id expectedID "File ID should match run and file path"
+            let name' = Expect.wantSome (LDFile.tryGetNameAsString file) "File should have a name"
+            Expect.equal name' expectedID "File name should match run and file path"
+            let exampleOfWork = Expect.wantSome (LDFile.tryGetExampleOfWork file) "File should have an exampleOfWork"
+            let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryUnbox exampleOfWork) "ExampleOfWork should be a reference"
+            Expect.equal exampleOfWorkAsRef.Id name "ExampleOfWork ID should match name"
+
+        )
+        testCase "SimpleString" (fun () ->
+            let name = "MyInput"
+            let runName = "MyRun"
+            let value = ResizeArray.singleton "verbose"
+            let paramRef = CWLParameterReference.create(name, values = value)
+            let propValue = RunConversion.composeCWLInputValue(paramRef, name, runName)
+            Expect.sequenceEqual propValue.SchemaType [LDPropertyValue.schemaType] "PropertyValue should have correct schema type"
+            Expect.isTrue (propValue.Id.StartsWith("#")) "PropertyValue ID should start with #"
+            let name' = Expect.wantSome (LDPropertyValue.tryGetNameAsString propValue) "PropertyValue should have a name"
+            Expect.equal name' name "PropertyValue name should match input name"
+            let value' = Expect.wantSome (LDPropertyValue.tryGetValueAsString propValue) "PropertyValue should have a value"
+            Expect.equal value' "verbose" "PropertyValue value should match input value"
+            let exampleOfWork = Expect.wantSome (LDPropertyValue.tryGetExampleOfWork propValue) "PropertyValue should have an exampleOfWork"
+            let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryUnbox exampleOfWork) "ExampleOfWork should be a reference"
+            Expect.equal exampleOfWorkAsRef.Id name "ExampleOfWork ID should match name"
+
+
+        )
+    ]
+
+
 let tests_Assay =
     testList "Assay" [
         testCase "Empty_FromScaffold" (fun () ->
