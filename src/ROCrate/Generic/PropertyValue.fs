@@ -144,6 +144,18 @@ type LDPropertyValue =
     static member setSubjectOf(pv : LDNode, subjectOf : LDNode, ?context : LDContext) =
         pv.SetProperty(LDPropertyValue.subjectOf, subjectOf, ?context = context)
 
+    static member tryGetExampleOfWork(dt : LDNode, ?context : LDContext) =
+        dt.TryGetPropertyAsSingleton(LDPropertyValue.exampleOfWork, ?context = context)
+
+    static member tryGetExampleOfWorkAsFormalParameter(dt : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        match dt.TryGetPropertyAsSingleNode(LDPropertyValue.exampleOfWork, ?graph = graph, ?context = context) with
+        | Some fp when LDFormalParameter.validate(fp, ?context = context) -> Some fp
+        | Some _ -> failwith $"Property of `exampleOfWork` of object with @id `{dt.Id}` was not a FormalParameter"
+        | _ -> None
+
+    static member setExampleOfWork(pv : LDNode, exampleOfWork : LDNode, ?context : LDContext) =
+        pv.SetProperty(LDPropertyValue.exampleOfWork, exampleOfWork, ?context = context)
+
     static member validate(pv : LDNode, ?context : LDContext) =
         pv.HasType(LDPropertyValue.schemaType, ?context = context)
         && pv.HasProperty(LDPropertyValue.name, ?context = context)
