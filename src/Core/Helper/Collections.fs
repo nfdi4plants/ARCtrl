@@ -2,16 +2,16 @@ namespace ARCtrl.Helper
 
 open Fable.Core
 
-module Seq = 
+module Seq =
     let inline compare (a: seq<'a>) (b: seq<'a>) =
         if Seq.length a = Seq.length b then
             [ for i in 0 .. (Seq.length a) - 1 do yield (Seq.item i a = Seq.item i b) ]
             |> Seq.fold (fun acc e -> acc && e) true
-        else 
+        else
             false
 
 module Option =
- 
+
     /// If the value matches the default, a None is returned, else a Some is returned
     let fromValueWithDefault d v =
         if d = v then None
@@ -24,7 +24,7 @@ module Option =
         | None   -> f d
         |> fromValueWithDefault d
 
-    /// Applies the function f on the value of the option if it exists, else returns the default value. 
+    /// Applies the function f on the value of the option if it exists, else returns the default value.
     let mapOrDefault (d : 'T Option) (f: 'U -> 'T) (o : 'U option) =
         match o with
         | Some v -> Some (f v)
@@ -35,19 +35,19 @@ module Option =
         if Seq.isEmpty v then None
         else Some v
 
-module internal List = 
-    
+module internal List =
+
     let tryPickAndRemove (f : 'T -> 'U option) (lst : 'T list) =
-        let rec loop newList remainingList = 
+        let rec loop newList remainingList =
             match remainingList with
-            | h::t -> 
+            | h::t ->
                 match f h with
                 | Some v -> Some v, newList @ t
                 | None -> loop (newList @ [h]) t
             | _ -> None, newList
         loop [] lst
 
-module Dictionary = 
+module Dictionary =
 
     open System.Collections.Generic
 
@@ -57,7 +57,7 @@ module Dictionary =
         else
             dict.Add(key,value)
 
-    let ofSeq (s : seq<'Key*'T>) = 
+    let ofSeq (s : seq<'Key*'T>) =
         let dict = Dictionary()
         s
         |> Seq.iter dict.Add
@@ -65,15 +65,15 @@ module Dictionary =
 
     let tryFind (key : 'Key) (dict : Dictionary<'Key,'T>) =
         let b,v = dict.TryGetValue key
-        if b then Some v 
+        if b then Some v
         else None
 
-    let ofSeqWithMerge (merge : 'T -> 'T -> 'T) (s : seq<'Key*'T>) = 
+    let ofSeqWithMerge (merge : 'T -> 'T -> 'T) (s : seq<'Key*'T>) =
         let dict = Dictionary()
         s
-        |> Seq.iter (fun (k,v) -> 
+        |> Seq.iter (fun (k,v) ->
             match tryFind k dict with
-            | Some v' ->                
+            | Some v' ->
                 dict.Remove(k) |> ignore
                 dict.Add(k,merge v' v)
             | None ->
@@ -95,22 +95,22 @@ module Dictionary =
         dict
         #endif
 
-module StringDictionary = 
+module StringDictionary =
 
     open System.Collections.Generic
 
-    let ofSeq (s : seq<string*string>) : Dictionary<string,string> = 
+    let ofSeq (s : seq<string*string>) : Dictionary<string,string> =
         s
         |> dict
         #if !FABLE_COMPILER
         |> Dictionary
-        #else 
+        #else
         |> unbox
         #endif
 
     let inline tryFind (key : string) (dict : Dictionary<string,'T>) =
         let b,v = dict.TryGetValue key
-        if b then Some v 
+        if b then Some v
         else None
 
     let inline addOrUpdate (key : string) (value : 'T) (dict : Dictionary<string,'T>) =
@@ -120,7 +120,7 @@ module StringDictionary =
             dict.Add(key,value)
 
 
-module ResizeArray =  
+module ResizeArray =
 
     open System.Collections.Generic
 
@@ -140,7 +140,7 @@ module ResizeArray =
         let b = ResizeArray<_>()
         for i in a do
             b.Add(f i)
-        b       
+        b
 
     let choose f (a : ResizeArray<_>) =
         let b = ResizeArray<_>()
@@ -172,11 +172,18 @@ module ResizeArray =
         for i in a do
             f i
 
+    let init (n : int) (f : int -> 'T) =
+        let a = ResizeArray<_>()
+        for i in 0 .. n - 1 do
+            a.Add(f i)
+        a
+
+
     let reduce f (a : ResizeArray<_>) =
         match a with
         | a when a.Count = 0 -> failwith "ResizeArray.reduce: empty array"
         | a when a.Count = 1 -> a.[0]
-        | a -> 
+        | a ->
             let mutable state = a.[0]
             for i in 1 .. a.Count - 1 do
                 state <- f state a.[i]

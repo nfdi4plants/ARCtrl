@@ -5,7 +5,7 @@ open ARCtrl.Helper
 open System.Collections.Generic
 open Fable.Core
 
-module CellDictionary = 
+module CellDictionary =
 
     open System.Collections.Generic
 
@@ -15,24 +15,24 @@ module CellDictionary =
         else
             dict.Add(key,value)
 
-    let ofSeq (s : seq<(int*int)*CompositeCell>) : Dictionary<int*int,CompositeCell> = 
+    let ofSeq (s : seq<(int*int)*CompositeCell>) : Dictionary<int*int,CompositeCell> =
         s
         |> dict
         #if !FABLE_COMPILER
         |> Dictionary
-        #else 
+        #else
         |> unbox
         #endif
 
     let tryFind (key : (int*int)) (dict : Dictionary<int*int,CompositeCell>) =
         let b,v = dict.TryGetValue key
-        if b then Some v 
+        if b then Some v
         else None
 
-let getColumnCount (headers:ResizeArray<CompositeHeader>) = 
+let getColumnCount (headers:ResizeArray<CompositeHeader>) =
     headers.Count
 
-let getRowCount (values:Dictionary<int*int,CompositeCell>) = 
+let getRowCount (values:Dictionary<int*int,CompositeCell>) =
     if values.Count = 0 then 0 else
         values.Keys |> Seq.maxBy snd |> snd |> (+) 1
 
@@ -42,11 +42,11 @@ let boxHashValues colCount (values:Dictionary<int*int,CompositeCell>) =
     for col = 0 to colCount - 1 do
         for row = 0 to rowCount - 1 do
             hash <- 0x9e3779b9 + values.[col,row].GetHashCode() + (hash <<< 6) + (hash >>> 2)
-    hash    
+    hash
     |> box
 
 // TODO: Move to CompositeHeader?
-let (|IsUniqueExistingHeader|_|) existingHeaders (input: CompositeHeader) = 
+let (|IsUniqueExistingHeader|_|) existingHeaders (input: CompositeHeader) =
     match input with
     | CompositeHeader.Parameter _
     | CompositeHeader.Factor _
@@ -57,20 +57,20 @@ let (|IsUniqueExistingHeader|_|) existingHeaders (input: CompositeHeader) =
     | CompositeHeader.Output _          -> Seq.tryFindIndex (fun h -> match h with | CompositeHeader.Output _ -> true | _ -> false) existingHeaders
     | CompositeHeader.Input _           -> Seq.tryFindIndex (fun h -> match h with | CompositeHeader.Input _ -> true | _ -> false) existingHeaders
     | header                            -> Seq.tryFindIndex (fun h -> h = header) existingHeaders
-        
+
 // TODO: Move to CompositeHeader?
 /// Returns the column index of the duplicate unique column in `existingHeaders`.
-let tryFindDuplicateUnique (newHeader: CompositeHeader) (existingHeaders: seq<CompositeHeader>) = 
+let tryFindDuplicateUnique (newHeader: CompositeHeader) (existingHeaders: seq<CompositeHeader>) =
     match newHeader with
     | IsUniqueExistingHeader existingHeaders index -> Some index
     | _ -> None
 
 /// Returns the column index of the duplicate unique column in `existingHeaders`.
-let tryFindDuplicateUniqueInArray (existingHeaders: seq<CompositeHeader>) = 
+let tryFindDuplicateUniqueInArray (existingHeaders: seq<CompositeHeader>) =
     let rec loop i (duplicateList: {|Index1: int; Index2: int; HeaderType: CompositeHeader|} list) (headerList: CompositeHeader list) =
         match headerList with
         | _ :: [] | [] -> duplicateList
-        | header :: tail -> 
+        | header :: tail ->
             let hasDuplicate = tryFindDuplicateUnique header tail
             let nextDuplicateList = if hasDuplicate.IsSome then {|Index1 = i; Index2 = hasDuplicate.Value; HeaderType = header|}::duplicateList else duplicateList
             loop (i+1) nextDuplicateList tail
@@ -84,7 +84,7 @@ module SanityChecks =
     /// Checks if given column index is valid for given number of columns.
     ///
     /// if `allowAppend` = true => `0 < index <= columnCount`
-    /// 
+    ///
     /// if `allowAppend` = false => `0 < index < columnCount`
     let validateColumnIndex (index:int) (columnCount:int) (allowAppend:bool) =
         let eval x y = if allowAppend then x > y else x >= y
@@ -94,7 +94,7 @@ module SanityChecks =
     /// Checks if given index is valid for given number of rows.
     ///
     /// if `allowAppend` = true => `0 < index <= rowCount`
-    /// 
+    ///
     /// if `allowAppend` = false => `0 < index < rowCount`
     let validateRowIndex (index:int) (rowCount:int) (allowAppend:bool) =
         let eval x y = if allowAppend then x > y else x >= y
@@ -109,7 +109,7 @@ module SanityChecks =
             let baseMsg = "Found duplicate unique columns in `columns`."
             let sb = System.Text.StringBuilder()
             sb.AppendLine(baseMsg) |> ignore
-            duplicates |> List.iter (fun (x: {| HeaderType: CompositeHeader; Index1: int; Index2: int |}) -> 
+            duplicates |> List.iter (fun (x: {| HeaderType: CompositeHeader; Index1: int; Index2: int |}) ->
                 sb.AppendLine($"Duplicate `{x.HeaderType}` at index {x.Index1} and {x.Index2}.")
                 |> ignore
             )
@@ -131,35 +131,42 @@ module SanityChecks =
         | _ ->
             ()
 
-    let validate (headers: ResizeArray<CompositeHeader>) (values: Dictionary<int*int,CompositeCell>) (raiseException: bool) =
+    let validate (headers: ResizeArray<CompositeHeader>) (columns: ResizeArray<ResizeArray<CompositeCell>>) (raiseException: bool) =
         let mutable isValid = true
-        let mutable en = values.GetEnumerator()
+        let mutable en = headers.GetEnumerator()
+        let mutable colIndex = 0
+        if headers.Count <> columns.Count then
+            (if raiseException then failwith else printfn "%s") $"Invalid table. Number of headers ({headers.Count}) does not match number of columns ({columns.Count})."
+            isValid <- false
         while isValid && en.MoveNext() do
-            let (ci,_),cell = en.Current.Key,en.Current.Value
-            let header = headers.[ci]
-            let headerIsData = header.IsDataColumn
-            let headerIsFreetext = (not header.IsTermColumn) && (not header.IsDataColumn)
-            let cellIsNotFreetext = not cell.isFreeText
-            let cellIsNotData = not cell.isData
-            if headerIsData && (cellIsNotData && cellIsNotFreetext) then 
-                (if raiseException then failwith else printfn "%s") $"Invalid combination of header `{header}` and cell `{cell}`. Data header should contain either Data or Freetext cells."
-                isValid <- false
-            if headerIsFreetext && cellIsNotFreetext then 
-                (if raiseException then failwith else printfn "%s") $"Invalid combination of header `{header}` and cell `{cell}`. Freetext header should not contain non-freetext cells."
-                isValid <- false
+            let header = en.Current
+            let mutable colEn = columns.[colIndex].GetEnumerator()
+            colIndex <- colIndex + 1
+            while isValid && colEn.MoveNext() do
+                let cell = colEn.Current
+                let headerIsData = header.IsDataColumn
+                let headerIsFreetext = (not header.IsTermColumn) && (not header.IsDataColumn)
+                let cellIsNotFreetext = not cell.isFreeText
+                let cellIsNotData = not cell.isData
+                if headerIsData && (cellIsNotData && cellIsNotFreetext) then
+                    (if raiseException then failwith else printfn "%s") $"Invalid combination of header `{header}` and cell `{cell}`. Data header should contain either Data or Freetext cells."
+                    isValid <- false
+                if headerIsFreetext && cellIsNotFreetext then
+                    (if raiseException then failwith else printfn "%s") $"Invalid combination of header `{header}` and cell `{cell}`. Freetext header should not contain non-freetext cells."
+                    isValid <- false
         isValid
 
 module Unchecked =
-        
-    let tryGetCellAt (column: int,row: int) (cells:System.Collections.Generic.Dictionary<int*int,CompositeCell>) = 
+
+    let tryGetCellAt (column: int,row: int) (cells:System.Collections.Generic.Dictionary<int*int,CompositeCell>) =
         CellDictionary.tryFind (column, row) cells
 
     /// Add or update a cell in the dictionary.
-    let setCellAt(columnIndex, rowIndex,c : CompositeCell) (cells:Dictionary<int*int,CompositeCell>) = 
+    let setCellAt(columnIndex, rowIndex,c : CompositeCell) (cells:Dictionary<int*int,CompositeCell>) =
         cells.[(columnIndex,rowIndex)] <- c
 
     /// Add a cell to the dictionary. If a cell already exists at the given position, it fails.
-    let addCellAt(columnIndex, rowIndex,c : CompositeCell) (cells:Dictionary<int*int,CompositeCell>) = 
+    let addCellAt(columnIndex, rowIndex,c : CompositeCell) (cells:Dictionary<int*int,CompositeCell>) =
         cells.Add((columnIndex,rowIndex),c)
 
     let moveCellTo (fromCol:int,fromRow:int,toCol:int,toRow:int) (cells:Dictionary<int*int,CompositeCell>) =
@@ -180,7 +187,7 @@ module Unchecked =
     let removeHeader (index:int) (headers:ResizeArray<CompositeHeader>) = headers.RemoveAt (index)
 
     /// Remove cells of one Column, change index of cells with higher index to index - 1
-    let removeColumnCells (index:int) (cells:Dictionary<int*int,CompositeCell>) = 
+    let removeColumnCells (index:int) (cells:Dictionary<int*int,CompositeCell>) =
         for KeyValue((c,r),_) in cells do
             // Remove cells of column
             if c = index then
@@ -190,7 +197,7 @@ module Unchecked =
                 ()
 
     /// Remove cells of one Column, change index of cells with higher index to index - 1
-    let removeColumnCells_withIndexChange (index:int) (columnCount:int) (rowCount:int) (cells:Dictionary<int*int,CompositeCell>) = 
+    let removeColumnCells_withIndexChange (index:int) (columnCount:int) (rowCount:int) (cells:Dictionary<int*int,CompositeCell>) =
         // Cannot loop over collection and change keys of existing.
         // Therefore we need to run over values between columncount and rowcount.
         for col = index to (columnCount-1) do
@@ -204,7 +211,7 @@ module Unchecked =
                 else
                     ()
 
-    let removeRowCells (rowIndex:int) (cells:Dictionary<int*int,CompositeCell>) = 
+    let removeRowCells (rowIndex:int) (cells:Dictionary<int*int,CompositeCell>) =
         for KeyValue((c,r),_) in cells do
             // Remove cells of column
             if r = rowIndex then
@@ -214,7 +221,7 @@ module Unchecked =
                 ()
 
     /// Remove cells of one Row, change index of cells with higher index to index - 1
-    let removeRowCells_withIndexChange (rowIndex:int) (columnCount:int) (rowCount:int) (cells:Dictionary<int*int,CompositeCell>) = 
+    let removeRowCells_withIndexChange (rowIndex:int) (columnCount:int) (rowCount:int) (cells:Dictionary<int*int,CompositeCell>) =
         // Cannot loop over collection and change keys of existing.
         // Therefore we need to run over values between columncount and rowcount.
         for row = rowIndex to (rowCount-1) do
@@ -236,13 +243,13 @@ module Unchecked =
         | false                                 -> CompositeCell.emptyFreeText
         | true ->
             match columCellOption with
-            | Some (CompositeCell.Term _) 
+            | Some (CompositeCell.Term _)
             | None                              -> CompositeCell.emptyTerm
             | Some (CompositeCell.Unitized _)   -> CompositeCell.emptyUnitized
             | _                                 -> failwith "[extendBodyCells] This should never happen, IsTermColumn header must be paired with either term or unitized cell."
 
     /// <summary>
-    /// 
+    ///
     /// </summary>
     /// <param name="newHeader"></param>
     /// <param name="newCells"></param>
@@ -266,13 +273,13 @@ module Unchecked =
         /// This ensures nothing gets messed up during mutable insert, for example inser header first and change ColumCount in the process
         let startColCount, startRowCount = getColumnCount headers, getRowCount values
         // headers are easily added. Just insert at position of index. This will insert without replace.
-        let setNewHeader() = 
+        let setNewHeader() =
             // if duplication found and we want to forceReplace we remove related header
             if hasDuplicateUnique.IsSome then
                 removeHeader(index) headers
             headers.Insert(index, newHeader)
         /// For all columns with index >= we need to increase column index by `numberOfNewColumns`.
-        /// We do this by moving all these columns one to the right with mutable dictionary set logic (cells.[key] <- newValue), 
+        /// We do this by moving all these columns one to the right with mutable dictionary set logic (cells.[key] <- newValue),
         /// Therefore we need to start with the last column to not overwrite any values we still need to shift
         let increaseColumnIndices() =
             /// Get last column index
@@ -288,13 +295,13 @@ module Unchecked =
             // Related Test: `All.ArcTable.addColumn.Existing Table.add less rows, replace input, force replace
             if hasDuplicateUnique.IsSome then
                 removeColumnCells(index) values
-            let f = 
-                if index >= startColCount then 
-                    fun (colIndex,rowIndex,cell) (values : Dictionary<int*int,CompositeCell>) -> 
+            let f =
+                if index >= startColCount then
+                    fun (colIndex,rowIndex,cell) (values : Dictionary<int*int,CompositeCell>) ->
                         values.Add((colIndex,rowIndex),cell) |> ignore
-                else 
+                else
                    setCellAt
-            newCells 
+            newCells
             |> Array.iteri (fun rowIndex cell ->
                 let columnIndex = index
                 f (columnIndex,rowIndex,cell) values
@@ -303,8 +310,8 @@ module Unchecked =
         // Only do this if column is inserted and not appended AND we do not execute forceReplace!
         if index < startColCount && hasDuplicateUnique.IsNone then
             increaseColumnIndices()
-        // 
-        if not onlyHeaders then 
+        //
+        if not onlyHeaders then
             setNewCells()
         ()
 
@@ -315,7 +322,7 @@ module Unchecked =
         let rowCount = getRowCount values
         let columnCount = getColumnCount headers
 
-        let columnKeyGroups = 
+        let columnKeyGroups =
             values.Keys // Get all keys, to map over relevant rows afterwards
             |> Seq.toArray
             |> Array.groupBy fst // Group by column index
@@ -356,7 +363,7 @@ module Unchecked =
         /// Store start rowCount here, so it does not get changed midway through
         let rowCount = getRowCount values
         let columnCount = getColumnCount headers
-        let increaseRowIndices =  
+        let increaseRowIndices =
             // Only do this if column is inserted and not appended!
             if index < rowCount then
                 /// Get last row index
@@ -378,7 +385,7 @@ module Unchecked =
         let rowCount = getRowCount values
         let columnCount = getColumnCount headers
         let numNewRows = newRows.Length
-        let increaseRowIndices =  
+        let increaseRowIndices =
             // Only do this if column is inserted and not appended!
             if index < rowCount then
                 /// Get last row index
@@ -396,19 +403,19 @@ module Unchecked =
                 )
             currentRowIndex <- currentRowIndex + 1
 
-            
+
     /// Returns true, if two composite headers share the same main header string
-    let compositeHeaderMainColumnEqual (ch1 : CompositeHeader) (ch2 : CompositeHeader) = 
+    let compositeHeaderMainColumnEqual (ch1 : CompositeHeader) (ch2 : CompositeHeader) =
         ch1.ToString() = ch2.ToString()
 
     /// Moves a column from one position to another
     ///
     /// This function moves the column from `fromCol` to `toCol` and shifts all columns in between accordingly
-    let moveColumnTo (rowCount : int) (fromCol:int) (toCol:int) (headers : ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =       
+    let moveColumnTo (rowCount : int) (fromCol:int) (toCol:int) (headers : ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
         // Shift describes the moving of all the cells that are between fromCol and toCol
-        let shift, shiftStart, shiftEnd = 
+        let shift, shiftStart, shiftEnd =
             if fromCol < toCol then
-                -1, fromCol + 1, toCol               
+                -1, fromCol + 1, toCol
             else
                 1, fromCol - 1, toCol
 
@@ -419,7 +426,7 @@ module Unchecked =
             headers.[c + shift] <- headers.[c]
         // Set the column of interest to the new position
         headers.[toCol] <- header
-        
+
         // Iterate rowWise
         for r = 0 to rowCount - 1 do
             // Remember the cell of interest (at fromCol)
@@ -437,22 +444,22 @@ module Unchecked =
     /// This function aligns the headers and values by the main header string
     ///
     /// If keepOrder is true, the order of values per row is kept intact, otherwise the values are allowed to be reordered
-    let alignByHeaders (keepOrder : bool) (rows : ((CompositeHeader * CompositeCell) list) list) = 
+    let alignByHeaders (keepOrder : bool) (rows : ((CompositeHeader * CompositeCell) list) list) =
         let headers : ResizeArray<CompositeHeader> = ResizeArray()
         let values : Dictionary<int*int,CompositeCell> = Dictionary()
         let getFirstElem (rows : ('T list) list) : 'T =
             List.pick (fun l -> if List.isEmpty l then None else List.head l |> Some) rows
         let rec loop colI (rows : ((CompositeHeader * CompositeCell) list) list) =
-            if List.exists (List.isEmpty >> not) rows |> not then 
+            if List.exists (List.isEmpty >> not) rows |> not then
                 headers,values
-            else 
-                
+            else
+
                 let firstElem = rows |> getFirstElem |> fst
                 headers.Add firstElem
-                let rows = 
+                let rows =
                     rows
                     |> List.mapi (fun rowI l ->
-                        if keepOrder then                           
+                        if keepOrder then
                             match l with
                             | [] -> []
                             | (h,c)::t ->
@@ -461,16 +468,16 @@ module Unchecked =
                                     t
                                 else
                                     l
-                                
+
                         else
-                            let firstMatch,newL = 
+                            let firstMatch,newL =
                                 l
                                 |> List.tryPickAndRemove (fun (h,c) ->
-                                    if compositeHeaderMainColumnEqual h firstElem then Some c 
+                                    if compositeHeaderMainColumnEqual h firstElem then Some c
                                     else None
                                 )
                             match firstMatch with
-                            | Some m -> 
+                            | Some m ->
                                 values.Add((colI,rowI),m)
                                 newL
                             | None -> newL
