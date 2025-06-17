@@ -5,45 +5,164 @@ open ARCtrl.Helper
 open System.Collections.Generic
 open Fable.Core
 
-module CellDictionary =
+/// Get an empty cell fitting for related column header.
+///
+/// `columCellOption` is used to decide between `CompositeCell.Term` or `CompositeCell.Unitized`. `columCellOption` can be any other cell in the same column, preferably the first one.
+let getEmptyCellForHeader (header:CompositeHeader) (columCellOption: CompositeCell option) =
+    match header.IsTermColumn with
+    | false                                 -> CompositeCell.emptyFreeText
+    | true ->
+        match columCellOption with
+        | Some (CompositeCell.Term _)
+        | None                              -> CompositeCell.emptyTerm
+        | Some (CompositeCell.Unitized _)   -> CompositeCell.emptyUnitized
+        | _                                 -> failwith "[extendBodyCells] This should never happen, IsTermColumn header must be paired with either term or unitized cell."
 
-    open System.Collections.Generic
 
-    let addOrUpdate (key : (int*int)) (value : CompositeCell) (dict : Dictionary<int*int,CompositeCell>) =
-        if dict.ContainsKey key then
-            dict.[key] <- value
-        else
-            dict.Add(key,value)
+[<Erase>]
+type ColumnValueRefs =
+    | Constant of int
+    | Sparse of Dictionary<int,int>
 
-    let ofSeq (s : seq<(int*int)*CompositeCell>) : Dictionary<int*int,CompositeCell> =
-        s
-        |> dict
-        #if !FABLE_COMPILER
-        |> Dictionary
-        #else
-        |> unbox
-        #endif
+    member this.RowCount =
+        match this with
+        | Constant _ -> None
+        | Sparse values ->
+            values |> Seq.maxBy (fun kv -> kv.Key) |> Some
 
-    let tryFind (key : (int*int)) (dict : Dictionary<int*int,CompositeCell>) =
-        let b,v = dict.TryGetValue key
-        if b then Some v
-        else None
+    member this.Copy() =
+        match this with
+        | Constant valueHash -> Constant valueHash
+        | Sparse values ->
+            let d = Dictionary<int, int>()
+            values |> Seq.iter (fun v -> d.Add(v.Key, v.Value))
+            Sparse d
 
-let getColumnCount (headers:ResizeArray<CompositeHeader>) =
-    headers.Count
+    static member fromCellColumn (column : ResizeArray<CompositeCell>, valueMap: Dictionary<int, CompositeCell>) =
+        let distinctValues = column |> ResizeArray.distinct
+        let columnValues = distinctValues |> ResizeArray.map(fun cell ->
+            let hash = cell.GetHashCode()
+            if valueMap.ContainsKey hash |> not then
+                valueMap.Add(hash, cell)
+            hash
+        )
+        match columnValues.Count with
+        | 1 -> Constant(columnValues.[0])
+        | _ ->
+            let d = Dictionary<int, int>()
+            columnValues |> Seq.iteri (fun i v -> d.Add(i, v))            
+            Sparse d
 
-let getRowCount (values:Dictionary<int*int,CompositeCell>) =
-    if values.Count = 0 then 0 else
-        values.Keys |> Seq.maxBy snd |> snd |> (+) 1
+    member this.ToCellColumn(valueMap: Dictionary<int, CompositeCell>, rowCount : int, header : CompositeHeader) =
+        match this with
+        | Constant valueHash ->
+            ResizeArray.create rowCount (valueMap.[valueHash])
+        | Sparse values ->
+            let defaultCell =
+                if values.Count = 0 then
+                    getEmptyCellForHeader header None
+                else
+                    let i = values.Keys |> Seq.max
+                    let c = valueMap.[i]
+                    getEmptyCellForHeader header (Some c)
+            ResizeArray.init rowCount (fun i ->
+                if values.ContainsKey i then
+                    valueMap.[values.[i]]
+                else
+                    defaultCell
+            )
 
-let boxHashValues colCount (values:Dictionary<int*int,CompositeCell>) =
-    let mutable hash = 0
-    let rowCount = getRowCount values
-    for col = 0 to colCount - 1 do
-        for row = 0 to rowCount - 1 do
-            hash <- 0x9e3779b9 + values.[col,row].GetHashCode() + (hash <<< 6) + (hash >>> 2)
-    hash
-    |> box
+//let __DEFAULT_TERM_HASH__ = CompositeCell.emptyTerm.GetHashCode()
+//let __DEFAULT_DATA_HASH__ = CompositeCell.emptyData.GetHashCode()
+//let __DEFAULT_FREETEXT_HASH__ = CompositeCell.emptyFreeText.GetHashCode()
+//let __DEFAULT_UNITIZED_HASH__ = CompositeCell.emptyUnitized.GetHashCode()
+
+//let initValueMap() =
+//    let dict = Dictionary<int, CompositeCell>()
+//    let emptyTerm = CompositeCell.emptyTerm
+//    let emptyData = CompositeCell.emptyData
+//    let emptyFreeText = CompositeCell.emptyFreeText
+//    let emptyUnitized = CompositeCell.emptyUnitized
+//    dict.Add(__DEFAULT_TERM_HASH__, emptyTerm)
+//    dict.Add(__DEFAULT_DATA_HASH__, emptyData)
+//    dict.Add(__DEFAULT_FREETEXT_HASH__, emptyFreeText)
+//    dict.Add(__DEFAULT_UNITIZED_HASH__, emptyUnitized)
+//    dict
+
+/// <summary>
+/// Helper type to hold the values of an ArcTable.
+///
+/// Composed of a list of `ColumnValueRefs` which reference the actual values in a dictionary.
+/// </summary>
+[<AttachMembers>]
+type ArcTableValues (cols : Dictionary<int,ColumnValueRefs>, valueMap: Dictionary<int, CompositeCell>, rowCount : int) =
+
+    let mutable _columns = cols
+    let mutable _valueMap = valueMap
+    let mutable _rowCount = rowCount
+
+    member this.Columns
+        with get() = _columns
+        and internal set(columns) =
+            _columns <- columns
+
+    member this.ValueMap
+        with get() = _valueMap
+        and internal set(valueMap) =
+            _valueMap <- valueMap
+
+    member this.RowCount
+        with get() = _rowCount
+        and internal set(rowCount) =
+            _rowCount <- rowCount
+
+    static member fromCellColumns (columns: ResizeArray<ResizeArray<CompositeCell>>) =
+        let valueMap = Dictionary<int, CompositeCell>() //initValueMap()
+        let parsedColumns = Dictionary<int, ColumnValueRefs>()     
+        columns |> Seq.iteri (fun i column ->
+            let columnValueRefs = ColumnValueRefs.fromCellColumn(column, valueMap)
+            parsedColumns.Add(i, columnValueRefs)
+        )      
+        let rowCount = columns |> ResizeArray.map (fun c -> c.Count) |> Seq.max
+        ArcTableValues(parsedColumns, valueMap, rowCount)
+
+    member this.ToCellColumns (headers : ResizeArray<CompositeHeader>) =
+        
+        ResizeArray.init headers.Count (fun i ->
+            let header = headers.[i]
+            let column = _columns.[i]
+            column.ToCellColumn(_valueMap, _rowCount, header)
+        )
+
+    member this.Copy() =
+        let nextValueMap = Dictionary<int, CompositeCell>()
+        _valueMap |> Seq.iter (fun kv -> nextValueMap.Add(kv.Key, kv.Value.Copy()))
+        let nextColumns = Dictionary<int, ColumnValueRefs>()
+        _columns |> Seq.iter (fun kv -> nextColumns.Add(kv.Key, kv.Value.Copy()))
+        ArcTableValues(nextColumns, nextValueMap, _rowCount)
+
+    member this.HashCode() =
+        failwith "TODO"
+        let mutable hash = 0
+        for column in _columns do
+            column.Key
+            match column.Value with
+            | ColumnValueRefs.Constant valueHash ->
+                hash <- 0x9e3779b9 + valueMap.[valueHash].GetHashCode() + (hash <<< 6) + (hash >>> 2)
+            | ColumnValueRefs.Sparse values ->
+                for kv in values do
+                    hash <- 0x9e3779b9 + valueMap.[kv.Value].GetHashCode() + (hash <<< 6) + (hash >>> 2)
+        hash
+
+
+//let boxHashValues colCount (values:ArcTableValues) =
+//    let mutable hash = 0
+//    let rowCount = getRowCount values
+//    for col = 0 to colCount - 1 do
+//        for row = 0 to rowCount - 1 do
+//            hash <- 0x9e3779b9 + values.[col,row].GetHashCode() + (hash <<< 6) + (hash >>> 2)
+//    hash
+//    |> box
 
 // TODO: Move to CompositeHeader?
 let (|IsUniqueExistingHeader|_|) existingHeaders (input: CompositeHeader) =
@@ -158,95 +277,139 @@ module SanityChecks =
 
 module Unchecked =
 
-    let tryGetCellAt (column: int,row: int) (cells:System.Collections.Generic.Dictionary<int*int,CompositeCell>) =
-        CellDictionary.tryFind (column, row) cells
+    let ensureCellHashInValueMap (value: CompositeCell) (valueMap: Dictionary<int, CompositeCell>) =
+        let hash = value.GetHashCode()
+        if valueMap.ContainsKey hash then
+            hash
+        else
+            // If value is not in the map, add it.
+            valueMap.Add(hash, value)
+            hash
+
+    let tryGetCellAt (column: int,row: int) (values:ArcTableValues) : CompositeCell option =
+        IntDictionary.tryFind column values.Columns
+        |> Option.bind (fun col ->
+            match col with
+            | ColumnValueRefs.Constant valueHash ->
+                Some values.ValueMap.[valueHash]
+            | ColumnValueRefs.Sparse vals ->
+                if vals.ContainsKey row then
+                    Some (values.ValueMap.[vals.[row]])
+                else
+                    None
+        )
 
     /// Add or update a cell in the dictionary.
-    let setCellAt(columnIndex, rowIndex,c : CompositeCell) (cells:Dictionary<int*int,CompositeCell>) =
-        cells.[(columnIndex,rowIndex)] <- c
+    let setCellAt(columnIndex, rowIndex,c : CompositeCell) (values:ArcTableValues) =
+        if rowIndex + 1 > values.RowCount then values.RowCount <- rowIndex + 1
+        match IntDictionary.tryFind columnIndex values.Columns with
+        | None ->           
+            // If the column does not exist, we create a new one.
+            let newColumn = Dictionary<int, int>()
+            let hash = ensureCellHashInValueMap c values.ValueMap
+            newColumn.Add(rowIndex, hash)
+            values.Columns.Add(columnIndex, ColumnValueRefs.Sparse newColumn)
+        | Some col  ->
+            match col with
+            | Constant valueHash ->              
+                let hash = ensureCellHashInValueMap c values.ValueMap
+                if hash = valueHash then
+                    ()
+                else
+                    let d = Dictionary<int, int>()
+                    for i in 0 .. values.RowCount - 1 do
+                        if i = rowIndex then
+                            d.Add(i, hash)
+                        else
+                            d.Add(i, valueHash) // Keep the old value for other rows
+            | Sparse vals ->
+                let hash = ensureCellHashInValueMap c values.ValueMap
+                IntDictionary.addOrUpdate rowIndex hash vals      
 
-    /// Add a cell to the dictionary. If a cell already exists at the given position, it fails.
-    let addCellAt(columnIndex, rowIndex,c : CompositeCell) (cells:Dictionary<int*int,CompositeCell>) =
-        cells.Add((columnIndex,rowIndex),c)
-
-    let moveCellTo (fromCol:int,fromRow:int,toCol:int,toRow:int) (cells:Dictionary<int*int,CompositeCell>) =
-        match CellDictionary.tryFind (fromCol, fromRow) cells with
-        | Some c ->
-            // Remove value. This is necessary in the following scenario:
-            //
-            // "AddColumn.Existing Table.add less rows, insert at".
-            //
-            // Assume a table with 5 rows, insert column with 2 cells. All 5 rows at `index` position are shifted +1, but only row 0 and 1 are replaced with new values.
-            // Without explicit removing, row 2..4 would stay as is.
-            // EDIT: First remove then set cell to otherwise a `amount` = 0 would just remove the cell!
-            cells.Remove((fromCol,fromRow)) |> ignore
-            setCellAt(toCol,toRow,c) cells
-            |> ignore
+    let removeCellAt (columnIndex, rowIndex) (values:ArcTableValues) =
+        match IntDictionary.tryFind columnIndex values.Columns with
         | None -> ()
+        | Some col ->
+            match col with
+            | Constant valueHash ->
+                let d = Dictionary<int, int>()
+                for i in 0 .. values.RowCount - 1 do
+                    if i = rowIndex then
+                        ()
+                    else
+                        d.Add(i, valueHash) // Keep the old value for other rows
+            | Sparse vals ->
+                if vals.ContainsKey rowIndex then
+                    vals.Remove(rowIndex) |> ignore
+                    // If the column is empty after removing the cell, we remove it.
+                    if vals.Count = 0 then
+                        values.Columns.Remove(columnIndex) |> ignore
+
+    let moveCellTo (fromCol:int,fromRow:int,toCol:int,toRow:int) (values:ArcTableValues) =
+        match tryGetCellAt (fromCol, fromRow) values with
+        | Some cell ->
+            // Remove the cell from the old position
+            removeCellAt (fromCol, fromRow) values
+            // Add the cell to the new position
+            setCellAt (toCol, toRow, cell) values
+        | None -> 
+            // If there is no cell at the old position, we do nothing.
+            ()
 
     let removeHeader (index:int) (headers:ResizeArray<CompositeHeader>) = headers.RemoveAt (index)
 
     /// Remove cells of one Column, change index of cells with higher index to index - 1
-    let removeColumnCells (index:int) (cells:Dictionary<int*int,CompositeCell>) =
-        for KeyValue((c,r),_) in cells do
-            // Remove cells of column
-            if c = index then
-                cells.Remove((c,r))
-                |> ignore
-            else
-                ()
+    let removeColumnCells (colIndex:int) (values:ArcTableValues) =
+        values.Columns.Remove(colIndex) |> ignore
 
     /// Remove cells of one Column, change index of cells with higher index to index - 1
-    let removeColumnCells_withIndexChange (index:int) (columnCount:int) (rowCount:int) (cells:Dictionary<int*int,CompositeCell>) =
+    let removeColumnCells_withIndexChange (colIndex:int) (columnCount : int) (values:ArcTableValues) =
         // Cannot loop over collection and change keys of existing.
         // Therefore we need to run over values between columncount and rowcount.
-        for col = index to (columnCount-1) do
-            for row = 0 to (rowCount-1) do
-                if col = index then
-                    cells.Remove((col,row))
-                    |> ignore
-                // move to left if "column index > index"
-                elif col > index then
-                    moveCellTo(col,row,col-1,row) cells
-                else
-                    ()
+        
+        if colIndex < columnCount - 1 then
+            let cols = Dictionary<int, ColumnValueRefs>()
+            values.Columns
+            |> Seq.iter (fun kv ->
+                let cI = kv.Key
+                if cI > colIndex then
+                    cols.Add(cI - 1, kv.Value)
+                elif cI < colIndex then
+                    cols.Add(cI, kv.Value)
+            )
+            values.Columns <- cols
+        else
+            removeColumnCells colIndex values |> ignore
 
-    let removeRowCells (rowIndex:int) (cells:Dictionary<int*int,CompositeCell>) =
-        for KeyValue((c,r),_) in cells do
-            // Remove cells of column
-            if r = rowIndex then
-                cells.Remove((c,r))
-                |> ignore
-            else
-                ()
+    let removeRowCells (rowIndex:int) (columnCount : int) (values:ArcTableValues) =
+        for c = 0 to columnCount - 1 do
+            removeCellAt (c, rowIndex) values
+        
 
     /// Remove cells of one Row, change index of cells with higher index to index - 1
-    let removeRowCells_withIndexChange (rowIndex:int) (columnCount:int) (rowCount:int) (cells:Dictionary<int*int,CompositeCell>) =
-        // Cannot loop over collection and change keys of existing.
-        // Therefore we need to run over values between columncount and rowcount.
-        for row = rowIndex to (rowCount-1) do
-            for col = 0 to (columnCount-1) do
-                if row = rowIndex then
-                    cells.Remove((col,row))
-                    |> ignore
-                // move to top if "row index > index"
-                elif row > rowIndex then
-                    moveCellTo(col,row,col,row-1) cells
-                else
-                    ()
+    let removeRowCells_withIndexChange (rowIndex:int) (values:ArcTableValues) =
+        if rowIndex = 0 && values.RowCount = 1 then
+            values.Columns <- Dictionary()
+        else
+            values.Columns
+            |> Seq.iter (fun kv ->
+                match kv.Value with
+                | Constant _ -> ()
+                | Sparse vals ->
+                    if rowIndex < values.RowCount - 1 then
+                        let col = Dictionary<int, int>()
+                        vals
+                        |> Seq.iter (fun kv ->
+                            let rI = kv.Key
+                            if rI > rowIndex then
+                                col.Add(rI - 1, kv.Value)
+                            elif rI < rowIndex then
+                                col.Add(rI, kv.Value)
+                        )
+                        values.Columns.[kv.Key] <- ColumnValueRefs.Sparse col
+                    else vals.Remove(rowIndex) |> ignore
+            )
 
-    /// Get an empty cell fitting for related column header.
-    ///
-    /// `columCellOption` is used to decide between `CompositeCell.Term` or `CompositeCell.Unitized`. `columCellOption` can be any other cell in the same column, preferably the first one.
-    let getEmptyCellForHeader (header:CompositeHeader) (columCellOption: CompositeCell option) =
-        match header.IsTermColumn with
-        | false                                 -> CompositeCell.emptyFreeText
-        | true ->
-            match columCellOption with
-            | Some (CompositeCell.Term _)
-            | None                              -> CompositeCell.emptyTerm
-            | Some (CompositeCell.Unitized _)   -> CompositeCell.emptyUnitized
-            | _                                 -> failwith "[extendBodyCells] This should never happen, IsTermColumn header must be paired with either term or unitized cell."
 
     /// <summary>
     ///
@@ -258,7 +421,7 @@ module Unchecked =
     /// <param name="onlyHeaders">If set to true, no values will be added</param>
     /// <param name="headers"></param>
     /// <param name="values"></param>
-    let addColumn (newHeader: CompositeHeader) (newCells: CompositeCell []) (index: int) (forceReplace: bool) (onlyHeaders: bool) (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
+    let addColumn (newHeader: CompositeHeader) (newCells: CompositeCell []) (index: int) (forceReplace: bool) (onlyHeaders: bool) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
         let mutable numberOfNewColumns = 1
         let mutable index = index
         /// If this isSome and the function does not raise exception we are executing a forceReplace.
@@ -271,7 +434,7 @@ module Unchecked =
             numberOfNewColumns <- 0
             index <- hasDuplicateUnique.Value
         /// This ensures nothing gets messed up during mutable insert, for example inser header first and change ColumCount in the process
-        let startColCount, startRowCount = getColumnCount headers, getRowCount values
+        let startColCount, startRowCount = headers.Count, values.RowCount
         // headers are easily added. Just insert at position of index. This will insert without replace.
         let setNewHeader() =
             // if duplication found and we want to forceReplace we remove related header
@@ -297,7 +460,7 @@ module Unchecked =
                 removeColumnCells(index) values
             let f =
                 if index >= startColCount then
-                    fun (colIndex,rowIndex,cell) (values : Dictionary<int*int,CompositeCell>) ->
+                    fun (colIndex,rowIndex,cell) (values : ArcTableValues) ->
                         values.Add((colIndex,rowIndex),cell) |> ignore
                 else
                    setCellAt
@@ -318,7 +481,7 @@ module Unchecked =
     // We need to calculate the max number of rows between the new columns and the existing columns in the table.
     // `maxRows` will be the number of rows all columns must have after adding the new columns.
     // This behaviour should be intuitive for the user, as Excel handles this case in the same way.
-    let fillMissingCells (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
+    let fillMissingCells (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
         let rowCount = getRowCount values
         let columnCount = getColumnCount headers
 
@@ -350,7 +513,7 @@ module Unchecked =
 
 
     /// Increases the table size to the given new row count and fills the new rows with the last value of the column
-    let extendToRowCount rowCount (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
+    let extendToRowCount rowCount (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
         let columnCount = getColumnCount headers
         let previousRowCount = getRowCount values
         // iterate over columns
@@ -359,7 +522,7 @@ module Unchecked =
             for rowIndex = previousRowCount - 1 to rowCount - 1 do
                 setCellAt (columnIndex,rowIndex,lastValue) values
 
-    let addRow (index:int) (newCells:CompositeCell []) (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
+    let addRow (index:int) (newCells:CompositeCell []) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
         /// Store start rowCount here, so it does not get changed midway through
         let rowCount = getRowCount values
         let columnCount = getColumnCount headers
@@ -380,7 +543,7 @@ module Unchecked =
             )
         ()
 
-    let addRows (index:int) (newRows:CompositeCell [][]) (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
+    let addRows (index:int) (newRows:CompositeCell [][]) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
         /// Store start rowCount here, so it does not get changed midway through
         let rowCount = getRowCount values
         let columnCount = getColumnCount headers
@@ -411,7 +574,7 @@ module Unchecked =
     /// Moves a column from one position to another
     ///
     /// This function moves the column from `fromCol` to `toCol` and shifts all columns in between accordingly
-    let moveColumnTo (rowCount : int) (fromCol:int) (toCol:int) (headers : ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
+    let moveColumnTo (rowCount : int) (fromCol:int) (toCol:int) (headers : ResizeArray<CompositeHeader>) (values:ArcTableValues) =
         // Shift describes the moving of all the cells that are between fromCol and toCol
         let shift, shiftStart, shiftEnd =
             if fromCol < toCol then
@@ -446,7 +609,7 @@ module Unchecked =
     /// If keepOrder is true, the order of values per row is kept intact, otherwise the values are allowed to be reordered
     let alignByHeaders (keepOrder : bool) (rows : ((CompositeHeader * CompositeCell) list) list) =
         let headers : ResizeArray<CompositeHeader> = ResizeArray()
-        let values : Dictionary<int*int,CompositeCell> = Dictionary()
+        let values : ArcTableValues = Dictionary()
         let getFirstElem (rows : ('T list) list) : 'T =
             List.pick (fun l -> if List.isEmpty l then None else List.head l |> Some) rows
         let rec loop colI (rows : ((CompositeHeader * CompositeCell) list) list) =

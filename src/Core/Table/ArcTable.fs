@@ -14,144 +14,57 @@ type TableJoinOptions =
 /// Add full columns
 | WithValues
 
-
-[<Erase>]
-type ColumnValueRefs =
-    | Constant of int
-    | Dense of ResizeArray<int>
-
-    member this.RowCount =
-        match this with
-        | Constant _ -> None
-        | Dense values -> Some values.Count
-
-    member this.Copy() =
-        match this with
-        | Constant valueHash -> Constant valueHash
-        | Dense values -> Dense(ResizeArray values)
-
-module ArcTableReworkHelpers =
-
-    let __DEFAULT_TERM_HASH__ = CompositeCell.emptyTerm.GetHashCode()
-    let __DEFAULT_DATA_HASH__ = CompositeCell.emptyData.GetHashCode()
-    let __DEFAULT_FREETEXT_HASH__ = CompositeCell.emptyFreeText.GetHashCode()
-    let __DEFAULT_UNITIZED_HASH__ = CompositeCell.emptyUnitized.GetHashCode()
-
-    let initValueMap() =
-        let dict = Dictionary<int, CompositeCell>()
-        let emptyTerm = CompositeCell.emptyTerm
-        let emptyData = CompositeCell.emptyData
-        let emptyFreeText = CompositeCell.emptyFreeText
-        let emptyUnitized = CompositeCell.emptyUnitized
-        dict.Add(__DEFAULT_TERM_HASH__, emptyTerm)
-        dict.Add(__DEFAULT_DATA_HASH__, emptyData)
-        dict.Add(__DEFAULT_FREETEXT_HASH__, emptyFreeText)
-        dict.Add(__DEFAULT_UNITIZED_HASH__, emptyUnitized)
-        dict
-
-    let createParsedValues(columns: ResizeArray<ResizeArray<CompositeCell>>, valueMap: Dictionary<int, CompositeCell>) =
-        let parsedColumns =
-            columns
-            |> ResizeArray.map(fun column ->
-                let distinctValues = column |> ResizeArray.distinct
-                let columnValues = distinctValues |> ResizeArray.map(fun cell ->
-                    let hash = cell.GetHashCode()
-                    if valueMap.ContainsKey hash |> not then
-                        valueMap.Add(hash, cell)
-                    hash
-                )
-                match columnValues.Count with
-                | 1 -> Constant(columnValues.[0])
-                | _ -> Dense(columnValues |> ResizeArray)
-            )
-            |> ResizeArray
-        let rowCount = parsedColumns |> Seq.choose (fun column -> column.RowCount) |> Seq.max
-        {| rowCount = rowCount; ParsedColumns = parsedColumns |}
-
-    let createCompositeCellValues(valueMap: Dictionary<int, CompositeCell>, internalColumnRefs: ResizeArray<ColumnValueRefs>, rowCount : int) =
-        internalColumnRefs
-        |> ResizeArray.map (fun column ->
-            match column with
-            | Constant valueHash ->
-                ResizeArray.create rowCount (valueMap.[valueHash])
-            | Dense values ->
-                values |> ResizeArray.map (fun v -> valueMap.[v])
-        )
-
-    let normalizeColumnLengths(rowCount: int, _valueMap: Dictionary<int, CompositeCell>, headers: ResizeArray<CompositeHeader>, _internalColumnRefs: ResizeArray<ColumnValueRefs>) =
-        for i in 0 .. _internalColumnRefs.Count - 1 do
-            match _internalColumnRefs.[i] with
-            | Constant _ -> ()
-            | Dense values when values.Count = rowCount ->
-                ()
-            | Dense values when values.Count = 0 ->
-                let h = headers.[i]
-                let d = ArcTableAux.Unchecked.getEmptyCellForHeader h None
-                _internalColumnRefs.[i] <- Constant( d.GetHashCode())
-            | Dense values when rowCount > values.Count ->
-                let h = headers.[i]
-                let last = values |> Seq.last
-                let d = ArcTableAux.Unchecked.getEmptyCellForHeader h (Some _valueMap.[last])
-                let diff = rowCount - values.Count
-                values.AddRange(ResizeArray.create diff (d.GetHashCode()))
-            | Dense values when rowCount < values.Count ->
-                let diff = values.Count - rowCount
-                values.RemoveRange(values.Count - 1, diff)
-            | anyElse ->
-                printfn "Unhandled case in ArcTableReworkHelpers.fillMissingCells, please report this as a bug: %A" anyElse
-                ()
-
-
 [<AttachMembers>]
 type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: ResizeArray<ResizeArray<CompositeCell>>) =
 
-
     let headers = defaultArg headers (ResizeArray<CompositeHeader>())
-    let columns = defaultArg columns (ResizeArray<ResizeArray<CompositeCell>>([|
-        for i = 0 to headers.Count - 1 do
-            ResizeArray.singleton (Unchecked.getEmptyCellForHeader headers.[i] None)
-    |]))
+    let columns = defaultArg columns (ResizeArray<ResizeArray<CompositeCell>>())
+
     let valid = SanityChecks.validate headers columns true
-    let mutable _valueMap = ArcTableReworkHelpers.initValueMap()
+    let mutable _values = ArcTableValues.fromCellColumns(columns)
     let mutable _rowCount = 0
-    let mutable name = name
-    let mutable headers: ResizeArray<CompositeHeader> = headers
-    let mutable _internalColumnRefs: ResizeArray<ColumnValueRefs> =
-        let d = ArcTableReworkHelpers.createParsedValues(columns, _valueMap)
-        _rowCount <- d.rowCount
-        d.ParsedColumns
+    let mutable _name = name
+    let mutable _headers: ResizeArray<CompositeHeader> = headers
 
-    member this._ValueMap
-        with internal get() = _valueMap
+    member this.ValueMap
+        with internal get() = _values.ValueMap
         and internal set(valueMap) =
-            _valueMap <- valueMap
+            _values.ValueMap <- valueMap
 
-    member this._InternalColumnRefs
-        with internal get() = _internalColumnRefs
+    member this.ColumnRefs
+        with internal get() = _values.Columns
         and internal set(internalColumnRefs) =
-            _internalColumnRefs <- internalColumnRefs
+            _values.Columns <- internalColumnRefs
 
     member this.Headers
-        with get() = headers
+        with get() = _headers
         and set(newHeaders) =
             // SanityChecks.validate newHeaders values true |> ignore // TODO
-            headers <- newHeaders
+            _headers <- newHeaders
 
     member this.Values
-        with get() = ArcTableReworkHelpers.createCompositeCellValues(_valueMap, _internalColumnRefs, _rowCount)
+        with get() = _values.ToCellColumns(this.Headers)
         // and set(newValues) = // TODO
         //     SanityChecks.validate headers newValues true |> ignore
         //     values <- newValues
 
     member this.Name
-        with get() = name
-        and internal set (newName) = name <- newName
+        with get() = _name
+        and internal set (newName) = _name <- newName
 
     static member create(name, headers, values) = ArcTable(name, headers, values)
 
     /// Create ArcTable with empty 'ValueHeader' and 'Values'
     static member init(name: string) =
         ArcTable(name, ResizeArray<CompositeHeader>(), ResizeArray())
+
+    static member fromArcTableValues (name: string, headers: ResizeArray<CompositeHeader>, values: ArcTableValues) =
+        let t = ArcTable.init(name)
+        t.Headers <- headers
+        t.ValueMap <- values.ValueMap
+        t.ColumnRefs <- values.Columns
+        t.RowCount <- values.RowCount
+        t
 
     /// Will return true or false if table is valid.
     ///
@@ -168,14 +81,13 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             table.Validate(?raiseException=raiseException)
 
     member this.ColumnCount
-        with get() = ArcTableAux.getColumnCount this.Headers
+        with get() = this.Headers.Count
 
     static member columnCount (table:ArcTable) = table.ColumnCount
 
     member this.RowCount
         with get() = _rowCount
         and set (newRowCount) =
-            ArcTableReworkHelpers.normalizeColumnLengths(newRowCount, _valueMap, headers, _internalColumnRefs)
             _rowCount <- newRowCount
 
     static member getRowCount (table:ArcTable) = table.RowCount
@@ -191,33 +103,20 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
 
     member this.Copy() : ArcTable =
         let nextHeaders = this.Headers |> ResizeArray.map (fun h -> h.Copy())
-        let nextValueMap = Dictionary()
-        this._ValueMap |> Seq.iter (fun kv ->
-            nextValueMap.Add(kv.Key, kv.Value.Copy())
-        )
-        let nextValues =
-            this._InternalColumnRefs
-            |> ResizeArray.map (fun column -> column.Copy())
-        let t = ArcTable.init(
-            this.Name
-        )
-        t.Headers <- nextHeaders
-        t._ValueMap <- nextValueMap
-        t._InternalColumnRefs <- nextValues
-        t
-
+        let nextValues = _values.Copy()
+        ArcTable.fromArcTableValues(this.Name, nextHeaders, nextValues)
 
     /// Returns a cell at given position if it exists, else returns None.
-    member this.TryGetCellAt (column: int,row: int) = ArcTableAux.Unchecked.tryGetCellAt (column,row) this.Values
+    member this.TryGetCellAt (column: int,row: int) = ArcTableAux.Unchecked.tryGetCellAt (column,row) _values
 
     static member tryGetCellAt  (column: int,row: int) =
         fun (table:ArcTable) ->
             table.TryGetCellAt(column, row)
 
     member this.GetCellAt (column: int,row: int) =
-        try
-            this.Values.[column,row]
-        with
+        failwithf "TODO: Return default value"
+        match this.TryGetCellAt (column, row) with
+        | Some c -> c
         | _ -> failwithf "Unable to find cell for index: (%i, %i) in table %s" column row this.Name
 
     static member getCellAt (column: int,row: int) =
@@ -254,7 +153,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
             SanityChecks.validateRowIndex rowIndex this.RowCount false
             c.ValidateAgainstHeader(this.Headers.[columnIndex],raiseException = true) |> ignore
-        Unchecked.setCellAt(columnIndex, rowIndex,c) this.Values
+        Unchecked.setCellAt(columnIndex, rowIndex,c) _values
 
     /// Update an already existing cell in the table. Fails if cell is outside the columnd AND row bounds of the table
     static member updateCellAt(columnIndex: int, rowIndex: int, cell: CompositeCell, ?skipValidation) =
@@ -270,7 +169,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         if not(skipValidation) then
             SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
             c.ValidateAgainstHeader(this.Headers.[columnIndex],raiseException = true) |> ignore
-        Unchecked.setCellAt(columnIndex, rowIndex,c) this.Values
+        Unchecked.setCellAt(columnIndex, rowIndex,c) _values
 
     /// Update an already existing cell in the table, or adds a new cell if the row boundary is exceeded. Fails if cell is outside the column bounds of the table
     static member setCellAt(columnIndex: int, rowIndex: int, cell: CompositeCell, ?skipValidation) =
@@ -289,7 +188,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             let ci,ri = kv.Key
             let newCell = f ci ri kv.Value
             if not(skipValidation) then newCell.ValidateAgainstHeader(this.Headers[ci],raiseException = true) |> ignore
-            Unchecked.setCellAt(ci, ri,newCell) this.Values
+            Unchecked.setCellAt(ci, ri,newCell) _values
 
     /// Update cells in a column by a function.
     ///
@@ -666,7 +565,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
                 let column = CompositeColumn.create(h,[|row.[columnIndex]|])
                 SanityChecks.validateColumn column
         // Sanity checks - end
-        Unchecked.addRows index rows this.Headers this.Values
+        Unchecked.addRows index rows this.Headers _values
 
     static member addRows (rows: CompositeCell [] [], ?index: int) =
         fun (table:ArcTable) ->
@@ -679,7 +578,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         let row = [|
             for columnIndex in 0 .. this.ColumnCount-1 do
                 let h = this.Headers.[columnIndex]
-                let tryFirstCell = Unchecked.tryGetCellAt(columnIndex,0) this.Values
+                let tryFirstCell = Unchecked.tryGetCellAt(columnIndex,0) _values
                 yield Unchecked.getEmptyCellForHeader h tryFirstCell
         |]
         let rows = Array.init rowCount (fun _ -> row)
@@ -695,7 +594,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
     member this.RemoveRow (index:int) =
         ArcTableAux.SanityChecks.validateRowIndex index this.RowCount false
         // removeCells
-        Unchecked.removeRowCells_withIndexChange index this.ColumnCount this.RowCount this.Values
+        Unchecked.removeRowCells_withIndexChange index this.ColumnCount this.RowCount _values
 
     static member removeRow (index:int) =
         fun (table:ArcTable) ->
@@ -765,11 +664,11 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         columns
         |> Array.iter (fun col ->
             let prevHeadersCount = this.Headers.Count
-            Unchecked.addColumn col.Header col.Cells index forceReplace onlyHeaders this.Headers this.Values
+            Unchecked.addColumn col.Header col.Cells index forceReplace onlyHeaders this.Headers _values
             // Check if more headers, otherwise `ArcTableAux.insertColumn` replaced a column and we do not need to increase index.
             if this.Headers.Count > prevHeadersCount then index <- index + 1
         )
-        if not(skipFillMissing) then Unchecked.fillMissingCells this.Headers this.Values
+        if not(skipFillMissing) then Unchecked.fillMissingCells this.Headers _values
 
     static member join(table:ArcTable, ?index: int, ?joinOptions: TableJoinOptions, ?forceReplace: bool) =
         fun (this: ArcTable) ->

@@ -119,6 +119,29 @@ module StringDictionary =
         else
             dict.Add(key,value)
 
+module IntDictionary = 
+
+    open System.Collections.Generic
+
+    let ofSeq (s : seq<int*'T>) : Dictionary<int,'T> =
+        s
+        |> dict
+        #if !FABLE_COMPILER
+        |> Dictionary
+        #else
+        |> unbox
+        #endif
+
+    let inline tryFind (key : int) (dict : Dictionary<int,'T>) =
+        let b,v = dict.TryGetValue key
+        if b then Some v
+        else None
+
+    let inline addOrUpdate (key : int) (value : 'T) (dict : Dictionary<int,'T>) =
+        if dict.ContainsKey key then
+            dict.[key] <- value
+        else
+            dict.Add(key,value)
 
 module ResizeArray =
 
@@ -141,6 +164,13 @@ module ResizeArray =
         for i in a do
             b.Add(f i)
         b
+
+    let map2 f (a : ResizeArray<_>) (b : ResizeArray<_>) =
+        let c = ResizeArray<_>()
+        let n = min a.Count b.Count
+        for i in 0 .. n - 1 do
+            c.Add(f a.[i] b.[i])
+        c
 
     let choose f (a : ResizeArray<_>) =
         let b = ResizeArray<_>()
