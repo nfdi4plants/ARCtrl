@@ -694,16 +694,16 @@ type ArcTable with
             t.AddColumn(CompositeHeader.Parameter pp.ParameterName.Value, ?index = pp.TryGetColumnIndex())
 
         for c in p.Components |> Option.defaultValue [] do
-            let v = c.ComponentValue |> Option.map ((fun v -> CompositeCell.fromValue(v,?unit = c.ComponentUnit)) >> Array.singleton)
+            let v = c.ComponentValue |> Option.map ((fun v -> CompositeCell.fromValue(v,?unit = c.ComponentUnit)) >> ResizeArray.singleton)
             t.AddColumn(
                 CompositeHeader.Parameter c.ComponentType.Value, 
                 ?cells = v,
                 ?index = c.TryGetColumnIndex())
-        p.Description   |> Option.map (fun d -> t.AddProtocolDescriptionColumn([|d|]))  |> ignore
-        p.Version       |> Option.map (fun d -> t.AddProtocolVersionColumn([|d|]))      |> ignore
-        p.ProtocolType  |> Option.map (fun d -> t.AddProtocolTypeColumn([|d|]))         |> ignore
-        p.Uri           |> Option.map (fun d -> t.AddProtocolUriColumn([|d|]))          |> ignore
-        p.Name          |> Option.map (fun d -> t.AddProtocolNameColumn([|d|]))         |> ignore
+        p.Description   |> Option.map (fun d -> t.AddProtocolDescriptionColumn(ResizeArray.singleton d))  |> ignore
+        p.Version       |> Option.map (fun d -> t.AddProtocolVersionColumn(ResizeArray.singleton d))      |> ignore
+        p.ProtocolType  |> Option.map (fun d -> t.AddProtocolTypeColumn(ResizeArray.singleton d))         |> ignore
+        p.Uri           |> Option.map (fun d -> t.AddProtocolUriColumn(ResizeArray.singleton d))          |> ignore
+        p.Name          |> Option.map (fun d -> t.AddProtocolNameColumn(ResizeArray.singleton d))         |> ignore
         t
 
     /// Returns the list of protocols executed in this ArcTable
