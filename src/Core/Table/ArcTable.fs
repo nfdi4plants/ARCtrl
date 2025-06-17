@@ -20,7 +20,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
     let headers = defaultArg headers (ResizeArray<CompositeHeader>())
     let columns = defaultArg columns (ResizeArray<ResizeArray<CompositeCell>>())
 
-    let valid = SanityChecks.validate headers columns true
+    let valid = SanityChecks.validateCellColumns headers columns true
     let mutable _values = ArcTableValues.fromCellColumns(columns)
     let mutable _rowCount = 0
     let mutable _name = name
@@ -43,10 +43,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             _headers <- newHeaders
 
     member this.Values
-        with get() = _values.ToCellColumns(this.Headers)
-        // and set(newValues) = // TODO
-        //     SanityChecks.validate headers newValues true |> ignore
-        //     values <- newValues
+        with internal get() = _values
 
     member this.Name
         with get() = _name
@@ -66,12 +63,17 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         t.RowCount <- values.RowCount
         t
 
+    static member createFromRows(name,headers : ResizeArray<CompositeHeader>,rows : ResizeArray<ResizeArray<CompositeCell>>) : ArcTable =
+        let t = ArcTable(name,headers)
+        t.AddRows(rows)
+        t
+
     /// Will return true or false if table is valid.
     ///
     /// Set `raiseException` = `true` to raise exception.
     member this.Validate(?raiseException: bool) =
         let raiseException = defaultArg raiseException true
-        SanityChecks.validate this.Headers this.Values raiseException
+        SanityChecks.validateArcTableValues this.Headers this.Values raiseException
 
     /// Will return true or false if table is valid.
     ///
@@ -99,7 +101,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             newTable
 
     member this.Columns
-        with get() = [|for i = 0 to this.ColumnCount - 1 do this.GetColumn(i)|]
+        with get() = ResizeArray [|for i = 0 to this.ColumnCount - 1 do this.GetColumn(i)|]
 
     member this.Copy() : ArcTable =
         let nextHeaders = this.Headers |> ResizeArray.map (fun h -> h.Copy())
@@ -184,7 +186,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
     /// Inputs of the function are columnIndex, rowIndex, and the current cell.
     member this.UpdateCellsBy(f : int -> int -> CompositeCell -> CompositeCell, ?skipValidation) =
         let skipValidation = defaultArg skipValidation false
-        for kv in this.Values do
+        for kv in _values do
             let ci,ri = kv.Key
             let newCell = f ci ri kv.Value
             if not(skipValidation) then newCell.ValidateAgainstHeader(this.Headers[ci],raiseException = true) |> ignore
@@ -208,7 +210,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             SanityChecks.validateRowIndex rowIndex this.RowCount false
         let newCell = this.GetCellAt(columnIndex, rowIndex) |> f
         if not(skipValidation) then newCell.ValidateAgainstHeader(this.Headers.[columnIndex],raiseException = true) |> ignore
-        Unchecked.setCellAt(columnIndex, rowIndex, newCell) this.Values
+        Unchecked.setCellAt(columnIndex, rowIndex, newCell) _values
 
     /// Update cells in a column by a function.
     ///
@@ -236,7 +238,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             let convertedCells =
                 match newHeader with
                 | isTerm when newHeader.IsTermColumn ->
-                    c.Cells |> Array.map (fun c ->
+                    c.Cells |> ResizeArray.map (fun c ->
                         // only update cell if it is freetext to not remove some unit and some term cells
                         if c.isFreeText then
                             c.ToTermCell()
@@ -244,7 +246,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
                             c
                     )
                 | _ ->
-                    c.Cells |> Array.map (fun c -> c.ToFreeTextCell())
+                    c.Cells |> ResizeArray.map (fun c -> c.ToFreeTextCell())
             this.UpdateColumn(index, newHeader, convertedCells)
         else
             failwith "Tried setting header for column with invalid type of cells. Set `forceConvertCells` flag to automatically convert cells into valid CompositeCell type."
@@ -257,20 +259,20 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
 
     // - Column API - //
     //[<NamedParams>]
-    member this.AddColumn (header:CompositeHeader, ?cells: CompositeCell [], ?index: int, ?forceReplace: bool, ?skipFillMissing) : unit =
+    member this.AddColumn (header:CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?index: int, ?forceReplace: bool, ?skipFillMissing) : unit =
         let index =
             defaultArg index this.ColumnCount
         let cells =
-            defaultArg cells [||]
+            defaultArg cells (ResizeArray())
         let forceReplace = defaultArg forceReplace false
         SanityChecks.validateColumnIndex index this.ColumnCount true
         SanityChecks.validateColumn(CompositeColumn.create(header, cells))
         //
-        Unchecked.addColumn header cells index forceReplace false this.Headers this.Values
-        if not(skipFillMissing = Some true) then Unchecked.fillMissingCells this.Headers this.Values
+        Unchecked.addColumn header cells index forceReplace false this.Headers _values
+        if not(skipFillMissing = Some true) then Unchecked.fillMissingCells this.Headers _values
 
 
-    static member addColumn (header: CompositeHeader, ?cells: CompositeCell [],?index: int ,?forceReplace : bool) : (ArcTable -> ArcTable) =
+    static member addColumn (header: CompositeHeader, ?cells: ResizeArray<CompositeCell>,?index: int ,?forceReplace : bool) : (ArcTable -> ArcTable) =
         fun (table: ArcTable) ->
             let newTable = table.Copy()
             newTable.AddColumn(header, ?cells = cells, ?index = index, ?forceReplace = forceReplace)
@@ -278,7 +280,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
 
     /// Adds a new column which fills in the single given value for the length of the table.
     member this.AddColumnFill (header: CompositeHeader, cell: CompositeCell, ?index: int ,?forceReplace : bool) =
-        let cells = Array.init this.RowCount (fun _ -> cell.Copy())
+        let cells = ResizeArray.init this.RowCount (fun _ -> cell.Copy())
         this.AddColumn(header, cells = cells, ?index = index,  ?forceReplace = forceReplace)
 
     static member addColumnFill (header: CompositeHeader, cell: CompositeCell, ?index: int ,?forceReplace : bool) : ArcTable -> ArcTable =
@@ -289,7 +291,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
 
     // - Column API - //
     /// Replaces the header and cells of a column at given index.
-    member this.UpdateColumn (columnIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?skipFillMissing) =
+    member this.UpdateColumn (columnIndex:int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?skipFillMissing) =
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
         let column = CompositeColumn.create(header, ?cells=cells)
         SanityChecks.validateColumn(column)
@@ -299,35 +301,35 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         SanityChecks.validateNoDuplicateUnique column.Header otherHeaders
         // Must remove first, so no leftover rows stay when setting less rows than before.
         Unchecked.removeHeader columnIndex this.Headers
-        Unchecked.removeColumnCells columnIndex this.Values
+        Unchecked.removeColumnCells columnIndex _values
         // nextHeader
         this.Headers.Insert(columnIndex,column.Header)
         // nextBody
-        column.Cells |> Array.iteri (fun rowIndex v -> Unchecked.setCellAt(columnIndex,rowIndex,v) this.Values)
-        if not(skipFillMissing = Some true) then Unchecked.fillMissingCells this.Headers this.Values
+        column.Cells |> ResizeArray.iteri (fun rowIndex v -> Unchecked.setCellAt(columnIndex,rowIndex,v) _values)
+        if not(skipFillMissing = Some true) then Unchecked.fillMissingCells this.Headers _values
 
     /// Replaces the header and cells of a column at given index.
-    static member updateColumn (columnIndex:int, header: CompositeHeader, ?cells: CompositeCell []) =
+    static member updateColumn (columnIndex:int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>) =
         fun (table:ArcTable) ->
             let newTable = table.Copy()
             newTable.UpdateColumn(columnIndex, header, ?cells=cells)
             newTable
 
     // - Column API - //
-    member this.InsertColumn (index: int, header:CompositeHeader, ?cells: CompositeCell []) =
+    member this.InsertColumn (index: int, header:CompositeHeader, ?cells: ResizeArray<CompositeCell>) =
         this.AddColumn(header, index = index,?cells = cells, forceReplace = false)
 
-    static member insertColumn (index: int, header:CompositeHeader, ?cells: CompositeCell []) =
+    static member insertColumn (index: int, header:CompositeHeader, ?cells: ResizeArray<CompositeCell>) =
         fun (table: ArcTable) ->
             let newTable = table.Copy()
             newTable.InsertColumn(index, header, ?cells = cells)
             newTable
 
     // - Column API - //
-    member this.AppendColumn (header:CompositeHeader, ?cells: CompositeCell []) =
+    member this.AppendColumn (header:CompositeHeader, ?cells: ResizeArray<CompositeCell>) =
         this.AddColumn(header, ?cells = cells, index = this.ColumnCount, forceReplace = false)
 
-    static member appendColumn (header:CompositeHeader, ?cells: CompositeCell []) =
+    static member appendColumn (header:CompositeHeader, ?cells: ResizeArray<CompositeCell>) =
         fun (table: ArcTable) ->
             let newTable = table.Copy()
             newTable.AppendColumn(header, ?cells = cells)
@@ -343,11 +345,11 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         columns
         |> Array.iter (fun col ->
             let prevHeadersCount = this.Headers.Count
-            Unchecked.addColumn col.Header col.Cells index forceReplace false this.Headers this.Values
+            Unchecked.addColumn col.Header col.Cells index forceReplace false this.Headers _values
             // Check if more headers, otherwise `ArcTableAux.insertColumn` replaced a column and we do not need to increase index.
             if this.Headers.Count > prevHeadersCount then index <- index + 1
         )
-        if not(skipFillMissing = Some true) then Unchecked.fillMissingCells this.Headers this.Values
+        if not(skipFillMissing = Some true) then Unchecked.fillMissingCells this.Headers _values
 
     static member addColumns (columns: CompositeColumn [],?index: int,?skipFillMissing) =
         fun (table:ArcTable) ->
@@ -363,7 +365,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         // removeHeader
         Unchecked.removeHeader(index) this.Headers
         // removeCell
-        Unchecked.removeColumnCells_withIndexChange(index) columnCount this.RowCount this.Values
+        Unchecked.removeColumnCells_withIndexChange (index) columnCount _values
 
     static member removeColumn (index:int) =
         fun (table:ArcTable) ->
@@ -390,12 +392,14 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
     member this.GetColumn(columnIndex:int) : CompositeColumn =
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
         let h = this.Headers.[columnIndex]
-        let cells = [|
-            for i = 0 to this.RowCount - 1 do
-                match this.TryGetCellAt(columnIndex, i) with
-                | None -> failwithf "Unable to find cell for index: (%i, %i)" columnIndex i
-                | Some c -> c
-        |]
+        let cells =
+            [|
+                for i = 0 to this.RowCount - 1 do
+                    match this.TryGetCellAt(columnIndex, i) with
+                    | None -> failwithf "Unable to find cell for index: (%i, %i)" columnIndex i
+                    | Some c -> c
+            |]
+            |> ResizeArray
         CompositeColumn.create(h, cells)
 
     static member getColumn (index:int) =
@@ -474,7 +478,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         elif endCol < 0 || endCol >= this.ColumnCount then
             failwithf "Cannt move column. Invalid end column index: %i" endCol
         else
-            ArcTableAux.Unchecked.moveColumnTo this.RowCount startCol endCol this.Headers this.Values
+            ArcTableAux.Unchecked.moveColumnTo startCol endCol this.Headers _values
 
     static member moveColumn(startCol : int, endCol : int) =
         fun (table:ArcTable) ->
@@ -483,7 +487,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             newTable
 
     // - Row API - //
-    member this.AddRow (?cells: CompositeCell [], ?index: int) : unit =
+    member this.AddRow (?cells: ResizeArray<CompositeCell>, ?index: int) : unit =
         let index = defaultArg index this.RowCount
         let cells =
             if cells.IsNone then
@@ -491,9 +495,10 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
                 [|
                     for columnIndex in 0 .. this.ColumnCount-1 do
                         let h = this.Headers.[columnIndex]
-                        let tryFirstCell = Unchecked.tryGetCellAt(columnIndex,0) this.Values
-                        yield Unchecked.getEmptyCellForHeader h tryFirstCell
+                        let tryFirstCell = Unchecked.tryGetCellAt(columnIndex,0) _values
+                        yield getEmptyCellForHeader h tryFirstCell
                 |]
+                |> ResizeArray
             else
                 cells.Value
         // Sanity checks
@@ -501,73 +506,73 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         SanityChecks.validateRowLength cells this.ColumnCount
         for columnIndex in 0 .. this.ColumnCount-1 do
             let h = this.Headers.[columnIndex]
-            let column = CompositeColumn.create(h,[|cells.[columnIndex]|])
+            let column = CompositeColumn.create(h,ResizeArray [|cells.[columnIndex]|])
             SanityChecks.validateColumn column
         // Sanity checks - end
-        Unchecked.addRow index cells this.Headers this.Values
+        Unchecked.addRow index cells this.Headers _values
 
-    static member addRow (?cells: CompositeCell [], ?index: int) =
+    static member addRow (?cells: ResizeArray<CompositeCell>, ?index: int) =
         fun (table:ArcTable) ->
             let newTable = table.Copy()
             newTable.AddRow(?cells=cells,?index=index)
             newTable
 
     // - Row API - //
-    member this.UpdateRow(rowIndex: int, cells: CompositeCell []) =
+    member this.UpdateRow(rowIndex: int, cells: ResizeArray<CompositeCell>) =
         SanityChecks.validateRowIndex rowIndex this.RowCount false
         SanityChecks.validateRowLength cells this.RowCount
         cells
-        |> Array.iteri (fun i cell ->
+        |> ResizeArray.iteri (fun i cell ->
             let h = this.Headers.[i]
-            let column = CompositeColumn.create(h,[|cell|])
+            let column = CompositeColumn.create(h,ResizeArray.singleton cell)
             SanityChecks.validateColumn column
         )
         cells
-        |> Array.iteri (fun columnIndex cell ->
-            Unchecked.setCellAt(columnIndex, rowIndex, cell) this.Values
+        |> ResizeArray.iteri (fun columnIndex cell ->
+            Unchecked.setCellAt(columnIndex, rowIndex, cell) _values
         )
 
-    static member updateRow(rowIndex: int, cells: CompositeCell []) =
+    static member updateRow(rowIndex: int, cells: ResizeArray<CompositeCell>) =
         fun (table: ArcTable) ->
             let newTable = table.Copy()
             newTable.UpdateRow(rowIndex, cells)
             newTable
 
     // - Row API - //
-    member this.AppendRow (?cells: CompositeCell []) =
+    member this.AppendRow (?cells: ResizeArray<CompositeCell>) =
         this.AddRow(?cells=cells,index = this.RowCount)
 
-    static member appendRow (?cells: CompositeCell []) =
+    static member appendRow (?cells: ResizeArray<CompositeCell>) =
         fun (table:ArcTable) ->
             let newTable = table.Copy()
             newTable.AppendRow(?cells=cells)
             newTable
 
     // - Row API - //
-    member this.InsertRow (index: int, ?cells: CompositeCell []) =
+    member this.InsertRow (index: int, ?cells: ResizeArray<CompositeCell>) =
         this.AddRow(index=index, ?cells=cells)
 
-    static member insertRow (index: int, ?cells: CompositeCell []) =
+    static member insertRow (index: int, ?cells: ResizeArray<CompositeCell>) =
         fun (table:ArcTable) ->
             let newTable = table.Copy()
             newTable.AddRow(index=index, ?cells=cells)
             newTable
 
     // - Row API - //
-    member this.AddRows (rows: CompositeCell [] [], ?index: int) =
+    member this.AddRows (rows: ResizeArray<ResizeArray<CompositeCell>>, ?index: int) =
         let mutable index = defaultArg index this.RowCount
         // Sanity checks
         SanityChecks.validateRowIndex index this.RowCount true
-        rows |> Array.iter (fun row -> SanityChecks.validateRowLength row this.ColumnCount)
+        rows |> ResizeArray.iter (fun row -> SanityChecks.validateRowLength row this.ColumnCount)
         for row in rows do
             for columnIndex in 0 .. this.ColumnCount-1 do
                 let h = this.Headers.[columnIndex]
-                let column = CompositeColumn.create(h,[|row.[columnIndex]|])
+                let column = CompositeColumn.create(h,ResizeArray.singleton (row.[columnIndex]))
                 SanityChecks.validateColumn column
         // Sanity checks - end
         Unchecked.addRows index rows this.Headers _values
 
-    static member addRows (rows: CompositeCell [] [], ?index: int) =
+    static member addRows (rows: ResizeArray<ResizeArray<CompositeCell>>, ?index: int) =
         fun (table:ArcTable) ->
             let newTable = table.Copy()
             newTable.AddRows(rows,?index=index)
@@ -575,13 +580,15 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
 
     // - Row API - //
     member this.AddRowsEmpty (rowCount: int, ?index: int) =
-        let row = [|
-            for columnIndex in 0 .. this.ColumnCount-1 do
-                let h = this.Headers.[columnIndex]
-                let tryFirstCell = Unchecked.tryGetCellAt(columnIndex,0) _values
-                yield Unchecked.getEmptyCellForHeader h tryFirstCell
-        |]
-        let rows = Array.init rowCount (fun _ -> row)
+        let row =
+            [|
+                for columnIndex in 0 .. this.ColumnCount-1 do
+                    let h = this.Headers.[columnIndex]
+                    let tryFirstCell = Unchecked.tryGetCellAt(columnIndex,0) _values
+                    yield getEmptyCellForHeader h tryFirstCell
+            |]
+            |> ResizeArray
+        let rows = ResizeArray.init rowCount (fun _ -> row)
         this.AddRows(rows,?index=index)
 
     static member addRowsEmpty (rowCount: int, ?index: int) =
@@ -594,7 +601,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
     member this.RemoveRow (index:int) =
         ArcTableAux.SanityChecks.validateRowIndex index this.RowCount false
         // removeCells
-        Unchecked.removeRowCells_withIndexChange index this.ColumnCount this.RowCount _values
+        Unchecked.removeRowCells_withIndexChange index _values
 
     static member removeRow (index:int) =
         fun (table:ArcTable) ->
@@ -623,6 +630,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             for columnIndex = 0 to this.ColumnCount - 1 do
                 this.TryGetCellAt(columnIndex, rowIndex).Value
         |]
+        |> ResizeArray
 
     static member getRow (index:int) =
         fun (table:ArcTable) ->
@@ -646,23 +654,23 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         let columns =
             let pre = table.Columns
             match joinOptions with
-            | Headers -> pre |> Array.map (fun c -> {c with Cells = [||]})
+            | Headers -> pre |> ResizeArray.map (fun c -> {c with Cells = ResizeArray()})
             // this is the most problematic case. How do we decide which unit we want to propagate? All?
             | WithUnit ->
-                pre |> Array.map (fun c ->
+                pre |> ResizeArray.map (fun c ->
                     let unitsOpt = c.TryGetColumnUnits()
                     match unitsOpt with
                     | Some units ->
                         let toCompositeCell = fun unitOA -> CompositeCell.createUnitized ("", unitOA)
-                        let unitCells = units |> Array.map (fun u -> toCompositeCell u)
+                        let unitCells = units |> ResizeArray.map (fun u -> toCompositeCell u)
                         {c with Cells = unitCells}
-                    | None -> {c with Cells = [||]}
+                    | None -> {c with Cells = ResizeArray()}
                 )
             | WithValues -> pre
         SanityChecks.validateNoDuplicateUniqueColumns columns
-        columns |> Array.iter (fun x -> SanityChecks.validateColumn x)
+        columns |> ResizeArray.iter (fun x -> SanityChecks.validateColumn x)
         columns
-        |> Array.iter (fun col ->
+        |> ResizeArray.iter (fun col ->
             let prevHeadersCount = this.Headers.Count
             Unchecked.addColumn col.Header col.Cells index forceReplace onlyHeaders this.Headers _values
             // Check if more headers, otherwise `ArcTableAux.insertColumn` replaced a column and we do not need to increase index.
@@ -677,29 +685,29 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             copy
 
     ///
-    member this.AddProtocolTypeColumn(?types : OntologyAnnotation [], ?index : int) =
+    member this.AddProtocolTypeColumn(?types : ResizeArray<OntologyAnnotation>, ?index : int) =
         let header = CompositeHeader.ProtocolType
-        let cells = types |> Option.map (Array.map CompositeCell.Term)
+        let cells = types |> Option.map (ResizeArray.map CompositeCell.Term)
         this.AddColumn(header, ?cells = cells, ?index = index)
 
-    member this.AddProtocolVersionColumn(?versions : string [], ?index : int) =
+    member this.AddProtocolVersionColumn(?versions : ResizeArray<string>, ?index : int) =
         let header = CompositeHeader.ProtocolVersion
-        let cells = versions |> Option.map (Array.map CompositeCell.FreeText)
+        let cells = versions |> Option.map (ResizeArray.map CompositeCell.FreeText)
         this.AddColumn(header, ?cells = cells, ?index = index)
 
-    member this.AddProtocolUriColumn(?uris : string [], ?index : int) =
+    member this.AddProtocolUriColumn(?uris : ResizeArray<string>, ?index : int) =
         let header = CompositeHeader.ProtocolUri
-        let cells = uris |> Option.map (Array.map CompositeCell.FreeText)
+        let cells = uris |> Option.map (ResizeArray.map CompositeCell.FreeText)
         this.AddColumn(header, ?cells = cells, ?index = index)
 
-    member this.AddProtocolDescriptionColumn(?descriptions : string [], ?index : int) =
+    member this.AddProtocolDescriptionColumn(?descriptions : ResizeArray<string>, ?index : int) =
         let header = CompositeHeader.ProtocolDescription
-        let cells = descriptions |> Option.map (Array.map CompositeCell.FreeText)
+        let cells = descriptions |> Option.map (ResizeArray.map CompositeCell.FreeText)
         this.AddColumn(header, ?cells = cells, ?index = index)
 
-    member this.AddProtocolNameColumn(?names : string [], ?index : int) =
+    member this.AddProtocolNameColumn(?names : ResizeArray<string>, ?index : int) =
         let header = CompositeHeader.ProtocolREF
-        let cells = names |> Option.map (Array.map CompositeCell.FreeText)
+        let cells = names |> Option.map (ResizeArray.map CompositeCell.FreeText)
         this.AddColumn(header, ?cells = cells, ?index = index)
 
     /// Get functions for the protocol columns
@@ -723,22 +731,23 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
 
     member this.GetComponentColumns() =
         this.Headers
-        |> Seq.filter (fun h -> h.isComponent)
-        |> Seq.toArray
-        |> Array.map (fun h -> this.GetColumnByHeader(h))
+        |> ResizeArray.choose (fun h ->
+            if h.isComponent then Some (this.GetColumnByHeader(h))
+            else None
+        )
 
     /// Splits the table rowWise into a collection of tables, so that each new table has only one value for the given column
     static member SplitByColumnValues(columnIndex) =
         fun (table : ArcTable) ->
             let column = table.GetColumn(columnIndex)
-            let indexGroups = column.Cells |> Array.indexed |> Array.groupBy snd |> Array.map (fun (g,vs) -> vs |> Array.map fst)
+            let indexGroups = column.Cells |> ResizeArray.indexed |> ResizeArray.groupBy snd |> ResizeArray.map (fun (g,vs) -> vs |> ResizeArray.map fst)
             indexGroups
-            |> Array.mapi (fun i indexGroup ->
-                let headers  = table.Headers |> ResizeArray
+            |> ResizeArray.mapi (fun i indexGroup ->
+                let headers  = table.Headers
                 let rows =
                     indexGroup
                     // Max row index is the last row index of the table, so no validation needed
-                    |> Array.map (fun i -> table.GetRow(i,SkipValidation = true))
+                    |> ResizeArray.map (fun i -> table.GetRow(i,SkipValidation = true))
                 ArcTable.createFromRows(table.Name,headers,rows)
             )
 
@@ -748,7 +757,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             let index = table.Headers |> Seq.tryFindIndex (fun x -> x = header)
             match index with
             | Some i -> ArcTable.SplitByColumnValues i table
-            | None -> [|table.Copy()|]
+            | None -> ResizeArray.singleton (table.Copy())
 
     /// Splits the table rowWise into a collection of tables, so that each new table has only one value for the ProtocolREF column
     static member SplitByProtocolREF =
@@ -766,7 +775,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             |> Seq.choose (fun (i,h) -> if h.isProtocolColumn then None else Some i)
             |> Seq.toArray
         refTable.RemoveColumns nonProtocolColumns
-        ArcTableAux.Unchecked.extendToRowCount annotationTable.RowCount refTable.Headers refTable.Values
+        refTable.RowCount <- annotationTable.RowCount
         for c in annotationTable.Columns do
             refTable.AddColumn(c.Header, cells = c.Cells,forceReplace = true)
         refTable
@@ -778,16 +787,17 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
     /// The name of table 2 will be ignored
     static member append table1 table2 =
         let getList (t : ArcTable) =
+            
             [
                 for row = 0 to t.RowCount - 1 do
-                    [for col = 0 to t.ColumnCount - 1 do
-                        yield t.Headers[col],t.Values[col,row]
-                    ]
+                    t.GetRow(row,SkipValidation = true)
+                    |> Seq.mapi (fun i c -> t.Headers.[i], c)
+                    |> Seq.toList
             ]
         let thisCells = getList table1
         let otherCells = getList table2
         let alignedheaders,alignedCells = ArcTableAux.Unchecked.alignByHeaders false (thisCells @ otherCells)
-        ArcTable.create(table1.Name,alignedheaders,alignedCells)
+        ArcTable.fromArcTableValues(table1.Name,alignedheaders,alignedCells)
 
     /// Pretty printer
     override this.ToString() =
@@ -811,11 +821,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         |> String.concat "\n"
 
     member this.StructurallyEquals (other: ArcTable) =
-        let sort = Array.ofSeq >> Array.sortBy (function |KeyValue (key,_) -> key)
-        let n = this.Name = other.Name
-        let headers = Seq.compare this.Headers other.Headers
-        let values = Seq.compare (sort this.Values) (sort other.Values)
-        n && headers && values
+        this.GetHashCode() = other.GetHashCode()
 
     /// <summary>
     /// Use this function to check if this ArcTable and the input ArcTable refer to the same object.
@@ -835,7 +841,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
     // it's good practice to ensure that this behaves using the same fields as Equals does:
     override this.GetHashCode() =
         //let v1,v2 =
-        let vHash =  ArcTableAux.boxHashValues this.ColumnCount this.Values
+        let vHash = _values.GetHashCode()
         [|
             box this.Name
             this.Headers |> HashCodes.boxHashSeq

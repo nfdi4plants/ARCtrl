@@ -165,6 +165,12 @@ module ResizeArray =
             b.Add(f i)
         b
 
+    let mapi f (a : ResizeArray<_>) =
+        let b = ResizeArray<_>()
+        for i in 0 .. a.Count - 1 do
+            b.Add(f i a.[i])
+        b
+
     let map2 f (a : ResizeArray<_>) (b : ResizeArray<_>) =
         let c = ResizeArray<_>()
         let n = min a.Count b.Count
@@ -201,6 +207,10 @@ module ResizeArray =
     let iter f (a : ResizeArray<_>) =
         for i in a do
             f i
+
+    let iteri f (a : ResizeArray<_>) =
+        for i in 0 .. a.Count - 1 do
+            f i a.[i]
 
     let init (n : int) (f : int -> 'T) =
         let a = ResizeArray<_>()
@@ -254,6 +264,11 @@ module ResizeArray =
         c.Add(b)
         c
 
+    let indexed (a : ResizeArray<_>) =
+        let b = ResizeArray<_>()
+        for i in 0 .. a.Count - 1 do
+            b.Add(i, a.[i])
+        b
 
     // Make sure that output type matches
     let groupBy (f : 'T -> 'a) (a : ResizeArray<'T>) : ResizeArray<'a*ResizeArray<'T>> =
