@@ -106,6 +106,9 @@ type ArcTableValues (cols : Dictionary<int,ColumnValueRefs>, valueMap: Dictionar
         and internal set(columns) =
             _columns <- columns
 
+    member this.ColumnCount
+        with get() = _columns.Keys |> Seq.max
+
     member this.ValueMap
         with get() = _valueMap
         and internal set(valueMap) =
@@ -126,6 +129,11 @@ type ArcTableValues (cols : Dictionary<int,ColumnValueRefs>, valueMap: Dictionar
         let rowCount = columns |> ResizeArray.map (fun c -> c.Count) |> Seq.max
         ArcTableValues(parsedColumns, valueMap, rowCount)
 
+    static member init () =
+        let valueMap = Dictionary<int, CompositeCell>() //initValueMap()
+        let parsedColumns = Dictionary<int, ColumnValueRefs>()
+        ArcTableValues(parsedColumns, valueMap, 0)
+
     member this.ToCellColumns (headers : ResizeArray<CompositeHeader>) =
         
         ResizeArray.init headers.Count (fun i ->
@@ -141,19 +149,47 @@ type ArcTableValues (cols : Dictionary<int,ColumnValueRefs>, valueMap: Dictionar
         _columns |> Seq.iter (fun kv -> nextColumns.Add(kv.Key, kv.Value.Copy()))
         ArcTableValues(nextColumns, nextValueMap, _rowCount)
 
-    member this.HashCode() =
-        failwith "TODO"
+    override this.GetHashCode() =
         let mutable hash = 0
-        for column in _columns do
-            column.Key
+        for column in _columns do         
             match column.Value with
             | ColumnValueRefs.Constant valueHash ->
-                hash <- 0x9e3779b9 + valueMap.[valueHash].GetHashCode() + (hash <<< 6) + (hash >>> 2)
+                hash <- 0x9e3779b9 + valueHash + (hash <<< 6) + (hash >>> 2)
+                hash <- 0x9e3779b9 + rowCount + (hash <<< 6) + (hash >>> 2)
             | ColumnValueRefs.Sparse values ->
                 for kv in values do
-                    hash <- 0x9e3779b9 + valueMap.[kv.Value].GetHashCode() + (hash <<< 6) + (hash >>> 2)
+                    hash <- 0x9e3779b9 + kv.Key + (hash <<< 6) + (hash >>> 2)
+                    hash <- 0x9e3779b9 + kv.Value + (hash <<< 6) + (hash >>> 2)
         hash
 
+    override this.Equals(other : obj) =
+        match other with
+        | :? ArcTableValues as other ->
+            this.GetHashCode() = other.GetHashCode()
+        | _ -> false
+
+    interface IEnumerable<KeyValuePair<int*int,CompositeCell>> with
+        member this.GetEnumerator() : IEnumerator<KeyValuePair<int*int,CompositeCell>> =
+            let s = 
+                seq {
+                    for colI in 0 .. this.ColumnCount - 1 do
+                        match IntDictionary.tryFind colI _columns with
+                        | None -> ()
+                        | Some col ->
+                            match col with
+                            | ColumnValueRefs.Constant valueHash ->
+                                for rowI = 0 to _rowCount - 1 do
+                                    
+                                    yield KeyValuePair((colI, rowI), _valueMap.[valueHash])
+                            | ColumnValueRefs.Sparse values ->
+                                for rowI = 0 to _rowCount - 1 do
+                                    if values.ContainsKey rowI then
+                                        yield KeyValuePair((colI, rowI), _valueMap.[values.[rowI]])
+                }
+            s.GetEnumerator()
+
+        member this.GetEnumerator(): System.Collections.IEnumerator = 
+            (this :> IEnumerable<KeyValuePair<int*int,CompositeCell>>).GetEnumerator()
 
 //let boxHashValues colCount (values:ArcTableValues) =
 //    let mutable hash = 0
@@ -250,7 +286,7 @@ module SanityChecks =
         | _ ->
             ()
 
-    let validate (headers: ResizeArray<CompositeHeader>) (columns: ResizeArray<ResizeArray<CompositeCell>>) (raiseException: bool) =
+    let validateCellColumns (headers: ResizeArray<CompositeHeader>) (columns: ResizeArray<ResizeArray<CompositeCell>>) (raiseException: bool) =
         let mutable isValid = true
         let mutable en = headers.GetEnumerator()
         let mutable colIndex = 0
@@ -274,6 +310,10 @@ module SanityChecks =
                     (if raiseException then failwith else printfn "%s") $"Invalid combination of header `{header}` and cell `{cell}`. Freetext header should not contain non-freetext cells."
                     isValid <- false
         isValid
+
+    let validateArcTableValues (headers: ResizeArray<CompositeHeader>) (values: ArcTableValues) (raiseException: bool) =
+        printfn "fix this function for performance reasons"
+        validateCellColumns headers (values.ToCellColumns(headers)) raiseException
 
 module Unchecked =
 
@@ -409,7 +449,13 @@ module Unchecked =
                         values.Columns.[kv.Key] <- ColumnValueRefs.Sparse col
                     else vals.Remove(rowIndex) |> ignore
             )
-
+  
+    let moveColumnCellsTo (fromCol:int) (toCol:int) (values:ArcTableValues) =
+        match IntDictionary.tryFind fromCol values.Columns with
+        | None -> ()
+        | Some col ->
+            removeColumnCells fromCol values
+            IntDictionary.addOrUpdate toCol col values.Columns                   
 
     /// <summary>
     ///
@@ -421,9 +467,10 @@ module Unchecked =
     /// <param name="onlyHeaders">If set to true, no values will be added</param>
     /// <param name="headers"></param>
     /// <param name="values"></param>
-    let addColumn (newHeader: CompositeHeader) (newCells: CompositeCell []) (index: int) (forceReplace: bool) (onlyHeaders: bool) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
+    let addRefColumn (newHeader: CompositeHeader) (newCol: ColumnValueRefs) (rowCount : int) (index: int) (forceReplace: bool) (onlyHeaders: bool) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
         let mutable numberOfNewColumns = 1
         let mutable index = index
+        if rowCount > values.RowCount then values.RowCount <- rowCount
         /// If this isSome and the function does not raise exception we are executing a forceReplace.
         let hasDuplicateUnique = tryFindDuplicateUnique newHeader headers
         // implement fail if unique column should be added but exists already
@@ -449,26 +496,16 @@ module Unchecked =
             let lastColumnIndex = System.Math.Max(startColCount - 1, 0) // If there are no columns. We get negative last column index. In this case just return 0.
             // start with last column index and go down to `index`
             for columnIndex = lastColumnIndex downto index do
-                for rowIndex in 0 .. startRowCount do
-                    moveCellTo(columnIndex,rowIndex,columnIndex+numberOfNewColumns,rowIndex) values
+                moveColumnCellsTo (columnIndex) (columnIndex + numberOfNewColumns) values
         /// Then we can set the new column at `index`
         let setNewCells() =
             // Not sure if this is intended? If we for example `forceReplace` a single column table with `Input`and 5 rows with a new column of `Input` ..
             // ..and only 2 rows, then table RowCount will decrease from 5 to 2.
             // Related Test: `All.ArcTable.addColumn.Existing Table.add less rows, replace input, force replace
-            if hasDuplicateUnique.IsSome then
-                removeColumnCells(index) values
-            let f =
-                if index >= startColCount then
-                    fun (colIndex,rowIndex,cell) (values : ArcTableValues) ->
-                        values.Add((colIndex,rowIndex),cell) |> ignore
-                else
-                   setCellAt
-            newCells
-            |> Array.iteri (fun rowIndex cell ->
-                let columnIndex = index
-                f (columnIndex,rowIndex,cell) values
-            )
+            //if hasDuplicateUnique.IsSome then
+            //    removeColumnCells(index) values
+            IntDictionary.addOrUpdate index newCol values.Columns
+                
         setNewHeader()
         // Only do this if column is inserted and not appended AND we do not execute forceReplace!
         if index < startColCount && hasDuplicateUnique.IsNone then
@@ -478,54 +515,23 @@ module Unchecked =
             setNewCells()
         ()
 
+    let addColumn (newHeader: CompositeHeader) (newCells: ResizeArray<CompositeCell>) (index: int) (forceReplace: bool) (onlyHeaders: bool) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
+        // Create a new column with the new header and cells
+        let newCol = ColumnValueRefs.fromCellColumn(newCells, values.ValueMap)
+        addRefColumn newHeader newCol newCells.Count index forceReplace onlyHeaders headers values
+
+
     // We need to calculate the max number of rows between the new columns and the existing columns in the table.
     // `maxRows` will be the number of rows all columns must have after adding the new columns.
     // This behaviour should be intuitive for the user, as Excel handles this case in the same way.
     let fillMissingCells (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
-        let rowCount = getRowCount values
-        let columnCount = getColumnCount headers
-
-        let columnKeyGroups =
-            values.Keys // Get all keys, to map over relevant rows afterwards
-            |> Seq.toArray
-            |> Array.groupBy fst // Group by column index
-            |> Map.ofArray
-
-        for columnIndex = 0 to columnCount - 1 do
-            let header = headers.[columnIndex]
-            match Map.tryFind columnIndex columnKeyGroups with
-            // All values existed in this column. Nothing to do
-            | Some col when col.Length = rowCount ->
-                ()
-            // Some values existed in this column. Fill with default cells
-            | Some col ->
-                let firstCell = Some (values.[Seq.head col])
-                let defaultCell = getEmptyCellForHeader header firstCell
-                let rowKeys = Array.map snd col |> Set.ofArray
-                for rowIndex = 0 to rowCount - 1 do
-                    if not <| rowKeys.Contains rowIndex then
-                        addCellAt (columnIndex,rowIndex,defaultCell.Copy()) values
-            // No values existed in this column. Fill with default cells
-            | None ->
-                let defaultCell = getEmptyCellForHeader header None
-                for rowIndex = 0 to rowCount - 1 do
-                    addCellAt (columnIndex,rowIndex,defaultCell.Copy()) values
+        failwith "FillMissingCells not implemented"
 
 
-    /// Increases the table size to the given new row count and fills the new rows with the last value of the column
-    let extendToRowCount rowCount (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
-        let columnCount = getColumnCount headers
-        let previousRowCount = getRowCount values
-        // iterate over columns
-        for columnIndex = 0 to columnCount - 1 do
-            let lastValue = values[columnIndex,previousRowCount-1]
-            for rowIndex = previousRowCount - 1 to rowCount - 1 do
-                setCellAt (columnIndex,rowIndex,lastValue) values
-
-    let addRow (index:int) (newCells:CompositeCell []) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
+    let addRow (index:int) (newCells:ResizeArray<CompositeCell>) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
         /// Store start rowCount here, so it does not get changed midway through
-        let rowCount = getRowCount values
-        let columnCount = getColumnCount headers
+        let rowCount = values.RowCount
+        let columnCount = values.ColumnCount
         let increaseRowIndices =
             // Only do this if column is inserted and not appended!
             if index < rowCount then
@@ -537,17 +543,17 @@ module Unchecked =
                         moveCellTo(columnIndex,rowIndex,columnIndex,rowIndex+1) values
         /// Then we can set the new row at `index`
         let setNewCells =
-            newCells |> Array.iteri (fun columnIndex cell ->
+            newCells |> ResizeArray.iteri (fun columnIndex cell ->
                 let rowIndex = index
                 setCellAt (columnIndex,rowIndex,cell) values
             )
         ()
 
-    let addRows (index:int) (newRows:CompositeCell [][]) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
+    let addRows (index:int) (newRows:ResizeArray<ResizeArray<CompositeCell>>) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
         /// Store start rowCount here, so it does not get changed midway through
-        let rowCount = getRowCount values
-        let columnCount = getColumnCount headers
-        let numNewRows = newRows.Length
+        let rowCount = values.RowCount
+        let columnCount = values.ColumnCount
+        let numNewRows = newRows.Count
         let increaseRowIndices =
             // Only do this if column is inserted and not appended!
             if index < rowCount then
@@ -561,7 +567,7 @@ module Unchecked =
         for row in newRows do
             /// Then we can set the new row at `index`
             let setNewCells =
-                row |> Array.iteri (fun columnIndex cell ->
+                row |> ResizeArray.iteri (fun columnIndex cell ->
                     setCellAt (columnIndex,currentRowIndex,cell) values
                 )
             currentRowIndex <- currentRowIndex + 1
@@ -574,7 +580,7 @@ module Unchecked =
     /// Moves a column from one position to another
     ///
     /// This function moves the column from `fromCol` to `toCol` and shifts all columns in between accordingly
-    let moveColumnTo (rowCount : int) (fromCol:int) (toCol:int) (headers : ResizeArray<CompositeHeader>) (values:ArcTableValues) =
+    let moveColumnTo (fromCol:int) (toCol:int) (headers : ResizeArray<CompositeHeader>) (values:ArcTableValues) =
         // Shift describes the moving of all the cells that are between fromCol and toCol
         let shift, shiftStart, shiftEnd =
             if fromCol < toCol then
@@ -589,16 +595,14 @@ module Unchecked =
             headers.[c + shift] <- headers.[c]
         // Set the column of interest to the new position
         headers.[toCol] <- header
-
-        // Iterate rowWise
-        for r = 0 to rowCount - 1 do
-            // Remember the cell of interest (at fromCol)
-            let cell = values.[fromCol,r]
-            // Shift all cells between fromCol and toCol
-            for c in [shiftStart .. (-shift) .. shiftEnd] do
-                values.[(c + shift,r)] <- values.[(c,r)]
-            // Set the cell of interest to the new position
-            values.[(toCol,r)] <- cell
+     
+        // Remember the cell of interest (at fromCol)
+        let col = values.Columns.[fromCol]
+        // Shift all cells between fromCol and toCol
+        for c in [shiftStart .. (-shift) .. shiftEnd] do
+            values.Columns.[(c + shift)] <- values.Columns.[c]
+        // Set the cell of interest to the new position
+        values.Columns.[(toCol)] <- col
 
     /// From a list of rows consisting of headers and values, creates a list of combined headers and the values as a sparse matrix
     ///
@@ -609,7 +613,8 @@ module Unchecked =
     /// If keepOrder is true, the order of values per row is kept intact, otherwise the values are allowed to be reordered
     let alignByHeaders (keepOrder : bool) (rows : ((CompositeHeader * CompositeCell) list) list) =
         let headers : ResizeArray<CompositeHeader> = ResizeArray()
-        let values : ArcTableValues = Dictionary()
+        let values : ArcTableValues = ArcTableValues.init()
+        values.RowCount <- rows.Length
         let getFirstElem (rows : ('T list) list) : 'T =
             List.pick (fun l -> if List.isEmpty l then None else List.head l |> Some) rows
         let rec loop colI (rows : ((CompositeHeader * CompositeCell) list) list) =
@@ -627,11 +632,10 @@ module Unchecked =
                             | [] -> []
                             | (h,c)::t ->
                                 if compositeHeaderMainColumnEqual h firstElem then
-                                    values.Add((colI,rowI),c)
+                                    setCellAt (colI,rowI,c) values
                                     t
                                 else
                                     l
-
                         else
                             let firstMatch,newL =
                                 l
@@ -641,7 +645,7 @@ module Unchecked =
                                 )
                             match firstMatch with
                             | Some m ->
-                                values.Add((colI,rowI),m)
+                                setCellAt (colI,rowI,m) values
                                 newL
                             | None -> newL
                     )
