@@ -309,7 +309,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         let updateColumnOption (dataNameFunction : Data -> string) (col : CompositeColumn option) =
             match col with
             | Some col when col.Header.IsDataColumn -> 
-                col.Cells |> Array.iter (fun c ->
+                col.Cells |> ResizeArray.iter (fun c ->
                     if c.AsData.FilePath.IsSome then               
                         let newFilePath = dataNameFunction c.AsData
                         c.AsData.FilePath <- Some newFilePath

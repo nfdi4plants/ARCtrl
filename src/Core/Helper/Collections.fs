@@ -270,6 +270,19 @@ module ResizeArray =
             b.Add(i, a.[i])
         b
 
+    let rev (a : ResizeArray<_>) =
+        let b = ResizeArray<_>()
+        for i in a.Count - 1 .. -1 .. 0 do
+            b.Add(a.[i])
+        b
+
+    let take (n : int) (a : ResizeArray<_>) =
+        let b = ResizeArray<_>()
+        let n = min n a.Count
+        for i in 0 .. n - 1 do
+            b.Add(a.[i])
+        b
+
     // Make sure that output type matches
     let groupBy (f : 'T -> 'a) (a : ResizeArray<'T>) : ResizeArray<'a*ResizeArray<'T>> =
         Seq.groupBy f a

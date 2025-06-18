@@ -16,7 +16,7 @@ module ArcTable =
             "header", Encode.list [
                 for h in table.Headers do yield CompositeHeader.encoder h
             ]
-        if table.Values.Count <> 0 then
+        if table.Values.RowCount <> 0 then
             "values", Encode.map keyEncoder valueEncoder ([for KeyValue(k,v) in table.Values do yield k, v] |> Map)
         ] 
 
@@ -26,11 +26,15 @@ module ArcTable =
             let keyDecoder : Decoder<int*int> = Decode.tuple2 Decode.int Decode.int
             let valueDecoder = CompositeCell.decoder
             let decodedValues = get.Optional.Field "values" (Decode.map' keyDecoder valueDecoder) |> Option.defaultValue Map.empty |> System.Collections.Generic.Dictionary
-            ArcTable.create(
-                get.Required.Field "name" Decode.string,
-                decodedHeader,
-                decodedValues
-            )
+            let t = 
+                ArcTable.create(
+                    get.Required.Field "name" Decode.string,
+                    decodedHeader,
+                    ResizeArray()
+                )
+            for KeyValue((c,r),v) in decodedValues do
+                t.SetCellAt(c, r, v)
+            t
         )
 
     open CellTable
@@ -57,7 +61,7 @@ module ArcTable =
             member this.Decode (helper,column) =
                 match (Decode.array (CellTable.decodeCell cellTable)).Decode(helper,column) with
                 | Ok a ->             
-                    a |> Array.iteri (fun r cell -> table.Values.Add((columnIndex,r),cell))
+                    a |> Array.iteri (fun r cell -> ArcTableAux.Unchecked.setCellAt(columnIndex,r,cell) table.Values)
                     Ok(())
                 | Error err -> 
                     let rangeDecoder = 
@@ -66,7 +70,7 @@ module ArcTable =
                             let to_ = get.Required.Field "t" Decode.int
                             let value = get.Required.Field "v" (CellTable.decodeCell cellTable)
                             for i = from to to_ do
-                                table.Values.Add((columnIndex,i),value)
+                                ArcTableAux.Unchecked.setCellAt(columnIndex,i,value) table.Values
                         )
                     match (Decode.array (rangeDecoder)).Decode(helper,column) with
                     | Ok _ -> Ok ()
@@ -114,7 +118,7 @@ module ArcTable =
                 "h", Encode.list [
                     for h in table.Headers do yield CompositeHeader.encoder h
                 ]
-            if table.Values.Count <> 0 then
+            if table.Values.RowCount <> 0 then
                 let rowCount = table.RowCount
                 let columns = [|for c = 0 to table.ColumnCount - 1 do encoderCompressedColumn c rowCount cellTable table|]
                 "c", Encode.array columns
@@ -128,7 +132,7 @@ module ArcTable =
                 ArcTable.create(
                     get.Required.Field "n" (StringTable.decodeString stringTable),
                     decodedHeader,
-                    Dictionary()
+                    ResizeArray()
                 )
                 
             // Columns

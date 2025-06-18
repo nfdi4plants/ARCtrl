@@ -31,7 +31,7 @@ let fromStringCellColumns (columns : array<string []>) : CompositeColumn =
         |> CompositeHeader.fromStringCells
     let l = columns.[0].Length
     let cells = 
-        [|
+        ResizeArray [|
         for i = 1 to l - 1 do
             columns
             |> Array.map (fun c -> c.[i])
@@ -56,30 +56,31 @@ let toStringCellColumns (column : CompositeColumn) : string list list =
     let isTerm = column.Header.IsTermColumn
     let isData = column.Header.IsDataColumn && column.Cells |> Seq.exists (fun c -> c.isData)
     let header = CompositeHeader.toStringCells hasUnit column.Header
-    let cells = column.Cells |> Array.map (CompositeCell.toStringCells isTerm hasUnit)
+    let compositeCells = column.Cells |> Seq.toArray
+    let cells = column.Cells |> Seq.toArray |> Array.map (CompositeCell.toStringCells isTerm hasUnit)
     let getCellOrDefault (ri: int) (ci: int) (cells: string [] []) = cells.[ri] |> Array.tryItem ci |> Option.defaultValue ""
     if hasUnit then
         [
-            [header.[0]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 0 cells]
-            [header.[1]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 1 cells]
-            [header.[2]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 2 cells]
-            [header.[3]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 3 cells]
+            [header.[0]; for i = 0 to compositeCells.Length - 1 do getCellOrDefault i 0 cells]
+            [header.[1]; for i = 0 to compositeCells.Length - 1 do getCellOrDefault i 1 cells]
+            [header.[2]; for i = 0 to compositeCells.Length - 1 do getCellOrDefault i 2 cells]
+            [header.[3]; for i = 0 to compositeCells.Length - 1 do getCellOrDefault i 3 cells]
         ]
     elif isTerm then
         [
-            [header.[0]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 0 cells]
-            [header.[1]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 1 cells]
-            [header.[2]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 2 cells]
+            [header.[0]; for i = 0 to compositeCells.Length - 1 do getCellOrDefault i 0 cells]
+            [header.[1]; for i = 0 to compositeCells.Length - 1 do getCellOrDefault i 1 cells]
+            [header.[2]; for i = 0 to compositeCells.Length - 1 do getCellOrDefault i 2 cells]
         ]
     elif isData then
         [
-            [header.[0]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 0 cells]
-            [header.[1]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 1 cells]
-            [header.[2]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 2 cells]
+            [header.[0]; for i = 0 to compositeCells.Length - 1 do getCellOrDefault i 0 cells]
+            [header.[1]; for i = 0 to compositeCells.Length - 1 do getCellOrDefault i 1 cells]
+            [header.[2]; for i = 0 to compositeCells.Length - 1 do getCellOrDefault i 2 cells]
         ]
     else
         [
-            [header.[0]; for i = 0 to column.Cells.Length - 1 do cells.[i].[0]]
+            [header.[0]; for i = 0 to compositeCells.Length - 1 do cells.[i].[0]]
         ]
 
 let toFsColumns (column : CompositeColumn) : list<FsCell list> =

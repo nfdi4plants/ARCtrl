@@ -378,8 +378,12 @@ type ProcessConversion =
     static member tryComponentGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Component oa ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                let c = BaseTypes.composeComponent valueHeader matrix.[generalI,i]
+            fun (table : ArcTable) i ->
+                let cell =
+                    match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                    | Some cell -> cell
+                    | None -> ArcTableAux.getEmptyCellForHeader valueHeader None
+                let c = BaseTypes.composeComponent valueHeader cell
                 c.SetColumnIndex valueI
                 c
             |> Some
@@ -389,8 +393,12 @@ type ProcessConversion =
     static member tryParameterGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Parameter oa ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                let p = BaseTypes.composeParameterValue valueHeader matrix.[generalI,i]
+            fun (table : ArcTable) i ->
+                let cell =
+                    match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                    | Some cell -> cell
+                    | None -> ArcTableAux.getEmptyCellForHeader valueHeader None
+                let p = BaseTypes.composeParameterValue valueHeader cell
                 p.SetColumnIndex valueI
                 p
             |> Some
@@ -400,8 +408,12 @@ type ProcessConversion =
     static member tryFactorGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Factor oa ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                let f = BaseTypes.composeFactorValue valueHeader matrix.[generalI,i]
+            fun (table : ArcTable) i ->
+                let cell =
+                    match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                    | Some cell -> cell
+                    | None -> ArcTableAux.getEmptyCellForHeader valueHeader None
+                let f = BaseTypes.composeFactorValue valueHeader cell
                 f.SetColumnIndex valueI
                 f
             |> Some
@@ -411,8 +423,12 @@ type ProcessConversion =
     static member tryCharacteristicGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Characteristic oa ->        
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                let c = BaseTypes.composeCharacteristicValue valueHeader matrix.[generalI,i]
+            fun (table : ArcTable) i ->
+                let cell =
+                    match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                    | Some cell -> cell
+                    | None -> ArcTableAux.getEmptyCellForHeader valueHeader None
+                let c = BaseTypes.composeCharacteristicValue valueHeader cell
                 c.SetColumnIndex valueI
                 c
             |> Some
@@ -422,8 +438,12 @@ type ProcessConversion =
     static member tryGetProtocolTypeGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolType ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                matrix.[generalI,i].AsTerm |> BaseTypes.composeDefinedTerm
+            fun (table : ArcTable) i ->
+                let oa =
+                    match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                    | Some cell -> cell.AsTerm
+                    | None -> OntologyAnnotation()
+                BaseTypes.composeDefinedTerm oa
             |> Some
         | _ -> None 
 
@@ -432,8 +452,10 @@ type ProcessConversion =
     static member tryGetProtocolREFGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolREF ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                matrix.[generalI,i].AsFreeText
+            fun (table : ArcTable) i ->
+                match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                | Some cell -> cell.AsFreeText
+                | None -> ""
             |> Some
         | _ -> None
 
@@ -441,8 +463,10 @@ type ProcessConversion =
     static member tryGetProtocolDescriptionGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolDescription ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                matrix.[generalI,i].AsFreeText
+            fun (table : ArcTable) i ->
+                match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                | Some cell -> cell.AsFreeText
+                | None -> ""
             |> Some
         | _ -> None
    
@@ -450,8 +474,10 @@ type ProcessConversion =
     static member tryGetProtocolURIGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolUri ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                matrix.[generalI,i].AsFreeText
+            fun (table : ArcTable) i ->
+                match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                | Some cell -> cell.AsFreeText
+                | None -> ""
             |> Some
         | _ -> None
 
@@ -459,8 +485,10 @@ type ProcessConversion =
     static member tryGetProtocolVersionGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolVersion ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                matrix.[generalI,i].AsFreeText
+            fun (table : ArcTable) i ->
+                match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                | Some cell -> cell.AsFreeText
+                | None -> ""
             |> Some
         | _ -> None
 
@@ -468,8 +496,12 @@ type ProcessConversion =
     static member tryGetInputGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.Input io ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                BaseTypes.composeProcessInput header matrix.[generalI,i]
+            fun (table : ArcTable) i ->
+                let cell =
+                    match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                    | Some cell -> cell
+                    | None -> ArcTableAux.getEmptyCellForHeader header None
+                BaseTypes.composeProcessInput header cell
             |> Some
         | _ -> None
 
@@ -477,8 +509,12 @@ type ProcessConversion =
     static member tryGetOutputGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.Output io ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                BaseTypes.composeProcessOutput header matrix.[generalI,i]
+            fun (table : ArcTable) i ->
+                let cell =
+                    match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                    | Some cell -> cell
+                    | None -> ArcTableAux.getEmptyCellForHeader header None
+                BaseTypes.composeProcessOutput header cell
             |> Some
         | _ -> None
 
@@ -486,17 +522,23 @@ type ProcessConversion =
     static member tryGetCommentGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.Comment c ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                //Comment.create(c,matrix.[generalI,i].AsFreeText)
-                Comment(c,matrix.[generalI,i].AsFreeText).ToString()
+            fun (table : ArcTable) i ->
+                let comment =
+                    match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                    | Some cell -> Comment(c,cell.AsFreeText)
+                    | None -> Comment(c)
+                comment.ToString()
             |> Some
         | _ -> None
 
     static member tryGetPerformerGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.Performer ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                let performer = matrix.[generalI,i].AsFreeText
+            fun (table : ArcTable) i ->
+                let performer =
+                    match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                    | Some cell -> cell.AsFreeText
+                    | None -> ""
                 let person = LDPerson.create(performer)
                 person
             |> Some
@@ -563,76 +605,76 @@ type ProcessConversion =
         let inputGetter =
             match headers |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetInputGetter generalI header) with
             | Some inputGetter ->
-                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                    let chars = charGetters |> Seq.map (fun f -> f matrix i) |> ResizeArray
-                    let input = inputGetter matrix i
+                fun (table : ArcTable) i ->
+                    let chars = charGetters |> Seq.map (fun f -> f table i) |> ResizeArray
+                    let input = inputGetter table i
 
                     if chars.Count > 0 then
                         LDSample.setAdditionalProperties(input,chars)
                     input
                     |> ResizeArray.singleton
             | None when charGetters.Length <> 0 ->
-                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                    let chars = charGetters |> Seq.map (fun f -> f matrix i) |> ResizeArray
+                fun (table : ArcTable) i ->
+                    let chars = charGetters |> Seq.map (fun f -> f table i) |> ResizeArray
                     LDSample.createSample(name = $"{processNameRoot}_Input_{i}", additionalProperties = chars)
                     |> ResizeArray.singleton
             | None ->
-                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                fun (table : ArcTable) i ->
                     ResizeArray []
             
         // This is a little more complex, as data and material objects can't contain factors. So in the case where the output of the table is a data object but factors exist. An additional sample object with the same name is created to contain the factors.
         let outputGetter =
             match headers |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetOutputGetter generalI header) with
             | Some outputGetter ->
-                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                    let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> ResizeArray
-                    let output = outputGetter matrix i
+                fun (table : ArcTable) i ->
+                    let factors = factorValueGetters |> Seq.map (fun f -> f table i) |> ResizeArray
+                    let output = outputGetter table i
                     if factors.Count > 0 then
                         LDSample.setAdditionalProperties(output,factors)
                     output
                     |> ResizeArray.singleton
             | None when factorValueGetters.Length <> 0 ->
-                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                    let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> ResizeArray
+                fun (table : ArcTable) i ->
+                    let factors = factorValueGetters |> Seq.map (fun f -> f table i) |> ResizeArray
                     LDSample.createSample(name = $"{processNameRoot}_Output_{i}", additionalProperties = factors)
                     |> ResizeArray.singleton
             | None ->
-                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                fun (table : ArcTable) i ->
                     ResizeArray []
-        fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+        fun (table : ArcTable) i ->
 
-            let rowCount = matrix.Keys |> Seq.map snd |> Seq.max |> (+) 1
+            let rowCount = table.RowCount
             let pn =
                 if rowCount = 1 then processNameRoot
                 else ProcessConversion.composeProcessName processNameRoot i
 
-            let paramvalues = parameterValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
+            let paramvalues = parameterValueGetters |> List.map (fun f -> f table i) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
             //let parameters = paramvalues |> Option.map (List.map (fun pv -> pv.Category.Value))
 
-            let comments = commentGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
+            let comments = commentGetters |> List.map (fun f -> f table i) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
 
-            let components = componentGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
+            let components = componentGetters |> List.map (fun f -> f table i) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
 
             let id = LDLabProcess.genId(processNameRoot,?assayName = assayName, ?studyName = studyName) + $"_{i}"
             
             let protocol : LDNode option =
-                let name = (protocolREFGetter |> Option.map (fun f -> f matrix i))
+                let name = (protocolREFGetter |> Option.map (fun f -> f table i))
                 let protocolId = LDLabProtocol.genId(?name = name, processName = processNameRoot)
                 LDLabProtocol.create(
                     id = protocolId,
                     ?name = name,
-                    ?description = (protocolDescriptionGetter |> Option.map (fun f -> f matrix i)),
-                    ?intendedUse = (protocolTypeGetter |> Option.map (fun f -> f matrix i)),
+                    ?description = (protocolDescriptionGetter |> Option.map (fun f -> f table i)),
+                    ?intendedUse = (protocolTypeGetter |> Option.map (fun f -> f table i)),
                     //?comments = comments,
-                    ?url = (protocolURIGetter |> Option.map (fun f -> f matrix i)),
-                    ?version = (protocolVersionGetter |> Option.map (fun f -> f matrix i)),
+                    ?url = (protocolURIGetter |> Option.map (fun f -> f table i)),
+                    ?version = (protocolVersionGetter |> Option.map (fun f -> f table i)),
                     ?labEquipments = components
                 )
                 |> Some
 
-            let input,output = inputGetter matrix i, outputGetter matrix i
+            let input,output = inputGetter table i, outputGetter table i
 
-            let agent = performerGetter |> Option.map (fun f -> f matrix i)
+            let agent = performerGetter |> Option.map (fun f -> f table i)
 
             LDLabProcess.create(
                 name = pn,
@@ -886,13 +928,13 @@ module TableTypeExtensions =
                 let h,v = BaseTypes.decomposeComponent(c, ?context = context)
                 t.AddColumn(
                     h, 
-                    cells = Array.singleton v,
+                    cells = ResizeArray.singleton v,
                     ?index = c.TryGetColumnIndex())
-            LDLabProtocol.tryGetDescriptionAsString(p, ?context = context)  |> Option.map (fun d -> t.AddProtocolDescriptionColumn([|d|]))  |> ignore
-            LDLabProtocol.tryGetVersionAsString(p, ?context = context)       |> Option.map (fun d -> t.AddProtocolVersionColumn([|d|]))      |> ignore
-            ProcessConversion.tryGetProtocolType(p, ?context =context) |> Option.map (fun d -> t.AddProtocolTypeColumn([|d|]))         |> ignore
-            LDLabProtocol.tryGetUrl(p, ?context = context)           |> Option.map (fun d -> t.AddProtocolUriColumn([|d|]))          |> ignore
-            t.AddProtocolNameColumn([|name|])
+            LDLabProtocol.tryGetDescriptionAsString(p, ?context = context)  |> Option.map (fun d -> t.AddProtocolDescriptionColumn(ResizeArray.singleton d))  |> ignore
+            LDLabProtocol.tryGetVersionAsString(p, ?context = context)       |> Option.map (fun d -> t.AddProtocolVersionColumn(ResizeArray.singleton d))      |> ignore
+            ProcessConversion.tryGetProtocolType(p, ?context =context) |> Option.map (fun d -> t.AddProtocolTypeColumn(ResizeArray.singleton d))         |> ignore
+            LDLabProtocol.tryGetUrl(p, ?context = context)           |> Option.map (fun d -> t.AddProtocolUriColumn(ResizeArray.singleton d))          |> ignore
+            t.AddProtocolNameColumn(ResizeArray.singleton name)
             t
 
         /// Returns the list of protocols executed in this ArcTable
@@ -933,7 +975,7 @@ module TableTypeExtensions =
                 let getter = ProcessConversion.getProcessGetter assayName studyName this.Name this.Headers          
                 [
                     for i in 0..this.RowCount-1 do
-                        yield getter this.Values i        
+                        yield getter this i        
                 ]
                 //|> ProcessConversion.mergeIdenticalProcesses
 
@@ -947,7 +989,7 @@ module TableTypeExtensions =
             ps
             |> List.collect (fun p -> ProcessConversion.processToRows(p,?context = context,?graph = graph) |> List.ofSeq)
             |> ArcTableAux.Unchecked.alignByHeaders true
-            |> fun (headers, rows) -> ArcTable.create(name,headers,rows)    
+            |> fun (headers, rows) -> ArcTable.fromArcTableValues(name,headers,rows)    
 
     type ArcTables with
 
@@ -968,7 +1010,7 @@ module TableTypeExtensions =
                 ps
                 |> List.collect (fun p -> ProcessConversion.processToRows(p,?graph = graph, ?context = context) |> List.ofSeq)
                 |> fun rows -> ArcTableAux.Unchecked.alignByHeaders true rows
-                |> fun (headers, rows) -> ArcTable.create(name,headers,rows)
+                |> fun (headers, rows) -> ArcTable.fromArcTableValues(name,headers,rows)
             )
             |> ResizeArray
             |> ArcTables

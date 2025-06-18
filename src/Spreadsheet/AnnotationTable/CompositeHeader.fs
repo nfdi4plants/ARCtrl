@@ -1,4 +1,4 @@
-﻿module ARCtrl.Spreadsheet.CompositeHeader
+module ARCtrl.Spreadsheet.CompositeHeader
 
 open ARCtrl
 open ARCtrl.Helper

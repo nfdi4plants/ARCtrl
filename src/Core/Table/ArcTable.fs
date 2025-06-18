@@ -43,7 +43,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             _headers <- newHeaders
 
     member this.Values
-        with internal get() = _values
+        with get() = _values
 
     member this.Name
         with get() = _name

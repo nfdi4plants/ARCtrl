@@ -132,7 +132,7 @@ let toFsWorksheet (index : int option) (table : ArcTable) =
 
     let columns = 
         table.Columns
-        |> List.ofArray
+        |> List.ofSeq
         |> List.sortBy classifyColumnOrder
         |> List.collect CompositeColumn.toStringCellColumns
     let tableRowCount =

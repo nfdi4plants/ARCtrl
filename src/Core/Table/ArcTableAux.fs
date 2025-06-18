@@ -191,6 +191,24 @@ type ArcTableValues (cols : Dictionary<int,ColumnValueRefs>, valueMap: Dictionar
         member this.GetEnumerator(): System.Collections.IEnumerator = 
             (this :> IEnumerable<KeyValuePair<int*int,CompositeCell>>).GetEnumerator()
 
+    member this.Item(crIndices : (int*int)) =
+        let col, row = crIndices
+        if row > this.RowCount - 1 then
+            failwithf "Row index %d is out of bounds for ArcTableValues with row count %d." row this.RowCount
+        if col > this.ColumnCount - 1 then
+            failwithf "Column index %d is out of bounds for ArcTableValues with column count %d." col this.ColumnCount
+        match IntDictionary.tryFind col _columns with
+        | None -> failwithf "Column %d does not exist in ArcTableValues." col
+        | Some colValueRefs ->
+            match colValueRefs with
+            | ColumnValueRefs.Constant valueHash ->
+                _valueMap.[valueHash]
+            | ColumnValueRefs.Sparse values ->
+                if values.ContainsKey row then
+                    _valueMap.[values.[row]]
+                else
+                    failwithf "Row value for index %d does not exist in column %d of ArcTableValues." row col
+
 //let boxHashValues colCount (values:ArcTableValues) =
 //    let mutable hash = 0
 //    let rowCount = getRowCount values
