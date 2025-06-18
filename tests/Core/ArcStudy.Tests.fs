@@ -324,8 +324,8 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         let studyDesignDescriptors = ResizeArray [|OntologyAnnotation("Design Descriptor")|]
         let tables = 
             let refTable = ArcTable.init(protocolREF)
-            refTable.AddProtocolNameColumn [|protocolREF|]
-            refTable.AddProtocolDescriptionColumn [|protocolDescription|]        
+            refTable.AddProtocolNameColumn (ResizeArray [|protocolREF|])
+            refTable.AddProtocolDescriptionColumn (ResizeArray [|protocolDescription|])    
             ResizeArray([|refTable|])
         let assays = createExampleAssays()
         let assay_identifiers = getAssayIdentifiers assays

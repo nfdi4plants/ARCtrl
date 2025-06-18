@@ -1,6 +1,7 @@
 module ArcJsonConversion.Tests
 
 open ARCtrl
+open ARCtrl.Helper
 open ARCtrl.Process
 open ARCtrl.Process.Conversion
 open TestingUtils
@@ -24,11 +25,11 @@ module Helper =
                 yield $"({c},{r}) {v}"
         ]
 
-    let createCells_FreeText pretext (count) = Array.init count (fun i -> CompositeCell.createFreeText  $"{pretext}_{i}") 
-    let createCells_Sciex (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_SCIEXInstrumentModel)
-    let createCells_chlamy (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_chlamy)
-    let createCells_DegreeCelsius (count) = Array.init count (fun i -> CompositeCell.createUnitized (string i,oa_degreeCel))
-    let createCells_Hour (count) = Array.init count (fun i -> CompositeCell.createUnitized (string i,oa_hour))
+    let createCells_FreeText pretext (count) = ResizeArray.init count (fun i -> CompositeCell.createFreeText  $"{pretext}_{i}") 
+    let createCells_Sciex (count) = ResizeArray.init count (fun _ -> CompositeCell.createTerm oa_SCIEXInstrumentModel)
+    let createCells_chlamy (count) = ResizeArray.init count (fun _ -> CompositeCell.createTerm oa_chlamy)
+    let createCells_DegreeCelsius (count) = ResizeArray.init count (fun i -> CompositeCell.createUnitized (string i,oa_degreeCel))
+    let createCells_Hour (count) = ResizeArray.init count (fun i -> CompositeCell.createUnitized (string i,oa_hour))
 
     let singleRowSingleParam = 
     /// Input [Source] --> Source_0 .. Source_4
@@ -116,7 +117,7 @@ module Helper =
         let columns = 
             [|
             CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 1)
-            CompositeColumn.create(CompositeHeader.ProtocolREF, [|CompositeCell.createFreeText "MyProtocol"|])
+            CompositeColumn.create(CompositeHeader.ProtocolREF, ResizeArray [|CompositeCell.createFreeText "MyProtocol"|])
             CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 1)
             |]
         let t = ArcTable.init(tableName1)
@@ -126,7 +127,7 @@ module Helper =
     /// Creates 5 empty tables
     ///
     /// Table Names: ["New Table 0"; "New Table 1" .. "New Table 4"]
-    let create_exampleTables(appendStr:string) = Array.init 5 (fun i -> ArcTable.init($"{appendStr} Table {i}"))
+    let create_exampleTables(appendStr:string) = ResizeArray.init 5 (fun i -> ArcTable.init($"{appendStr} Table {i}"))
 
     /// Valid TestAssay with empty tables: 
     ///
@@ -134,7 +135,7 @@ module Helper =
     let create_exampleAssay() =
         let assay = ArcAssay("MyAssay")
         let sheets = create_exampleTables("My")
-        sheets |> Array.iter (fun table -> assay.AddTable(table))
+        sheets |> ResizeArray.iter (fun table -> assay.AddTable(table))
         assay
 
 open Helper
@@ -338,7 +339,7 @@ let private tests_ArcTableProcess =
             let header = CompositeHeader.Parameter oa_temperature
             let unit = oa_degreeCel
             let cell = CompositeCell.createUnitized ("",unit)
-            t.AddColumn(header,[|cell|])
+            t.AddColumn(header,ResizeArray [|cell|])
 
             let processes = t.GetProcesses()
             Expect.equal 1 processes.Length "Should have 1 process"
@@ -359,9 +360,9 @@ let private tests_ArcTableProcess =
             let header = CompositeHeader.Parameter oa_temperature
             let unit = oa_degreeCel
             let cell = CompositeCell.createUnitized ("",unit)
-            t.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
-            t.AddColumn(header,[|cell|])
-            t.AddColumn(CompositeHeader.Output(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
+            t.AddColumn(CompositeHeader.Input(IOType.Source),ResizeArray [|CompositeCell.createFreeText "Source"|])
+            t.AddColumn(header,ResizeArray [|cell|])
+            t.AddColumn(CompositeHeader.Output(IOType.Sample),ResizeArray [|CompositeCell.createFreeText "Sample"|])
 
             let processes = t.GetProcesses()
             Expect.equal 1 processes.Length "Should have 1 process"
@@ -381,9 +382,9 @@ let private tests_ArcTableProcess =
             let t = ArcTable.init tableName1
             let header = CompositeHeader.Parameter oa_temperature
             let cell = CompositeCell.createUnitized ("")
-            t.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
-            t.AddColumn(header,[|cell|])
-            t.AddColumn(CompositeHeader.Output(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
+            t.AddColumn(CompositeHeader.Input(IOType.Source),ResizeArray [|CompositeCell.createFreeText "Source"|])
+            t.AddColumn(header,ResizeArray [|cell|])
+            t.AddColumn(CompositeHeader.Output(IOType.Sample),ResizeArray [|CompositeCell.createFreeText "Sample"|])
 
             let processes = t.GetProcesses()
             Expect.equal 1 processes.Length "Should have 1 process"
@@ -402,9 +403,9 @@ let private tests_ArcTableProcess =
             let t = ArcTable.init tableName1
             let header = CompositeHeader.Parameter oa_temperature
             let cell = CompositeCell.createUnitized ("5")
-            t.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
-            t.AddColumn(header,[|cell|])
-            t.AddColumn(CompositeHeader.Output(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
+            t.AddColumn(CompositeHeader.Input(IOType.Source),ResizeArray [|CompositeCell.createFreeText "Source"|])
+            t.AddColumn(header,ResizeArray [|cell|])
+            t.AddColumn(CompositeHeader.Output(IOType.Sample),ResizeArray [|CompositeCell.createFreeText "Sample"|])
 
             let processes = t.GetProcesses()
             Expect.equal 1 processes.Length "Should have 1 process"
@@ -424,9 +425,9 @@ let private tests_ArcTableProcess =
             let t = ArcTable.init tableName1
             let header = CompositeHeader.Parameter oa_species
             let cell = CompositeCell.createTerm (OntologyAnnotation.create())
-            t.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
-            t.AddColumn(header,[|cell|])
-            t.AddColumn(CompositeHeader.Output(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
+            t.AddColumn(CompositeHeader.Input(IOType.Source),ResizeArray [|CompositeCell.createFreeText "Source"|])
+            t.AddColumn(header,ResizeArray [|cell|])
+            t.AddColumn(CompositeHeader.Output(IOType.Sample),ResizeArray [|CompositeCell.createFreeText "Sample"|])
 
             let processes = t.GetProcesses()
             Expect.equal 1 processes.Length "Should have 1 process"
@@ -445,9 +446,9 @@ let private tests_ArcTableProcess =
             let t = ArcTable.init(tableName1)
             let commentKey = "MyCommentKey"
             let commentValue = "MyCommentValue"
-            t.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
-            t.AddColumn(CompositeHeader.Comment(commentKey), [|CompositeCell.createFreeText commentValue|])
-            t.AddColumn(CompositeHeader.Output(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
+            t.AddColumn(CompositeHeader.Input(IOType.Source),ResizeArray [|CompositeCell.createFreeText "Source"|])
+            t.AddColumn(CompositeHeader.Comment(commentKey), ResizeArray [|CompositeCell.createFreeText commentValue|])
+            t.AddColumn(CompositeHeader.Output(IOType.Sample),ResizeArray [|CompositeCell.createFreeText "Sample"|])
             let processes = t.GetProcesses()
             Expect.hasLength processes 1 ""
             let comments = Expect.wantSome processes.[0].Comments ""
@@ -501,7 +502,7 @@ let private tests_ArcTablesProcessSeq =
         testCase "SimpleTables GetAndFromProcesses" (fun () ->
             let t1 = singleRowSingleParam.Copy()
             let t2 = 
-                singleRowSingleParam.Copy() |> fun t -> ArcTable.create(tableName2, t.Headers, t.Values)
+                singleRowSingleParam.Copy() |> fun t -> ArcTable.fromArcTableValues(tableName2, t.Headers, t.Values)
             let tables = ResizeArray[t1;t2] |> ArcTables
             let processes = tables.GetProcesses() 
             Expect.equal processes.Length 2 "Should have 2 processes"
@@ -517,7 +518,7 @@ let private tests_ArcTablesProcessSeq =
         testCase "OneWithDifferentParamVals GetAndFromProcesses" (fun () ->
             let t1 = singleRowSingleParam.Copy()
             let t2 = 
-                twoRowsDifferentParamValue.Copy() |> fun t -> ArcTable.create(tableName2, t.Headers, t.Values)
+                twoRowsDifferentParamValue.Copy() |> fun t -> ArcTable.fromArcTableValues(tableName2, t.Headers, t.Values)
             let tables = ResizeArray[t1;t2] |> ArcTables
             let processes = tables.GetProcesses()           
             Expect.equal processes.Length 3 "Should have 3 processes"
@@ -615,7 +616,7 @@ let private tests_ProtocolTransformation =
         testCase "GetProtocols SingleName" (fun () ->           
             let t = ArcTable.init "TestTable"
             let name = "Name"
-            t.AddProtocolNameColumn([|name|])
+            t.AddProtocolNameColumn(ResizeArray [|name|])
             let expected = [Protocol.create(Name = name)]
 
             TestingUtils.Expect.sequenceEqual (t.GetProtocols()) expected "Protocols do not match"
@@ -623,7 +624,7 @@ let private tests_ProtocolTransformation =
         testCase "GetProtocols SameNames" (fun () ->           
             let t = ArcTable.init "TestTable"
             let name = "Name"
-            t.AddProtocolNameColumn([|name;name|])
+            t.AddProtocolNameColumn(ResizeArray [|name;name|])
             let expected = [Protocol.create(Name = name)]
 
             TestingUtils.Expect.sequenceEqual (t.GetProtocols()) expected "Protocols do not match"
@@ -632,7 +633,7 @@ let private tests_ProtocolTransformation =
             let t = ArcTable.init "TestTable"
             let name1 = "Name"
             let name2 = "Name2"
-            t.AddProtocolNameColumn([|name1;name2|])
+            t.AddProtocolNameColumn(ResizeArray [|name1;name2|])
             let expected = [Protocol.create(Name = name1);Protocol.create(Name = name2)]
 
             TestingUtils.Expect.sequenceEqual (t.GetProtocols()) expected "Protocols do not match"

@@ -1,7 +1,7 @@
 module ArcInvestigation.Tests
 
 open ARCtrl
-
+open ARCtrl.Helper
 open TestingUtils
 
 let private assay_Identifier = "MyAssay"
@@ -803,12 +803,12 @@ let tests_UpdateIOTypeByEntityIDTypes = testList "UpdateIOTypeByEntityIDType" [
             let t1 = a.InitTable("MyTable")
             let t2 = a.InitTable("MyTable2")
             t1.AddColumns [|
-                CompositeColumn.create (CompositeHeader.Input IOType.Source, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Source %i" i)))
-                CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
+                CompositeColumn.create (CompositeHeader.Input IOType.Source, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Source %i" i)))
+                CompositeColumn.create (CompositeHeader.Output IOType.Sample, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
             |]
             t2.AddColumns [|
-                CompositeColumn.create (CompositeHeader.Input IOType.Source, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Source_Alt %i" i)))
-                CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
+                CompositeColumn.create (CompositeHeader.Input IOType.Source, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Source_Alt %i" i)))
+                CompositeColumn.create (CompositeHeader.Output IOType.Sample, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
             |]
             let a_Copy = a.Copy()
             i.UpdateIOTypeByEntityID()
@@ -819,12 +819,12 @@ let tests_UpdateIOTypeByEntityIDTypes = testList "UpdateIOTypeByEntityIDType" [
             let t1 = a.InitTable("MyTable")
             let t2 = a.InitTable("MyTable2")
             t1.AddColumns [|
-                CompositeColumn.create (CompositeHeader.Input IOType.Source, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Source %i" i)))
-                CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
+                CompositeColumn.create (CompositeHeader.Input IOType.Source, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Source %i" i)))
+                CompositeColumn.create (CompositeHeader.Output IOType.Sample, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
             |]
             t2.AddColumns [|
-                CompositeColumn.create (CompositeHeader.Input IOType.Source, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
-                CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
+                CompositeColumn.create (CompositeHeader.Input IOType.Source, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
+                CompositeColumn.create (CompositeHeader.Output IOType.Sample, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
             |]
             i.UpdateIOTypeByEntityID()
             Expect.sequenceEqual t1.Headers [CompositeHeader.Input IOType.Source; CompositeHeader.Output IOType.Sample] "Headers should be updated"
@@ -835,12 +835,12 @@ let tests_UpdateIOTypeByEntityIDTypes = testList "UpdateIOTypeByEntityIDType" [
             let t1 = a.InitTable("MyTable")
             let t2 = a.InitTable("MyTable2")
             t1.AddColumns [|
-                CompositeColumn.create (CompositeHeader.Input IOType.Source, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Source %i" i)))
-                CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
+                CompositeColumn.create (CompositeHeader.Input IOType.Source, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Source %i" i)))
+                CompositeColumn.create (CompositeHeader.Output IOType.Sample, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
             |]
             t2.AddColumns [|
-                CompositeColumn.create (CompositeHeader.Input IOType.Data, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
-                CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
+                CompositeColumn.create (CompositeHeader.Input IOType.Data, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
+                CompositeColumn.create (CompositeHeader.Output IOType.Sample, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
             |]
             Expect.throws (fun () -> i.UpdateIOTypeByEntityID()) "Update should fail as sample and data can not be updated against each other."
     ]
@@ -852,12 +852,12 @@ let tests_UpdateIOTypeByEntityIDTypes = testList "UpdateIOTypeByEntityIDType" [
             let t1 = s.InitTable("MyTable")
             let t2 = a.InitTable("MyTable2")
             t1.AddColumns [|
-                CompositeColumn.create (CompositeHeader.Input IOType.Source, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Source %i" i)))
-                CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
+                CompositeColumn.create (CompositeHeader.Input IOType.Source, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Source %i" i)))
+                CompositeColumn.create (CompositeHeader.Output IOType.Sample, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
             |]
             t2.AddColumns [|
-                CompositeColumn.create (CompositeHeader.Input IOType.Source, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Source_Alt %i" i)))
-                CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
+                CompositeColumn.create (CompositeHeader.Input IOType.Source, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Source_Alt %i" i)))
+                CompositeColumn.create (CompositeHeader.Output IOType.Sample, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
             |]
             let a_Copy = a.Copy()
             let s_Copy = s.Copy()
@@ -871,12 +871,12 @@ let tests_UpdateIOTypeByEntityIDTypes = testList "UpdateIOTypeByEntityIDType" [
             let t1 = s.InitTable("MyTable")
             let t2 = a.InitTable("MyTable2")
             t1.AddColumns [|
-                CompositeColumn.create (CompositeHeader.Input IOType.Source, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Source %i" i)))
-                CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
+                CompositeColumn.create (CompositeHeader.Input IOType.Source, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Source %i" i)))
+                CompositeColumn.create (CompositeHeader.Output IOType.Sample, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
             |]
             t2.AddColumns [|
-                CompositeColumn.create (CompositeHeader.Input IOType.Source, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
-                CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
+                CompositeColumn.create (CompositeHeader.Input IOType.Source, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
+                CompositeColumn.create (CompositeHeader.Output IOType.Sample, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
             |]
             i.UpdateIOTypeByEntityID()
             Expect.sequenceEqual t1.Headers [CompositeHeader.Input IOType.Source; CompositeHeader.Output IOType.Sample] "Headers should be updated"
@@ -888,12 +888,12 @@ let tests_UpdateIOTypeByEntityIDTypes = testList "UpdateIOTypeByEntityIDType" [
             let t1 = s.InitTable("MyTable")
             let t2 = a.InitTable("MyTable2")
             t1.AddColumns [|
-                CompositeColumn.create (CompositeHeader.Input IOType.Source, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Source %i" i)))
-                CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
+                CompositeColumn.create (CompositeHeader.Input IOType.Source, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Source %i" i)))
+                CompositeColumn.create (CompositeHeader.Output IOType.Sample, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
             |]
             t2.AddColumns [|
-                CompositeColumn.create (CompositeHeader.Input IOType.Data, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
-                CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
+                CompositeColumn.create (CompositeHeader.Input IOType.Data, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
+                CompositeColumn.create (CompositeHeader.Output IOType.Sample, ResizeArray.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
             |]
             Expect.throws (fun () -> i.UpdateIOTypeByEntityID()) "Update should fail as sample and data can not be updated against each other."
     ]

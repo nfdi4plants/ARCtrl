@@ -1,6 +1,7 @@
 module PerformanceReport
 
 open ARCtrl
+open ARCtrl.Helper
 open ARCtrl.Json
 open ARCtrl.Spreadsheet
 open Fable.Core
@@ -90,7 +91,7 @@ let table_GetHashCode =
     let testTable = ArcTable.init("Test")
     let fillTable () =
         // Prepare the table with 1 column and 10000 rows
-        let values = Array.init 10000 (fun i -> CompositeCell.createFreeText (string i))
+        let values = ResizeArray.init 10000 (fun i -> CompositeCell.createFreeText (string i))
         testTable.AddColumn(CompositeHeader.FreeText "Header", values)
     PerformanceTest.create
         "Table_GetHashCode"
@@ -123,12 +124,12 @@ let table_GetHashCode =
 
 let table_AddRows =
     let initTable () =
-        ArcTable("MyTable", ResizeArray [CompositeHeader.Input IOType.Sample; CompositeHeader.FreeText "Freetext1"; CompositeHeader.FreeText "Freetext2"; CompositeHeader.Output IOType.Sample], System.Collections.Generic.Dictionary())
-    let mutable rows = [||]
+        ArcTable("MyTable", ResizeArray [CompositeHeader.Input IOType.Sample; CompositeHeader.FreeText "Freetext1"; CompositeHeader.FreeText "Freetext2"; CompositeHeader.Output IOType.Sample])
+    let mutable rows = ResizeArray()
     let prepareRows () =
         rows <-
-         Array.init 10000 (fun i -> 
-            [|CompositeCell.FreeText $"Source_{i}"; CompositeCell.FreeText $"FT1_{i}"; CompositeCell.FreeText $"FT2_{i}"; CompositeCell.FreeText $"Sample_{i}"; |])
+         ResizeArray.init 10000 (fun i -> 
+            ResizeArray [|CompositeCell.FreeText $"Source_{i}"; CompositeCell.FreeText $"FT1_{i}"; CompositeCell.FreeText $"FT2_{i}"; CompositeCell.FreeText $"Sample_{i}"; |])
     PerformanceTest.create
         "Table_AddRows"
         "Add 10000 rows to a table with 4 columns."
@@ -142,10 +143,10 @@ let table_AddRows =
 
 let table_fillMissingCells =
     let headers = ResizeArray [CompositeHeader.Input IOType.Sample;CompositeHeader.FreeText "Freetext1" ; CompositeHeader.FreeText "Freetext2"; CompositeHeader.Output IOType.Sample]
-    let mutable values = System.Collections.Generic.Dictionary()
+    let mutable values = ArcTableAux.ArcTableValues.init()
     
     let prepareValues () =
-        values <- System.Collections.Generic.Dictionary()
+        values <- ArcTableAux.ArcTableValues.init()
         for i = 0 to 20000 do       
         if i%2 = 0 then
             ArcTableAux.Unchecked.setCellAt(0,i,(CompositeCell.FreeText $"Source_{i}")) values

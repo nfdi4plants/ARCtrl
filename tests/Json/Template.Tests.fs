@@ -1,4 +1,4 @@
-﻿module Tests.Template
+module Tests.Template
 
 open ARCtrl
 open ARCtrl.Json
@@ -54,8 +54,8 @@ let tests_Template =
     testList "roundabout" [
         testCase "complete" <| fun _ ->
             let table = ArcTable.init("My Table")
-            table.AddColumn(CompositeHeader.Input IOType.Source, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Source {i}")|])
-            table.AddColumn(CompositeHeader.Output IOType.Data, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Output {i}")|])
+            table.AddColumn(CompositeHeader.Input IOType.Source, ResizeArray [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Source {i}")|])
+            table.AddColumn(CompositeHeader.Output IOType.Data, ResizeArray [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Output {i}")|])
             let o = Template.init("MyTemplate")
             o.Table <- table
             o.Authors <- ResizeArray [|ARCtrl.Person.create(firstName="John", lastName="Doe"); ARCtrl.Person.create(firstName="Jane", lastName="Doe");|]
@@ -88,16 +88,16 @@ let tests_Templates =
     testList "templates" [
         testCase "roundabout" <| fun _ ->
             let table1 = ArcTable.init("My Table")
-            table1.AddColumn(CompositeHeader.Input IOType.Source, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Source1 {i}")|])
-            table1.AddColumn(CompositeHeader.Output IOType.Data, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Output1 {i}")|])
+            table1.AddColumn(CompositeHeader.Input IOType.Source, ResizeArray [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Source1 {i}")|])
+            table1.AddColumn(CompositeHeader.Output IOType.Data, ResizeArray [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Output1 {i}")|])
             let template1 = Template.init("MyTemplate")
             template1.Table <- table1
             template1.Authors <- ResizeArray [|ARCtrl.Person.create(firstName="John", lastName="Doe"); ARCtrl.Person.create(firstName="Jane", lastName="Doe");|]
             template1.EndpointRepositories <- ResizeArray [|ARCtrl.OntologyAnnotation("Test"); ARCtrl.OntologyAnnotation("Testing second")|]
 
             let table2 = ArcTable.init("My Table 2")
-            table2.AddColumn(CompositeHeader.Input IOType.Source, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Source2 {i}")|])
-            table2.AddColumn(CompositeHeader.Output IOType.Data, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Output2 {i}")|])
+            table2.AddColumn(CompositeHeader.Input IOType.Source, ResizeArray [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Source2 {i}")|])
+            table2.AddColumn(CompositeHeader.Output IOType.Data, ResizeArray [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Output2 {i}")|])
             let template2 = Template.init("MyTemplate 2")
             template2.Table <- table2
             template2.Authors <- ResizeArray [|ARCtrl.Person.create(firstName="John", lastName="Millter"); ARCtrl.Person.create(firstName="Jane", lastName="Miller");|]

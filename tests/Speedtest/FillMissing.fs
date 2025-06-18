@@ -1,4 +1,4 @@
-﻿module FillMissing
+module FillMissing
 
 open ARCtrl
 open ArcTableAux
@@ -9,12 +9,13 @@ open System.Collections.Generic
 // We need to calculate the max number of rows between the new columns and the existing columns in the table.
 // `maxRows` will be the number of rows all columns must have after adding the new columns.
 // This behaviour should be intuitive for the user, as Excel handles this case in the same way.
-let fillMissingCellsSeq (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
-    let rowCount = getRowCount values
-    let columnCount = getColumnCount headers
+let fillMissingCellsSeq (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
+    let rowCount = values.RowCount
+    let columnCount = values.ColumnCount
 
     let columnKeyGroups = 
-        values.Keys // Get all keys, to map over relevant rows afterwards
+        values
+        |> Seq.map (fun kv -> kv.Key) // Get all keys, to map over relevant rows afterwards
         |> Seq.groupBy fst // Group by column index
         |> Map.ofSeq
 
@@ -24,23 +25,24 @@ let fillMissingCellsSeq (headers: ResizeArray<CompositeHeader>) (values:Dictiona
         // Some values existed in this column. Fill with default cells
         | Some col ->
             let firstCell = Some (values.[Seq.head col])
-            let defaultCell = Unchecked.getEmptyCellForHeader header firstCell
+            let defaultCell = getEmptyCellForHeader header firstCell
             let rowKeys = col |> Seq.map snd |> Set.ofSeq
             for rowIndex = 0 to rowCount - 1 do
                 if not <| rowKeys.Contains rowIndex then
                     Unchecked.setCellAt (columnIndex,rowIndex,defaultCell) values
         // No values existed in this column. Fill with default cells
         | None ->
-            let defaultCell = Unchecked.getEmptyCellForHeader header None
+            let defaultCell = getEmptyCellForHeader header None
             for rowIndex = 0 to rowCount - 1 do
                 Unchecked.setCellAt (columnIndex,rowIndex,defaultCell) values
 
-let fillMissingCellsArray (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
-    let rowCount = getRowCount values
-    let columnCount = getColumnCount headers
+let fillMissingCellsArray (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
+    let rowCount = values.RowCount
+    let columnCount = values.ColumnCount
 
-    let columnKeyGroups = 
-        values.Keys // Get all keys, to map over relevant rows afterwards
+    let columnKeyGroups =
+        values
+        |> Seq.map (fun kv -> kv.Key) // Get all keys, to map over relevant rows afterwards
         |> Seq.toArray
         |> Array.groupBy fst // Group by column index
         |> Map.ofArray
@@ -54,25 +56,25 @@ let fillMissingCellsArray (headers: ResizeArray<CompositeHeader>) (values:Dictio
         // Some values existed in this column. Fill with default cells
         | Some col ->
             let firstCell = Some (values.[Seq.head col])
-            let defaultCell = Unchecked.getEmptyCellForHeader header firstCell
+            let defaultCell = getEmptyCellForHeader header firstCell
             let rowKeys = Array.map snd col |> Set.ofArray
             for rowIndex = 0 to rowCount - 1 do
                 if not <| rowKeys.Contains rowIndex then
                     Unchecked.setCellAt (columnIndex,rowIndex,defaultCell) values
         // No values existed in this column. Fill with default cells
         | None ->
-            let defaultCell = Unchecked.getEmptyCellForHeader header None
+            let defaultCell = getEmptyCellForHeader header None
             for rowIndex = 0 to rowCount - 1 do
                 Unchecked.setCellAt (columnIndex,rowIndex,defaultCell) values
 
 
-let fillMissingOld (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) = 
-    let rowCount = getRowCount values
-    let columnCount = getColumnCount headers
+let fillMissingOld (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) = 
+    let rowCount = values.RowCount
+    let columnCount = values.ColumnCount
     let maxRows = rowCount
     let lastColumnIndex = columnCount - 1
     /// Get all keys, to map over relevant rows afterwards
-    let keys = values.Keys
+    let keys = values |> Seq.map (fun kv -> kv.Key)
     // iterate over columns
     for columnIndex in 0 .. lastColumnIndex do
         /// Only get keys for the relevant column
@@ -91,7 +93,7 @@ let fillMissingOld (headers: ResizeArray<CompositeHeader>) (values:Dictionary<in
             ///
             /// Not sure if we can add a better logic to infer if empty cells should be term or unitized ~Kevin F
             let tryExistingCell = if colKeys.IsEmpty then None else Some values.[colKeys.MinimumElement]
-            let empty = Unchecked.getEmptyCellForHeader relatedHeader tryExistingCell
+            let empty = getEmptyCellForHeader relatedHeader tryExistingCell
             for missingColumn,missingRow in missingKeys do
                 Unchecked.setCellAt (missingColumn,missingRow,empty) values
 
@@ -100,7 +102,7 @@ let table() =
 
     let name = "MyTable"
     let headers = ResizeArray [CompositeHeader.Input IOType.Sample;CompositeHeader.FreeText "Freetext1" ; CompositeHeader.FreeText "Freetext2"; CompositeHeader.Output IOType.Sample]
-    let values = System.Collections.Generic.Dictionary()
+    let values = ArcTableAux.ArcTableValues.init()
     for i = 0 to 20000 do       
         if i%2 = 0 then
             Unchecked.setCellAt(0,i,(CompositeCell.FreeText $"Source_{i}")) values
@@ -115,7 +117,7 @@ let table() =
             Unchecked.setCellAt(5,i,(CompositeCell.FreeText $"FT5_{i}")) values
             Unchecked.setCellAt(6,i,(CompositeCell.FreeText $"Sample_{i}")) values
 
-    ArcTable(name, headers, values)
+    ArcTable.fromArcTableValues(name, headers, values)
     
 let prepareTables() =
     let t1 = table()

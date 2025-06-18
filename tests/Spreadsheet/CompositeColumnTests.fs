@@ -1,4 +1,4 @@
-﻿module CompositeColumnTests
+module CompositeColumnTests
 
 open TestingUtils
 
@@ -16,7 +16,7 @@ let private parameterTests =
             let col = CompositeColumn.fromFsColumns cols
                 
             Expect.equal col.Header Parameter.temperatureHeader "Header did not match"
-            Expect.equal col.Cells.Length 1 "Wrong number of cells"
+            Expect.equal col.Cells.Count 1 "Wrong number of cells"
             Expect.equal col.Cells.[0] Parameter.temperatureValue "Value did not match"
         )
         testCase "SingleWithUnitWrite" (fun () ->
@@ -36,7 +36,7 @@ let private parameterTests =
             let col = CompositeColumn.fromFsColumns cols
                 
             Expect.equal col.Header Parameter.instrumentHeader "Header did not match"
-            Expect.equal col.Cells.Length 1 "Wrong number of cells"
+            Expect.equal col.Cells.Count 1 "Wrong number of cells"
             Expect.equal col.Cells.[0] Parameter.instrumentValue "Value did not match"
         )
         testCase "SingleWithTermWrite" (fun () ->
@@ -55,7 +55,7 @@ let private parameterTests =
             let col = CompositeColumn.fromFsColumns cols
                 
             Expect.equal col.Header Parameter.temperatureHeader "Header did not match"
-            Expect.equal col.Cells.Length 2 "Wrong number of cells"
+            Expect.equal col.Cells.Count 2 "Wrong number of cells"
             Expect.equal col.Cells.[0] Parameter.temperatureValue "First Value did not match"
             Expect.equal col.Cells.[1] Parameter.temperatureValue2 "Second Value did not match"
         )
@@ -81,7 +81,7 @@ let characteristicTests =
             let col = CompositeColumn.fromFsColumns cols
 
             Expect.equal col.Header Characteristic.organismHeader "Header did not match"
-            Expect.equal col.Cells.Length 1 "Wrong number of cells"
+            Expect.equal col.Cells.Count 1 "Wrong number of cells"
             Expect.equal col.Cells.[0] Characteristic.organismValue "Value did not match"
         )
         testCase "SingleWithTermWrite" (fun () ->
@@ -104,7 +104,7 @@ let factorTests =
                     [Factor.appendTimeColumn 1]
             let col = CompositeColumn.fromFsColumns cols
             Expect.equal col.Header Factor.timeHeader "Header did not match"
-            Expect.equal col.Cells.Length 1 "Wrong number of cells"
+            Expect.equal col.Cells.Count 1 "Wrong number of cells"
             Expect.equal col.Cells.[0] Factor.timeValue "Value did not match"
         ) 
         testCase "SingleWithUnitWrite" (fun () ->
@@ -126,7 +126,7 @@ let protocolTests =
                     [Protocol.REF.appendLolColumn 1]
             let col = CompositeColumn.fromFsColumns cols
             Expect.equal col.Header Protocol.REF.lolHeader "Header did not match"
-            Expect.equal col.Cells.Length 1 "Wrong number of cells"
+            Expect.equal col.Cells.Count 1 "Wrong number of cells"
             Expect.equal col.Cells.[0] Protocol.REF.lolValue "Value did not match"
         )
         testCase "REFSingleWrite" (fun () ->
@@ -144,7 +144,7 @@ let protocolTests =
                     [Protocol.Type.appendCollectionColumn 1]
             let col = CompositeColumn.fromFsColumns cols
             Expect.equal col.Header Protocol.Type.collectionHeader "Header did not match"
-            Expect.equal col.Cells.Length 1 "Wrong number of cells"
+            Expect.equal col.Cells.Count 1 "Wrong number of cells"
             Expect.equal col.Cells.[0] Protocol.Type.collectionValue "Value did not match"
         )
         testCase "TypeSingleWrite" (fun () ->
