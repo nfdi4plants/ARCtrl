@@ -113,7 +113,7 @@ let tryFromFsWorksheet (sheet : FsWorksheet) =
                 |> Array.map CompositeColumn.fixDeprecatedIOHeader
                 |> composeColumns
             ArcTable.init sheet.Name
-            |> ArcTable.addColumns(compositeColumns,skipFillMissing = true)
+            |> ArcTable.addColumns(compositeColumns)
             |> Some
         | None ->
             None

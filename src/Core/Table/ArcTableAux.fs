@@ -38,7 +38,16 @@ type ColumnValueRefs =
             values |> Seq.iter (fun v -> d.Add(v.Key, v.Value))
             Sparse d
 
-    static member fromCellColumn (column : ResizeArray<CompositeCell>, valueMap: Dictionary<int, CompositeCell>) =
+    member this.AsSparse(rowCount : int) =
+        match this with
+        | Constant valueHash ->
+            let d = Dictionary<int, int>()
+            for i in 0 .. rowCount - 1 do
+                d.Add(i, valueHash)
+            Sparse d
+        | Sparse values -> Sparse values
+
+    static member fromCellColumn (column : ResizeArray<CompositeCell>, previousRowCount : int, valueMap: Dictionary<int, CompositeCell>) =
         let distinctValues = column |> ResizeArray.distinct
         let columnValues = distinctValues |> ResizeArray.map(fun cell ->
             let hash = cell.GetHashCode()
@@ -47,7 +56,12 @@ type ColumnValueRefs =
             hash
         )
         match columnValues.Count with
-        | 1 -> Constant(columnValues.[0])
+        | 1 when column.Count >= previousRowCount -> Constant(columnValues.[0])
+        | 1 ->
+            let d = Dictionary<int, int>()
+            for i in 0 .. column.Count - 1 do
+                d.Add(i, columnValues.[0])
+            Sparse d
         | _ ->
             let d = Dictionary<int, int>()
             columnValues |> Seq.iteri (fun i v -> d.Add(i, v))            
@@ -107,7 +121,9 @@ type ArcTableValues (cols : Dictionary<int,ColumnValueRefs>, valueMap: Dictionar
             _columns <- columns
 
     member this.ColumnCount
-        with get() = _columns.Keys |> Seq.max
+        with get() =
+            if Seq.isEmpty _columns then 0
+            else _columns.Keys |> Seq.max |> (+) 1
 
     member this.ValueMap
         with get() = _valueMap
@@ -119,14 +135,16 @@ type ArcTableValues (cols : Dictionary<int,ColumnValueRefs>, valueMap: Dictionar
         and internal set(rowCount) =
             _rowCount <- rowCount
 
-    static member fromCellColumns (columns: ResizeArray<ResizeArray<CompositeCell>>) =
+    static member fromCellColumns (columns: ResizeArray<ResizeArray<CompositeCell>>) =       
+        let rowCount =
+            if columns.Count = 0 then 0
+            else columns |> ResizeArray.map (fun c -> c.Count) |> Seq.max
         let valueMap = Dictionary<int, CompositeCell>() //initValueMap()
         let parsedColumns = Dictionary<int, ColumnValueRefs>()     
         columns |> Seq.iteri (fun i column ->
-            let columnValueRefs = ColumnValueRefs.fromCellColumn(column, valueMap)
+            let columnValueRefs = ColumnValueRefs.fromCellColumn(column, rowCount, valueMap)
             parsedColumns.Add(i, columnValueRefs)
         )      
-        let rowCount = columns |> ResizeArray.map (fun c -> c.Count) |> Seq.max
         ArcTableValues(parsedColumns, valueMap, rowCount)
 
     static member init () =
@@ -154,8 +172,9 @@ type ArcTableValues (cols : Dictionary<int,ColumnValueRefs>, valueMap: Dictionar
         for column in _columns do         
             match column.Value with
             | ColumnValueRefs.Constant valueHash ->
-                hash <- 0x9e3779b9 + valueHash + (hash <<< 6) + (hash >>> 2)
-                hash <- 0x9e3779b9 + rowCount + (hash <<< 6) + (hash >>> 2)
+                for i = 0 to rowCount - 1 do
+                    hash <- 0x9e3779b9 + i + (hash <<< 6) + (hash >>> 2)
+                    hash <- 0x9e3779b9 + valueHash + (hash <<< 6) + (hash >>> 2)
             | ColumnValueRefs.Sparse values ->
                 for kv in values do
                     hash <- 0x9e3779b9 + kv.Key + (hash <<< 6) + (hash >>> 2)
@@ -447,8 +466,10 @@ module Unchecked =
     /// Remove cells of one Row, change index of cells with higher index to index - 1
     let removeRowCells_withIndexChange (rowIndex:int) (values:ArcTableValues) =
         if rowIndex = 0 && values.RowCount = 1 then
+            values.RowCount <- 0
             values.Columns <- Dictionary()
         else
+            values.RowCount <- values.RowCount - 1
             values.Columns
             |> Seq.iter (fun kv ->
                 match kv.Value with
@@ -488,11 +509,18 @@ module Unchecked =
     let addRefColumn (newHeader: CompositeHeader) (newCol: ColumnValueRefs) (rowCount : int) (index: int) (forceReplace: bool) (onlyHeaders: bool) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
         let mutable numberOfNewColumns = 1
         let mutable index = index
-        if rowCount > values.RowCount then values.RowCount <- rowCount
         /// If this isSome and the function does not raise exception we are executing a forceReplace.
         let hasDuplicateUnique = tryFindDuplicateUnique newHeader headers
         // implement fail if unique column should be added but exists already
         if not forceReplace && hasDuplicateUnique.IsSome then failwith $"Invalid new column `{newHeader}`. Table already contains header of the same type on index `{hasDuplicateUnique.Value}`"
+        
+        if rowCount > values.RowCount then
+            values.RowCount <- rowCount
+            for kv in values.Columns do
+                values.Columns.[kv.Key] <- kv.Value.AsSparse(values.RowCount)
+        // In case we replace an existing unique column, we should adjust the new rowCount. For other constant rows we
+        if rowCount < values.RowCount && hasDuplicateUnique.IsSome && forceReplace && values.Columns.Count = 1 then
+            values.RowCount <- rowCount
         // Example: existingCells contains `Output io` (With io being any IOType) and header is `Output RawDataFile`. This should replace the existing `Output io`.
         // In this case the number of new columns drops to 0 and we insert the index of the existing `Output io` column.
         if hasDuplicateUnique.IsSome then
@@ -535,7 +563,7 @@ module Unchecked =
 
     let addColumn (newHeader: CompositeHeader) (newCells: ResizeArray<CompositeCell>) (index: int) (forceReplace: bool) (onlyHeaders: bool) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
         // Create a new column with the new header and cells
-        let newCol = ColumnValueRefs.fromCellColumn(newCells, values.ValueMap)
+        let newCol = ColumnValueRefs.fromCellColumn(newCells,  values.RowCount, values.ValueMap)
         addRefColumn newHeader newCol newCells.Count index forceReplace onlyHeaders headers values
 
 

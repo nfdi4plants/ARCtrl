@@ -116,6 +116,45 @@ let private tests_GetHashCode = testList "GetHashCode" [
         let notActual = create_testTable()
         Expect.notEqual actual notActual "equal"
         Expect.notEqual (actual.GetHashCode()) (notActual.GetHashCode()) "Hash"
+    testCase "equal? sparse vs constant column" <| fun _ ->
+        let cell = CompositeCell.createFreeText "Value"
+        let valueMap = System.Collections.Generic.Dictionary<int, CompositeCell>()
+        valueMap.Add(cell.GetHashCode(), cell)
+
+        let sparseDict = System.Collections.Generic.Dictionary<int, int>()
+        sparseDict.Add(0, cell.GetHashCode())
+        sparseDict.Add(1, cell.GetHashCode())
+        let sparseColumn = ArcTableAux.Sparse sparseDict
+        let sparseColumns = System.Collections.Generic.Dictionary<int, ArcTableAux.ColumnValueRefs>()
+        sparseColumns.Add(0, sparseColumn)
+        let sparseTable = ArcTableAux.ArcTableValues(sparseColumns, valueMap, 2)
+
+        let constantColumn = ArcTableAux.Constant (cell.GetHashCode())
+        let constantColumns = System.Collections.Generic.Dictionary<int, ArcTableAux.ColumnValueRefs>()
+        constantColumns.Add(0, constantColumn)
+        let constantTable = ArcTableAux.ArcTableValues(constantColumns, valueMap, 2)
+
+        Expect.equal (sparseTable.GetHashCode()) (constantTable.GetHashCode()) "HashCodes should be equal for sparse and constant column with same values"
+
+    testCase "notequal? sparse vs constant column" <| fun _ ->
+        let cell = CompositeCell.createFreeText "Value"
+        let valueMap = System.Collections.Generic.Dictionary<int, CompositeCell>()
+        valueMap.Add(cell.GetHashCode(), cell)
+
+        let sparseDict = System.Collections.Generic.Dictionary<int, int>()
+        sparseDict.Add(0, cell.GetHashCode())
+        sparseDict.Add(1, cell.GetHashCode())
+        let sparseColumn = ArcTableAux.Sparse sparseDict
+        let sparseColumns = System.Collections.Generic.Dictionary<int, ArcTableAux.ColumnValueRefs>()
+        sparseColumns.Add(0, sparseColumn)
+        let sparseTable = ArcTableAux.ArcTableValues(sparseColumns, valueMap, 2)
+
+        let constantColumn = ArcTableAux.Constant (cell.GetHashCode())
+        let constantColumns = System.Collections.Generic.Dictionary<int, ArcTableAux.ColumnValueRefs>()
+        constantColumns.Add(0, constantColumn)
+        let constantTable = ArcTableAux.ArcTableValues(constantColumns, valueMap, 2)
+
+        Expect.notEqual (sparseTable.GetHashCode()) (constantTable.GetHashCode()) "HashCodes should not be equal for sparse and constant column with same values"
 ]
 
 let private tests_validate = 
@@ -831,8 +870,8 @@ let private tests_AddColumn_Mutable =
                 Expect.equal table.Headers.[0] header_input "Header 0"
                 Expect.equal table.Headers.[1] header_chara "Header 1"
                 let expected = 
-                    ResizeArray.init 5 (fun i -> 
-                        let c = if i <= 1 then CompositeCell.createTerm oa_chlamy else CompositeCell.emptyTerm
+                    ResizeArray.init 2 (fun i -> 
+                        let c = CompositeCell.createTerm oa_chlamy
                         System.Collections.Generic.KeyValuePair((1,i), c) 
                     )
                 let actual = Array.ofSeq table.Values
@@ -848,8 +887,8 @@ let private tests_AddColumn_Mutable =
                 Expect.equal table.Headers.[1] header_chara "Header 1"
                 let expected_chara = ResizeArray.init 8 (fun i -> System.Collections.Generic.KeyValuePair((1,i), CompositeCell.createTerm oa_chlamy))
                 let expected_io = 
-                    ResizeArray.init 8 (fun i -> 
-                        let c = if i <= 4 then CompositeCell.createFreeText $"Source_{i}" else CompositeCell.emptyFreeText
+                    ResizeArray.init 5 (fun i -> 
+                        let c = CompositeCell.createFreeText $"Source_{i}" 
                         System.Collections.Generic.KeyValuePair((0,i), c) 
                     )
                 let actual = Array.ofSeq table.Values
@@ -874,8 +913,8 @@ let private tests_AddColumn_Mutable =
                 Expect.equal table.Headers.[0] header_chara "Header chara"
                 Expect.equal table.Headers.[1] header_input "Header io"
                 let expected = 
-                    ResizeArray.init 5 (fun i -> 
-                        let c = if i <= 1 then CompositeCell.createTerm oa_chlamy else CompositeCell.emptyTerm
+                    ResizeArray.init 2 (fun i -> 
+                        let c = CompositeCell.createTerm oa_chlamy
                         System.Collections.Generic.KeyValuePair((0,i), c) 
                     )
                 let actual = Array.ofSeq table.Values
@@ -891,8 +930,8 @@ let private tests_AddColumn_Mutable =
                 Expect.equal table.Headers.[1] header_input "Header io"
                 let expected_chara = ResizeArray.init 8 (fun i -> System.Collections.Generic.KeyValuePair((0,i), CompositeCell.createTerm oa_chlamy))
                 let expected_io = 
-                    ResizeArray.init 8 (fun i -> 
-                        let c = if i <= 4 then CompositeCell.createFreeText $"Source_{i}" else CompositeCell.emptyFreeText
+                    ResizeArray.init 5 (fun i -> 
+                        let c = CompositeCell.createFreeText $"Source_{i}"
                         System.Collections.Generic.KeyValuePair((1,i), c) 
                     )
                 let actual = Array.ofSeq table.Values
@@ -1055,8 +1094,8 @@ let private tests_addColumn =
                 Expect.equal updatedTable.Headers.[0] header_input "Header 0"
                 Expect.equal updatedTable.Headers.[1] header_chara "Header 1"
                 let expected = 
-                    ResizeArray.init 5 (fun i -> 
-                        let c = if i <= 1 then CompositeCell.createTerm oa_chlamy else CompositeCell.emptyTerm
+                    ResizeArray.init 2 (fun i -> 
+                        let c = CompositeCell.createTerm oa_chlamy
                         System.Collections.Generic.KeyValuePair((1,i), c) 
                     )
                 let actual = Array.ofSeq updatedTable.Values
@@ -1075,8 +1114,8 @@ let private tests_addColumn =
                 Expect.equal updatedTable.Headers.[1] header_chara "Header 1"
                 let expected_chara = ResizeArray.init 8 (fun i -> System.Collections.Generic.KeyValuePair((1,i), CompositeCell.createTerm oa_chlamy))
                 let expected_io = 
-                    ResizeArray.init 8 (fun i -> 
-                        let c = if i <= 4 then CompositeCell.createFreeText $"Source_{i}" else CompositeCell.emptyFreeText
+                    ResizeArray.init 5 (fun i -> 
+                        let c = CompositeCell.createFreeText $"Source_{i}"
                         System.Collections.Generic.KeyValuePair((0,i), c) 
                     )
                 let actual = Array.ofSeq updatedTable.Values
@@ -1107,8 +1146,8 @@ let private tests_addColumn =
                 Expect.equal updatedTable.Headers.[0] header_chara "Header chara"
                 Expect.equal updatedTable.Headers.[1] header_input "Header io"
                 let expected = 
-                    ResizeArray.init 5 (fun i -> 
-                        let c = if i <= 1 then CompositeCell.createTerm oa_chlamy else CompositeCell.emptyTerm
+                    ResizeArray.init 2 (fun i -> 
+                        let c = CompositeCell.createTerm oa_chlamy
                         System.Collections.Generic.KeyValuePair((0,i), c) 
                     )
                 let actual = Array.ofSeq updatedTable.Values
@@ -1127,8 +1166,8 @@ let private tests_addColumn =
                 Expect.equal updatedTable.Headers.[1] header_input "Header io"
                 let expected_chara = ResizeArray.init 8 (fun i -> System.Collections.Generic.KeyValuePair((0,i), CompositeCell.createTerm oa_chlamy))
                 let expected_io = 
-                    ResizeArray.init 8 (fun i -> 
-                        let c = if i <= 4 then CompositeCell.createFreeText $"Source_{i}" else CompositeCell.emptyFreeText
+                    ResizeArray.init 5 (fun i -> 
+                        let c = CompositeCell.createFreeText $"Source_{i}" 
                         System.Collections.Generic.KeyValuePair((1,i), c) 
                     )
                 let actual = Array.ofSeq updatedTable.Values
@@ -2470,7 +2509,7 @@ let private tests_Join = testList "Join" [
                 )
             |]
             joinTable.AddColumns(columns)
-            table.Join(joinTable,-1,TableJoinOptions.WithUnit, skipFillMissing=false)
+            table.Join(joinTable,-1,TableJoinOptions.WithUnit)
             Expect.equal table.ColumnCount 2 "column count"
             Expect.equal table.RowCount 5 "row count"
             Expect.equal table.Values.[(0,0)] (CompositeCell.createTerm (OntologyAnnotation())) "empty term cell"

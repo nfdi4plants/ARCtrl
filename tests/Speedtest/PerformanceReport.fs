@@ -213,7 +213,7 @@ let assay_toJson =
                     CompositeCell.FreeText $"Sample{i}"
                 |]
             for j = 0 to cells.Length - 1 do
-                t.Values.[(j,i)] <- cells.[j]
+                ArcTableAux.Unchecked.setCellAt (j,i,cells.[j]) a.Tables.[0].Values
     PerformanceTest.create
         "Assay_toJson"
         "Parse an assay with one table with 10000 rows and 6 columns to json"

@@ -405,9 +405,6 @@ type ArcTables(initTables:ResizeArray<ArcTable>) =
             ts
             |> Seq.reduce ArcTable.append
         )
-        |> ResizeArray.map (fun t -> 
-            ArcTableAux.Unchecked.fillMissingCells t.Headers t.Values
-            t)
         |> fun s -> 
             if keepUnusedRefTables then
                 Seq.append 

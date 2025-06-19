@@ -22,7 +22,6 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
 
     let valid = SanityChecks.validateCellColumns headers columns true
     let mutable _values = ArcTableValues.fromCellColumns(columns)
-    let mutable _rowCount = 0
     let mutable _name = name
     let mutable _headers: ResizeArray<CompositeHeader> = headers
 
@@ -88,9 +87,9 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
     static member columnCount (table:ArcTable) = table.ColumnCount
 
     member this.RowCount
-        with get() = _rowCount
+        with get() = _values.RowCount
         and set (newRowCount) =
-            _rowCount <- newRowCount
+            _values.RowCount <- newRowCount
 
     static member getRowCount (table:ArcTable) = table.RowCount
 
@@ -116,10 +115,16 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             table.TryGetCellAt(column, row)
 
     member this.GetCellAt (column: int,row: int) =
-        failwithf "TODO: Return default value"
+        if column > this.ColumnCount - 1 || column < 0 then
+            failwithf "Column index %i is out of bounds for table %s with %i columns." column this.Name this.ColumnCount
+        if row > this.RowCount - 1 || row < 0 then
+            failwithf "Row index %i is out of bounds for table %s with %i rows." row this.Name this.RowCount
         match this.TryGetCellAt (column, row) with
         | Some c -> c
-        | _ -> failwithf "Unable to find cell for index: (%i, %i) in table %s" column row this.Name
+        | _ ->
+            let header = this.Headers.[column]
+            getEmptyCellForHeader header None
+            //failwithf "Unable to find cell for index: (%i, %i) in table %s" column row this.Name
 
     static member getCellAt (column: int,row: int) =
         fun (table:ArcTable) ->
@@ -259,7 +264,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
 
     // - Column API - //
     //[<NamedParams>]
-    member this.AddColumn (header:CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?index: int, ?forceReplace: bool, ?skipFillMissing) : unit =
+    member this.AddColumn (header:CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?index: int, ?forceReplace: bool) : unit =
         let index =
             defaultArg index this.ColumnCount
         let cells =
@@ -269,7 +274,6 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         SanityChecks.validateColumn(CompositeColumn.create(header, cells))
         //
         Unchecked.addColumn header cells index forceReplace false this.Headers _values
-        if not(skipFillMissing = Some true) then Unchecked.fillMissingCells this.Headers _values
 
 
     static member addColumn (header: CompositeHeader, ?cells: ResizeArray<CompositeCell>,?index: int ,?forceReplace : bool) : (ArcTable -> ArcTable) =
@@ -291,7 +295,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
 
     // - Column API - //
     /// Replaces the header and cells of a column at given index.
-    member this.UpdateColumn (columnIndex:int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?skipFillMissing) =
+    member this.UpdateColumn (columnIndex:int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>) =
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
         let column = CompositeColumn.create(header, ?cells=cells)
         SanityChecks.validateColumn(column)
@@ -306,7 +310,6 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         this.Headers.Insert(columnIndex,column.Header)
         // nextBody
         column.Cells |> ResizeArray.iteri (fun rowIndex v -> Unchecked.setCellAt(columnIndex,rowIndex,v) _values)
-        if not(skipFillMissing = Some true) then Unchecked.fillMissingCells this.Headers _values
 
     /// Replaces the header and cells of a column at given index.
     static member updateColumn (columnIndex:int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>) =
@@ -336,7 +339,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             newTable
 
     // - Column API - //
-    member this.AddColumns (columns: CompositeColumn [], ?index: int, ?forceReplace: bool, ?skipFillMissing) : unit =
+    member this.AddColumns (columns: CompositeColumn [], ?index: int, ?forceReplace: bool) : unit =
         let mutable index = defaultArg index this.ColumnCount
         let forceReplace = defaultArg forceReplace false
         SanityChecks.validateColumnIndex index this.ColumnCount true
@@ -349,12 +352,11 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             // Check if more headers, otherwise `ArcTableAux.insertColumn` replaced a column and we do not need to increase index.
             if this.Headers.Count > prevHeadersCount then index <- index + 1
         )
-        if not(skipFillMissing = Some true) then Unchecked.fillMissingCells this.Headers _values
 
-    static member addColumns (columns: CompositeColumn [],?index: int,?skipFillMissing) =
+    static member addColumns (columns: CompositeColumn [],?index: int) =
         fun (table:ArcTable) ->
             let newTable = table.Copy()
-            newTable.AddColumns(columns, ?index = index, ?skipFillMissing = skipFillMissing)
+            newTable.AddColumns(columns, ?index = index)
             newTable
 
     // - Column API - //
@@ -643,10 +645,9 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
     /// <param name="table">The table to join to this table.</param>
     /// <param name="joinOptions">Can add only headers, header with unitized cell information, headers with values.</param>
     /// <param name="forceReplace">if set to true will replace unique columns.</param>
-    member this.Join(table:ArcTable, ?index: int, ?joinOptions: TableJoinOptions, ?forceReplace: bool, ?skipFillMissing) : unit =
+    member this.Join(table:ArcTable, ?index: int, ?joinOptions: TableJoinOptions, ?forceReplace: bool) : unit =
         let joinOptions = defaultArg joinOptions TableJoinOptions.Headers
         let forceReplace = defaultArg forceReplace false
-        let skipFillMissing = defaultArg skipFillMissing false
         let mutable index = defaultArg index this.ColumnCount
         index <- if index = -1 then this.ColumnCount else index //make -1 default to append to make function usage more fluent.
         SanityChecks.validateColumnIndex index this.ColumnCount true
@@ -676,7 +677,6 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             // Check if more headers, otherwise `ArcTableAux.insertColumn` replaced a column and we do not need to increase index.
             if this.Headers.Count > prevHeadersCount then index <- index + 1
         )
-        if not(skipFillMissing) then Unchecked.fillMissingCells this.Headers _values
 
     static member join(table:ArcTable, ?index: int, ?joinOptions: TableJoinOptions, ?forceReplace: bool) =
         fun (this: ArcTable) ->
