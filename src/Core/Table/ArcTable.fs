@@ -736,6 +736,11 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             else None
         )
 
+    member this.RescanValueMap() =
+        // This will rescan the value map of the table, so that it is up to date with the current values.
+        // This is useful if you have changed the values of the table and want to update the value map.
+        _values.RescanValueMap()
+
     /// Splits the table rowWise into a collection of tables, so that each new table has only one value for the given column
     static member SplitByColumnValues(columnIndex) =
         fun (table : ArcTable) ->

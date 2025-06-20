@@ -2684,6 +2684,7 @@ let private tests_copy = testList "Copy" [
         match copy.GetCellAt(0,0) with
         | CompositeCell.Term oa -> oa.Name <- Some "NewAnnotation"
         | _ -> Expect.isTrue false "Cell not term?"
+        copy.RescanValueMap()
         Expect.equal (table.GetCellAt(0,0)) (CompositeCell.createTerm (OntologyAnnotation("OldAnnotation"))) "Cell of old table should stay as is"
         Expect.notEqual copy table "Should not be equal after change"
     testCase "UpdateUnitCell" <| fun _ ->
@@ -2694,7 +2695,7 @@ let private tests_copy = testList "Copy" [
             )
         let copy = table.Copy()
         Expect.equal copy table "Should be equal before change"
-        copy.SetCellAt(0,0,CompositeCell.createUnitized("NewValue",(OntologyAnnotation("NewAnnotation"))))
+        copy.SetCellAt(0,0,CompositeCell.createUnitized("NewValue",(OntologyAnnotation("NewAnnotation"))))        
         Expect.equal (table.GetCellAt(0,0)) (CompositeCell.createUnitized("OldValue",(OntologyAnnotation("OldAnnotation")))) "Cell of old table should stay as is"
         Expect.notEqual copy table "Should not be equal after change"
     testCase "UpdateAnnotationOfUnitCell" <| fun _ ->

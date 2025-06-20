@@ -18,6 +18,14 @@ let getEmptyCellForHeader (header:CompositeHeader) (columCellOption: CompositeCe
         | Some (CompositeCell.Unitized _)   -> CompositeCell.emptyUnitized
         | _                                 -> failwith "[extendBodyCells] This should never happen, IsTermColumn header must be paired with either term or unitized cell."
 
+let ensureCellHashInValueMap (value: CompositeCell) (valueMap: Dictionary<int, CompositeCell>) =
+    let hash = value.GetHashCode()
+    if valueMap.ContainsKey hash then
+        hash
+    else
+        // If value is not in the map, add it.
+        valueMap.Add(hash, value)
+        hash
 
 [<Erase>]
 type ColumnValueRefs =
@@ -159,6 +167,21 @@ type ArcTableValues (cols : Dictionary<int,ColumnValueRefs>, valueMap: Dictionar
             let column = _columns.[i]
             column.ToCellColumn(_valueMap, _rowCount, header)
         )
+
+    member this.RescanValueMap() =
+        let newValueMap = Dictionary<int, CompositeCell>()
+        for kv in _columns do
+            
+            match kv.Value with
+            | ColumnValueRefs.Constant valueHash ->
+                let hash = ensureCellHashInValueMap (_valueMap.[valueHash]) newValueMap
+                _columns.[kv.Key] <- ColumnValueRefs.Constant hash
+            | ColumnValueRefs.Sparse values ->
+                for ckv in values do
+                    let hash = ensureCellHashInValueMap (_valueMap.[ckv.Value]) newValueMap
+                    values.[ckv.Key] <- hash      
+        _valueMap <- newValueMap
+
 
     member this.Copy() =
         let nextValueMap = Dictionary<int, CompositeCell>()
@@ -354,14 +377,6 @@ module SanityChecks =
 
 module Unchecked =
 
-    let ensureCellHashInValueMap (value: CompositeCell) (valueMap: Dictionary<int, CompositeCell>) =
-        let hash = value.GetHashCode()
-        if valueMap.ContainsKey hash then
-            hash
-        else
-            // If value is not in the map, add it.
-            valueMap.Add(hash, value)
-            hash
 
     let tryGetCellAt (column: int,row: int) (values:ArcTableValues) : CompositeCell option =
         IntDictionary.tryFind column values.Columns
@@ -399,6 +414,7 @@ module Unchecked =
                             d.Add(i, hash)
                         else
                             d.Add(i, valueHash) // Keep the old value for other rows
+                    values.Columns.[columnIndex] <- ColumnValueRefs.Sparse d
             | Sparse vals ->
                 let hash = ensureCellHashInValueMap c values.ValueMap
                 IntDictionary.addOrUpdate rowIndex hash vals      
