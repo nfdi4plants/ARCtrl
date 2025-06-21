@@ -85,7 +85,7 @@ type ColumnValueRefs =
                     getEmptyCellForHeader header None
                 else
                     let i = values.Keys |> Seq.max
-                    let c = valueMap.[i]
+                    let c = valueMap.[values.[i - 1]]
                     getEmptyCellForHeader header (Some c)
             ResizeArray.init rowCount (fun i ->
                 if values.ContainsKey i then
@@ -350,10 +350,10 @@ module SanityChecks =
         let mutable isValid = true
         let mutable en = headers.GetEnumerator()
         let mutable colIndex = 0
-        if headers.Count <> columns.Count then
+        if headers.Count <> columns.Count && columns.Count <> 0 then
             (if raiseException then failwith else printfn "%s") $"Invalid table. Number of headers ({headers.Count}) does not match number of columns ({columns.Count})."
             isValid <- false
-        while isValid && en.MoveNext() do
+        while isValid && en.MoveNext() && columns.Count <> 0 do
             let header = en.Current
             let mutable colEn = columns.[colIndex].GetEnumerator()
             colIndex <- colIndex + 1
