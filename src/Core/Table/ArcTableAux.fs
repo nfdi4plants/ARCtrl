@@ -57,13 +57,13 @@ type ColumnValueRefs =
 
     static member fromCellColumn (column : ResizeArray<CompositeCell>, previousRowCount : int, valueMap: Dictionary<int, CompositeCell>) =
         let distinctValues = column |> ResizeArray.distinct
-        let columnValues = distinctValues |> ResizeArray.map(fun cell ->
+        let columnValues = column |> ResizeArray.map(fun cell ->
             let hash = cell.GetHashCode()
             if valueMap.ContainsKey hash |> not then
                 valueMap.Add(hash, cell)
             hash
         )
-        match columnValues.Count with
+        match distinctValues.Count with
         | 1 when column.Count >= previousRowCount -> Constant(columnValues.[0])
         | 1 ->
             let d = Dictionary<int, int>()
@@ -192,13 +192,14 @@ type ArcTableValues (cols : Dictionary<int,ColumnValueRefs>, valueMap: Dictionar
 
     override this.GetHashCode() =
         let mutable hash = 0
-        for column in _columns do         
-            match column.Value with
-            | ColumnValueRefs.Constant valueHash ->
-                for i = 0 to rowCount - 1 do
+        for i = 0 to this.ColumnCount - 1 do
+            match IntDictionary.tryFind i _columns with
+            | None -> ()         
+            | Some (ColumnValueRefs.Constant valueHash) ->
+                for i = 0 to _rowCount - 1 do
                     hash <- 0x9e3779b9 + i + (hash <<< 6) + (hash >>> 2)
                     hash <- 0x9e3779b9 + valueHash + (hash <<< 6) + (hash >>> 2)
-            | ColumnValueRefs.Sparse values ->
+            | Some (ColumnValueRefs.Sparse values) ->
                 for kv in values do
                     hash <- 0x9e3779b9 + kv.Key + (hash <<< 6) + (hash >>> 2)
                     hash <- 0x9e3779b9 + kv.Value + (hash <<< 6) + (hash >>> 2)
@@ -391,6 +392,37 @@ module Unchecked =
                     None
         )
 
+    let getCellWithDefault (column: int,row: int) (headers : ResizeArray<CompositeHeader>) (values:ArcTableValues) : CompositeCell =
+        if headers.Count <= column then
+            failwithf "Column index %d is out of bounds for ArcTableValues with column count %d." column headers.Count
+        match IntDictionary.tryFind column values.Columns with
+        | Some col ->
+            match col with
+            | ColumnValueRefs.Constant valueHash ->
+                values.ValueMap.[valueHash]
+            | ColumnValueRefs.Sparse vals ->          
+                if vals.ContainsKey row then
+                    (values.ValueMap.[vals.[row]])
+                elif vals.Count = 0 then
+                    // If the column is empty, we return an empty cell for the header.
+                    let header = headers.[column]
+                    getEmptyCellForHeader header None
+                else
+                    let header = headers.[column]
+                    let maxI = vals.Keys |> Seq.max
+                    let c = values.ValueMap.[vals.[maxI]]
+                    getEmptyCellForHeader header (Some c)
+        | None ->
+            if row < values.RowCount then
+                // If the column does not exist, we return an empty cell for the header.
+                CompositeCell.emptyFreeText
+            else
+                // If the column does not exist and the row is out of bounds, we return an empty cell for the header.
+                let header = headers.[column]
+                getEmptyCellForHeader header None
+            
+
+
     /// Add or update a cell in the dictionary.
     let setCellAt(columnIndex, rowIndex,c : CompositeCell) (values:ArcTableValues) =
         if rowIndex + 1 > values.RowCount then values.RowCount <- rowIndex + 1
@@ -582,6 +614,9 @@ module Unchecked =
         let newCol = ColumnValueRefs.fromCellColumn(newCells,  values.RowCount, values.ValueMap)
         addRefColumn newHeader newCol newCells.Count index forceReplace onlyHeaders headers values
 
+    let addColumnFill (newHeader: CompositeHeader) (newCell : CompositeCell) (index: int) (forceReplace: bool) (onlyHeaders: bool) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
+        let newCol = Constant (ensureCellHashInValueMap newCell values.ValueMap)
+        addRefColumn newHeader newCol 1 index forceReplace onlyHeaders headers values
 
     // We need to calculate the max number of rows between the new columns and the existing columns in the table.
     // `maxRows` will be the number of rows all columns must have after adding the new columns.

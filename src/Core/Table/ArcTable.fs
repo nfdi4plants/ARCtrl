@@ -119,12 +119,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             failwithf "Column index %i is out of bounds for table %s with %i columns." column this.Name this.ColumnCount
         if row > this.RowCount - 1 || row < 0 then
             failwithf "Row index %i is out of bounds for table %s with %i rows." row this.Name this.RowCount
-        match this.TryGetCellAt (column, row) with
-        | Some c -> c
-        | _ ->
-            let header = this.Headers.[column]
-            getEmptyCellForHeader header None
-            //failwithf "Unable to find cell for index: (%i, %i) in table %s" column row this.Name
+        Unchecked.getCellWithDefault (column,row) _headers _values
 
     static member getCellAt (column: int,row: int) =
         fun (table:ArcTable) ->
@@ -284,8 +279,13 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
 
     /// Adds a new column which fills in the single given value for the length of the table.
     member this.AddColumnFill (header: CompositeHeader, cell: CompositeCell, ?index: int ,?forceReplace : bool) =
-        let cells = ResizeArray.init this.RowCount (fun _ -> cell.Copy())
-        this.AddColumn(header, cells = cells, ?index = index,  ?forceReplace = forceReplace)
+        let index =
+            defaultArg index this.ColumnCount
+        let forceReplace = defaultArg forceReplace false
+        SanityChecks.validateColumnIndex index this.ColumnCount true
+        SanityChecks.validateColumn(CompositeColumn.create(header, ResizeArray [cell]))
+        //
+        Unchecked.addColumnFill header cell index forceReplace false this.Headers _values
 
     static member addColumnFill (header: CompositeHeader, cell: CompositeCell, ?index: int ,?forceReplace : bool) : ArcTable -> ArcTable =
         fun (table: ArcTable) ->
@@ -630,7 +630,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         if not(SkipValidation = Some true) then SanityChecks.validateRowIndex rowIndex this.RowCount false
         [|
             for columnIndex = 0 to this.ColumnCount - 1 do
-                this.TryGetCellAt(columnIndex, rowIndex).Value
+                this.GetCellAt(columnIndex, rowIndex)
         |]
         |> ResizeArray
 

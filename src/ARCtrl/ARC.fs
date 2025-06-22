@@ -49,9 +49,10 @@ module ARCAux =
 
 
     let getArcInvestigationFromContracts (contracts: Contract []) =
-        contracts 
-        |> Array.choose ArcInvestigation.tryFromReadContract
-        |> Array.exactlyOne 
+        match contracts |> Array.choose ArcInvestigation.tryFromReadContract with
+        | [|inv|] -> inv
+        | invs -> 
+            failwithf "Could not find investigation in contracts. Expected exactly one investigation, but found %d." (invs |> Array.length)
 
     let updateFSByISA (isa : ArcInvestigation) (fs : FileSystem) = 
 
