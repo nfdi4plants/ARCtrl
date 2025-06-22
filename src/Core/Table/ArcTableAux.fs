@@ -622,7 +622,30 @@ module Unchecked =
     // `maxRows` will be the number of rows all columns must have after adding the new columns.
     // This behaviour should be intuitive for the user, as Excel handles this case in the same way.
     let fillMissingCells (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
-        failwith "FillMissingCells not implemented"
+        if values.RowCount = 0 then ()
+        else
+            for i = 0 to values.ColumnCount - 1 do
+                match IntDictionary.tryFind i values.Columns with
+                | None ->
+                    let cell = getEmptyCellForHeader headers.[i] None
+                    let col = Constant (ensureCellHashInValueMap cell values.ValueMap)
+                    values.Columns.Add(i, col) |> ignore
+                | Some (ColumnValueRefs.Constant _) -> ()
+                | Some (ColumnValueRefs.Sparse vals) ->
+                    if vals.Count < values.RowCount then
+                        let header = headers.[i]                       
+                        let defaultCell =
+                            if vals.Count = 0 then
+                                getEmptyCellForHeader header None
+                            else
+                                let i = vals.Keys |> Seq.max
+                                let c = values.ValueMap.[vals.[i - 1]]
+                                getEmptyCellForHeader header (Some c)
+                        let defaultHash = ensureCellHashInValueMap defaultCell values.ValueMap
+                        for j = vals.Count to values.RowCount - 1 do
+                            if not (vals.ContainsKey j) then
+                                vals.Add(j, defaultHash)
+                    
 
 
     let addRow (index:int) (newCells:ResizeArray<CompositeCell>) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
