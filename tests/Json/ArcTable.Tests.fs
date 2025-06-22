@@ -97,11 +97,12 @@ let private tests_compressedExtended = testList "compressed_extended" [
 
             Expect.equal (table.Values.[(0,1)]) (decoded.Values.[(0,1)]) "Should be the same cell"
 
-            let cell = decoded.Values.[(0,0)]
+            let cell = decoded.Values.[(0,0)].Copy()
 
             match cell with
-            | CompositeCell.Term oa -> 
-              oa.Name <- Some "New Name"
+            | CompositeCell.Term oa ->
+                oa.Name <- Some "New Name"
+                decoded.SetCellAt (0, 0, CompositeCell.Term oa)
             | _ -> failwith "Expected a term"
 
             let otherCell = decoded.Values.[(0,1)]
