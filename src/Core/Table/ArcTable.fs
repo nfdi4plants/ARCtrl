@@ -391,44 +391,49 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
 
     // - Column API - //
     // GetColumnAt?
-    member this.GetColumn(columnIndex:int) : CompositeColumn =
+    member this.GetColumn(columnIndex:int, ?fillDefault : bool) : CompositeColumn =
+        let fillDefault = defaultArg fillDefault false
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
         let h = this.Headers.[columnIndex]
         let cells =
             [|
                 for i = 0 to this.RowCount - 1 do
                     match this.TryGetCellAt(columnIndex, i) with
-                    | None -> failwithf "Unable to find cell for index: (%i, %i)" columnIndex i
+                    | None when not fillDefault->
+                        failwithf "Unable to find cell for index: (%i, %i)" columnIndex i
+                    | None ->   
+                        let h = this.Headers.[columnIndex]
+                        getEmptyCellForHeader h None
                     | Some c -> c
             |]
             |> ResizeArray
         CompositeColumn.create(h, cells)
 
-    static member getColumn (index:int) =
+    static member getColumn (index:int, ?fillDefault) =
         fun (table:ArcTable) ->
-            table.GetColumn(index)
+            table.GetColumn(index, ?fillDefault = fillDefault)
 
-    member this.TryGetColumnByHeader (header:CompositeHeader) =
+    member this.TryGetColumnByHeader (header:CompositeHeader, ?fillDefault) =
         let index = this.Headers |> Seq.tryFindIndex (fun x -> x = header)
         index
-        |> Option.map (fun i -> this.GetColumn(i))
+        |> Option.map (fun i -> this.GetColumn(i, ?fillDefault = fillDefault))
 
-    static member tryGetColumnByHeader (header:CompositeHeader) =
+    static member tryGetColumnByHeader (header:CompositeHeader, ?fillDefault ) =
         fun (table:ArcTable) ->
-            table.TryGetColumnByHeader(header)
+            table.TryGetColumnByHeader(header, ?fillDefault = fillDefault)
 
     // tryGetColumnByHeaderBy
-    member this.TryGetColumnByHeaderBy (headerPredicate:CompositeHeader -> bool) = //better name for header / action
+    member this.TryGetColumnByHeaderBy (headerPredicate:CompositeHeader -> bool, ?fillDefault ) = //better name for header / action
         this.Headers
         |> Seq.tryFindIndex headerPredicate
-        |> Option.map (fun i -> this.GetColumn(i))
+        |> Option.map (fun i -> this.GetColumn(i, ?fillDefault = fillDefault))
 
-    static member tryGetColumnByHeaderBy (headerPredicate:CompositeHeader -> bool) =
+    static member tryGetColumnByHeaderBy (headerPredicate:CompositeHeader -> bool, ?fillDefault) =
         fun (table:ArcTable) ->
-            table.TryGetColumnByHeaderBy(headerPredicate)
+            table.TryGetColumnByHeaderBy(headerPredicate, ?fillDefault = fillDefault)
 
-    member this.GetColumnByHeader (header:CompositeHeader) =
-        match this.TryGetColumnByHeader(header) with
+    member this.GetColumnByHeader (header:CompositeHeader, ?fillDefault) =
+        match this.TryGetColumnByHeader(header, ?fillDefault = fillDefault) with
         | Some c -> c
         | None -> failwithf "Unable to find column with header in table %s: %O" this.Name header
 
@@ -744,7 +749,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
     /// Splits the table rowWise into a collection of tables, so that each new table has only one value for the given column
     static member SplitByColumnValues(columnIndex) =
         fun (table : ArcTable) ->
-            let column = table.GetColumn(columnIndex)
+            let column = table.GetColumn(columnIndex, fillDefault = true)
             let indexGroups = column.Cells |> ResizeArray.indexed |> ResizeArray.groupBy snd |> ResizeArray.map (fun (g,vs) -> vs |> ResizeArray.map fst)
             indexGroups
             |> ResizeArray.mapi (fun i indexGroup ->

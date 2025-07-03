@@ -27,7 +27,6 @@ let ensureCellHashInValueMap (value: CompositeCell) (valueMap: Dictionary<int, C
         valueMap.Add(hash, value)
         hash
 
-[<Erase>]
 type ColumnValueRefs =
     | Constant of int
     | Sparse of Dictionary<int,int>
