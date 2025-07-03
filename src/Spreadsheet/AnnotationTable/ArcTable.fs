@@ -94,6 +94,18 @@ let composeColumns (stringCellColumns : array<string []>) : CompositeColumn [] =
     |> groupColumnsByHeader
     |> Array.map CompositeColumn.fromStringCellColumns
 
+/// Groups and parses a collection of single columns into the according ISA composite columns
+let composeArcTableValues (stringCellColumns : array<string []>) : CompositeHeader [] * ArcTableAux.ArcTableValues =
+    let valueMap = System.Collections.Generic.Dictionary<int, CompositeCell>()
+    let rowCount = stringCellColumns.[0].Length - 1
+    let headers, columns = 
+        stringCellColumns
+        |> groupColumnsByHeader
+        |> Array.map (CompositeColumn.ColumnValueRefs.fromStringCellColumns valueMap)
+        |> Array.unzip
+    headers, ArcTableAux.ArcTableValues.fromRefColumns(columns, valueMap, rowCount)
+    
+
 /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
 let tryFromFsWorksheet (sheet : FsWorksheet) =
     try
@@ -108,12 +120,11 @@ let tryFromFsWorksheet (sheet : FsWorksheet) =
                         | None -> ""
                     |]
                 |]              
-            let compositeColumns = 
+            let headers,values = 
                 stringCellColumns
                 |> Array.map CompositeColumn.fixDeprecatedIOHeader
-                |> composeColumns
-            ArcTable.init sheet.Name
-            |> ArcTable.addColumns(compositeColumns)
+                |> composeArcTableValues
+            ArcTable.fromArcTableValues(sheet.Name, headers = ResizeArray headers, values = values)
             |> Some
         | None ->
             None

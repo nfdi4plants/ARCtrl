@@ -155,6 +155,13 @@ type ArcTableValues (cols : Dictionary<int,ColumnValueRefs>, valueMap: Dictionar
         )      
         ArcTableValues(parsedColumns, valueMap, rowCount)
 
+    static member fromRefColumns (columns: #seq<ColumnValueRefs>, valueMap: Dictionary<int, CompositeCell>, rowCount: int) =
+        let parsedColumns = Dictionary<int, ColumnValueRefs>()
+        columns |> Seq.iteri (fun i column ->
+            parsedColumns.Add(i, column)
+        )
+        ArcTableValues(parsedColumns, valueMap, rowCount)
+
     static member init () =
         let valueMap = Dictionary<int, CompositeCell>() //initValueMap()
         let parsedColumns = Dictionary<int, ColumnValueRefs>()

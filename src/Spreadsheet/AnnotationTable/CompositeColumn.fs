@@ -32,12 +32,21 @@ let fromStringCellColumns (columns : array<string []>) : CompositeColumn =
     let l = columns.[0].Length
     let cells = 
         ResizeArray [|
-        for i = 1 to l - 1 do
-            columns
-            |> Array.map (fun c -> c.[i])
-            |> cellParser
+            for i = 1 to l - 1 do
+                columns
+                |> Array.map (fun c -> c.[i])
+                |> cellParser
         |]                 
     CompositeColumn.create(header,cells)
+
+let stringCellColumnsOfFsColumns (columns : FsColumn []) : string [][] =
+    columns
+    |> Array.map (fun c ->
+        c.ToDenseColumn()
+        c.Cells
+        |> Seq.toArray
+        |> Array.map (fun cell -> cell.ValueAsString())
+    )
 
 
 let fromFsColumns (columns : FsColumn []) : CompositeColumn = 
@@ -92,3 +101,64 @@ let toFsColumns (column : CompositeColumn) : list<FsCell list> =
             |> List.map (fun s -> FsCell(s))
         )
     fsColumns
+
+
+module ColumnValueRefs =
+    open System.Collections.Generic
+    open ArcTableAux
+
+
+    let fromStringCellColumns (valueMap : Dictionary<int, CompositeCell>) (columns : string [][]) : CompositeHeader*ColumnValueRefs =
+        // This hashmap is only for internal performance improvements and is supposed to check whether a new cell value has to be created
+        // Maps from the hash of the row strings to the cell hash
+        let hashMap = Dictionary<int, int>()
+        // This represents a potential sparse column,
+        // Only filled if constant is set to false
+        // Maps from row index to cell hash
+        let cells = Dictionary<int, int>()
+        // This is true, as long as there are no distinct values in the column
+        let mutable constant = true
+        let header, cellParser = 
+            columns
+            |> Array.map (fun c -> c.[0])
+            |> CompositeHeader.fromStringCells
+        let l = columns.[0].Length
+        // If the column consists only of the header, we can return an empty sparse column
+        if l = 1 then
+            header, ColumnValueRefs.Sparse cells
+        else 
+            for i = 1 to l - 1 do
+                let strings =
+                    columns
+                    |> Array.map (fun c -> c.[i])
+                let hash =
+                    strings
+                    |> Seq.map (fun s -> s.GetHashCode())
+                    |> Seq.reduce HashCodes.mergeHashes
+                match IntDictionary.tryFind hash hashMap with
+                | Some cellHash when constant->
+                    ()
+                | Some cellHash ->
+                    // If the hash is already in the hashmap, we can use it
+                    cells.[i - 1] <- cellHash
+                | None when i = 1 ->
+                    let cell = cellParser strings
+                    let cellHash = ArcTableAux.ensureCellHashInValueMap cell valueMap 
+                    hashMap.[hash] <- cellHash
+                    cells.[i - 1] <- cellHash
+                | None ->
+                    if constant then
+                        // If the column was constant until now, we can set it to unconstant now
+                        constant <- false
+                        // We also need to fill the cells up until this point
+                        for j = 0 to i - 1 do
+                            let cellHash = cells.[0]
+                            cells.[j] <- cellHash
+                    let cell = cellParser strings
+                    let cellHash = ArcTableAux.ensureCellHashInValueMap cell valueMap
+                    hashMap.[hash] <- cellHash
+                    cells.[i - 1] <- cellHash                  
+            if constant then
+                header, ColumnValueRefs.Constant cells.[0]           
+            else
+                header, ColumnValueRefs.Sparse cells
