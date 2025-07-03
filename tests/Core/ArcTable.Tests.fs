@@ -2542,8 +2542,8 @@ let private tests_Join = testList "Join" [
             table.Join(joinTable,-1,TableJoinOptions.WithUnit)
             Expect.equal table.ColumnCount 2 "column count"
             Expect.equal table.RowCount 5 "row count"
-            Expect.equal table.Values.[(0,0)] (CompositeCell.createTerm (OntologyAnnotation())) "empty term cell"
-            Expect.equal table.Values.[(1,0)] (CompositeCell.createUnitized("",oa_temperature)) "temperature unit cell"
+            Expect.equal (table.GetCellAt(0,0)) (CompositeCell.createTerm (OntologyAnnotation())) "empty term cell"
+            Expect.equal (table.GetCellAt(1,0)) (CompositeCell.createUnitized("",oa_temperature)) "temperature unit cell"
     ]
     testList "TableJoinOption.WithValues" [
         testCase "Add to empty" <| fun _ ->
