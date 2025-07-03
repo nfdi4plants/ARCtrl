@@ -55,28 +55,28 @@ let private tests_equals = testList "Equals" [
         let oa2 = OntologyAnnotation("instrument model", "MSS")
         Expect.notEqual oa1 oa2 ""
     testCase "Full" <| fun _ ->   
-        let oa1 = OntologyAnnotation("instrument model", "MS", "MS:00000001", ResizeArray [Comment("KeyName", "Value1")])
-        let oa2 = OntologyAnnotation("instrument model", "MS", "MS:00000001", ResizeArray [Comment("KeyName", "Value1")])
+        let oa1 = OntologyAnnotation("instrument model", "MS", "MS:00000001", comments = ResizeArray [Comment("KeyName", "Value1")])
+        let oa2 = OntologyAnnotation("instrument model", "MS", "MS:00000001", comments = ResizeArray [Comment("KeyName", "Value1")])
         Expect.equal oa1 oa2 ""
     testCase "Full, comments ignored" <| fun _ ->   
-        let oa1 = OntologyAnnotation("instrument model", "MS", "MS:00000001", ResizeArray [Comment("KeyName", "Value1")])
+        let oa1 = OntologyAnnotation("instrument model", "MS", "MS:00000001", comments = ResizeArray [Comment("KeyName", "Value1")])
         let oa2 = OntologyAnnotation("instrument model", "MS", "MS:00000001")
         Expect.equal oa1 oa2 ""
     testCase "TANInfo" <| fun _ ->   
-        let oa1 = OntologyAnnotation("instrument model", "MS", "http://purl.obolibrary.org/obo/MS_00000001", ResizeArray [Comment("KeyName", "Value1")])
-        let oa2 = OntologyAnnotation("instrument model", "MS", "MS:00000001", ResizeArray [Comment("KeyName", "Value1")])
+        let oa1 = OntologyAnnotation("instrument model", "MS", "http://purl.obolibrary.org/obo/MS_00000001", comments = ResizeArray [Comment("KeyName", "Value1")])
+        let oa2 = OntologyAnnotation("instrument model", "MS", "MS:00000001", comments = ResizeArray [Comment("KeyName", "Value1")])
         Expect.equal oa1 oa2 ""
     testCase "TANInfo, missing tsr" <| fun _ ->   
-        let oa1 = OntologyAnnotation("instrument model", "MS", "http://purl.obolibrary.org/obo/MS_00000001", ResizeArray [Comment("KeyName", "Value1")])
+        let oa1 = OntologyAnnotation("instrument model", "MS", "http://purl.obolibrary.org/obo/MS_00000001", comments = ResizeArray [Comment("KeyName", "Value1")])
         let oa2 = OntologyAnnotation("instrument model", tan= "MS:00000001", comments=ResizeArray [Comment("KeyName", "Value1")])
         Expect.equal oa1 oa2 "This should not fail"
     testCase "TANInfo, different tsr" <| fun _ ->   
-        let oa1 = OntologyAnnotation("instrument model", "MS", "http://purl.obolibrary.org/obo/MS_00000001", ResizeArray [Comment("KeyName", "Value1")])
+        let oa1 = OntologyAnnotation("instrument model", "MS", "http://purl.obolibrary.org/obo/MS_00000001", comments = ResizeArray [Comment("KeyName", "Value1")])
         let oa2 = OntologyAnnotation("instrument model", "MSS", tan= "MS:00000001", comments=ResizeArray [Comment("KeyName", "Value1")])
         Expect.notEqual oa1 oa2 ""
         Expect.isFalse (oa1 = oa2) ""
     testCase "not equal" <| fun _ ->   
-        let oa1 = OntologyAnnotation("instrument model", "MS", "http://purl.obolibrary.org/obo/MS_00000001", ResizeArray [Comment("KeyName", "Value1")])
+        let oa1 = OntologyAnnotation("instrument model", "MS", "http://purl.obolibrary.org/obo/MS_00000001", comments = ResizeArray [Comment("KeyName", "Value1")])
         let oa2 = OntologyAnnotation(tan= "MS:00000001", comments=ResizeArray [Comment("KeyName", "Value1")])
         Expect.notEqual oa1 oa2 ""
 ]
