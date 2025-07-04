@@ -1609,7 +1609,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             newRun
 
     // - Table API - //
-    static member updateTable(name: string, updateFun: ArcTable -> unit) : ArcRun -> ArcRun =
+    static member mapTable(name: string, updateFun: ArcTable -> unit) : ArcRun -> ArcRun =
         fun (run:ArcRun) ->
             let newRun = run.Copy()
             newRun.MapTable(name, updateFun)

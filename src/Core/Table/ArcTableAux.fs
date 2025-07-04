@@ -645,7 +645,7 @@ module Unchecked =
                                 getEmptyCellForHeader header None
                             else
                                 let i = vals.Keys |> Seq.max
-                                let c = values.ValueMap.[vals.[i - 1]]
+                                let c = values.ValueMap.[vals.[i]]
                                 getEmptyCellForHeader header (Some c)
                         let defaultHash = ensureCellHashInValueMap defaultCell values.ValueMap
                         for j = vals.Count to values.RowCount - 1 do
