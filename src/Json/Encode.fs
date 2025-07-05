@@ -72,3 +72,11 @@ module Encode =
             values
             |> Seq.map encoder
             |> Encode.seq
+
+    let dictionary (keyEncoder : Encoder<'key>) (valueEncoder : Encoder<'value>) (values: System.Collections.Generic.IDictionary<'key, 'value>) =
+        if values.Count = 0 then
+            Encode.nil
+        else
+            values
+            |> Seq.map (fun (KeyValue(k, v)) -> Encode.tuple2 keyEncoder valueEncoder (k,v))
+            |> Encode.seq

@@ -339,14 +339,14 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             newTable
 
     // - Column API - //
-    member this.AddColumns (columns: CompositeColumn [], ?index: int, ?forceReplace: bool) : unit =
+    member this.AddColumns (columns: seq<CompositeColumn>, ?index: int, ?forceReplace: bool) : unit =
         let mutable index = defaultArg index this.ColumnCount
         let forceReplace = defaultArg forceReplace false
         SanityChecks.validateColumnIndex index this.ColumnCount true
         SanityChecks.validateNoDuplicateUniqueColumns columns
-        columns |> Array.iter (fun x -> SanityChecks.validateColumn x)
+        columns |> Seq.iter (fun x -> SanityChecks.validateColumn x)
         columns
-        |> Array.iter (fun col ->
+        |> Seq.iter (fun col ->
             let prevHeadersCount = this.Headers.Count
             Unchecked.addColumn col.Header col.Cells index forceReplace false this.Headers _values
             // Check if more headers, otherwise `ArcTableAux.insertColumn` replaced a column and we do not need to increase index.

@@ -9,18 +9,24 @@ module ArcTable =
 
     let encoder (table: ArcTable) =
         let keyEncoder : Encoder<int*int> = Encode.tuple2 Encode.int Encode.int
-        let valueEncoder = CompositeCell.encoder
+        let columnEncoder (col : ArcTableAux.ColumnValueRefs) : IEncodable =
+            match col with
+            | ArcTableAux.ColumnValueRefs.Constant hash -> Encode.int hash
+            | ArcTableAux.ColumnValueRefs.Sparse cells -> Encode.dictionary Encode.int Encode.int cells
+
         Encode.object [
         "name", Encode.string table.Name
         if table.Headers.Count <> 0 then
-            "header", Encode.list [
+                "headers", Encode.list [
                 for h in table.Headers do yield CompositeHeader.encoder h
             ]
         if table.Values.RowCount <> 0 then
-            "values", Encode.map keyEncoder valueEncoder ([for KeyValue(k,v) in table.Values do yield k, v] |> Map)
+                "cells", Encode.dictionary Encode.int CompositeCell.encoder table.Values.ValueMap
+                "columns", Encode.dictionary Encode.int columnEncoder table.Values.Columns
+                "rowCount", Encode.int table.RowCount
         ] 
 
-    let decoder : Decoder<ArcTable> =
+    let decoderV2Deprecated : Decoder<ArcTable> =
         Decode.object(fun get ->
             let decodedHeader = get.Optional.Field "header" (Decode.list CompositeHeader.decoder) |> Option.defaultValue List.empty |> ResizeArray 
             let keyDecoder : Decoder<int*int> = Decode.tuple2 Decode.int Decode.int
@@ -37,24 +43,37 @@ module ArcTable =
             t
         )
 
-    open CellTable
+    let decoder : Decoder<ArcTable> =
 
-    let encoderCompressedColumn (columnIndex : int) (rowCount : int) (cellTable : CellTableMap) (table: ArcTable) =
-        if table.Headers[columnIndex].IsIOType || rowCount < 100 then
-            Encode.array [|for r = 0 to rowCount - 1 do CellTable.encodeCell cellTable table.Values[columnIndex,r]|]
+        let columnDecoder : Decoder<ArcTableAux.ColumnValueRefs> =
+            Decode.oneOf [
+                Decode.int |> Decode.map ArcTableAux.ColumnValueRefs.Constant
+                Decode.dictionary Decode.int Decode.int |> Decode.map ArcTableAux.ColumnValueRefs.Sparse
+            ]
+        let decoder : Decoder<ArcTable> =
+            Decode.object(fun get ->               
+                let decodedHeader = get.Optional.Field "headers" (Decode.resizeArray CompositeHeader.decoder) |> Option.defaultValue (ResizeArray())
+                let decodedCells = get.Optional.Field "cells" (Decode.dictionary Decode.int CompositeCell.decoder) |> Option.defaultValue (Dictionary())
+                let decodedColumns = get.Optional.Field "columns" (Decode.dictionary Decode.int columnDecoder) |> Option.defaultValue (Dictionary())
+                let rowCount = get.Optional.Field "rowCount" Decode.int |> Option.defaultValue 0
+
+                let values = ArcTableAux.ArcTableValues(decodedColumns, decodedCells, rowCount)
+                
+                ArcTable.fromArcTableValues(
+                    get.Required.Field "name" Decode.string,
+                    decodedHeader,
+                    values
+                )
+            )
+        {new Decoder<ArcTable> with
+            member this.Decode (helper, column) =
+                if helper.hasProperty "values" column then
+                    // This is the old format, we need to decode it with the old decoder
+                    decoderV2Deprecated.Decode(helper, column)
         else
-            let mutable current = table.Values.[(columnIndex,0)]
-            let mutable from = 0
-            [|
-                for i = 1 to rowCount - 1 do
-                    let next = table.Values.[(columnIndex,i)]
-                    if next <> current then
-                        yield Encode.object ["f",Encode.int from; "t", Encode.int(i-1); "v",CellTable.encodeCell cellTable current]
-                        current <- next
-                        from <- i
-                yield Encode.object ["f",Encode.int from; "t", Encode.int(rowCount-1); "v",CellTable.encodeCell cellTable current]
-            |]
-            |> Encode.array
+                    // This is the new format, we can use the new decoder
+                    decoder.Decode(helper, column)              
+        }
       
     let decoderCompressedColumn (cellTable : CellTableArray) (table: ArcTable) (columnIndex : int)  =
         {new Decoder<unit> with
