@@ -574,7 +574,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         for row in rows do
             for columnIndex in 0 .. this.ColumnCount-1 do
                 let h = this.Headers.[columnIndex]
-                row.[columnIndex].ValidateAgainstHeader(h) |> ignore
+                row.[columnIndex].ValidateAgainstHeader(h, raiseException = true) |> ignore
         // Sanity checks - end
         Unchecked.addRows index rows this.Headers _values
 
