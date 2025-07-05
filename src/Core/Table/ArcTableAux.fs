@@ -45,7 +45,7 @@ type ColumnValueRefs =
             values |> Seq.iter (fun v -> d.Add(v.Key, v.Value))
             Sparse d
 
-    member this.AsSparse(rowCount : int) =
+    member this.ToSparse(rowCount : int) =
         match this with
         | Constant valueHash ->
             let d = Dictionary<int, int>()
@@ -54,25 +54,52 @@ type ColumnValueRefs =
             Sparse d
         | Sparse values -> Sparse values
 
-    static member fromCellColumn (column : ResizeArray<CompositeCell>, previousRowCount : int, valueMap: Dictionary<int, CompositeCell>) =
-        let distinctValues = column |> ResizeArray.distinct
-        let columnValues = column |> ResizeArray.map(fun cell ->
-            let hash = cell.GetHashCode()
-            if valueMap.ContainsKey hash |> not then
-                valueMap.Add(hash, cell)
-            hash
-        )
-        match distinctValues.Count with
-        | 1 when column.Count >= previousRowCount -> Constant(columnValues.[0])
-        | 1 ->
-            let d = Dictionary<int, int>()
-            for i in 0 .. column.Count - 1 do
-                d.Add(i, columnValues.[0])
-            Sparse d
-        | _ ->
-            let d = Dictionary<int, int>()
-            columnValues |> Seq.iteri (fun i v -> d.Add(i, v))            
-            Sparse d
+    member this.AsSparse() =
+        match this with
+        | Constant valueHash -> failwith "Cannot convert a constant column to sparse. Use ToSparse first."
+        | Sparse values -> values
+
+    member this.AsConstant() =
+        match this with
+        | Constant valueHash -> valueHash
+        | Sparse _ -> failwith "Cannot convert a sparse column to constant. Use ToSparse first."
+
+    static member fromCellColumn (column : #seq<CompositeCell>, previousRowCount : int, valueMap: Dictionary<int, CompositeCell>) =
+        let l = Seq.length column
+        let cells = Dictionary<int, int>()
+    
+        if l = 0 then
+            ColumnValueRefs.Sparse cells
+        else 
+            // We assume constant, as long as there are no distinct values in the column or the new column is shorter than the rest of the table
+            // If the column consists only of the header, we can return an empty sparse column
+            let mutable current = 
+                let hash = ensureCellHashInValueMap (Seq.item 0 column) valueMap
+                if l >= previousRowCount then 
+                    ColumnValueRefs.Constant hash
+                else 
+                    cells.Add(0, hash)
+                    ColumnValueRefs.Sparse cells
+            column
+            |> Seq.iteri (fun i cell ->    
+                let hash = 
+                    ensureCellHashInValueMap cell valueMap
+                match current with
+                // If the current column is constant and the hashes match, it stays constant
+                | Constant cellHash when cellHash = hash ->
+                    ()
+                // If the current column is constant and the hashes do not match, it becomes sparse and we have to fill it up until this point
+                | Constant cellHash ->
+                    let cells = Dictionary<int, int>()
+                    for j = 0 to i - 1 do                       
+                        cells.[j] <- cellHash                  
+                    cells.[i] <- hash
+                    current <- ColumnValueRefs.Sparse cells
+                // If the current column is sparse, we just add the new hash
+                | Sparse cells->
+                    cells.[i] <- hash
+            )
+            current
 
     member this.ToCellColumn(valueMap: Dictionary<int, CompositeCell>, rowCount : int, header : CompositeHeader) =
         match this with
@@ -433,7 +460,10 @@ module Unchecked =
     let setCellAt(columnIndex, rowIndex,c : CompositeCell) (values:ArcTableValues) =
         if rowIndex + 1 > values.RowCount then values.RowCount <- rowIndex + 1
         match IntDictionary.tryFind columnIndex values.Columns with
-        | None ->           
+        | None when values.RowCount <= 1 && rowIndex = 0 ->
+            let hash = ensureCellHashInValueMap c values.ValueMap
+            values.Columns.Add(columnIndex, ColumnValueRefs.Constant hash)
+        | None ->
             // If the column does not exist, we create a new one.
             let newColumn = Dictionary<int, int>()
             let hash = ensureCellHashInValueMap c values.ValueMap
@@ -571,7 +601,7 @@ module Unchecked =
         if rowCount > values.RowCount then
             values.RowCount <- rowCount
             for kv in values.Columns do
-                values.Columns.[kv.Key] <- kv.Value.AsSparse(values.RowCount)
+                values.Columns.[kv.Key] <- kv.Value.ToSparse(values.RowCount)
         // In case we replace an existing unique column, we should adjust the new rowCount. For other constant rows we
         if rowCount < values.RowCount && hasDuplicateUnique.IsSome && forceReplace && values.Columns.Count = 1 then
             values.RowCount <- rowCount
@@ -615,10 +645,10 @@ module Unchecked =
             setNewCells()
         ()
 
-    let addColumn (newHeader: CompositeHeader) (newCells: ResizeArray<CompositeCell>) (index: int) (forceReplace: bool) (onlyHeaders: bool) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
+    let addColumn (newHeader: CompositeHeader) (newCells: #seq<CompositeCell>) (index: int) (forceReplace: bool) (onlyHeaders: bool) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
         // Create a new column with the new header and cells
         let newCol = ColumnValueRefs.fromCellColumn(newCells,  values.RowCount, values.ValueMap)
-        addRefColumn newHeader newCol newCells.Count index forceReplace onlyHeaders headers values
+        addRefColumn newHeader newCol (Seq.length newCells) index forceReplace onlyHeaders headers values
 
     let addColumnFill (newHeader: CompositeHeader) (newCell : CompositeCell) (index: int) (forceReplace: bool) (onlyHeaders: bool) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
         let newCol = Constant (ensureCellHashInValueMap newCell values.ValueMap)

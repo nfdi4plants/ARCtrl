@@ -2254,6 +2254,73 @@ let private tests_AddRow =
                     else
                         Expect.equal table.Values.[columnIndex, rowIndex] newTable.Values.[columnIndex, rowIndex-1] $"Cell {columnIndex},{rowIndex}"
         )
+        testCase "row to empty table, constant" (fun () ->
+            let headers = ResizeArray [|
+                CompositeHeader.Input IOType.Sample
+                CompositeHeader.Output IOType.Data
+                CompositeHeader.Parameter oa_temperature
+                CompositeHeader.Characteristic oa_species
+                CompositeHeader.Parameter oa_SCIEXInstrumentModel
+            |]
+            let table = ArcTable(TableName, headers = headers)
+            table.AddRow(row_default)
+            Expect.equal table.ColumnCount 5 "ColumnCount"
+            Expect.equal table.RowCount 1 "RowCount"
+            let c1 = Expect.wantSome (IntDictionary.tryFind 0 table.Values.Columns) "Column 0 should be present"
+            match c1 with
+            | ArcTableAux.Constant _ -> Expect.isTrue true "Column 0 should be constant"
+            | _ -> Expect.isTrue false "Column 0 should be constant"
+            let c2 = Expect.wantSome (IntDictionary.tryFind 1 table.Values.Columns) "Column 1 should be present"
+            match c2 with
+            | ArcTableAux.Constant _ -> Expect.isTrue true "Column 1 should be constant"
+            | _ -> Expect.isTrue false "Column 1 should be constant"
+            let c3 = Expect.wantSome (IntDictionary.tryFind 2 table.Values.Columns) "Column 2 should be present"
+            match c3 with
+            | ArcTableAux.Constant _ -> Expect.isTrue true "Column 2 should be constant"
+            | _ -> Expect.isTrue false "Column 2 should be constant"
+            let c4 = Expect.wantSome (IntDictionary.tryFind 3 table.Values.Columns) "Column 3 should be present"
+            match c4 with
+            | ArcTableAux.Constant _ -> Expect.isTrue true "Column 3 should be constant"
+            | _ -> Expect.isTrue false "Column 3 should be constant"
+            let c5 = Expect.wantSome (IntDictionary.tryFind 4 table.Values.Columns) "Column 4 should be present"
+            match c5 with
+            | ArcTableAux.Constant _ -> Expect.isTrue true "Column 4 should be constant"
+            | _ -> Expect.isTrue false "Column 4 should be constant"
+        )
+        testCase "same row to table, constant" (fun () ->
+            let headers = ResizeArray [|
+                CompositeHeader.Input IOType.Sample
+                CompositeHeader.Output IOType.Data
+                CompositeHeader.Parameter oa_temperature
+                CompositeHeader.Characteristic oa_species
+                CompositeHeader.Parameter oa_SCIEXInstrumentModel
+            |]
+            let table = ArcTable(TableName, headers = headers)
+            table.AddRow(row_default)
+            table.AddRow(row_default)
+            Expect.equal table.ColumnCount 5 "ColumnCount"
+            Expect.equal table.RowCount 2 "RowCount"
+            let c1 = Expect.wantSome (IntDictionary.tryFind 0 table.Values.Columns) "Column 0 should be present"
+            match c1 with
+            | ArcTableAux.Constant _ -> Expect.isTrue true "Column 0 should be constant"
+            | _ -> Expect.isTrue false "Column 0 should be constant"
+            let c2 = Expect.wantSome (IntDictionary.tryFind 1 table.Values.Columns) "Column 1 should be present"
+            match c2 with
+            | ArcTableAux.Constant _ -> Expect.isTrue true "Column 1 should be constant"
+            | _ -> Expect.isTrue false "Column 1 should be constant"
+            let c3 = Expect.wantSome (IntDictionary.tryFind 2 table.Values.Columns) "Column 2 should be present"
+            match c3 with
+            | ArcTableAux.Constant _ -> Expect.isTrue true "Column 2 should be constant"
+            | _ -> Expect.isTrue false "Column 2 should be constant"
+            let c4 = Expect.wantSome (IntDictionary.tryFind 3 table.Values.Columns) "Column 3 should be present"
+            match c4 with
+            | ArcTableAux.Constant _ -> Expect.isTrue true "Column 3 should be constant"
+            | _ -> Expect.isTrue false "Column 3 should be constant"
+            let c5 = Expect.wantSome (IntDictionary.tryFind 4 table.Values.Columns) "Column 4 should be present"
+            match c5 with
+            | ArcTableAux.Constant _ -> Expect.isTrue true "Column 4 should be constant"
+            | _ -> Expect.isTrue false "Column 4 should be constant"
+        )
     ]
 
 let private tests_AddRows = 
