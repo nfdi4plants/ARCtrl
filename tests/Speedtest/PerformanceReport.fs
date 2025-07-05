@@ -121,8 +121,64 @@ let table_GetHashCode =
 //        //                ArcTableAux.Unchecked.addCellAt(i,j,CompositeCell.createFreeText $"Cell_{i}_{j}") table.Values
 //        //    Expect.isFasterThan f1 f2 "SetCell Implementation should be faster than reference"
 
+let table_AddColumnsWithDistinctValues =
+    let initTable () = ArcTable("MyTable")
+    let mutable columns = ResizeArray()
+    let prepareColumns () =
+        columns.Add (
+            CompositeColumn.create(header = CompositeHeader.Input IOType.Sample, cells = ResizeArray.init 10000 (fun i -> CompositeCell.FreeText $"Source_{i}"))
+        )
+        columns.Add (
+            CompositeColumn.create(header = CompositeHeader.FreeText "Freetext1", cells = ResizeArray.init 10000 (fun i -> CompositeCell.FreeText $"FT1_{i}"))
+        )
+        columns.Add (
+            CompositeColumn.create(header = CompositeHeader.FreeText "Freetext2", cells = ResizeArray.init 10000 (fun i -> CompositeCell.FreeText $"FT2_{i}"))
+        )
+        columns.Add (
+            CompositeColumn.create(header = CompositeHeader.Output IOType.Sample, cells = ResizeArray.init 10000 (fun i -> CompositeCell.FreeText $"Sample_{i}"))
+        )
 
-let table_AddRows =
+    PerformanceTest.create
+        "Table_AddColumnsWithDistinctValues"
+        "Add 4 columns with 10000 distinct values each."
+        prepareColumns
+        false // Do not prepare again, as the rows are used and not altered
+        (fun _ ->
+            let table = initTable()
+            table.AddColumns(columns)
+            |> ignore
+        )
+
+let table_AddColumnsWithIdenticalValues =
+    let initTable () = ArcTable("MyTable")
+    let mutable columns = ResizeArray()
+    let prepareColumns () =
+        columns.Add (
+            CompositeColumn.create(header = CompositeHeader.Input IOType.Sample, cells = ResizeArray.init 10000 (fun _ -> CompositeCell.FreeText "Source_5000"))
+        )
+        columns.Add (
+            CompositeColumn.create(header = CompositeHeader.FreeText "Freetext1", cells = ResizeArray.init 10000 (fun _ -> CompositeCell.FreeText "FT1_5000"))
+        )
+        columns.Add (
+            CompositeColumn.create(header = CompositeHeader.FreeText "Freetext2", cells = ResizeArray.init 10000 (fun _ -> CompositeCell.FreeText "FT2_5000"))
+        )
+        columns.Add (
+            CompositeColumn.create(header = CompositeHeader.Output IOType.Sample, cells = ResizeArray.init 10000 (fun _ -> CompositeCell.FreeText "Sample_5000"))
+        )
+
+    PerformanceTest.create
+        "Table_AddColumnsWithIdenticalValues"
+        "Add 4 columns with 10000 identical values each."
+        prepareColumns
+        false // Do not prepare again, as the rows are used and not altered
+        (fun _ ->
+            let table = initTable()
+            table.AddColumns(columns)
+            |> ignore
+        )
+
+
+let table_AddDistinctRows =
     let initTable () =
         ArcTable("MyTable", ResizeArray [CompositeHeader.Input IOType.Sample; CompositeHeader.FreeText "Freetext1"; CompositeHeader.FreeText "Freetext2"; CompositeHeader.Output IOType.Sample])
     let mutable rows = ResizeArray()
@@ -131,8 +187,28 @@ let table_AddRows =
          ResizeArray.init 10000 (fun i -> 
             ResizeArray [|CompositeCell.FreeText $"Source_{i}"; CompositeCell.FreeText $"FT1_{i}"; CompositeCell.FreeText $"FT2_{i}"; CompositeCell.FreeText $"Sample_{i}"; |])
     PerformanceTest.create
-        "Table_AddRows"
-        "Add 10000 rows to a table with 4 columns."
+        "Table_AddDistinctRows"
+        "Add 10000 distinct rows to a table with 4 columns."
+        prepareRows
+        false // Do not prepare again, as the rows are used and not altered
+        (fun _ ->
+            let table = initTable()
+            table.AddRows(rows)
+            |> ignore
+        )
+
+
+let table_AddIdenticalRows =
+    let initTable () =
+        ArcTable("MyTable", ResizeArray [CompositeHeader.Input IOType.Sample; CompositeHeader.FreeText "Freetext1"; CompositeHeader.FreeText "Freetext2"; CompositeHeader.Output IOType.Sample])
+    let mutable rows = ResizeArray()
+    let prepareRows () =
+        rows <-
+         ResizeArray.init 10000 (fun i -> 
+            ResizeArray [|CompositeCell.FreeText $"Source_{5000}"; CompositeCell.FreeText $"FT1_{5000}"; CompositeCell.FreeText $"FT2_{5000}"; CompositeCell.FreeText $"Sample_{5000}"; |])
+    PerformanceTest.create
+        "Table_AddIdenticalRows"
+        "Add 10000 identical rows to a table with 4 columns."
         prepareRows
         false // Do not prepare again, as the rows are used and not altered
         (fun _ ->
@@ -142,7 +218,7 @@ let table_AddRows =
         )
 
 let table_fillMissingCells =
-    let headers = ResizeArray [CompositeHeader.Input IOType.Sample;CompositeHeader.FreeText "Freetext1" ; CompositeHeader.FreeText "Freetext2"; CompositeHeader.Output IOType.Sample]
+    let headers = ResizeArray [CompositeHeader.Input IOType.Sample;CompositeHeader.FreeText "Freetext1" ; CompositeHeader.FreeText "Freetext2"; CompositeHeader.FreeText "Freetext3"; CompositeHeader.FreeText "Freetext4"; CompositeHeader.FreeText "Freetext5"; CompositeHeader.Output IOType.Sample]
     let mutable values = ArcTableAux.ArcTableValues.init()
     
     let prepareValues () =
@@ -250,7 +326,10 @@ let investigation_toWorkbook_ManyStudies =
 let allPerformanceTests = 
     [
         table_GetHashCode
-        table_AddRows
+        table_AddDistinctRows
+        table_AddIdenticalRows
+        table_AddColumnsWithDistinctValues
+        table_AddColumnsWithIdenticalValues
         table_fillMissingCells
         table_toJson
         table_toCompressedJson
