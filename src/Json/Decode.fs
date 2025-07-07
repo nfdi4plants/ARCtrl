@@ -169,3 +169,31 @@ module Decode =
                 else
                     ("", BadPrimitive("an object", value)) |> Error
         }
+
+    let intDictionary (valueDecoder : Decoder<'value>) : Decoder<Dictionary<int,'value>> =
+        { new Decoder<Dictionary<int,'value>> with
+            member _.Decode(helpers, value) =
+                if helpers.isArray value then
+                    let mutable errors = []
+                    let tokens = helpers.asArray value
+                    let dict = Dictionary<int,'value>()
+                    let decoder = Decode.tuple2 Decode.int valueDecoder
+
+                    (Ok dict, tokens)
+                    ||> Array.fold (fun acc value ->
+                        match acc with
+                        | Error _ -> acc
+                        | Ok acc ->
+                            match decoder.Decode(helpers, value) with
+                            | Error er ->
+                                Error(
+                                    er                                    
+                                )
+                            | Ok value ->
+                                acc.Add value
+                                Ok acc
+                    )
+                    
+                else
+                    ("", BadPrimitive("an object", value)) |> Error
+        }
