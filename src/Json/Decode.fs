@@ -197,3 +197,19 @@ module Decode =
                 else
                     ("", BadPrimitive("an object", value)) |> Error
         }
+
+    let tryOneOf (decoders : Decoder<'value> list) : Decoder<'value> =
+        { new Decoder<'value> with
+            member _.Decode(helpers, value) =
+                let rec loop (errors : DecoderError<'JsonValue> list) (decoders : Decoder<'value> list) =
+                    match decoders with
+                    | [] -> Error ("", BadOneOf errors)
+                    | decoder :: rest ->
+                        let decodingResult =
+                            try decoder.Decode(helpers, value)
+                            with e -> Error (DecoderError("", ErrorReason.FailMessage e.Message))
+                        match decodingResult with
+                        | Ok v -> Ok v
+                        | Error e -> loop (e :: errors) rest
+                loop [] decoders
+        }
