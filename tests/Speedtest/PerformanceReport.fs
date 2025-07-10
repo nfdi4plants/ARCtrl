@@ -28,6 +28,31 @@ let writeFile (path : string) (content : string) =
 
     //fs.writeFile(path,content)
 
+// Create an assay with 6 columns and 10000 rows, where 3 columns are fixed and 3 columns are variable
+let prepareAssay() =
+    let a = ArcAssay.init "MyAssay"
+    let t = a.InitTable("MyTable")
+    t.AddColumn(CompositeHeader.Input IOType.Source)
+    t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter1")))
+    t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter")))
+    t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter")))
+    t.AddColumn(CompositeHeader.Characteristic (OntologyAnnotation("MyCharacteristic")))
+    t.AddColumn(CompositeHeader.Output IOType.Sample)
+    let rowCount = 10000
+    for i = 0 to rowCount - 1 do
+        let cells =             
+            [|
+                CompositeCell.FreeText $"Source{i}"
+                CompositeCell.FreeText $"Parameter1_value"
+                CompositeCell.FreeText $"Parameter2_value"
+                CompositeCell.FreeText $"Parameter3_value{i - i % 10}"
+                CompositeCell.FreeText $"Characteristic_value"
+                CompositeCell.FreeText $"Sample{i}"
+            |]
+        for j = 0 to cells.Length - 1 do
+            ArcTableAux.Unchecked.setCellAt (j,i,cells.[j]) a.Tables.[0].Values
+    a
+
 type PerformanceTest =
     {
         Name : string
@@ -251,7 +276,7 @@ let table_toJson =
         t <- TestObjects.Spreadsheet.Study.LargeFile.createTable()
     PerformanceTest.create
         "Table_ToJson"
-        "Serialize a table with 5 columns and 10000 rows to json."
+        "Serialize a table with 5 columns and 10000 rows to json, with 3 fixed and 2 variable columns."
         prepare
         false // Do not prepare again, as the table is used and not altered
         (fun _ -> t.ToJsonString() |> ignore)
@@ -262,40 +287,56 @@ let table_toCompressedJson =
         t <- TestObjects.Spreadsheet.Study.LargeFile.createTable()
     PerformanceTest.create
         "Table_ToCompressedJson"
-        "Serialize a table with 5 columns and 10000 rows to compressed json."
+        "Serialize a table with 5 columns and 10000 rows to compressed json, with 3 fixed and 2 variable columns."
         prepare
         false // Do not prepare again, as the table is used and not altered
         (fun _ -> t.ToCompressedJsonString() |> ignore)       
     
 let assay_toJson =
-    let a = ArcAssay.init("MyAssay")
-    let prepareAssay() = 
-        let t = a.InitTable("MyTable")
-        t.AddColumn(CompositeHeader.Input IOType.Source)
-        t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter1")))
-        t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter")))
-        t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter")))
-        t.AddColumn(CompositeHeader.Characteristic (OntologyAnnotation("MyCharacteristic")))
-        t.AddColumn(CompositeHeader.Output IOType.Sample)
-        let rowCount = 10000
-        for i = 0 to rowCount - 1 do
-            let cells =             
-                [|
-                    CompositeCell.FreeText $"Source{i}"
-                    CompositeCell.FreeText $"Parameter1_value"
-                    CompositeCell.FreeText $"Parameter2_value"
-                    CompositeCell.FreeText $"Parameter3_value{i - i % 10}"
-                    CompositeCell.FreeText $"Characteristic_value"
-                    CompositeCell.FreeText $"Sample{i}"
-                |]
-            for j = 0 to cells.Length - 1 do
-                ArcTableAux.Unchecked.setCellAt (j,i,cells.[j]) a.Tables.[0].Values
+    let mutable a = ArcAssay.init("MyAssay")
+    let prepare() =
+        a <- prepareAssay()
     PerformanceTest.create
         "Assay_toJson"
-        "Parse an assay with one table with 10000 rows and 6 columns to json"
-        prepareAssay
+        "Parse an assay with one table with 10000 rows and 6 columns to json, with 3 fixed and 3 variable columns."
+        prepare
         false // Do not prepare again, as the assay is used and not altered
         (fun _ -> ArcAssay.toJsonString() a |> ignore)
+
+let assay_fromJson =
+    let mutable json = ""
+    let prepare() =
+        let a = prepareAssay()
+        json <- a.ToJsonString()
+    PerformanceTest.create
+        "Assay_fromJson"
+        "Parse an assay with one table with 10000 rows and 6 columns from json, with 3 fixed and 3 variable columns."
+        prepare
+        false // Do not prepare again, as the assay is used and not altered
+        (fun _ -> ArcAssay.fromJsonString json |> ignore)
+        
+let assay_toISAJson =
+    let mutable a = ArcAssay.init("MyAssay")
+    let prepare() =
+        a <- prepareAssay()
+    PerformanceTest.create
+        "Assay_toISAJson"
+        "Parse an assay with one table with 10000 rows and 6 columns to json, with 3 fixed and 3 variable columns"
+        prepare
+        false // Do not prepare again, as the assay is used and not altered
+        (fun _ -> ArcAssay.toISAJsonString() a |> ignore)
+
+let assay_fromISAJson =
+    let mutable json = ""
+    let prepare() =
+        let a = prepareAssay()
+        json <- ArcAssay.toISAJsonString() a
+    PerformanceTest.create
+        "Assay_fromISAJson"
+        "Parse an assay with one table with 10000 rows and 6 columns from json, with 3 fixed and 3 variable columns"
+        prepare
+        false // Do not prepare again, as the assay is used and not altered
+        (fun _ -> ArcAssay.fromISAJsonString json |> ignore)
 
 let study_fromWorkbook =
     let mutable fswb = new FsSpreadsheet.FsWorkbook()
@@ -322,7 +363,48 @@ let investigation_toWorkbook_ManyStudies =
         false // Do not prepare again, as the investigation is used and not altered
         (fun _ -> ArcInvestigation.toFsWorkbook inv |> ignore)
 
+let investigation_fromWorkbook_ManyStudies =
+    let mutable fswb = new FsSpreadsheet.FsWorkbook()
+    let prepareWorkbook () =
+        let inv = ArcInvestigation.init("MyInvestigation")
+        for i = 0 to 1500 do 
+            let s = ArcStudy.init($"Study{i}")
+            inv.AddRegisteredStudy(s)
+        fswb <- ArcInvestigation.toFsWorkbook inv
+    PerformanceTest.create
+        "Investigation_FromWorkbook_ManyStudies"
+        "Parse a workbook with 1500 studies to an ArcInvestigation"
+        prepareWorkbook
+        false // Do not prepare again, as the workbook is used and not altered
+        (fun _ -> ArcInvestigation.fromFsWorkbook fswb |> ignore)
 
+let arc_toROCrate =
+    let arc = ARC("MyARC", title = "My ARC Title", description = "My Description")
+    let prepareARC () =
+        let a = prepareAssay()
+        arc.AddAssay(a)
+    PerformanceTest.create
+        "ARC_ToROCrate"
+        "Parse an ARC with one assay with 10000 rows and 6 columns to a RO-Crate metadata file."
+        prepareARC
+        false // Do not prepare again, as the ARC is used and not altered
+        (fun _ -> arc.ToROCrateJsonString() |> ignore)
+
+
+let arc_fromROCrate =
+    let mutable json = ""
+    let prepareARC () =
+        let a = prepareAssay()
+        let arc = ARC("MyARC", title = "My ARC Title", description = "My Description")
+        arc.AddAssay(a)
+        json <- arc.ToROCrateJsonString()
+    PerformanceTest.create
+        "ARC_FromROCrate"
+        "Parse an ARC with one assay with 10000 rows and 6 columns from a RO-Crate metadata file."
+        prepareARC
+        false // Do not prepare again, as the ARC is used and not altered
+        (fun _ -> ARC.fromROCrateJsonString json |> ignore)
+        
 let allPerformanceTests = 
     [
         table_GetHashCode
@@ -334,8 +416,14 @@ let allPerformanceTests =
         table_toJson
         table_toCompressedJson
         assay_toJson
+        assay_fromJson
+        assay_toISAJson
+        assay_fromISAJson
         study_fromWorkbook
         investigation_toWorkbook_ManyStudies
+        investigation_fromWorkbook_ManyStudies
+        arc_toROCrate
+        //arc_fromROCrate
     ]
 
 
