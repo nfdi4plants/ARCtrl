@@ -1028,6 +1028,27 @@ let private tests_ArcTablesProcessSeq =
             Expect.arcTableEqual resultTables.Tables.[0] expectedTables.[0] "Table 1 should be equal"
             Expect.arcTableEqual resultTables.Tables.[1] expectedTables.[1] "Table 2 should be equal"
         )
+        testCase "TableNameUndescore" (fun () ->
+            let t1 = ArcTable.init "Test_Table"
+            t1.AddColumn(
+                CompositeHeader.Input(IOType.Sample),
+                ResizeArray [|CompositeCell.createFreeText "MySample"|]
+            )
+            let t2 = ArcTable.init "Test_Tisch"
+            t2.AddColumn(
+                CompositeHeader.Input(IOType.Sample),
+                ResizeArray [|CompositeCell.createFreeText "MeinSample"|]
+            )
+            let ts = ResizeArray [|t1;t2|] |> ArcTables
+            let processes = ts.GetProcesses()
+            Expect.equal processes.Length 2 "Should have 2 processes"
+            let resultTables = ArcTables.fromProcesses processes
+            Expect.equal resultTables.TableCount 2 "Should have 2 tables"
+            Expect.equal resultTables.Tables.[0].Name "Test_Table" "Table 1 name should match"
+            Expect.equal resultTables.Tables.[1].Name "Test_Tisch" "Table 2 name should match"
+            Expect.arcTableEqual resultTables.Tables.[0] t1 "Table 1 should be equal"
+            Expect.arcTableEqual resultTables.Tables.[1] t2 "Table 2 should be equal"
+        )
     ]
 
 
