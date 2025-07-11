@@ -476,7 +476,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                 registeredStudy.UpdateReferenceByStudyFile(study,true)
             | None -> 
                 this.AddStudy(study)
-            let datamap = ARCAux.getAssayDataMapFromContracts study.Identifier contracts
+            let datamap = ARCAux.getStudyDataMapFromContracts study.Identifier contracts
             if study.DataMap.IsNone then
                 study.DataMap <- datamap
             study.StaticHash <- study.GetLightHashCode()

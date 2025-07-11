@@ -253,7 +253,83 @@ let private tests_SetISAFromContracts = testList "SetISAFromContracts" [
         Expect.isNone a2.DataMap "Metabolome Assay was not supposed to have datamap"
     
     )
+    testCase "studySameNameAsAssayWithDatamap" (fun () ->
+        // https://github.com/nfdi4plants/ARCtrl/issues/538
+        // This test checks that a study with the same name as an assay with a datamap does not faultily also gets the datamap assigned as a child.
+        let arc = ARC("MyIdentifier")
+        let contracts = [|
+            Contract.create (
+                Operation.READ,
+                path = ArcPathHelper.InvestigationFileName,
+                dtoType = DTOType.ISA_Investigation,
+                dto = DTO.Spreadsheet (ArcInvestigation.init("MyInvestigation").ToFsWorkbook())
+            )
+            SimpleISA.Assay.proteomeReadContract
+            SimpleISA.Assay.proteomeDatamapContract
+            Contract.create (
+                Operation.READ,
+                path = Identifier.Study.fileNameFromIdentifier Assay.Proteome.assayIdentifier,
+                dtoType = DTOType.ISA_Study,
+                dto = DTO.Spreadsheet (ArcStudy.init(Assay.Proteome.assayIdentifier).ToFsWorkbook())
+            )
+        |]
 
+        arc.SetISAFromContracts contracts
+        Expect.equal arc.Identifier "MyInvestigation" "investigation identifier should have been read from investigation contract"
+
+        Expect.equal arc.StudyCount 1 "should have read two studies"
+        Expect.equal arc.Studies.[0].Identifier Assay.Proteome.assayIdentifier "Study Identifier"
+
+        Expect.equal arc.AssayCount 1 "should have read one assay"
+        Expect.equal arc.Assays.[0].Identifier Assay.Proteome.assayIdentifier "Assay Identifier"
+
+        // Assay has datamap, but study should not have it
+        let dm = Expect.wantSome arc.Assays.[0].DataMap "Assay should have a datamap assigned"
+        Expect.hasLength dm.DataContexts 2 "Datamap should have two data contexts"
+
+        Expect.isNone arc.Studies.[0].DataMap "Study should not have a datamap assigned"
+    )
+    testCase "assaySameNameAsStudyWithDatamap" (fun () ->
+        // https://github.com/nfdi4plants/ARCtrl/issues/538
+        // This test checks that a assay with the same name as an study with a datamap does not faultily also gets the datamap assigned as a child.
+        let arc = ARC("MyIdentifier")
+        let contracts = [|
+            Contract.create (
+                Operation.READ,
+                path = ArcPathHelper.InvestigationFileName,
+                dtoType = DTOType.ISA_Investigation,
+                dto = DTO.Spreadsheet (ArcInvestigation.init("MyInvestigation").ToFsWorkbook())
+            )
+            SimpleISA.Assay.proteomeReadContract
+            Contract.create (
+                Operation.READ,
+                path = Identifier.Study.datamapFileNameFromIdentifier Assay.Proteome.assayIdentifier,
+                dtoType = DTOType.ISA_Datamap,
+                dto = DTO.Spreadsheet (SimpleISA.Assay.proteomeDatamapWB)
+            )
+            Contract.create (
+                Operation.READ,
+                path = Identifier.Study.fileNameFromIdentifier Assay.Proteome.assayIdentifier,
+                dtoType = DTOType.ISA_Study,
+                dto = DTO.Spreadsheet (ArcStudy.init(Assay.Proteome.assayIdentifier).ToFsWorkbook())
+            )
+        |]
+
+        arc.SetISAFromContracts contracts
+        Expect.equal arc.Identifier "MyInvestigation" "investigation identifier should have been read from investigation contract"
+
+        Expect.equal arc.StudyCount 1 "should have read two studies"
+        Expect.equal arc.Studies.[0].Identifier Assay.Proteome.assayIdentifier "Study Identifier"
+
+        Expect.equal arc.AssayCount 1 "should have read one assay"
+        Expect.equal arc.Assays.[0].Identifier Assay.Proteome.assayIdentifier "Assay Identifier"
+
+        // Study has datamap, but assay should not have it
+        Expect.isNone arc.Assays.[0].DataMap "Assay should not have a datamap assigned"
+
+        let dm = Expect.wantSome arc.Studies.[0].DataMap "Study should have a datamap assigned"
+        Expect.hasLength dm.DataContexts 2 "Datamap should have two data contexts"
+    )
 ]
 
 let private tests_writeContracts = testList "write_contracts" [
