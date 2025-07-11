@@ -78,7 +78,7 @@ let tests_gitContracts = testList "gitContracts" [
     testCase "init_basic" <| fun _ ->
         let arc = ARC("MyARC")
         let contracts = arc.GetGitInitContracts()
-        Expect.equal contracts.Length 2 "Should be two contracts"
+        Expect.equal contracts.Length 1 "Should be two contracts"
         /// Check init contract
         Expect.equal contracts.[0].Operation Operation.EXECUTE "Should be an execute operation"
         Expect.isSome contracts.[0].DTOType "Should have a DTO type"
@@ -91,20 +91,20 @@ let tests_gitContracts = testList "gitContracts" [
         Expect.equal cli.Arguments.Length 3 "Should have two arguments"
         Expect.sequenceEqual cli.Arguments [|"init";"-b";"main"|] "Should be init"
         /// Check gitattributes contract
-        Expect.equal contracts.[1].Operation Operation.CREATE "Should be an create operation"
-        let dtoType = Expect.wantSome contracts.[1].DTOType "Should have a DTO type"
-        Expect.equal dtoType DTOType.PlainText "Should be a plain text"
-        Expect.equal contracts.[1].Path ".gitattributes" "Should have a path"
-        let dto = Expect.wantSome contracts.[1].DTO "Gitattributes contract should have a DTO"
-        Expect.isTrue dto.isText "Should be text"
-        let text = dto.AsText()
-        Expect.equal text "**/dataset/**" "Should have the correct text"
+        //Expect.equal contracts.[1].Operation Operation.CREATE "Should be an create operation"
+        //let dtoType = Expect.wantSome contracts.[1].DTOType "Should have a DTO type"
+        //Expect.equal dtoType DTOType.PlainText "Should be a plain text"
+        //Expect.equal contracts.[1].Path ".gitattributes" "Should have a path"
+        //let dto = Expect.wantSome contracts.[1].DTO "Gitattributes contract should have a DTO"
+        //Expect.isTrue dto.isText "Should be text"
+        //let text = dto.AsText()
+        //Expect.equal text "**/dataset/**" "Should have the correct text"
 
     testCase "init_Branch" <| fun _ ->
         let arc = ARC("MyARC")
         let branchName = "myBranch"
         let contracts = arc.GetGitInitContracts(branch = branchName)
-        Expect.equal contracts.Length 2 "Should be two contracts"
+        Expect.equal contracts.Length 1 "Should be two contracts"
         let dto = Expect.wantSome contracts.[0].DTO "Should have a DTO"
         let cli = dto.AsCLITool()
         Expect.sequenceEqual cli.Arguments [|"init";"-b";branchName|] "Should have new branchname"
@@ -113,19 +113,31 @@ let tests_gitContracts = testList "gitContracts" [
         let arc = ARC("MyARC")
         let remote = @"www.fantasyGit.net/MyAccount/MyRepo"
         let contracts = arc.GetGitInitContracts(repositoryAddress = remote)
-        Expect.equal contracts.Length 3 "Should be three contracts"
-        let dto = Expect.wantSome contracts.[2].DTO "Should have a DTO"
+        Expect.equal contracts.Length 2 "Should be three contracts"
+        let dto = Expect.wantSome contracts.[1].DTO "Should have a DTO"
         let cli = dto.AsCLITool()
         Expect.sequenceEqual cli.Arguments [|"remote";"add";"origin";remote|] "Should correctly set new remote"
 
     testCase "init_GitIgnore" <| fun _ ->
         let arc = ARC("MyARC")
         let contracts = arc.GetGitInitContracts(defaultGitignore = true)
-        Expect.equal contracts.Length 3 "Should be three contracts"
-        Expect.equal contracts.[2].Operation Operation.CREATE "Should be an create operation"
-        let dto = Expect.wantSome contracts.[2].DTO "Should have a DTO"
+        Expect.equal contracts.Length 2 "Should be three contracts"
+        Expect.equal contracts.[1].Operation Operation.CREATE "Should be an create operation"
+        let dto = Expect.wantSome contracts.[1].DTO "Should have a DTO"
         Expect.isTrue dto.isText "Should be text"
-        Expect.equal contracts.[2].Path ".gitignore" "Should be a gitignore"
+        Expect.equal contracts.[1].Path ".gitignore" "Should be a gitignore"
+    testCase "init_GitAttributes" <| fun _ ->
+        let arc = ARC("MyARC")
+        let contracts = arc.GetGitInitContracts(defaultGitattributes = true)
+        Expect.equal contracts.Length 2 "Should be three contracts"
+        Expect.equal contracts.[1].Operation Operation.CREATE "Should be an create operation"
+        let dtoType = Expect.wantSome contracts.[1].DTOType "Should have a DTO type"
+        Expect.equal dtoType DTOType.PlainText "Should be a plain text"
+        Expect.equal contracts.[1].Path ".gitattributes" "Should have a path"
+        let dto = Expect.wantSome contracts.[1].DTO "Gitattributes contract should have a DTO"
+        Expect.isTrue dto.isText "Should be text"
+        let text = dto.AsText()
+        Expect.equal text "**/dataset/** filter=lfs diff=lfs merge=lfs -text" "Should have the correct text"
     testCase "clone_AllOptions" <| fun _ ->
         let remoteURL = @"https://git.fantasyGit.net/MyAccount/MyRepo"
         let user = "Lukas"
