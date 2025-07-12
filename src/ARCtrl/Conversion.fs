@@ -701,9 +701,9 @@ type ProcessConversion =
                 ProcessConversion.decomposeProcessName name |> fst
             | _, Some protocol when LDLabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.isSome ->
                 LDLabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.defaultValue ""
-            | Some name, _ when name.Contains "_" ->
-                let lastUnderScoreIndex = name.LastIndexOf '_'
-                name.Remove lastUnderScoreIndex
+            //| Some name, _ when name.Contains "_" ->
+            //    let lastUnderScoreIndex = name.LastIndexOf '_'
+            //    name.Remove lastUnderScoreIndex
             | Some name, _ ->
                 name
             | _, Some protocol  ->

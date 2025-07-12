@@ -556,9 +556,9 @@ module ProcessParsing =
                 (x.Name.Value |> Process.decomposeName |> fst)
             elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
                 x.ExecutesProtocol.Value.Name.Value 
-            elif x.Name.IsSome && x.Name.Value.Contains "_" then
-                let lastUnderScoreIndex = x.Name.Value.LastIndexOf '_'
-                x.Name.Value.Remove lastUnderScoreIndex
+            //elif x.Name.IsSome && x.Name.Value.Contains "_" then
+            //    let lastUnderScoreIndex = x.Name.Value.LastIndexOf '_'
+            //    x.Name.Value.Remove lastUnderScoreIndex
             elif x.Name.IsSome then
                 x.Name.Value
             elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.ID.IsSome then 

@@ -539,10 +539,18 @@ let private tests_ArcTablesProcessSeq =
                 CompositeHeader.Input(IOType.Sample),
                 ResizeArray [|CompositeCell.createFreeText "MySample"|]
             )
+            t1.AddColumn(
+                CompositeHeader.Output IOType.Sample,
+                ResizeArray [|CompositeCell.createFreeText "MyOutSample"|]
+            )
             let t2 = ArcTable.init "Test_Tisch"
             t2.AddColumn(
                 CompositeHeader.Input(IOType.Sample),
                 ResizeArray [|CompositeCell.createFreeText "MeinSample"|]
+            )
+            t2.AddColumn(
+                CompositeHeader.Output IOType.Sample,
+                ResizeArray [|CompositeCell.createFreeText "MeinRausSample"|]
             )
             let ts = ResizeArray [|t1;t2|] |> ArcTables
             let processes = ts.GetProcesses()
