@@ -407,6 +407,55 @@ let private tests_TryGetCellAt =
 
     ]
 
+let private tests_Columns =
+    testList "Columns" [
+        testCase "Empty" (fun () ->
+            let table = ArcTable.init "MyTable"
+            let cols = table.Columns
+            Expect.hasLength cols 0 "Columns should be empty"
+        )
+        testCase "OnlyHeaders" (fun () ->
+            let table = ArcTable.init "MyTable"
+            table.AddColumn(CompositeHeader.Input IOType.Source)
+            table.AddColumn(CompositeHeader.Output IOType.Sample)
+            let cols = table.Columns
+            Expect.hasLength cols 2 "Columns should have 2 headers only"
+            Expect.equal cols.[0].Header (CompositeHeader.Input IOType.Source) "Column 0 header should be Input"
+            Expect.hasLength cols.[0].Cells 0 "Column 0 should have no cells"
+            Expect.equal cols.[1].Header (CompositeHeader.Output IOType.Sample) "Column 1 header should be Output"
+            Expect.hasLength cols.[1].Cells 0 "Column 1 should have no cells"
+        )
+        testCase "OnlyHeaders_Constructor" (fun () ->
+            let table = ArcTable.create(
+                "jointable",
+                ResizeArray([CompositeHeader.Input IOType.Data]),
+                ResizeArray()
+            )
+            let cols = table.Columns
+            Expect.hasLength cols 1 "Columns should have 1 header only"
+            Expect.equal cols.[0].Header (CompositeHeader.Input IOType.Data) "Column 0 header should be Input"
+            Expect.hasLength cols.[0].Cells 0 "Column 0 should have no cells"
+
+        )
+        testCase "Simple" (fun () ->
+            let table = create_testTable()
+            let cols = table.Columns
+            Expect.hasLength cols 5 "Columns should have 5 headers"
+            Expect.equal cols.[0].Header column_input.Header "Column 0 header should be Input"
+            Expect.equal cols.[0].Cells.[0] (CompositeCell.FreeText "Source_0") "Column 0 first cell should be Source_0"
+            Expect.hasLength cols.[0].Cells 5 "Column 0 should have 5 cells"
+            Expect.equal cols.[1].Header column_output.Header "Column 1 header should be Output"
+            Expect.hasLength cols.[1].Cells 5 "Column 1 should have 5 cells"
+            Expect.equal cols.[2].Header column_param.Header "Column 2 header should be Parameter"
+            Expect.hasLength cols.[2].Cells 5 "Column 2 should have 5 cells"
+            Expect.equal cols.[3].Header column_component.Header "Column 3 header should be Component"
+            Expect.hasLength cols.[3].Cells 5 "Column 3 should have 5 cells"
+            Expect.equal cols.[4].Header column_param.Header "Column 4 header should be Parameter"
+            Expect.hasLength cols.[4].Cells 5 "Column 4 should have 5 cells"
+            Expect.equal cols.[4].Cells.[4] (CompositeCell.Unitized("4",OntologyAnnotation())) "Column 4 last cell should be unitized with value 4"
+        )
+    ]
+    
 
 let private tests_UpdateHeader = 
     testList "UpdateHeader" [
@@ -2840,6 +2889,7 @@ let main =
         tests_member
         tests_GetCellAt
         tests_TryGetCellAt
+        tests_Columns
         tests_UpdateHeader
         tests_UpdateCellAt
         tests_SetCellAt

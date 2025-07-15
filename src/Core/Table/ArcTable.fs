@@ -395,18 +395,23 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         let fillDefault = defaultArg fillDefault false
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
         let h = this.Headers.[columnIndex]
-        let cells =
-            [|
+        let cells = ResizeArray()
+        if this.RowCount <> 0 then           
+            let col = _values.Columns.[columnIndex]
+            match col with
+            | ColumnValueRefs.Constant valueHash ->
+                let c = _values.ValueMap.[valueHash]
                 for i = 0 to this.RowCount - 1 do
-                    match this.TryGetCellAt(columnIndex, i) with
-                    | None when not fillDefault->
-                        failwithf "Unable to find cell for index: (%i, %i)" columnIndex i
-                    | None ->   
-                        let h = this.Headers.[columnIndex]
-                        getEmptyCellForHeader h None
-                    | Some c -> c
-            |]
-            |> ResizeArray
+                    cells.Add c
+            | ColumnValueRefs.Sparse vals ->
+                for rowIndex = 0 to this.RowCount - 1 do
+                    if vals.ContainsKey rowIndex then
+                        cells.Add _values.ValueMap.[vals.[rowIndex]]
+                    else
+                        if fillDefault then
+                            cells.Add (getEmptyCellForHeader h None)
+                        else
+                            failwithf "Unable to find cell for index: (%i, %i)" columnIndex rowIndex
         CompositeColumn.create(h, cells)
 
     static member getColumn (index:int, ?fillDefault) =
@@ -654,6 +659,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         let forceReplace = defaultArg forceReplace false
         let mutable index = defaultArg index this.ColumnCount
         index <- if index = -1 then this.ColumnCount else index //make -1 default to append to make function usage more fluent.
+        printfn "1"
         SanityChecks.validateColumnIndex index this.ColumnCount true
         let onlyHeaders = joinOptions = TableJoinOptions.Headers
         let columns =
@@ -672,8 +678,10 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
                     | None -> {c with Cells = ResizeArray()}
                 )
             | WithValues -> pre
+        printfn "2"
         SanityChecks.validateNoDuplicateUniqueColumns columns
         columns |> ResizeArray.iter (fun x -> SanityChecks.validateColumn x)
+        printfn "3"
         columns
         |> ResizeArray.iter (fun col ->
             let prevHeadersCount = this.Headers.Count
