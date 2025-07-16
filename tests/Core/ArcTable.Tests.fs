@@ -2282,7 +2282,12 @@ let private tests_AddRow =
                     if rowIndex < index then
                         Expect.equal table.Values.[columnIndex, rowIndex] newTable.Values.[columnIndex, rowIndex] $"Cell,rowIndex < index, {columnIndex},{rowIndex}"
                     elif rowIndex = index then
-                        Expect.equal table.Values.[columnIndex, rowIndex] row_empty.[columnIndex] $"Cell,rowIndex = index, {columnIndex},{rowIndex}"
+                        // The last row is empty, except when the column is constant
+                        if columnIndex = 3 then
+                            let cell = Expect.wantSome (table.TryGetCellAt(columnIndex, rowIndex)) $"Last row ({columnIndex}, {rowIndex}) should not be empty for constant column"
+                            Expect.equal cell (CompositeCell.createTerm oa_SCIEXInstrumentModel) $"Last row ({columnIndex}, {rowIndex}) should be correct for constant column"
+                        else
+                            Expect.isNone (table.TryGetCellAt(columnIndex, rowIndex)) $"Last row ({columnIndex}, {rowIndex}) should be empty"
                     else
                         Expect.equal table.Values.[columnIndex, rowIndex] newTable.Values.[columnIndex, rowIndex-1] $"Cell {columnIndex},{rowIndex}"
         )
@@ -2299,7 +2304,12 @@ let private tests_AddRow =
                     if rowIndex < index then
                         Expect.equal table.Values.[columnIndex, rowIndex] newTable.Values.[columnIndex, rowIndex] $"Cell,rowIndex < index, {columnIndex},{rowIndex}"
                     elif rowIndex = index then
-                        Expect.equal table.Values.[columnIndex, rowIndex] row_empty.[columnIndex] $"Cell,rowIndex = index, {columnIndex},{rowIndex}"
+                        // The third row is empty, except when the column is constant
+                        if columnIndex = 3 then
+                            let cell = Expect.wantSome (table.TryGetCellAt(columnIndex, rowIndex)) $"Last row ({columnIndex}, {rowIndex}) should not be empty for constant column"
+                            Expect.equal cell (CompositeCell.createTerm oa_SCIEXInstrumentModel) $"Last row ({columnIndex}, {rowIndex}) should be correct for constant column"
+                        else
+                            Expect.isNone (table.TryGetCellAt(columnIndex, rowIndex)) $"Last row ({columnIndex}, {rowIndex}) should be empty"
                     else
                         Expect.equal table.Values.[columnIndex, rowIndex] newTable.Values.[columnIndex, rowIndex-1] $"Cell {columnIndex},{rowIndex}"
         )

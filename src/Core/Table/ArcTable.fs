@@ -38,7 +38,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
     member this.Headers
         with get() = _headers
         and set(newHeaders) =
-            // SanityChecks.validate newHeaders values true |> ignore // TODO
+            SanityChecks.validateArcTableValues newHeaders _values true |> ignore // TODO
             _headers <- newHeaders
 
     member this.Values
@@ -501,27 +501,20 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
     // - Row API - //
     member this.AddRow (?cells: ResizeArray<CompositeCell>, ?index: int) : unit =
         let index = defaultArg index this.RowCount
-        let cells =
-            if cells.IsNone then
-                // generate default cells. Uses the same logic as extending missing row values.
-                [|
-                    for columnIndex in 0 .. this.ColumnCount-1 do
-                        let h = this.Headers.[columnIndex]
-                        let tryFirstCell = Unchecked.tryGetCellAt(columnIndex,0) _values
-                        yield getEmptyCellForHeader h tryFirstCell
-                |]
-                |> ResizeArray
-            else
-                cells.Value
         // Sanity checks
         SanityChecks.validateRowIndex index this.RowCount true
-        SanityChecks.validateRowLength cells this.ColumnCount
-        for columnIndex in 0 .. this.ColumnCount-1 do
-            let h = this.Headers.[columnIndex]
-            let column = CompositeColumn.create(h,ResizeArray [|cells.[columnIndex]|])
-            SanityChecks.validateColumn column
-        // Sanity checks - end
-        Unchecked.addRow index cells this.Headers _values
+        match cells with
+        | None ->
+            Unchecked.addEmptyRow index _values
+        | Some cells ->         
+            SanityChecks.validateRowLength cells this.ColumnCount
+            for columnIndex in 0 .. this.ColumnCount-1 do
+                let h = this.Headers.[columnIndex]
+                let column = CompositeColumn.create(h,ResizeArray [|cells.[columnIndex]|])
+                cells.[columnIndex].ValidateAgainstHeader(h, raiseException = true) |> ignore
+                SanityChecks.validateColumn column
+            // Sanity checks - end
+            Unchecked.addRow index cells this.Headers _values
 
     static member addRow (?cells: ResizeArray<CompositeCell>, ?index: int) =
         fun (table:ArcTable) ->

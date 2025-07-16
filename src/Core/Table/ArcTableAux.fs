@@ -406,9 +406,32 @@ module SanityChecks =
         isValid
 
     let validateArcTableValues (headers: ResizeArray<CompositeHeader>) (values: ArcTableValues) (raiseException: bool) =
-        printfn "fix this function for performance reasons"
-        validateCellColumns headers (values.ToCellColumns(headers)) raiseException
+        let mutable isValid = true
+        let mutable colIndex = 0
+        if headers.Count <> values.ColumnCount && values.ColumnCount <> 0 then
+            (if raiseException then failwith else printfn "%s") $"Invalid table. Number of headers ({headers.Count}) does not match number of columns ({values.ColumnCount})."
+            isValid <- false
+        if values.RowCount <> 0 && values.ColumnCount <> 0 then
+            while isValid && colIndex < values.ColumnCount do
+                let header = headers[colIndex]
+                match IntDictionary.tryFind colIndex values.Columns with
+                | None -> ()
+                | Some (Constant hash) ->
+                    let cell = values.ValueMap.[hash]
+                    let v = cell.ValidateAgainstHeader(header, raiseException = raiseException)
+                    if not v then 
+                        isValid <- false
+                | Some (Sparse column) ->
+                    for kv in column do
+                        let cell = values.ValueMap.[kv.Value]
+                        let v = cell.ValidateAgainstHeader(header, raiseException = raiseException)
+                        if not v then 
+                            isValid <- false
+                colIndex <- colIndex + 1
+        isValid
 
+
+            
 module Unchecked =
 
 
@@ -682,7 +705,14 @@ module Unchecked =
                             if not (vals.ContainsKey j) then
                                 vals.Add(j, defaultHash)
                     
-
+    let addEmptyRow (index : int) (values:ArcTableValues) =
+        if index < values.RowCount && values.ColumnCount <> 0 then
+            for kv in values.Columns do
+                match kv.Value with
+                | ColumnValueRefs.Constant valueHash -> ()
+                | ColumnValueRefs.Sparse column ->                  
+                    IntDictionary.shiftFromBy_inPlace index 1 column
+        values.RowCount <- values.RowCount + 1
 
     let addRow (index:int) (newCells:ResizeArray<CompositeCell>) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =
         /// Store start rowCount here, so it does not get changed midway through

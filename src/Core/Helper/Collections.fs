@@ -143,6 +143,15 @@ module IntDictionary =
         else
             dict.Add(key,value)
 
+    let inline shiftFromBy_inPlace (startIndex : int) (count : int) (dict : Dictionary<int,'T>) =
+        let maxIndex = dict.Keys |> Seq.max
+        for i = maxIndex downto startIndex + count - 1 do
+            if dict.ContainsKey i then
+                let v = dict.[i]
+                dict.Remove(i) |> ignore
+                dict.Add(i + count, v)
+        
+
 module ResizeArray =
 
     open System.Collections.Generic
