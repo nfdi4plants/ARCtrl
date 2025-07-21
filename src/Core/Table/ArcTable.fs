@@ -38,7 +38,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
     member this.Headers
         with get() = _headers
         and set(newHeaders) =
-            SanityChecks.validateArcTableValues newHeaders _values true |> ignore // TODO
+            SanityChecks.validateArcTableValues newHeaders _values true |> ignore
             _headers <- newHeaders
 
     member this.Values
@@ -91,7 +91,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         and set (newRowCount) =
             _values.RowCount <- newRowCount
 
-    static member getRowCount (table:ArcTable) = table.RowCount
+    static member rowCount (table:ArcTable) = table.RowCount
 
     static member setRowCount (newRowCount) =
         fun (table:ArcTable) ->
@@ -115,10 +115,12 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             table.TryGetCellAt(column, row)
 
     member this.GetCellAt (column: int,row: int) =
-        if column > this.ColumnCount - 1 || column < 0 then
-            failwithf "Column index %i is out of bounds for table %s with %i columns." column this.Name this.ColumnCount
-        if row > this.RowCount - 1 || row < 0 then
-            failwithf "Row index %i is out of bounds for table %s with %i rows." row this.Name this.RowCount
+        ArcTableAux.SanityChecks.validateColumnIndex column this.ColumnCount false
+        ArcTableAux.SanityChecks.validateRowIndex row this.RowCount false
+        //if column > this.ColumnCount - 1 || column < 0 then
+        //    failwithf "Column index %i is out of bounds for table %s with %i columns." column this.Name this.ColumnCount
+        //if row > this.RowCount - 1 || row < 0 then
+        //    failwithf "Row index %i is out of bounds for table %s with %i rows." row this.Name this.RowCount
         Unchecked.getCellWithDefault (column,row) _headers _values
 
     static member getCellAt (column: int,row: int) =

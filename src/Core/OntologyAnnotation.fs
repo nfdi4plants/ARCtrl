@@ -4,7 +4,8 @@ open ARCtrl.Helper
 open Fable.Core
 
 [<AttachMembers>]
-type OntologyAnnotation(?name,?tsr,?tan, ?tanInfo, ?comments) =
+// tanInfo given from outside was meant to allow for performance optimization, but it is not used in the code currently.
+type OntologyAnnotation(?name,?tsr,?tan, (*?tanInfo, *)?comments) =
     let mutable _name : string option =
         match name with
         | Some "" | None -> None
@@ -20,9 +21,10 @@ type OntologyAnnotation(?name,?tsr,?tan, ?tanInfo, ?comments) =
     let mutable _comments : ResizeArray<Comment> = defaultArg comments <| ResizeArray()
 
     let mutable _tanInfo : {| IDSpace : string; LocalID : string |} option =
-        match tanInfo with
-        | Some tanInfo -> tanInfo
-        | None -> OntologyAnnotation.computeTanInfo (?tan = _termAccessionNumber, ?tsr = _termSourceREF)
+        //match tanInfo with
+        //| Some tanInfo -> tanInfo
+        //| None ->
+        OntologyAnnotation.computeTanInfo (?tan = _termAccessionNumber, ?tsr = _termSourceREF)
 
     let recomputeTanInfo() =
         let newTanInfo = OntologyAnnotation.computeTanInfo(?tan = _termAccessionNumber, ?tsr = _termSourceREF)

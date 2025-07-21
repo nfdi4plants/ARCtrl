@@ -167,6 +167,15 @@ type ArcTableValues (cols : Dictionary<int,ColumnValueRefs>, valueMap: Dictionar
     member this.RowCount
         with get() = _rowCount
         and internal set(rowCount) =
+            // If the row count is set to a value lower than the current row count, we need to remove any sparse values that are out of bounds.
+            // Not sure whethere we should handle it like this, as it might cause additional issues if used in functions where the rows are also being handled manually.
+            for kv in _columns do
+                match kv.Value with
+                | Constant _ -> ()
+                | Sparse values ->
+                    for key in values.Keys do                 
+                        if key >= rowCount then
+                            values.Remove(key) |> ignore
             _rowCount <- rowCount
 
     static member fromCellColumns (columns: ResizeArray<ResizeArray<CompositeCell>>) =       
@@ -576,7 +585,6 @@ module Unchecked =
             values.RowCount <- 0
             values.Columns <- Dictionary()
         else
-            values.RowCount <- values.RowCount - 1
             values.Columns
             |> Seq.iter (fun kv ->
                 match kv.Value with
@@ -595,6 +603,7 @@ module Unchecked =
                         values.Columns.[kv.Key] <- ColumnValueRefs.Sparse col
                     else vals.Remove(rowIndex) |> ignore
             )
+            values.RowCount <- values.RowCount - 1
   
     let moveColumnCellsTo (fromCol:int) (toCol:int) (values:ArcTableValues) =
         match IntDictionary.tryFind fromCol values.Columns with
