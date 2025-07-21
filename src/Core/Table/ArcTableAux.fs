@@ -603,7 +603,36 @@ module Unchecked =
                     else vals.Remove(rowIndex) |> ignore
             )
             values.RowCount <- values.RowCount - 1
-  
+
+    /// Remove cells of one Row, change index of cells with higher index to index - 1
+    let removeRowRange_withIndexChange (rowStartIndex:int) (rowEndIndex:int) (values:ArcTableValues) =
+        if rowStartIndex = 0 && values.RowCount = rowEndIndex then
+            values.RowCount <- 0
+            values.Columns <- Dictionary()
+        else
+            values.Columns
+            |> Seq.iter (fun kv ->
+                match kv.Value with
+                | Constant _ -> ()
+                | Sparse vals ->
+                    let range = rowEndIndex - rowStartIndex + 1
+                    if rowEndIndex < values.RowCount - 1 then
+                        let col = Dictionary<int, int>()
+                        vals
+                        |> Seq.iter (fun kv ->
+                            let rI = kv.Key
+                            if rI > rowEndIndex then
+                                col.Add(rI - range, kv.Value)
+                            elif rI < rowStartIndex then
+                                col.Add(rI, kv.Value)
+                        )
+                        values.Columns.[kv.Key] <- ColumnValueRefs.Sparse col
+                    else
+                        for rowIndex = rowStartIndex to rowEndIndex do
+                            vals.Remove(rowIndex) |> ignore
+            )
+            values.RowCount <- values.RowCount - (rowEndIndex - rowStartIndex + 1)
+
     let moveColumnCellsTo (fromCol:int) (toCol:int) (values:ArcTableValues) =
         match IntDictionary.tryFind fromCol values.Columns with
         | None -> ()
@@ -660,11 +689,6 @@ module Unchecked =
                 moveColumnCellsTo (columnIndex) (columnIndex + numberOfNewColumns) values
         /// Then we can set the new column at `index`
         let setNewCells() =
-            // Not sure if this is intended? If we for example `forceReplace` a single column table with `Input`and 5 rows with a new column of `Input` ..
-            // ..and only 2 rows, then table RowCount will decrease from 5 to 2.
-            // Related Test: `All.ArcTable.addColumn.Existing Table.add less rows, replace input, force replace
-            //if hasDuplicateUnique.IsSome then
-            //    removeColumnCells(index) values
             IntDictionary.addOrUpdate index newCol values.Columns
                 
         setNewHeader()
