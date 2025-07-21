@@ -166,16 +166,18 @@ type ArcTableValues (cols : Dictionary<int,ColumnValueRefs>, valueMap: Dictionar
 
     member this.RowCount
         with get() = _rowCount
-        and internal set(rowCount) =
+        and internal set(rowCount) =            
             // If the row count is set to a value lower than the current row count, we need to remove any sparse values that are out of bounds.
             // Not sure whethere we should handle it like this, as it might cause additional issues if used in functions where the rows are also being handled manually.
-            for kv in _columns do
-                match kv.Value with
-                | Constant _ -> ()
-                | Sparse values ->
-                    for key in values.Keys do                 
-                        if key >= rowCount then
-                            values.Remove(key) |> ignore
+            if rowCount > 0 && rowCount < _rowCount then
+                for kv in _columns do
+                    match kv.Value with
+                    | Constant _ -> ()
+                    | Sparse values ->
+                        let keys = values.Keys |> Seq.toList
+                        for key in keys do                 
+                            if key >= rowCount then
+                                values.Remove(key) |> ignore
             _rowCount <- rowCount
 
     static member fromCellColumns (columns: ResizeArray<ResizeArray<CompositeCell>>) =       
@@ -525,12 +527,9 @@ module Unchecked =
         | Some col ->
             match col with
             | Constant valueHash ->
-                let d = Dictionary<int, int>()
-                for i in 0 .. values.RowCount - 1 do
-                    if i = rowIndex then
-                        ()
-                    else
-                        d.Add(i, valueHash) // Keep the old value for other rows
+                if rowIndex = 0 && values.RowCount = 1 then
+                    // If the column is constant and the only cell is removed, we remove the column.
+                    values.Columns.Remove(columnIndex) |> ignore             
             | Sparse vals ->
                 if vals.ContainsKey rowIndex then
                     vals.Remove(rowIndex) |> ignore
@@ -613,9 +612,9 @@ module Unchecked =
             IntDictionary.addOrUpdate toCol col values.Columns                   
 
     /// <summary>
-    ///
+    /// Add a new column to the ArcTableValues.
     /// </summary>
-    /// <param name="newHeader"></param>
+    /// <param name="newHeader">Header of the new column.</param>
     /// <param name="newCells"></param>
     /// <param name="index"></param>
     /// <param name="forceReplace"></param>

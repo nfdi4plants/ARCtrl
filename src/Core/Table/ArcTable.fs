@@ -392,7 +392,11 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             newTable
 
     // - Column API - //
-    // GetColumnAt?
+    /// <summary>
+    /// Return a CompositeColumn for the given column index.
+    /// </summary>
+    /// <param name="columnIndex">0-based Index of the column to return.</param>
+    /// <param name="fillDefault">Tables can be sparse, so if set to true, will fill the column with empty cells for rows that do not have a value. Otherwise will fail for non-existing cells.</param>
     member this.GetColumn(columnIndex:int, ?fillDefault : bool) : CompositeColumn =
         let fillDefault = defaultArg fillDefault false
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
@@ -406,47 +410,81 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
                 for i = 0 to this.RowCount - 1 do
                     cells.Add c
             | ColumnValueRefs.Sparse vals ->
+                let emptyCell = getEmptyCellForHeader h None
                 for rowIndex = 0 to this.RowCount - 1 do
                     if vals.ContainsKey rowIndex then
                         cells.Add _values.ValueMap.[vals.[rowIndex]]
                     else
                         if fillDefault then
-                            cells.Add (getEmptyCellForHeader h None)
+                            cells.Add emptyCell
                         else
-                            failwithf "Unable to find cell for index: (%i, %i)" columnIndex rowIndex
+                            failwithf "Could not return column: Unable to find cell for index: (%i, %i)" columnIndex rowIndex
         CompositeColumn.create(h, cells)
 
+    /// <summary>
+    /// Return a CompositeColumn for the given column index.
+    /// </summary>
+    /// <param name="columnIndex">0-based Index of the column to return.</param>
+    /// <param name="fillDefault">Tables can be sparse, so if set to true, will fill the column with empty cells for rows that do not have a value. Otherwise will fail for non-existing cells.</param>s
     static member getColumn (index:int, ?fillDefault) =
         fun (table:ArcTable) ->
             table.GetColumn(index, ?fillDefault = fillDefault)
 
+    /// <summary>
+    /// Returns a column by its header.
+    /// If the header is not found, returns None.
+    /// </summary>
+    /// <param name="header">The header to search for.</param>
+    /// <param name="fillDefault">Tables can be sparse, so if set to true, will fill the column with empty cells for rows that do not have a value. Otherwise will fail for non-existing cells.</param>
     member this.TryGetColumnByHeader (header:CompositeHeader, ?fillDefault) =
         let index = this.Headers |> Seq.tryFindIndex (fun x -> x = header)
         index
         |> Option.map (fun i -> this.GetColumn(i, ?fillDefault = fillDefault))
 
+    /// <summary>
+    /// Returns a column by its header.
+    /// If the header is not found, returns None.
+    /// </summary>
+    /// <param name="header">The header to search for.</param>
+    /// <param name="fillDefault">Tables can be sparse, so if set to true, will fill the column with empty cells for rows that do not have a value. Otherwise will fail for non-existing cells.</param>
     static member tryGetColumnByHeader (header:CompositeHeader, ?fillDefault ) =
         fun (table:ArcTable) ->
             table.TryGetColumnByHeader(header, ?fillDefault = fillDefault)
 
-    // tryGetColumnByHeaderBy
+    /// <summary>
+    /// Returns the first column for that the header predicate returns true.
+    /// If the header is not found, returns None.
+    /// </summary>
+    /// <param name="header">Predicate to search for the header.</param>
+    /// <param name="fillDefault">Tables can be sparse, so if set to true, will fill the column with empty cells for rows that do not have a value. Otherwise will fail for non-existing cells.</param>
     member this.TryGetColumnByHeaderBy (headerPredicate:CompositeHeader -> bool, ?fillDefault ) = //better name for header / action
         this.Headers
         |> Seq.tryFindIndex headerPredicate
         |> Option.map (fun i -> this.GetColumn(i, ?fillDefault = fillDefault))
 
+    /// <summary>
+    /// Returns the first column for that the header predicate returns true.
+    /// If the header is not found, returns None.
+    /// </summary>
+    /// <param name="header">Predicate to search for the header.</param>
+    /// <param name="fillDefault">Tables can be sparse, so if set to true, will fill the column with empty cells for rows that do not have a value. Otherwise will fail for non-existing cells.</param>
     static member tryGetColumnByHeaderBy (headerPredicate:CompositeHeader -> bool, ?fillDefault) =
         fun (table:ArcTable) ->
             table.TryGetColumnByHeaderBy(headerPredicate, ?fillDefault = fillDefault)
 
+    /// <summary>
+    /// Returns a column by its header.
+    /// </summary>
+    /// <param name="header">Header to search for.</param>
+    /// <param name="fillDefault">Tables can be sparse, so if set to true, will fill the column with empty cells for rows that do not have a value. Otherwise will fail for non-existing cells.</param>
     member this.GetColumnByHeader (header:CompositeHeader, ?fillDefault) =
         match this.TryGetColumnByHeader(header, ?fillDefault = fillDefault) with
         | Some c -> c
         | None -> failwithf "Unable to find column with header in table %s: %O" this.Name header
 
-    static member getColumnByHeader (header:CompositeHeader) =
+    static member getColumnByHeader (header:CompositeHeader, ?fillDefault) =
         fun (table:ArcTable) ->
-            table.GetColumnByHeader(header)
+            table.GetColumnByHeader(header, ?fillDefault = fillDefault)
 
     member this.TryGetInputColumn() =
         let index = this.Headers |> Seq.tryFindIndex (fun x -> x.isInput)
@@ -514,7 +552,6 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
                 let h = this.Headers.[columnIndex]
                 let column = CompositeColumn.create(h,ResizeArray [|cells.[columnIndex]|])
                 cells.[columnIndex].ValidateAgainstHeader(h, raiseException = true) |> ignore
-                SanityChecks.validateColumn column
             // Sanity checks - end
             Unchecked.addRow index cells this.Headers _values
 
@@ -654,7 +691,6 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         let forceReplace = defaultArg forceReplace false
         let mutable index = defaultArg index this.ColumnCount
         index <- if index = -1 then this.ColumnCount else index //make -1 default to append to make function usage more fluent.
-        printfn "1"
         SanityChecks.validateColumnIndex index this.ColumnCount true
         let onlyHeaders = joinOptions = TableJoinOptions.Headers
         let columns =
@@ -673,10 +709,8 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
                     | None -> {c with Cells = ResizeArray()}
                 )
             | WithValues -> pre
-        printfn "2"
         SanityChecks.validateNoDuplicateUniqueColumns columns
         columns |> ResizeArray.iter (fun x -> SanityChecks.validateColumn x)
-        printfn "3"
         columns
         |> ResizeArray.iter (fun col ->
             let prevHeadersCount = this.Headers.Count
@@ -692,30 +726,30 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             copy
 
     ///
-    member this.AddProtocolTypeColumn(?types : ResizeArray<OntologyAnnotation>, ?index : int) =
+    member this.AddProtocolTypeColumn(?types : ResizeArray<OntologyAnnotation>, ?index : int, ?forceReplace: bool) =
         let header = CompositeHeader.ProtocolType
         let cells = types |> Option.map (ResizeArray.map CompositeCell.Term)
-        this.AddColumn(header, ?cells = cells, ?index = index)
+        this.AddColumn(header, ?cells = cells, ?index = index, ?forceReplace = forceReplace)
 
-    member this.AddProtocolVersionColumn(?versions : ResizeArray<string>, ?index : int) =
+    member this.AddProtocolVersionColumn(?versions : ResizeArray<string>, ?index : int, ?forceReplace: bool) =
         let header = CompositeHeader.ProtocolVersion
         let cells = versions |> Option.map (ResizeArray.map CompositeCell.FreeText)
-        this.AddColumn(header, ?cells = cells, ?index = index)
+        this.AddColumn(header, ?cells = cells, ?index = index, ?forceReplace = forceReplace)
 
-    member this.AddProtocolUriColumn(?uris : ResizeArray<string>, ?index : int) =
+    member this.AddProtocolUriColumn(?uris : ResizeArray<string>, ?index : int, ?forceReplace: bool) =
         let header = CompositeHeader.ProtocolUri
         let cells = uris |> Option.map (ResizeArray.map CompositeCell.FreeText)
-        this.AddColumn(header, ?cells = cells, ?index = index)
+        this.AddColumn(header, ?cells = cells, ?index = index, ?forceReplace = forceReplace)
 
-    member this.AddProtocolDescriptionColumn(?descriptions : ResizeArray<string>, ?index : int) =
+    member this.AddProtocolDescriptionColumn(?descriptions : ResizeArray<string>, ?index : int, ?forceReplace: bool) =
         let header = CompositeHeader.ProtocolDescription
         let cells = descriptions |> Option.map (ResizeArray.map CompositeCell.FreeText)
-        this.AddColumn(header, ?cells = cells, ?index = index)
+        this.AddColumn(header, ?cells = cells, ?index = index, ?forceReplace = forceReplace)
 
-    member this.AddProtocolNameColumn(?names : ResizeArray<string>, ?index : int) =
+    member this.AddProtocolNameColumn(?names : ResizeArray<string>, ?index : int, ?forceReplace: bool) =
         let header = CompositeHeader.ProtocolREF
         let cells = names |> Option.map (ResizeArray.map CompositeCell.FreeText)
-        this.AddColumn(header, ?cells = cells, ?index = index)
+        this.AddColumn(header, ?cells = cells, ?index = index, ?forceReplace = forceReplace)
 
     /// Get functions for the protocol columns
     member this.GetProtocolTypeColumn() =
@@ -743,9 +777,9 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             else None
         )
 
+    /// This will rescan the value map of the table, so that it is up to date with the current values.
+    /// This is useful if you have changed the values of the table and want to update the value map.
     member this.RescanValueMap() =
-        // This will rescan the value map of the table, so that it is up to date with the current values.
-        // This is useful if you have changed the values of the table and want to update the value map.
         _values.RescanValueMap()
 
     /// Splits the table rowWise into a collection of tables, so that each new table has only one value for the given column

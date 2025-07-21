@@ -381,7 +381,6 @@ type ArcTables(initTables:ResizeArray<ArcTable>) =
             ) 
             |> Map.ofSeq
         sheetTables.Tables
-        |> ResizeArray
         |> ResizeArray.collect ArcTable.SplitByProtocolREF
         |> ResizeArray.map (fun t ->
             let k = 
