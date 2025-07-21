@@ -4,7 +4,7 @@ open ARCtrl
 open System.Collections.Generic
 open FsSpreadsheet.DSL
 open FsSpreadsheet
-
+open ARCtrl.Helper
 
 type SparseRow = (int * string) seq
 
@@ -74,7 +74,7 @@ type SparseTable =
 
     static member Create(?matrix,?keys,?commentKeys,?length) = 
         {
-            Matrix= Option.defaultValue (Dictionary()) matrix
+            Matrix= Option.defaultValue (Dictionary.init()) matrix
             Keys = Option.defaultValue [] keys
             CommentKeys = Option.defaultValue [] commentKeys
             ColumnCount = Option.defaultValue 0 length

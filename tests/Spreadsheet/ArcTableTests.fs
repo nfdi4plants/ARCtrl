@@ -12,13 +12,13 @@ let private dataColumnsTable =
     testList "dataColumnsTable" [
         testCase "Only Freetext" <| fun _ ->
             let table = ArcTable.init("MyTable")
-            table.AddColumn(CompositeHeader.Input(IOType.Data), [|for i in 1 .. 5 do mkInputStr i |> CompositeCell.FreeText|])
+            table.AddColumn(CompositeHeader.Input(IOType.Data), ResizeArray [|for i in 1 .. 5 do mkInputStr i |> CompositeCell.FreeText|])
             let fsws = ArcTable.toFsWorksheet None table
             let actualColValues = (fsws.Column(1).Cells |> Seq.map (fun c -> c.ValueAsString())) 
             Expect.sequenceEqual actualColValues ["Input [Data]"; "Input_1"; "Input_2"; "Input_3"; "Input_4"; "Input_5"] ""
         testCase "Only Data" <| fun _ ->
             let table = ArcTable.init("MyTable")
-            table.AddColumn(CompositeHeader.Input(IOType.Data), [|for i in 1 .. 5 do CompositeCell.createData (Data(name = mkDataNameStr i, format = "text/csv", selectorFormat = "MySelector"))|])
+            table.AddColumn(CompositeHeader.Input(IOType.Data), ResizeArray [|for i in 1 .. 5 do CompositeCell.createData (Data(name = mkDataNameStr i, format = "text/csv", selectorFormat = "MySelector"))|])
             let fsws = ArcTable.toFsWorksheet None table
             fsws.RescanRows()
             let rows = fsws.Rows |> Seq.map (fun x -> x.Cells |> Seq.map (fun c -> c.ValueAsString()) |> Array.ofSeq) |> Array.ofSeq
@@ -30,7 +30,7 @@ let private dataColumnsTable =
             let table = ArcTable.init("MyTable")
             table.AddColumn(
                 CompositeHeader.Input(IOType.Data),
-                [|
+                ResizeArray [|
                     for i in 1 .. 5 do
                         CompositeCell.createData (Data(name = mkDataNameStr i, format = "text/csv", selectorFormat = "MySelector"))
                     for i in 6 .. 10 do

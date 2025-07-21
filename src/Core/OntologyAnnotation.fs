@@ -4,7 +4,8 @@ open ARCtrl.Helper
 open Fable.Core
 
 [<AttachMembers>]
-type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
+// tanInfo given from outside was meant to allow for performance optimization, but it is not used in the code currently.
+type OntologyAnnotation(?name,?tsr,?tan, (*?tanInfo, *)?comments) =
     let mutable _name : string option =
         match name with
         | Some "" | None -> None
@@ -19,17 +20,31 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
         | tan -> tan
     let mutable _comments : ResizeArray<Comment> = defaultArg comments <| ResizeArray()
 
+    let mutable _tanInfo : {| IDSpace : string; LocalID : string |} option =
+        //match tanInfo with
+        //| Some tanInfo -> tanInfo
+        //| None ->
+        OntologyAnnotation.computeTanInfo (?tan = _termAccessionNumber, ?tsr = _termSourceREF)
+
+    let recomputeTanInfo() =
+        let newTanInfo = OntologyAnnotation.computeTanInfo(?tan = _termAccessionNumber, ?tsr = _termSourceREF)
+        _tanInfo <- newTanInfo
+
     member this.Name
         with get() = _name
         and set(name) = _name <- name
 
     member this.TermSourceREF
         with get() = _termSourceREF
-        and set(tsr) = _termSourceREF <- tsr
+        and set(tsr) =
+            _termSourceREF <- tsr
+            recomputeTanInfo()
 
     member this.TermAccessionNumber
         with get() = _termAccessionNumber
-        and set(tan) = _termAccessionNumber <- tan
+        and set(tan) =
+            _termAccessionNumber <- tan
+            recomputeTanInfo()
 
     member this.Comments
         with get() = _comments
@@ -46,20 +61,10 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
     ///<param name="tsr">Term accession number</param>
     ///<param name="tan">Term accession number</param>
     ///<param name="comments">Term accession number</param>
-    static member create(?name,?tsr,?tan,?comments) : OntologyAnnotation =
+    static member create(?name,?tsr,?tan, ?comments) : OntologyAnnotation =
         OntologyAnnotation.make name tsr tan (defaultArg comments <| ResizeArray())
 
-    member this.TANInfo = 
-        match this.TermAccessionNumber with
-        | Some tan -> 
-            match Regex.tryParseTermAnnotation tan with
-            | Some ta -> Some ta
-            | None ->
-                match this.TermSourceREF with
-                | Some "" | None -> None
-                | Some tsr -> 
-                    Some {| IDSpace = tsr; LocalID = tan |}
-        | None -> None
+    member this.TANInfo = _tanInfo
 
     member this.NameText = 
         this.Name
@@ -147,24 +152,23 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
            this.Name.IsNone && this.TermSourceREF.IsNone && this.TermAccessionNumber.IsNone && this.Comments.Count = 0
 
     override this.GetHashCode() = 
-        [|
-            HashCodes.boxHashOption this.Name
-            match this.TermSourceREF, this.TANInfo with
-            | None, Some taninfo -> // if we get taninfo we assume tsr to be inferrable by taninfo
-                HashCodes.boxHashArray [|taninfo.IDSpace; taninfo.IDSpace + ":" + taninfo.LocalID|]
-            | Some tsr, Some taninfo -> // if we get taninfo + tsr we do NOT override tsr
-                HashCodes.boxHashArray [|tsr; taninfo.IDSpace + ":" + taninfo.LocalID|]
-            | Some tsr, None ->
-                let tan = this.TermAccessionNumber |> Option.defaultValue ""
-                HashCodes.boxHashArray [|tsr; tan|]
-            | None, None ->
-                let tan = this.TermAccessionNumber |> Option.defaultValue ""
-                let tsr = this.TermAccessionNumber |> Option.defaultValue ""
-                HashCodes.boxHashArray [|tsr; tan|]
-            //HashCodes.boxHashSeq this.Comments
-        |]
-        |> HashCodes.boxHashArray
-        |> fun x -> x :?> int
+        // Same as above but don't create unneccessary arrays
+        let nameHash = 
+            match this.Name with
+            | Some name -> hash name
+            | None -> 0
+        match this.TermSourceREF, this.TANInfo with
+        | None, Some taninfo -> 
+            HashCodes.mergeHashes (hash taninfo.IDSpace) (hash taninfo.LocalID)
+        | Some tsr, Some taninfo -> 
+            HashCodes.mergeHashes (hash tsr) (hash taninfo.LocalID)
+        | Some tsr, None ->
+            match this.TermAccessionNumber with
+            | Some tan -> HashCodes.mergeHashes (hash tsr) (hash tan)
+            | None -> hash tsr
+        | None, None ->
+            0    
+        |> HashCodes.mergeHashes nameHash
 
     override this.Equals(obj) : bool =
         HashCodes.hash this = HashCodes.hash obj
@@ -187,3 +191,15 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
     member this.Copy() =
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
         OntologyAnnotation.make this.Name this.TermSourceREF this.TermAccessionNumber nextComments
+
+    static member computeTanInfo (?tan : string, ?tsr : string) =
+        match tan with
+        | Some tan -> 
+            match Regex.tryParseTermAnnotation tan with
+            | Some ta -> Some ta
+            | None ->
+                match tsr with
+                | Some "" | None -> None
+                | Some tsr -> 
+                    Some {| IDSpace = tsr; LocalID = tan |}
+        | None -> None

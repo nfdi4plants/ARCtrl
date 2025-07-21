@@ -294,14 +294,14 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
             newAssay
 
     // - Column CRUD API - //
-    static member addColumnAt(tableIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) : ArcAssay -> ArcAssay = 
+    static member addColumnAt(tableIndex:int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?columnIndex: int, ?forceReplace: bool) : ArcAssay -> ArcAssay = 
         fun (assay: ArcAssay) ->
             let newAssay = assay.Copy()
             newAssay.AddColumnAt(tableIndex, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
             newAssay
 
     // - Column CRUD API - //
-    static member addColumn(tableName: string, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) : ArcAssay -> ArcAssay =
+    static member addColumn(tableName: string, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?columnIndex: int, ?forceReplace: bool) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
             newAssay.AddColumn(tableName, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
@@ -322,14 +322,14 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
             newAssay
 
     // - Column CRUD API - //
-    static member updateColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
+    static member updateColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>) =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
             newAssay.UpdateColumnAt(tableIndex, columnIndex, header, ?cells=cells)
             newAssay
 
     // - Column CRUD API - //
-    static member updateColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
+    static member updateColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>) =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
             newAssay.UpdateColumn(tableName, columnIndex, header, ?cells=cells)
@@ -348,14 +348,14 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
             newAssay.GetColumn(tableName, columnIndex)
 
     // - Row CRUD API - //
-    static member addRowAt(tableIndex:int, ?cells: CompositeCell [], ?rowIndex: int) : ArcAssay -> ArcAssay = 
+    static member addRowAt(tableIndex:int, ?cells: ResizeArray<CompositeCell>, ?rowIndex: int) : ArcAssay -> ArcAssay = 
         fun (assay: ArcAssay) ->
             let newAssay = assay.Copy()
             newAssay.AddRowAt(tableIndex, ?cells=cells, ?rowIndex=rowIndex)
             newAssay
 
     // - Row CRUD API - //
-    static member addRow(tableName: string, ?cells: CompositeCell [], ?rowIndex: int) : ArcAssay -> ArcAssay =
+    static member addRow(tableName: string, ?cells: ResizeArray<CompositeCell>, ?rowIndex: int) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
             newAssay.AddRow(tableName, ?cells=cells, ?rowIndex=rowIndex)
@@ -376,14 +376,14 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
             newAssay
 
     // - Row CRUD API - //
-    static member updateRowAt(tableIndex: int, rowIndex: int, cells: CompositeCell []) =
+    static member updateRowAt(tableIndex: int, rowIndex: int, cells: ResizeArray<CompositeCell>) =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
             newAssay.UpdateRowAt(tableIndex, rowIndex, cells)
             newAssay
 
     // - Row CRUD API - //
-    static member updateRow(tableName: string, rowIndex: int, cells: CompositeCell []) =
+    static member updateRow(tableName: string, rowIndex: int, cells: ResizeArray<CompositeCell>) =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
             newAssay.UpdateRow(tableName, rowIndex, cells)
@@ -873,14 +873,14 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Column CRUD API - //
-    static member addColumnAt(tableIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) : ArcStudy -> ArcStudy = 
+    static member addColumnAt(tableIndex:int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?columnIndex: int, ?forceReplace: bool) : ArcStudy -> ArcStudy = 
         fun (study: ArcStudy) ->
             let newAssay = study.Copy()
             newAssay.AddColumnAt(tableIndex, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
             newAssay
 
     // - Column CRUD API - //
-    static member addColumn(tableName: string, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) : ArcStudy -> ArcStudy =
+    static member addColumn(tableName: string, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?columnIndex: int, ?forceReplace: bool) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
             newAssay.AddColumn(tableName, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
@@ -901,14 +901,14 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Column CRUD API - //
-    static member updateColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
+    static member updateColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>) =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
             newAssay.UpdateColumnAt(tableIndex, columnIndex, header, ?cells=cells)
             newAssay
 
     // - Column CRUD API - //
-    static member updateColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
+    static member updateColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>) =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
             newAssay.UpdateColumn(tableName, columnIndex, header, ?cells=cells)
@@ -927,14 +927,14 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay.GetColumn(tableName, columnIndex)
 
     // - Row CRUD API - //
-    static member addRowAt(tableIndex:int, ?cells: CompositeCell [], ?rowIndex: int) : ArcStudy -> ArcStudy = 
+    static member addRowAt(tableIndex:int, ?cells: ResizeArray<CompositeCell>, ?rowIndex: int) : ArcStudy -> ArcStudy = 
         fun (study: ArcStudy) ->
             let newAssay = study.Copy()
             newAssay.AddRowAt(tableIndex, ?cells=cells, ?rowIndex=rowIndex)
             newAssay
 
     // - Row CRUD API - //
-    static member addRow(tableName: string, ?cells: CompositeCell [], ?rowIndex: int) : ArcStudy -> ArcStudy =
+    static member addRow(tableName: string, ?cells: ResizeArray<CompositeCell>, ?rowIndex: int) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
             newAssay.AddRow(tableName, ?cells=cells, ?rowIndex=rowIndex)
@@ -955,14 +955,14 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Row CRUD API - //
-    static member updateRowAt(tableIndex: int, rowIndex: int, cells: CompositeCell []) =
+    static member updateRowAt(tableIndex: int, rowIndex: int, cells: ResizeArray<CompositeCell>) =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
             newAssay.UpdateRowAt(tableIndex, rowIndex, cells)
             newAssay
 
     // - Row CRUD API - //
-    static member updateRow(tableName: string, rowIndex: int, cells: CompositeCell []) =
+    static member updateRow(tableName: string, rowIndex: int, cells: ResizeArray<CompositeCell>) =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
             newAssay.UpdateRow(tableName, rowIndex, cells)
@@ -1609,7 +1609,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             newRun
 
     // - Table API - //
-    static member updateTable(name: string, updateFun: ArcTable -> unit) : ArcRun -> ArcRun =
+    static member mapTable(name: string, updateFun: ArcTable -> unit) : ArcRun -> ArcRun =
         fun (run:ArcRun) ->
             let newRun = run.Copy()
             newRun.MapTable(name, updateFun)
@@ -1630,14 +1630,14 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             newRun
 
     // - Column CRUD API - //
-    static member addColumnAt(tableIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) : ArcRun -> ArcRun = 
+    static member addColumnAt(tableIndex:int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?columnIndex: int, ?forceReplace: bool) : ArcRun -> ArcRun = 
         fun (run: ArcRun) ->
             let newRun = run.Copy()
             newRun.AddColumnAt(tableIndex, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
             newRun
 
     // - Column CRUD API - //
-    static member addColumn(tableName: string, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) : ArcRun -> ArcRun =
+    static member addColumn(tableName: string, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?columnIndex: int, ?forceReplace: bool) : ArcRun -> ArcRun =
         fun (run:ArcRun) ->
             let newRun = run.Copy()
             newRun.AddColumn(tableName, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
@@ -1658,14 +1658,14 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             newRun
 
     // - Column CRUD API - //
-    static member updateColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
+    static member updateColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>) =
         fun (run:ArcRun) ->
             let newRun = run.Copy()
             newRun.UpdateColumnAt(tableIndex, columnIndex, header, ?cells=cells)
             newRun
 
     // - Column CRUD API - //
-    static member updateColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
+    static member updateColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>) =
         fun (run:ArcRun) ->
             let newRun = run.Copy()
             newRun.UpdateColumn(tableName, columnIndex, header, ?cells=cells)
@@ -1684,14 +1684,14 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             newRun.GetColumn(tableName, columnIndex)
 
     // - Row CRUD API - //
-    static member addRowAt(tableIndex:int, ?cells: CompositeCell [], ?rowIndex: int) : ArcRun -> ArcRun = 
+    static member addRowAt(tableIndex:int, ?cells: ResizeArray<CompositeCell>, ?rowIndex: int) : ArcRun -> ArcRun = 
         fun (run: ArcRun) ->
             let newRun = run.Copy()
             newRun.AddRowAt(tableIndex, ?cells=cells, ?rowIndex=rowIndex)
             newRun
 
     // - Row CRUD API - //
-    static member addRow(tableName: string, ?cells: CompositeCell [], ?rowIndex: int) : ArcRun -> ArcRun =
+    static member addRow(tableName: string, ?cells: ResizeArray<CompositeCell>, ?rowIndex: int) : ArcRun -> ArcRun =
         fun (run:ArcRun) ->
             let newRun = run.Copy()
             newRun.AddRow(tableName, ?cells=cells, ?rowIndex=rowIndex)
@@ -1712,14 +1712,14 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             newRun
 
     // - Row CRUD API - //
-    static member updateRowAt(tableIndex: int, rowIndex: int, cells: CompositeCell []) =
+    static member updateRowAt(tableIndex: int, rowIndex: int, cells: ResizeArray<CompositeCell>) =
         fun (run:ArcRun) ->
             let newRun = run.Copy()
             newRun.UpdateRowAt(tableIndex, rowIndex, cells)
             newRun
 
     // - Row CRUD API - //
-    static member updateRow(tableName: string, rowIndex: int, cells: CompositeCell []) =
+    static member updateRow(tableName: string, rowIndex: int, cells: ResizeArray<CompositeCell>) =
         fun (run:ArcRun) ->
             let newRun = run.Copy()
             newRun.UpdateRow(tableName, rowIndex, cells)

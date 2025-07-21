@@ -72,3 +72,24 @@ module Encode =
             values
             |> Seq.map encoder
             |> Encode.seq
+
+    let dictionary (keyEncoder : Encoder<'key>) (valueEncoder : Encoder<'value>) (values: System.Collections.Generic.IDictionary<'key, 'value>) =
+        if values.Count = 0 then
+            Encode.nil
+        else
+            values
+            |> Seq.map (fun (KeyValue(k, v)) -> Encode.tuple2 keyEncoder valueEncoder (k,v))
+            |> Seq.toArray
+            |> Encode.seq
+
+    let intDictionary (valueEncoder : Encoder<'value>) (values: System.Collections.Generic.IDictionary<int, 'value>) =
+        if values.Count = 0 then
+            Encode.nil
+        else
+            values
+            |> Seq.map (fun (KeyValue(k, v)) ->
+                if k > System.Int32.MaxValue || k < System.Int32.MinValue then
+                    failwithf "Key %d is out of bounds for Int32" k
+                Encode.tuple2 Encode.int valueEncoder (k,v))
+            |> Seq.toArray
+            |> Encode.seq

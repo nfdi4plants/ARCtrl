@@ -2,6 +2,7 @@ module ArcAssayTests
 
 
 open ARCtrl
+open ARCtrl.Helper
 open TestingUtils
 open ARCtrl.Spreadsheet
 
@@ -522,8 +523,8 @@ let tests_ArcTable = testList "ArcTable" [
         let createTestAssay() = 
             let assay = ArcAssay(assayIdentifier)
             let t = ArcTable.init(tableName)
-            t.AddProtocolNameColumn(Array.create 2 protocolName)
-            t.AddColumn(inputHeader, Array.create 2 inputCell)
+            t.AddProtocolNameColumn(ResizeArray.create 2 protocolName)
+            t.AddColumn(inputHeader, ResizeArray.create 2 inputCell)
             assay.AddTable t
             assay
         let ensureTestAssay (assay: ArcAssay) =

@@ -1,4 +1,4 @@
-﻿
+
 open ARCtrl
 open ARCtrl.Json
 
@@ -52,7 +52,7 @@ let main argv =
                         CompositeCell.FreeText $"Sample{i}"
                     |]
                 for j = 0 to cells.Length - 1 do
-                    t.Values.[(j,i)] <- cells.[j]
+                    ArcTableAux.Unchecked.setCellAt (j,i,cells.[j]) t.Values
             a
         let toJson(a : ArcAssay) = 
             ArcAssay.toISAJsonString() a

@@ -2,6 +2,7 @@ module ARCtrl.ROCrateConversion.Tests
 
 open ARCtrl.ROCrate
 open ARCtrl
+open ARCtrl.Helper
 open ARCtrl.Conversion
 open ARCtrl.Process
 open TestingUtils
@@ -33,11 +34,11 @@ module Helper =
                 yield $"({c},{r}) {v}"
         ]
 
-    let createCells_FreeText pretext (count) = Array.init count (fun i -> CompositeCell.createFreeText  $"{pretext}_{i}") 
-    let createCells_Sciex (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_SCIEXInstrumentModel)
-    let createCells_chlamy (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_chlamy)
-    let createCells_DegreeCelsius (count) = Array.init count (fun i -> CompositeCell.createUnitized (string i,oa_degreeCel))
-    let createCells_Hour (count) = Array.init count (fun i -> CompositeCell.createUnitized (string i,oa_hour))
+    let createCells_FreeText pretext (count) = ResizeArray.init count (fun i -> CompositeCell.createFreeText  $"{pretext}_{i}") 
+    let createCells_Sciex (count) = ResizeArray.init count (fun _ -> CompositeCell.createTerm oa_SCIEXInstrumentModel)
+    let createCells_chlamy (count) = ResizeArray.init count (fun _ -> CompositeCell.createTerm oa_chlamy)
+    let createCells_DegreeCelsius (count) = ResizeArray.init count (fun i -> CompositeCell.createUnitized (string i,oa_degreeCel))
+    let createCells_Hour (count) = ResizeArray.init count (fun i -> CompositeCell.createUnitized (string i,oa_hour))
 
     let singleRowSingleParam = 
     /// Input [Source] --> Source_0 .. Source_4
@@ -125,7 +126,7 @@ module Helper =
         let columns = 
             [|
             CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 1)
-            CompositeColumn.create(CompositeHeader.ProtocolREF, [|CompositeCell.createFreeText "MyProtocol"|])
+            CompositeColumn.create(CompositeHeader.ProtocolREF, ResizeArray [|CompositeCell.createFreeText "MyProtocol"|])
             CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 1)
             |]
         let t = ArcTable.init(tableName1)
@@ -135,7 +136,7 @@ module Helper =
     /// Creates 5 empty tables
     ///
     /// Table Names: ["New Table 0"; "New Table 1" .. "New Table 4"]
-    let create_exampleTables(appendStr:string) = Array.init 5 (fun i -> ArcTable.init($"{appendStr} Table {i}"))
+    let create_exampleTables(appendStr:string) = ResizeArray.init 5 (fun i -> ArcTable.init($"{appendStr} Table {i}"))
 
     /// Valid TestAssay with empty tables: 
     ///
@@ -143,7 +144,7 @@ module Helper =
     let create_exampleAssay() =
         let assay = ArcAssay("MyAssay")
         let sheets = create_exampleTables("My")
-        sheets |> Array.iter (fun table -> assay.AddTable(table))
+        sheets |> ResizeArray.iter (fun table -> assay.AddTable(table))
         assay
 
 
@@ -189,9 +190,7 @@ module Helper =
         let person =
             let role = OntologyAnnotation(name = "Resarcher", tsr = "PO", tan = "PO:123")
             ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
-        let table2 = ArcTable.init("Table2")
-        table2.Headers <- twoRowsDifferentParamValue.Headers
-        table2.Values <- twoRowsDifferentParamValue.Values
+        let table2 = ArcTable.fromArcTableValues("Table2", twoRowsDifferentParamValue.Headers, twoRowsDifferentParamValue.Values)
         let p =
             ArcAssay(
                 identifier = "My Assay",
@@ -216,9 +215,7 @@ module Helper =
             let role = OntologyAnnotation(name = "Resarcher", tsr = "PO", tan = "PO:123")
             ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
         let comment = Comment("MyCommentKey","MyCommentValue")
-        let table2 = ArcTable.init("Table2")
-        table2.Headers <- twoRowsDifferentParamValue.Headers
-        table2.Values <- twoRowsDifferentParamValue.Values
+        let table2 = ArcTable.fromArcTableValues("Table2", twoRowsDifferentParamValue.Headers, twoRowsDifferentParamValue.Values)
         let p = ArcStudy(
             identifier = "My Study",
             title = "My Best Study",
@@ -743,7 +740,7 @@ let private tests_ArcTableProcess =
         )
         testCase "OnlyInput GetAndFromProcessess" (fun () ->
             let t = ArcTable.init tableName1
-            t.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
+            t.AddColumn(CompositeHeader.Input(IOType.Source),ResizeArray [|CompositeCell.createFreeText "Source"|])
             let processes = t.GetProcesses()
             let table = ArcTable.fromProcesses(tableName1,processes)
             Expect.arcTableEqual table t "Table should be equal"
@@ -753,7 +750,7 @@ let private tests_ArcTableProcess =
             let header = CompositeHeader.Parameter oa_temperature
             let unit = oa_degreeCel
             let cell = CompositeCell.createUnitized ("",unit)
-            t.AddColumn(header,[|cell|])
+            t.AddColumn(header,ResizeArray [|cell|])
 
             let processes = t.GetProcesses()
             Expect.equal 1 processes.Length "Should have 1 process"
@@ -779,9 +776,9 @@ let private tests_ArcTableProcess =
             let header = CompositeHeader.Parameter oa_temperature
             let unit = oa_degreeCel
             let cell = CompositeCell.createUnitized ("",unit)
-            t.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
-            t.AddColumn(header,[|cell|])
-            t.AddColumn(CompositeHeader.Output(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
+            t.AddColumn(CompositeHeader.Input(IOType.Source),ResizeArray [|CompositeCell.createFreeText "Source"|])
+            t.AddColumn(header,ResizeArray [|cell|])
+            t.AddColumn(CompositeHeader.Output(IOType.Sample),ResizeArray [|CompositeCell.createFreeText "Sample"|])
 
             let processes = t.GetProcesses()
             Expect.equal 1 processes.Length "Should have 1 process"
@@ -807,9 +804,9 @@ let private tests_ArcTableProcess =
             let t = ArcTable.init tableName1
             let header = CompositeHeader.Parameter oa_temperature
             let cell = CompositeCell.createUnitized ("")
-            t.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
-            t.AddColumn(header,[|cell|])
-            t.AddColumn(CompositeHeader.Output(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
+            t.AddColumn(CompositeHeader.Input(IOType.Source),ResizeArray [|CompositeCell.createFreeText "Source"|])
+            t.AddColumn(header,ResizeArray [|cell|])
+            t.AddColumn(CompositeHeader.Output(IOType.Sample),ResizeArray [|CompositeCell.createFreeText "Sample"|])
 
             let processes = t.GetProcesses()
             Expect.equal 1 processes.Length "Should have 1 process"
@@ -832,9 +829,9 @@ let private tests_ArcTableProcess =
             let t = ArcTable.init tableName1
             let header = CompositeHeader.Parameter oa_temperature
             let cell = CompositeCell.createUnitized ("5")
-            t.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
-            t.AddColumn(header,[|cell|])
-            t.AddColumn(CompositeHeader.Output(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
+            t.AddColumn(CompositeHeader.Input(IOType.Source),ResizeArray [|CompositeCell.createFreeText "Source"|])
+            t.AddColumn(header,ResizeArray [|cell|])
+            t.AddColumn(CompositeHeader.Output(IOType.Sample),ResizeArray [|CompositeCell.createFreeText "Sample"|])
 
             let processes = t.GetProcesses()
             Expect.equal 1 processes.Length "Should have 1 process"
@@ -858,9 +855,9 @@ let private tests_ArcTableProcess =
             let t = ArcTable.init tableName1
             let header = CompositeHeader.Parameter oa_species
             let cell = CompositeCell.createTerm (OntologyAnnotation.create())
-            t.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
-            t.AddColumn(header,[|cell|])
-            t.AddColumn(CompositeHeader.Output(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
+            t.AddColumn(CompositeHeader.Input(IOType.Source),ResizeArray [|CompositeCell.createFreeText "Source"|])
+            t.AddColumn(header,ResizeArray [|cell|])
+            t.AddColumn(CompositeHeader.Output(IOType.Sample),ResizeArray [|CompositeCell.createFreeText "Sample"|])
 
             let processes = t.GetProcesses()
             Expect.equal 1 processes.Length "Should have 1 process"
@@ -883,9 +880,9 @@ let private tests_ArcTableProcess =
             let t = ArcTable.init(tableName1)
             let commentKey = "MyCommentKey"
             let commentValue = "MyCommentValue"
-            t.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
-            t.AddColumn(CompositeHeader.Comment(commentKey), [|CompositeCell.createFreeText commentValue|])
-            t.AddColumn(CompositeHeader.Output(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
+            t.AddColumn(CompositeHeader.Input(IOType.Source),ResizeArray [|CompositeCell.createFreeText "Source"|])
+            t.AddColumn(CompositeHeader.Comment(commentKey), ResizeArray [|CompositeCell.createFreeText commentValue|])
+            t.AddColumn(CompositeHeader.Output(IOType.Sample),ResizeArray [|CompositeCell.createFreeText "Sample"|])
             let processes = t.GetProcesses()
             Expect.hasLength processes 1 "Should have 1 process"
             let comments = LDLabProcess.getDisambiguatingDescriptionsAsString(processes.[0])
@@ -999,7 +996,7 @@ let private tests_ArcTablesProcessSeq =
         testCase "SimpleTables GetAndFromProcesses" (fun () ->
             let t1 = singleRowSingleParam.Copy()
             let t2 = 
-                singleRowSingleParam.Copy() |> fun t -> ArcTable.create(tableName2, t.Headers, t.Values)
+                singleRowSingleParam.Copy() |> fun t -> ArcTable.fromArcTableValues(tableName2, t.Headers, t.Values)
             let tables = ResizeArray[t1;t2] |> ArcTables
             let processes = tables.GetProcesses() 
             Expect.equal processes.Length 2 "Should have 2 processes"
@@ -1015,7 +1012,7 @@ let private tests_ArcTablesProcessSeq =
         testCase "OneWithDifferentParamVals GetAndFromProcesses" (fun () ->
             let t1 = singleRowSingleParam.Copy()
             let t2 = 
-                twoRowsDifferentParamValue.Copy() |> fun t -> ArcTable.create(tableName2, t.Headers, t.Values)
+                twoRowsDifferentParamValue.Copy() |> fun t -> ArcTable.fromArcTableValues(tableName2, t.Headers, t.Values)
             let tables = ResizeArray[t1;t2] |> ArcTables
             let processes = tables.GetProcesses()           
             Expect.equal processes.Length 3 "Should have 3 processes"
@@ -1459,7 +1456,7 @@ let tests_Assay =
                 let input2 = CompositeCell.createData(create_dataRow "MyFile" 2)
                 let assay = ArcAssay("My Assay", datamap = dm)
                 let table = assay.InitTable("Table")
-                table.AddColumn(CompositeHeader.Input IOType.Data, [|input1; input2|])
+                table.AddColumn(CompositeHeader.Input IOType.Data, ResizeArray [|input1; input2|])
                 let ro_Assay = AssayConversion.composeAssay assay
                 let assay' = AssayConversion.decomposeAssay ro_Assay
                 let dm' = Expect.wantSome assay'.DataMap "Assay should have a data map"
@@ -1476,7 +1473,7 @@ let tests_Assay =
                 let input2 = CompositeCell.createData(create_dataRow "MyFile" 2)
                 let assay = ArcAssay("My Assay", datamap = dm)
                 let table = assay.InitTable("Table")
-                table.AddColumn(CompositeHeader.Input IOType.Data, [|input1; input2|])
+                table.AddColumn(CompositeHeader.Input IOType.Data, ResizeArray [|input1; input2|])
                 let ro_Assay = AssayConversion.composeAssay assay
                 let graph = ro_Assay.Flatten()
                 // Test that flattened worked
@@ -1533,7 +1530,7 @@ let tests_Study =
                 let input2 = CompositeCell.createData(create_dataRow "MyFile" 2)
                 let study = ArcStudy("My Study", datamap = dm)
                 let table = study.InitTable("Table")
-                table.AddColumn(CompositeHeader.Input IOType.Data, [|input1; input2|])
+                table.AddColumn(CompositeHeader.Input IOType.Data, ResizeArray [|input1; input2|])
                 let ro_Study = StudyConversion.composeStudy study
                 let study' = StudyConversion.decomposeStudy ro_Study
                 let dm' = Expect.wantSome study'.DataMap "Study should have a data map"
@@ -1550,7 +1547,7 @@ let tests_Study =
                 let input2 = CompositeCell.createData(create_dataRow "MyFile" 2)
                 let study = ArcStudy("My Study", datamap = dm)
                 let table = study.InitTable("Table")
-                table.AddColumn(CompositeHeader.Input IOType.Data, [|input1; input2|])
+                table.AddColumn(CompositeHeader.Input IOType.Data, ResizeArray [|input1; input2|])
                 let ro_Study = StudyConversion.composeStudy study
                 let graph = ro_Study.Flatten()
                 // Test that flattened worked
@@ -1629,8 +1626,8 @@ let tests_Investigation =
             let study2 = arc.InitStudy "Study2"
             let table1 = study1.InitTable("Growth")
             let table2 = study2.InitTable("Growth")
-            table1.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source1"; CompositeCell.createFreeText "Source2"|])
-            table2.AddColumn(CompositeHeader.Input(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
+            table1.AddColumn(CompositeHeader.Input(IOType.Source),ResizeArray [|CompositeCell.createFreeText "Source1"; CompositeCell.createFreeText "Source2"|])
+            table2.AddColumn(CompositeHeader.Input(IOType.Sample),ResizeArray [|CompositeCell.createFreeText "Sample"|])
             // Check Json LD
             let ro_Investigation = InvestigationConversion.composeInvestigation arc
             let subDatasets = ro_Investigation |> LDDataset.getHasPartsAsDataset
@@ -1665,8 +1662,8 @@ let tests_Investigation =
             let assay = arc.InitAssay "Dataset"
             let table1 = study.InitTable("Growth")
             let table2 = assay.InitTable("Growth")
-            table1.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source1"; CompositeCell.createFreeText "Source2"|])
-            table2.AddColumn(CompositeHeader.Input(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
+            table1.AddColumn(CompositeHeader.Input(IOType.Source),ResizeArray [|CompositeCell.createFreeText "Source1"; CompositeCell.createFreeText "Source2"|])
+            table2.AddColumn(CompositeHeader.Input(IOType.Sample),ResizeArray [|CompositeCell.createFreeText "Sample"|])
             // Check Json LD
             let ro_Investigation = InvestigationConversion.composeInvestigation arc
             let subDatasets = ro_Investigation |> LDDataset.getHasPartsAsDataset

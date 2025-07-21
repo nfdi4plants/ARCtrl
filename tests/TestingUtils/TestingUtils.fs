@@ -228,7 +228,7 @@ module Expect =
         sequenceEqual (f actual) (f expected) $"{message}. Columns do not match"
 
     let arcTableEqual (t1 : ArcTable) (t2 : ArcTable) (message : string) = 
-        let sortVals (dict : System.Collections.Generic.Dictionary<int*int,CompositeCell>) = 
+        let sortVals (dict : ArcTableAux.ArcTableValues) = 
             dict |> Seq.sortBy (fun kv -> kv.Key)
         Expect.equal t1.Name t2.Name (sprintf "%s: Name" message)
         sequenceEqual t1.Headers t2.Headers (sprintf "%s: Headers" message)

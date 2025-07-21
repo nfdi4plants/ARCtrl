@@ -199,13 +199,13 @@ module UpdateAssayWithStudyProtocol =
     study.AddRegisteredAssay assay
 
     let t = ArcTable.init("AssayProtocol")
-    t.AddProtocolNameColumn(Array.create 2 protocolName)
-    t.AddColumn(inputHeader, Array.create 2 inputCell)
+    t.AddProtocolNameColumn(ResizeArray.create 2 protocolName)
+    t.AddColumn(inputHeader, ResizeArray.create 2 inputCell)
     assay.AddTable t
 
     let refT = ArcTable.init("StudyProtocol")
-    refT.AddProtocolNameColumn(Array.create 1 protocolName)
-    refT.AddProtocolDescriptionColumn(Array.create 1 description)
+    refT.AddProtocolNameColumn(ResizeArray.create 1 protocolName)
+    refT.AddProtocolDescriptionColumn(ResizeArray.create 1 description)
     study.AddTable refT
 
     let assayWB = ArcAssay.toFsWorkbook assay

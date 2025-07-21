@@ -1,7 +1,7 @@
-﻿module ArcTables.Tests
+module ArcTables.Tests
 
 open ARCtrl
-
+open ARCtrl.Helper
 open TestingUtils
 module TestObjects = 
     let TableName = "Test"
@@ -25,8 +25,8 @@ module TestObjects =
         let paramValue = CompositeCell.createTerm oa_chlamy
         t.AddColumns
             [|
-                CompositeColumn.create(inputHeader, Array.init 2 (fun i -> CompositeCell.createFreeText $"{i}")) 
-                CompositeColumn.create(paramHeader, Array.create 2 paramValue)
+                CompositeColumn.create(inputHeader, ResizeArray.init 2 (fun i -> CompositeCell.createFreeText $"{i}")) 
+                CompositeColumn.create(paramHeader, ResizeArray.create 2 paramValue)
             |]
         t
 
@@ -37,9 +37,9 @@ module TestObjects =
         let paramValue = CompositeCell.createTerm oa_chlamy
         t.AddColumns
             [|
-                CompositeColumn.create(inputHeader, Array.init 2 (fun i -> CompositeCell.createFreeText $"{i}")) 
-                CompositeColumn.create(CompositeHeader.ProtocolREF, Array.create 2 (CompositeCell.createFreeText protocolName1))        
-                CompositeColumn.create(paramHeader, Array.create 2 paramValue)
+                CompositeColumn.create(inputHeader, ResizeArray.init 2 (fun i -> CompositeCell.createFreeText $"{i}")) 
+                CompositeColumn.create(CompositeHeader.ProtocolREF, ResizeArray.create 2 (CompositeCell.createFreeText protocolName1))        
+                CompositeColumn.create(paramHeader, ResizeArray.create 2 paramValue)
             |]
         t
 
@@ -49,8 +49,8 @@ module TestObjects =
         let factorValue = CompositeCell.createTerm oa_SCIEXInstrumentModel
         t.AddColumns
             [|
-                CompositeColumn.create(CompositeHeader.ProtocolREF, Array.create 3 (CompositeCell.createFreeText protocolName1))        
-                CompositeColumn.create(factorHeader, Array.create 3 factorValue)
+                CompositeColumn.create(CompositeHeader.ProtocolREF, ResizeArray.create 3 (CompositeCell.createFreeText protocolName1))        
+                CompositeColumn.create(factorHeader, ResizeArray.create 3 factorValue)
             |]
         t
 
@@ -61,9 +61,9 @@ module TestObjects =
         let paramValue = CompositeCell.createTerm oa_chlamy
         t.AddColumns
             [|
-                CompositeColumn.create(inputHeader, Array.init 4 (fun i -> CompositeCell.createFreeText $"{i}")) 
-                CompositeColumn.create(CompositeHeader.ProtocolREF, Array.create 2 (CompositeCell.createFreeText protocolName1))        
-                CompositeColumn.create(paramHeader, Array.create 4 paramValue)
+                CompositeColumn.create(inputHeader, ResizeArray.init 4 (fun i -> CompositeCell.createFreeText $"{i}")) 
+                CompositeColumn.create(CompositeHeader.ProtocolREF, ResizeArray.create 2 (CompositeCell.createFreeText protocolName1))        
+                CompositeColumn.create(paramHeader, ResizeArray.create 4 paramValue)
             |]
         t
 
@@ -73,13 +73,13 @@ module TestObjects =
         let paramHeader = CompositeHeader.Parameter oa_species
         let paramValue = CompositeCell.createTerm oa_chlamy
         let protocolREFColumn = 
-            Array.create 2 (CompositeCell.createFreeText protocolName2)
-            |> Array.append (Array.create 2 (CompositeCell.createFreeText protocolName1))
+            ResizeArray.create 2 (CompositeCell.createFreeText protocolName2)
+            |> ResizeArray.append (ResizeArray.create 2 (CompositeCell.createFreeText protocolName1))
         t.AddColumns
             [|
-                CompositeColumn.create(inputHeader, Array.init 4 (fun i -> CompositeCell.createFreeText $"{i}")) 
+                CompositeColumn.create(inputHeader, ResizeArray.init 4 (fun i -> CompositeCell.createFreeText $"{i}")) 
                 CompositeColumn.create(CompositeHeader.ProtocolREF, protocolREFColumn)        
-                CompositeColumn.create(paramHeader, Array.create 4 paramValue)
+                CompositeColumn.create(paramHeader, ResizeArray.create 4 paramValue)
             |]
         t
 
@@ -89,8 +89,8 @@ module TestObjects =
         
         t.AddColumns
             [|
-                CompositeColumn.create(CompositeHeader.ProtocolDescription, Array.create 1 (CompositeCell.createFreeText descriptionValue1))       
-                CompositeColumn.create(CompositeHeader.ProtocolREF, Array.create 1 (CompositeCell.createFreeText protocolName1))        
+                CompositeColumn.create(CompositeHeader.ProtocolDescription, ResizeArray.create 1 (CompositeCell.createFreeText descriptionValue1))       
+                CompositeColumn.create(CompositeHeader.ProtocolREF, ResizeArray.create 1 (CompositeCell.createFreeText protocolName1))        
             |]
         t
 
@@ -99,8 +99,8 @@ module TestObjects =
         
         t.AddColumns
             [|
-                CompositeColumn.create(CompositeHeader.ProtocolDescription, Array.create 1 (CompositeCell.createFreeText descriptionValue2))       
-                CompositeColumn.create(CompositeHeader.ProtocolREF, Array.create 1 (CompositeCell.createFreeText protocolName2))        
+                CompositeColumn.create(CompositeHeader.ProtocolDescription, ResizeArray.create 1 (CompositeCell.createFreeText descriptionValue2))       
+                CompositeColumn.create(CompositeHeader.ProtocolREF, ResizeArray.create 1 (CompositeCell.createFreeText protocolName2))        
             |]
         t
 
@@ -109,8 +109,8 @@ module TestObjects =
         
         t.AddColumns
             [|
-                CompositeColumn.create(CompositeHeader.ProtocolVersion, Array.create 1 (CompositeCell.createFreeText versionValue1))       
-                CompositeColumn.create(CompositeHeader.ProtocolREF, Array.create 1 (CompositeCell.createFreeText protocolName2))        
+                CompositeColumn.create(CompositeHeader.ProtocolVersion, ResizeArray.create 1 (CompositeCell.createFreeText versionValue1))       
+                CompositeColumn.create(CompositeHeader.ProtocolREF, ResizeArray.create 1 (CompositeCell.createFreeText protocolName2))        
             |]
         t
 
@@ -319,10 +319,10 @@ let updateReferenceWithSheet =
             Expect.equal resultTable.RowCount tableOfInterest.RowCount "Should be same number of rows"
 
             let expectedDescription =              
-                Array.create 2 (CompositeCell.emptyFreeText)
-                |> Array.append (Array.create 2 (CompositeCell.createFreeText descriptionValue1))
+                ResizeArray.create 2 (CompositeCell.emptyFreeText)
+                |> ResizeArray.append (ResizeArray.create 2 (CompositeCell.createFreeText descriptionValue1))
             Expect.sequenceEqual
-                (resultTable.GetColumnByHeader CompositeHeader.ProtocolDescription).Cells
+                (resultTable.GetColumnByHeader(CompositeHeader.ProtocolDescription, fillDefault = true)).Cells
                 (expectedDescription)
                 "Description value was not taken correctly"
             Expect.sequenceEqual
@@ -344,8 +344,8 @@ let updateReferenceWithSheet =
             Expect.equal resultTable.RowCount tableOfInterest.RowCount "Should be same number of rows"
 
             let expectedDescription =              
-                Array.create 2 (CompositeCell.createFreeText descriptionValue2)
-                |> Array.append (Array.create 2 (CompositeCell.createFreeText descriptionValue1))
+                ResizeArray.create 2 (CompositeCell.createFreeText descriptionValue2)
+                |> ResizeArray.append (ResizeArray.create 2 (CompositeCell.createFreeText descriptionValue1))
             Expect.sequenceEqual
                 (resultTable.GetColumnByHeader CompositeHeader.ProtocolDescription).Cells
                 (expectedDescription)

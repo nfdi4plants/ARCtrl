@@ -1,7 +1,7 @@
 module ArcRun.Tests
 
 open ARCtrl
-
+open ARCtrl.Helper
 open TestingUtils
 
 module Helper =
@@ -19,9 +19,9 @@ module Helper =
                 yield $"({c},{r}) {v}"
         ]
 
-    let createCells_FreeText pretext (count) = Array.init count (fun i -> CompositeCell.createFreeText  $"{pretext}_{i}") 
-    let createCells_Term (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_SCIEXInstrumentModel)
-    let createCells_Unitized (count) = Array.init count (fun i -> CompositeCell.createUnitized (string i,OntologyAnnotation()))
+    let createCells_FreeText pretext (count) = ResizeArray.init count (fun i -> CompositeCell.createFreeText  $"{pretext}_{i}") 
+    let createCells_Term (count) = ResizeArray.init count (fun _ -> CompositeCell.createTerm oa_SCIEXInstrumentModel)
+    let createCells_Unitized (count) = ResizeArray.init count (fun i -> CompositeCell.createUnitized (string i,OntologyAnnotation()))
     /// Input [Source] --> Source_0 .. Source_4
     let column_input = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 5)
     let column_output = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 5)
@@ -296,7 +296,7 @@ let private tests_Copy =
             Expect.equal table.Name "My Table 0"            "Table Sheet Name"
             Expect.equal table.ColumnCount 0                "table.ColumnCount"
             Expect.equal table.RowCount 0                   "Table Sheet Name"
-            table.AddColumn(CompositeHeader.ProtocolREF, Array.init 5 (fun i -> CompositeCell.FreeText "My Protocol Name"))
+            table.AddColumn(CompositeHeader.ProtocolREF, ResizeArray.init 5 (fun i -> CompositeCell.FreeText "My Protocol Name"))
             let table2 = run.GetTableAt(0)
             Expect.equal table2.Name "My Table 0"           "Table Sheet Name"
             Expect.equal table2.ColumnCount 1               "table.ColumnCount"
@@ -331,7 +331,7 @@ let private tests_Copy =
             Expect.equal table.Name "My Table 0" "Table Sheet Name"
             Expect.equal table.ColumnCount 0 "table.ColumnCount"
             Expect.equal table.RowCount 0 "Table Sheet Name"
-            table.AddColumn(CompositeHeader.ProtocolREF, Array.init 5 (fun i -> CompositeCell.FreeText "My Protocol Name"))
+            table.AddColumn(CompositeHeader.ProtocolREF, ResizeArray.init 5 (fun i -> CompositeCell.FreeText "My Protocol Name"))
             let table_shouldBeUnchanged = run.GetTableAt(0)
             let table2_copy = run_copy.GetTableAt(0)
             Expect.equal table_shouldBeUnchanged.Name "My Table 0"     "Table Sheet Name"

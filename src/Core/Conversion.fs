@@ -234,8 +234,12 @@ module ProcessParsing =
             let newOA = oa.Copy()
             newOA.SetColumnIndex valueI
             let cat = CompositeHeader.Component newOA
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                JsonTypes.composeComponent cat matrix.[generalI,i]
+            fun (table : ArcTable) i ->
+                let cell = 
+                    match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                    | Some cell -> cell
+                    | None -> ArcTableAux.getEmptyCellForHeader cat None               
+                JsonTypes.composeComponent cat cell
             |> Some
         | _ -> None    
             
@@ -246,8 +250,12 @@ module ProcessParsing =
             let cat = 
                 OntologyAnnotation.setColumnIndex valueI oa 
                 |> CompositeHeader.Parameter
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                JsonTypes.composeParameterValue cat matrix.[generalI,i]
+            fun (table : ArcTable) i ->
+                let cell =
+                    match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                    | Some cell -> cell
+                    | None -> ArcTableAux.getEmptyCellForHeader cat None
+                JsonTypes.composeParameterValue cat cell
             |> Some
         | _ -> None 
 
@@ -258,8 +266,12 @@ module ProcessParsing =
             let cat = 
                 OntologyAnnotation.setColumnIndex valueI oa
                 |> CompositeHeader.Factor
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                JsonTypes.composeFactorValue cat matrix.[generalI,i]
+            fun (table : ArcTable) i ->
+                let cell =
+                    match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                    | Some cell -> cell
+                    | None -> ArcTableAux.getEmptyCellForHeader cat None
+                JsonTypes.composeFactorValue cat cell
             |> Some
         | _ -> None 
 
@@ -270,8 +282,12 @@ module ProcessParsing =
             let cat = 
                 OntologyAnnotation.setColumnIndex valueI oa
                 |> CompositeHeader.Characteristic              
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                JsonTypes.composeCharacteristicValue cat matrix.[generalI,i]
+            fun (table : ArcTable) i ->
+                let cell =
+                    match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                    | Some cell -> cell
+                    | None -> ArcTableAux.getEmptyCellForHeader cat None
+                JsonTypes.composeCharacteristicValue cat cell
             |> Some
         | _ -> None 
 
@@ -279,8 +295,10 @@ module ProcessParsing =
     let tryGetProtocolTypeGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolType ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                matrix.[generalI,i].AsTerm
+            fun (table : ArcTable) i ->               
+                match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                | Some cell -> cell.AsTerm
+                | None -> OntologyAnnotation()
             |> Some
         | _ -> None 
 
@@ -289,8 +307,10 @@ module ProcessParsing =
     let tryGetProtocolREFGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolREF ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                matrix.[generalI,i].AsFreeText
+            fun (table : ArcTable) i ->             
+                match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                | Some cell -> cell.AsFreeText
+                | None -> ""
             |> Some
         | _ -> None
 
@@ -298,8 +318,10 @@ module ProcessParsing =
     let tryGetProtocolDescriptionGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolDescription ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                matrix.[generalI,i].AsFreeText
+            fun (table : ArcTable) i ->
+                match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                | Some cell -> cell.AsFreeText
+                | None -> ""
             |> Some
         | _ -> None
    
@@ -307,8 +329,10 @@ module ProcessParsing =
     let tryGetProtocolURIGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolUri ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                matrix.[generalI,i].AsFreeText
+            fun (table : ArcTable) i ->
+                match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                | Some cell -> cell.AsFreeText
+                | None -> ""
             |> Some
         | _ -> None
 
@@ -316,8 +340,10 @@ module ProcessParsing =
     let tryGetProtocolVersionGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolVersion ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                matrix.[generalI,i].AsFreeText
+            fun (table : ArcTable) i ->
+                match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                | Some cell -> cell.AsFreeText
+                | None -> ""
             |> Some
         | _ -> None
 
@@ -325,8 +351,12 @@ module ProcessParsing =
     let tryGetInputGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.Input io ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                JsonTypes.composeProcessInput header matrix.[generalI,i]
+            fun (table : ArcTable) i ->
+                let cell =
+                    match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                    | Some cell -> cell
+                    | None -> ArcTableAux.getEmptyCellForHeader header None
+                JsonTypes.composeProcessInput header cell
             |> Some
         | _ -> None
 
@@ -334,8 +364,12 @@ module ProcessParsing =
     let tryGetOutputGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.Output io ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                JsonTypes.composeProcessOutput header matrix.[generalI,i]
+            fun (table : ArcTable) i ->
+                let cell =
+                    match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                    | Some cell -> cell
+                    | None -> ArcTableAux.getEmptyCellForHeader header None
+                JsonTypes.composeProcessOutput header cell
             |> Some
         | _ -> None
 
@@ -343,8 +377,10 @@ module ProcessParsing =
     let tryGetCommentGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.Comment c ->
-            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                Comment(c,matrix.[generalI,i].AsFreeText)
+            fun (table : ArcTable) i ->           
+                match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                | Some cell -> Comment(c,cell.AsFreeText)
+                | None -> Comment(c)
             |> Some
         | _ -> None
 
@@ -406,9 +442,9 @@ module ProcessParsing =
         let inputGetter =
             match headers |> Seq.tryPick (fun (generalI,header) -> tryGetInputGetter generalI header) with
             | Some inputGetter ->
-                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                    let chars = charGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
-                    let input = inputGetter matrix i
+                fun (table : ArcTable) i ->
+                    let chars = charGetters |> Seq.map (fun f -> f table i) |> Seq.toList
+                    let input = inputGetter table i
 
                     if ((input.isSample() || input.isSource())|> not) && (chars.IsEmpty |> not) then
                         [
@@ -423,8 +459,8 @@ module ProcessParsing =
                             input                           
                         |> List.singleton
             | None ->
-                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                    let chars = charGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
+                fun (table : ArcTable) i ->
+                    let chars = charGetters |> Seq.map (fun f -> f table i) |> Seq.toList
                     ProcessInput.Source (Source.create(Name = $"{processNameRoot}_Input_{i}", Characteristics = chars))
                     |> List.singleton
             
@@ -432,9 +468,9 @@ module ProcessParsing =
         let outputGetter =
             match headers |> Seq.tryPick (fun (generalI,header) -> tryGetOutputGetter generalI header) with
             | Some outputGetter ->
-                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                    let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
-                    let output = outputGetter matrix i
+                fun (table : ArcTable) i ->
+                    let factors = factorValueGetters |> Seq.map (fun f -> f table i) |> Seq.toList
+                    let output = outputGetter table i
                     if (output.isSample() |> not) && (factors.IsEmpty |> not) then
                         [
                         output
@@ -448,30 +484,30 @@ module ProcessParsing =
                             output
                         |> List.singleton
             | None ->
-                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                    let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
+                fun (table : ArcTable) i ->
+                    let factors = factorValueGetters |> Seq.map (fun f -> f table i) |> Seq.toList
                     ProcessOutput.Sample (Sample.create(Name = $"{processNameRoot}_Output_{i}", FactorValues = factors))
                     |> List.singleton
 
-        fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+        fun (table : ArcTable) i ->
 
             let pn = processNameRoot |> Option.fromValueWithDefault "" |> Option.map (fun p -> Process.composeName p i)
 
-            let paramvalues = parameterValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [] 
+            let paramvalues = parameterValueGetters |> List.map (fun f -> f table i) |> Option.fromValueWithDefault [] 
             let parameters = paramvalues |> Option.map (List.map (fun pv -> pv.Category.Value))
 
-            let comments = commentGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault []
+            let comments = commentGetters |> List.map (fun f -> f table i) |> Option.fromValueWithDefault []
 
             let protocol : Protocol option = 
                 Protocol.make 
                     None
-                    (protocolREFGetter |> Option.map (fun f -> f matrix i))
-                    (protocolTypeGetter |> Option.map (fun f -> f matrix i))
-                    (protocolDescriptionGetter |> Option.map (fun f -> f matrix i))
-                    (protocolURIGetter |> Option.map (fun f -> f matrix i))
-                    (protocolVersionGetter |> Option.map (fun f -> f matrix i))
+                    (protocolREFGetter |> Option.map (fun f -> f table i))
+                    (protocolTypeGetter |> Option.map (fun f -> f table i))
+                    (protocolDescriptionGetter |> Option.map (fun f -> f table i))
+                    (protocolURIGetter |> Option.map (fun f -> f table i))
+                    (protocolVersionGetter |> Option.map (fun f -> f table i))
                     (parameters)
-                    (componentGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
+                    (componentGetters |> List.map (fun f -> f table i) |> Option.fromValueWithDefault [])
                     None
                 |> fun p ->     
                     match p with
@@ -486,8 +522,8 @@ module ProcessParsing =
                     | _ -> Some p
 
             let inputs,outputs = 
-                let inputs = inputGetter matrix i
-                let outputs = outputGetter matrix i
+                let inputs = inputGetter table i
+                let outputs = outputGetter table i
                 if inputs.Length = 1 && outputs.Length = 2 then 
                     [inputs.[0];inputs.[0]],outputs
                 elif inputs.Length = 2 && outputs.Length = 1 then
@@ -694,16 +730,16 @@ type ArcTable with
             t.AddColumn(CompositeHeader.Parameter pp.ParameterName.Value, ?index = pp.TryGetColumnIndex())
 
         for c in p.Components |> Option.defaultValue [] do
-            let v = c.ComponentValue |> Option.map ((fun v -> CompositeCell.fromValue(v,?unit = c.ComponentUnit)) >> Array.singleton)
+            let v = c.ComponentValue |> Option.map ((fun v -> CompositeCell.fromValue(v,?unit = c.ComponentUnit)) >> ResizeArray.singleton)
             t.AddColumn(
                 CompositeHeader.Parameter c.ComponentType.Value, 
                 ?cells = v,
                 ?index = c.TryGetColumnIndex())
-        p.Description   |> Option.map (fun d -> t.AddProtocolDescriptionColumn([|d|]))  |> ignore
-        p.Version       |> Option.map (fun d -> t.AddProtocolVersionColumn([|d|]))      |> ignore
-        p.ProtocolType  |> Option.map (fun d -> t.AddProtocolTypeColumn([|d|]))         |> ignore
-        p.Uri           |> Option.map (fun d -> t.AddProtocolUriColumn([|d|]))          |> ignore
-        p.Name          |> Option.map (fun d -> t.AddProtocolNameColumn([|d|]))         |> ignore
+        p.Description   |> Option.map (fun d -> t.AddProtocolDescriptionColumn(ResizeArray.singleton d))  |> ignore
+        p.Version       |> Option.map (fun d -> t.AddProtocolVersionColumn(ResizeArray.singleton d))      |> ignore
+        p.ProtocolType  |> Option.map (fun d -> t.AddProtocolTypeColumn(ResizeArray.singleton d))         |> ignore
+        p.Uri           |> Option.map (fun d -> t.AddProtocolUriColumn(ResizeArray.singleton d))          |> ignore
+        p.Name          |> Option.map (fun d -> t.AddProtocolNameColumn(ResizeArray.singleton d))         |> ignore
         t
 
     /// Returns the list of protocols executed in this ArcTable
@@ -745,7 +781,7 @@ type ArcTable with
             let getter = ProcessParsing.getProcessGetter this.Name this.Headers          
             [
                 for i in 0..this.RowCount-1 do
-                    yield getter this.Values i        
+                    yield getter this i        
             ]
             |> ProcessParsing.mergeIdenticalProcesses
 
@@ -759,7 +795,7 @@ type ArcTable with
         ps
         |> List.collect (fun p -> ProcessParsing.processToRows p)
         |> fun rows -> ArcTableAux.Unchecked.alignByHeaders true rows
-        |> fun (headers, rows) -> ArcTable.create(name,headers,rows)    
+        |> fun (headers, rows) -> ArcTable.fromArcTableValues(name,headers,rows)    
 
 type ArcTables with
 
@@ -785,7 +821,7 @@ type ArcTables with
             //|> fun x -> printfn "fromProcesses-%s 1" name; x
             |> fun rows -> ArcTableAux.Unchecked.alignByHeaders true rows
             //|> fun x -> printfn "fromProcesses-%s 2" name; x
-            |> fun (headers, rows) -> ArcTable.create(name,headers,rows)
+            |> fun (headers, rows) -> ArcTable.fromArcTableValues(name,headers,rows)
             //|> fun x -> printfn "fromProcesses-%s 3" name; x
         )
         |> ResizeArray

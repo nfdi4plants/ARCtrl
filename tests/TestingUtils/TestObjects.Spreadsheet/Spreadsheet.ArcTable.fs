@@ -349,6 +349,20 @@ module Protocol =
             for i = 2 to l + 1 do                   
                 t.Cell(FsAddress(i, colCount + 1),c).SetValueAs lolValueV1
 
+        let roflValue = CompositeCell.FreeText "ROFL"
+
+        let roflHeaderV1 = "Protocol REF"
+        let roflValueV1 = "ROFL"
+
+        let appendMixedREFColumn l1 l2 (c : FsCellsCollection) (t : FsTable) = 
+            let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
+            t.Cell(FsAddress(1, colCount + 1),c).SetValueAs lolHeaderV1
+            for i = 2 to l1 + 1 do                   
+                t.Cell(FsAddress(i, colCount + 1),c).SetValueAs lolValueV1
+            for j = 2 + l1 to l1 + l2 + 1 do
+                t.Cell(FsAddress(j, colCount + 1),c).SetValueAs roflValueV1
+
+
     module Type = 
         
         let collectionHeader = 

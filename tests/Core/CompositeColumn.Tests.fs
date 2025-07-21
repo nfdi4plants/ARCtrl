@@ -1,7 +1,7 @@
-﻿module CompositeColumn.Tests
+module CompositeColumn.Tests
 
 open ARCtrl
-
+open ARCtrl.Helper
 open TestingUtils
 
 let private tests_Validate = 
@@ -10,7 +10,7 @@ let private tests_Validate =
             let header : CompositeHeader = CompositeHeader.Characteristic (OntologyAnnotation())
             let header1 : CompositeHeader = CompositeHeader.Input IOType.Source
             let header2 : CompositeHeader = CompositeHeader.ProtocolType
-            let cells : CompositeCell [] = [||]
+            let cells : ResizeArray<CompositeCell> = ResizeArray()
             let c1 = CompositeColumn.create(header, cells).Validate()
             let c2 = CompositeColumn.create(header1, cells).Validate()
             let c3 = CompositeColumn.create(header2, cells).Validate()
@@ -20,7 +20,7 @@ let private tests_Validate =
         )
         testCase "Valid term with term cells" (fun () ->
             let header : CompositeHeader = CompositeHeader.Characteristic (OntologyAnnotation())
-            let cells : CompositeCell [] = Array.init 2 (fun _ -> CompositeCell.emptyTerm)
+            let cells : ResizeArray<CompositeCell> = ResizeArray.init 2 (fun _ -> CompositeCell.emptyTerm)
             let column = CompositeColumn.create(header, cells).Validate()
             let eval() = CompositeColumn.create(header, cells).Validate(true)
             // Still shows bool as output but could raise an exception.
@@ -29,7 +29,7 @@ let private tests_Validate =
         )
         testCase "Valid term with unit cells" (fun () ->
             let header : CompositeHeader = CompositeHeader.Characteristic (OntologyAnnotation())
-            let cells : CompositeCell [] = Array.init 2 (fun _ -> CompositeCell.emptyUnitized)
+            let cells : ResizeArray<CompositeCell> = ResizeArray.init 2 (fun _ -> CompositeCell.emptyUnitized)
             let column = CompositeColumn.create(header, cells).Validate()
             let eval() = CompositeColumn.create(header, cells).Validate(true)
             // Still shows bool as output but could raise an exception.
@@ -38,7 +38,7 @@ let private tests_Validate =
         )
         testCase "Invalid term with freetext cells" (fun () ->
             let header : CompositeHeader = CompositeHeader.Characteristic (OntologyAnnotation())
-            let cells : CompositeCell [] = Array.init 2 (fun _ -> CompositeCell.emptyFreeText)
+            let cells : ResizeArray<CompositeCell> = ResizeArray.init 2 (fun _ -> CompositeCell.emptyFreeText)
             let column = CompositeColumn.create(header, cells).Validate()
             let eval() = CompositeColumn.create(header, cells).Validate(true) |> ignore
             Expect.isFalse column ""
@@ -46,7 +46,7 @@ let private tests_Validate =
         )
         testCase "Invalid featured with freetext cells" (fun () ->
             let header : CompositeHeader = CompositeHeader.ProtocolType
-            let cells : CompositeCell [] = Array.init 2 (fun _ -> CompositeCell.emptyFreeText)
+            let cells : ResizeArray<CompositeCell> = ResizeArray.init 2 (fun _ -> CompositeCell.emptyFreeText)
             let column = CompositeColumn.create(header, cells).Validate()
             let eval() = CompositeColumn.create(header, cells).Validate(true) |> ignore
             Expect.isFalse column ""
@@ -54,7 +54,7 @@ let private tests_Validate =
         )
         testCase "Invalid io column with term cells" (fun () ->
             let header : CompositeHeader = CompositeHeader.Input IOType.Data
-            let cells : CompositeCell [] = Array.init 2 (fun _ -> CompositeCell.emptyTerm)
+            let cells : ResizeArray<CompositeCell> = ResizeArray.init 2 (fun _ -> CompositeCell.emptyTerm)
             let column = CompositeColumn.create(header, cells).Validate()
             let eval() = CompositeColumn.create(header, cells).Validate(true) |> ignore
             Expect.isFalse column ""
@@ -62,7 +62,7 @@ let private tests_Validate =
         )
         testCase "Invalid io column with unit cells" (fun () ->
             let header : CompositeHeader = CompositeHeader.Input IOType.Data
-            let cells : CompositeCell [] = Array.init 2 (fun _ -> CompositeCell.emptyUnitized)
+            let cells : ResizeArray<CompositeCell> = ResizeArray.init 2 (fun _ -> CompositeCell.emptyUnitized)
             let column = CompositeColumn.create(header, cells).Validate()
             let eval() = CompositeColumn.create(header, cells).Validate(true) |> ignore
             Expect.isFalse column ""
@@ -70,7 +70,7 @@ let private tests_Validate =
         )
         testCase "Invalid single column with term cells" (fun () ->
             let header : CompositeHeader = CompositeHeader.ProtocolREF
-            let cells : CompositeCell [] = Array.init 2 (fun _ -> CompositeCell.emptyTerm)
+            let cells : ResizeArray<CompositeCell> = ResizeArray.init 2 (fun _ -> CompositeCell.emptyTerm)
             let column = CompositeColumn.create(header, cells).Validate()
             let eval() = CompositeColumn.create(header, cells).Validate(true) |> ignore
             Expect.isFalse column ""
@@ -78,7 +78,7 @@ let private tests_Validate =
         )
         testCase "Invalid single column with unit cells" (fun () ->
             let header : CompositeHeader = CompositeHeader.ProtocolREF
-            let cells : CompositeCell [] = Array.init 2 (fun _ -> CompositeCell.emptyUnitized)
+            let cells : ResizeArray<CompositeCell> = ResizeArray.init 2 (fun _ -> CompositeCell.emptyUnitized)
             let column = CompositeColumn.create(header, cells).Validate()
             let eval() = CompositeColumn.create(header, cells).Validate(true) |> ignore
             Expect.isFalse column ""

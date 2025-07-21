@@ -5,10 +5,10 @@ open Fable.Core
 [<AttachMembers>]
 type CompositeColumn = {
     Header: CompositeHeader
-    Cells: CompositeCell []
+    Cells: ResizeArray<CompositeCell>
 } with
-    static member create (header: CompositeHeader, ?cells: CompositeCell []) = 
-        let cells = Option.defaultValue [||] cells
+    static member create (header: CompositeHeader, ?cells: ResizeArray<CompositeCell>) = 
+        let cells = Option.defaultValue (ResizeArray()) cells
         {
             Header = header
             Cells = cells
@@ -27,13 +27,15 @@ type CompositeColumn = {
     /// Returns an array of all units found in the cells of this column. Returns None if no units are found.
     /// </summary>
     member this.TryGetColumnUnits() =
-        let arr = [|
+        let arr =
+            [|
             for cell in this.Cells do
                 if cell.isUnitized then
                     let _, unit = cell.AsUnitized
                     unit
-        |]
-        if Array.isEmpty arr then None else Some arr
+            |]
+            |> ResizeArray
+        if Seq.isEmpty arr then None else Some arr
 
     /// <summary>
     /// Simple predictor for empty default cells.

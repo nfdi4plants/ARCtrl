@@ -626,6 +626,7 @@ All libraries should be Fable compatible, and produce javascript/typescript code
     ```fsharp
      [<StringEnum>] type YesOrNo = | Yes | No
     ```
+- if possible, do not use non-primitive types as keys in dictionaries. Only with primitive types, the more efficient native implementation `Map` in javascript and `dict` in python will be used.
     
 **Example:**
 

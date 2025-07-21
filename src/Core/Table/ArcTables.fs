@@ -1,4 +1,4 @@
-﻿namespace ARCtrl
+namespace ARCtrl
 
 open System.Collections.Generic
 open ARCtrl.Helper 
@@ -54,7 +54,7 @@ module ArcTablesAux =
             | Some ic -> 
                 let ioType = ic.Header.TryInput().Value
                 ic.Cells
-                |> Array.iter (fun c -> 
+                |> ResizeArray.iter (fun c -> 
                     includeInMap (c.ToFreeTextCell().AsFreeText) ioType
                 )
             | None -> ()
@@ -62,7 +62,7 @@ module ArcTablesAux =
             | Some oc -> 
                 let ioType = oc.Header.TryOutput().Value
                 oc.Cells
-                |> Array.iter (fun c -> 
+                |> ResizeArray.iter (fun c -> 
                     includeInMap (c.ToFreeTextCell().AsFreeText) ioType
                 )
             | None -> ()
@@ -76,7 +76,7 @@ module ArcTablesAux =
                 let oldIoType = ic.Header.TryInput().Value
                 let newIOType = 
                     ic.Cells
-                    |> Array.fold (fun (io : IOType) c ->
+                    |> ResizeArray.fold (fun (io : IOType) c ->
                         match Dictionary.tryFind (c.ToFreeTextCell().AsFreeText) map with
                         | Some newIO -> io.Merge newIO
                         | None -> io
@@ -89,7 +89,7 @@ module ArcTablesAux =
                 let oldIoType = oc.Header.TryOutput().Value
                 let newIOType = 
                     oc.Cells
-                    |> Array.fold (fun (io : IOType) c ->
+                    |> ResizeArray.fold (fun (io : IOType) c ->
                         match Dictionary.tryFind (c.ToFreeTextCell().AsFreeText) map with
                         | Some newIO -> io.Merge newIO
                         | None -> io
@@ -272,13 +272,13 @@ type ArcTables(initTables:ResizeArray<ArcTable>) =
         |> this.RenameTableAt
 
     // - Column CRUD API - //
-    member this.AddColumnAt(tableIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) = 
+    member this.AddColumnAt(tableIndex:int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?columnIndex: int, ?forceReplace: bool) = 
         this.MapTableAt(tableIndex, fun table ->
             table.AddColumn(header, ?cells=cells, ?index=columnIndex, ?forceReplace=forceReplace)
         )
 
     // - Column CRUD API - //
-    member this.AddColumn(tableName: string, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) =
+    member this.AddColumn(tableName: string, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?columnIndex: int, ?forceReplace: bool) =
         findIndexByTableName tableName this.Tables
         |> fun i -> this.AddColumnAt(i, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
 
@@ -294,13 +294,13 @@ type ArcTables(initTables:ResizeArray<ArcTable>) =
         |> this.RemoveColumnAt
 
     // - Column CRUD API - //
-    member this.UpdateColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
+    member this.UpdateColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>) =
         this.MapTableAt(tableIndex, fun table ->
             table.UpdateColumn(columnIndex, header, ?cells=cells)
         )
 
     // - Column CRUD API - //
-    member this.UpdateColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
+    member this.UpdateColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>) =
         findIndexByTableName tableName this.Tables
         |> fun tableIndex -> this.UpdateColumnAt(tableIndex, columnIndex, header, ?cells=cells)
 
@@ -315,13 +315,13 @@ type ArcTables(initTables:ResizeArray<ArcTable>) =
         |> this.GetColumnAt
 
     // - Row CRUD API - //
-    member this.AddRowAt(tableIndex:int, ?cells: CompositeCell [], ?rowIndex: int) = 
+    member this.AddRowAt(tableIndex:int, ?cells: ResizeArray<CompositeCell>, ?rowIndex: int) = 
         this.MapTableAt(tableIndex, fun table ->
             table.AddRow(?cells=cells, ?index=rowIndex)
         )
 
     // - Row CRUD API - //
-    member this.AddRow(tableName: string, ?cells: CompositeCell [], ?rowIndex: int) =
+    member this.AddRow(tableName: string, ?cells: ResizeArray<CompositeCell>, ?rowIndex: int) =
         findIndexByTableName tableName this.Tables
         |> fun i -> this.AddRowAt(i, ?cells=cells, ?rowIndex=rowIndex)
 
@@ -337,13 +337,13 @@ type ArcTables(initTables:ResizeArray<ArcTable>) =
         |> this.RemoveRowAt
 
     // - Row CRUD API - //
-    member this.UpdateRowAt(tableIndex: int, rowIndex: int, cells: CompositeCell []) =
+    member this.UpdateRowAt(tableIndex: int, rowIndex: int, cells: ResizeArray<CompositeCell>) =
         this.MapTableAt(tableIndex, fun table ->
             table.UpdateRow(rowIndex, cells)
         )
 
     // - Row CRUD API - //
-    member this.UpdateRow(tableName: string, rowIndex: int, cells: CompositeCell []) =
+    member this.UpdateRow(tableName: string, rowIndex: int, cells: ResizeArray<CompositeCell>) =
         (findIndexByTableName tableName this.Tables, rowIndex, cells)
         |> this.UpdateRowAt
 
@@ -381,9 +381,8 @@ type ArcTables(initTables:ResizeArray<ArcTable>) =
             ) 
             |> Map.ofSeq
         sheetTables.Tables
-        |> Seq.toArray
-        |> Array.collect ArcTable.SplitByProtocolREF
-        |> Array.map (fun t ->
+        |> ResizeArray.collect ArcTable.SplitByProtocolREF
+        |> ResizeArray.map (fun t ->
             let k = 
                 t.Headers |> Seq.tryFindIndex (fun x -> x = CompositeHeader.ProtocolREF)
                 |> Option.bind (fun i ->
@@ -397,17 +396,14 @@ type ArcTables(initTables:ResizeArray<ArcTable>) =
             | Some rt -> 
                 usedTables.Add(k) |> ignore
                 let updatedTable = ArcTable.updateReferenceByAnnotationTable rt t
-                ArcTable.create(t.Name, updatedTable.Headers, updatedTable.Values)
+                ArcTable.fromArcTableValues(t.Name, updatedTable.Headers, updatedTable.Values)
             | None -> t
         )
-        |> Array.groupBy (fun t -> t.Name)
-        |> Array.map (fun (_,ts) -> 
+        |> ResizeArray.groupBy (fun t -> t.Name)
+        |> ResizeArray.map (fun (_,ts) -> 
             ts
             |> Seq.reduce ArcTable.append
         )
-        |> Array.map (fun t -> 
-            ArcTableAux.Unchecked.fillMissingCells t.Headers t.Values
-            t)
         |> fun s -> 
             if keepUnusedRefTables then
                 Seq.append 

@@ -4,6 +4,7 @@ open Thoth.Json.Core
 
 open ARCtrl
 open Fable.Core
+open System.Collections.Generic
 
 #if FABLE_COMPILER_PYTHON
 module PyTime = 
@@ -139,3 +140,76 @@ module Decode =
         }
         //Decode.datetimeUtc
         #endif
+
+
+    let dictionary (keyDecoder : Decoder<'key>) (valueDecoder : Decoder<'value>) : Decoder<Dictionary<'key,'value>> =
+        { new Decoder<Dictionary<'key,'value>> with
+            member _.Decode(helpers, value) =
+                if helpers.isArray value then
+                    let mutable errors = []
+                    let tokens = helpers.asArray value
+                    let dict = Dictionary<'key,'value>()
+                    let decoder = Decode.tuple2 keyDecoder valueDecoder
+
+                    (Ok dict, tokens)
+                    ||> Array.fold (fun acc value ->
+                        match acc with
+                        | Error _ -> acc
+                        | Ok acc ->
+                            match decoder.Decode(helpers, value) with
+                            | Error er ->
+                                Error(
+                                    er                                    
+                                )
+                            | Ok value ->
+                                acc.Add value
+                                Ok acc
+                    )
+                    
+                else
+                    ("", BadPrimitive("an object", value)) |> Error
+        }
+
+    let intDictionary (valueDecoder : Decoder<'value>) : Decoder<Dictionary<int,'value>> =
+        { new Decoder<Dictionary<int,'value>> with
+            member _.Decode(helpers, value) =
+                if helpers.isArray value then
+                    let mutable errors = []
+                    let tokens = helpers.asArray value
+                    let dict = Dictionary<int,'value>()
+                    let decoder = Decode.tuple2 Decode.int valueDecoder
+
+                    (Ok dict, tokens)
+                    ||> Array.fold (fun acc value ->
+                        match acc with
+                        | Error _ -> acc
+                        | Ok acc ->
+                            match decoder.Decode(helpers, value) with
+                            | Error er ->
+                                Error(
+                                    er                                    
+                                )
+                            | Ok value ->
+                                acc.Add value
+                                Ok acc
+                    )
+                    
+                else
+                    ("", BadPrimitive("an object", value)) |> Error
+        }
+
+    let tryOneOf (decoders : Decoder<'value> list) : Decoder<'value> =
+        { new Decoder<'value> with
+            member _.Decode(helpers, value) =
+                let rec loop (errors : DecoderError<'JsonValue> list) (decoders : Decoder<'value> list) =
+                    match decoders with
+                    | [] -> Error ("", BadOneOf errors)
+                    | decoder :: rest ->
+                        let decodingResult =
+                            try decoder.Decode(helpers, value)
+                            with e -> Error (DecoderError("", ErrorReason.FailMessage e.Message))
+                        match decodingResult with
+                        | Ok v -> Ok v
+                        | Error e -> loop (e :: errors) rest
+                loop [] decoders
+        }
