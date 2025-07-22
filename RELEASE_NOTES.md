@@ -1,3 +1,52 @@
+### 3.0.0-beta.1+a98b25f (Released 2025-7-22)
+* Additions:
+    * [[#4a51552](https://github.com/nfdi4plants/ARCtrl/commit/4a51552f74504ccc66ce99ff5ea0c2e644a5fc86)] add tests to reproduce isa and rocrate json import error #512
+    * [[#8d97118](https://github.com/nfdi4plants/ARCtrl/commit/8d97118d892643b6a2a7b479684b5f9a60426f66)] expose default .gitattributes contract equal to .gitignore #534
+    * [[#589322a](https://github.com/nfdi4plants/ARCtrl/commit/589322a19eac3f6c0e80d73a6d10214c51f66273)] continue reworking ArcTable according to change requests in #537
+    * [[#995e668](https://github.com/nfdi4plants/ARCtrl/commit/995e6687ef2839a6df30349ae552150e8c583687)] continue reworking ArcTable according to change requests in #537
+    * [[#70ccc25](https://github.com/nfdi4plants/ARCtrl/commit/70ccc258bdedac1ea869571c5c061e7148c6d7c8)] small performance improvement to ArcTable.GetColumn
+    * [[#0a69048](https://github.com/nfdi4plants/ARCtrl/commit/0a69048e39d077d791c18e1eb946087611fbe5cd)] extend and run performance tests
+    * [[#02efde4](https://github.com/nfdi4plants/ARCtrl/commit/02efde43c177773f3fbac193ad5fa8ac63580bdf)] adjust ArcTable json parsing according to changes in ArcTable structure
+    * [[#8bdd981](https://github.com/nfdi4plants/ARCtrl/commit/8bdd98103c33a39aa8334b6204f7bc948b50e55a)] update ArcTable compressed json parsing
+    * [[#8f127ba](https://github.com/nfdi4plants/ARCtrl/commit/8f127ba961339f6d2f81099004c652b39ee8dd63)] add and run performance tests
+    * [[#7be7abf](https://github.com/nfdi4plants/ARCtrl/commit/7be7abf00f26a4d218b52784139154cddaa282da)] update default ArcTable json parsing
+    * [[#86e2a22](https://github.com/nfdi4plants/ARCtrl/commit/86e2a2277483969cf32d2242d5008759682f9cf2)] heavily improve performance of ArcTable addRow and addColumn
+    * [[#5213ffd](https://github.com/nfdi4plants/ARCtrl/commit/5213ffdcabf896da24122fed39f57b2bec701179)] improve performance of Annotation Table Read
+    * [[#0713287](https://github.com/nfdi4plants/ARCtrl/commit/0713287337041661e073bbd5cc7b164b3a417fae)] change OntologyAnnotation TanInfo computation time
+    * [[#913ee6e](https://github.com/nfdi4plants/ARCtrl/commit/913ee6e4d823b2bf156bfee890ff805a64d2e7d6)] implement fillmissingcells
+    * [[#3711615](https://github.com/nfdi4plants/ARCtrl/commit/3711615d97becdfafa3811c0d1f123d0b6ae72f7)] adjust tests according to ArcTable rework
+    * [[#10671d5](https://github.com/nfdi4plants/ARCtrl/commit/10671d5382ecfb4a35ad7f74e03dcb1bebe7bfdb)] finish up first version of ArcTable rework in source code
+    * [[#df14ca0](https://github.com/nfdi4plants/ARCtrl/commit/df14ca0938514278b7f745dd3d8251fa78585a96)] start reworking ArcTable references
+    * [[#233344d](https://github.com/nfdi4plants/ARCtrl/commit/233344d1ee7140e73ca1dbea28b7a6d958f7e1df)] finish up first version of reworked ArcTable
+    * [[#179bcdb](https://github.com/nfdi4plants/ARCtrl/commit/179bcdb4b7aa6250cb993ad25319371cf812cdbb)] finish up first version of ArcTableValues type
+    * [[#d3f27b1](https://github.com/nfdi4plants/ARCtrl/commit/d3f27b13baa0957aa4a71a45f01ae721490b0f90)] continue reworking arcTable by adding ArcTableValues type
+    * [[#0651f02](https://github.com/nfdi4plants/ARCtrl/commit/0651f02c388f6588b0448ee18e5598556e700678)] Start working on ArcTable redesign :sparkles:
+    * [[#ceb6c2b](https://github.com/nfdi4plants/ARCtrl/commit/ceb6c2b43f71b910d61a44e1405036847d762f06)] Add (more) tests for ArcInvestigation functionality
+    * [[#e87294f](https://github.com/nfdi4plants/ARCtrl/commit/e87294f7ca290b17af28b07841aae4d554334705)] Add in-memory spreadsheet file for tests
+    * [[#b847725](https://github.com/nfdi4plants/ARCtrl/commit/b84772520887fd5a9aa5003bfda329a6a6a38156)] Update fromRows function for ArcInvestigation module
+    * [[#e0e5f6e](https://github.com/nfdi4plants/ARCtrl/commit/e0e5f6e79fa02b7557a5f310c0471f950ad1b69f)] improve performance import to include preparation and repeated testing
+    * [[#81d65c5](https://github.com/nfdi4plants/ARCtrl/commit/81d65c5e23b1bc035ed48549ca93f940f3ceb829)] force python dict usage in compressed json writing
+    * [[#1a73116](https://github.com/nfdi4plants/ARCtrl/commit/1a73116b7abb37f9d8f95ace81442005feb9c542)] improve LDContext Dictionary access speed
+    * [[#311603c](https://github.com/nfdi4plants/ARCtrl/commit/311603c28dfd3129f43360955939757e1b15c896)] change ro-crate labprocess id generation to include study or assay name
+    * [[#4d1bb7a](https://github.com/nfdi4plants/ARCtrl/commit/4d1bb7ac94fb19b49af640b84fda76418df31220)] add test against distinct ro-crate process ids for same table names
+* Deletions:
+    * [[#5fcfda1](https://github.com/nfdi4plants/ARCtrl/commit/5fcfda17d47f7f944f40608bbb58ed42f7c5ca33)] add preliminary removeRowRange function
+* Bugfixes:
+    * [[#9a9c015](https://github.com/nfdi4plants/ARCtrl/commit/9a9c0157605b93a3f9bc292255ce01ce0c91cb40)] various small fixes and comments according to PR #539 review
+    * [[#8de07fe](https://github.com/nfdi4plants/ARCtrl/commit/8de07feaeb60a88ace51bc4464d72f94336900da)] fix processes with underscore names being incorrectly parsed back to Scaffold tables #512
+    * [[#61ea221](https://github.com/nfdi4plants/ARCtrl/commit/61ea2212c7b73d9896c441c4aa32de8c9609bbd5)] datamap comment headers now contain "Comment" prefix #515
+    * [[#f1d5e16](https://github.com/nfdi4plants/ARCtrl/commit/f1d5e16ad05449ba7e31f89ba2ab3c4c90f4ca45)] fix scaffold reader assigning assay datamap to study
+    * [[#3e30224](https://github.com/nfdi4plants/ARCtrl/commit/3e30224b16cbcc9c5036f5a8e10acbb7f9ea65c0)] small fixes to ArcTable according to PR comments
+    * [[#4ff9bc4](https://github.com/nfdi4plants/ARCtrl/commit/4ff9bc4d636b7e95287cafa94976ec5770e9857c)] small fix to ArcTable
+    * [[#585017d](https://github.com/nfdi4plants/ARCtrl/commit/585017de6fb6e05bd7df08d67addc1b052115869)] small fixes to ArcTable functions
+    * [[#0895fd1](https://github.com/nfdi4plants/ARCtrl/commit/0895fd14a52f6fec5c73a44f9fabf40a90407741)] remove erase from ColumnRefValues to fix js and py
+    * [[#be5876b](https://github.com/nfdi4plants/ARCtrl/commit/be5876b7546289db20b20108342c2604bdf04151)] fix final tests against dotnet for table rework
+    * [[#a8f5c5e](https://github.com/nfdi4plants/ARCtrl/commit/a8f5c5edeaa121c9a11f231b1c62d7ce53b878cf)] fix some ArcTable tests
+    * [[#be45cbc](https://github.com/nfdi4plants/ARCtrl/commit/be45cbcce6d962920fca6cc68a85b20d7f3b6699)] fix arctable cell addition and retrieval according to tests
+    * [[#214160c](https://github.com/nfdi4plants/ARCtrl/commit/214160cc054cbafd4deb35dca2070c06784e9413)] some fixes to ArcTable according to tests
+    * [[#a3eec49](https://github.com/nfdi4plants/ARCtrl/commit/a3eec49602bc8c1ee56b2698c771edd55fdcf76b)] small fixes against tests for ArcTable rework
+    * [[#fd94ddb](https://github.com/nfdi4plants/ARCtrl/commit/fd94ddb92efe3a802d17f6a6de32e10a9f419ba8)] some fixes on ArcTable against tests
+
 ### 3.0.0-alpha.4+16a8bb6 (Released 2025-5-28)
     * Python performance improvements
     * Fix duplicate Process IDs for Tables with same name
