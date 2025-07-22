@@ -701,9 +701,11 @@ type ProcessConversion =
                 ProcessConversion.decomposeProcessName name |> fst
             | _, Some protocol when LDLabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.isSome ->
                 LDLabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.defaultValue ""
-            | Some name, _ when name.Contains "_" ->
-                let lastUnderScoreIndex = name.LastIndexOf '_'
-                name.Remove lastUnderScoreIndex
+            // Removed this case in order to fix https://github.com/nfdi4plants/ARCtrl/issues/512
+            // The problem is, that through this case table-names with underscores clash, e.g. "Table_MS" and "Table_RNASeq" would be grouped together.
+            //| Some name, _ when name.Contains "_" ->
+            //    let lastUnderScoreIndex = name.LastIndexOf '_'
+            //    name.Remove lastUnderScoreIndex
             | Some name, _ ->
                 name
             | _, Some protocol  ->

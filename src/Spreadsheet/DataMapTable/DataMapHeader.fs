@@ -199,5 +199,5 @@ let toFsCells (commentKeys : string list) : list<FsCell> =
             FsCell(DataMapAux.labelShortHand)
         ]
         for ck in commentKeys do
-            yield FsCell(ck)
+            yield FsCell($"Comment [{ck}]")
     ]

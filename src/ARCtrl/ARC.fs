@@ -476,7 +476,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                 registeredStudy.UpdateReferenceByStudyFile(study,true)
             | None -> 
                 this.AddStudy(study)
-            let datamap = ARCAux.getAssayDataMapFromContracts study.Identifier contracts
+            let datamap = ARCAux.getStudyDataMapFromContracts study.Identifier contracts
             if study.DataMap.IsNone then
                 study.DataMap <- datamap
             study.StaticHash <- study.GetLightHashCode()
@@ -700,12 +700,13 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                     | _ -> ()
             |]           
 
-    member this.GetGitInitContracts(?branch : string,?repositoryAddress : string,?defaultGitignore : bool) = 
+    member this.GetGitInitContracts(?branch : string,?repositoryAddress : string,?defaultGitignore : bool, ?defaultGitattributes) = 
         let defaultGitignore = defaultArg defaultGitignore false
+        let defaultGitattributes = defaultArg defaultGitattributes false
         [|
             Contract.Git.Init.createInitContract(?branch = branch)
-            Contract.Git.gitattributesContract
             if defaultGitignore then Contract.Git.gitignoreContract
+            if defaultGitattributes then Contract.Git.gitattributesContract
             if repositoryAddress.IsSome then Contract.Git.Init.createAddRemoteContract repositoryAddress.Value
         |]
 

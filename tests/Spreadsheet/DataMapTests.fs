@@ -65,6 +65,70 @@ let private simpleTable =
         )
     ]
 
+let private commentTable = 
+    testList "commentTable" [
+        let wsName = "isa_datamap"
+        let ws = 
+                initWorksheet wsName
+                    [
+                        Data.appendDataColumn               1  
+                        Explication.appendMeanColumn        1
+                        Unit.appendPPMColumn                1
+                        ObjectType.appendFloatColumn        1
+                        Description.appendDescriptionColumn 1
+                        GeneratedBy.appendGeneratedByColumn 1
+                        Label.appendLabelColumn             1
+                        Comment.appendCommentColumn         1
+                    ]
+        testCase "Read" (fun () -> 
+                    
+            let table = DataMapTable.tryFromFsWorksheet ws        
+        
+            Expect.isSome table "Table was not created"
+            let table = table.Value
+
+            Expect.equal table.DataContexts.Count 1 "Wrong number of rows"
+
+            let dc = table.GetDataContext(0)
+
+            let expectedComment = Comment(Comment.commentHeader, Comment.commentValue)
+            let expectedData = Data.dataValue.Copy()
+            expectedData.Comments <- ResizeArray [| expectedComment |]
+
+            Expect.equal (dc.AsData()) expectedData "Data did not match"
+
+            let explication = Expect.wantSome dc.Explication "Explication was not set"
+            Expect.equal explication Explication.meanValue "Explication did not match"
+
+            let unit = Expect.wantSome dc.Unit "Unit was not set"
+            Expect.equal unit Unit.ppmValue "Unit did not match"
+
+            let objectType = Expect.wantSome dc.ObjectType "ObjectType was not set"
+            Expect.equal objectType ObjectType.floatValue "ObjectType did not match"
+
+            let description = Expect.wantSome dc.Description "Description was not set"
+            Expect.equal description Description.descriptionValue "Description did not match"
+
+            let generatedBy = Expect.wantSome dc.GeneratedBy "GeneratedBy was not set"
+            Expect.equal generatedBy GeneratedBy.generatedByValue "GeneratedBy did not match"
+
+            let label = Expect.wantSome dc.Label "Label was not set"
+            Expect.equal label Label.labelValue "Label did not match"
+
+            Expect.hasLength dc.Comments 1 "Comments should have one entry"
+            let comment = dc.Comments.[0]
+            Expect.equal comment.Name (Some Comment.commentHeader) "Comment key did not match"
+            Expect.equal comment.Value (Some Comment.commentValue) "Comment value did not match"
+        )
+        testCase "Write" (fun () ->            
+            let table = DataMapTable.tryFromFsWorksheet ws        
+            Expect.isSome table "Table was not created"
+            let out = DataMapTable.toFsWorksheet table.Value
+            Expect.workSheetEqual out ws "Worksheet was not correctly written"
+           
+        )
+    ]
+
 let private valuelessTable = 
     testList "valuelessTable" [
         let wsName = "isa_datamap"
@@ -188,6 +252,7 @@ let private emptyDatamap =
 let main = 
     testList "DataMapTableTests" [
         simpleTable
+        commentTable
         valuelessTable
         emptyTable
         simpleFile

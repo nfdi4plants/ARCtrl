@@ -164,6 +164,22 @@ module Label =
         for i = 2 to l + 1 do  
             t.Cell(FsAddress(i, colCount + 1),c).SetValueAs labelValueV1
 
+module Comment =
+
+    let commentHeader = "Kommend"
+
+    let commentValue = "This is a comment"
+
+    let commentHeaderV1 = "Comment [Kommend]"
+
+    let commentValueV1 = "This is a comment"
+
+    let appendCommentColumn l (c : FsCellsCollection) (t : FsTable) = 
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
+        t.Cell(FsAddress(1, colCount + 1),c).SetValueAs commentHeaderV1
+        for i = 2 to l + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs commentValueV1
+
 let initWorksheet (name : string) (appendOperations : (FsCellsCollection -> FsTable -> unit) list) = 
     let w = FsWorksheet(name)
     let t  = w.Table(DataMapTable.datamapTablePrefix, FsRangeAddress("A1:A1"))
