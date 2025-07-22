@@ -555,7 +555,9 @@ module ProcessParsing =
             if x.Name.IsSome && (x.Name.Value |> Process.decomposeName |> snd).IsSome then
                 (x.Name.Value |> Process.decomposeName |> fst)
             elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
-                x.ExecutesProtocol.Value.Name.Value 
+                x.ExecutesProtocol.Value.Name.Value
+            // Removed this case in order to fix https://github.com/nfdi4plants/ARCtrl/issues/512
+            // The problem is, that through this case table-names with underscores clash, e.g. "Table_MS" and "Table_RNASeq" would be grouped together.
             //elif x.Name.IsSome && x.Name.Value.Contains "_" then
             //    let lastUnderScoreIndex = x.Name.Value.LastIndexOf '_'
             //    x.Name.Value.Remove lastUnderScoreIndex

@@ -78,7 +78,7 @@ let tests_gitContracts = testList "gitContracts" [
     testCase "init_basic" <| fun _ ->
         let arc = ARC("MyARC")
         let contracts = arc.GetGitInitContracts()
-        Expect.equal contracts.Length 1 "Should be two contracts"
+        Expect.equal contracts.Length 1 "Should be one contract"
         /// Check init contract
         Expect.equal contracts.[0].Operation Operation.EXECUTE "Should be an execute operation"
         Expect.isSome contracts.[0].DTOType "Should have a DTO type"
@@ -88,7 +88,7 @@ let tests_gitContracts = testList "gitContracts" [
         Expect.isTrue dto.isCLITool "Should be a CLI tool"
         let cli = dto.AsCLITool()
         Expect.equal cli.Name "git" "Should be git"
-        Expect.equal cli.Arguments.Length 3 "Should have two arguments"
+        Expect.equal cli.Arguments.Length 3 "Should have three arguments"
         Expect.sequenceEqual cli.Arguments [|"init";"-b";"main"|] "Should be init"
         /// Check gitattributes contract
         //Expect.equal contracts.[1].Operation Operation.CREATE "Should be an create operation"
@@ -104,7 +104,7 @@ let tests_gitContracts = testList "gitContracts" [
         let arc = ARC("MyARC")
         let branchName = "myBranch"
         let contracts = arc.GetGitInitContracts(branch = branchName)
-        Expect.equal contracts.Length 1 "Should be two contracts"
+        Expect.equal contracts.Length 1 "Should be one contract"
         let dto = Expect.wantSome contracts.[0].DTO "Should have a DTO"
         let cli = dto.AsCLITool()
         Expect.sequenceEqual cli.Arguments [|"init";"-b";branchName|] "Should have new branchname"
@@ -113,7 +113,7 @@ let tests_gitContracts = testList "gitContracts" [
         let arc = ARC("MyARC")
         let remote = @"www.fantasyGit.net/MyAccount/MyRepo"
         let contracts = arc.GetGitInitContracts(repositoryAddress = remote)
-        Expect.equal contracts.Length 2 "Should be three contracts"
+        Expect.equal contracts.Length 2 "Should be two contracts"
         let dto = Expect.wantSome contracts.[1].DTO "Should have a DTO"
         let cli = dto.AsCLITool()
         Expect.sequenceEqual cli.Arguments [|"remote";"add";"origin";remote|] "Should correctly set new remote"
@@ -121,7 +121,7 @@ let tests_gitContracts = testList "gitContracts" [
     testCase "init_GitIgnore" <| fun _ ->
         let arc = ARC("MyARC")
         let contracts = arc.GetGitInitContracts(defaultGitignore = true)
-        Expect.equal contracts.Length 2 "Should be three contracts"
+        Expect.equal contracts.Length 2 "Should be two contracts"
         Expect.equal contracts.[1].Operation Operation.CREATE "Should be an create operation"
         let dto = Expect.wantSome contracts.[1].DTO "Should have a DTO"
         Expect.isTrue dto.isText "Should be text"
@@ -129,7 +129,7 @@ let tests_gitContracts = testList "gitContracts" [
     testCase "init_GitAttributes" <| fun _ ->
         let arc = ARC("MyARC")
         let contracts = arc.GetGitInitContracts(defaultGitattributes = true)
-        Expect.equal contracts.Length 2 "Should be three contracts"
+        Expect.equal contracts.Length 2 "Should be two contracts"
         Expect.equal contracts.[1].Operation Operation.CREATE "Should be an create operation"
         let dtoType = Expect.wantSome contracts.[1].DTOType "Should have a DTO type"
         Expect.equal dtoType DTOType.PlainText "Should be a plain text"

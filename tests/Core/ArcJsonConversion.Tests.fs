@@ -534,6 +534,9 @@ let private tests_ArcTablesProcessSeq =
             Expect.arcTableEqual resultTables.Tables.[1] expectedTables.[1] "Table 2 should be equal"
         )
         testCase "TableNameUndescore" (fun () ->
+            // https://github.com/nfdi4plants/ARCtrl/issues/512
+            // This test checks if the two table names with underscore and shared string before the underscore are handled correctly.
+            // The two tables should be recognized as different tables and not clash when parsing back from processes.
             let t1 = ArcTable.init "Test_Table"
             t1.AddColumn(
                 CompositeHeader.Input(IOType.Sample),
