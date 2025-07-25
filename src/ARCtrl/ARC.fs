@@ -872,8 +872,9 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
 
     static member fromROCrateJsonString (s:string) =
         try 
-            let isa = ARCtrl.Json.Decode.fromJsonString ARCtrl.Json.ARC.ROCrate.decoder s
-            ARC.fromArcInvestigation(isa = isa)
+            let isa, files = ARCtrl.Json.Decode.fromJsonString ARCtrl.Json.ARC.ROCrate.decoder s
+            let fileSystem = Array.ofSeq files |> FileSystem.fromFilePaths
+            ARC.fromArcInvestigation(isa = isa, fs = fileSystem)
         with
         | ex -> 
             failwithf "Could not parse ARC-RO-Crate metadata: \n%s" ex.Message
