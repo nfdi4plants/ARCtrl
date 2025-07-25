@@ -1,6 +1,12 @@
+### 3.0.0-beta.2+e74c9f8 (Released 2025-7-25)
+* Additions:
+    * [[#2290d57](https://github.com/nfdi4plants/ARCtrl/commit/2290d57382a4ffcd3b4a9edf7f6a30cad973f6c4)] add ldgraph and ldnode to JsonController
+    * [[#7d14d88](https://github.com/nfdi4plants/ARCtrl/commit/7d14d882b0f1ec95fac03f94a56fe989d18b719d)] minimal implementation of reading filepaths from RO-Crate
+    * [[#eccb4f8](https://github.com/nfdi4plants/ARCtrl/commit/eccb4f881944a53d99440e7dbc7982293201d244)] fix ro_crate writig duplicating data file paths #513
+
 ### 3.0.0-beta.1+a98b25f (Released 2025-7-22)
 * Additions:
-    * [[#4a51552](https://github.com/nfdi4plants/ARCtrl/commit/4a51552f74504ccc66ce99ff5ea0c2e644a5fc86)] add tests to reproduce isa and rocrate json import error #512
+   * [[#4a51552](https://github.com/nfdi4plants/ARCtrl/commit/4a51552f74504ccc66ce99ff5ea0c2e644a5fc86)] add tests to reproduce isa and rocrate json import error #512
     * [[#8d97118](https://github.com/nfdi4plants/ARCtrl/commit/8d97118d892643b6a2a7b479684b5f9a60426f66)] expose default .gitattributes contract equal to .gitignore #534
     * [[#589322a](https://github.com/nfdi4plants/ARCtrl/commit/589322a19eac3f6c0e80d73a6d10214c51f66273)] continue reworking ArcTable according to change requests in #537
     * [[#995e668](https://github.com/nfdi4plants/ARCtrl/commit/995e6687ef2839a6df30349ae552150e8c583687)] continue reworking ArcTable according to change requests in #537
