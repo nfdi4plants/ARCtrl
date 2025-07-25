@@ -1,4 +1,4 @@
-﻿module Data.Tests
+module Data.Tests
 
 open ARCtrl
 
@@ -21,8 +21,68 @@ let private tests_GetHashCode = testList "GetHashCode" [
         Expect.notEqual hash1 hash2 "HashCode should not be equal"
     ]
 
+let private tests_AbsoluteFilePath = testList "AbsoluteFilePath" [
+    testCase "Study_Relative" <| fun _ ->
+        let fileName = "MyFile"
+        let studyName = "MyStudy"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForStudy(studyName)
+        let expected = $"studies/{studyName}/resources/{fileName}"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Study_Absolute" <| fun _ ->
+        let fileName = "studies/MyStudy/resources/MyFile"
+        let studyName = "MyStudy"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForStudy(studyName)
+        let expected = $"studies/{studyName}/resources/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Study_Absolute_/" <| fun _ ->
+        let fileName = "/studies/MyStudy/resources/MyFile"
+        let studyName = "MyStudy"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForStudy(studyName)
+        let expected = $"studies/{studyName}/resources/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Study_Absolute_./" <| fun _ ->
+        let fileName = "./studies/MyStudy/resources/MyFile"
+        let studyName = "MyStudy"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForStudy(studyName)
+        let expected = $"studies/{studyName}/resources/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Assay_Relative" <| fun _ ->
+        let fileName = "MyFile"
+        let assayName = "MyAssay"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForAssay(assayName)
+        let expected = $"assays/{assayName}/dataset/{fileName}"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Assay_Absolute" <| fun _ ->
+        let fileName = "assays/MyAssay/dataset/MyFile"
+        let assayName = "MyAssay"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForAssay(assayName)
+        let expected = $"assays/{assayName}/dataset/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Assay_Absolute_/" <| fun _ ->
+        let fileName = "/assays/MyAssay/dataset/MyFile"
+        let assayName = "MyAssay"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForAssay(assayName)
+        let expected = $"assays/{assayName}/dataset/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Assay_Absolute_./" <| fun _ ->
+        let fileName = "./assays/MyAssay/dataset/MyFile"
+        let assayName = "MyAssay"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForAssay(assayName)
+        let expected = $"assays/{assayName}/dataset/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    ]
+
 
 let main = 
     testList "Data" [
-        tests_GetHashCode       
+        tests_GetHashCode
+        tests_AbsoluteFilePath
     ]

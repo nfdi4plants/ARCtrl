@@ -1,7 +1,8 @@
-﻿namespace ARCtrl
+namespace ARCtrl
 
 open Thoth.Json.Core
 open ARCtrl.Json
+open ARCtrl.ROCrate
 open Fable.Core
 
 module JsonHelper =
@@ -53,6 +54,16 @@ module JsonHelper =
         member _.fromROCrateJsonString (s: string) = ARC.fromROCrateJsonString s
         member _.toROCrateJsonString(?spaces) = ARC.toROCrateJsonString(?spaces=spaces)
 
+    [<AttachMembers>]
+    type LDGraphJson() =
+        member _.fromROCrateJsonString (s : string)  = LDGraph.fromROCrateJsonString s
+        member _.toROCrateJsonString(?spaces) = LDGraph.toROCrateJsonString(?spaces=spaces)
+
+    [<AttachMembers>]
+    type LDNodeJson() =
+        member _.fromROCrateJsonString (s : string) = LDNode.fromROCrateJsonString s
+        member _.toROCrateJsonString(?spaces) = LDNode.toROCrateJsonString(?spaces=spaces)
+
 open JsonHelper
 
 [<AttachMembers>]
@@ -62,3 +73,5 @@ type JsonController =
     static member Study = StudyJson()
     static member Investigation = InvestigationJson()
     static member ARC = ARCJson()
+    static member LDGraph = LDGraphJson()
+    static member LDNode = LDNodeJson()

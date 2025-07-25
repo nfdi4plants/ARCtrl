@@ -43,12 +43,21 @@ module ARC =
             graph.Compact_InPlace()
             LDGraph.encoder graph
 
-        static member decoder : Decoder<ArcInvestigation> =
+        static member decoder : Decoder<ArcInvestigation*string ResizeArray> =
             LDGraph.decoder
             |> Decode.map (fun graph ->
                 match graph.TryGetNode("./") with
                 | Some node ->
-                    ArcInvestigation.fromROCrateInvestigation(node, graph = graph, ?context = graph.TryGetContext())
+                    let files =
+                        graph.Nodes
+                        |> ResizeArray.choose (fun n ->
+                            if LDFile.validate(n, ?context = graph.TryGetContext()) && n.Id.Contains "#" |> not then
+                                Some n.Id
+                            else
+                                None
+                        )
+                    ArcInvestigation.fromROCrateInvestigation(node, graph = graph, ?context = graph.TryGetContext()),
+                    files
                 | None ->
                     failwith "RO-Crate graph did not contain root data Entity"
             )

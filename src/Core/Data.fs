@@ -90,13 +90,19 @@ type Data(?id,?name : string,?dataType,?format,?selectorFormat,?comments) =
         |> Option.defaultValue ""
 
     member this.GetAbsolutePathBy(f : string -> string, ?checkExistenceFromRoot : string -> bool) =
+        let trimStart (subString : string) (s : string) =
+            if s.StartsWith(subString) then
+                s.Substring(subString.Length)
+            else
+                s    
         let checkExistenceFromRoot = Option.defaultValue (fun _ -> false) checkExistenceFromRoot
         let isPartOfSubFolder (p : string) =
             p.StartsWith("assays/") || p.StartsWith("studies/") || p.StartsWith("workflows/") || p.StartsWith("runs/")
         let isOnlineRessource (p : string) =
             p.StartsWith("http:") || p.StartsWith("https:")
         match this.FilePath with
-        | Some p -> 
+        | Some p ->
+            let p = p.TrimStart('/') |> trimStart "./"
             if checkExistenceFromRoot p || isPartOfSubFolder p || isOnlineRessource p then
                 p
             else
