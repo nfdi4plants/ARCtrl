@@ -484,6 +484,28 @@ let private tests_AddFile =
             Expect.testFileSystemTree actual expected // use this instead of equal to ensure order of Folder children does not matter
     ]
 
+let private tests_TryGetPath =
+    let files = [|
+        "assays/MyAssay/dataset/ABC.D/SubFile.txt"
+        "assays/MyAssay/dataset/ABC.D/SubFolder/SubSubFile.txt"
+    |]
+    let fs = FileSystemTree.fromFilePaths files
+    testList "TryGetPath" [
+        testCase "ExistingFolder" <| fun _ ->
+            let folder = fs.TryGetPath("assays/MyAssay/dataset/ABC.D")
+            let folder = Expect.wantSome folder "Folder exists"
+            Expect.isTrue folder.isFolder "Should be folder object"
+            Expect.isTrue (folder.ContainsChildWithName "SubFile.txt") "Should contain subfile"
+            Expect.isTrue (folder.ContainsChildWithName "SubFolder") "Should contain subfolder"
+        testCase "ExistingFile" <| fun _ ->
+            let file = fs.TryGetPath("assays/MyAssay/dataset/ABC.D/SubFile.txt")
+            let file = Expect.wantSome file "File exists"
+            Expect.isTrue file.isFile "Should be File object"
+        testCase "NonExistingPath" <| fun _ ->
+            let nonExisting = fs.TryGetPath("assays/MyAssay/dataset/ABC.D/NonExisting.txt")
+            Expect.isNone nonExisting "Should not find non-existing file"
+    ]
+
 let main = testList "FileSystemTree" [
     tests_fromFilePaths
     tests_ToFilePaths
@@ -491,4 +513,5 @@ let main = testList "FileSystemTree" [
     tests_Filter_Folders
     tests_Filter
     tests_AddFile
+    tests_TryGetPath
 ]

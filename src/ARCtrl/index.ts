@@ -14,6 +14,8 @@ export { OntologyAnnotation } from './ts/Core/OntologyAnnotation.js'
 export { Comment$ as Comment } from './ts/Core/Comment.js'
 export { Contract } from './ts/Contract/Contract.js'
 export { WebController} from './ts/Template.Web.js'
+export { FileSystem } from './ts/FileSystem/FileSystem.js'
+export { FileSystemTree } from './ts/FileSystem/FileSystemTree.js'
 
 /// RO-Crate
 import { LDNode, LDGraph, LDRef, LDValue} from './ts/ROCrate/LDObject.js'
