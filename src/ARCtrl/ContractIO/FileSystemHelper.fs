@@ -9,6 +9,18 @@ open Fable
 open Fable.Core.JsInterop
 open FsSpreadsheet.Js
 
+let inline dynamicNodeImportOrThrow (memberName: string) (moduleName: string) (props: obj): Fable.Core.JS.Promise<'b> =
+    emitJsExpr (memberName, moduleName, props) """(async () => {
+    if (typeof process !== "undefined" && process.versions?.node) {
+        // Only dynamically import in Node
+        const dynImport = await import($1);
+        const args = Array.isArray($2) ? $2 : [$2];
+        return await dynImport[$0].apply(null, args);
+    } else {
+        throw new Error(`${$0} is not available in the browser.`);
+    }
+})()"""
+
 [<Erase>]
 type Stats =
     abstract member isDirectory: unit -> bool
@@ -23,29 +35,22 @@ type Dirent =
 
 [<Erase>]
 type FS =
-    [<ImportMember("fs/promises")>]
-    static member stat (path : string) : Fable.Core.JS.Promise<Stats> = jsNative
-    
-    [<ImportMember("fs/promises")>]
-    static member mkdir (path : string) (options : obj) : Fable.Core.JS.Promise<string option> = jsNative
 
-    [<ImportMember("fs/promises")>]
-    static member readdir (path : string) (options : obj) : Fable.Core.JS.Promise<Dirent []> = jsNative
+    static member stat (path : string) : Fable.Core.JS.Promise<Stats> = dynamicNodeImportOrThrow "stat" "fs/promises" path
 
-    [<ImportMember("fs/promises")>]
-    static member rename (oldName : string) (newName : string) : Fable.Core.JS.Promise<unit> = jsNative
+    static member mkdir (path : string) (options : obj) : Fable.Core.JS.Promise<string option> = dynamicNodeImportOrThrow "mkdir" "fs/promises" (path, options)
 
-    [<ImportMember("fs/promises")>]
-    static member unlink (path : string) : Fable.Core.JS.Promise<unit> = jsNative
+    static member readdir (path : string) (options : obj) : Fable.Core.JS.Promise<Dirent []> = dynamicNodeImportOrThrow "readdir" "fs/promises" (path, options)
 
-    [<ImportMember("fs/promises")>]
-    static member rm (path : string) (options : obj) : Fable.Core.JS.Promise<unit> = jsNative
+    static member rename (oldName : string) (newName : string) : Fable.Core.JS.Promise<unit> = dynamicNodeImportOrThrow "rename" "fs/promises" (oldName, newName)
 
-    [<ImportMember("fs/promises")>]
-    static member readFile (path : string) (encoding : string option) : Fable.Core.JS.Promise<obj> = jsNative
+    static member unlink (path : string) : Fable.Core.JS.Promise<unit> = dynamicNodeImportOrThrow "unlink" "fs/promises" path
 
-    [<ImportMember("fs/promises")>]
-    static member writeFile (path : string) (fileContent : obj) (encoding : string option) :Fable.Core.JS.Promise<unit> = jsNative
+    static member rm (path : string) (options : obj) : Fable.Core.JS.Promise<unit> = dynamicNodeImportOrThrow "rm" "fs/promises" (path, options)
+
+    static member readFile (path : string) (encoding : string option) : Fable.Core.JS.Promise<obj> = dynamicNodeImportOrThrow "readFile" "fs/promises" (path, encoding)
+
+    static member writeFile (path : string) (fileContent : obj) (encoding : string option) :Fable.Core.JS.Promise<unit> = dynamicNodeImportOrThrow "writeFile" "fs/promises" (path, fileContent, encoding)
 
     static member readFileText (path: string) : Fable.Core.JS.Promise<string> =
         FS.readFile path (Some "utf-8")
@@ -96,7 +101,7 @@ let directoryExistsAsync (path : string) : CrossAsync<bool> =
         let f (path : string) : bool = emitPyExpr (path) "Path(path).is_dir()"
         crossAsync {
             return f path
-        }      
+        }
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -121,7 +126,7 @@ let createDirectoryAsync (path : string) : CrossAsync<unit> =
     }
     #endif
 
-let ensureDirectoryAsync (path : string) : CrossAsync<unit> =   
+let ensureDirectoryAsync (path : string) : CrossAsync<unit> =
     crossAsync {
         let! exists = directoryExistsAsync path
         if not exists then
@@ -136,7 +141,7 @@ let ensureDirectoryOfFileAsync (filePath : string) : CrossAsync<unit> =
     #if FABLE_COMPILER_PYTHON
         let f (path : string) : string = emitPyExpr (path) "Path(file_path).parent"
         crossAsync {
-            return! ensureDirectoryAsync(f filePath) 
+            return! ensureDirectoryAsync(f filePath)
         }
     #endif
     #if !FABLE_COMPILER
@@ -333,20 +338,20 @@ let makeRelative (directoryPath : string) (path : string) : string =
     else
         let directoryPath = trim directoryPath
         let path = trim path
-        if path.StartsWith(directoryPath) then 
+        if path.StartsWith(directoryPath) then
             path.Substring(directoryPath.Length)
         else path
-    
-    
 
-let standardizeSlashes (path : string) : string = 
-    path.Replace("\\","/")              
+
+
+let standardizeSlashes (path : string) : string =
+    path.Replace("\\","/")
 
 let getSubDirectoriesAsync (path : string) : CrossAsync<string []> =
-    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT      
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         crossAsync {
             let! entries = FS.readdir path {|withFileTypes = true|}
-            let paths = 
+            let paths =
                 entries
                 |> Array.choose (fun entry ->
                     if entry.isDirectory() then
@@ -376,7 +381,7 @@ let getSubFilesAsync (path : string) : CrossAsync<string []> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         crossAsync {
             let! entries = FS.readdir path {|withFileTypes = true|}
-            let paths = 
+            let paths =
                 entries
                 |> Array.choose (fun entry ->
                     if entry.isFile() then
@@ -411,16 +416,16 @@ let getAllFilePathsAsync (directoryPath : string) : CrossAsync<string []> =
             if Seq.isEmpty dirs then
                 return Seq.empty
             else
-                
+
                 let! subFiles = dirs |> Seq.map getSubFilesAsync |> CrossAsync.all
                 let subFiles = subFiles |> Seq.concat
-                let! subDirs = dirs |> Seq.map getSubDirectoriesAsync |> CrossAsync.all 
+                let! subDirs = dirs |> Seq.map getSubDirectoriesAsync |> CrossAsync.all
                 let! subDirContents = subDirs |> Seq.map allFiles |> CrossAsync.all
                 let subDirContents = subDirContents |> Seq.concat
                 return subFiles |> Seq.append subDirContents
             }
         let! allFiles = allFiles [directoryPath]
-        let allFilesRelative = 
+        let allFilesRelative =
             allFiles
             |> Seq.toArray
             |> Array.map (makeRelative directoryPath >> standardizeSlashes)
