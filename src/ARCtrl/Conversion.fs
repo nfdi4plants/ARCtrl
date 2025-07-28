@@ -3,6 +3,7 @@ namespace ARCtrl.Conversion
 open ARCtrl.ROCrate
 open ARCtrl
 open ARCtrl.Helper
+open ARCtrl.FileSystem
 open System.Collections.Generic
 //open ColumnIndex
 
@@ -141,9 +142,31 @@ type BaseTypes =
         $"{headerFT}={name}"
         
 
-    static member composeFile (d : Data) : LDNode =
-        let dataType = d.DataType |> Option.map (fun dt -> dt.AsString) 
-        LDFile.create(d.NameText,d.NameText,?disambiguatingDescription = dataType, ?encodingFormat = d.Format, ?usageInfo = d.SelectorFormat)
+    static member composeFile (d : Data, ?fs : FileSystem) : LDNode =
+        let createFile() =
+            let dataType = d.DataType |> Option.map (fun dt -> dt.AsString) 
+            LDFile.create(d.NameText,d.NameText,?disambiguatingDescription = dataType, ?encodingFormat = d.Format, ?usageInfo = d.SelectorFormat)
+        match fs with
+        | Some fs ->
+            match fs.Tree.TryGetPath d.NameText with
+            | None ->
+                createFile()
+            | Some (File _) ->
+                createFile()
+            | Some (Folder _ as fs) ->
+                let file = createFile()
+                let subFiles = 
+                    fs.ToFilePaths(true)
+                    |> Array.map (fun fp ->
+                        let fullPath = ArcPathHelper.combine d.NameText fp
+                        LDFile.create(fullPath,fullPath)                  
+                    )
+                    |> ResizeArray
+                LDDataset.setHasParts(file, subFiles)
+                file
+        | None ->
+             createFile()
+            
 
     static member decomposeFile (f : LDNode, ?context : LDContext) : Data =
         let dataType = LDFile.tryGetDisambiguatingDescriptionAsString(f, ?context = context) |> Option.map DataFile.fromString

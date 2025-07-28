@@ -6,6 +6,7 @@ open ARCtrl.Helper
 open ARCtrl.Conversion
 open ARCtrl.Process
 open TestingUtils
+open ARCtrl.FileSystem
 
 module Helper =
     let tableName1 = "Test1"
@@ -895,6 +896,64 @@ let private tests_ArcTableProcess =
         )
     ]
 
+let private tests_Data =
+    let files = [|
+        "assays/MyAssay/dataset/ABC.D/SubFile.txt"
+        "assays/MyAssay/dataset/ABC.D/SubFolder/SubSubFile.txt"
+    |]
+    let fs = FileSystem.fromFilePaths files
+    testList "Data" [
+        testCase "Basic_NotInFs" (fun () ->
+            let path = "assays/MyAssay/dataset/MyData.csv"
+            let data = Data(name = path)
+            let f = BaseTypes.composeFile(data, fs = fs)
+            Expect.sequenceEqual f.SchemaType [LDFile.schemaType] "Type should match"
+            Expect.equal f.Id path "ID should match"
+            let name = Expect.wantSome (LDFile.tryGetNameAsString f) "Should have name"
+            Expect.equal name path "Name should match"
+        )
+        testCase "Basic_InFs" (fun () ->
+            let path = "assays/MyAssay/dataset/ABC.D/SubFile.txt"
+            let data = Data(name = path)
+            let f = BaseTypes.composeFile(data, fs = fs)
+            Expect.sequenceEqual f.SchemaType [LDFile.schemaType] "Type should match"
+            Expect.equal f.Id path "ID should match"
+            let name = Expect.wantSome (LDFile.tryGetNameAsString f) "Should have name"
+            Expect.equal name path "Name should match"
+        )
+        testCase "WithFormatAndSelector" (fun () ->
+            let path = "assays/MyAssay/dataset/MyData.csv"
+            let data = Data(name = path, format = "text/csv", selectorFormat = "MySelector")
+            let f = BaseTypes.composeFile(data, fs = fs)
+            Expect.sequenceEqual f.SchemaType [LDFile.schemaType] "Type should match"
+            Expect.equal f.Id path "ID should match"
+            let name = Expect.wantSome (LDFile.tryGetNameAsString f) "Should have name"
+            Expect.equal name path "Name should match"
+            let format = Expect.wantSome (LDFile.tryGetEncodingFormatAsString f) "Should have format"
+            Expect.equal format "text/csv" "Format should match"
+            let selectorFormat = Expect.wantSome (LDFile.tryGetUsageInfoAsString f) "Should have selector format"
+            Expect.equal selectorFormat "MySelector" "Selector format should match"
+        )
+        testCase "IsFolder" (fun () ->
+            let path = "assays/MyAssay/dataset/ABC.D"
+            let data = Data(name = path)
+            let f = BaseTypes.composeFile(data, fs = fs)
+            Expect.sequenceEqual f.SchemaType [LDFile.schemaType] "Type should match"
+            Expect.equal f.Id path "ID should match"
+            let name = Expect.wantSome (LDFile.tryGetNameAsString f) "Should have name"
+            Expect.equal name path "Name should match"
+            let hasParts = LDDataset.getHasParts f
+            Expect.hasLength hasParts 2 "Should have 2 parts"
+            Expect.equal hasParts.[0].Id "assays/MyAssay/dataset/ABC.D/SubFile.txt" "First part Id should match"
+            Expect.sequenceEqual hasParts.[0].SchemaType [LDFile.schemaType] "First part type should match"
+            Expect.equal hasParts.[1].Id "assays/MyAssay/dataset/ABC.D/SubFolder/SubSubFile.txt" "Second part Id should match"
+            Expect.sequenceEqual hasParts.[1].SchemaType [LDFile.schemaType] "Second part type should match"
+        )
+
+
+
+    ]
+
 let private tests_DataContext =
     testList "DataContext" [
         testCase "Empty" (fun () ->
@@ -1733,6 +1792,7 @@ let main =
         tests_Person
         tests_Publication
         tests_GetDataFilesFromProcesses
+        tests_Data
         tests_DataContext
         tests_DataMap
         tests_Assay
