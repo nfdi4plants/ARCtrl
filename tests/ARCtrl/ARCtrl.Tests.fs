@@ -1772,7 +1772,7 @@ let tests_ROCrate =
             Expect.sequenceEqual inputCol.Cells expectedCells "First table input column should have correct cells"
             /// Assays
             Expect.equal arc.AssayCount 2 "ARC should contain 2 assays"
-        ftestCase "IncludeFilesystem" <| fun _ ->
+        testCase "IncludeFilesystem" <| fun _ ->
             let arc = ARC("MyARC", title = "MyTitle", description = "MyDescription")
             let assay = arc.InitAssay("MyAssay")
             arc.UpdateFileSystem()
