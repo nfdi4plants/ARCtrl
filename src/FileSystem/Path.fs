@@ -6,9 +6,6 @@ let [<Literal>] PathSeperator = '/'
 let [<Literal>] PathSeperatorWindows = '\\'
 let seperators = [|PathSeperator; PathSeperatorWindows|]
 
-let isPathSeperator (c: char) =
-    c = PathSeperator || c = PathSeperatorWindows
-
 // Files
 let [<Literal>] DataMapFileName = "isa.datamap.xlsx"
 let [<Literal>] AssayFileName = "isa.assay.xlsx"
