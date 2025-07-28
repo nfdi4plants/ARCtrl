@@ -3,6 +3,7 @@ namespace ARCtrl.Json
 open Thoth.Json.Core
 
 open ARCtrl
+open ARCtrl.FileSystem
 open ARCtrl.ROCrate
 open ARCtrl.Helper
 open ARCtrl.Conversion
@@ -29,11 +30,11 @@ module ARC =
             node.SetProperty("http://schema.org/about", LDRef("./"))
             node
 
-        static member encoder (isa : ArcInvestigation, ?license : obj) =
+        static member encoder (isa : ArcInvestigation, ?license : obj, ?fs : FileSystem) =
             let license = match license with
                           | Some license -> license
                           | None -> ROCrate.getDefaultLicense()
-            let isa = isa.ToROCrateInvestigation()
+            let isa = isa.ToROCrateInvestigation(?fs = fs)
             LDDataset.setSDDatePublishedAsDateTime(isa, System.DateTime.Now)
             LDDataset.setLicenseAsCreativeWork(isa, license)
             let graph = isa.Flatten()
@@ -51,7 +52,7 @@ module ARC =
                     let files =
                         graph.Nodes
                         |> ResizeArray.choose (fun n ->
-                            if LDFile.validate(n, ?context = graph.TryGetContext()) && n.Id.Contains "#" |> not then
+                            if LDFile.validate(n, ?context = graph.TryGetContext()) && n.Id.Contains "#" |> not && n.HasType(LDDataset.schemaType, ?context = graph.TryGetContext()) |> not then
                                 Some n.Id
                             else
                                 None

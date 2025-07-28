@@ -155,11 +155,12 @@ type BaseTypes =
                 createFile()
             | Some (Folder _ as fs) ->
                 let file = createFile()
+                file.SchemaType <- ResizeArray [LDFile.schemaType; LDDataset.schemaType]
                 let subFiles = 
                     fs.ToFilePaths(true)
                     |> Array.map (fun fp ->
                         let fullPath = ArcPathHelper.combine d.NameText fp
-                        LDFile.create(fullPath,fullPath)                  
+                        LDFile.create(fullPath,fullPath)
                     )
                     |> ResizeArray
                 LDDataset.setHasParts(file, subFiles)
@@ -231,7 +232,7 @@ type BaseTypes =
         DataContext(name = name, ?format = format, ?selectorFormat = selectorFormat, ?explication = explication, ?unit = unit, ?objectType = objectType, ?generatedBy = generatedBy, ?description = description, ?label = label, comments = comments)
 
     /// Convert a CompositeHeader and Cell tuple to a ISA ProcessInput
-    static member composeProcessInput (header : CompositeHeader) (value : CompositeCell) : LDNode =
+    static member composeProcessInput (header : CompositeHeader) (value : CompositeCell) (fs : FileSystem option) : LDNode =
         match header with
         | CompositeHeader.Input IOType.Source -> LDSample.createSource(value.AsFreeText)
         | CompositeHeader.Input IOType.Sample -> LDSample.createSample(value.AsFreeText)
@@ -241,7 +242,7 @@ type BaseTypes =
             | CompositeCell.FreeText ft ->
                 LDFile.create(ft,ft)
             | CompositeCell.Data od ->
-                BaseTypes.composeFile od
+                BaseTypes.composeFile(od, ?fs = fs)
             | _ -> failwithf "Could not parse input data %O" value
         | CompositeHeader.Input (IOType.FreeText ft) ->
             let n = LDNode(id = BaseTypes.composeFreetextMaterialName ft value.AsFreeText, schemaType = ResizeArray [ft])
@@ -252,7 +253,7 @@ type BaseTypes =
 
 
     /// Convert a CompositeHeader and Cell tuple to a ISA ProcessOutput
-    static member composeProcessOutput (header : CompositeHeader) (value : CompositeCell) : LDNode =
+    static member composeProcessOutput (header : CompositeHeader) (value : CompositeCell) (fs : FileSystem option) : LDNode =
         match header with
         | CompositeHeader.Output IOType.Source 
         | CompositeHeader.Output IOType.Sample -> LDSample.createSample(value.AsFreeText)
@@ -262,7 +263,7 @@ type BaseTypes =
             | CompositeCell.FreeText ft ->
                 LDFile.create(ft,ft)
             | CompositeCell.Data od ->
-                BaseTypes.composeFile od
+                BaseTypes.composeFile(od, ?fs = fs)
             | _ -> failwithf "Could not parse output data %O" value
         | CompositeHeader.Output (IOType.FreeText ft) ->
             let n = LDNode(id = BaseTypes.composeFreetextMaterialName ft value.AsFreeText, schemaType = ResizeArray [ft])
@@ -516,7 +517,7 @@ type ProcessConversion =
         | _ -> None
 
     /// If the given headers depict an input, returns a function for parsing the values of the matrix to the values of this type
-    static member tryGetInputGetter (generalI : int) (header : CompositeHeader) =
+    static member tryGetInputGetter (generalI : int) (header : CompositeHeader) (fs : FileSystem option) =
         match header with
         | CompositeHeader.Input io ->
             fun (table : ArcTable) i ->
@@ -524,12 +525,12 @@ type ProcessConversion =
                     match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
                     | Some cell -> cell
                     | None -> ArcTableAux.getEmptyCellForHeader header None
-                BaseTypes.composeProcessInput header cell
+                BaseTypes.composeProcessInput header cell fs
             |> Some
         | _ -> None
 
     /// If the given headers depict an output, returns a function for parsing the values of the matrix to the values of this type
-    static member tryGetOutputGetter (generalI : int) (header : CompositeHeader) =
+    static member tryGetOutputGetter (generalI : int) (header : CompositeHeader) (fs : FileSystem option) =
         match header with
         | CompositeHeader.Output io ->
             fun (table : ArcTable) i ->
@@ -537,7 +538,7 @@ type ProcessConversion =
                     match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
                     | Some cell -> cell
                     | None -> ArcTableAux.getEmptyCellForHeader header None
-                BaseTypes.composeProcessOutput header cell
+                BaseTypes.composeProcessOutput header cell fs
             |> Some
         | _ -> None
 
@@ -568,7 +569,7 @@ type ProcessConversion =
         | _ -> None
 
     /// Given the header sequence of an ArcTable, returns a function for parsing each row of the table to a process
-    static member getProcessGetter (assayName: string option) (studyName : string option) (processNameRoot : string) (headers : CompositeHeader seq) =
+    static member getProcessGetter (assayName: string option) (studyName : string option) (processNameRoot : string) (headers : CompositeHeader seq) (fs : FileSystem option) =
     
         let headers = 
             headers
@@ -626,7 +627,7 @@ type ProcessConversion =
             |> Seq.toList
 
         let inputGetter =
-            match headers |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetInputGetter generalI header) with
+            match headers |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetInputGetter generalI header fs) with
             | Some inputGetter ->
                 fun (table : ArcTable) i ->
                     let chars = charGetters |> Seq.map (fun f -> f table i) |> ResizeArray
@@ -647,7 +648,7 @@ type ProcessConversion =
             
         // This is a little more complex, as data and material objects can't contain factors. So in the case where the output of the table is a data object but factors exist. An additional sample object with the same name is created to contain the factors.
         let outputGetter =
-            match headers |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetOutputGetter generalI header) with
+            match headers |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetOutputGetter generalI header fs) with
             | Some outputGetter ->
                 fun (table : ArcTable) i ->
                     let factors = factorValueGetters |> Seq.map (fun f -> f table i) |> ResizeArray
@@ -990,14 +991,14 @@ module TableTypeExtensions =
                 |> List.distinct
 
         /// Returns the list of processes specidified in this ArcTable
-        member this.GetProcesses(?assayName, ?studyName) : LDNode list = 
+        member this.GetProcesses(?assayName, ?studyName, ?fs : FileSystem) : LDNode list = 
             if this.RowCount = 0 then
                 //let input = ResizeArray [Sample.createSample(name = $"{this.Name}_Input", additionalProperties = ResizeArray [])]
                 //let output = ResizeArray [Sample.createSample(name = $"{this.Name}_Output", additionalProperties = ResizeArray [])]
                 LDLabProcess.create(name = this.Name(*, objects = input, results = output*))
                 |> List.singleton
             else
-                let getter = ProcessConversion.getProcessGetter assayName studyName this.Name this.Headers          
+                let getter = ProcessConversion.getProcessGetter assayName studyName this.Name this.Headers fs        
                 [
                     for i in 0..this.RowCount-1 do
                         yield getter this i        
@@ -1019,10 +1020,10 @@ module TableTypeExtensions =
     type ArcTables with
 
         /// Return a list of all the processes in all the tables.
-        member this.GetProcesses(?assayName, ?studyName) : LDNode list = 
+        member this.GetProcesses(?assayName, ?studyName, ?fs) : LDNode list = 
             this.Tables
             |> Seq.toList
-            |> List.collect (fun t -> t.GetProcesses(?assayName = assayName, ?studyName = studyName))
+            |> List.collect (fun t -> t.GetProcesses(?assayName = assayName, ?studyName = studyName, ?fs = fs))
 
         /// Create a collection of tables from a list of processes.
         ///
@@ -1301,7 +1302,7 @@ type AssayConversion =
             )
         ResizeArray.append files filesFromfragments
 
-    static member composeAssay (assay : ArcAssay) =
+    static member composeAssay (assay : ArcAssay, ?fs : FileSystem) =
         let measurementMethod = assay.TechnologyType |> Option.map BaseTypes.composeDefinedTerm
         let measurementTechnique = assay.TechnologyPlatform |> Option.map BaseTypes.composeDefinedTerm
         let variableMeasured = assay.MeasurementType |> Option.map BaseTypes.composePropertyValueFromOA
@@ -1310,7 +1311,7 @@ type AssayConversion =
             |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
             |> Option.fromSeq
         let processSequence = 
-            ArcTables(assay.Tables).GetProcesses(assayName = assay.Identifier)
+            ArcTables(assay.Tables).GetProcesses(assayName = assay.Identifier, ?fs = fs)
             |> ResizeArray
             |> Option.fromSeq
         let fragmentDescriptors =
@@ -1380,7 +1381,7 @@ type AssayConversion =
 
 type StudyConversion = 
 
-    static member composeStudy (study : ArcStudy) =
+    static member composeStudy (study : ArcStudy, ?fs : FileSystem) =
         let dateCreated = study.SubmissionDate |> Option.bind DateTime.tryFromString
         let datePublished = study.PublicReleaseDate |> Option.bind DateTime.tryFromString
         let dateModified = System.DateTime.Now
@@ -1393,7 +1394,7 @@ type StudyConversion =
             |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
             |> Option.fromSeq
         let processSequence = 
-            ArcTables(study.Tables).GetProcesses(studyName = study.Identifier)
+            ArcTables(study.Tables).GetProcesses(studyName = study.Identifier, ?fs = fs)
             |> ResizeArray
             |> Option.fromSeq
         let fragmentDescriptors =
@@ -1459,7 +1460,7 @@ type StudyConversion =
 
 type InvestigationConversion =
 
-    static member composeInvestigation (investigation : ArcInvestigation) =
+    static member composeInvestigation (investigation : ArcInvestigation, ?fs : FileSystem) =
         let name = match investigation.Title with | Some t -> t | None -> failwith "Investigation must have a title"
         let dateCreated = investigation.SubmissionDate |> Option.bind DateTime.tryFromString
         let datePublished =
@@ -1481,8 +1482,8 @@ type InvestigationConversion =
             |> Option.fromSeq
         let hasParts =
             investigation.Assays
-            |> ResizeArray.map (fun a -> AssayConversion.composeAssay a)
-            |> ResizeArray.append (investigation.Studies |> ResizeArray.map (fun s -> StudyConversion.composeStudy s))
+            |> ResizeArray.map (fun a -> AssayConversion.composeAssay(a, ?fs = fs))
+            |> ResizeArray.append (investigation.Studies |> ResizeArray.map (fun s -> StudyConversion.composeStudy(s, ?fs = fs)))
             |> Option.fromSeq
         let mentions =
             ResizeArray [] // TODO
@@ -1548,34 +1549,34 @@ type InvestigationConversion =
 module TypeExtensions =
 
     type ArcAssay with
-         member this.ToROCrateAssay() = AssayConversion.composeAssay this
+         member this.ToROCrateAssay(?fs) = AssayConversion.composeAssay(this, ?fs = fs)
 
          static member fromROCrateAssay (a : LDNode, ?graph : LDGraph, ?context : LDContext) = AssayConversion.decomposeAssay(a, ?graph = graph, ?context = context)
 
     type ArcStudy with
-         member this.ToROCrateStudy() = StudyConversion.composeStudy this
+         member this.ToROCrateStudy(?fs) = StudyConversion.composeStudy(this, ?fs = fs)
 
          static member fromROCrateStudy (a : LDNode, ?graph : LDGraph, ?context : LDContext) = StudyConversion.decomposeStudy(a, ?graph = graph, ?context = context)
 
     type ArcInvestigation with
-        member this.ToROCrateInvestigation() = InvestigationConversion.composeInvestigation this
+        member this.ToROCrateInvestigation(?fs) = InvestigationConversion.composeInvestigation(this, ?fs = fs)
     
         static member fromROCrateInvestigation (a : LDNode, ?graph : LDGraph, ?context : LDContext) = InvestigationConversion.decomposeInvestigation(a, ?graph = graph, ?context = context)
 
     [<Fable.Core.AttachMembers>]
     type Conversion =
 
-        static member arcAssayToDataset(a : ArcAssay) = a.ToROCrateAssay()
+        static member arcAssayToDataset(a : ArcAssay, ?fs) = a.ToROCrateAssay(?fs = fs)
 
         static member datasetToArcAssay(a : LDNode, ?graph : LDGraph, ?context : LDContext) =
             ArcAssay.fromROCrateAssay(a, ?graph = graph, ?context = context)
 
-        static member arcStudyToDataset(a : ArcStudy) = a.ToROCrateStudy()
+        static member arcStudyToDataset(a : ArcStudy, ?fs) = a.ToROCrateStudy(?fs = fs)
 
         static member datasetToArcStudy(a : LDNode, ?graph : LDGraph, ?context : LDContext) =
             ArcStudy.fromROCrateStudy(a, ?graph = graph, ?context = context)
 
-        static member arcInvestigationToDataset(a : ArcInvestigation) = a.ToROCrateInvestigation()
+        static member arcInvestigationToDataset(a : ArcInvestigation, ?fs) = a.ToROCrateInvestigation(?fs = fs)
 
         static member datasetToArcInvestigation(a : LDNode, ?graph : LDGraph, ?context : LDContext) =
             ArcInvestigation.fromROCrateInvestigation(a, ?graph = graph, ?context = context)       

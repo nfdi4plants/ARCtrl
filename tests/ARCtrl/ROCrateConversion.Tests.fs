@@ -269,7 +269,7 @@ let private tests_ProcessInput =
         testCase "Source" (fun () ->
             let header = CompositeHeader.Input(IOType.Source)
             let cell = CompositeCell.createFreeText "MySource"
-            let input = BaseTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell None
 
             Expect.isTrue (LDSample.validateSource input) "Should be a valid source"
             let name = LDSample.getNameAsString input
@@ -282,7 +282,7 @@ let private tests_ProcessInput =
         testCase "Sample" (fun () ->
             let header = CompositeHeader.Input(IOType.Sample)
             let cell = CompositeCell.createFreeText "MySample"
-            let input = BaseTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell None
 
             Expect.isTrue (LDSample.validateSample input) "Should be a valid sample"
             let name = LDSample.getNameAsString input
@@ -296,7 +296,7 @@ let private tests_ProcessInput =
             let header = CompositeHeader.Input(IOType.Data)
             let data = Data(name = "MyData", format = "text/csv", selectorFormat = "MySelector")
             let cell = CompositeCell.createData data
-            let input = BaseTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell None
     
             Expect.isTrue (LDFile.validate input) "Should be a valid data"
             let name = LDFile.getNameAsString input
@@ -310,7 +310,7 @@ let private tests_ProcessInput =
         testCase "Data_Freetext" (fun () ->
             let header = CompositeHeader.Input(IOType.Data)
             let cell = CompositeCell.createFreeText "MyData"
-            let input = BaseTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell None
     
             Expect.isTrue (LDFile.validate input) "Should be a valid data"
             let name = LDFile.getNameAsString input
@@ -324,7 +324,7 @@ let private tests_ProcessInput =
         testCase "Material" (fun () ->
             let header = CompositeHeader.Input(IOType.Material)
             let cell = CompositeCell.createFreeText "MyMaterial"
-            let input = BaseTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell None
     
             Expect.isTrue (LDSample.validateMaterial input) "Should be a valid material"
             let name = LDSample.getNameAsString input
@@ -337,7 +337,7 @@ let private tests_ProcessInput =
         testCase "FreeType" (fun () ->
             let header = CompositeHeader.Input (IOType.FreeText "MyInputType")
             let cell = CompositeCell.createFreeText "MyFreeText"
-            let input = BaseTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell None
 
             let name = LDSample.getNameAsString input
             Expect.equal name "MyFreeText" "Name should match"
@@ -356,7 +356,7 @@ let private tests_ProcessOutput =
         testCase "Sample" (fun () ->
             let header = CompositeHeader.Output(IOType.Sample)
             let cell = CompositeCell.createFreeText "MySample"
-            let output = BaseTypes.composeProcessOutput header cell
+            let output = BaseTypes.composeProcessOutput header cell None
 
             Expect.isTrue (LDSample.validateSample output) "Should be a valid sample"
             let name = LDSample.getNameAsString output
@@ -370,7 +370,7 @@ let private tests_ProcessOutput =
             let header = CompositeHeader.Output(IOType.Data)
             let data = Data(name = "MyData", format = "text/csv", selectorFormat = "MySelector")
             let cell = CompositeCell.createData data
-            let output = BaseTypes.composeProcessOutput header cell
+            let output = BaseTypes.composeProcessOutput header cell None
     
             Expect.isTrue (LDFile.validate output) "Should be a valid data"
             let name = LDFile.getNameAsString output
@@ -384,7 +384,7 @@ let private tests_ProcessOutput =
         testCase "Data_Freetext" (fun () ->
             let header = CompositeHeader.Output(IOType.Data)
             let cell = CompositeCell.createFreeText "MyData"
-            let output = BaseTypes.composeProcessOutput header cell
+            let output = BaseTypes.composeProcessOutput header cell None
     
             Expect.isTrue (LDFile.validate output) "Should be a valid data"
             let name = LDFile.getNameAsString output
@@ -398,7 +398,7 @@ let private tests_ProcessOutput =
         testCase "Material" (fun () ->
             let header = CompositeHeader.Output(IOType.Material)
             let cell = CompositeCell.createFreeText "MyMaterial"
-            let output = BaseTypes.composeProcessOutput header cell
+            let output = BaseTypes.composeProcessOutput header cell None
     
             Expect.isTrue (LDSample.validateMaterial output) "Should be a valid material"
             let name = LDSample.getNameAsString output
@@ -411,7 +411,7 @@ let private tests_ProcessOutput =
         testCase "FreeType" (fun () ->
             let header = CompositeHeader.Output (IOType.FreeText "MyOutputType")
             let cell = CompositeCell.createFreeText "MyFreeText"
-            let output = BaseTypes.composeProcessOutput header cell
+            let output = BaseTypes.composeProcessOutput header cell None
 
             let name = LDSample.getNameAsString output
             Expect.equal name "MyFreeText" "Name should match"
@@ -938,7 +938,7 @@ let private tests_Data =
             let path = "assays/MyAssay/dataset/ABC.D"
             let data = Data(name = path)
             let f = BaseTypes.composeFile(data, fs = fs)
-            Expect.sequenceEqual f.SchemaType [LDFile.schemaType] "Type should match"
+            Expect.sequenceEqual f.SchemaType [LDFile.schemaType; LDDataset.schemaType] "Type should match"
             Expect.equal f.Id path "ID should match"
             let name = Expect.wantSome (LDFile.tryGetNameAsString f) "Should have name"
             Expect.equal name path "Name should match"
