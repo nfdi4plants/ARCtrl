@@ -9,7 +9,7 @@ open Fake.Core
 open Fake.IO
 open Fake.IO.Globbing.Operators
 
-module RunTests = 
+module RunTests =
 
     let skipTestsFlag = "--skipTests"
 
@@ -26,7 +26,10 @@ module RunTests =
                 // transpile library for native access
                 // run dotnet $"fable src/ARCtrl/ARCtrl.Javascript.fsproj -o {path}/ts --lang ts -e fs.ts --nocache" ""
                 // System.IO.File.Copy("src/ARCtrl/index.ts", $"{path}/index.ts", overwrite = true) |> ignore
-                run npx $"vitest run --dir ./tests/JavaScript/" ""
+                run npx $"vitest run --dir {path}" ""
+            Trace.traceImportant "Start JavaScript web bundling of ARCtrl"
+            // ensure bundling for web does not fail
+            run npx "vite build" "./tests/WebBundling"
         else
             Trace.traceImportant "Skipping JavaScript tests"
     )
@@ -109,7 +112,7 @@ module RunTests =
                 // transpile js files from fsharp code
                 run dotnet $"fable {p} -o {p}/js" ""
                 System.IO.Directory.CreateDirectory(jsIOResultFolder) |> ignore
-                
+
                 // run mocha in target path to execute tests
                 // "--timeout 20000" is used, because json schema validation takes a bit of time.
                 run node $"{p}/js/Main.js" ""
@@ -117,8 +120,8 @@ module RunTests =
                 failwithf "Project %s not found" projectName
         | _ -> failwith "Please provide a project name to run tests for as the single argument"
     )
-    
 
-let runTests = BuildTask.create "RunTests" [clean; build; RunTests.runTestsJs; RunTests.runTestsJsNative; RunTests.runTestsPy; RunTests.runTestsPyNative; RunTests.runTestsDotnet] { 
+
+let runTests = BuildTask.create "RunTests" [clean; build; RunTests.runTestsJs; RunTests.runTestsJsNative; RunTests.runTestsPy; RunTests.runTestsPyNative; RunTests.runTestsDotnet] {
     ()
 }

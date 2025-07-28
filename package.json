@@ -16,23 +16,24 @@
   "contributors": [
     "Kevin Frey <Freymaurer@gmx.de> (https://github.com/Freymaurer)"
   ],
-  "main": "./dist/ts/cjs/index.js",
-  "module": "./dist/ts/esm/index.js",
+  "main": "./dist/ts/arctrl.cjs.js",
+  "module": "./dist/ts/arctrl.es.js",
+  "types": "./dist/ts/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/ts/types/index.d.ts",
-      "import": "./dist/ts/esm/index.js",
-      "require": "./dist/ts/cjs/index.js"
+      "types": "./dist/ts/index.d.ts",
+      "import": "./dist/ts/arctrl.es.js",
+      "require": "./dist/ts/arctrl.cjs.js"
     }
   },
+  "unpkg": "./dist/ts/arctrl.umd.js",
+  "jsdeliver": "./dist/ts/arctrl.umd.js",
   "private": false,
   "files": [
     "dist/ts"
   ],
   "scripts": {
-    "build:esm": "tsc --module ESNext --outDir dist/ts/esm || echo 'ESM build displayed warnings'",
-    "build:cjs": "tsc --module CommonJS --outDir dist/ts/cjs --declaration false || echo 'CJS build displayed warnings'",
-    "build": "npm run build:esm && npm run build:cjs"
+    "build": "vite build"
   },
   "dependencies": {
     "@fable-org/fable-library-js": "^1.8.0",
@@ -41,7 +42,9 @@
   },
   "devDependencies": {
     "jsonschema": "^1.4.1",
-    "vite": "^6.3.5",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.0",
+    "vite-plugin-dts": "^4.5.4",
     "vitest": "^3.1.1"
   }
 }
