@@ -68,11 +68,12 @@ type FS =
 
 [<Erase>]
 type PathModule =
-    [<ImportMember("path")>]
-    static member dirname (filePath : string) : string = jsNative
+    // alternative idea to async dynamic import is replicating nodejs sourc code:
+    // nodejs source https://github.com/nodejs/node/blob/cd1a90d1ee6f615963180b9a2df3987f98d6123f/lib/path.js#L764
+    // [<ImportMemberAttribute "path">]
+    static member dirname (path : string) : Fable.Core.JS.Promise<string> = dynamicNodeImportOrThrow "dirname" "path" path
 
-    [<ImportMember("path")>]
-    static member join ([<ParamSeq>] paths : string []) : string = jsNative
+    static member join (paths : string []) : Fable.Core.JS.Promise<string> = dynamicNodeImportOrThrow "join" "path" paths
 
 #endif
 #if FABLE_COMPILER_PYTHON
@@ -135,8 +136,10 @@ let ensureDirectoryAsync (path : string) : CrossAsync<unit> =
 
 let ensureDirectoryOfFileAsync (filePath : string) : CrossAsync<unit> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        PathModule.dirname filePath
-        |> ensureDirectoryAsync
+        crossAsync {
+            let! dir = PathModule.dirname filePath
+            return! ensureDirectoryAsync dir
+        }
     #endif
     #if FABLE_COMPILER_PYTHON
         let f (path : string) : string = emitPyExpr (path) "Path(file_path).parent"
@@ -351,7 +354,7 @@ let getSubDirectoriesAsync (path : string) : CrossAsync<string []> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         crossAsync {
             let! entries = FS.readdir path {|withFileTypes = true|}
-            let paths =
+            let! paths =
                 entries
                 |> Array.choose (fun entry ->
                     if entry.isDirectory() then
@@ -359,6 +362,7 @@ let getSubDirectoriesAsync (path : string) : CrossAsync<string []> =
                     else
                         None
                     )
+                |> Promise.all
             return paths |> Array.map standardizeSlashes
         }
     #endif
@@ -381,7 +385,7 @@ let getSubFilesAsync (path : string) : CrossAsync<string []> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         crossAsync {
             let! entries = FS.readdir path {|withFileTypes = true|}
-            let paths =
+            let! paths =
                 entries
                 |> Array.choose (fun entry ->
                     if entry.isFile() then
@@ -389,6 +393,7 @@ let getSubFilesAsync (path : string) : CrossAsync<string []> =
                     else
                         None
                     )
+                |> Promise.all
             return paths |> Array.map standardizeSlashes
         }
     #endif

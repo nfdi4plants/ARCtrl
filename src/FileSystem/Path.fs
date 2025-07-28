@@ -1,12 +1,13 @@
 module ARCtrl.ArcPathHelper
-    
+
 open System
 
 let [<Literal>] PathSeperator = '/'
 let [<Literal>] PathSeperatorWindows = '\\'
 let seperators = [|PathSeperator; PathSeperatorWindows|]
 
-
+let isPathSeperator (c: char) =
+    c = PathSeperator || c = PathSeperatorWindows
 
 // Files
 let [<Literal>] DataMapFileName = "isa.datamap.xlsx"
@@ -15,7 +16,7 @@ let [<Literal>] StudyFileName = "isa.study.xlsx"
 let [<Literal>] WorkflowFileName = "isa.workflow.xlsx"
 let [<Literal>] RunFileName = "isa.run.xlsx"
 let [<Literal>] InvestigationFileName = "isa.investigation.xlsx"
-let [<Literal>] GitKeepFileName = ".gitkeep" 
+let [<Literal>] GitKeepFileName = ".gitkeep"
 let [<Literal>] READMEFileName = "README.md"
 let [<Literal>] ValidationPackagesYamlFileName = "validation_packages.yml"
 
@@ -34,19 +35,19 @@ let [<Literal>] StudiesResourcesFolderName = "resources"
 
 //let assaySubFolderNames = [|assayDatasetFolderName;assayProtocolsFolderName|]
 
-let split(path: string) = 
+let split(path: string) =
     path.Split(seperators, enum<StringSplitOptions>(3))
     |> Array.filter (fun p -> p <> "" && p <> ".")
 
-let combine (path1 : string) (path2 : string) : string = 
+let combine (path1 : string) (path2 : string) : string =
     let path1_trimmed = path1.TrimEnd(seperators)
     let path2_trimmed = path2.TrimStart(seperators)
     let combined = path1_trimmed + string PathSeperator + path2_trimmed
     combined // should we trim any excessive path seperators?
 
-let combineMany (paths : string []) : string = 
-    paths 
-    |> Array.mapi (fun i p -> 
+let combineMany (paths : string []) : string =
+    paths
+    |> Array.mapi (fun i p ->
         if i = 0 then p.TrimEnd(seperators)
         elif i = (paths.Length-1) then p.TrimStart(seperators)
         else
