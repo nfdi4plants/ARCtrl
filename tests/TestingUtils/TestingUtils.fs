@@ -240,6 +240,7 @@ module Expect =
         | Folder (n1, children1), Folder (n2, children2) -> 
             Expect.equal n1 n2 $"Expects folder names to be equal: {n1} = {n2}"
             let sortByName (children: FileSystemTree []) = children |> Array.sortBy (fun c -> c.Name)
+            Expect.equal children1.Length children2.Length $"Expects folder names to be equal in length: {n1}:{children1.Length} = {n2}{children2.Length}"
             Array.iter2 testFileSystemTree (sortByName children1) (sortByName children2)
         | anyActual, anyExpected ->
             failwith $"Testing FileSystemTree found an issue with unequal states: 

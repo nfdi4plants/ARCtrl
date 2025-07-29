@@ -881,7 +881,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
 
     member this.ToROCrateJsonString(?spaces) =
         this.MakeDataFilesAbsolute()
-        ARCtrl.Json.ARC.ROCrate.encoder this
+        ARCtrl.Json.ARC.ROCrate.encoder(this, fs = _fs)
         |> ARCtrl.Json.Encode.toJsonString (ARCtrl.Json.Encode.defaultSpaces spaces)
 
         /// exports in json-ld format

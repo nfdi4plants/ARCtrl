@@ -1772,6 +1772,29 @@ let tests_ROCrate =
             Expect.sequenceEqual inputCol.Cells expectedCells "First table input column should have correct cells"
             /// Assays
             Expect.equal arc.AssayCount 2 "ARC should contain 2 assays"
+        testCase "IncludeFilesystem" <| fun _ ->
+            let arc = ARC("MyARC", title = "MyTitle", description = "MyDescription")
+            let assay = arc.InitAssay("MyAssay")
+            arc.UpdateFileSystem()
+            let fs = 
+                arc.FileSystem.AddFile("assays/MyAssay/dataset/MyData.csv")
+                    .AddFile("assays/MyAssay/dataset/ABC.D/SubFile.txt")
+                    .AddFile("assays/MyAssay/dataset/ABC.D/SubFolder/SubSubFile.txt")
+            arc.FileSystem <- fs
+            let table = assay.InitTable("MyTable")
+            table.AddColumn(
+                CompositeHeader.Input IOType.Data,
+                ResizeArray [
+                    CompositeCell.createDataFromString("assays/MyAssay/dataset/MyData.csv")
+                    CompositeCell.createDataFromString("assays/MyAssay/dataset/ABC.D");
+                ]                
+            ) |> ignore
+            let roCrate = arc.ToROCrateJsonString()
+            let arc' = ARC.fromROCrateJsonString(roCrate)
+            Expect.testFileSystemTree arc'.FileSystem.Tree arc.FileSystem.Tree 
+            Expect.equal arc'.Assays[0] arc.Assays[0] "Assays should be equal"
+                    
+        
     ]
 
 

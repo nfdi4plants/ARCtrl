@@ -45,8 +45,33 @@ type FileSystemTree =
             |> Array.exists (fun c -> c.Name = name)
         | File _ -> false
 
+    /// Non-recursive lookup of child with the given name
     static member containsChildWithName (name : string) =
         fun (fst : FileSystemTree) -> fst.ContainsChildWithName name
+
+
+    member this.TryGetPath(path:string) : FileSystemTree option =
+        let rec loop (parent: FileSystemTree) (pathParts: string array) =
+            match parent with
+            | Folder ("root", children) ->
+                children |> Array.tryPick (fun child -> loop child pathParts)
+            | Folder (name, children) ->
+                let nextPart = Array.head pathParts
+                if name = nextPart then
+                    if pathParts.Length = 1 then
+                        Some parent
+                    else
+                        let remainingParts = Array.tail pathParts
+                        children |> Array.tryPick (fun child -> loop child remainingParts)
+                else
+                    None // Current folder name does not match the next part of the path
+            | File name -> 
+                if pathParts.Length = 1 && pathParts.[0] = name then
+                    Some parent
+                else 
+                    None // Cannot go deeper into a file
+        let parts = ARCtrl.ArcPathHelper.split path
+        loop this parts
 
     member this.AddFile (path: string) : FileSystemTree =
         let existingPaths = this.ToFilePaths()

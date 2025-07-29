@@ -6,6 +6,7 @@ open ARCtrl.Helper
 open ARCtrl.Conversion
 open ARCtrl.Process
 open TestingUtils
+open ARCtrl.FileSystem
 
 module Helper =
     let tableName1 = "Test1"
@@ -268,7 +269,7 @@ let private tests_ProcessInput =
         testCase "Source" (fun () ->
             let header = CompositeHeader.Input(IOType.Source)
             let cell = CompositeCell.createFreeText "MySource"
-            let input = BaseTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell None
 
             Expect.isTrue (LDSample.validateSource input) "Should be a valid source"
             let name = LDSample.getNameAsString input
@@ -281,7 +282,7 @@ let private tests_ProcessInput =
         testCase "Sample" (fun () ->
             let header = CompositeHeader.Input(IOType.Sample)
             let cell = CompositeCell.createFreeText "MySample"
-            let input = BaseTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell None
 
             Expect.isTrue (LDSample.validateSample input) "Should be a valid sample"
             let name = LDSample.getNameAsString input
@@ -295,7 +296,7 @@ let private tests_ProcessInput =
             let header = CompositeHeader.Input(IOType.Data)
             let data = Data(name = "MyData", format = "text/csv", selectorFormat = "MySelector")
             let cell = CompositeCell.createData data
-            let input = BaseTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell None
     
             Expect.isTrue (LDFile.validate input) "Should be a valid data"
             let name = LDFile.getNameAsString input
@@ -309,7 +310,7 @@ let private tests_ProcessInput =
         testCase "Data_Freetext" (fun () ->
             let header = CompositeHeader.Input(IOType.Data)
             let cell = CompositeCell.createFreeText "MyData"
-            let input = BaseTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell None
     
             Expect.isTrue (LDFile.validate input) "Should be a valid data"
             let name = LDFile.getNameAsString input
@@ -323,7 +324,7 @@ let private tests_ProcessInput =
         testCase "Material" (fun () ->
             let header = CompositeHeader.Input(IOType.Material)
             let cell = CompositeCell.createFreeText "MyMaterial"
-            let input = BaseTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell None
     
             Expect.isTrue (LDSample.validateMaterial input) "Should be a valid material"
             let name = LDSample.getNameAsString input
@@ -336,7 +337,7 @@ let private tests_ProcessInput =
         testCase "FreeType" (fun () ->
             let header = CompositeHeader.Input (IOType.FreeText "MyInputType")
             let cell = CompositeCell.createFreeText "MyFreeText"
-            let input = BaseTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell None
 
             let name = LDSample.getNameAsString input
             Expect.equal name "MyFreeText" "Name should match"
@@ -355,7 +356,7 @@ let private tests_ProcessOutput =
         testCase "Sample" (fun () ->
             let header = CompositeHeader.Output(IOType.Sample)
             let cell = CompositeCell.createFreeText "MySample"
-            let output = BaseTypes.composeProcessOutput header cell
+            let output = BaseTypes.composeProcessOutput header cell None
 
             Expect.isTrue (LDSample.validateSample output) "Should be a valid sample"
             let name = LDSample.getNameAsString output
@@ -369,7 +370,7 @@ let private tests_ProcessOutput =
             let header = CompositeHeader.Output(IOType.Data)
             let data = Data(name = "MyData", format = "text/csv", selectorFormat = "MySelector")
             let cell = CompositeCell.createData data
-            let output = BaseTypes.composeProcessOutput header cell
+            let output = BaseTypes.composeProcessOutput header cell None
     
             Expect.isTrue (LDFile.validate output) "Should be a valid data"
             let name = LDFile.getNameAsString output
@@ -383,7 +384,7 @@ let private tests_ProcessOutput =
         testCase "Data_Freetext" (fun () ->
             let header = CompositeHeader.Output(IOType.Data)
             let cell = CompositeCell.createFreeText "MyData"
-            let output = BaseTypes.composeProcessOutput header cell
+            let output = BaseTypes.composeProcessOutput header cell None
     
             Expect.isTrue (LDFile.validate output) "Should be a valid data"
             let name = LDFile.getNameAsString output
@@ -397,7 +398,7 @@ let private tests_ProcessOutput =
         testCase "Material" (fun () ->
             let header = CompositeHeader.Output(IOType.Material)
             let cell = CompositeCell.createFreeText "MyMaterial"
-            let output = BaseTypes.composeProcessOutput header cell
+            let output = BaseTypes.composeProcessOutput header cell None
     
             Expect.isTrue (LDSample.validateMaterial output) "Should be a valid material"
             let name = LDSample.getNameAsString output
@@ -410,7 +411,7 @@ let private tests_ProcessOutput =
         testCase "FreeType" (fun () ->
             let header = CompositeHeader.Output (IOType.FreeText "MyOutputType")
             let cell = CompositeCell.createFreeText "MyFreeText"
-            let output = BaseTypes.composeProcessOutput header cell
+            let output = BaseTypes.composeProcessOutput header cell None
 
             let name = LDSample.getNameAsString output
             Expect.equal name "MyFreeText" "Name should match"
@@ -893,6 +894,64 @@ let private tests_ArcTableProcess =
             let expectedTable = t
             Expect.arcTableEqual table expectedTable "Table should be equal"
         )
+    ]
+
+let private tests_Data =
+    let files = [|
+        "assays/MyAssay/dataset/ABC.D/SubFile.txt"
+        "assays/MyAssay/dataset/ABC.D/SubFolder/SubSubFile.txt"
+    |]
+    let fs = FileSystem.fromFilePaths files
+    testList "Data" [
+        testCase "Basic_NotInFs" (fun () ->
+            let path = "assays/MyAssay/dataset/MyData.csv"
+            let data = Data(name = path)
+            let f = BaseTypes.composeFile(data, fs = fs)
+            Expect.sequenceEqual f.SchemaType [LDFile.schemaType] "Type should match"
+            Expect.equal f.Id path "ID should match"
+            let name = Expect.wantSome (LDFile.tryGetNameAsString f) "Should have name"
+            Expect.equal name path "Name should match"
+        )
+        testCase "Basic_InFs" (fun () ->
+            let path = "assays/MyAssay/dataset/ABC.D/SubFile.txt"
+            let data = Data(name = path)
+            let f = BaseTypes.composeFile(data, fs = fs)
+            Expect.sequenceEqual f.SchemaType [LDFile.schemaType] "Type should match"
+            Expect.equal f.Id path "ID should match"
+            let name = Expect.wantSome (LDFile.tryGetNameAsString f) "Should have name"
+            Expect.equal name path "Name should match"
+        )
+        testCase "WithFormatAndSelector" (fun () ->
+            let path = "assays/MyAssay/dataset/MyData.csv"
+            let data = Data(name = path, format = "text/csv", selectorFormat = "MySelector")
+            let f = BaseTypes.composeFile(data, fs = fs)
+            Expect.sequenceEqual f.SchemaType [LDFile.schemaType] "Type should match"
+            Expect.equal f.Id path "ID should match"
+            let name = Expect.wantSome (LDFile.tryGetNameAsString f) "Should have name"
+            Expect.equal name path "Name should match"
+            let format = Expect.wantSome (LDFile.tryGetEncodingFormatAsString f) "Should have format"
+            Expect.equal format "text/csv" "Format should match"
+            let selectorFormat = Expect.wantSome (LDFile.tryGetUsageInfoAsString f) "Should have selector format"
+            Expect.equal selectorFormat "MySelector" "Selector format should match"
+        )
+        testCase "IsFolder" (fun () ->
+            let path = "assays/MyAssay/dataset/ABC.D"
+            let data = Data(name = path)
+            let f = BaseTypes.composeFile(data, fs = fs)
+            Expect.sequenceEqual f.SchemaType [LDFile.schemaType; LDDataset.schemaType] "Type should match"
+            Expect.equal f.Id path "ID should match"
+            let name = Expect.wantSome (LDFile.tryGetNameAsString f) "Should have name"
+            Expect.equal name path "Name should match"
+            let hasParts = LDDataset.getHasParts f
+            Expect.hasLength hasParts 2 "Should have 2 parts"
+            Expect.equal hasParts.[0].Id "assays/MyAssay/dataset/ABC.D/SubFile.txt" "First part Id should match"
+            Expect.sequenceEqual hasParts.[0].SchemaType [LDFile.schemaType] "First part type should match"
+            Expect.equal hasParts.[1].Id "assays/MyAssay/dataset/ABC.D/SubFolder/SubSubFile.txt" "Second part Id should match"
+            Expect.sequenceEqual hasParts.[1].SchemaType [LDFile.schemaType] "Second part type should match"
+        )
+
+
+
     ]
 
 let private tests_DataContext =
@@ -1733,6 +1792,7 @@ let main =
         tests_Person
         tests_Publication
         tests_GetDataFilesFromProcesses
+        tests_Data
         tests_DataContext
         tests_DataMap
         tests_Assay

@@ -13,6 +13,8 @@ from .py.Core.Table.arc_table import ArcTable
 from .py.Core.Table.arc_tables import ArcTables
 from .py.Core.arc_types import ArcAssay, ArcStudy, ArcRun, ArcWorkflow, ArcInvestigation
 from .py.Core.template import Template
+from .py.FileSystem.file_system import FileSystem
+from .py.FileSystem.file_system_tree import FileSystemTree
 from .py.json import JsonController
 from .py.xlsx import XlsxController
 from .py.arc import ARC

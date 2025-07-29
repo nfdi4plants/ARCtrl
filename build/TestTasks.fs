@@ -13,6 +13,8 @@ module RunTests =
 
     let skipTestsFlag = "--skipTests"
 
+    let failOnFocusFlag = "--fail-on-focused-tests"
+
     [<Literal>]
     let jsIOResultFolder = "./tests/TestingUtils/TestResults/js"
 
@@ -87,7 +89,12 @@ module RunTests =
     let runTestsDotnet = BuildTask.createFn "runTestsDotnet" [clean; build] (fun tp ->
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start .NET tests"
-            let dotnetRun = run dotnet "run"
+            let cmd =
+                if tp.Context.AllExecutingTargets |> List.exists (fun t -> t.Name = failOnFocusFlag) then
+                    $"run {failOnFocusFlag}"
+                else
+                    "run"
+            let dotnetRun = run dotnet cmd
             dotnetRun allTestsProject
         else
             Trace.traceImportant "Skipping .NET tests"
