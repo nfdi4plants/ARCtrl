@@ -1,3 +1,15 @@
+### 3.0.0-beta.3+2f33c59 (Released 2025-7-29)
+* Additions:
+    * [[#e683d69](https://github.com/nfdi4plants/ARCtrl/commit/e683d69ce49a168400cf6e90492a32f85995610e)] add --fail-on-focused-tests to dotnet pyxpecto tests
+    * [[#70ab794](https://github.com/nfdi4plants/ARCtrl/commit/70ab79439d5dbb426c110eca44424a5d1db64f29)] streamline build logic :sparkles:
+    * [[#43757e6](https://github.com/nfdi4plants/ARCtrl/commit/43757e616e93c858ab2eff330e13e513e7c7fbed)] add test files
+    * [[#52ba8df](https://github.com/nfdi4plants/ARCtrl/commit/52ba8df1b734df2ec06066e866dd8713332fade5)] implement and test composeFile considering FileSystem
+    * [[#c7ca1bb](https://github.com/nfdi4plants/ARCtrl/commit/c7ca1bb2d331db848498cd38e974b203960c5e2e)] add tryGetPath function to FileSystemTree
+    * [[#f648699](https://github.com/nfdi4plants/ARCtrl/commit/f6486995cf31bfb4a37170506f82d34dbbdd1299)] establish async dynamic import logic ✅
+
+* Bugfixes:
+    * [[#386560b](https://github.com/nfdi4plants/ARCtrl/commit/386560bd3723052c1030bfa248204c935c9a27b9)] test and fix rocrate containing enough information to reconstruct annotated files and folder in FileSystemTree
+
 ### 3.0.0-beta.2+e74c9f8 (Released 2025-7-25)
 * Additions:
     * [[#2290d57](https://github.com/nfdi4plants/ARCtrl/commit/2290d57382a4ffcd3b4a9edf7f6a30cad973f6c4)] add ldgraph and ldnode to JsonController
@@ -6,7 +18,7 @@
 
 ### 3.0.0-beta.1+a98b25f (Released 2025-7-22)
 * Additions:
-   * [[#4a51552](https://github.com/nfdi4plants/ARCtrl/commit/4a51552f74504ccc66ce99ff5ea0c2e644a5fc86)] add tests to reproduce isa and rocrate json import error #512
+    * [[#4a51552](https://github.com/nfdi4plants/ARCtrl/commit/4a51552f74504ccc66ce99ff5ea0c2e644a5fc86)] add tests to reproduce isa and rocrate json import error #512
     * [[#8d97118](https://github.com/nfdi4plants/ARCtrl/commit/8d97118d892643b6a2a7b479684b5f9a60426f66)] expose default .gitattributes contract equal to .gitignore #534
     * [[#589322a](https://github.com/nfdi4plants/ARCtrl/commit/589322a19eac3f6c0e80d73a6d10214c51f66273)] continue reworking ArcTable according to change requests in #537
     * [[#995e668](https://github.com/nfdi4plants/ARCtrl/commit/995e6687ef2839a6df30349ae552150e8c583687)] continue reworking ArcTable according to change requests in #537
