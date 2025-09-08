@@ -7,13 +7,13 @@
     {"name": "Wetzels, Florian", "affiliation": "RPTU Kaiserslautern-Landau", "orcid": "https://orcid.org/0000-0002-5526-7138"}
   ],
   "contributors": [
-    {"name": "Blume, Patrick", "affiliation": "RPTU Kaiserslautern-Landau"},
-    {"name": "Scholz, Ole", "affiliation": "RPTU Kaiserslautern-Landau", "orcid": "https://orcid.org/0009-0001-0182-7531"},
-    {"name": "Brilhaus, Dominik", "affiliation": "Heinrich Heine University Düsseldorf", "orcid": "https://orcid.org/0000-0001-9021-3197"},
-    {"name": "Maus, Oliver", "affiliation": "RPTU Kaiserslautern-Landau", "orcid": "https://orcid.org/0000-0002-8241-5300"},
-    {"name": "Dahms, Eik"},
-    {"name": "Zhou, Xiao-Ran", "affiliation": " Forschungszentrum Jülich", "orcid": "https://orcid.org/0000-0002-5622-3348"},
-    {"name": "blaker42"}
+    {"name": "Blume, Patrick", "affiliation": "RPTU Kaiserslautern-Landau", "type": "ProjectMember"},
+    {"name": "Scholz, Ole", "affiliation": "RPTU Kaiserslautern-Landau", "orcid": "https://orcid.org/0009-0001-0182-7531", "type": "ProjectMember"},
+    {"name": "Brilhaus, Dominik", "affiliation": "Heinrich Heine University Düsseldorf", "orcid": "https://orcid.org/0000-0001-9021-3197", "type": "ProjectMember"},
+    {"name": "Maus, Oliver", "affiliation": "RPTU Kaiserslautern-Landau", "orcid": "https://orcid.org/0000-0002-8241-5300", "type": "ProjectMember"},
+    {"name": "Dahms, Eik", "affiliation": "Universität zu Köln", "type": "ProjectMember"},
+    {"name": "Zhou, Xiao-Ran", "affiliation": " Forschungszentrum Jülich", "orcid": "https://orcid.org/0000-0002-5622-3348", "type": "ProjectMember"},
+    {"name": "Bianca Laker", "affiliation": "Universität Bielefeld", "type": "ProjectMember"}
   ],
   "keywords": ["RDM", "Research Data management", "ARC", "Annotated Research Context"]
 }
