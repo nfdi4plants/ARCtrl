@@ -13,7 +13,7 @@
     {"name": "Maus, Oliver", "affiliation": "RPTU Kaiserslautern-Landau", "orcid": "https://orcid.org/0000-0002-8241-5300", "type": "ProjectMember"},
     {"name": "Dahms, Eik", "affiliation": "Universität zu Köln", "type": "ProjectMember"},
     {"name": "Zhou, Xiao-Ran", "affiliation": " Forschungszentrum Jülich", "orcid": "https://orcid.org/0000-0002-5622-3348", "type": "ProjectMember"},
-    {"name": "Bianca Laker", "affiliation": "Universität Bielefeld", "type": "ProjectMember"}
+    {"name": "Bianca Laker", "affiliation": "Universität Bielefeld", "orcid" :  "https://orcid.org/0000-0002-5792-0102", "type": "ProjectMember"}
   ],
   "keywords": ["RDM", "Research Data management", "ARC", "Annotated Research Context"]
 }

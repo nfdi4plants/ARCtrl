@@ -3,6 +3,8 @@
 
 # ARCtrl
 
+[![DOI](https://img.shields.io/badge/Cite%20Us-10.5281%2Fzenodo.15194394-008273?logo=zenodo&logoColor=C70039)](https://doi.org/10.5281/zenodo.15194394)
+
 > **ARCtrl** the easy way to read, manipulate and write ARCs in __.NET__, __JavaScript__ and __Python__! ❤️
 
 | Version | Downloads |
