@@ -13,6 +13,11 @@
     <Compile Include="Inputs.Tests.fs" />
     <Compile Include="Requirements.Tests.fs" />
     <Compile Include="WorkflowSteps.Tests.fs" />
+    <Compile Include="Encode/EncodeTestUtils.fs" />
+    <Compile Include="Encode/ToolRoundTrip.Tests.fs" />
+    <Compile Include="Encode/RequirementsOrdering.Tests.fs" />
+    <Compile Include="Encode/WorkflowNegative.Tests.fs" />
+  <Compile Include="Encode/WorkflowRoundTrip.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>
