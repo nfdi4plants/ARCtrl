@@ -159,13 +159,13 @@ type OntologyAnnotation(?name,?tsr,?tan, (*?tanInfo, *)?comments) =
             | None -> 0
         match this.TermSourceREF, this.TANInfo with
         | None, Some taninfo -> 
-            HashCodes.mergeHashes (hash taninfo.IDSpace) (hash taninfo.LocalID)
+            HashCodes.mergeHashes (hash (taninfo.IDSpace.ToLower())) (hash taninfo.LocalID)
         | Some tsr, Some taninfo -> 
-            HashCodes.mergeHashes (hash tsr) (hash taninfo.LocalID)
+            HashCodes.mergeHashes (hash (tsr.ToLower())) (hash taninfo.LocalID)
         | Some tsr, None ->
             match this.TermAccessionNumber with
-            | Some tan -> HashCodes.mergeHashes (hash tsr) (hash tan)
-            | None -> hash tsr
+            | Some tan -> HashCodes.mergeHashes (hash (tsr.ToLower())) (hash tan)
+            | None -> hash (tsr.ToLower())
         | None, None ->
             0    
         |> HashCodes.mergeHashes nameHash
