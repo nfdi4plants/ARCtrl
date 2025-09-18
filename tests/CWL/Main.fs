@@ -10,6 +10,8 @@ let all = testSequenced <| testList "CWL" [
     Tests.Inputs.main
     Tests.Requirements.main
     Tests.WorkflowSteps.main
+    Tests.Encode.ToolRoundTrip.main
+    Tests.Encode.WorkflowRoundTrip.main
 ]
 
 #if !TESTS_ALL
