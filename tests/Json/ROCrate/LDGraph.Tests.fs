@@ -20,6 +20,16 @@ let private test_read = testList "Read" [
         let secondExpectedObject = LDNode("./", ResizeArray ["Dataset"])
         Expect.equal graph.Nodes.[0] firstExpectedObject "first node should be the metadata"
         Expect.equal graph.Nodes.[1] secondExpectedObject "second node should be the dataset"
+    // https://github.com/nfdi4plants/ARCtrl/issues/545
+    testCase "LargeNodeCount" <| fun _ ->
+        let graph = LDGraph()
+        for i in 1 .. 1000 do
+            let node = LDNode($"node{i}", ResizeArray ["Thing"])
+            graph.AddNode node |> ignore
+        Expect.hasLength graph.Nodes 1000 "should have 1000 nodes"
+        let ro = graph.ToROCrateJsonString()
+        let graph2 = LDGraph.fromROCrateJsonString ro
+        Expect.hasLength graph2.Nodes 1000 "should have 1000 nodes"
 ]
 
 let private test_write = testList "Write" [
