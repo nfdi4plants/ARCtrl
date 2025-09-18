@@ -34,7 +34,7 @@ module rec LDGraph =
                         fun (get : Decode.IGetters) ->
                             let id = get.Optional.Field "@id" Decode.string
                             let context = get.Optional.Field "@context" LDContext.decoder
-                            let nodes = get.Required.Field "@graph" (Decode.seq LDNode.decoder)            
+                            let nodes = get.Required.Field "@graph" (Decode.resizeArray LDNode.decoder)            
                             let o = LDGraph(?id = id, ?context = context)
                             for property in properties do
                                 if property <> "@id" && property <> "@graph" && property <> "@context" then
