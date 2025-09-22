@@ -20,8 +20,7 @@ let private test_read = testList "Read" [
         let secondExpectedObject = LDNode("./", ResizeArray ["Dataset"])
         Expect.equal graph.Nodes.[0] firstExpectedObject "first node should be the metadata"
         Expect.equal graph.Nodes.[1] secondExpectedObject "second node should be the dataset"
-    // https://github.com/nfdi4plants/ARCtrl/issues/545
-    testCase "LargeNodeCount" <| fun _ ->
+    testCase "LargeNodeCount (issue #545)" <| fun _ ->
         let graph = LDGraph()
         for i in 1 .. 1000 do
             let node = LDNode($"node{i}", ResizeArray ["Thing"])
