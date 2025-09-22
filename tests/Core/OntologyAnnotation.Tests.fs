@@ -75,6 +75,10 @@ let private tests_equals = testList "Equals" [
         let oa2 = OntologyAnnotation("instrument model", "MSS", tan= "MS:00000001", comments=ResizeArray [Comment("KeyName", "Value1")])
         Expect.notEqual oa1 oa2 ""
         Expect.isFalse (oa1 = oa2) ""
+    testCase "TSR lowercase" <| fun _ ->
+        let oa1 = OntologyAnnotation("UniProt ID", "edam", "EDAM:2291")
+        let oa2 = OntologyAnnotation("UniProt ID", "EDAM", "EDAM:2291")
+        Expect.equal oa1 oa2 ""
     testCase "not equal" <| fun _ ->   
         let oa1 = OntologyAnnotation("instrument model", "MS", "http://purl.obolibrary.org/obo/MS_00000001", comments = ResizeArray [Comment("KeyName", "Value1")])
         let oa2 = OntologyAnnotation(tan= "MS:00000001", comments=ResizeArray [Comment("KeyName", "Value1")])
