@@ -8,9 +8,9 @@ type FsTable with
     member this.IsEmpty(c : FsCellsCollection) =
         this.RangeAddress.Range = "A1:A1"
         && 
-            (this.Cell(FsAddress("A1"),c).Value = null)
+            (this.Cell(FsAddress.fromString("A1"),c).Value = null)
             ||
-            (this.Cell(FsAddress("A1"),c).Value = "")
+            (this.Cell(FsAddress.fromString("A1"),c).Value = "")
 
 module Data = 
 
@@ -182,7 +182,7 @@ module Comment =
 
 let initWorksheet (name : string) (appendOperations : (FsCellsCollection -> FsTable -> unit) list) = 
     let w = FsWorksheet(name)
-    let t  = w.Table(DataMapTable.datamapTablePrefix, FsRangeAddress("A1:A1"))
+    let t  = w.Table(DataMapTable.datamapTablePrefix, FsRangeAddress.fromString("A1:A1"))
     appendOperations 
     |> List.iter (fun o -> o w.CellCollection t)
     ArcTable.addSpacesToEnd w.CellCollection t

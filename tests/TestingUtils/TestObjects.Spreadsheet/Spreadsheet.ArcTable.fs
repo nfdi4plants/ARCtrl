@@ -8,9 +8,9 @@ type FsTable with
     member this.IsEmpty(c : FsCellsCollection) =
         this.RangeAddress.Range = "A1:A1"
         && 
-            (this.Cell(FsAddress("A1"),c).Value = null)
+            (this.Cell(FsAddress.fromString("A1"),c).Value = null)
             ||
-            (this.Cell(FsAddress("A1"),c).Value = "")
+            (this.Cell(FsAddress.fromString("A1"),c).Value = "")
 
 module Parameter = 
 
@@ -435,7 +435,7 @@ let addSpacesToEnd (cc : FsCellsCollection) (t : FsTable) =
 
 let initTable (appendOperations : (FsCellsCollection -> FsTable -> unit) list)= 
     let c = FsCellsCollection()
-    let t = FsTable(ArcTable.annotationTablePrefix, FsRangeAddress("A1:A1"))
+    let t = FsTable(ArcTable.annotationTablePrefix, FsRangeAddress.fromString("A1:A1"))
     appendOperations 
     |> List.iter (fun o -> o c t)
     c,t
@@ -447,7 +447,7 @@ let initTableCols (appendOperations : (FsCellsCollection -> FsTable -> unit) lis
 
 let initWorksheet (name : string) (appendOperations : (FsCellsCollection -> FsTable -> unit) list) = 
     let w = FsWorksheet(name)
-    let t  = w.Table(ArcTable.annotationTablePrefix, FsRangeAddress("A1:A1"))
+    let t  = w.Table(ArcTable.annotationTablePrefix, FsRangeAddress.fromString("A1:A1"))
     appendOperations 
     |> List.iter (fun o -> o w.CellCollection t)
     addSpacesToEnd w.CellCollection t
@@ -457,7 +457,7 @@ let initWorksheet (name : string) (appendOperations : (FsCellsCollection -> FsTa
 
 let initWorksheetWithTableName (worksheetName : string) (tableName : string) (appendOperations : (FsCellsCollection -> FsTable -> unit) list) = 
     let w = FsWorksheet(worksheetName)
-    let t  = w.Table(tableName, FsRangeAddress("A1:A1"))
+    let t  = w.Table(tableName, FsRangeAddress.fromString("A1:A1"))
     appendOperations 
     |> List.iter (fun o -> o w.CellCollection t)
     addSpacesToEnd w.CellCollection t
