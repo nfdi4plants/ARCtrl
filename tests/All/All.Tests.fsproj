@@ -22,7 +22,4 @@
     <ProjectReference Include="..\CWL\ARCtrl.CWL.Tests.fsproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="8.0.400" />
-  </ItemGroup>
 </Project>
