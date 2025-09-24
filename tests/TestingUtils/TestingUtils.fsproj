@@ -49,7 +49,4 @@
     <ProjectReference Condition="'$(FABLE_COMPILER_TYPESCRIPT)' == 'true'" Include="..\..\src\ARCtrl\ARCtrl.Javascript.fsproj" />
     <ProjectReference Condition="'$(FABLE_COMPILER_PYTHON)' == 'true'" Include="..\..\src\ARCtrl\ARCtrl.Python.fsproj" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="8.0.400" />
-  </ItemGroup>
 </Project>
