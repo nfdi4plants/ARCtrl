@@ -1541,7 +1541,7 @@ type WorkflowConversion =
         | CWL.Workflow wf -> 
             WorkflowConversion.composeWorkflowProtocolFromWorkflow(filePath, wf, ?workflowName = workflowName, ?runName = runName)
 
-    static member composeWorkflow (workflow : ArcWorkflow) =
+    static member composeWorkflow (workflow : ArcWorkflow, ?fs : FileSystem) =
         let workflowProtocol =
             let workflowFilePath = Identifier.Workflow.cwlFileNameFromIdentifier workflow.Identifier
             match workflow.CWLDescription with
@@ -1558,6 +1558,13 @@ type WorkflowConversion =
         //            p.ParameterName |> Option.map BaseTypes.composeDefinedTerm
         //        )
         //    LDLabProtocol.set(workflowProtocol, inputs)
+        let fragmentDescriptors =
+            workflow.DataMap
+            |> Option.map DatamapConversion.composeFragmentDescriptors
+        let dataFiles =
+            fragmentDescriptors
+            |> Option.defaultValue (ResizeArray [])
+            |> ResizeArray.choose (fun df -> LDPropertyValue.tryGetSubjectOf(df))
         if workflow.Components.Count > 0 then
             let softwareTools =
                 workflow.Components
@@ -1568,7 +1575,7 @@ type WorkflowConversion =
             |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
             |> Option.fromSeq
         let hasParts =
-            ResizeArray()
+            dataFiles
             |> Option.fromSeq
         let comments =
             workflow.Comments
@@ -1607,7 +1614,7 @@ type RunConversion =
                 input.Values
             )
 
-    static member composeWorkflowInvocationFromArcRun (run : ArcRun) =
+    static member composeWorkflowInvocationFromArcRun (run : ArcRun, ?fs : FileSystem) =
         let workflowProtocol =
             let workflowFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
             match run.CWLDescription with
@@ -1630,7 +1637,7 @@ type RunConversion =
                     failwith $"Could not create workflow invocation for run \"{run.Identifier}\": Workflow parameter \"name\" had no assigned value."
             )
         let processSequence =
-            ArcTables(run.Tables).GetProcesses()
+            ArcTables(run.Tables).GetProcesses(?fs = fs)
             |> ResizeArray
         if processSequence.Count = 0 then
             LDWorkflowInvocation.create(
@@ -1662,9 +1669,9 @@ type RunConversion =
                 )
             )
             
-    static member composeRun (run : ArcRun) =
+    static member composeRun (run : ArcRun, ?fs : FileSystem) =
         let workflowInvocations =
-            RunConversion.composeWorkflowInvocationFromArcRun run
+            RunConversion.composeWorkflowInvocationFromArcRun(run, ?fs = fs)
             |> Option.fromSeq
         let measurementMethod = run.TechnologyType |> Option.map BaseTypes.composeDefinedTerm
         let measurementTechnique = run.TechnologyPlatform |> Option.map BaseTypes.composeDefinedTerm
@@ -1728,10 +1735,10 @@ type InvestigationConversion =
             |> Option.fromSeq
         let hasParts =
             [
-                yield! (investigation.Assays |> ResizeArray.map (fun a -> AssayConversion.composeAssay a, ?fs = fs))
-                yield! (investigation.Studies |> ResizeArray.map (fun s -> StudyConversion.composeStudy s, ?fs = fs))
-                yield! (investigation.Workflows |> ResizeArray.map (fun w -> WorkflowConversion.composeWorkflowFromArcWorkflow w, ?fs = fs))
-                yield! (investigation.Runs |> ResizeArray.map (fun r -> WorkflowConversion.composeRunFromArcRun r, ?fs = fs))
+                yield! (investigation.Assays |> ResizeArray.map (fun a -> AssayConversion.composeAssay(a, ?fs = fs)))
+                yield! (investigation.Studies |> ResizeArray.map (fun s -> StudyConversion.composeStudy(s, ?fs = fs)))
+                yield! (investigation.Workflows |> ResizeArray.map (fun w -> WorkflowConversion.composeWorkflow(w, ?fs = fs)))
+                yield! (investigation.Runs |> ResizeArray.map (fun r -> RunConversion.composeRun(r, ?fs = fs)))
             ]
             |> ResizeArray
             |> Option.fromSeq
