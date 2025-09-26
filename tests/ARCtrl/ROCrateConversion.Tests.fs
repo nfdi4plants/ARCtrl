@@ -1491,6 +1491,7 @@ let tests_FormalParameter =
             Expect.equal name' name "FormalParameter name should match input name"
             let isRequired = Expect.wantSome (LDFormalParameter.tryGetValueRequiredAsBoolean formalParameter) "FormalParameter should have valueRequired"
             Expect.isTrue isRequired "FormalParameter should be required"
+            Expect.hasLength (LDFormalParameter.getIdentifiers formalParameter) 0 "FormalParameter should have no identifiers"
             //let t' = Expect.wantExactlyOne (formalParameter.AdditionalType) "FormalParameter should have an additionalType"
             //Expect.equal t' t "FormalParameter type should match input type"
         )
@@ -1514,16 +1515,58 @@ let tests_FormalParameter =
             let isRequired = Expect.wantSome (LDFormalParameter.tryGetValueRequiredAsBoolean formalParameter) "FormalParameter should have valueRequired"
             Expect.isTrue isRequired "FormalParameter should be required"
         )
+        testCase "FromInput_Prefix" (fun () ->
+            let name = "MyInput"
+            let t = CWLType.String
+            let binding = InputBinding.create(prefix = "--eenput")
+            let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
+            let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+            let identifiers = LDFormalParameter.getIdentifiers formalParameter
+            Expect.hasLength identifiers 1 "FormalParameter should have 1 identifier"
+            let id = identifiers.[0]
+            Expect.isTrue (LDPropertyValue.validatePrefix id) "Identifier should be a prefix"
+            let prefix = Expect.wantSome (LDPropertyValue.tryGetValueAsString id) "Identifier should have a prefix"
+            Expect.equal prefix "--eenput" "Prefix should match input binding"         
+        )
+        testCase "FromInput_Position" (fun () ->
+            let name = "MyInput"
+            let t = CWLType.String
+            let binding = InputBinding.create(position = 1)
+            let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
+            let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+            let identifiers = LDFormalParameter.getIdentifiers formalParameter
+            Expect.hasLength identifiers 1 "FormalParameter should have 1 identifier"
+            let id = identifiers.[0]
+            Expect.isTrue (LDPropertyValue.validatePosition id) "Identifier should be a position"
+            let position = Expect.wantSome (LDPropertyValue.tryGetValueAsString id) "Identifier should have a position"
+            Expect.equal position "1" "Position should match input binding" 
+        )
+        testCase "FromInput_PrefixPosition" (fun () ->
+            let name = "MyInput"
+            let t = CWLType.String
+            let binding = InputBinding.create(prefix = "--eenput", position = 1)
+            let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
+            let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+            let identifiers = LDFormalParameter.getIdentifiers formalParameter
+            Expect.hasLength identifiers 2 "FormalParameter should have 2 identifiers"
+            let prefixId = identifiers |> Seq.tryFind LDPropertyValue.validatePrefix |> fun p -> Expect.wantSome p "Should have a prefix identifier"
+            let prefix = Expect.wantSome (LDPropertyValue.tryGetValueAsString prefixId) "Identifier should have a prefix"
+            Expect.equal prefix "--eenput" "Prefix should match input binding"
+            let positionId = identifiers |> Seq.tryFind LDPropertyValue.validatePosition |> fun p ->  Expect.wantSome p "Should have a position identifier"
+            let position = Expect.wantSome (LDPropertyValue.tryGetValueAsString positionId) "Identifier should have a position"
+            Expect.equal position "1" "Position should match input binding"
+        )
     ]
 
-let tests_CWLInput =
-    testList "CWLInput" [
+let tests_YAMLInputValue =
+    testList "YAMLInputValue" [
         testCase "SimpleFileInRun" (fun () ->
             let name = "MyInput"
             let runName = "MyRun"
             let filePath = ResizeArray.singleton "myfile.txt"
-            let paramRef = CWLParameterReference.create(name, values = filePath, type_ = "File")
-            let file = RunConversion.composeCWLInputValue(paramRef, name, runName)
+            let paramRef = CWLParameterReference.create(name, values = filePath, type_ = CWLType.file())
+            let formalParam = LDFormalParameter.create("File", id = "MyInput")
+            let file = RunConversion.composeCWLInputValue(paramRef, formalParam, runName)
             Expect.sequenceEqual file.SchemaType [LDFile.schemaType] "File should have correct schema type"
             let expectedID = $"runs/{runName}/{filePath}"
             Expect.equal file.Id expectedID "File ID should match run and file path"
@@ -1538,8 +1581,9 @@ let tests_CWLInput =
             let runName = "MyRun"
             let fileName = "myfile.txt"
             let filePath = ResizeArray.singleton $"../../assays/MyAssay/dataset/{fileName}"
-            let paramRef = CWLParameterReference.create(name, values = filePath, type_ = "File")
-            let file = RunConversion.composeCWLInputValue(paramRef, name, runName)
+            let paramRef = CWLParameterReference.create(name, values = filePath, type_ = CWLType.file())
+            let formalParam = LDFormalParameter.create("File", id = "MyInput")
+            let file = RunConversion.composeCWLInputValue(paramRef, formalParam, runName)
             Expect.sequenceEqual file.SchemaType [LDFile.schemaType] "File should have correct schema type"
             let expectedID = $"assays/MyAssay/dataset/{fileName}"
             Expect.equal file.Id expectedID "File ID should match run and file path"
@@ -1555,7 +1599,8 @@ let tests_CWLInput =
             let runName = "MyRun"
             let value = ResizeArray.singleton "verbose"
             let paramRef = CWLParameterReference.create(name, values = value)
-            let propValue = RunConversion.composeCWLInputValue(paramRef, name, runName)
+            let formalParam = LDFormalParameter.create("String", id = "MyInput")
+            let propValue = RunConversion.composeCWLInputValue(paramRef, formalParam, runName)
             Expect.sequenceEqual propValue.SchemaType [LDPropertyValue.schemaType] "PropertyValue should have correct schema type"
             Expect.isTrue (propValue.Id.StartsWith("#")) "PropertyValue ID should start with #"
             let name' = Expect.wantSome (LDPropertyValue.tryGetNameAsString propValue) "PropertyValue should have a name"
@@ -1565,8 +1610,15 @@ let tests_CWLInput =
             let exampleOfWork = Expect.wantSome (LDPropertyValue.tryGetExampleOfWork propValue) "PropertyValue should have an exampleOfWork"
             let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryUnbox exampleOfWork) "ExampleOfWork should be a reference"
             Expect.equal exampleOfWorkAsRef.Id name "ExampleOfWork ID should match name"
-
-
+        )
+        testCase "FailForNonMatchingType" (fun () ->
+            Expect.isTrue false "implement"
+        )
+        testCase "SimpleArray" (fun () ->
+            let a = ["a"; "b"]
+            // use separator to concat strings
+            // See CWL Input tests for reference
+            Expect.isTrue false "implement"           
         )
     ]
 
@@ -1888,6 +1940,8 @@ let main =
         tests_Data
         tests_DataContext
         tests_DataMap
+        tests_FormalParameter
+        tests_YAMLInputValue
         tests_Assay
         tests_Study
         tests_Investigation
