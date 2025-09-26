@@ -7,12 +7,12 @@ open System
 type CWLParameterReference = {
         Key: string 
         Values: string ResizeArray
-        Type: string option
+        Type: CWLType option
     }
 
     with
 
-    static member create(key : string, ?values : string ResizeArray, ?type_ : string) =
+    static member create(key : string, ?values : string ResizeArray, ?type_ : CWLType) =
         { Key = key
           Values = defaultArg values (ResizeArray<string>())
           Type = type_ }

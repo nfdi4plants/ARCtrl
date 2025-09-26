@@ -585,7 +585,7 @@ module Decode =
 
 module DecodeParameters =
 
-    let cwlParameterReferenceDecoder (key: string) (yEle: YAMLElement): CWLParameterReference =
+    let cwlParameterReferenceDecoder (get : Decode.IGetters) (key: string) (yEle: YAMLElement): CWLParameterReference =
         match yEle with
         | YAMLElement.Object[YAMLElement.Value v] ->
             {
@@ -594,10 +594,11 @@ module DecodeParameters =
                 Type = None
             }
         | YAMLElement.Object[YAMLElement.Mapping (_,YAMLElement.Object [YAMLElement.Value v1]) ; YAMLElement.Mapping (_,YAMLElement.Object [YAMLElement.Value v2])] ->
+            let t,b = Decode.cwlTypeStringMatcher v1.Value get
             {
                 Key = key
                 Values = ResizeArray [v2.Value]
-                Type = Some v1.Value
+                Type = Some t
             }
         | YAMLElement.Object[YAMLElement.Sequence s] ->
             {
@@ -612,7 +613,7 @@ module DecodeParameters =
             let dict = get.Overflow.FieldList []
             [|
                 for ele in dict do
-                    cwlParameterReferenceDecoder ele.Key ele.Value
+                    cwlParameterReferenceDecoder get ele.Key ele.Value
             |]
             |> ResizeArray
         )
