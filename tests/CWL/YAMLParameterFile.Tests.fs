@@ -37,7 +37,7 @@ let testYAMLParameterFile =
                 {
                     Key = "exampleFile"
                     Values = ResizeArray [| "../examplePath" |]
-                    Type = Some "File"
+                    Type = Some (CWLType.file())
                 }
             Expect.equal expected.Key decodeYAMLParameterFile.[2].Key ""
             Expect.sequenceEqual expected.Values decodeYAMLParameterFile.[2].Values ""
@@ -47,7 +47,7 @@ let testYAMLParameterFile =
                 {
                     Key = "exampleDir"
                     Values = ResizeArray [| "../examplePathDir" |]
-                    Type = Some "Directory"
+                    Type = Some (CWLType.directory())
                 }
             Expect.equal expected.Key decodeYAMLParameterFile.[3].Key ""
             Expect.sequenceEqual expected.Values decodeYAMLParameterFile.[3].Values ""

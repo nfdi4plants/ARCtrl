@@ -35,6 +35,9 @@ type CWLType =
     | Null
     | Array of CWLType
 
+    static member file() = File(FileInstance())
+
+    static member directory() = Directory(DirectoryInstance())
 type InputRecordSchema () =
     inherit DynamicObj ()
 

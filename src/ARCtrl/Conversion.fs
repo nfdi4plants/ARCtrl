@@ -1463,6 +1463,26 @@ type WorkflowConversion =
     static member composeAdditionalType (t : CWL.CWLType) : string =
         t.ToString().ToLowerInvariant() 
 
+    static member composeFormalParamIdentifiers (prefix : string option) (position : int option) =
+        match prefix, position with
+        | Some pr, Some po ->               
+            ResizeArray [
+                LDPropertyValue.createPosition(po)
+                LDPropertyValue.createPrefix(pr)
+            ]
+            |> Some
+        | Some pr, None ->               
+            ResizeArray [
+                LDPropertyValue.createPrefix(pr)
+            ]
+            |> Some
+        | None, Some po ->               
+            ResizeArray [
+                LDPropertyValue.createPosition(po)
+            ]
+            |> Some
+        | None, None -> None
+
     static member composeFormalParameterFromInput (inp : CWL.CWLInput, ?workflowName : string, ?runName) =
         
         let additionalType =
@@ -1471,11 +1491,17 @@ type WorkflowConversion =
             | None -> failwith "Input must have a type"
         let valueRequired = inp.Optional |> Option.defaultValue false |> not
         let id = LDFormalParameter.genID(name = inp.Name, ?workflowName = workflowName, ?runName = runName)
+        let identifiers =
+            inp.InputBinding
+            |> Option.bind (fun ib ->
+                WorkflowConversion.composeFormalParamIdentifiers ib.Prefix ib.Position
+            )
         LDFormalParameter.create(
             additionalType = additionalType,
             id = id,
             name = inp.Name,
-            valueRequired = valueRequired
+            valueRequired = valueRequired,
+            ?identifiers = identifiers
         )
 
     static member composeFormalParameterFromOutput (out : CWL.CWLOutput, ?workflowName : string, ?runName) =
@@ -1602,14 +1628,21 @@ type RunConversion =
         else
             ArcPathHelper.combineMany [| "runs"; runName ; path|]
 
-    static member composeCWLInputValue (input : CWL.CWLParameterReference, exampleOfWork : string, runName : string) =
-        match input.Type with
-        | Some "File" when input.Values.Count = 1 ->
+    static member composeCWLInputValue (input : CWL.CWLParameterReference, exampleOfWork : LDNode, runName : string) =
+        let type_ = LDFormalParameter.getAdditionalType(exampleOfWork)
+        if input.Type.IsSome then
+            let t =input.Type.Value.ToString()
+            if t <> type_ then
+                failwith $"Type ({t.ToString()}) of yml input value \"{input.Key}\" does not match type of workflow input parameter ({type_})."
+        match type_ with
+        | "File" when input.Values.Count = 1 ->
             let path = RunConversion.composeCWLInputFilePath(input.Values[0], runName)
-            LDFile.createCWLParameter(path, exampleOfWork = exampleOfWork)
+            LDFile.createCWLParameter(path, exampleOfWork = exampleOfWork.Id)
+        | _ when type_.ToLower().Contains("array") ->
+            failwith $"CWL input value \"{input.Key}\" has type \"{type_}\", which is not yet supported."
         | _ ->
             LDPropertyValue.createCWLParameter(
-                exampleOfWork,
+                exampleOfWork.Id,
                 input.Key,
                 input.Values
             )
@@ -1632,7 +1665,7 @@ type RunConversion =
                     )
                 match paramRef with
                 | Some pr ->
-                    RunConversion.composeCWLInputValue(pr, exampleOfWork = i.Id, runName = run.Identifier)
+                    RunConversion.composeCWLInputValue(pr, exampleOfWork = i, runName = run.Identifier)
                 | None ->
                     failwith $"Could not create workflow invocation for run \"{run.Identifier}\": Workflow parameter \"name\" had no assigned value."
             )
