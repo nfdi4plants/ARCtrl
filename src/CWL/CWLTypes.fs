@@ -5,8 +5,26 @@ open DynamicObj
 type FileInstance () =
     inherit DynamicObj ()
 
+    override this.GetHashCode (): int =
+        this.DeepCopyProperties().GetHashCode()
+
+    override this.Equals (o: obj): bool =
+        match o with
+        | :? FileInstance as o ->
+            this.StructurallyEquals o
+        | _ -> false
+
 type DirectoryInstance () =
     inherit DynamicObj ()
+
+    override this.Equals (o: obj): bool =
+        match o with
+        | :? DirectoryInstance as o ->
+            this.StructurallyEquals o
+        | _ -> false
+
+    override this.GetHashCode (): int = 
+        this.DeepCopyProperties().GetHashCode()
 
 type DirentInstance = {
     // can be string or expression, but expression is string as well
@@ -38,6 +56,7 @@ type CWLType =
     static member file() = File(FileInstance())
 
     static member directory() = Directory(DirectoryInstance())
+
 type InputRecordSchema () =
     inherit DynamicObj ()
 
