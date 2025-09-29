@@ -1513,7 +1513,8 @@ type WorkflowConversion =
         LDFormalParameter.create(
             additionalType = additionalType,
             id = id,
-            name = out.Name
+            name = out.Name,
+            valueRequired = true
         )
 
     static member composeComputationalTool (tool : Process.Component) =
@@ -1533,6 +1534,15 @@ type WorkflowConversion =
             | Some oa -> oa.Name, oa.TermAccessionNumber
             | None -> None, None
         LDPropertyValue.createComponent(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
+
+    static member getInputParametersFromProcessingUnit (pu : CWL.CWLProcessingUnit) =
+        match pu with
+        | CWL.CommandLineTool tool ->
+            match tool.Inputs with
+            | Some inputs -> inputs |> ResizeArray.map (fun i -> i)
+            | None -> ResizeArray []
+        | CWL.Workflow wf -> 
+            wf.Inputs |> ResizeArray.map (fun i -> i)
 
     static member composeWorkflowProtocolFromToolDescription (filePath : string, workflow : CWL.CWLToolDescription, ?workflowName : string, ?runName : string) =
         let inputs =
@@ -1628,23 +1638,33 @@ type RunConversion =
         else
             ArcPathHelper.combineMany [| "runs"; runName ; path|]
 
-    static member composeCWLInputValue (input : CWL.CWLParameterReference, exampleOfWork : LDNode, runName : string) =
-        let type_ = LDFormalParameter.getAdditionalType(exampleOfWork)
-        if input.Type.IsSome then
-            let t =input.Type.Value.ToString()
-            if t <> type_ then
-                failwith $"Type ({t.ToString()}) of yml input value \"{input.Key}\" does not match type of workflow input parameter ({type_})."
+    static member composeCWLInputValue (inputValue : CWL.CWLParameterReference, exampleOfWork : LDNode, inputParam : CWL.CWLInput, runName : string) =
+        if inputParam.Type_.IsNone then
+            failwith $"Cannot convert param values \"{inputValue.Values}\" as Input parameter \"{inputParam.Name}\" has no type."
+        let type_ = inputParam.Type_.Value
+        if inputValue.Type.IsSome then
+            if inputValue.Type.Value <> type_ then
+                failwith $"Type ({inputValue.Type.Value.ToString()}) of yml input value \"{inputValue.Key}\" does not match type of workflow input parameter ({type_.ToString()})."
         match type_ with
-        | "File" when input.Values.Count = 1 ->
-            let path = RunConversion.composeCWLInputFilePath(input.Values[0], runName)
+        | CWL.CWLType.File _ when inputValue.Values.Count = 1 ->
+            let path = RunConversion.composeCWLInputFilePath(inputValue.Values[0], runName)
             LDFile.createCWLParameter(path, exampleOfWork = exampleOfWork.Id)
-        | _ when type_.ToLower().Contains("array") ->
-            failwith $"CWL input value \"{input.Key}\" has type \"{type_}\", which is not yet supported."
+        | _ when type_.ToString().ToLower().Contains("array") ->
+            let separator =
+                inputParam.InputBinding
+                |> Option.bind (fun ib -> ib.ItemSeparator)
+                |> Option.defaultValue ","
+            let values = String.concat separator inputValue.Values
+            LDPropertyValue.createCWLParameter(
+                exampleOfWork.Id,
+                inputValue.Key,
+                ResizeArray.singleton values
+            )
         | _ ->
             LDPropertyValue.createCWLParameter(
                 exampleOfWork.Id,
-                input.Key,
-                input.Values
+                inputValue.Key,
+                inputValue.Values
             )
 
     static member composeWorkflowInvocationFromArcRun (run : ArcRun, ?fs : FileSystem) =
@@ -1655,8 +1675,9 @@ type RunConversion =
             | None -> failwithf "Run %s must have a CWL description" run.Identifier
         let inputParams =
             LDComputationalWorkflow.getInputsAsFormalParameters(workflowProtocol, ?context = workflowProtocol.TryGetContext())
-            |> ResizeArray.map (fun i ->
-                let name = LDFormalParameter.getNameAsString(i, ?context = workflowProtocol.TryGetContext())
+            |> ResizeArray.zip (WorkflowConversion.getInputParametersFromProcessingUnit run.CWLDescription.Value)
+            |> ResizeArray.map (fun (i, ldI) ->
+                let name = LDFormalParameter.getNameAsString(ldI, ?context = workflowProtocol.TryGetContext())
                 let paramRef =
                     run.CWLInput
                     |> Seq.tryPick (fun i ->
@@ -1665,7 +1686,7 @@ type RunConversion =
                     )
                 match paramRef with
                 | Some pr ->
-                    RunConversion.composeCWLInputValue(pr, exampleOfWork = i, runName = run.Identifier)
+                    RunConversion.composeCWLInputValue(pr, exampleOfWork = ldI, inputParam = i, runName = run.Identifier)
                 | None ->
                     failwith $"Could not create workflow invocation for run \"{run.Identifier}\": Workflow parameter \"name\" had no assigned value."
             )
