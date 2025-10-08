@@ -267,6 +267,9 @@ type FileSystemTree =
     static member createInvestigationFile() = 
         FileSystemTree.createFile ARCtrl.ArcPathHelper.InvestigationFileName
 
+    static member createLicenseFile() =
+        FileSystemTree.createFile ARCtrl.ArcPathHelper.LICENSEFileName
+
     static member createAssaysFolder(assays : FileSystemTree array) =
         FileSystemTree.createFolder(
             ARCtrl.ArcPathHelper.AssaysFolderName, 

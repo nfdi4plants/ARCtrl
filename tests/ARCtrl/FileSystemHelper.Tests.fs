@@ -39,6 +39,7 @@ let ensureDirectoryOfFile =
             let directoryPath = combine TestObjects.IO.testResultsFolder "EnsuredDirectory"
             let filePath = combine directoryPath "EnsuredFile.txt"
 
+            do! FileSystemHelper.deleteFileOrDirectoryAsync directoryPath // how about deleting it inside the test instead of build action if you require it to not exist one here @hlweil?? ~Kevin Frey
             let! directoryExistsBefore = FileSystemHelper.directoryExistsAsync directoryPath
             Expect.isFalse directoryExistsBefore "Directory should not exist before."
 
@@ -65,7 +66,6 @@ let writeFileText =
             do! ARCtrl.FileSystemHelper.ensureDirectoryAsync TestObjects.IO.testResultsFolder
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "SimpleText.txt"
             let t = "Hello"
-            printfn "write to %s" p
             do! FileSystemHelper.writeFileTextAsync p t
             let! result = FileSystemHelper.readFileTextAsync p
             let expected = "Hello"
@@ -75,7 +75,6 @@ let writeFileText =
             let subDir = ArcPathHelper.combine TestObjects.IO.testResultsFolder "SubFolder"
             let p = ArcPathHelper.combine subDir "SimpleText.txt"
             let t = "Hello"
-            printfn "write to %s" p
             do! FileSystemHelper.ensureDirectoryAsync subDir
             do! FileSystemHelper.writeFileTextAsync p t
             let! result = FileSystemHelper.readFileTextAsync p
@@ -117,7 +116,6 @@ let getSubFiles =
     testList "GetSubFiles" [
         testCaseCrossAsync "simple" (crossAsync {
             let p = TestObjects.IO.testSubPathsFolder
-            printfn "getSubFiles %s" p
             let! result = FileSystemHelper.getSubFilesAsync p
             let expected = 
                 [
@@ -132,7 +130,6 @@ let getSubDirectories =
     testList "GetSubDirectories" [
         testCaseCrossAsync "simple" (crossAsync {
             let p = TestObjects.IO.testSubPathsFolder
-            printfn "getSubDirectories %s" p
             let! result = FileSystemHelper.getSubDirectoriesAsync p
             let expected = 
                 [
@@ -169,6 +166,8 @@ let rename =
             let newFileName = "NewFile.txt"
             let oldFilePath = ArcPathHelper.combine TestObjects.IO.testResultsFolder oldFileName
             let newFilePath = ArcPathHelper.combine TestObjects.IO.testResultsFolder newFileName
+            do! FileSystemHelper.deleteFileOrDirectoryAsync oldFileName
+            do! FileSystemHelper.deleteFileOrDirectoryAsync newFilePath
             let text = "Hello"
 
             do! FileSystemHelper.writeFileTextAsync oldFilePath text
@@ -184,6 +183,8 @@ let rename =
             let newFolderName = "NewFolder"
             let oldFolderPath = ArcPathHelper.combine TestObjects.IO.testResultsFolder oldFolderName
             let newFolderPath = ArcPathHelper.combine TestObjects.IO.testResultsFolder newFolderName
+            do! FileSystemHelper.deleteFileOrDirectoryAsync oldFolderPath
+            do! FileSystemHelper.deleteFileOrDirectoryAsync newFolderPath
             let oldFilePath = ArcPathHelper.combine oldFolderPath "File.txt"
             let newFilePath = ArcPathHelper.combine newFolderPath "File.txt"
             let text = "Hello"

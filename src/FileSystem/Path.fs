@@ -16,6 +16,7 @@ let [<Literal>] InvestigationFileName = "isa.investigation.xlsx"
 let [<Literal>] GitKeepFileName = ".gitkeep"
 let [<Literal>] READMEFileName = "README.md"
 let [<Literal>] ValidationPackagesYamlFileName = "validation_packages.yml"
+let [<Literal>] LICENSEFileName = "LICENSE"
 
 // Folder
 let [<Literal>] ARCConfigFolderName = ".arc"

@@ -14,13 +14,6 @@ module ARC =
     ///
     /// See https://www.researchobject.org/ro-crate/1.1/root-data-entity.html for more information
     type ROCrate =
-
-        static member getDefaultLicense() =
-            //let cw = LDNode("License", ResizeArray ["https://schema.org/CreativeWork"])
-            //cw.SetProperty("https://schema.org/name", "ALL RIGHTS RESERVED BY THE AUTHORS")
-            //cw.SetProperty("https://schema.org/about",LDRef "./")
-            //cw
-            "ALL RIGHTS RESERVED BY THE AUTHORS"
             
         static member metadataFileDescriptor =
             let id = "ro-crate-metadata.json"
@@ -30,13 +23,16 @@ module ARC =
             node.SetProperty("http://schema.org/about", LDRef("./"))
             node
 
-        static member encoder (isa : ArcInvestigation, ?license : obj, ?fs : FileSystem) =
-            let license = match license with
-                          | Some license -> license
-                          | None -> ROCrate.getDefaultLicense()
+        static member encoder (isa : ArcInvestigation, ?license : License, ?fs : FileSystem) =
+            let license =
+                match license with
+                | Some license ->
+                    match license.Type with
+                    | LicenseContentType.Fulltext -> license.Content
+                | None -> ARCtrl.FileSystem.DefaultLicense.dl
             let isa = isa.ToROCrateInvestigation(?fs = fs)
             LDDataset.setSDDatePublishedAsDateTime(isa, System.DateTime.Now)
-            LDDataset.setLicenseAsCreativeWork(isa, license)
+            LDDataset.setLicenseAsString(isa, license)
             let graph = isa.Flatten()
             let context = LDContext(baseContexts=ResizeArray[Context.initV1_1();Context.initBioschemasContext()])
             graph.SetContext(context)
@@ -44,7 +40,7 @@ module ARC =
             graph.Compact_InPlace()
             LDGraph.encoder graph
 
-        static member decoder : Decoder<ArcInvestigation*string ResizeArray> =
+        static member decoder : Decoder<ArcInvestigation*string ResizeArray * string option> =
             LDGraph.decoder
             |> Decode.map (fun graph ->
                 match graph.TryGetNode("./") with
@@ -57,8 +53,12 @@ module ARC =
                             else
                                 None
                         )
+                    let license =
+                        LDDataset.tryGetLicenseAsString(node, ?context = graph.TryGetContext())
+                        
                     ArcInvestigation.fromROCrateInvestigation(node, graph = graph, ?context = graph.TryGetContext()),
-                    files
+                    files,
+                    license
                 | None ->
                     failwith "RO-Crate graph did not contain root data Entity"
             )

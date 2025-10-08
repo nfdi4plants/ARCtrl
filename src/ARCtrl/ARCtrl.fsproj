@@ -10,6 +10,7 @@
   <ItemGroup>
     <None Include="README.md" />
     <Content Include="ARCtrl.Common.props" Pack="true" PackagePath="fable/" />
+    <Compile Include="License.fs" />
     <Compile Include="ColumnIndex.fs" />
     <Compile Include="JsonIO\Decode.fs" />
     <Compile Include="JsonIO\Encode.fs" />

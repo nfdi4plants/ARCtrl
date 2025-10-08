@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <None Include="README.md" />
+    <Compile Include="License.fs" />
     <Compile Include="CrossAsync.fs" />
     <Content Include="ARCtrl.Common.props" Pack="true" PackagePath="fable/" />
     <Compile Include="ColumnIndex.fs" />
