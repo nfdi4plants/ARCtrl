@@ -130,7 +130,7 @@ let private test_roCrate = testList "ROCrate" [
     ptestCase "Write" <| fun _ ->
         let a = create_filled()
         let json = ArcAssay.toROCrateJsonString() a
-        printfn "%s" json
+        ()
     createBaseJsonTests
         ""
         create_filled

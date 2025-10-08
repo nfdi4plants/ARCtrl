@@ -12,6 +12,7 @@
     <Compile Include="Contract.fs" />
     <Compile Include="Datamap.fs" />
     <Compile Include="ValidationPackagesConfig.fs" />
+    <Compile Include="License.fs" />
     <Compile Include="ArcAssay.fs" />
     <Compile Include="ArcStudy.fs" />
     <Compile Include="ArcWorkflow.fs" />

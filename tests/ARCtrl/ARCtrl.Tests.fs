@@ -43,7 +43,7 @@ let private tests_fromFilePaths = testList "fromFilePaths" [
             @"studies\est\resources\.gitkeep"; @"studies\MyStudy\protocols\.gitkeep";
             @"studies\MyStudy\resources\.gitkeep";
             @"studies\TestAssay1\protocols\.gitkeep";
-            @"studies\TestAssay1\resources\.gitkeep"
+            @"studies\TestAssay1\resources\.gitkeep";
             |]
             |> Array.map (fun x -> x.Replace(@"\","/"))
             |> Array.sort
@@ -1526,6 +1526,7 @@ let tests_renameAssay =
     testList "RenameAssay" [
         testCaseCrossAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RenameAssay_SimpleARC"
+            do! FileSystemHelper.deleteFileOrDirectoryAsync p
             let arc = ARC("MyInvestigation")
 
             // setup arc
@@ -1577,6 +1578,7 @@ let tests_RenameStudy =
     testList "RenameStudy" [
         testCaseCrossAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RenameStudy_SimpleARC"
+            do! FileSystemHelper.deleteFileOrDirectoryAsync p
             let arc = ARC("MyInvestigation")
 
             // setup arc
@@ -1706,7 +1708,7 @@ let tests_RemoveStudy =
                     $"/assays/{assayName}/protocols/.gitkeep"
                     $"/assays/{assayName}/dataset/.gitkeep"
                     "/runs/.gitkeep";
-                    "/workflows/.gitkeep"          
+                    "/workflows/.gitkeep"
                 ]
                 |> List.sort
 
@@ -1720,6 +1722,17 @@ let tests_RemoveStudy =
 
 let tests_ROCrate =
     testList "RO-Crate" [
+        testList "Roundtrip" [
+            testCase "License" <| fun _ ->
+                let arcExpected = ARC("MyARC", title = "MyTitle", description = "MyDescription", license = License.initFulltext "CC-BY-4.0")
+                let json = arcExpected.ToROCrateJsonString()
+                let arcActual = ARC.fromROCrateJsonString(json)
+                Expect.equal arcActual.Identifier arcExpected.Identifier "Identifier should be equal"
+                Expect.equal arcActual.Title arcExpected.Title "Title should be equal"
+                Expect.equal arcActual.Description arcExpected.Description "Description should be equal"
+                Expect.equal arcActual.License arcExpected.License "License should be equal"
+        ]
+                
         testCase "CanRead_Deprecated" <| fun _ ->
             let arc = ARC.fromDeprecatedROCrateJsonString(TestObjects.ROCrate.ArcPrototypeDeprecated.ed123499)
             let nonDeprecatedARC = ARC.fromROCrateJsonString(TestObjects.ROCrate.ArcPrototype.ed123499)
@@ -1770,7 +1783,7 @@ let tests_ROCrate =
             Expect.equal inputCol.Header expectedHeader "First table input column should have correct header"
             let expectedCells = [for i = 1 to 6 do CompositeCell.FreeText $"Source{i}"]
             Expect.sequenceEqual inputCol.Cells expectedCells "First table input column should have correct cells"
-            /// Assays
+            // Assays
             Expect.equal arc.AssayCount 2 "ARC should contain 2 assays"
         testCase "IncludeFilesystem" <| fun _ ->
             let arc = ARC("MyARC", title = "MyTitle", description = "MyDescription")
