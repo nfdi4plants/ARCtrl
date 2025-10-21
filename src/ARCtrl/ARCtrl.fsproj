@@ -44,10 +44,10 @@
     <Compile Include="JsonIO\Table\CompositeHeader.fs" />
     <Compile Include="JsonIO\Table\ArcTable.fs" />
     <Compile Include="JsonIO\Table\Templates.fs" />
-    <Compile Include="JsonIO\DataMap\DataMap.fs" />
     <Compile Include="JsonIO\Assay.fs" />
     <Compile Include="JsonIO\Study.fs" />
     <Compile Include="JsonIO\Investigation.fs" />
+    <Compile Include="JsonIO\Datamap.fs" />
     <Compile Include="JsonIO\LDObject.fs" />
     <Compile Include="Conversion.fs" />
     <Compile Include="ROCrateIO.fs" />
