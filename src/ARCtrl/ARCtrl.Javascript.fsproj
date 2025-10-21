@@ -18,6 +18,7 @@
     <Compile Include="JsonIO\OntologySourceReference.fs" />
     <Compile Include="JsonIO\DataFile.fs" />
     <Compile Include="JsonIO\Data.fs" />
+    <Compile Include="JsonIO\Datamap.fs" />
     <Compile Include="JsonIO\Person.fs" />
     <Compile Include="JsonIO\Publication.fs" />
     <Compile Include="JsonIO\Process\Value.fs" />
