@@ -1,3 +1,18 @@
+### 3.0.0-beta.4+79c230b2 (Released 2025-10-22)
+* Additions:
+    * [[#7fcf7d3a](https://github.com/nfdi4plants/ARCtrl/commit/7fcf7d3a965f9755ae1b6dd72dfcab4dc14d5552)] bump to 3.0.0-beta.3
+    * [[#c68f3ec8](https://github.com/nfdi4plants/ARCtrl/commit/c68f3ec823e73944a5f3796578012374cca0f76f)] Add .zenodo.json for metadata and contributors
+    * [[#d9124d2a](https://github.com/nfdi4plants/ARCtrl/commit/d9124d2a107147c485ecb2331431d6a26f8bf3e7)] Update contributors with project member types
+    * [[#4dccaaa1](https://github.com/nfdi4plants/ARCtrl/commit/4dccaaa147f8e24e22edc970505a0ba9bf337b09)] various small changes to citability
+    * [[#ca57190d](https://github.com/nfdi4plants/ARCtrl/commit/ca57190df42f202e60d80846c6d8dcbfaab506f4)] Add Mühlhaus, Timo to contributors in .zenodo.json
+    * [[#c861dbdf](https://github.com/nfdi4plants/ARCtrl/commit/c861dbdff36c882569f9aface4c0d98856caa05e)] make OntologyAnnotation equality TSR case insensitive
+    * [[#4fe6c226](https://github.com/nfdi4plants/ARCtrl/commit/4fe6c226f45351ac714b3e9b8935c52befc15302)] add issue id to ldgraph parser test name
+    * [[#3f77dd54](https://github.com/nfdi4plants/ARCtrl/commit/3f77dd540fcb13aed49ff0066f4356774dfbbf22)] update FsSpreadsheet dependency to 7.0.0
+    * [[#a6adeb92](https://github.com/nfdi4plants/ARCtrl/commit/a6adeb92e0a9199512f51e980ffd1002b2993e93)] Add ToJsonString and FromJsonString to datamap
+    * [[#869d6e09](https://github.com/nfdi4plants/ARCtrl/commit/869d6e0922d7aa097b710698dfb9a6e2cff14cb6)] Add unit tests
+    * [[#51d26af9](https://github.com/nfdi4plants/ARCtrl/commit/51d26af91b4bf28180202060b51db963425dc164)] stop vite minifying ts source code for packaging
+    * [[#5b84a774](https://github.com/nfdi4plants/ARCtrl/commit/5b84a774608d4e1ffc35c92607d38cf7241d61db)] improve access to non-manually exported typescript functions
+
 ### 3.0.0-beta.3+2f33c59 (Released 2025-7-29)
 * Additions:
     * [[#e683d69](https://github.com/nfdi4plants/ARCtrl/commit/e683d69ce49a168400cf6e90492a32f85995610e)] add --fail-on-focused-tests to dotnet pyxpecto tests
