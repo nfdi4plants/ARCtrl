@@ -70,7 +70,7 @@ module ARC =
                         )
                     let license =
                         LDDataset.tryGetLicenseAsCreativeWork(node, graph = graph, ?context = graph.TryGetContext())
-                        |> Option.bind ROCrate.getLicense
+                        |> Option.bind (fun n -> ROCrate.getLicense(n, ?context = graph.TryGetContext()))
 
                     ArcInvestigation.fromROCrateInvestigation(node, graph = graph, ?context = graph.TryGetContext()),
                     files,
