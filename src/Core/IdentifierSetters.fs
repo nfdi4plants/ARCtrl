@@ -19,17 +19,18 @@ let setStudyIdentifier (newIdentifier: string) (study: ArcStudy) =
     study.Identifier <- newIdentifier
     study
 
-let setInvestigationIdentifier (newIdentifier: string) (investigation: ArcInvestigation) =
+let setWorkflowIdentifier (newIdentifier: string) (workflow: ArcWorkflow) =
     checkValidCharacters newIdentifier
-    investigation.Identifier <- newIdentifier
-    investigation
+    workflow.Identifier <- newIdentifier
+    workflow
 
 let setRunIdentifier (newIdentifier: string) (run: ArcRun) =
     checkValidCharacters newIdentifier
     run.Identifier <- newIdentifier
     run
 
-let setWorkflowIdentifier (newIdentifier: string) (workflow: ArcWorkflow) =
+let setInvestigationIdentifier (newIdentifier: string) (investigation: ArcInvestigation) =
     checkValidCharacters newIdentifier
-    workflow.Identifier <- newIdentifier
-    workflow
+    investigation.Identifier <- newIdentifier
+    investigation
+

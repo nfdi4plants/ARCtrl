@@ -15,6 +15,8 @@ let all = testSequenced <| testList "Json" [
     Tests.Publication.main
     Tests.Assay.main
     Tests.Study.main
+    Tests.Workflow.main
+    Tests.Run.main
     Tests.Investigation.main
     Tests.Template.main
     Tests.Process.ProcessParameterValue.main

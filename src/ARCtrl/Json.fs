@@ -39,6 +39,20 @@ module JsonHelper =
         member _.toROCrateJsonString(study: ArcStudy, ?assays,?spaces) = ArcStudy.toROCrateJsonString(?assays=assays,?spaces=spaces) study
 
     [<AttachMembers>]
+    type WorkflowJson() =
+        member _.fromJsonString (s: string) = ArcWorkflow.fromJsonString s
+        member _.fromCompressedJsonString (s: string) = ArcWorkflow.fromCompressedJsonString s
+        member _.toJsonString (workflow: ArcWorkflow, ?spaces) = ArcWorkflow.toJsonString(?spaces=spaces) workflow
+        member _.toCompressedJsonString (workflow: ArcWorkflow, ?spaces) = ArcWorkflow.toCompressedJsonString(?spaces=spaces) workflow
+
+    [<AttachMembers>]
+    type RunJson() =
+        member _.fromJsonString (s: string) = ArcRun.fromJsonString s
+        member _.fromCompressedJsonString (s: string) = ArcRun.fromCompressedJsonString s
+        member _.toJsonString (run: ArcRun, ?spaces) = ArcRun.toJsonString(?spaces=spaces) run
+        member _.toCompressedJsonString (run: ArcRun, ?spaces) = ArcRun.toCompressedJsonString(?spaces=spaces) run
+
+    [<AttachMembers>]
     type InvestigationJson() =
         member _.fromJsonString (s: string) = ArcInvestigation.fromJsonString s
         member _.fromCompressedJsonString (s: string) = ArcInvestigation.fromCompressedJsonString s
@@ -71,6 +85,8 @@ type JsonController =
     static member OntologyAnnotation = OntologyAnnotationJson()
     static member Assay = AssayJson()
     static member Study = StudyJson()
+    static member Workflow = WorkflowJson()
+    static member Run = RunJson()
     static member Investigation = InvestigationJson()
     static member ARC = ARCJson()
     static member LDGraph = LDGraphJson()

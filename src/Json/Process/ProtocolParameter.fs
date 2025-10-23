@@ -5,10 +5,22 @@ open Thoth.Json.Core
 
 open ARCtrl
 open ARCtrl.Process
-
+open ARCtrl.Helper
 
 module ProtocolParameter =
-    
+
+    let encoder (value : ProtocolParameter) = 
+        value.ParameterName
+        |> Option.defaultValue (OntologyAnnotation())
+        |> OntologyAnnotation.encoder
+
+    let decoder : Decoder<ProtocolParameter> =
+        OntologyAnnotation.decoder
+        |> Decode.map (fun oa ->
+            let oa = Option.fromValueWithDefault (OntologyAnnotation()) oa
+            ProtocolParameter.create(?ParameterName = oa)
+        )
+
     module ISAJson = 
 
         let genID (p : ProtocolParameter) = 
@@ -35,3 +47,4 @@ module ProtocolParameter =
                     ParameterName = get.Optional.Field "parameterName" (OntologyAnnotation.ISAJson.decoder)
                 }
             )
+

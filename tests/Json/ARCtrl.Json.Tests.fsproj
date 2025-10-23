@@ -26,9 +26,9 @@
     <Compile Include="Publication.Tests.fs" />
     <Compile Include="DataMap.Tests.fs" />
     <Compile Include="Assay.Tests.fs" />
-    <Compile Include="Run.Tests.fs" />
-    <Compile Include="Workflow.Tests.fs" />
     <Compile Include="Study.Tests.fs" />
+    <Compile Include="Workflow.Tests.fs" />
+    <Compile Include="Run.Tests.fs" />
     <Compile Include="Investigation.Tests.fs" />
     <Compile Include="Process\ProcessParameterValue.fs" />
     <Compile Include="Process\ProcessInput.Tests.fs" />

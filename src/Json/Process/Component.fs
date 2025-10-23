@@ -8,6 +8,24 @@ open ARCtrl.Process
 
 module Component =
 
+    let encoder (value : Component) =
+        [
+            Encode.tryInclude "type" OntologyAnnotation.encoder value.ComponentType
+            Encode.tryInclude "value" (Value.ISAJson.encoder None) value.ComponentValue
+            Encode.tryInclude "unit" OntologyAnnotation.encoder value.ComponentUnit
+        ]
+        |> Encode.choose
+        |> Encode.object
+
+    let decoder : Decoder<Component> =
+        Decode.object (fun get ->
+            {
+                ComponentType = get.Optional.Field "type" OntologyAnnotation.decoder
+                ComponentValue = get.Optional.Field "value" (Value.ISAJson.decoder)
+                ComponentUnit = get.Optional.Field "unit" OntologyAnnotation.decoder
+            }
+        )
+
     module ROCrate =
 
         let encoder : Component -> IEncodable = 

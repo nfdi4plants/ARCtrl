@@ -46,6 +46,16 @@ let private test_runJsonTesting =
         None
         compare
 
+let private test_runCompressedJsonTesting =
+    createBaseJsonTests
+        "run-compressed-json"
+        create_filled_run
+        ArcRun.toCompressedJsonString
+        ArcRun.fromCompressedJsonString
+        None
+        compare
+
 let main = testList "Run" [
     test_runJsonTesting
+    test_runCompressedJsonTesting
 ]

@@ -9,10 +9,10 @@ module Helper =
     let create_parameters() =
         ResizeArray [
             Process.ProtocolParameter.create(
-                URI.Empty, OntologyAnnotation("Explication", "MS", "MS:123456")
+                ParameterName = OntologyAnnotation("Explication", "MS", "MS:123456")
             )
             Process.ProtocolParameter.create(
-                URI.Empty, OntologyAnnotation("Unit", "MS", "MS:123456")
+                ParameterName = OntologyAnnotation("Unit", "MS", "MS:123456")
             )
         ]
 
@@ -94,6 +94,17 @@ let private test_workflowJsonTesting =
         None
         compare
 
+
+let private test_workflowCompressedJsonTesting =
+    createBaseJsonTests
+        "workflow-compressed-json"
+        create_Workflow
+        ArcWorkflow.toCompressedJsonString
+        ArcWorkflow.fromCompressedJsonString
+        None
+        compare
+
 let main = testList "Workflow" [
     test_workflowJsonTesting
+    test_workflowCompressedJsonTesting
 ]
