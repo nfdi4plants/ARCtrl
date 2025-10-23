@@ -1,4 +1,4 @@
-﻿module ARCtrl.IdentifierSetters
+module ARCtrl.IdentifierSetters
 
 open ARCtrl.Helper 
 open Identifier
@@ -23,3 +23,13 @@ let setInvestigationIdentifier (newIdentifier: string) (investigation: ArcInvest
     checkValidCharacters newIdentifier
     investigation.Identifier <- newIdentifier
     investigation
+
+let setRunIdentifier (newIdentifier: string) (run: ArcRun) =
+    checkValidCharacters newIdentifier
+    run.Identifier <- newIdentifier
+    run
+
+let setWorkflowIdentifier (newIdentifier: string) (workflow: ArcWorkflow) =
+    checkValidCharacters newIdentifier
+    workflow.Identifier <- newIdentifier
+    workflow

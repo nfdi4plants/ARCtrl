@@ -6,8 +6,6 @@ open ARCtrl.Helper
 [<AutoOpen>]
 module AssayExtensions =
 
-    open System.Collections.Generic
-
     type ArcAssay with
        
         static member fromJsonString (s:string)  = 

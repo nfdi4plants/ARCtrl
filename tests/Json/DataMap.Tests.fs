@@ -25,7 +25,7 @@ module Helper =
     let create_filled() = 
         DataMap(ResizeArray [
             for i in 1 .. 3 do
-                create_Datacontext i            
+                create_Datacontext i
         ])
 
     let compare =
@@ -37,7 +37,7 @@ module Helper =
                 d2.DataContexts
                 |> Array.ofSeq
 
-            Expect.equal d1DataContexts.Length d2DataContexts.Length "Datamap Länge"
+            Expect.equal d1DataContexts.Length d2DataContexts.Length "Datamap Length"
 
             for i in 0..d1DataContexts.Length - 1 do
 

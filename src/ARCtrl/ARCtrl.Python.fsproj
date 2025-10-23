@@ -18,6 +18,8 @@
     <Compile Include="JsonIO\Comment.fs" />
     <Compile Include="JsonIO\OntologyAnnotation.fs" />
     <Compile Include="JsonIO\OntologySourceReference.fs" />
+    <Compile Include="JsonIO\Run.fs" />
+    <Compile Include="JsonIO\Workflow.fs" />
     <Compile Include="JsonIO\DataFile.fs" />
     <Compile Include="JsonIO\Data.fs" />
     <Compile Include="JsonIO\Datamap.fs" />
