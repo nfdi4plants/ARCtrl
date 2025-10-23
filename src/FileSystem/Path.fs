@@ -17,6 +17,8 @@ let [<Literal>] GitKeepFileName = ".gitkeep"
 let [<Literal>] READMEFileName = "README.md"
 let [<Literal>] ValidationPackagesYamlFileName = "validation_packages.yml"
 let [<Literal>] LICENSEFileName = "LICENSE"
+let alternativeLICENSEFileNames = ["LICENSE.txt"; "LICENSE.md"; "LICENSE.rst"]
+
 
 // Folder
 let [<Literal>] ARCConfigFolderName = ".arc"

@@ -102,10 +102,10 @@ type LDDataset =
         | Some (:? string as n) -> Some n
         | _ -> None
 
-    //static member tryGetLicenseAsCreativeWork(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
-    //    match lp.TryGetPropertyAsSingleNode(Dataset.license, ?graph = graph, ?context = context) with
-    //    | Some n when CreativeWork.validate(n, ?context = context) -> Some n
-    //    | _ -> None
+    static member tryGetLicenseAsCreativeWork(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        match lp.TryGetPropertyAsSingleNode(LDDataset.license, ?graph = graph, ?context = context) with
+        | Some n when LDCreativeWork.validate(n, ?context = context) -> Some n
+        | _ -> None
 
     static member setLicenseAsString(lp : LDNode, license : string, ?context : LDContext) =
         lp.SetProperty(LDDataset.license, license, ?context = context)

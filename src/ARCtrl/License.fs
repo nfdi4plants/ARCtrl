@@ -8,11 +8,15 @@ type LicenseContentType =
     | Fulltext
 
 [<AttachMembers>]
-type License( ``type``: LicenseContentType, content: string) =
+type License( contentType: LicenseContentType, content: string, ?path : string) =
 
-    let mutable _type: LicenseContentType = ``type``
+    let mutable _type: LicenseContentType = contentType
     let mutable _content: string = content
     let mutable _staticHash = 0
+    let mutable _path =
+        match path with
+        | Some p -> p
+        | None -> ArcPathHelper.LICENSEFileName
 
     member this.Type
         with get() = _type
@@ -26,24 +30,25 @@ type License( ``type``: LicenseContentType, content: string) =
         with get() = _staticHash
         and set(h) = _staticHash <- h
 
+    member this.Path
+        with get() = _path
+        and internal set(p) = _path <- p
+
     static member initFulltext(content: string) =
         License(LicenseContentType.Fulltext, content)
 
     member this.ToCreateContract () =
-        let path = ArcPathHelper.LICENSEFileName
         match this.Type with
         | LicenseContentType.Fulltext ->
-            Contract.createCreate(path, DTOType.PlainText, DTO.Text this.Content)
+            Contract.createCreate(_path, DTOType.PlainText, DTO.Text this.Content)
 
     member this.ToUpdateContract () =
-        let path = ArcPathHelper.LICENSEFileName
         match this.Type with
         | LicenseContentType.Fulltext ->
-            Contract.createUpdate(path, DTOType.PlainText, DTO.Text this.Content)
+            Contract.createUpdate(_path, DTOType.PlainText, DTO.Text this.Content)
 
     member this.ToDeleteContract () =
-        let path = ArcPathHelper.LICENSEFileName
-        let c = Contract.createDelete(path)
+        let c = Contract.createDelete(_path)
         c
 
     static member toDeleteContract (run: ArcRun) : Contract =
@@ -57,7 +62,9 @@ type License( ``type``: LicenseContentType, content: string) =
 
     static member tryFromReadContract (c:Contract) =
         match c with
-        | {Operation = READ; Path = ArcPathHelper.LICENSEFileName; DTOType = Some DTOType.PlainText; DTO = Some (DTO.Text txt)} ->
+        | {Operation = READ; DTOType = Some DTOType.PlainText; DTO = Some (DTO.Text txt)} when
+            c.Path = ArcPathHelper.LICENSEFileName || Seq.contains c.Path ArcPathHelper.alternativeLICENSEFileNames
+            ->
             License.initFulltext txt |> Some
         | _ -> None
 

@@ -7,6 +7,8 @@ module LicenseContractExtensions =
         match input with
         | [|ARCtrl.ArcPathHelper.LICENSEFileName|] -> 
             Some ARCtrl.ArcPathHelper.LICENSEFileName
+        | [|alternativeName|] when ARCtrl.ArcPathHelper.alternativeLICENSEFileNames |> List.contains alternativeName ->
+            Some alternativeName
         | _ -> None
 
 module License =

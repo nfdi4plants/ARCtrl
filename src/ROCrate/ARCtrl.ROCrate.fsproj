@@ -23,6 +23,7 @@
     <Compile Include="Generic\File.fs" />
     <Compile Include="Generic\LabProtocol.fs" />
     <Compile Include="Generic\LabProcess.fs" />
+    <Compile Include="Generic\CreativeWork.fs" />
     <Compile Include="Generic\Dataset.fs" />
     <Compile Include="ISAProfile\Dataset.fs" />
     <Compile Include="ISAProfile\Investigation.fs" />

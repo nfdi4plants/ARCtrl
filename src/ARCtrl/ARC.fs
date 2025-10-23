@@ -929,12 +929,8 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
 
     static member fromROCrateJsonString (s:string) =
         try 
-            let isa, files, licenseContent = ARCtrl.Json.Decode.fromJsonString ARCtrl.Json.ARC.ROCrate.decoder s
+            let isa, files, license = ARCtrl.Json.Decode.fromJsonString ARCtrl.Json.ARC.ROCrate.decoder s
             let fileSystem = Array.ofSeq files |> FileSystem.fromFilePaths
-            let license =
-                match licenseContent with
-                | Some lc when lc <> ARCtrl.FileSystem.DefaultLicense.dl -> Some (License(LicenseContentType.Fulltext, lc))
-                | _ -> None
 
             ARC.fromArcInvestigation(isa = isa, fs = fileSystem, ?license = license)
         with

@@ -23,16 +23,30 @@ module ARC =
             node.SetProperty("http://schema.org/about", LDRef("./"))
             node
 
-        static member encoder (isa : ArcInvestigation, ?license : License, ?fs : FileSystem) =
-            let license =
-                match license with
+        static member createLicenseNode (license : License option) =
+            match license with
                 | Some license ->
-                    match license.Type with
-                    | LicenseContentType.Fulltext -> license.Content
-                | None -> ARCtrl.FileSystem.DefaultLicense.dl
+                    let text = 
+                        match license.Type with
+                        | LicenseContentType.Fulltext -> license.Content
+                    LDCreativeWork.create(license.Path, text = text)
+                | None ->
+                    LDCreativeWork.create("#LICENSE", text = ARCtrl.FileSystem.DefaultLicense.dl)
+
+        static member getLicense (license : LDNode, ?context : LDContext) =
+            let text = LDCreativeWork.tryGetTextAsString(license, ?context = context)
+            match license.Id, text with
+            | "#LICENSE", None 
+            | "#LICENSE", Some ARCtrl.FileSystem.DefaultLicense.dl -> None
+            | "#LICENSE", Some text -> Some (License(contentType = Fulltext,content = text))
+            | path, Some text -> Some (License(contentType = Fulltext,content = text, path = path))
+            | path, None -> Some (License(contentType = Fulltext,content = "", path = path))
+
+        static member encoder (isa : ArcInvestigation, ?license : License, ?fs : FileSystem) =
+            let license = ROCrate.createLicenseNode(license)
             let isa = isa.ToROCrateInvestigation(?fs = fs)
             LDDataset.setSDDatePublishedAsDateTime(isa, System.DateTime.Now)
-            LDDataset.setLicenseAsString(isa, license)
+            LDDataset.setLicenseAsCreativeWork(isa, license)
             let graph = isa.Flatten()
             let context = LDContext(baseContexts=ResizeArray[Context.initV1_1();Context.initBioschemasContext()])
             graph.SetContext(context)
@@ -40,7 +54,8 @@ module ARC =
             graph.Compact_InPlace()
             LDGraph.encoder graph
 
-        static member decoder : Decoder<ArcInvestigation*string ResizeArray * string option> =
+        /// Returns ArcInvestigation, list of file Ids, and optional License
+        static member decoder : Decoder<ArcInvestigation*string ResizeArray * License option> =
             LDGraph.decoder
             |> Decode.map (fun graph ->
                 match graph.TryGetNode("./") with
@@ -54,8 +69,9 @@ module ARC =
                                 None
                         )
                     let license =
-                        LDDataset.tryGetLicenseAsString(node, ?context = graph.TryGetContext())
-                        
+                        LDDataset.tryGetLicenseAsCreativeWork(node, graph = graph, ?context = graph.TryGetContext())
+                        |> Option.bind ROCrate.getLicense
+
                     ArcInvestigation.fromROCrateInvestigation(node, graph = graph, ?context = graph.TryGetContext()),
                     files,
                     license
