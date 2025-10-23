@@ -79,6 +79,8 @@
     <Compile Include="DataMap\DataMap.fs" />
     <Compile Include="Assay.fs" />
     <Compile Include="Study.fs" />
+    <Compile Include="Workflow.fs" />
+    <Compile Include="Run.fs" />
     <Compile Include="Investigation.fs" />
   </ItemGroup>
   <ItemGroup>

@@ -19,8 +19,8 @@ module Assay =
             Encode.tryInclude "TechnologyPlatform" OntologyAnnotation.encoder assay.TechnologyPlatform
             Encode.tryInclude "DataMap" DataMap.encoder assay.DataMap
             Encode.tryIncludeSeq "Tables" ArcTable.encoder assay.Tables
-            Encode.tryIncludeSeq "Performers" Person.encoder assay.Performers 
-            Encode.tryIncludeSeq "Comments" Comment.encoder assay.Comments 
+            Encode.tryIncludeSeq "Performers" Person.encoder assay.Performers
+            Encode.tryIncludeSeq "Comments" Comment.encoder assay.Comments
         ]
         |> Encode.choose
         |> Encode.object
@@ -86,7 +86,7 @@ module Assay =
                 let identifier = i.Replace(" ","_")
                 $"assays/{identifier}/"
 
-        let encoder (studyName:string Option) (a : ArcAssay) = 
+        let encoder (assayName:string Option) (a : ArcAssay) = 
             let fileName = Identifier.Assay.fileNameFromIdentifier a.Identifier
             let processes = a.GetProcesses()
             let dataFiles = ProcessSequence.getData processes
@@ -104,7 +104,7 @@ module Assay =
                 Encode.tryInclude "technologyPlatform" OntologyAnnotation.ROCrate.encoderDefinedTerm a.TechnologyPlatform
                 Encode.tryIncludeSeq "performers" Person.ROCrate.encoder a.Performers
                 Encode.tryIncludeList "dataFiles" Data.ROCrate.encoder dataFiles
-                Encode.tryIncludeList "processSequence" (Process.ROCrate.encoder studyName (Some a.Identifier)) processes
+                Encode.tryIncludeList "processSequence" (Process.ROCrate.encoder assayName (Some a.Identifier)) processes
                 Encode.tryIncludeSeq "comments" Comment.ROCrate.encoder a.Comments
                 "@context", ROCrateContext.Assay.context_jsonvalue |> Some
             ]

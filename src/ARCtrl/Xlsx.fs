@@ -54,6 +54,29 @@ module XlsxHelper =
         member _.toXlsxFile (path: string, study: ArcStudy, ?assays: ResizeArray<ArcAssay>) = ArcStudy.toFsWorkbook(study,?assays=Option.map List.ofSeq assays) |> FsWorkbook.toXlsxFile path
         #endif
 
+    [<AttachMembers>]
+    type WorkflowXlsx() =
+        member _.fromFsWorkbook (fswb: FsWorkbook) = ArcWorkflow.fromFsWorkbook fswb
+        member _.toFsWorkbook (workflow: ArcWorkflow) = ArcWorkflow.toFsWorkbook(workflow)
+        #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        member _.fromXlsxFileAsync (path: string) = FsWorkbook.fromXlsxFile path |> CrossAsync.map ArcWorkflow.fromFsWorkbook
+        member _.toXlsxFileAsync (path: string, workflow: ArcWorkflow) = ArcWorkflow.toFsWorkbook(workflow) |> FsWorkbook.toXlsxFile path
+        #else
+        member _.fromXlsxFile (path: string) = FsWorkbook.fromXlsxFile path |> ArcWorkflow.fromFsWorkbook
+        member _.toXlsxFile (path: string, workflow: ArcWorkflow) = ArcWorkflow.toFsWorkbook(workflow) |> FsWorkbook.toXlsxFile path
+        #endif
+
+    [<AttachMembers>]
+    type RunXlsx() =
+        member _.fromFsWorkbook (fswb: FsWorkbook) = ArcRun.fromFsWorkbook fswb
+        member _.toFsWorkbook (run: ArcRun) = ArcRun.toFsWorkbook(run)
+        #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        member _.fromXlsxFileAsync (path: string) = FsWorkbook.fromXlsxFile path |> CrossAsync.map ArcRun.fromFsWorkbook
+        member _.toXlsxFileAsync (path: string, run: ArcRun) = ArcRun.toFsWorkbook(run) |> FsWorkbook.toXlsxFile path
+        #else
+        member _.fromXlsxFile (path: string) = FsWorkbook.fromXlsxFile path |> ArcRun.fromFsWorkbook
+        member _.toXlsxFile (path: string, run: ArcRun) = ArcRun.toFsWorkbook(run) |> FsWorkbook.toXlsxFile path
+        #endif
 
     [<AttachMembers>]
     type InvestigationXlsx() =
@@ -74,4 +97,6 @@ type XlsxController =
     static member Datamap = DatamapXlsx()
     static member Assay = AssayXlsx()
     static member Study = StudyXlsx()
+    static member Workflow = WorkflowXlsx()
+    static member Run = RunXlsx()
     static member Investigation = InvestigationXlsx()
