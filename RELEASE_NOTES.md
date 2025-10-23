@@ -1,3 +1,9 @@
+### 3.0.0-beta.5+f74b2d99 (Released 2025-10-23)
+* Additions:
+    * [[#70cdacff](https://github.com/nfdi4plants/ARCtrl/commit/70cdacff350a93aba036eeae324dbbd7854588da)] bump to 3.0.0-beta.4
+    * [[#e8a74ffa](https://github.com/nfdi4plants/ARCtrl/commit/e8a74ffa4dfa9d82fefa51faed82c4cdbbe15342)] Implement run and workflow json methods
+    * [[#168dec1b](https://github.com/nfdi4plants/ARCtrl/commit/168dec1b4207c1f5ada100d0f32b1e564d41f192)] various small changes to run and workflow json parsing according to PR review #558
+
 ### 3.0.0-beta.4+79c230b2 (Released 2025-10-22)
 * Additions:
     * [[#7fcf7d3a](https://github.com/nfdi4plants/ARCtrl/commit/7fcf7d3a965f9755ae1b6dd72dfcab4dc14d5552)] bump to 3.0.0-beta.3
@@ -21,7 +27,6 @@
     * [[#52ba8df](https://github.com/nfdi4plants/ARCtrl/commit/52ba8df1b734df2ec06066e866dd8713332fade5)] implement and test composeFile considering FileSystem
     * [[#c7ca1bb](https://github.com/nfdi4plants/ARCtrl/commit/c7ca1bb2d331db848498cd38e974b203960c5e2e)] add tryGetPath function to FileSystemTree
     * [[#f648699](https://github.com/nfdi4plants/ARCtrl/commit/f6486995cf31bfb4a37170506f82d34dbbdd1299)] establish async dynamic import logic ✅
-
 * Bugfixes:
     * [[#386560b](https://github.com/nfdi4plants/ARCtrl/commit/386560bd3723052c1030bfa248204c935c9a27b9)] test and fix rocrate containing enough information to reconstruct annotated files and folder in FileSystemTree
 
