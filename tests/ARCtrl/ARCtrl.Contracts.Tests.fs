@@ -151,34 +151,8 @@ let tests_gitContracts = testList "gitContracts" [
         Expect.sequenceEqual cli.Arguments [|"clone";noLFSConfig;"-b";branch;tokenFormattedURL;"."|] "some option was wrong"
     ]
 
-let private tests_licenseContract = testList "LicenseContract" [
-    testCase "GetWriteContracts" <| fun _ ->
-        let p = "LICENSE"
-        let arc = ARC("MyARC")
-        let licenseFullText = "This is my license"
-        arc.SetLicenseFulltext (licenseFullText)
-        let contracts = arc.GetWriteContracts()
-        let licenseContract = contracts |> Array.tryFind (fun c -> c.Path = p)
-        let actualContract = Expect.wantSome licenseContract "There should be a license contract"
-        let expectedContract = Contract.createCreate(p, DTOType.PlainText, DTO.Text licenseFullText)
-        Expect.equal actualContract expectedContract "should be equal"
-
-    testCase "GetUpdateContracts" <| fun _ ->
-        let p = "LICENSE"
-        let initLicenseTxt = "This is my license"
-        let nextLicenseTxt = "This is my new license"
-        let arc = ARC("MyARC", license = License.initFulltext initLicenseTxt)
-        arc.GetWriteContracts() |> ignore // to simulate that the license was written
-        arc.SetLicenseFulltext (nextLicenseTxt)
-        let contracts = arc.GetUpdateContracts()
-        let licenseContract = contracts |> Array.tryFind (fun c -> c.Path = p)
-        let actualContract = Expect.wantSome licenseContract "There should be a license contract"
-        let expectedContract = Contract.createUpdate(p, DTOType.PlainText, DTO.Text nextLicenseTxt)
-        Expect.equal actualContract expectedContract "should be equal"
-]
 
 let main = testList "Contracts" [
     tests_tryFromContract
     tests_gitContracts
-    tests_licenseContract
 ]

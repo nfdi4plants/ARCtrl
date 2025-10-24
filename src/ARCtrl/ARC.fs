@@ -87,7 +87,7 @@ module ARCAux =
                 workflowsFolder;
                 runsFolder
                 if license.IsSome then
-                    FileSystemTree.createLicenseFile()
+                    File license.Value.Path
             |]
             |> FileSystem.create
         fs.Union(tree)
@@ -135,14 +135,16 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         this.GetUpdateContracts()
         |> fullFillContractBatchAsync arcPath
 
-    member this.SetLicenseFulltext (fulltext : string) : unit =
+    member this.SetLicenseFulltext (fulltext : string, ?path : string) : unit =
         match this.License with
         | Some license -> 
             license.Type <- LicenseContentType.Fulltext
             license.Content <- fulltext
+            if path.IsSome then license.Path <- path.Value
         | None -> 
             let license = License(LicenseContentType.Fulltext, fulltext)
             this.License <- Some license
+            if path.IsSome then license.Path <- path.Value
 
     static member tryLoadAsync (arcPath : string) =
         crossAsync {
@@ -636,8 +638,8 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         | Some l ->
             match l.Type with
             | LicenseContentType.Fulltext ->
-                l.StaticHash <- this.License.GetHashCode()
-                filemap.Add (LICENSEFileName, (DTOType.PlainText, DTO.Text l.Content))
+                l.StaticHash <- l.GetHashCode()
+                filemap.Add (l.Path, (DTOType.PlainText, DTO.Text l.Content))
         | None ->
             ()
 
