@@ -27,6 +27,8 @@ let tryISAReadContractFromPath (path: string) =
         Some <| Contract.createRead(p, DTOType.ISA_Run)
     | DatamapPath p ->
         Some <| Contract.createRead(p, DTOType.ISA_Datamap)
+    | LicensePath p ->
+        Some <| Contract.createRead(p, DTOType.PlainText)
     | anyElse -> 
         None
 

@@ -151,6 +151,7 @@ let tests_gitContracts = testList "gitContracts" [
         Expect.sequenceEqual cli.Arguments [|"clone";noLFSConfig;"-b";branch;tokenFormattedURL;"."|] "some option was wrong"
     ]
 
+
 let main = testList "Contracts" [
     tests_tryFromContract
     tests_gitContracts

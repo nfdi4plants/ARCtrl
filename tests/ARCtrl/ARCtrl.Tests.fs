@@ -43,7 +43,7 @@ let private tests_fromFilePaths = testList "fromFilePaths" [
             @"studies\est\resources\.gitkeep"; @"studies\MyStudy\protocols\.gitkeep";
             @"studies\MyStudy\resources\.gitkeep";
             @"studies\TestAssay1\protocols\.gitkeep";
-            @"studies\TestAssay1\resources\.gitkeep"
+            @"studies\TestAssay1\resources\.gitkeep";
             |]
             |> Array.map (fun x -> x.Replace(@"\","/"))
             |> Array.sort
@@ -132,6 +132,39 @@ let private tests_read_contracts = testList "read_contracts" [
         let runContract = Expect.wantSome runContractOpt "run contract should be present"
         Expect.equal runContract.Operation Operation.READ "run contract should be a read contract"
         Expect.equal runContract.DTOType (Some DTOType.ISA_Run) "run contract should have the correct DTO type"      
+    )
+    testCase "License" (fun () ->
+        let input = 
+            [|
+            @"isa.investigation.xlsx"; @".arc\.gitkeep"; @".git\config";
+            @"LICENSE"
+            |]
+            |> Array.map (fun x -> x.Replace(@"\","/"))
+            |> Array.sort
+        let arc = ARC.fromFilePaths(input)
+        let contracts = arc.GetReadContracts()
+        Expect.hasLength contracts 2 "should have read 2 read contracts"
+        let licenseContractOpt = contracts |> Array.tryFind (fun c -> c.Path = "LICENSE")
+        let licenseContract = Expect.wantSome licenseContractOpt "license contract should be present"
+        Expect.equal licenseContract.Operation Operation.READ "license contract should be a read contract"
+        Expect.equal licenseContract.DTOType (Some DTOType.PlainText) "license contract should have the correct DTO type"
+    )
+    testCase "License_AltPath" (fun () ->
+        let licensePath = "LICENSE.txt"
+        let input = 
+            [|
+            @"isa.investigation.xlsx"; @".arc\.gitkeep"; @".git\config";
+            licensePath
+            |]
+            |> Array.map (fun x -> x.Replace(@"\","/"))
+            |> Array.sort
+        let arc = ARC.fromFilePaths(input)
+        let contracts = arc.GetReadContracts()
+        Expect.hasLength contracts 2 "should have read 2 read contracts"
+        let licenseContractOpt = contracts |> Array.tryFind (fun c -> c.Path = licensePath)
+        let licenseContract = Expect.wantSome licenseContractOpt "license contract should be present"
+        Expect.equal licenseContract.Operation Operation.READ "license contract should be a read contract"
+        Expect.equal licenseContract.DTOType (Some DTOType.PlainText) "license contract should have the correct DTO type"
     )
 
     ]
@@ -330,6 +363,37 @@ let private tests_SetISAFromContracts = testList "SetISAFromContracts" [
         let dm = Expect.wantSome arc.Studies.[0].DataMap "Study should have a datamap assigned"
         Expect.hasLength dm.DataContexts 2 "Datamap should have two data contexts"
     )
+    testCase "license" (fun () ->
+        let licenseText = "This is my license"
+        let licenseContract = 
+            Contract.create(
+                Operation.READ,
+                path = "LICENSE",
+                dtoType = DTOType.PlainText,
+                dto = DTO.Text licenseText
+            )
+        let arc = ARC("MyIdentifier")
+        arc.SetISAFromContracts [|SimpleISA.Investigation.investigationReadContract; licenseContract|]
+        let expectedLicense = License(LicenseContentType.Fulltext, content = licenseText)
+        let actualLicense = Expect.wantSome arc.License "License was not set"
+        Expect.equal actualLicense expectedLicense "License was not set correctly"
+    )
+    testCase "license_altPath" (fun () ->
+        let licenseText = "This is my license"
+        let licensePath = "LICENSE.md"
+        let licenseContract = 
+            Contract.create(
+                Operation.READ,
+                path = licensePath,
+                dtoType = DTOType.PlainText,
+                dto = DTO.Text licenseText
+            )
+        let arc = ARC("MyIdentifier")
+        arc.SetISAFromContracts [|SimpleISA.Investigation.investigationReadContract; licenseContract|]
+        let expectedLicense = License(LicenseContentType.Fulltext, content = licenseText)
+        let actualLicense = Expect.wantSome arc.License "License was not set"
+        Expect.equal actualLicense expectedLicense "License was not set correctly"
+    )
 ]
 
 let private tests_writeContracts = testList "write_contracts" [
@@ -520,6 +584,29 @@ let private tests_writeContracts = testList "write_contracts" [
         Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/dataset/.gitkeep") "assay dataset folder missing"
         Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/isa.assay.xlsx") "assay file missing"
         Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/isa.assay.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Assay) "assay file exisiting but has wrong DTO type"
+    )
+
+    testCase "license" (fun _ ->
+        let p = "LICENSE"
+        let arc = ARC("MyARC")
+        let licenseFullText = "This is my license"
+        arc.SetLicenseFulltext (licenseFullText)
+        let contracts = arc.GetWriteContracts()
+        let licenseContract = contracts |> Array.tryFind (fun c -> c.Path = p)
+        let actualContract = Expect.wantSome licenseContract "There should be a license contract"
+        let expectedContract = Contract.createCreate(p, DTOType.PlainText, DTO.Text licenseFullText)
+        Expect.equal actualContract expectedContract "should be equal"
+    )
+    testCase "license_altPath" (fun _ ->
+        let p = "LICENSE.txt"
+        let arc = ARC("MyARC")
+        let licenseFullText = "This is my license"
+        arc.SetLicenseFulltext (licenseFullText, path = p)
+        let contracts = arc.GetWriteContracts()
+        let licenseContract = contracts |> Array.tryFind (fun c -> c.Path = p)
+        let actualContract = Expect.wantSome licenseContract "There should be a license contract"
+        let expectedContract = Contract.createCreate(p, DTOType.PlainText, DTO.Text licenseFullText)
+        Expect.equal actualContract expectedContract "should be equal"
     )
 ]
 
@@ -789,6 +876,33 @@ let private tests_updateContracts = testList "update_contracts" [
         Expect.equal contracts.[0].Path expectedPath "Should be the investigation file"
         let nextContracts = arc.GetUpdateContracts()
         Expect.equal nextContracts.Length 0 "Should contain no contracts as there are no changes"   
+    )
+    testCase "license" (fun _ ->
+        let p = "LICENSE"
+        let initLicenseTxt = "This is my license"
+        let nextLicenseTxt = "This is my new license"
+        let arc = ARC("MyARC", license = License.initFulltext initLicenseTxt)
+        arc.GetWriteContracts() |> ignore // to simulate that the license was written
+        arc.SetLicenseFulltext (nextLicenseTxt)
+        let contracts = arc.GetUpdateContracts()
+        let licenseContract = contracts |> Array.tryFind (fun c -> c.Path = p)
+        let actualContract = Expect.wantSome licenseContract "There should be a license contract"
+        let expectedContract = Contract.createUpdate(p, DTOType.PlainText, DTO.Text nextLicenseTxt)
+        Expect.equal actualContract expectedContract "should be equal"
+    )
+    testCase "license_altPath" (fun _ ->
+        let p = "LICENSE.txt"
+        let arc = ARC("MyARC")
+        let initLicenseTxt = "This is my license"
+        let nextLicenseTxt = "This is my new license"
+        arc.SetLicenseFulltext (initLicenseTxt, path = p)
+        arc.GetWriteContracts() |> ignore // to simulate that the license was written
+        arc.SetLicenseFulltext (nextLicenseTxt, path = p)
+        let contracts = arc.GetUpdateContracts()
+        let licenseContract = contracts |> Array.tryFind (fun c -> c.Path = p)
+        let actualContract = Expect.wantSome licenseContract "There should be a license contract"
+        let expectedContract = Contract.createUpdate(p, DTOType.PlainText, DTO.Text nextLicenseTxt)
+        Expect.equal actualContract expectedContract "should be equal"
     )
 ]
 
@@ -1270,8 +1384,7 @@ let tests_load =
             let r = result.Runs.[0]
             Expect.equal r.Identifier "Proteomics" "Run identifer does not match"
             Expect.hasLength r.Performers 2 "Run should have 2 performers"
-            }
-            
+            }          
         )
     ]
 
@@ -1526,6 +1639,7 @@ let tests_renameAssay =
     testList "RenameAssay" [
         testCaseCrossAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RenameAssay_SimpleARC"
+            do! FileSystemHelper.deleteFileOrDirectoryAsync p
             let arc = ARC("MyInvestigation")
 
             // setup arc
@@ -1577,6 +1691,7 @@ let tests_RenameStudy =
     testList "RenameStudy" [
         testCaseCrossAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RenameStudy_SimpleARC"
+            do! FileSystemHelper.deleteFileOrDirectoryAsync p
             let arc = ARC("MyInvestigation")
 
             // setup arc
@@ -1706,7 +1821,7 @@ let tests_RemoveStudy =
                     $"/assays/{assayName}/protocols/.gitkeep"
                     $"/assays/{assayName}/dataset/.gitkeep"
                     "/runs/.gitkeep";
-                    "/workflows/.gitkeep"          
+                    "/workflows/.gitkeep"
                 ]
                 |> List.sort
 
@@ -1720,6 +1835,34 @@ let tests_RemoveStudy =
 
 let tests_ROCrate =
     testList "RO-Crate" [
+        testList "Roundtrip" [
+            testCase "License" <| fun _ ->
+                let arcExpected = ARC("MyARC", title = "MyTitle", description = "MyDescription", license = License.initFulltext "CC-BY-4.0")
+                let json = arcExpected.ToROCrateJsonString()
+                let arcActual = ARC.fromROCrateJsonString(json)
+                Expect.equal arcActual.Identifier arcExpected.Identifier "Identifier should be equal"
+                Expect.equal arcActual.Title arcExpected.Title "Title should be equal"
+                Expect.equal arcActual.Description arcExpected.Description "Description should be equal"
+                Expect.equal arcActual.License arcExpected.License "License should be equal"
+            testCase "License_DifferentPath" <| fun _ ->
+                let license = License(contentType = LicenseContentType.Fulltext, content = "CC-BY-4.0", path = "LICENSE.txt")
+                let arcExpected = ARC("MyARC", title = "MyTitle", description = "MyDescription", license = license)
+                let json = arcExpected.ToROCrateJsonString()
+                let arcActual = ARC.fromROCrateJsonString(json)
+                Expect.equal arcActual.Identifier arcExpected.Identifier "Identifier should be equal"
+                Expect.equal arcActual.Title arcExpected.Title "Title should be equal"
+                Expect.equal arcActual.Description arcExpected.Description "Description should be equal"
+                Expect.equal arcActual.License arcExpected.License "License should be equal"
+            testCase "NoLicense" <| fun _ ->
+                let arcExpected = ARC("MyARC", title = "MyTitle", description = "MyDescription")
+                let json = arcExpected.ToROCrateJsonString()
+                let arcActual = ARC.fromROCrateJsonString(json)
+                Expect.equal arcActual.Identifier arcExpected.Identifier "Identifier should be equal"
+                Expect.equal arcActual.Title arcExpected.Title "Title should be equal"
+                Expect.equal arcActual.Description arcExpected.Description "Description should be equal"
+                Expect.isNone arcActual.License "License should be None"
+        ]
+                
         testCase "CanRead_Deprecated" <| fun _ ->
             let arc = ARC.fromDeprecatedROCrateJsonString(TestObjects.ROCrate.ArcPrototypeDeprecated.ed123499)
             let nonDeprecatedARC = ARC.fromROCrateJsonString(TestObjects.ROCrate.ArcPrototype.ed123499)
@@ -1770,7 +1913,7 @@ let tests_ROCrate =
             Expect.equal inputCol.Header expectedHeader "First table input column should have correct header"
             let expectedCells = [for i = 1 to 6 do CompositeCell.FreeText $"Source{i}"]
             Expect.sequenceEqual inputCol.Cells expectedCells "First table input column should have correct cells"
-            /// Assays
+            // Assays
             Expect.equal arc.AssayCount 2 "ARC should contain 2 assays"
         testCase "IncludeFilesystem" <| fun _ ->
             let arc = ARC("MyARC", title = "MyTitle", description = "MyDescription")
