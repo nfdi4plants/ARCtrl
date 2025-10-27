@@ -1463,7 +1463,7 @@ type WorkflowConversion =
     static member composeAdditionalType (t : CWL.CWLType) : string =
         t.ToString().ToLowerInvariant() 
 
-    static member composeFormalParamIdentifiers (prefix : string option) (position : int option) =
+    static member composeFormalParamInputIdentifiers (prefix : string option) (position : int option) =
         match prefix, position with
         | Some pr, Some po ->               
             ResizeArray [
@@ -1494,7 +1494,7 @@ type WorkflowConversion =
         let identifiers =
             inp.InputBinding
             |> Option.bind (fun ib ->
-                WorkflowConversion.composeFormalParamIdentifiers ib.Prefix ib.Position
+                WorkflowConversion.composeFormalParamInputIdentifiers ib.Prefix ib.Position
             )
         LDFormalParameter.create(
             additionalType = additionalType,
@@ -1504,17 +1504,33 @@ type WorkflowConversion =
             ?identifiers = identifiers
         )
 
+    static member composeFormalParameterOutputIdentifiers (glob : string option) =
+        match glob with
+        | Some g ->               
+            ResizeArray [
+                LDPropertyValue.createGlob(g)
+            ]
+            |> Some
+        | None -> None
+        
+
     static member composeFormalParameterFromOutput (out : CWL.CWLOutput, ?workflowName : string, ?runName) =
         let additionalType =
             match out.Type_ with
             | Some t -> WorkflowConversion.composeAdditionalType t
             | None -> failwith "Output must have a type"
         let id = LDFormalParameter.genID(name = out.Name, ?workflowName = workflowName, ?runName = runName)
+        let identifiers =
+            out.OutputBinding
+            |> Option.bind (fun ob ->
+                WorkflowConversion.composeFormalParameterOutputIdentifiers ob.Glob
+            )
         LDFormalParameter.create(
             additionalType = additionalType,
             id = id,
             name = out.Name,
-            valueRequired = true
+            valueRequired = true,
+            ?identifiers = identifiers
         )
 
     static member composeComputationalTool (tool : Process.Component) =

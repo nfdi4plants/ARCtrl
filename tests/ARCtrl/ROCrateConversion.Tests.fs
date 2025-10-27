@@ -1556,6 +1556,56 @@ let tests_FormalParameter =
             let position = Expect.wantSome (LDPropertyValue.tryGetValueAsString positionId) "Identifier should have a position"
             Expect.equal position "1" "Position should match input binding"
         )
+        ptestCase "FromInput_File" (fun () ->
+            let name = "MyInput"
+            let t = CWLType.file()
+            let input = CWL.CWLInput(name = name, type_ = t)
+            let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+            Expect.equal formalParameter.Id "#FormalParameter_MyInput" "FormalParameter ID should match"
+            let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
+            Expect.equal name' name "FormalParameter name should match input name"
+            let isRequired = Expect.wantSome (LDFormalParameter.tryGetValueRequiredAsBoolean formalParameter) "FormalParameter should have valueRequired"
+            Expect.isTrue isRequired "FormalParameter should be required"
+            Expect.hasLength (LDFormalParameter.getIdentifiers formalParameter) 0 "FormalParameter should have no identifiers"
+        )
+        testCase "FromOutput" (fun () ->
+            let name = "MyOutput"
+            let t = CWLType.String
+            let output = CWL.CWLOutput(name = name, type_ = t)
+            let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
+            let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
+            Expect.equal name' name "FormalParameter name should match output name"
+            let isRequired = Expect.wantSome (LDFormalParameter.tryGetValueRequiredAsBoolean formalParameter) "FormalParameter should have valueRequired"
+            Expect.isTrue isRequired "FormalParameter should be required"
+            Expect.hasLength (LDFormalParameter.getIdentifiers formalParameter) 0 "FormalParameter should have no identifiers"           
+        )
+        testCase "FromOutput_File" (fun () ->
+            let name = "MyOutput"
+            let t = CWLType.file()
+            let output = CWL.CWLOutput(name = name, type_ = t)
+            let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
+            let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
+            Expect.equal name' name "FormalParameter name should match output name"
+            let isRequired = Expect.wantSome (LDFormalParameter.tryGetValueRequiredAsBoolean formalParameter) "FormalParameter should have valueRequired"
+            Expect.isTrue isRequired "FormalParameter should be required"
+            Expect.hasLength (LDFormalParameter.getIdentifiers formalParameter) 0 "FormalParameter should have no identifiers"           
+        )
+        testCase "FromOutput_File_GlobBinding" (fun () ->
+            let name = "MyOutput"
+            let t = CWLType.file()
+            let binding : OutputBinding= {Glob = Some "*.txt"}
+            let output = CWL.CWLOutput(name = name, type_ = t, outputBinding = binding)
+            let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
+            let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
+            Expect.equal name' name "FormalParameter name should match output name"
+            let isRequired = Expect.wantSome (LDFormalParameter.tryGetValueRequiredAsBoolean formalParameter) "FormalParameter should have valueRequired"
+            Expect.isTrue isRequired "FormalParameter should be required"
+            let identifiers = LDFormalParameter.getIdentifiers formalParameter
+            Expect.hasLength identifiers 1 "FormalParameter should have one identifiers"
+            let globId = identifiers |> Seq.tryFind LDPropertyValue.validateGlob |> fun p -> Expect.wantSome p "Should have a glob identifier"
+            let glob = Expect.wantSome (LDPropertyValue.tryGetValueAsString globId) "Identifier should have a glob"
+            Expect.equal glob "*.txt" "Glob should match output binding"
+        )
     ]
 
 let tests_YAMLInputValue =
@@ -1567,8 +1617,8 @@ let tests_YAMLInputValue =
         testCase "SimpleFileInRun" (fun () ->
             let name = "MyInput"
             let runName = "MyRun"
-            let filePath = ResizeArray.singleton "myfile.txt"
-            let paramValue = CWLParameterReference.create(name, values = filePath, type_ = CWLType.file())
+            let filePath = "myfile.txt"
+            let paramValue = CWLParameterReference.create(name, values = ResizeArray.singleton  filePath, type_ = CWLType.file())
             let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
@@ -1579,7 +1629,7 @@ let tests_YAMLInputValue =
             Expect.equal name' expectedID "File name should match run and file path"
             let exampleOfWork = Expect.wantSome (LDFile.tryGetExampleOfWork file) "File should have an exampleOfWork"
             let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryLDRef exampleOfWork) "ExampleOfWork should be a reference"
-            Expect.equal exampleOfWorkAsRef.Id name "ExampleOfWork ID should match name"
+            Expect.equal exampleOfWorkAsRef.Id formalParam.Id "ExampleOfWork ID should match name"
         )
         testCase "SimpleFileInAssay" (fun () ->
             let name = "MyInput"
@@ -1597,7 +1647,7 @@ let tests_YAMLInputValue =
             Expect.equal name' expectedID "File name should match run and file path"
             let exampleOfWork = Expect.wantSome (LDFile.tryGetExampleOfWork file) "File should have an exampleOfWork"
             let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryLDRef exampleOfWork) "ExampleOfWork should be a reference"
-            Expect.equal exampleOfWorkAsRef.Id name "ExampleOfWork ID should match name"
+            Expect.equal exampleOfWorkAsRef.Id formalParam.Id "ExampleOfWork ID should match name"
 
         )
         testCase "SimpleString" (fun () ->
@@ -1662,7 +1712,13 @@ let tests_YAMLInputValue =
 
 let tests_ToolDescription =
     testList "ToolDescription" [
-
+        //testCase "SimpleTool" (fun () ->
+        //    let toolName = "MyTool"
+        //    let cwlTool = CWLToolDescription.create(name = toolName)
+        //    let ro_Tool = ToolConversion.composeCWLToolDescription cwlTool
+        //    let toolName' = Expect.wantSome (LDSoftwareApplication.tryGetNameAsString ro_Tool) "Tool should have a name"
+        //    Expect.equal toolName' toolName "Tool name should match"
+        //)
     ]
 
 let tests_CWLWorkflow =
