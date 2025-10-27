@@ -45,6 +45,8 @@ type LDPropertyValue =
 
     static member positionKey = "Position"
 
+    static member globKey = "Glob"
+
     static member exampleOfWork = "http://schema.org/exampleOfWork"
 
     static member tryGetNameAsString(pv : LDNode, ?context : LDContext) =
@@ -234,6 +236,16 @@ type LDPropertyValue =
         | Some name, Some value when name = LDPropertyValue.positionKey -> true
         | _ -> false
 
+    static member validateGlob (pv : LDNode, ?context : LDContext) =
+        LDPropertyValue.validate(pv, ?context = context)
+        && 
+        match
+            LDPropertyValue.tryGetNameAsString(pv, ?context = context),
+            LDPropertyValue.tryGetValueAsString(pv, ?context = context)
+        with
+        | Some name, Some value when name = LDPropertyValue.globKey -> true
+        | _ -> false
+
     static member genId(name : string, ?value : string, ?propertyID : string, ?prefix) =
         let prefix = Option.defaultValue "PV" prefix
         match value,propertyID with
@@ -270,6 +282,9 @@ type LDPropertyValue =
 
     static member genIdPosition(position : int) =
         $"#Position_{position}"
+
+    static member genIdGlob(glob : string) =
+        $"#Glob_{glob}"
 
     static member create(name, ?value, ?id : string, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
         let id = match id with
@@ -361,6 +376,10 @@ type LDPropertyValue =
         let id = LDPropertyValue.genIdPosition(value)
         LDPropertyValue.create(name = LDPropertyValue.positionKey, value = string value, id = id, ?context = context)
 
+    static member createGlob(value : string, ?context : LDContext) =
+        let id = LDPropertyValue.genIdGlob(value)
+        LDPropertyValue.create(name = LDPropertyValue.globKey, value = value, id = id, ?context = context)
+
     static member tryGetAsDOI(pv : LDNode, ?context : LDContext) =
         if LDPropertyValue.validateDOI(pv, ?context = context) then
             Some (LDPropertyValue.getValueAsString(pv, ?context = context))
@@ -381,4 +400,9 @@ type LDPropertyValue =
             match System.Int32.TryParse(LDPropertyValue.getValueAsString(pv, ?context = context)) with
             | true, v -> Some v
             | _ -> None
+        else None
+
+    static member tryGetAsGlob(pv : LDNode, ?context : LDContext) =
+        if LDPropertyValue.validateGlob(pv, ?context = context) then
+            Some (LDPropertyValue.getValueAsString(pv, ?context = context))
         else None
