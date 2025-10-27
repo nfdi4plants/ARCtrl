@@ -10,13 +10,14 @@
   <ItemGroup>
     <Compile Include="Path.fs" />
     <Compile Include="Commit.fs" />
+    <Compile Include="DefaultLicense.fs" />
     <Compile Include="DefaultGitignore.fs" />
     <Compile Include="DefaultGitattributes.fs" />
     <Compile Include="FileSystemTree.fs" />
     <Compile Include="FileSystem.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Fable.Core"/>
+    <PackageReference Include="Fable.Core" />
   </ItemGroup>
 
 </Project>

@@ -115,6 +115,8 @@ let testRename =
             let content = "This is a test"
             let oldPath = ArcPathHelper.combine TestObjects.IO.testResultsFolder oldFileName
             let newPath = ArcPathHelper.combine TestObjects.IO.testResultsFolder newFileName
+            do! FileSystemHelper.deleteFileOrDirectoryAsync oldPath
+            do! FileSystemHelper.deleteFileOrDirectoryAsync newPath
             do! FileSystemHelper.writeFileTextAsync oldPath content
 
             let contract = Contract.createRename(oldFileName,newFileName)

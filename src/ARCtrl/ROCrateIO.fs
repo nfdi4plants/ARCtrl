@@ -9,18 +9,14 @@ open ARCtrl.Helper
 open ARCtrl.Conversion
 
 module ARC =
-    
+
+    [<Literal>]
+    let SubstituteLicenseID = "#LICENSE"
+
     /// Functions for serializing and deserializing ARC objects to RO-Crate Root Data Entity
     ///
     /// See https://www.researchobject.org/ro-crate/1.1/root-data-entity.html for more information
     type ROCrate =
-
-        static member getDefaultLicense() =
-            //let cw = LDNode("License", ResizeArray ["https://schema.org/CreativeWork"])
-            //cw.SetProperty("https://schema.org/name", "ALL RIGHTS RESERVED BY THE AUTHORS")
-            //cw.SetProperty("https://schema.org/about",LDRef "./")
-            //cw
-            "ALL RIGHTS RESERVED BY THE AUTHORS"
             
         static member metadataFileDescriptor =
             let id = "ro-crate-metadata.json"
@@ -30,10 +26,27 @@ module ARC =
             node.SetProperty("http://schema.org/about", LDRef("./"))
             node
 
-        static member encoder (isa : ArcInvestigation, ?license : obj, ?fs : FileSystem) =
-            let license = match license with
-                          | Some license -> license
-                          | None -> ROCrate.getDefaultLicense()
+        static member createLicenseNode (license : License option) =
+            match license with
+                | Some license ->
+                    let text = 
+                        match license.Type with
+                        | LicenseContentType.Fulltext -> license.Content
+                    LDCreativeWork.create(license.Path, text = text)
+                | None ->
+                    LDCreativeWork.create(SubstituteLicenseID, text = ARCtrl.FileSystem.DefaultLicense.dl)
+
+        static member getLicense (license : LDNode, ?context : LDContext) =
+            let text = LDCreativeWork.tryGetTextAsString(license, ?context = context)
+            match license.Id, text with
+            | SubstituteLicenseID, None 
+            | SubstituteLicenseID, Some ARCtrl.FileSystem.DefaultLicense.dl -> None
+            | SubstituteLicenseID, Some text -> Some (License(contentType = Fulltext,content = text))
+            | path, Some text -> Some (License(contentType = Fulltext,content = text, path = path))
+            | path, None -> Some (License(contentType = Fulltext,content = "", path = path))
+
+        static member encoder (isa : ArcInvestigation, ?license : License, ?fs : FileSystem) =
+            let license = ROCrate.createLicenseNode(license)
             let isa = isa.ToROCrateInvestigation(?fs = fs)
             LDDataset.setSDDatePublishedAsDateTime(isa, System.DateTime.Now)
             LDDataset.setLicenseAsCreativeWork(isa, license)
@@ -44,7 +57,8 @@ module ARC =
             graph.Compact_InPlace()
             LDGraph.encoder graph
 
-        static member decoder : Decoder<ArcInvestigation*string ResizeArray> =
+        /// Returns ArcInvestigation, list of file Ids, and optional License
+        static member decoder : Decoder<ArcInvestigation*string ResizeArray * License option> =
             LDGraph.decoder
             |> Decode.map (fun graph ->
                 match graph.TryGetNode("./") with
@@ -57,8 +71,13 @@ module ARC =
                             else
                                 None
                         )
+                    let license =
+                        LDDataset.tryGetLicenseAsCreativeWork(node, graph = graph, ?context = graph.TryGetContext())
+                        |> Option.bind (fun n -> ROCrate.getLicense(n, ?context = graph.TryGetContext()))
+
                     ArcInvestigation.fromROCrateInvestigation(node, graph = graph, ?context = graph.TryGetContext()),
-                    files
+                    files,
+                    license
                 | None ->
                     failwith "RO-Crate graph did not contain root data Entity"
             )
