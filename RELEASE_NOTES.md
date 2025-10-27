@@ -1,3 +1,15 @@
+### 3.0.0-beta.6+0b552d70 (Released 2025-10-27)
+* Additions:
+    * [[#6b4e11ce](https://github.com/nfdi4plants/ARCtrl/commit/6b4e11ceecc67bdef7dadfffb28d62e0945ecaab)] bump to 3.0.0-beta.5
+    * [[#38ffdcd8](https://github.com/nfdi4plants/ARCtrl/commit/38ffdcd8a582a587c9b3dd595c8d11fdacd1c60f)] Add license logic to `ARC` class + tests :sparkles:
+    * [[#d9d1dcf2](https://github.com/nfdi4plants/ARCtrl/commit/d9d1dcf2ebc5019b3605dc0cfef719b89fc2ef25)] license object in ROCrate is CreativeWork and Scaffold parser checks more different potential License paths
+    * [[#2b59ea8b](https://github.com/nfdi4plants/ARCtrl/commit/2b59ea8be7a9025c39351677e4cd553e3a4c3ccc)] add license rename contract function
+* Deletions:
+    * [[#0b552d70](https://github.com/nfdi4plants/ARCtrl/commit/0b552d7008620d28edf749feac19823c4689f93d)] remove treeshake from typescript bundling to include more functions in package
+* Bugfixes:
+    * [[#c1dda5a9](https://github.com/nfdi4plants/ARCtrl/commit/c1dda5a9162eab7ba98d16497e531ac6baa7448f)] fix ro-crate license parser
+    * [[#0abcddb0](https://github.com/nfdi4plants/ARCtrl/commit/0abcddb092137dd2e1f781f7c4b78f774f883edd)] add additional license parsing tests and according fixes
+
 ### 3.0.0-beta.5+f74b2d99 (Released 2025-10-23)
 * Additions:
     * [[#70cdacff](https://github.com/nfdi4plants/ARCtrl/commit/70cdacff350a93aba036eeae324dbbd7854588da)] bump to 3.0.0-beta.4
