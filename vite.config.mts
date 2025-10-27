@@ -34,7 +34,8 @@ export default defineConfig({
                 preserveModulesRoot: 'src/ARCtrl',
                 entryFileNames: "[name].js",
                 chunkFileNames: "[name].js",
-            }
+            },
+            treeshake: false
         },
         minify: false
     },

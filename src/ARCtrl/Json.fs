@@ -17,6 +17,15 @@ module JsonHelper =
         member _.toROCrateJsonString(oa: OntologyAnnotation, ?spaces) = OntologyAnnotation.toROCrateJsonString(?spaces=spaces) oa
 
     [<AttachMembers>]
+    type PersonJson() =
+        member _.fromJsonString (s: string) = Person.fromJsonString s
+        member _.fromISAJsonString (s: string) = Person.fromISAJsonString s
+        member _.fromROCrateJsonString (s: string) = Person.fromROCrateJsonString s
+        member _.toJsonString (person: ARCtrl.Person, ?spaces) = Person.toJsonString(?spaces=spaces) person
+        member _.toISAJsonString (person: ARCtrl.Person, ?spaces, ?useIDReferencing) = Person.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) person
+        member _.toROCrateJsonString(person: ARCtrl.Person, ?spaces) = ARCtrl.Person.toROCrateJsonString(?spaces=spaces) person
+
+    [<AttachMembers>]
     type AssayJson() =
         member _.fromJsonString (s: string) = ArcAssay.fromJsonString s
         member _.fromCompressedJsonString (s: string) = ArcAssay.fromCompressedJsonString s
