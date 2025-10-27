@@ -26,6 +26,11 @@ module JsonHelper =
         member _.toROCrateJsonString(person: ARCtrl.Person, ?spaces) = ARCtrl.Person.toROCrateJsonString(?spaces=spaces) person
 
     [<AttachMembers>]
+    type DatamapJson() =
+        member _.fromJsonString (s: string) = DataMap.fromJsonString s
+        member _.toJsonString (datamap: DataMap, ?spaces) = DataMap.toJsonString(?spaces=spaces) datamap
+
+    [<AttachMembers>]
     type AssayJson() =
         member _.fromJsonString (s: string) = ArcAssay.fromJsonString s
         member _.fromCompressedJsonString (s: string) = ArcAssay.fromCompressedJsonString s
@@ -92,6 +97,8 @@ open JsonHelper
 [<AttachMembers>]
 type JsonController =
     static member OntologyAnnotation = OntologyAnnotationJson()
+    static member Person = PersonJson()
+    static member Datamap = DatamapJson()
     static member Assay = AssayJson()
     static member Study = StudyJson()
     static member Workflow = WorkflowJson()

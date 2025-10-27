@@ -1,5 +1,6 @@
 export { ARC } from './ts/ARC.js'
 export { ArcAssay, ArcStudy, ArcRun, ArcWorkflow, ArcInvestigation } from './ts/Core/ArcTypes.js'
+export { DataMap } from './ts/Core/DataMap.js'
 export { CompositeCell } from './ts/Core/Table/CompositeCell.js'
 export { CompositeHeader, IOType } from './ts/Core/Table/CompositeHeader.js'
 export { CompositeColumn } from './ts/Core/Table/CompositeColumn.js'

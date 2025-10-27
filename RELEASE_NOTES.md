@@ -1,3 +1,7 @@
+### 3.0.0-beta.7+e314b7b2 (Released 2025-10-27)
+* Additions:
+    * [[#e314b7b2](https://github.com/nfdi4plants/ARCtrl/commit/e314b7b2483a4f3e2de2a1c6926d2d883419fd22)] bump to 3.0.0-beta.6
+
 ### 3.0.0-beta.6+0b552d70 (Released 2025-10-27)
 * Additions:
     * [[#6b4e11ce](https://github.com/nfdi4plants/ARCtrl/commit/6b4e11ceecc67bdef7dadfffb28d62e0945ecaab)] bump to 3.0.0-beta.5
