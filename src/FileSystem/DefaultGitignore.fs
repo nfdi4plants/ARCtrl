@@ -1,9 +1,9 @@
-﻿module ARCtrl.FileSystem.DefaultGitignore
+module ARCtrl.FileSystem.DefaultGitignore
 
 /// <summary>
 /// A string containing the default .gitignore file content.
 /// </summary>
-let dgi = """# ----- macos rules -----
+let [<Literal>] dgi = """# ----- macos rules -----
 # taken from https://github.com/github/gitignore/blob/main/Global/macOS.gitignore
 # General
 .DS_Store

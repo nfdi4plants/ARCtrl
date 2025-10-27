@@ -34,8 +34,8 @@ type License( contentType: LicenseContentType, content: string, ?path : string) 
         with get() = _path
         and internal set(p) = _path <- p
 
-    static member initFulltext(content: string) =
-        License(LicenseContentType.Fulltext, content)
+    static member initFulltext(content: string, ?path : string) =
+        License(LicenseContentType.Fulltext, content, ?path = path)
 
     member this.ToCreateContract () =
         match this.Type with
@@ -51,14 +51,27 @@ type License( contentType: LicenseContentType, content: string, ?path : string) 
         let c = Contract.createDelete(_path)
         c
 
-    static member toDeleteContract (run: ArcRun) : Contract =
-        run.ToDeleteContract()
+    member this.GetRenameContracts (newPath: string) : Contract [] =
+        let deleteContract = this.ToDeleteContract()
+        this.Path <- newPath
+        let createContract =
+            match this.Type with
+            | LicenseContentType.Fulltext ->
+                Contract.createCreate(newPath, DTOType.PlainText, DTO.Text this.Content)
+        [| deleteContract; createContract |]
 
-    static member toCreateContract (run: ArcRun,?WithFolder) : Contract [] =
-        run.ToCreateContract(?WithFolder = WithFolder)
+    static member toDeleteContract (license: License) : Contract =
+        license.ToDeleteContract()
 
-    static member toUpdateContract (run: ArcRun) : Contract =
-        run.ToUpdateContract()
+    static member toCreateContract (license: License) : Contract =
+        license.ToCreateContract()
+
+    static member toUpdateContract (license: License) : Contract =
+        license.ToUpdateContract()
+
+    static member getRenameContracts (newPath: string) =
+        fun (license: License) ->
+            license.GetRenameContracts(newPath)
 
     static member tryFromReadContract (c:Contract) =
         match c with
@@ -83,6 +96,7 @@ type License( contentType: LicenseContentType, content: string, ?path : string) 
         [|
             box this.Type
             box this.Content
+            box this.Path
         |]
         |> Helper.HashCodes.boxHashArray 
         |> fun x -> x :?> int
@@ -91,6 +105,7 @@ type License( contentType: LicenseContentType, content: string, ?path : string) 
         [|
             this.Type = other.Type
             this.Content = other.Content
+            this.Path = other.Path
         |] |> Seq.forall (fun x -> x = true)
 
     /// <summary>

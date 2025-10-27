@@ -9,7 +9,10 @@ open ARCtrl.Helper
 open ARCtrl.Conversion
 
 module ARC =
-    
+
+    [<Literal>]
+    let SubstituteLicenseID = "#LICENSE"
+
     /// Functions for serializing and deserializing ARC objects to RO-Crate Root Data Entity
     ///
     /// See https://www.researchobject.org/ro-crate/1.1/root-data-entity.html for more information
@@ -31,14 +34,14 @@ module ARC =
                         | LicenseContentType.Fulltext -> license.Content
                     LDCreativeWork.create(license.Path, text = text)
                 | None ->
-                    LDCreativeWork.create("#LICENSE", text = ARCtrl.FileSystem.DefaultLicense.dl)
+                    LDCreativeWork.create(SubstituteLicenseID, text = ARCtrl.FileSystem.DefaultLicense.dl)
 
         static member getLicense (license : LDNode, ?context : LDContext) =
             let text = LDCreativeWork.tryGetTextAsString(license, ?context = context)
             match license.Id, text with
-            | "#LICENSE", None 
-            | "#LICENSE", Some ARCtrl.FileSystem.DefaultLicense.dl -> None
-            | "#LICENSE", Some text -> Some (License(contentType = Fulltext,content = text))
+            | SubstituteLicenseID, None 
+            | SubstituteLicenseID, Some ARCtrl.FileSystem.DefaultLicense.dl -> None
+            | SubstituteLicenseID, Some text -> Some (License(contentType = Fulltext,content = text))
             | path, Some text -> Some (License(contentType = Fulltext,content = text, path = path))
             | path, None -> Some (License(contentType = Fulltext,content = "", path = path))
 

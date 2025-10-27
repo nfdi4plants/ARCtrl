@@ -13,7 +13,7 @@ module LicenseContractExtensions =
 
 module License =
 
-    let deaultLicenseContract =
+    let defaultLicenseContract =
         Contract.createCreate(
             ARCtrl.ArcPathHelper.LICENSEFileName,
             DTOType.PlainText,

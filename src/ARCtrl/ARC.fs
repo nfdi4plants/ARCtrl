@@ -664,7 +664,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         // Map containing the DTOTypes and objects for the ISA objects.
         if this.StaticHash = 0 then
             this.StaticHash <- this.GetLightHashCode()
-            this.GetWriteContracts(?skipUpdateFS = skipUpdateFS) // <- why this?
+            this.GetWriteContracts(?skipUpdateFS = skipUpdateFS)
         else
             [|
                 // Get Investigation contract
@@ -835,7 +835,8 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             set [
                 InvestigationFileName
                 READMEFileName
-                LICENSEFileName
+                if this.License.IsSome then
+                    this.License.Value.Path
             ]
 
         let includeStudyFiles = 
@@ -917,7 +918,6 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     static member DefaultContracts = Map<string,Contract> [|
         ARCtrl.Contract.Git.gitignoreFileName, ARCtrl.Contract.Git.gitignoreContract
         ARCtrl.Contract.Git.gitattributesFileName, ARCtrl.Contract.Git.gitattributesContract
-        ARCtrl.ArcPathHelper.LICENSEFileName, ARCtrl.Contract.License.deaultLicenseContract // not sure if we want this?
     |]
 
     static member fromDeprecatedROCrateJsonString (s:string) =
@@ -992,20 +992,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     member this.GetValidationPackagesConfigFromReadContract(contract) =
         ValidationPackagesConfig.tryFromReadContract contract
 
-
     member this.ToFilePaths(?removeRoot: bool, ?skipUpdateFS : bool) =
         if not (defaultArg skipUpdateFS false) then
             this.UpdateFileSystem()
         this.FileSystem.Tree.ToFilePaths(?removeRoot = removeRoot)
-
-//-Pseudo code-//
-//// Option 1
-//let fs, readcontracts = ARC.FSFromFilePaths filepaths
-//let isa = ARC.ISAFromContracts fullfilled_readcontracts
-//let cwl = ARC.CWLFromXXX XXX
-//ARC.create(fs, isa, cwl)
-
-//// Option 2
-//let arc = ARC.fromFilePaths // returned ARC
-//let contracts = arc.getREADContracts // retunred READ
-//arc.updateFromContracts fullfilled_contracts //returned ARC
