@@ -92,29 +92,16 @@ module ARCAux =
             |> FileSystem.create
         fs.Union(tree)
 
-    let updateFSByCWL (cwl : unit option) (fs : FileSystem) =       
-        let workflows = FileSystemTree.createWorkflowsFolder [||]
-        let runs = FileSystemTree.createRunsFolder [||]       
-        let tree = 
-            FileSystemTree.createRootFolder [|workflows;runs|]
-            |> FileSystem.create
-        fs.Union(tree)
-
 [<AttachMembers>]
-type ARC(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?workflows : ResizeArray<ArcWorkflow>, ?runs : ResizeArray<ArcRun>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks, ?cwl : unit, ?fs : FileSystem.FileSystem, ?license) as this =
+type ARC(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?workflows : ResizeArray<ArcWorkflow>, ?runs : ResizeArray<ArcRun>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks, ?fs : FileSystem.FileSystem, ?license) as this =
 
     inherit ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ?ontologySourceReferences = ontologySourceReferences, ?publications = publications, ?contacts = contacts, ?assays = assays, ?studies = studies, ?workflows = workflows, ?runs = runs, ?registeredStudyIdentifiers = registeredStudyIdentifiers, ?comments = comments, ?remarks = remarks) 
 
-    let mutable _cwl = cwl
     let mutable _license: License option = license
     let mutable _fs = 
         fs
         |> Option.defaultValue (FileSystem.create(FileSystemTree.Folder ("",[||])))
         |> ARCAux.updateFSByARC this license
-        //|> ARCAux.updateFSByCWL cwl
-
-    //member this.CWL 
-    //    with get() = cwl
 
     member this.FileSystem 
         with get() = _fs
@@ -124,8 +111,8 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         with get() : License option = _license
         and set(license) = _license <- license
 
-    static member fromArcInvestigation (isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem, ?license: License) = 
-        ARC(identifier = isa.Identifier, ?title = isa.Title, ?description = isa.Description, ?submissionDate = isa.SubmissionDate, ?publicReleaseDate = isa.PublicReleaseDate, ontologySourceReferences = isa.OntologySourceReferences, publications = isa.Publications, contacts = isa.Contacts, assays = isa.Assays, studies = isa.Studies, workflows = isa.Workflows, runs = isa.Runs, registeredStudyIdentifiers = isa.RegisteredStudyIdentifiers, comments = isa.Comments, remarks = isa.Remarks, ?cwl = cwl, ?fs = fs, ?license = license) 
+    static member fromArcInvestigation (isa : ArcInvestigation, ?fs : FileSystem, ?license: License) = 
+        ARC(identifier = isa.Identifier, ?title = isa.Title, ?description = isa.Description, ?submissionDate = isa.SubmissionDate, ?publicReleaseDate = isa.PublicReleaseDate, ontologySourceReferences = isa.OntologySourceReferences, publications = isa.Publications, contacts = isa.Contacts, assays = isa.Assays, studies = isa.Studies, workflows = isa.Workflows, runs = isa.Runs, registeredStudyIdentifiers = isa.RegisteredStudyIdentifiers, comments = isa.Comments, remarks = isa.Remarks, ?fs = fs, ?license = license) 
 
     member this.TryWriteAsync(arcPath) =
         this.GetWriteContracts()
@@ -431,9 +418,6 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     //static member updateISA (isa : ISA.Investigation) (arc : ARC) : ARC =
     //    raise (System.NotImplementedException())
 
-    //static member updateCWL (cwl : CWL.CWL) (arc : ARC) : ARC =
-    //    raise (System.NotImplementedException())
-
     //static member updateFileSystem (fileSystem : FileSystem.FileSystem) (arc : ARC) : ARC =
     //    raise (System.NotImplementedException())
 
@@ -612,7 +596,6 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     member this.UpdateFileSystem() =   
         let newFS = 
             ARCAux.updateFSByARC this _license _fs
-            //|> ARCAux.updateFSByCWL _cwl
         _fs <- newFS        
 
     /// <summary>
@@ -868,7 +851,6 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             contacts = nextContacts,
             comments = nextComments,
             remarks = nextRemarks,
-            ?cwl = _cwl,
             ?license = nextLicense,
             fs = fsCopy
         )
