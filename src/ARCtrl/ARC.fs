@@ -92,29 +92,16 @@ module ARCAux =
             |> FileSystem.create
         fs.Union(tree)
 
-    let updateFSByCWL (cwl : unit option) (fs : FileSystem) =       
-        let workflows = FileSystemTree.createWorkflowsFolder [||]
-        let runs = FileSystemTree.createRunsFolder [||]       
-        let tree = 
-            FileSystemTree.createRootFolder [|workflows;runs|]
-            |> FileSystem.create
-        fs.Union(tree)
-
 [<AttachMembers>]
-type ARC(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?workflows : ResizeArray<ArcWorkflow>, ?runs : ResizeArray<ArcRun>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks, ?cwl : unit, ?fs : FileSystem.FileSystem, ?license) as this =
+type ARC(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?workflows : ResizeArray<ArcWorkflow>, ?runs : ResizeArray<ArcRun>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks, ?fs : FileSystem.FileSystem, ?license) as this =
 
     inherit ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ?ontologySourceReferences = ontologySourceReferences, ?publications = publications, ?contacts = contacts, ?assays = assays, ?studies = studies, ?workflows = workflows, ?runs = runs, ?registeredStudyIdentifiers = registeredStudyIdentifiers, ?comments = comments, ?remarks = remarks) 
 
-    let mutable _cwl = cwl
     let mutable _license: License option = license
     let mutable _fs = 
         fs
         |> Option.defaultValue (FileSystem.create(FileSystemTree.Folder ("",[||])))
         |> ARCAux.updateFSByARC this license
-        //|> ARCAux.updateFSByCWL cwl
-
-    //member this.CWL 
-    //    with get() = cwl
 
     member this.FileSystem 
         with get() = _fs
@@ -124,8 +111,8 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         with get() : License option = _license
         and set(license) = _license <- license
 
-    static member fromArcInvestigation (isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem, ?license: License) = 
-        ARC(identifier = isa.Identifier, ?title = isa.Title, ?description = isa.Description, ?submissionDate = isa.SubmissionDate, ?publicReleaseDate = isa.PublicReleaseDate, ontologySourceReferences = isa.OntologySourceReferences, publications = isa.Publications, contacts = isa.Contacts, assays = isa.Assays, studies = isa.Studies, workflows = isa.Workflows, runs = isa.Runs, registeredStudyIdentifiers = isa.RegisteredStudyIdentifiers, comments = isa.Comments, remarks = isa.Remarks, ?cwl = cwl, ?fs = fs, ?license = license) 
+    static member fromArcInvestigation (isa : ArcInvestigation, ?fs : FileSystem, ?license: License) = 
+        ARC(identifier = isa.Identifier, ?title = isa.Title, ?description = isa.Description, ?submissionDate = isa.SubmissionDate, ?publicReleaseDate = isa.PublicReleaseDate, ontologySourceReferences = isa.OntologySourceReferences, publications = isa.Publications, contacts = isa.Contacts, assays = isa.Assays, studies = isa.Studies, workflows = isa.Workflows, runs = isa.Runs, registeredStudyIdentifiers = isa.RegisteredStudyIdentifiers, comments = isa.Comments, remarks = isa.Remarks, ?fs = fs, ?license = license) 
 
     member this.TryWriteAsync(arcPath) =
         this.GetWriteContracts()
@@ -177,19 +164,103 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         this.SetFilePaths(filteredPaths)      
         [|
             assay.ToDeleteContract()
-            this.ToUpdateContract()
-            for s in studies do
-                s.ToUpdateContract()
+            yield! this.GetUpdateContracts()
+            //for s in studies do
+            //    s.ToUpdateContract()
+        |]
+
+    member this.GetRunRemoveContracts(runIdentifier: string) =
+        if this.RunIdentifiers |> Seq.contains runIdentifier |> not then
+            failwith "ARC does not contain run with given name"
+        let run = this.GetRun(runIdentifier)
+        this.DeleteRun(runIdentifier)
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        let runFolderPath = getRunFolderPath(runIdentifier)
+        let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(runFolderPath) |> not)
+        this.SetFilePaths(filteredPaths)      
+        [|
+            run.ToDeleteContract()
+            yield! this.GetUpdateContracts()
+        |]
+
+    member this.GetWorkflowRemoveContracts(workflowIdentifier: string) =
+        if this.WorkflowIdentifiers |> Seq.contains workflowIdentifier |> not then
+            failwith "ARC does not contain workflow with given name"
+        let workflow = this.GetWorkflow(workflowIdentifier)
+        this.DeleteWorkflow(workflowIdentifier)
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        let workflowFolderPath = getWorkflowFolderPath(workflowIdentifier)
+        let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(workflowFolderPath) |> not)
+        this.SetFilePaths(filteredPaths)      
+        [|
+            workflow.ToDeleteContract()
+            yield! this.GetUpdateContracts()
         |]
 
     member this.TryRemoveAssayAsync(arcPath : string, assayIdentifier: string) =
         this.GetAssayRemoveContracts(assayIdentifier)
         |> fullFillContractBatchAsync arcPath
 
+    member this.TryRemoveRunAsync(arcPath : string, runIdentifier: string) =
+        this.GetRunRemoveContracts(runIdentifier)
+        |> fullFillContractBatchAsync arcPath
+
+    member this.TryRemoveWorkflowAsync(arcPath : string, workflowIdentifier: string) =
+        this.GetWorkflowRemoveContracts(workflowIdentifier)
+        |> fullFillContractBatchAsync arcPath
+
+    member this.RemoveRunAsync(arcPath, runIdentifier) =
+        crossAsync {
+            let! result = this.TryRemoveRunAsync(arcPath, runIdentifier)
+            match result with
+            | Ok _ -> ()
+            | Error errors ->
+                let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+                failwithf "Could not remove run, failed with the following errors %s" appended
+        }
+
+    member this.RemoveWorkflowAsync(arcPath, workflowIdentifier) =
+        crossAsync {
+            let! result = this.TryRemoveWorkflowAsync(arcPath, workflowIdentifier)
+            match result with
+            | Ok _ -> ()
+            | Error errors ->
+                let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+                failwithf "Could not remove workflow, failed with the following errors %s" appended
+        }
+
+    member this.TryRenameRunAsync(arcPath : string, oldRunIdentifier: string, newRunIdentifier: string) =
+        this.GetRunRenameContracts(oldRunIdentifier,newRunIdentifier)
+        |> fullFillContractBatchAsync arcPath
+
+    member this.TryRenameWorkflowAsync(arcPath : string, oldWorkflowIdentifier: string, newWorkflowIdentifier: string) =
+        this.GetWorkflowRenameContracts(oldWorkflowIdentifier,newWorkflowIdentifier)
+        |> fullFillContractBatchAsync arcPath
+
+    member this.RenameRunAsync(arcPath, oldRunIdentifier, newRunIdentifier) =
+        crossAsync {
+            let! result = this.TryRenameRunAsync(arcPath, oldRunIdentifier, newRunIdentifier)
+            match result with
+            | Ok _ -> ()
+            | Error errors ->
+                let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+                failwithf "Could not rename run, failed with the following errors %s" appended
+        }
+
+    member this.RenameWorkflowAsync(arcPath, oldWorkflowIdentifier, newWorkflowIdentifier) =
+        crossAsync {
+            let! result = this.TryRenameWorkflowAsync(arcPath, oldWorkflowIdentifier, newWorkflowIdentifier)
+            match result with
+            | Ok _ -> ()
+            | Error errors ->
+                let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+                failwithf "Could not rename workflow, failed with the following errors %s" appended
+        }
+
     member this.GetAssayRenameContracts(oldAssayIdentifier: string, newAssayIdentifier: string) =
         if this.AssayIdentifiers |> Seq.contains oldAssayIdentifier |> not then
             failwith "ARC does not contain assay with given name"
-
+        // Why use base? -> to avoid calling overridden method in derived classes
         base.RenameAssay(oldAssayIdentifier,newAssayIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
         let oldAssayFolderPath = getAssayFolderPath(oldAssayIdentifier)
@@ -198,6 +269,36 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         this.SetFilePaths(renamedPaths)
         [|
             yield Contract.createRename(oldAssayFolderPath,newAssayFolderPath)
+            yield! this.GetUpdateContracts()
+        |]
+
+    member this.GetRunRenameContracts(oldRunIdentifier: string, newRunIdentifier: string) =
+        if this.RunIdentifiers |> Seq.contains oldRunIdentifier |> not then
+            failwith "ARC does not contain run with given name"
+        // Why use base? -> to avoid calling overridden method in derived classes
+        base.RenameRun(oldRunIdentifier,newRunIdentifier)
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        let oldPath = getRunFolderPath(oldRunIdentifier)
+        let newPath = getRunFolderPath(newRunIdentifier)
+        let renamedPaths = paths |> Array.map (fun p -> p.Replace(oldPath,newPath))
+        this.SetFilePaths(renamedPaths)
+        [|
+            yield Contract.createRename(oldPath,newPath)
+            yield! this.GetUpdateContracts()
+        |]
+
+    member this.GetWorkflowRenameContracts(oldWorkflowIdentifier: string, newWorkflowIdentifier: string) =
+        if this.WorkflowIdentifiers |> Seq.contains oldWorkflowIdentifier |> not then
+            failwith "ARC does not contain workflow with given name"
+        // Why use base? -> to avoid calling overridden method in derived classes
+        base.RenameWorkflow(oldWorkflowIdentifier,newWorkflowIdentifier)
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        let oldPath = getWorkflowFolderPath(oldWorkflowIdentifier)
+        let newPath = getWorkflowFolderPath(newWorkflowIdentifier)
+        let renamedPaths = paths |> Array.map (fun p -> p.Replace(oldPath,newPath))
+        this.SetFilePaths(renamedPaths)
+        [|
+            yield Contract.createRename(oldPath,newPath)
             yield! this.GetUpdateContracts()
         |]
 
@@ -223,6 +324,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     member this.GetStudyRenameContracts(oldStudyIdentifier: string, newStudyIdentifier: string) =
         if this.StudyIdentifiers |> Seq.contains oldStudyIdentifier |> not then
             failwith "ARC does not contain study with given name"
+        // Why use base? -> to avoid calling overridden method in derived classes
         base.RenameStudy(oldStudyIdentifier,newStudyIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
         let oldStudyFolderPath = getStudyFolderPath(oldStudyIdentifier)
@@ -329,6 +431,18 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     member this.RenameStudy(arcPath, oldStudyIdentifier, newStudyIdentifier) =
         Async.RunSynchronously (this.RenameStudyAsync(arcPath, oldStudyIdentifier, newStudyIdentifier))
 
+    member this.RemoveRun(arcPath, runIdentifier) =
+        Async.RunSynchronously (this.RemoveRunAsync(arcPath, runIdentifier))
+
+    member this.RenameRun(arcPath, oldRunIdentifier, newRunIdentifier) =
+        Async.RunSynchronously (this.RenameRunAsync(arcPath, oldRunIdentifier, newRunIdentifier))
+
+    member this.RemoveWorkflow(arcPath, workflowIdentifier) =
+        Async.RunSynchronously (this.RemoveWorkflowAsync(arcPath, workflowIdentifier))
+
+    member this.RenameWorkflow(arcPath, oldWorkflowIdentifier, newWorkflowIdentifier) =
+        Async.RunSynchronously (this.RenameWorkflowAsync(arcPath, oldWorkflowIdentifier, newWorkflowIdentifier))
+
     static member load (arcPath) =
         Async.RunSynchronously (ARC.loadAsync arcPath)
     #endif
@@ -371,9 +485,6 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
 
 
     //static member updateISA (isa : ISA.Investigation) (arc : ARC) : ARC =
-    //    raise (System.NotImplementedException())
-
-    //static member updateCWL (cwl : CWL.CWL) (arc : ARC) : ARC =
     //    raise (System.NotImplementedException())
 
     //static member updateFileSystem (fileSystem : FileSystem.FileSystem) (arc : ARC) : ARC =
@@ -554,7 +665,6 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     member this.UpdateFileSystem() =   
         let newFS = 
             ARCAux.updateFSByARC this _license _fs
-            //|> ARCAux.updateFSByCWL _cwl
         _fs <- newFS        
 
     /// <summary>
@@ -810,7 +920,6 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             contacts = nextContacts,
             comments = nextComments,
             remarks = nextRemarks,
-            ?cwl = _cwl,
             ?license = nextLicense,
             fs = fsCopy
         )

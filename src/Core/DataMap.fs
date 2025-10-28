@@ -6,7 +6,6 @@ open ARCtrl
 open Fable.Core
 
 
-[<AttachMembers>]
 module DataMapAux = 
 
     [<Literal>]
@@ -102,6 +101,7 @@ module DataMapAux =
             if newColumn.Length <> dataContexts.Count then
                 failwith "Length of new column does not match length of data contexts."
 
+[<AttachMembers>]
 type DataMap(dataContexts : ResizeArray<DataContext>) = 
     
     let mutable staticHash = 0
@@ -165,3 +165,6 @@ type DataMap(dataContexts : ResizeArray<DataContext>) =
         dataContexts
         |> HashCodes.boxHashSeq
         |> fun x -> x :?> int
+
+
+    static member FileName = ARCtrl.ArcPathHelper.DataMapFileName

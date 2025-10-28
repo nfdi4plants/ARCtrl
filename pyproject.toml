@@ -1,6 +1,6 @@
 [project]
 name = "arctrl"
-version = "3.0.0b7"
+version = "3.0.0b8"
 description = "Library for management of Annotated Research Contexts (ARCs) using an in-memory representation and runtimer agnostic contract systems."
 authors = [
     { name = "Heinrich Lukas Weil", email = "weil@rptu.de" },

@@ -9,7 +9,7 @@ module ArcTypesAux =
 
     module ErrorMsgs =
 
-        let unableToFindAssayIdentifier assayIdentifier investigationIdentifier = 
+        let unableToFindAssayIdentifier assayIdentifier investigationIdentifier =
             $"Error. Unable to find assay with identifier '{assayIdentifier}' in investigation {investigationIdentifier}."
 
         let unableToFindStudyIdentifier studyIdentifer investigationIdentifier =
@@ -21,7 +21,7 @@ module ArcTypesAux =
         let unableToFindRunIdentifier runIdentifier investigationIdentifier =
             $"Error. Unable to find run with identifier '{runIdentifier}' in investigation {investigationIdentifier}."
 
-    module SanityChecks = 
+    module SanityChecks =
 
         let inline validateRegisteredInvestigation (investigation: ArcInvestigation option) =
             match investigation with
@@ -41,7 +41,7 @@ module ArcTypesAux =
                 failwith $"The given study with identifier '{studyIdent}' must be added to Investigation before it can be registered."
             | Some _ ->
                 ()
-        
+
         let inline validateUniqueRegisteredStudyIdentifiers (studyIdent: string) (studyIdents: seq<string>) =
             match studyIdents |> Seq.contains studyIdent with
             | true ->
@@ -90,14 +90,14 @@ module ArcTypesAux =
                 if Seq.contains registeredAssay existingAssays |> not then
                     study.DeregisterAssay registeredAssay |> ignore
 
-    let inline updateAppendArray (append:bool) (origin: 'A []) (next: 'A []) = 
+    let inline updateAppendArray (append:bool) (origin: 'A []) (next: 'A []) =
         if not append then
             next
-        else 
+        else
             Array.append origin next
             |> Array.distinct
 
-    let inline updateAppendResizeArrayInplace (append:bool) (origin: ResizeArray<'A>) (next: ResizeArray<'A>) = 
+    let inline updateAppendResizeArrayInplace (append:bool) (origin: ResizeArray<'A>) (next: ResizeArray<'A>) =
         if not append then
             next
         else
@@ -105,8 +105,8 @@ module ArcTypesAux =
                 if origin.Contains e |> not then
                     origin.Add(e)
             origin
-       
-    let inline updateAppendResizeArray (append:bool) (origin: ResizeArray<'A>) (next: ResizeArray<'A>) = 
+
+    let inline updateAppendResizeArray (append:bool) (origin: ResizeArray<'A>) (next: ResizeArray<'A>) =
         if not append then
             next |> ResizeArray.map id
         else
@@ -121,7 +121,7 @@ module ArcTypesAux =
 
 
 [<AttachMembers>]
-type ArcAssay(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
+type ArcAssay(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
     inherit ArcTables(defaultArg tables <| ResizeArray())
 
     let performers = defaultArg performers <| ResizeArray()
@@ -156,10 +156,10 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
     member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
 
     static member init (identifier : string) = ArcAssay(identifier)
-    static member create (identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
+    static member create (identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
         ArcAssay(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?tables =tables, ?datamap = datamap, ?performers = performers, ?comments = comments)
 
-    static member make 
+    static member make
         (identifier : string)
         (title : string option)
         (description : string option)
@@ -169,19 +169,19 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
         (tables : ResizeArray<ArcTable>)
         (datamap : DataMap option)
         (performers : ResizeArray<Person>)
-        (comments : ResizeArray<Comment>) = 
+        (comments : ResizeArray<Comment>) =
         ArcAssay(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, tables =tables, ?datamap = datamap, performers = performers, comments = comments)
 
     static member FileName = ARCtrl.ArcPathHelper.AssayFileName
     member this.StudiesRegisteredIn
-        with get () = 
+        with get () =
             match this.Investigation with
-            | Some i -> 
+            | Some i ->
                 i.Studies
                 |> Seq.filter (fun s -> s.RegisteredAssayIdentifiers |> Seq.contains this.Identifier)
                 |> Seq.toArray
             | None -> [||]
-        
+
     // - Table API - //
     static member addTable(table:ArcTable, ?index: int) =
         fun (assay:ArcAssay) ->
@@ -201,7 +201,7 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
         fun (assay:ArcAssay) ->
             let c = assay.Copy()
             c,c.InitTable(tableName, ?index=index)
-            
+
     // - Table API - //
     static member initTables(tableNames:seq<string>, ?index: int) =
         fun (assay:ArcAssay) ->
@@ -268,7 +268,7 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
     // - Table API - //
     static member mapTableAt(index:int, updateFun: ArcTable -> unit) =
         fun (assay:ArcAssay) ->
-            let newAssay = assay.Copy()    
+            let newAssay = assay.Copy()
             newAssay.MapTableAt(index, updateFun)
             newAssay
 
@@ -282,7 +282,7 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
     // - Table API - //
     static member renameTableAt(index: int, newName: string) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
-            let newAssay = assay.Copy()    
+            let newAssay = assay.Copy()
             newAssay.RenameTableAt(index, newName)
             newAssay
 
@@ -294,7 +294,7 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
             newAssay
 
     // - Column CRUD API - //
-    static member addColumnAt(tableIndex:int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?columnIndex: int, ?forceReplace: bool) : ArcAssay -> ArcAssay = 
+    static member addColumnAt(tableIndex:int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?columnIndex: int, ?forceReplace: bool) : ArcAssay -> ArcAssay =
         fun (assay: ArcAssay) ->
             let newAssay = assay.Copy()
             newAssay.AddColumnAt(tableIndex, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
@@ -348,7 +348,7 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
             newAssay.GetColumn(tableName, columnIndex)
 
     // - Row CRUD API - //
-    static member addRowAt(tableIndex:int, ?cells: ResizeArray<CompositeCell>, ?rowIndex: int) : ArcAssay -> ArcAssay = 
+    static member addRowAt(tableIndex:int, ?cells: ResizeArray<CompositeCell>, ?rowIndex: int) : ArcAssay -> ArcAssay =
         fun (assay: ArcAssay) ->
             let newAssay = assay.Copy()
             newAssay.AddRowAt(tableIndex, ?cells=cells, ?rowIndex=rowIndex)
@@ -437,11 +437,11 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
             this.Title <- assay.Title
         if assay.Description.IsSome || updateAlways then
             this.Description <- assay.Description
-        if assay.MeasurementType.IsSome || updateAlways then 
+        if assay.MeasurementType.IsSome || updateAlways then
             this.MeasurementType <- assay.MeasurementType
-        if assay.TechnologyType.IsSome || updateAlways then 
+        if assay.TechnologyType.IsSome || updateAlways then
             this.TechnologyType <- assay.TechnologyType
-        if assay.TechnologyPlatform.IsSome || updateAlways then 
+        if assay.TechnologyPlatform.IsSome || updateAlways then
             this.TechnologyPlatform <- assay.TechnologyPlatform
         if assay.Tables.Count <> 0 || updateAlways then
             let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Tables assay.Tables
@@ -455,7 +455,7 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
 
     // Use this for better print debugging and better unit test output
     override this.ToString() =
-        sprintf 
+        sprintf
             """ArcAssay({
     Identifier = "%s",
     Title = %A,
@@ -491,19 +491,19 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
             this.Title <- assay.Title
         if assay.Description.IsSome || updateAlways then
             this.Description <- assay.Description
-        if assay.MeasurementType.IsSome || updateAlways then 
+        if assay.MeasurementType.IsSome || updateAlways then
             this.MeasurementType <- assay.MeasurementType
-        if assay.TechnologyPlatform.IsSome || updateAlways then 
+        if assay.TechnologyPlatform.IsSome || updateAlways then
             this.TechnologyPlatform <- assay.TechnologyPlatform
-        if assay.TechnologyType.IsSome || updateAlways then 
+        if assay.TechnologyType.IsSome || updateAlways then
             this.TechnologyType <- assay.TechnologyType
-        if assay.Tables.Count <> 0 || updateAlways then          
+        if assay.Tables.Count <> 0 || updateAlways then
             this.Tables <- assay.Tables
-        if assay.Comments.Count <> 0 || updateAlways then          
-            this.Comments <- assay.Comments 
+        if assay.Comments.Count <> 0 || updateAlways then
+            this.Comments <- assay.Comments
         this.DataMap <- assay.DataMap
-        if assay.Performers.Count <> 0 || updateAlways then          
-            this.Performers <- assay.Performers  
+        if assay.Performers.Count <> 0 || updateAlways then
+            this.Performers <- assay.Performers
 
     member this.StructurallyEquals (other: ArcAssay) : bool =
         let i = this.Identifier = other.Identifier
@@ -530,12 +530,12 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
     // custom check
     override this.Equals other =
         match other with
-        | :? ArcAssay as assay -> 
+        | :? ArcAssay as assay ->
             this.StructurallyEquals(assay)
         | _ -> false
 
     // Hashcode without Datamap
-    member this.GetLightHashCode() = 
+    member this.GetLightHashCode() =
         [|
             box this.Identifier
             HashCodes.boxHashOption this.Title
@@ -547,10 +547,10 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
             HashCodes.boxHashSeq this.Performers
             HashCodes.boxHashSeq this.Comments
         |]
-        |> HashCodes.boxHashArray 
+        |> HashCodes.boxHashArray
         |> fun x -> x :?> int
 
-    override this.GetHashCode() = 
+    override this.GetHashCode() =
         [|
             box this.Identifier
             HashCodes.boxHashOption this.Title
@@ -563,11 +563,11 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
             HashCodes.boxHashSeq this.Performers
             HashCodes.boxHashSeq this.Comments
         |]
-        |> HashCodes.boxHashArray 
+        |> HashCodes.boxHashArray
         |> fun x -> x :?> int
 
 [<AttachMembers>]
-type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?datamap, ?registeredAssayIdentifiers: ResizeArray<string>, ?comments) = 
+type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?datamap, ?registeredAssayIdentifiers: ResizeArray<string>, ?comments) =
     inherit ArcTables(defaultArg tables <| ResizeArray())
 
     let publications = defaultArg publications <| ResizeArray()
@@ -582,7 +582,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         identifier
     let mutable investigation : ArcInvestigation option = None
     let mutable title : string option = title
-    let mutable description : string option = description 
+    let mutable description : string option = description
     let mutable submissionDate : string option = submissionDate
     let mutable publicReleaseDate : string option = publicReleaseDate
     let mutable publications : ResizeArray<Publication> = publications
@@ -611,16 +611,16 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
 
     static member init(identifier : string) = ArcStudy identifier
 
-    static member create(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?datamap, ?registeredAssayIdentifiers, ?comments) = 
+    static member create(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?datamap, ?registeredAssayIdentifiers, ?comments) =
         ArcStudy(identifier, ?title = title, ?description = description, ?submissionDate =  submissionDate, ?publicReleaseDate = publicReleaseDate, ?publications = publications, ?contacts = contacts, ?studyDesignDescriptors = studyDesignDescriptors, ?tables = tables, ?datamap = datamap, ?registeredAssayIdentifiers = registeredAssayIdentifiers, ?comments = comments)
 
-    static member make identifier title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors tables datamap registeredAssayIdentifiers comments = 
+    static member make identifier title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors tables datamap registeredAssayIdentifiers comments =
         ArcStudy(identifier, ?title = title, ?description = description, ?submissionDate =  submissionDate, ?publicReleaseDate = publicReleaseDate, publications = publications, contacts = contacts, studyDesignDescriptors = studyDesignDescriptors, tables = tables, ?datamap = datamap, registeredAssayIdentifiers = registeredAssayIdentifiers, comments = comments)
 
     /// <summary>
     /// Returns true if all fields are None/ empty sequences **except** Identifier.
     /// </summary>
-    member this.isEmpty 
+    member this.isEmpty
         with get() =
             (this.Title = None) &&
             (this.Description = None) &&
@@ -638,26 +638,26 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     //member this.FileName = ArcStudy.FileName
 
     /// Returns the count of registered assay *identifiers*. This is not necessarily the same as the count of registered assays, as not all identifiers correspond to an existing assay.
-    member this.RegisteredAssayIdentifierCount 
+    member this.RegisteredAssayIdentifierCount
         with get() = this.RegisteredAssayIdentifiers.Count
 
     /// Returns the count of registered assays. This is not necessarily the same as the count of registered assay *identifiers*, as not all identifiers correspond to an existing assay.
-    member this.RegisteredAssayCount 
+    member this.RegisteredAssayCount
         with get() = this.RegisteredAssays.Count
 
     /// Returns all assays registered in this study, that correspond to an existing assay object in the associated investigation.
     member this.RegisteredAssays
-        with get(): ResizeArray<ArcAssay> = 
+        with get(): ResizeArray<ArcAssay> =
             let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
-            this.RegisteredAssayIdentifiers 
+            this.RegisteredAssayIdentifiers
             |> Seq.choose inv.TryGetAssay
             |> ResizeArray
 
     /// Returns all registered assay identifiers that do not correspond to an existing assay object in the associated investigation.
     member this.VacantAssayIdentifiers
-        with get() = 
+        with get() =
             let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
-            this.RegisteredAssayIdentifiers 
+            this.RegisteredAssayIdentifiers
             |> Seq.filter (inv.ContainsAssay >> not)
             |> ResizeArray
 
@@ -667,7 +667,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     /// </summary>
     /// <param name="assay"></param>
     member this.AddRegisteredAssay(assay: ArcAssay) =
-        let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation 
+        let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
         inv.AddAssay(assay)
         inv.RegisterAssay(this.Identifier,assay.Identifier)
 
@@ -729,21 +729,21 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     /// <summary>
     /// Returns ArcAssays registered in study, or if no parent exists, initializies new ArcAssay from identifier.
     /// </summary>
-    member this.GetRegisteredAssaysOrIdentifier() = 
+    member this.GetRegisteredAssaysOrIdentifier() =
         // Two Options:
         // 1. Init new assays with only identifier. This is possible without ArcInvestigation parent.
         // 2. Get full assays from ArcInvestigation parent.
         match this.Investigation with
-        | Some i -> 
+        | Some i ->
             this.RegisteredAssayIdentifiers
-            |> ResizeArray.map (fun identifier -> 
+            |> ResizeArray.map (fun identifier ->
                 match i.TryGetAssay(identifier) with
                 | Some assay -> assay
                 | None -> ArcAssay.init(identifier)
             )
         | None ->
-            this.RegisteredAssayIdentifiers 
-            |> ResizeArray.map (fun identifier -> ArcAssay.init(identifier))   
+            this.RegisteredAssayIdentifiers
+            |> ResizeArray.map (fun identifier -> ArcAssay.init(identifier))
 
     /// <summary>
     /// Returns ArcAssays registered in study, or if no parent exists, initializies new ArcAssay from identifier.
@@ -777,7 +777,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         fun (study:ArcStudy) ->
             let c = study.Copy()
             c,c.InitTable(tableName, ?index=index)
-            
+
 
     // - Table API - //
     static member initTables(tableNames:seq<string>, ?index: int) =
@@ -847,7 +847,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     // Remark: This must stay `ArcTable -> unit` so name cannot be changed here.
     static member mapTableAt(index:int, updateFun: ArcTable -> unit) =
         fun (study:ArcStudy) ->
-            let newAssay = study.Copy()    
+            let newAssay = study.Copy()
             newAssay.MapTableAt(index, updateFun)
             newAssay
 
@@ -861,7 +861,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     // - Table API - //
     static member renameTableAt(index: int, newName: string) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
-            let newAssay = study.Copy()    
+            let newAssay = study.Copy()
             newAssay.RenameTableAt(index, newName)
             newAssay
 
@@ -873,7 +873,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Column CRUD API - //
-    static member addColumnAt(tableIndex:int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?columnIndex: int, ?forceReplace: bool) : ArcStudy -> ArcStudy = 
+    static member addColumnAt(tableIndex:int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?columnIndex: int, ?forceReplace: bool) : ArcStudy -> ArcStudy =
         fun (study: ArcStudy) ->
             let newAssay = study.Copy()
             newAssay.AddColumnAt(tableIndex, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
@@ -927,7 +927,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay.GetColumn(tableName, columnIndex)
 
     // - Row CRUD API - //
-    static member addRowAt(tableIndex:int, ?cells: ResizeArray<CompositeCell>, ?rowIndex: int) : ArcStudy -> ArcStudy = 
+    static member addRowAt(tableIndex:int, ?cells: ResizeArray<CompositeCell>, ?rowIndex: int) : ArcStudy -> ArcStudy =
         fun (study: ArcStudy) ->
             let newAssay = study.Copy()
             newAssay.AddRowAt(tableIndex, ?cells=cells, ?rowIndex=rowIndex)
@@ -1021,20 +1021,20 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         study
 
     /// <summary>
-    /// Updates given study from an investigation file against a study from a study file. Identifier will never be updated. 
+    /// Updates given study from an investigation file against a study from a study file. Identifier will never be updated.
     /// </summary>
     /// <param name="study">The study used for updating this study.</param>
     /// <param name="onlyReplaceExisting">If true, this will only update fields which are `Some` or non-empty lists. Default: **false**</param>
     member this.UpdateReferenceByStudyFile(study:ArcStudy,?onlyReplaceExisting : bool,?keepUnusedRefTables) =
         let onlyReplaceExisting = defaultArg onlyReplaceExisting false
         let updateAlways = onlyReplaceExisting |> not
-        if study.Title.IsSome || updateAlways then 
+        if study.Title.IsSome || updateAlways then
             this.Title <- study.Title
-        if study.Description.IsSome || updateAlways then 
+        if study.Description.IsSome || updateAlways then
             this.Description <- study.Description
-        if study.SubmissionDate.IsSome || updateAlways then 
+        if study.SubmissionDate.IsSome || updateAlways then
             this.SubmissionDate <- study.SubmissionDate
-        if study.PublicReleaseDate.IsSome || updateAlways then 
+        if study.PublicReleaseDate.IsSome || updateAlways then
             this.PublicReleaseDate <- study.PublicReleaseDate
         if study.Publications.Count <> 0 || updateAlways then
             this.Publications <- study.Publications
@@ -1056,7 +1056,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         let t = this.Title = other.Title
         let d = this.Description = other.Description
         let sd = this.SubmissionDate = other.SubmissionDate
-        let prd = this.PublicReleaseDate = other.PublicReleaseDate 
+        let prd = this.PublicReleaseDate = other.PublicReleaseDate
         let dm = this.DataMap = other.DataMap
         let pub = Seq.compare this.Publications other.Publications
         let con = Seq.compare this.Contacts other.Contacts
@@ -1077,7 +1077,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
 
     // Use this for better print debugging and better unit test output
     override this.ToString() =
-        sprintf 
+        sprintf
             """ArcStudy {
     Identifier = %A,
     Title = %A,
@@ -1106,11 +1106,11 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     // custom check
     override this.Equals other =
         match other with
-        | :? ArcStudy as s -> 
+        | :? ArcStudy as s ->
             this.StructurallyEquals(s)
         | _ -> false
 
-    override this.GetHashCode() = 
+    override this.GetHashCode() =
         [|
             box this.Identifier
             HashCodes.boxHashOption this.Title
@@ -1125,10 +1125,10 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             HashCodes.boxHashSeq this.RegisteredAssayIdentifiers
             HashCodes.boxHashSeq this.Comments
         |]
-        |> HashCodes.boxHashArray 
+        |> HashCodes.boxHashArray
         |> fun x -> x :?> int
 
-    member this.GetLightHashCode() = 
+    member this.GetLightHashCode() =
         [|
             box this.Identifier
             HashCodes.boxHashOption this.Title
@@ -1142,10 +1142,10 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             HashCodes.boxHashSeq this.RegisteredAssayIdentifiers
             HashCodes.boxHashSeq this.Comments
         |]
-        |> HashCodes.boxHashArray 
+        |> HashCodes.boxHashArray
         |> fun x -> x :?> int
 
-
+[<AttachMembers>]
 type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
 
     let mutable identifier : string =
@@ -1184,7 +1184,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     member this.StaticHash with get() = staticHash and set(s) = staticHash <- s
 
     static member init(identifier : string) = ArcWorkflow(identifier = identifier)
-    static member create(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
+    static member create(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
         ArcWorkflow(identifier = identifier, ?title = title, ?description = description, ?subWorkflowIdentifiers = subWorkflowIdentifiers, ?workflowType = workflowType, ?uri = uri, ?version = version, ?parameters = parameters, ?components = components, ?datamap = datamap, ?contacts = contacts, ?comments = comments)
 
     static member make (identifier : string) (title : string option) (description : string option) (workflowType : OntologyAnnotation option) (uri : string option) (version : string option) (subWorkflowIdentifiers : ResizeArray<string>) (parameters : ResizeArray<Process.ProtocolParameter>) (components : ResizeArray<Process.Component>) (datamap : DataMap option) (contacts : ResizeArray<Person>) (comments : ResizeArray<Comment>) =
@@ -1193,26 +1193,26 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     static member FileName = ARCtrl.ArcPathHelper.RunFileName
 
     /// Returns the count of registered subWorkflow *identifiers*. This is not necessarily the same as the count of registered subWorkflows, as not all identifiers correspond to an existing subWorkflow.
-    member this.SubWorkflowIdentifiersCount 
+    member this.SubWorkflowIdentifiersCount
         with get() = this.SubWorkflowIdentifiers.Count
 
     /// Returns the count of registered subWorkflows. This is not necessarily the same as the count of registered subWorkflow *identifiers*, as not all identifiers correspond to an existing subWorkflow.
-    member this.SubWorkflowCount 
+    member this.SubWorkflowCount
         with get() = this.SubWorkflows.Count
 
     /// Returns all subWorkflows registered in this workflow, that correspond to an existing subWorkflow object in the associated investigation.
     member this.SubWorkflows
-        with get(): ResizeArray<ArcWorkflow> = 
+        with get(): ResizeArray<ArcWorkflow> =
             let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
-            this.SubWorkflowIdentifiers 
+            this.SubWorkflowIdentifiers
             |> Seq.choose inv.TryGetWorkflow
             |> ResizeArray
 
     /// Returns all registered subWorkflow identifiers that do not correspond to an existing subWorkflow object in the associated investigation.
     member this.VacantSubWorkflowIdentifiers
-        with get() = 
+        with get() =
             let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
-            this.SubWorkflowIdentifiers 
+            this.SubWorkflowIdentifiers
             |> Seq.filter (inv.ContainsWorkflow >> not)
             |> ResizeArray
 
@@ -1222,7 +1222,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     /// </summary>
     /// <param name="subWorkflow"></param>
     member this.AddSubWorkflow(subWorkflow: ArcWorkflow) =
-        let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation 
+        let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
         inv.AddWorkflow(subWorkflow)
 
     static member addSubWorkflow(subWorkflow: ArcWorkflow) =
@@ -1283,20 +1283,20 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     /// <summary>
     /// Returns ArcSubWorkflows registered in workflow, or if no parent exists, initializies new ArcSubWorkflow from identifier.
     /// </summary>
-    member this.GetRegisteredSubWorkflowsOrIdentifier() = 
+    member this.GetRegisteredSubWorkflowsOrIdentifier() =
         // Two Options:
         // 1. Init new subWorkflows with only identifier. This is possible without ArcInvestigation parent.
         // 2. Get full subWorkflows from ArcInvestigation parent.
         match this.Investigation with
-        | Some i -> 
+        | Some i ->
             this.SubWorkflowIdentifiers
-            |> ResizeArray.map (fun identifier -> 
+            |> ResizeArray.map (fun identifier ->
                 match i.TryGetWorkflow(identifier) with
                 | Some subWorkflow -> subWorkflow
                 | None -> ArcWorkflow.init(identifier)
             )
         | None ->
-            this.SubWorkflowIdentifiers 
+            this.SubWorkflowIdentifiers
             |> ResizeArray.map (fun identifier -> ArcWorkflow.init(identifier))
 
 
@@ -1366,7 +1366,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
 
     // Use this for better print debugging and better unit test output
     override this.ToString() =
-        sprintf 
+        sprintf
             """ArcWorkflow {
     Identifier = %A,
     Title = %A,
@@ -1396,11 +1396,11 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     // custom check
     override this.Equals other =
         match other with
-        | :? ArcWorkflow as s -> 
+        | :? ArcWorkflow as s ->
             this.StructurallyEquals(s)
         | _ -> false
 
-    override this.GetHashCode() = 
+    override this.GetHashCode() =
         [|
             box this.Identifier
             HashCodes.boxHashOption this.Title
@@ -1418,7 +1418,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
         |> HashCodes.boxHashArray
         |> fun x -> x :?> int
 
-    member this.GetLightHashCode() = 
+    member this.GetLightHashCode() =
         [|
             box this.Identifier
             HashCodes.boxHashOption this.Title
@@ -1438,7 +1438,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
 
 
 [<AttachMembers>]
-type ArcRun(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
+type ArcRun(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
     inherit ArcTables(defaultArg tables <| ResizeArray())
 
     let performers = defaultArg performers <| ResizeArray()
@@ -1476,10 +1476,10 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
 
     static member init (identifier : string) = ArcRun(identifier)
-    static member create (identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
+    static member create (identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
         ArcRun(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?workflowIdentifiers = workflowIdentifiers, ?tables =tables, ?datamap = datamap, ?performers = performers, ?comments = comments)
 
-    static member make 
+    static member make
         (identifier : string)
         (title : string option)
         (description : string option)
@@ -1490,7 +1490,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
         (tables : ResizeArray<ArcTable>)
         (datamap : DataMap option)
         (performers : ResizeArray<Person>)
-        (comments : ResizeArray<Comment>) = 
+        (comments : ResizeArray<Comment>) =
         ArcRun(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, workflowIdentifiers = workflowIdentifiers, tables =tables, ?datamap = datamap, performers = performers, comments = comments)
 
     static member FileName = ARCtrl.ArcPathHelper.RunFileName
@@ -1499,12 +1499,12 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     member this.WorkflowIdentifierCount
         with get() = this.WorkflowIdentifiers.Count
 
-    member this.WorkflowCount 
+    member this.WorkflowCount
         with get() = this.Workflows.Count
 
     /// Returns all workflows registered in this run, that correspond to an existing workflow object in the associated investigation.
     member this.Workflows
-        with get(): ResizeArray<ArcWorkflow> = 
+        with get(): ResizeArray<ArcWorkflow> =
             let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
             this.WorkflowIdentifiers
             |> Seq.choose inv.TryGetWorkflow
@@ -1512,9 +1512,9 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
 
     /// Returns all registered workflow identifiers that do not correspond to an existing workflow object in the associated investigation.
     member this.VacantWorkflowIdentifiers
-        with get() = 
+        with get() =
             let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
-            this.WorkflowIdentifiers 
+            this.WorkflowIdentifiers
             |> Seq.filter (inv.ContainsWorkflow >> not)
             |> ResizeArray
 
@@ -1537,7 +1537,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
         fun (run:ArcRun) ->
             let c = run.Copy()
             c,c.InitTable(tableName, ?index=index)
-            
+
     // - Table API - //
     static member initTables(tableNames:seq<string>, ?index: int) =
         fun (run:ArcRun) ->
@@ -1604,7 +1604,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     // - Table API - //
     static member mapTableAt(index:int, updateFun: ArcTable -> unit) =
         fun (run:ArcRun) ->
-            let newRun = run.Copy()    
+            let newRun = run.Copy()
             newRun.MapTableAt(index, updateFun)
             newRun
 
@@ -1618,7 +1618,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     // - Table API - //
     static member renameTableAt(index: int, newName: string) : ArcRun -> ArcRun =
         fun (run:ArcRun) ->
-            let newRun = run.Copy()    
+            let newRun = run.Copy()
             newRun.RenameTableAt(index, newName)
             newRun
 
@@ -1630,7 +1630,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             newRun
 
     // - Column CRUD API - //
-    static member addColumnAt(tableIndex:int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?columnIndex: int, ?forceReplace: bool) : ArcRun -> ArcRun = 
+    static member addColumnAt(tableIndex:int, header: CompositeHeader, ?cells: ResizeArray<CompositeCell>, ?columnIndex: int, ?forceReplace: bool) : ArcRun -> ArcRun =
         fun (run: ArcRun) ->
             let newRun = run.Copy()
             newRun.AddColumnAt(tableIndex, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
@@ -1684,7 +1684,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             newRun.GetColumn(tableName, columnIndex)
 
     // - Row CRUD API - //
-    static member addRowAt(tableIndex:int, ?cells: ResizeArray<CompositeCell>, ?rowIndex: int) : ArcRun -> ArcRun = 
+    static member addRowAt(tableIndex:int, ?cells: ResizeArray<CompositeCell>, ?rowIndex: int) : ArcRun -> ArcRun =
         fun (run: ArcRun) ->
             let newRun = run.Copy()
             newRun.AddRowAt(tableIndex, ?cells=cells, ?rowIndex=rowIndex)
@@ -1775,11 +1775,11 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             this.Title <- run.Title
         if run.Description.IsSome || updateAlways then
             this.Description <- run.Description
-        if run.MeasurementType.IsSome || updateAlways then 
+        if run.MeasurementType.IsSome || updateAlways then
             this.MeasurementType <- run.MeasurementType
-        if run.TechnologyType.IsSome || updateAlways then 
+        if run.TechnologyType.IsSome || updateAlways then
             this.TechnologyType <- run.TechnologyType
-        if run.TechnologyPlatform.IsSome || updateAlways then 
+        if run.TechnologyPlatform.IsSome || updateAlways then
             this.TechnologyPlatform <- run.TechnologyPlatform
         if run.WorkflowIdentifiers.Count <> 0 || updateAlways then
             let s = ArcTypesAux.updateAppendResizeArray appendSequences this.WorkflowIdentifiers run.WorkflowIdentifiers
@@ -1798,7 +1798,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
 
     // Use this for better print debugging and better unit test output
     override this.ToString() =
-        sprintf 
+        sprintf
             """ArcRun({
     Identifier = "%s",
     Title = %A,
@@ -1856,12 +1856,12 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     // custom check
     override this.Equals other =
         match other with
-        | :? ArcRun as run -> 
+        | :? ArcRun as run ->
             this.StructurallyEquals(run)
         | _ -> false
 
     // Hashcode without Datamap
-    member this.GetLightHashCode() = 
+    member this.GetLightHashCode() =
         [|
             box this.Identifier
             HashCodes.boxHashOption this.Title
@@ -1874,10 +1874,10 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             HashCodes.boxHashSeq this.Performers
             HashCodes.boxHashSeq this.Comments
         |]
-        |> HashCodes.boxHashArray 
+        |> HashCodes.boxHashArray
         |> fun x -> x :?> int
 
-    override this.GetHashCode() = 
+    override this.GetHashCode() =
         [|
             box this.Identifier
             HashCodes.boxHashOption this.Title
@@ -1891,24 +1891,24 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             HashCodes.boxHashSeq this.Performers
             HashCodes.boxHashSeq this.Comments
         |]
-        |> HashCodes.boxHashArray 
+        |> HashCodes.boxHashArray
         |> fun x -> x :?> int
 
 
 [<AttachMembers>]
-type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?workflows : ResizeArray<ArcWorkflow>, ?runs : ResizeArray<ArcRun>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks) as this = 
+type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?workflows : ResizeArray<ArcWorkflow>, ?runs : ResizeArray<ArcRun>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks) as this =
 
     let ontologySourceReferences = defaultArg ontologySourceReferences <| ResizeArray()
     let publications = defaultArg publications <| ResizeArray()
     let contacts = defaultArg contacts <| ResizeArray()
-    let assays = 
+    let assays =
         let ass = defaultArg assays (ResizeArray())
-        for a in ass do 
+        for a in ass do
             a.Investigation <- Some this
         ass
-    let studies = 
+    let studies =
         let sss = defaultArg studies (ResizeArray())
-        for s in sss do 
+        for s in sss do
             s.Investigation <- Some this
         sss
     let workflows =
@@ -1963,24 +1963,24 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     static member FileName = ARCtrl.ArcPathHelper.InvestigationFileName
 
     static member init(identifier: string) = ArcInvestigation identifier
-    static member create(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?workflows : ResizeArray<ArcWorkflow>, ?runs : ResizeArray<ArcRun>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks) = 
+    static member create(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?workflows : ResizeArray<ArcWorkflow>, ?runs : ResizeArray<ArcRun>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks) =
         ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ?ontologySourceReferences = ontologySourceReferences, ?publications = publications, ?contacts = contacts, ?assays = assays, ?studies = studies, ?workflows = workflows, ?runs = runs, ?registeredStudyIdentifiers = registeredStudyIdentifiers, ?comments = comments, ?remarks = remarks)
 
     static member make (identifier : string) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReferences) (publications) (contacts) (assays: ResizeArray<ArcAssay>) (studies : ResizeArray<ArcStudy>) (workflows : ResizeArray<ArcWorkflow>) (runs : ResizeArray<ArcRun>) (registeredStudyIdentifiers : ResizeArray<string>) (comments : ResizeArray<Comment>) (remarks) : ArcInvestigation =
         ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ontologySourceReferences = ontologySourceReferences, publications = publications, contacts = contacts, assays = assays, studies = studies, workflows = workflows, runs = runs, registeredStudyIdentifiers = registeredStudyIdentifiers, comments = comments, remarks = remarks)
 
-    member this.AssayCount 
+    member this.AssayCount
         with get() = this.Assays.Count
 
-    member this.AssayIdentifiers 
+    member this.AssayIdentifiers
         with get(): string [] = this.Assays |> Seq.map (fun (x:ArcAssay) -> x.Identifier) |> Array.ofSeq
 
-    member this.UnregisteredAssays 
-        with get(): ResizeArray<ArcAssay> = 
-            this.Assays 
+    member this.UnregisteredAssays
+        with get(): ResizeArray<ArcAssay> =
+            this.Assays
             |> ResizeArray.filter (fun a ->
                 this.RegisteredStudies
-                |> Seq.exists (fun s -> 
+                |> Seq.exists (fun s ->
                     Seq.exists (fun i -> i = a.Identifier) s.RegisteredAssayIdentifiers
                 )
                 |> not
@@ -2094,31 +2094,76 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             newInv
 
     /// <summary>
-    /// Renames an assay in the whole investigation  
+    /// Renames an assay in the whole investigation
     /// </summary>
     /// <param name="oldIdentifier">Identifier of the assay to be renamed</param>
     /// <param name="newIdentifier">Identifier to which the assay should be renamed to</param>
-    member this.RenameAssay(oldIdentifier: string, newIdentifier: string) =        
-        this.Assays 
-        |> Seq.iter (fun a -> 
-            if a.Identifier = oldIdentifier then 
+    member this.RenameAssay(oldIdentifier: string, newIdentifier: string) =
+        this.Assays
+        |> Seq.iter (fun a ->
+            if a.Identifier = oldIdentifier then
                 a.Identifier <- newIdentifier
         )
         this.Studies
         |> Seq.iter (fun s ->
-            let index = 
-                s.RegisteredAssayIdentifiers 
+            let index =
+                s.RegisteredAssayIdentifiers
                 |> Seq.tryFindIndex (fun ai -> ai = oldIdentifier)
             match index with
             | None -> ()
-            | Some index -> 
+            | Some index ->
                 s.RegisteredAssayIdentifiers.[index] <- newIdentifier
         )
 
-    static member renameAssay(oldIdentifier: string, newIdentifier: string) =       
+    static member renameAssay(oldIdentifier: string, newIdentifier: string) =
         fun (inv: ArcInvestigation) ->
             let newInv = inv.Copy()
             newInv.RenameAssay(oldIdentifier,newIdentifier)
+            newInv
+
+    /// <summary>
+    /// Renames an run in the whole investigation
+    /// </summary>
+    /// <param name="oldIdentifier">Identifier of the run to be renamed</param>
+    /// <param name="newIdentifier">Identifier to which the run should be renamed to</param>
+    member this.RenameRun(oldIdentifier: string, newIdentifier: string) =
+        this.Runs
+        |> Seq.iter (fun a ->
+            if a.Identifier = oldIdentifier then
+                a.Identifier <- newIdentifier
+        )
+
+    static member renameRun(oldIdentifier: string, newIdentifier: string) =
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.RenameRun(oldIdentifier,newIdentifier)
+            newInv
+
+    /// <summary>
+    /// Renames an workflow in the whole investigation
+    /// </summary>
+    /// <param name="oldIdentifier">Identifier of the workflow to be renamed</param>
+    /// <param name="newIdentifier">Identifier to which the workflow should be renamed to</param>
+    member this.RenameWorkflow(oldIdentifier: string, newIdentifier: string) =
+        this.Workflows
+        |> Seq.iter (fun w ->
+            if w.Identifier = oldIdentifier then
+                w.Identifier <- newIdentifier
+            match w.SubWorkflowIdentifiers |> Seq.tryFindIndex (fun subId -> subId = oldIdentifier) with
+            | None -> ()
+            | Some i -> w.SubWorkflowIdentifiers.[i] <- newIdentifier
+        )
+        this.Runs
+        |> Seq.iter (fun r ->
+            match r.WorkflowIdentifiers |> Seq.tryFindIndex (fun wId -> wId = oldIdentifier) with
+            | None -> ()
+            | Some i -> r.WorkflowIdentifiers.[i] <- newIdentifier
+        )
+
+    static member renameWorkflow(oldIdentifier: string, newIdentifier: string) =
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.RenameWorkflow(oldIdentifier,newIdentifier)
             newInv
 
     // - Assay API - CRUD //
@@ -2182,45 +2227,45 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         fun (inv: ArcInvestigation) ->
             let newInvestigation = inv.Copy()
             newInvestigation.TryGetAssay(assayIdentifier)
-    
+
     member this.ContainsAssay(assayIdentifier: string) =
         this.Assays
         |> Seq.exists (fun a -> a.Identifier = assayIdentifier)
 
     static member containsAssay (assayIdentifier: string) : ArcInvestigation -> bool =
-        fun (inv: ArcInvestigation) ->            
+        fun (inv: ArcInvestigation) ->
             inv.ContainsAssay(assayIdentifier)
 
     /// Returns the count of registered study *identifiers*. This is not necessarily the same as the count of registered studies, as not all identifiers correspond to an existing study object.
-    member this.RegisteredStudyIdentifierCount 
+    member this.RegisteredStudyIdentifierCount
         with get() = this.RegisteredStudyIdentifiers.Count
 
     /// Returns all studies registered in this investigation, that correspond to an existing study object investigation.
-    member this.RegisteredStudies 
-        with get() : ResizeArray<ArcStudy> = 
-            this.RegisteredStudyIdentifiers 
+    member this.RegisteredStudies
+        with get() : ResizeArray<ArcStudy> =
+            this.RegisteredStudyIdentifiers
             |> ResizeArray.choose (fun identifier -> this.TryGetStudy identifier)
 
     /// Returns the count of registered studies. This is not necessarily the same as the count of registered study *identifiers*, as not all identifiers correspond to an existing study object.
-    member this.RegisteredStudyCount 
+    member this.RegisteredStudyCount
         with get() = this.RegisteredStudies.Count
 
     /// Returns all registered study identifiers that do not correspond to an existing study object in the investigation.
     member this.VacantStudyIdentifiers
-        with get() = 
-            this.RegisteredStudyIdentifiers 
+        with get() =
+            this.RegisteredStudyIdentifiers
             |> ResizeArray.filter (this.ContainsStudy >> not)
 
-    member this.StudyCount 
+    member this.StudyCount
         with get() = this.Studies.Count
 
     member this.StudyIdentifiers
         with get() = this.Studies |> Seq.map (fun (x:ArcStudy) -> x.Identifier) |> Seq.toArray
 
-    member this.UnregisteredStudies 
-        with get() = 
-            this.Studies 
-            |> ResizeArray.filter (fun s -> 
+    member this.UnregisteredStudies
+        with get() =
+            this.Studies
+            |> ResizeArray.filter (fun s ->
                 this.RegisteredStudyIdentifiers
                 |> Seq.exists ((=) s.Identifier)
                 |> not
@@ -2250,9 +2295,9 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             copy,copy.InitStudy(studyIdentifier)
 
     // - Study API - CRUD //
-    member this.RegisterStudy (studyIdentifier : string) = 
-        ArcTypesAux.SanityChecks.validateExistingStudyRegisterInInvestigation studyIdentifier this.StudyIdentifiers 
-        ArcTypesAux.SanityChecks.validateUniqueRegisteredStudyIdentifiers studyIdentifier this.RegisteredStudyIdentifiers       
+    member this.RegisterStudy (studyIdentifier : string) =
+        ArcTypesAux.SanityChecks.validateExistingStudyRegisterInInvestigation studyIdentifier this.StudyIdentifiers
+        ArcTypesAux.SanityChecks.validateUniqueRegisteredStudyIdentifiers studyIdentifier this.RegisteredStudyIdentifiers
         this.RegisteredStudyIdentifiers.Add(studyIdentifier)
 
     static member registerStudy(studyIdentifier: string) =
@@ -2262,7 +2307,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             copy
 
     // - Study API - CRUD //
-    member this.AddRegisteredStudy (study: ArcStudy) = 
+    member this.AddRegisteredStudy (study: ArcStudy) =
         this.AddStudy study
         this.RegisterStudy(study.Identifier)
 
@@ -2353,10 +2398,10 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     /// </summary>
     /// <param name="oldIdentifier">Identifier of the study to be renamed</param>
     /// <param name="newIdentifier">Identifier to which the study should be renamed to</param>
-    member this.RenameStudy(oldIdentifier: string, newIdentifier: string) =        
-        this.Studies 
-        |> Seq.iter (fun s -> 
-            if s.Identifier = oldIdentifier then 
+    member this.RenameStudy(oldIdentifier: string, newIdentifier: string) =
+        this.Studies
+        |> Seq.iter (fun s ->
+            if s.Identifier = oldIdentifier then
                 s.Identifier <- newIdentifier
         )
         let index =
@@ -2371,7 +2416,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     /// </summary>
     /// <param name="oldIdentifier">Identifier of the study to be renamed</param>
     /// <param name="newIdentifier">Identifier to which the study should be renamed to</param>
-    static member renameStudy(oldIdentifier: string, newIdentifier: string) =       
+    static member renameStudy(oldIdentifier: string, newIdentifier: string) =
         fun (inv: ArcInvestigation) ->
             let newInv = inv.Copy()
             newInv.RenameStudy(oldIdentifier,newIdentifier)
@@ -2432,9 +2477,9 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
 
     member this.TryGetStudy(studyIdentifier: string) : ArcStudy option =
         this.Studies |> Seq.tryFind (fun s -> s.Identifier = studyIdentifier)
-        
-    static member tryGetStudy(studyIdentifier : string) : ArcInvestigation -> ArcStudy option = 
-        fun (inv: ArcInvestigation) -> 
+
+    static member tryGetStudy(studyIdentifier : string) : ArcInvestigation -> ArcStudy option =
+        fun (inv: ArcInvestigation) ->
             let newInv = inv.Copy()
             newInv.TryGetStudy(studyIdentifier)
 
@@ -2443,7 +2488,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         |> Seq.exists (fun s -> s.Identifier = studyIdentifier)
 
     static member containsStudy (studyIdentifier: string) : ArcInvestigation -> bool =
-        fun (inv: ArcInvestigation) ->            
+        fun (inv: ArcInvestigation) ->
             inv.ContainsStudy(studyIdentifier)
 
     // - Study API - CRUD //
@@ -2558,6 +2603,21 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     member this.DeleteWorkflow(workflowIdentifier: string) =
         let index = this.Workflows.FindIndex(fun w -> w.Identifier = workflowIdentifier)
         this.DeleteWorkflowAt(index)
+        this.Workflows
+        |> Seq.iter (fun w ->
+            match w.SubWorkflowIdentifiers |> Seq.tryFindIndex (fun swi -> swi = workflowIdentifier) with
+            | None -> ()
+            | Some swiIndex ->
+                w.SubWorkflowIdentifiers.RemoveAt(swiIndex)
+        )
+        this.Runs
+        |> Seq.iter (fun r ->
+            match r.WorkflowIdentifiers |> Seq.tryFindIndex (fun wi -> wi = workflowIdentifier) with
+            | None -> ()
+            | Some wiIndex ->
+                r.WorkflowIdentifiers.RemoveAt(wiIndex)
+        )
+
 
     static member deleteWorkflow(workflowIdentifier: string) =
         fun (inv: ArcInvestigation) ->
@@ -2600,7 +2660,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             inv.ContainsWorkflow(workflowIdentifier)
 
     member this.SetWorkflowAt(index: int, workflow: ArcWorkflow) =
-        ArcTypesAux.SanityChecks.validateUniqueWorkflowIdentifier workflow this.Workflows
+        ArcTypesAux.SanityChecks.validateUniqueWorkflowIdentifier workflow (this.Workflows |> Seq.removeAt index)
         workflow.Investigation <- Some this
         this.Workflows.[index] <- workflow
 
@@ -2709,7 +2769,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             inv.ContainsRun(runIdentifier)
 
     member this.SetRunAt(index: int, run: ArcRun) =
-        ArcTypesAux.SanityChecks.validateUniqueRunIdentifier run this.Runs
+        ArcTypesAux.SanityChecks.validateUniqueRunIdentifier run (this.Runs |> Seq.removeAt index)
         run.Investigation <- Some this
         this.Runs.[index] <- run
 
@@ -2730,7 +2790,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             copy
 
     /// <summary>
-    /// Returns all fully distinct Contacts/Performers from assays/studies/investigation. 
+    /// Returns all fully distinct Contacts/Performers from assays/studies/investigation.
     /// </summary>
     member this.GetAllPersons() : Person [] =
         let persons = ResizeArray()
@@ -2744,7 +2804,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         |> Array.distinct
 
     /// <summary>
-    /// Returns all fully distinct Contacts/Performers from assays/studies/investigation unfiltered. 
+    /// Returns all fully distinct Contacts/Performers from assays/studies/investigation unfiltered.
     /// </summary>
     member this.GetAllPublications() : Publication [] =
         let pubs = ResizeArray()
@@ -2767,7 +2827,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             let copy = inv.Copy()
             copy.DeregisterMissingAssays()
             copy
-    
+
     /// Updates the IOtypes of the IO columns (Input, Output) across all tables in the investigation if possible.
     ///
     /// If an entity (Row Value of IO Column) with the same name as an entity with a higher IOType specifity is found, the IOType of the entity with the lower IOType specificity is updated.
@@ -2778,7 +2838,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     ///
     /// E.g. Sample is equally specific to RawDataFile.
     member this.UpdateIOTypeByEntityID() =
-        let ioMap = 
+        let ioMap =
             [
                 for study in this.Studies do
                     yield! study.Tables
@@ -2848,13 +2908,13 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     //    let onlyReplaceExisting = defaultArg onlyReplaceExisting false
     //    let appendSequences = defaultArg appendSequences false
     //    let updateAlways = onlyReplaceExisting |> not
-    //    if inv.Title.IsSome || updateAlways then 
+    //    if inv.Title.IsSome || updateAlways then
     //        this.Title <- inv.Title
-    //    if inv.Description.IsSome || updateAlways then 
+    //    if inv.Description.IsSome || updateAlways then
     //        this.Description <- inv.Description
-    //    if inv.SubmissionDate.IsSome || updateAlways then 
+    //    if inv.SubmissionDate.IsSome || updateAlways then
     //        this.SubmissionDate <- inv.SubmissionDate
-    //    if inv.PublicReleaseDate.IsSome || updateAlways then 
+    //    if inv.PublicReleaseDate.IsSome || updateAlways then
     //        this.PublicReleaseDate <- inv.PublicReleaseDate
     //    if inv.OntologySourceReferences.Length <> 0 || updateAlways then
     //        let s = ArcTypesAux.updateAppendArray appendSequences this.OntologySourceReferences inv.OntologySourceReferences
@@ -2886,7 +2946,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         let t = this.Title = other.Title
         let d = this.Description = other.Description
         let sd = this.SubmissionDate = other.SubmissionDate
-        let prd = this.PublicReleaseDate = other.PublicReleaseDate 
+        let prd = this.PublicReleaseDate = other.PublicReleaseDate
         let pub = Seq.compare this.Publications other.Publications
         let con = Seq.compare this.Contacts other.Contacts
         let osr = Seq.compare this.OntologySourceReferences other.OntologySourceReferences
@@ -2910,7 +2970,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
 
     // Use this for better print debugging and better unit test output
     override this.ToString() =
-        sprintf 
+        sprintf
             """ArcInvestigation {
     Identifier = %A,
     Title = %A,
@@ -2947,11 +3007,11 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     // custom check
     override this.Equals other =
         match other with
-        | :? ArcInvestigation as i -> 
+        | :? ArcInvestigation as i ->
             this.StructurallyEquals(i)
         | _ -> false
 
-    override this.GetHashCode() = 
+    override this.GetHashCode() =
         [|
             box this.Identifier
             HashCodes.boxHashOption this.Title
@@ -2969,7 +3029,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             HashCodes.boxHashSeq this.Comments
             HashCodes.boxHashSeq this.Remarks
         |]
-        |> HashCodes.boxHashArray 
+        |> HashCodes.boxHashArray
         |> fun x -> x :?> int
 
     member this.GetLightHashCode() =
@@ -2986,5 +3046,5 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             HashCodes.boxHashSeq this.Comments
             HashCodes.boxHashSeq this.Remarks
         |]
-        |> HashCodes.boxHashArray 
+        |> HashCodes.boxHashArray
         |> fun x -> x :?> int
