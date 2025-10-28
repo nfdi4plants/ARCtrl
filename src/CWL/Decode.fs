@@ -53,6 +53,12 @@ module Decode =
             outputBinding
         )
 
+    let outputSourceDecoder: (YAMLiciousTypes.YAMLElement -> string option) =
+        Decode.object(fun get ->
+            let outputSource = get.Optional.Field "outputSource" Decode.string
+            outputSource
+        )
+
     /// Decode a YAMLElement into a Dirent
     let direntDecoder: (YAMLiciousTypes.YAMLElement -> CWLType) =
         Decode.object (fun get ->
@@ -142,13 +148,7 @@ module Decode =
                 for key in dict.Keys do
                     let value = dict.[key]
                     let outputBinding = outputBindingDecoder value
-                    let outputSource =
-                        match value with
-                        | YAMLElement.Object entries ->
-                            entries
-                            |> List.tryPick (function | YAMLElement.Mapping (k,v) when k.Value = "outputSource" -> Some v | _ -> None)
-                            |> Option.bind (function | YAMLElement.Value sv -> Some sv.Value | _ -> None)
-                        | _ -> None
+                    let outputSource = outputSourceDecoder value
                     let cwlType =
                         match value with
                         | YAMLElement.Object [YAMLElement.Value v] -> cwlTypeStringMatcher v.Value get |> fst

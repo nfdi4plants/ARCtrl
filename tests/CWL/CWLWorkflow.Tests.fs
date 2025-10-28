@@ -100,6 +100,7 @@ let testCWLWorkflowDescription =
                 Expect.equal actual.[i].Name expected.[i].Name ""
                 Expect.equal actual.[i].OutputBinding expected.[i].OutputBinding ""
                 Expect.equal actual.[i].Type_ expected.[i].Type_ ""
+                Expect.equal actual.[i].OutputSource expected.[i].OutputSource ""
     ]
 
 let main = 
