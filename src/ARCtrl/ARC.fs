@@ -214,11 +214,6 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         this.GetAssayRemoveContracts(assayIdentifier)
         |> fullFillContractBatchAsync arcPath
 
-    member this.TryRemoveAssayAsync(arcPath : string, assayIdentifier: string) =
-        this.GetAssayRemoveContracts(assayIdentifier)
-        |> fullFillContractBatchAsync arcPath
-
-
     member this.GetAssayRenameContracts(oldAssayIdentifier: string, newAssayIdentifier: string) =
         if this.AssayIdentifiers |> Seq.contains oldAssayIdentifier |> not then
             failwith "ARC does not contain assay with given name"

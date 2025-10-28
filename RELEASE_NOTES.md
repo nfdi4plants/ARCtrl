@@ -1,3 +1,7 @@
+### 3.0.0-beta.8+1e8ec499 (Released 2025-10-28)
+* Bugfixes:
+    * [[#1e8ec499](https://github.com/nfdi4plants/ARCtrl/commit/1e8ec499bdcd188a1449afd96e453504e1bc2de7)] Apply several hotfixes around workflow and run :bug:
+
 ### 3.0.0-beta.7+e314b7b2 (Released 2025-10-27)
 * Additions:
     * [[#e314b7b2](https://github.com/nfdi4plants/ARCtrl/commit/e314b7b2483a4f3e2de2a1c6926d2d883419fd22)] bump to 3.0.0-beta.6
