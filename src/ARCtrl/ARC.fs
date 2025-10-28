@@ -164,9 +164,9 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         this.SetFilePaths(filteredPaths)      
         [|
             assay.ToDeleteContract()
-            this.ToUpdateContract()
-            for s in studies do
-                s.ToUpdateContract()
+            yield! this.GetUpdateContracts()
+            //for s in studies do
+            //    s.ToUpdateContract()
         |]
 
     member this.GetRunRemoveContracts(runIdentifier: string) =
@@ -180,7 +180,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         this.SetFilePaths(filteredPaths)      
         [|
             run.ToDeleteContract()
-            this.ToUpdateContract()
+            yield! this.GetUpdateContracts()
         |]
 
     member this.GetWorkflowRemoveContracts(workflowIdentifier: string) =
@@ -194,17 +194,73 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         this.SetFilePaths(filteredPaths)      
         [|
             workflow.ToDeleteContract()
-            this.ToUpdateContract()
+            yield! this.GetUpdateContracts()
         |]
 
     member this.TryRemoveAssayAsync(arcPath : string, assayIdentifier: string) =
         this.GetAssayRemoveContracts(assayIdentifier)
         |> fullFillContractBatchAsync arcPath
 
+    member this.TryRemoveRunAsync(arcPath : string, runIdentifier: string) =
+        this.GetRunRemoveContracts(runIdentifier)
+        |> fullFillContractBatchAsync arcPath
+
+    member this.TryRemoveWorkflowAsync(arcPath : string, workflowIdentifier: string) =
+        this.GetWorkflowRemoveContracts(workflowIdentifier)
+        |> fullFillContractBatchAsync arcPath
+
+    member this.RemoveRunAsync(arcPath, runIdentifier) =
+        crossAsync {
+            let! result = this.TryRemoveRunAsync(arcPath, runIdentifier)
+            match result with
+            | Ok _ -> ()
+            | Error errors ->
+                let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+                failwithf "Could not remove run, failed with the following errors %s" appended
+        }
+
+    member this.RemoveWorkflowAsync(arcPath, workflowIdentifier) =
+        crossAsync {
+            let! result = this.TryRemoveWorkflowAsync(arcPath, workflowIdentifier)
+            match result with
+            | Ok _ -> ()
+            | Error errors ->
+                let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+                failwithf "Could not remove workflow, failed with the following errors %s" appended
+        }
+
+    member this.TryRenameRunAsync(arcPath : string, oldRunIdentifier: string, newRunIdentifier: string) =
+        this.GetRunRenameContracts(oldRunIdentifier,newRunIdentifier)
+        |> fullFillContractBatchAsync arcPath
+
+    member this.TryRenameWorkflowAsync(arcPath : string, oldWorkflowIdentifier: string, newWorkflowIdentifier: string) =
+        this.GetWorkflowRenameContracts(oldWorkflowIdentifier,newWorkflowIdentifier)
+        |> fullFillContractBatchAsync arcPath
+
+    member this.RenameRunAsync(arcPath, oldRunIdentifier, newRunIdentifier) =
+        crossAsync {
+            let! result = this.TryRenameRunAsync(arcPath, oldRunIdentifier, newRunIdentifier)
+            match result with
+            | Ok _ -> ()
+            | Error errors ->
+                let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+                failwithf "Could not rename run, failed with the following errors %s" appended
+        }
+
+    member this.RenameWorkflowAsync(arcPath, oldWorkflowIdentifier, newWorkflowIdentifier) =
+        crossAsync {
+            let! result = this.TryRenameWorkflowAsync(arcPath, oldWorkflowIdentifier, newWorkflowIdentifier)
+            match result with
+            | Ok _ -> ()
+            | Error errors ->
+                let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+                failwithf "Could not rename workflow, failed with the following errors %s" appended
+        }
+
     member this.GetAssayRenameContracts(oldAssayIdentifier: string, newAssayIdentifier: string) =
         if this.AssayIdentifiers |> Seq.contains oldAssayIdentifier |> not then
             failwith "ARC does not contain assay with given name"
-
+        // Why use base? -> to avoid calling overridden method in derived classes
         base.RenameAssay(oldAssayIdentifier,newAssayIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
         let oldAssayFolderPath = getAssayFolderPath(oldAssayIdentifier)
@@ -219,8 +275,8 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     member this.GetRunRenameContracts(oldRunIdentifier: string, newRunIdentifier: string) =
         if this.RunIdentifiers |> Seq.contains oldRunIdentifier |> not then
             failwith "ARC does not contain run with given name"
-
-        this.RenameRun(oldRunIdentifier,newRunIdentifier)
+        // Why use base? -> to avoid calling overridden method in derived classes
+        base.RenameRun(oldRunIdentifier,newRunIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
         let oldPath = getRunFolderPath(oldRunIdentifier)
         let newPath = getRunFolderPath(newRunIdentifier)
@@ -231,14 +287,14 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             yield! this.GetUpdateContracts()
         |]
 
-    member this.GetWorkflowRenameContracts(oldRunIdentifier: string, newRunIdentifier: string) =
-        if this.WorkflowIdentifiers |> Seq.contains oldRunIdentifier |> not then
-            failwith "ARC does not contain run with given name"
-
-        this.RenameWorkflow(oldRunIdentifier,newRunIdentifier)
+    member this.GetWorkflowRenameContracts(oldWorkflowIdentifier: string, newWorkflowIdentifier: string) =
+        if this.WorkflowIdentifiers |> Seq.contains oldWorkflowIdentifier |> not then
+            failwith "ARC does not contain workflow with given name"
+        // Why use base? -> to avoid calling overridden method in derived classes
+        base.RenameWorkflow(oldWorkflowIdentifier,newWorkflowIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
-        let oldPath = getWorkflowFolderPath(oldRunIdentifier)
-        let newPath = getWorkflowFolderPath(newRunIdentifier)
+        let oldPath = getWorkflowFolderPath(oldWorkflowIdentifier)
+        let newPath = getWorkflowFolderPath(newWorkflowIdentifier)
         let renamedPaths = paths |> Array.map (fun p -> p.Replace(oldPath,newPath))
         this.SetFilePaths(renamedPaths)
         [|
@@ -268,6 +324,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     member this.GetStudyRenameContracts(oldStudyIdentifier: string, newStudyIdentifier: string) =
         if this.StudyIdentifiers |> Seq.contains oldStudyIdentifier |> not then
             failwith "ARC does not contain study with given name"
+        // Why use base? -> to avoid calling overridden method in derived classes
         base.RenameStudy(oldStudyIdentifier,newStudyIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
         let oldStudyFolderPath = getStudyFolderPath(oldStudyIdentifier)
@@ -373,6 +430,18 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
 
     member this.RenameStudy(arcPath, oldStudyIdentifier, newStudyIdentifier) =
         Async.RunSynchronously (this.RenameStudyAsync(arcPath, oldStudyIdentifier, newStudyIdentifier))
+
+    member this.RemoveRun(arcPath, runIdentifier) =
+        Async.RunSynchronously (this.RemoveRunAsync(arcPath, runIdentifier))
+
+    member this.RenameRun(arcPath, oldRunIdentifier, newRunIdentifier) =
+        Async.RunSynchronously (this.RenameRunAsync(arcPath, oldRunIdentifier, newRunIdentifier))
+
+    member this.RemoveWorkflow(arcPath, workflowIdentifier) =
+        Async.RunSynchronously (this.RemoveWorkflowAsync(arcPath, workflowIdentifier))
+
+    member this.RenameWorkflow(arcPath, oldWorkflowIdentifier, newWorkflowIdentifier) =
+        Async.RunSynchronously (this.RenameWorkflowAsync(arcPath, oldWorkflowIdentifier, newWorkflowIdentifier))
 
     static member load (arcPath) =
         Async.RunSynchronously (ARC.loadAsync arcPath)

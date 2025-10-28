@@ -2146,9 +2146,18 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     /// <param name="newIdentifier">Identifier to which the workflow should be renamed to</param>
     member this.RenameWorkflow(oldIdentifier: string, newIdentifier: string) =
         this.Workflows
-        |> Seq.iter (fun a ->
-            if a.Identifier = oldIdentifier then
-                a.Identifier <- newIdentifier
+        |> Seq.iter (fun w ->
+            if w.Identifier = oldIdentifier then
+                w.Identifier <- newIdentifier
+            match w.SubWorkflowIdentifiers |> Seq.tryFindIndex (fun subId -> subId = oldIdentifier) with
+            | None -> ()
+            | Some i -> w.SubWorkflowIdentifiers.[i] <- newIdentifier
+        )
+        this.Runs
+        |> Seq.iter (fun r ->
+            match r.WorkflowIdentifiers |> Seq.tryFindIndex (fun wId -> wId = oldIdentifier) with
+            | None -> ()
+            | Some i -> r.WorkflowIdentifiers.[i] <- newIdentifier
         )
 
     static member renameWorkflow(oldIdentifier: string, newIdentifier: string) =
@@ -2594,6 +2603,21 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     member this.DeleteWorkflow(workflowIdentifier: string) =
         let index = this.Workflows.FindIndex(fun w -> w.Identifier = workflowIdentifier)
         this.DeleteWorkflowAt(index)
+        this.Workflows
+        |> Seq.iter (fun w ->
+            match w.SubWorkflowIdentifiers |> Seq.tryFindIndex (fun swi -> swi = workflowIdentifier) with
+            | None -> ()
+            | Some swiIndex ->
+                w.SubWorkflowIdentifiers.RemoveAt(swiIndex)
+        )
+        this.Runs
+        |> Seq.iter (fun r ->
+            match r.WorkflowIdentifiers |> Seq.tryFindIndex (fun wi -> wi = workflowIdentifier) with
+            | None -> ()
+            | Some wiIndex ->
+                r.WorkflowIdentifiers.RemoveAt(wiIndex)
+        )
+
 
     static member deleteWorkflow(workflowIdentifier: string) =
         fun (inv: ArcInvestigation) ->

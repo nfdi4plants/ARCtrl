@@ -1127,6 +1127,7 @@ let private tests_GetAssayRemoveContracts = testList "GetAssayRemoveContracts" [
         let assayIdentifier = "My Assay"
         arc.InitAssay(assayIdentifier) |> ignore
         Expect.equal arc.AssayCount 1 "ensure assay count"
+        arc.GetWriteContracts() |> ignore
         let actual = arc.GetAssayRemoveContracts(assayIdentifier)
         let expected = [
             Contract.createDelete (ArcPathHelper.getAssayFolderPath assayIdentifier)
@@ -1138,15 +1139,11 @@ let private tests_GetAssayRemoveContracts = testList "GetAssayRemoveContracts" [
         let assayIdentifier = "My Assay"
         arc.InitAssay(assayIdentifier) |> ignore
         Expect.equal arc.AssayCount 1 "ensure assay count"
+        arc.GetWriteContracts() |> ignore
         let actual = arc.GetAssayRemoveContracts(assayIdentifier)
-        Expect.hasLength actual 2 "contract count"
+        Expect.hasLength actual 1 "contract count"
         Expect.equal actual.[0].Path (ArcPathHelper.getAssayFolderPath assayIdentifier) "assay contract path"
         Expect.equal actual.[0].Operation DELETE "assay contract cmd"
-        Expect.equal actual.[1].Path (ArcPathHelper.InvestigationFileName) "inv contract path"
-        Expect.equal actual.[1].Operation UPDATE "inve contract cmd"
-        Expect.isSome actual.[1].DTO "has DTO"
-        let dtoType = Expect.wantSome actual.[1].DTOType "has DTOType"
-        Expect.equal dtoType DTOType.ISA_Investigation "dto type"
     testCase "registered in multiple studies" <| fun _ ->
         let arc = ARC("My Investigation")
         let assayIdentifier = "My Assay"
@@ -1158,16 +1155,15 @@ let private tests_GetAssayRemoveContracts = testList "GetAssayRemoveContracts" [
         Expect.equal arc.AssayCount 1 "ensure assay count"
         Expect.equal arc.StudyCount 2 "ensure study count"
         Expect.hasLength a.StudiesRegisteredIn 2 "ensure studies registered in - count"
+        arc.GetWriteContracts() |> ignore
         let actual = arc.GetAssayRemoveContracts(assayIdentifier)
-        Expect.hasLength actual 4 "contract count"
+        Expect.hasLength actual 3 "contract count"
         Expect.equal actual.[0].Path (ArcPathHelper.getAssayFolderPath assayIdentifier) "assay contract path"
         Expect.equal actual.[0].Operation DELETE "assay contract cmd"
-        Expect.equal actual.[1].Path (ArcPathHelper.InvestigationFileName) "inv contract path"
-        Expect.equal actual.[1].Operation UPDATE "inv contract cmd"
-        Expect.equal actual.[2].Path (Identifier.Study.fileNameFromIdentifier "Study 1") "study 1 contract path"
-        Expect.equal actual.[2].Operation UPDATE "study 1 contract cmd"
-        Expect.equal actual.[3].Path (Identifier.Study.fileNameFromIdentifier "Study 2") "study 2 contract path"
-        Expect.equal actual.[3].Operation UPDATE "study 2 contract cmd"
+        Expect.equal actual.[1].Path (Identifier.Study.fileNameFromIdentifier "Study 1") "study 1 contract path"
+        Expect.equal actual.[1].Operation UPDATE "study 1 contract cmd"
+        Expect.equal actual.[2].Path (Identifier.Study.fileNameFromIdentifier "Study 2") "study 2 contract path"
+        Expect.equal actual.[2].Operation UPDATE "study 2 contract cmd"
 ]
 
 let tests_GetAssayRenameContracts = testList "GetAssayRenameContracts" [
@@ -1332,6 +1328,187 @@ let tests_GetStudyRenameContracts = testList "GetStudyRenameContracts" [
 
 ] 
 
+let tests_GetWorkflowRemoveContracts = testList "GetWorkflowRemoveContracts" [
+    testCase "not existing" <| fun _ ->
+        let arc = ARC("My Investigation")        
+        let workflowRemoveF = 
+            fun () -> arc.GetWorkflowRemoveContracts("MyWorkflow") |> ignore
+        Expect.throws workflowRemoveF "Should fail as arc does not contan workflow with given name"
+    testCase "Basic" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        i.InitWorkflow("MyWorkflow") |> ignore
+        let arc = ARC.fromArcInvestigation(isa = i)
+        Expect.equal arc.WorkflowCount 1 "ensure workflow count"
+        arc.GetWriteContracts() |> ignore
+        let actual = arc.GetWorkflowRemoveContracts("MyWorkflow")
+        let expected = [
+            Contract.createDelete (ArcPathHelper.getWorkflowFolderPath "MyWorkflow")
+        ]
+        Expect.sequenceEqual actual expected "Should contain exactly the delete contract"
+    testCase "RegisteredInRun" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        let w = i.InitWorkflow("MyWorkflow")
+        let r = i.InitRun("MyRun")
+        r.WorkflowIdentifiers.Add(w.Identifier)
+        Expect.isTrue (r.WorkflowIdentifiers.Contains("MyWorkflow")) "ensure run references workflow"
+        let arc = ARC.fromArcInvestigation(isa = i)
+        Expect.equal arc.WorkflowCount 1 "ensure workflow count"
+        arc.GetWriteContracts() |> ignore
+        let actual = arc.GetWorkflowRemoveContracts("MyWorkflow")
+        Expect.isFalse (r.WorkflowIdentifiers.Contains("MyWorkflow")) "After getting remove contracts, run should no longer reference workflow"
+        Expect.hasLength actual 2 "Should contain delete and run update contracts"
+        let delete = Expect.wantSome (actual |> Array.tryFind (fun c -> c.Operation = DELETE)) "Should contain delete contract"
+        Expect.equal delete.Path (ArcPathHelper.getWorkflowFolderPath "MyWorkflow") "Delete contract path"
+        let update = Expect.wantSome (actual |> Array.tryFind (fun c -> c.Operation = UPDATE)) "Should contain run update contract"
+        Expect.equal update.Path (Identifier.Run.fileNameFromIdentifier "MyRun") "Run update contract path"
+        let updateDTO = Expect.wantSome update.DTO "Run update contract should have DTO"
+        let parsedRun = XlsxController.Run.fromFsWorkbook (updateDTO.AsSpreadsheet() :?> FsWorkbook)
+        Expect.isFalse (parsedRun.WorkflowIdentifiers.Contains("MyWorkflow")) "Parsed Run should no longer reference the removed workflow"
+    testCase "RegisteredInWorkflow" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        let w1 = i.InitWorkflow("MySubWorkflow")
+        let w2 = i.InitWorkflow("MyWorkflow")
+        w2.SubWorkflowIdentifiers.Add("MySubWorkflow")
+        Expect.isTrue (w2.SubWorkflowIdentifiers.Contains("MySubWorkflow")) "ensure workflow references sub-workflow"
+        let arc = ARC.fromArcInvestigation(isa = i)
+        Expect.equal arc.WorkflowCount 2 "ensure workflow count"
+        arc.GetWriteContracts() |> ignore
+        let actual = arc.GetWorkflowRemoveContracts("MySubWorkflow")
+        Expect.isFalse (w2.SubWorkflowIdentifiers.Contains("MySubWorkflow")) "Workflow should no longer reference the removed sub-workflow"
+        Expect.hasLength actual 2 "Should contain delete and workflow update contracts"
+        let delete = Expect.wantSome (actual |> Array.tryFind (fun c -> c.Operation = DELETE)) "Should contain delete contract"
+        Expect.equal delete.Path (ArcPathHelper.getWorkflowFolderPath "MySubWorkflow") "Delete contract path"
+        let update = Expect.wantSome (actual |> Array.tryFind (fun c -> c.Operation = UPDATE)) "Should contain workflow update contract"
+        Expect.equal update.Path (Identifier.Workflow.fileNameFromIdentifier "MyWorkflow") "Workflow update contract path"
+        let updateDTO = Expect.wantSome update.DTO "Workflow update contract should have DTO"
+        let parsedWorkflow = XlsxController.Workflow.fromFsWorkbook (updateDTO.AsSpreadsheet() :?> FsWorkbook)
+        Expect.isFalse (parsedWorkflow.SubWorkflowIdentifiers.Contains("MySubWorkflow")) "Parsed Workflow should no longer reference the removed sub-workflow"
+    ]
+
+let tests_GetRunRemoveContracts = testList "GetRunRemoveContracts" [
+    testCase "not existing" <| fun _ ->
+        let arc = ARC("My Investigation")        
+        let runRemoveF = 
+            fun () -> arc.GetRunRemoveContracts("MyRun") |> ignore
+        Expect.throws runRemoveF "Should fail as arc does not contan run with given name"
+    testCase "Basic" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        i.InitRun("MyRun") |> ignore
+        let arc = ARC.fromArcInvestigation(isa = i)
+        Expect.equal arc.RunCount 1 "ensure run count"
+        arc.GetWriteContracts() |> ignore
+        let actual = arc.GetRunRemoveContracts("MyRun")
+        let expected = [
+            Contract.createDelete (ArcPathHelper.getRunFolderPath "MyRun")
+        ]
+        Expect.sequenceEqual actual expected "Should contain exactly the delete contract"
+    ]
+
+let tests_GetWorkflowRenameContracts = testList "GetWorkflowRenameContracts" [
+    testCase "not existing" <| fun _ ->
+        let arc = ARC("My Investigation")        
+        let workflowMoveF = 
+            fun () -> arc.GetWorkflowRenameContracts("MyOldWorkflow","MyNewWorkflow") |> ignore
+        Expect.throws workflowMoveF "Should fail as arc does not contan workflow with given name"
+    testCase "Basic" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        i.InitWorkflow("MyOldWorkflow") |> ignore
+        let arc = ARC.fromArcInvestigation(isa = i)
+        arc.GetWriteContracts() |> ignore
+        let contracts = arc.GetWorkflowRenameContracts("MyOldWorkflow","MyNewWorkflow")
+        Expect.hasLength contracts 2 "Contract count is wrong"
+        // Rename contract
+        let renameContract = contracts.[0]
+        Expect.equal renameContract.Operation Operation.RENAME "Rename contract operation"
+        Expect.equal "workflows/MyOldWorkflow" renameContract.Path "Rename contract path"
+        let renameDTO = Expect.wantSome renameContract.DTO "Rename contract dto"
+        let expectedRenameDTO = DTO.Text "workflows/MyNewWorkflow"
+        Expect.equal renameDTO expectedRenameDTO "Rename contract dto"
+        // Update workflow contract
+        let updateContract = contracts.[1]
+        Expect.equal updateContract.Operation Operation.UPDATE "Update contract operation"
+        Expect.equal updateContract.Path "workflows/MyNewWorkflow/isa.workflow.xlsx" "Update contract path"
+        let updateDTO = Expect.wantSome updateContract.DTO "Update contract dto"
+        Expect.isTrue updateDTO.isSpreadsheet "Update contract dto"
+        let wb = updateDTO.AsSpreadsheet() :?> FsWorkbook
+        let updatedWorkflow = ArcWorkflow.fromFsWorkbook wb
+        Expect.equal updatedWorkflow.Identifier "MyNewWorkflow" "Update contract Workflow Identifier"
+    testCase "RegisteredInRun" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        let w = i.InitWorkflow("MyOldWorkflow")
+        let r = i.InitRun("MyRun")
+        r.WorkflowIdentifiers.Add(w.Identifier)
+        Expect.isTrue (r.WorkflowIdentifiers.Contains("MyOldWorkflow")) "ensure run references workflow"
+        let arc = ARC.fromArcInvestigation(isa = i)
+        arc.GetWriteContracts() |> ignore
+        let contracts = arc.GetWorkflowRenameContracts("MyOldWorkflow","MyNewWorkflow")
+        Expect.sequenceEqual r.WorkflowIdentifiers ["MyNewWorkflow"] "After getting rename contracts, run should reference new workflow name"
+        Expect.hasLength contracts 3 "Contract count is wrong"
+        // Update run contract
+        let runUpdateContract = contracts.[2]
+        Expect.equal runUpdateContract.Operation Operation.UPDATE "Update contract operation"
+        Expect.equal runUpdateContract.Path "runs/MyRun/isa.run.xlsx" "Update contract path"
+        let runUpdateDTO = Expect.wantSome runUpdateContract.DTO "Update contract dto"
+        Expect.isTrue runUpdateDTO.isSpreadsheet "Update contract dto"
+        let wb = runUpdateDTO.AsSpreadsheet() :?> FsWorkbook
+        let updatedRun = ArcRun.fromFsWorkbook wb
+        Expect.equal updatedRun.Identifier "MyRun" "Update contract Run Identifier"
+        Expect.hasLength updatedRun.WorkflowIdentifiers 1 "Update contract Run Workflow count"
+        Expect.equal updatedRun.WorkflowIdentifiers.[0] "MyNewWorkflow" "Update contract Run Workflow Identifier"
+    testCase "RegisteredInWorkflow" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        let w1 = i.InitWorkflow("MyOldSubWorkflow")
+        let w2 = i.InitWorkflow("MyWorkflow")
+        w2.SubWorkflowIdentifiers.Add("MyOldSubWorkflow")
+        Expect.isTrue (w2.SubWorkflowIdentifiers.Contains("MyOldSubWorkflow")) "ensure workflow references sub-workflow"
+        let arc = ARC.fromArcInvestigation(isa = i)
+        arc.GetWriteContracts() |> ignore
+        let contracts = arc.GetWorkflowRenameContracts("MyOldSubWorkflow","MyNewSubWorkflow")
+        Expect.sequenceEqual w2.SubWorkflowIdentifiers ["MyNewSubWorkflow"] "After getting rename contracts, workflow should still reference sub-workflow"
+        Expect.hasLength contracts 3 "Contract count is wrong"
+        // Update workflow contract
+        let workflowUpdateContract = contracts.[2]
+        Expect.equal workflowUpdateContract.Operation Operation.UPDATE "Update contract operation"
+        Expect.equal workflowUpdateContract.Path "workflows/MyWorkflow/isa.workflow.xlsx" "Update contract path"
+        let workflowUpdateDTO = Expect.wantSome workflowUpdateContract.DTO "Update contract dto"
+        Expect.isTrue workflowUpdateDTO.isSpreadsheet "Update contract dto"
+        let wb = workflowUpdateDTO.AsSpreadsheet() :?> FsWorkbook
+        let updatedWorkflow = ArcWorkflow.fromFsWorkbook wb
+        Expect.equal updatedWorkflow.Identifier "MyWorkflow" "Update contract Workflow Identifier"
+        Expect.hasLength updatedWorkflow.SubWorkflowIdentifiers 1 "Updated contract still has Sub workflow"
+        Expect.equal updatedWorkflow.SubWorkflowIdentifiers.[0] "MyNewSubWorkflow" "Updated contract Sub workflow Identifier"
+]
+
+let tests_GetRunRenameContracts = testList "GetRunRenameContracts" [
+    testCase "not existing" <| fun _ ->
+        let arc = ARC("My Investigation")        
+        let runMoveF = 
+            fun () -> arc.GetRunRenameContracts("MyOldRun","MyNewRun") |> ignore
+        Expect.throws runMoveF "Should fail as arc does not contan run with given name"
+    testCase "Basic" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        i.InitRun("MyOldRun") |> ignore
+        let arc = ARC.fromArcInvestigation(isa = i)
+        arc.GetWriteContracts() |> ignore
+        let contracts = arc.GetRunRenameContracts("MyOldRun","MyNewRun")
+        Expect.hasLength contracts 2 "Contract count is wrong"
+        // Rename contract
+        let renameContract = contracts.[0]
+        Expect.equal renameContract.Operation Operation.RENAME "Rename contract operation"
+        Expect.equal "runs/MyOldRun" renameContract.Path "Rename contract path"
+        let renameDTO = Expect.wantSome renameContract.DTO "Rename contract dto"
+        let expectedRenameDTO = DTO.Text "runs/MyNewRun"
+        Expect.equal renameDTO expectedRenameDTO "Rename contract dto"
+        // Update run contract
+        let updateContract = contracts.[1]
+        Expect.equal updateContract.Operation Operation.UPDATE "Update contract operation"
+        Expect.equal updateContract.Path "runs/MyNewRun/isa.run.xlsx" "Update contract path"
+        let updateDTO = Expect.wantSome updateContract.DTO "Update contract dto"
+        Expect.isTrue updateDTO.isSpreadsheet "Update contract dto"
+        let wb = updateDTO.AsSpreadsheet() :?> FsWorkbook
+        let updatedRun = ArcRun.fromFsWorkbook wb
+        Expect.equal updatedRun.Identifier "MyNewRun" "Update contract Run Identifier"
+]
 
 let tests_load =
 
@@ -1953,6 +2130,10 @@ let main = testList "ARCtrl" [
     tests_GetAssayRemoveContracts
     tests_GetAssayRenameContracts
     tests_GetStudyRenameContracts
+    tests_GetWorkflowRemoveContracts
+    tests_GetWorkflowRenameContracts
+    tests_GetRunRemoveContracts
+    tests_GetRunRenameContracts
     payload_file_filters
     tests_load
     tests_write
