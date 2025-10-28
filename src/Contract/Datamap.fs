@@ -18,6 +18,12 @@ module DatamapContractExtensions =
         | [|StudiesFolderName; anyStudyName; DataMapFileName|] -> 
             let path = ARCtrl.ArcPathHelper.combineMany input
             Some path
+        | [|WorkflowsFolderName; anyWorkflowName; DataMapFileName|] ->
+            let path = ARCtrl.ArcPathHelper.combineMany input
+            Some path
+        | [|RunsFolderName; anyRunName; DataMapFileName|] ->
+            let path = ARCtrl.ArcPathHelper.combineMany input
+            Some path
         | _ -> None
 
     type DataMap with

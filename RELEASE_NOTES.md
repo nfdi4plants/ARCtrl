@@ -1,3 +1,9 @@
+### 3.0.0-beta.9+3aef1ad3 (Released 2025-10-28)
+* Deletions:
+    * [[#0671bbb9](https://github.com/nfdi4plants/ARCtrl/commit/0671bbb941db486fed02ad19569be061cc14d27f)] remove cwl references from top level ARC object
+* Bugfixes:
+    * [[#342953d2](https://github.com/nfdi4plants/ARCtrl/commit/342953d27848a547e2123dac233fafb5416cb255)] add tests and fixes for run and workflow rename and remove functionality
+ 
 ### 3.0.0-beta.8+1e8ec499 (Released 2025-10-28)
 * Bugfixes:
     * [[#1e8ec499](https://github.com/nfdi4plants/ARCtrl/commit/1e8ec499bdcd188a1449afd96e453504e1bc2de7)] Apply several hotfixes around workflow and run :bug:
