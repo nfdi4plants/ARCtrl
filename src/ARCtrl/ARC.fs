@@ -182,9 +182,42 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                 s.ToUpdateContract()
         |]
 
+    member this.GetRunRemoveContracts(runIdentifier: string) =
+        if this.RunIdentifiers |> Seq.contains runIdentifier |> not then
+            failwith "ARC does not contain run with given name"
+        let run = this.GetRun(runIdentifier)
+        this.DeleteRun(runIdentifier)
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        let runFolderPath = getRunFolderPath(runIdentifier)
+        let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(runFolderPath) |> not)
+        this.SetFilePaths(filteredPaths)      
+        [|
+            run.ToDeleteContract()
+            this.ToUpdateContract()
+        |]
+
+    member this.GetWorkflowRemoveContracts(workflowIdentifier: string) =
+        if this.WorkflowIdentifiers |> Seq.contains workflowIdentifier |> not then
+            failwith "ARC does not contain workflow with given name"
+        let workflow = this.GetWorkflow(workflowIdentifier)
+        this.DeleteWorkflow(workflowIdentifier)
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        let workflowFolderPath = getWorkflowFolderPath(workflowIdentifier)
+        let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(workflowFolderPath) |> not)
+        this.SetFilePaths(filteredPaths)      
+        [|
+            workflow.ToDeleteContract()
+            this.ToUpdateContract()
+        |]
+
     member this.TryRemoveAssayAsync(arcPath : string, assayIdentifier: string) =
         this.GetAssayRemoveContracts(assayIdentifier)
         |> fullFillContractBatchAsync arcPath
+
+    member this.TryRemoveAssayAsync(arcPath : string, assayIdentifier: string) =
+        this.GetAssayRemoveContracts(assayIdentifier)
+        |> fullFillContractBatchAsync arcPath
+
 
     member this.GetAssayRenameContracts(oldAssayIdentifier: string, newAssayIdentifier: string) =
         if this.AssayIdentifiers |> Seq.contains oldAssayIdentifier |> not then
@@ -198,6 +231,36 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         this.SetFilePaths(renamedPaths)
         [|
             yield Contract.createRename(oldAssayFolderPath,newAssayFolderPath)
+            yield! this.GetUpdateContracts()
+        |]
+
+    member this.GetRunRenameContracts(oldRunIdentifier: string, newRunIdentifier: string) =
+        if this.RunIdentifiers |> Seq.contains oldRunIdentifier |> not then
+            failwith "ARC does not contain run with given name"
+
+        this.RenameRun(oldRunIdentifier,newRunIdentifier)
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        let oldPath = getRunFolderPath(oldRunIdentifier)
+        let newPath = getRunFolderPath(newRunIdentifier)
+        let renamedPaths = paths |> Array.map (fun p -> p.Replace(oldPath,newPath))
+        this.SetFilePaths(renamedPaths)
+        [|
+            yield Contract.createRename(oldPath,newPath)
+            yield! this.GetUpdateContracts()
+        |]
+
+    member this.GetWorkflowRenameContracts(oldRunIdentifier: string, newRunIdentifier: string) =
+        if this.WorkflowIdentifiers |> Seq.contains oldRunIdentifier |> not then
+            failwith "ARC does not contain run with given name"
+
+        this.RenameWorkflow(oldRunIdentifier,newRunIdentifier)
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        let oldPath = getWorkflowFolderPath(oldRunIdentifier)
+        let newPath = getWorkflowFolderPath(newRunIdentifier)
+        let renamedPaths = paths |> Array.map (fun p -> p.Replace(oldPath,newPath))
+        this.SetFilePaths(renamedPaths)
+        [|
+            yield Contract.createRename(oldPath,newPath)
             yield! this.GetUpdateContracts()
         |]
 
