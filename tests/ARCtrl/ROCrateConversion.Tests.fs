@@ -9,6 +9,12 @@ open TestingUtils
 open ARCtrl.FileSystem
 
 module Helper =
+
+    let tryLDRef (o : obj) =
+        match o with
+        | :? LDRef as r -> Some r
+        | _ -> None
+
     let tableName1 = "Test1"
     let tableName2 = "Test2"
     let oa_species = OntologyAnnotation("species", "GO", "GO:0123456")
@@ -1609,10 +1615,7 @@ let tests_FormalParameter =
     ]
 
 let tests_YAMLInputValue =
-    let tryLDRef (o : obj) =
-        match o with
-        | :? LDRef as r -> Some r
-        | _ -> None
+    
     testList "YAMLInputValue" [
         testCase "SimpleFileInRun" (fun () ->
             let name = "MyInput"
@@ -1753,7 +1756,7 @@ let tests_ToolDescription =
 
 let tests_WorkflowInvocation =
     testList "WorkflowInvocation" [
-        ftestCase "OnlyCWL_BasicToolDescription" (fun () ->
+        testCase "OnlyCWL_BasicToolDescription" (fun () ->
             let inputValues = ResizeArray [
                 TestObjects.CWL.YAMLParameterFile.File.fileParameterReference
                 TestObjects.CWL.YAMLParameterFile.String.stringParameterReference
@@ -1770,10 +1773,25 @@ let tests_WorkflowInvocation =
             let objects = LDLabProcess.getObjects workflowInvocation
             Expect.hasLength objects 2 "WorkflowInvocation should have two objects"
 
+            let inputFile = Expect.wantSome (Seq.tryFind LDFile.validateCWLParameter objects) "Should have one input file"
+            let expectedFilePath = ArcPathHelper.combineMany [|"runs"; run.Identifier; TestObjects.CWL.YAMLParameterFile.File.filePath|]
+            Expect.equal inputFile.Id expectedFilePath "Input file path should match"
+            let exampleOfWork = Expect.wantSome (LDFile.tryGetExampleOfWork inputFile) "Input file should have an exampleOfWork"
+            let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryLDRef exampleOfWork) "File ExampleOfWork should be a reference"
+            Expect.equal exampleOfWorkAsRef.Id $"#FormalParameter_R_{run.Identifier}_{TestObjects.CWL.Inputs.File.inputFileName}" "File ExampleOfWork ID should match input formal parameter"
 
-            
+            let inputString = Expect.wantSome (Seq.tryFind LDPropertyValue.validateCWLParameter objects) "Should have one input string"
+            let inputStringValue = Expect.wantSome (LDPropertyValue.tryGetValueAsString inputString) "Input string should have a value"
+            Expect.equal inputStringValue TestObjects.CWL.YAMLParameterFile.String.stringValue "Input string value should match"
+            let exampleOfWork2 = Expect.wantSome (LDPropertyValue.tryGetExampleOfWork inputString) "Input string should have an exampleOfWork"
+            let exampleOfWorkAsRef2 : LDRef = Expect.wantSome (tryLDRef exampleOfWork2) "String ExampleOfWork should be a reference"
+            Expect.equal exampleOfWorkAsRef2.Id $"#FormalParameter_R_{run.Identifier}_{TestObjects.CWL.Inputs.String.inputStringName}" "String ExampleOfWork ID should match input formal parameter"
 
-            Expect.isFalse true "dawd"
+            let results = LDLabProcess.getResults workflowInvocation
+            Expect.hasLength results 0 "WorkflowInvocation should have no results"
+            //let outputFile = Expect.wantSome (Seq.tryFind LDFile.validateCWLParameter results) "Should have one output file"
+            //let outputFileName = Expect.wantSome (LDFile.tryGetNameAsString outputFile) "Output file should have a name"
+            //Expect.equal outputFileName "runs/MyRun/output.csv" "Output file name should match"
         )
     ]
 
