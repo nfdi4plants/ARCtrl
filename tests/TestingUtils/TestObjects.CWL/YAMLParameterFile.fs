@@ -16,7 +16,7 @@ exampleList:
   - baz.txt"""
 
 module File =
-    let filePath = "../examplePath"
+    let filePath = "data/examplePath"
     let fileClass = "File"
 
     let fileParameterReference = CWLParameterReference.create(key = Inputs.File.inputFileName, values = ResizeArray [filePath])
