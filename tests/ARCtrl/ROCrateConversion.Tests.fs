@@ -1712,17 +1712,69 @@ let tests_YAMLInputValue =
 
 let tests_ToolDescription =
     testList "ToolDescription" [
-        //testCase "SimpleTool" (fun () ->
-        //    let toolName = "MyTool"
-        //    let cwlTool = CWLToolDescription.create(name = toolName)
-        //    let ro_Tool = ToolConversion.composeCWLToolDescription cwlTool
-        //    let toolName' = Expect.wantSome (LDSoftwareApplication.tryGetNameAsString ro_Tool) "Tool should have a name"
-        //    Expect.equal toolName' toolName "Tool name should match"
-        //)
+        testCase "BasicTool" (fun () ->
+            let filePath = "tools/echo.cwl"
+            let toolDescription = TestObjects.CWL.CommandLineTool.Basic.basicCWLTool
+            let ro_Tool = WorkflowConversion.composeWorkflowProtocolFromToolDescription(filePath,toolDescription)
+            Expect.equal ro_Tool.Id filePath "Tool ID should match file path"
+
+            let inputs = LDComputationalWorkflow.getInputs ro_Tool
+            Expect.hasLength inputs 2 "Tool should have one input"
+            let input1 = inputs.[0]
+            let input1Name = Expect.wantSome (LDFormalParameter.tryGetNameAsString input1) "Input should have a name"
+            Expect.equal input1Name TestObjects.CWL.Inputs.File.inputFileName "Input name should match"
+            Expect.sequenceEqual input1.SchemaType [LDFormalParameter.schemaType] "Input should have correct schema type"
+            let input1Ids = LDFormalParameter.getIdentifiers input1
+            Expect.hasLength input1Ids 2 "Input should have two identifiers"
+            let input1Position = input1Ids |> Seq.tryPick LDPropertyValue.tryGetAsPosition |> fun p -> Expect.wantSome p "Should have a position identifier"
+            Expect.equal input1Position TestObjects.CWL.Inputs.File.inputFilePosition "Position should match input binding"
+            let input1Prefix = input1Ids |> Seq.tryPick LDPropertyValue.tryGetAsPrefix |> fun p -> Expect.wantSome p "Should have a prefix identifier"
+            Expect.equal input1Prefix TestObjects.CWL.Inputs.File.inputFilePrefix "Prefix should match input binding"
+            let input2 = inputs.[1]
+            let input2Name = Expect.wantSome (LDFormalParameter.tryGetNameAsString input2) "Input should have a name"
+            Expect.equal input2Name TestObjects.CWL.Inputs.String.inputStringName "Input name should match"
+            Expect.sequenceEqual input2.SchemaType [LDFormalParameter.schemaType] "Input should have correct schema type"
+            let input2Ids = LDFormalParameter.getIdentifiers input2
+            Expect.hasLength input2Ids 1 "Input should have one identifier"
+            let input2Position = input2Ids |> Seq.tryPick LDPropertyValue.tryGetAsPosition |> fun p -> Expect.wantSome p "Should have a position identifier"
+            Expect.equal input2Position TestObjects.CWL.Inputs.String.inputStringPosition "Position should match input binding"
+
+            let outputs = LDComputationalWorkflow.getOutputs ro_Tool
+            Expect.hasLength outputs 1 "Tool should have one output"
+            let output1 = outputs.[0]
+            let output1Name = Expect.wantSome (LDFormalParameter.tryGetNameAsString output1) "Output should have a name"
+            Expect.equal output1Name TestObjects.CWL.Outputs.CSV.outputCSVName "Output name should match"
+            let output1Ids = LDFormalParameter.getIdentifiers output1
+            Expect.hasLength output1Ids 1 "Output should have one identifier"
+            let output1Glob = output1Ids |> Seq.tryPick LDPropertyValue.tryGetAsGlob |> fun p -> Expect.wantSome p "Should have a glob identifier"
+            Expect.equal output1Glob TestObjects.CWL.Outputs.CSV.outputCSVGlobStr "Glob should match output binding"
+        )
     ]
 
-let tests_CWLWorkflow =
-    testList "CWLWorkflow" [
+let tests_WorkflowInvocation =
+    testList "WorkflowInvocation" [
+        ftestCase "OnlyCWL_BasicToolDescription" (fun () ->
+            let inputValues = ResizeArray [
+                TestObjects.CWL.YAMLParameterFile.File.fileParameterReference
+                TestObjects.CWL.YAMLParameterFile.String.stringParameterReference
+            ]
+            let run = ArcRun(
+                identifier = "MyRun",
+                cwlDescription = TestObjects.CWL.CommandLineTool.Basic.basicProcessingUnit,
+                cwlInput = inputValues        
+            )
+            let workflowInvocation = Expect.wantExactlyOne (RunConversion.composeWorkflowInvocationFromArcRun run) "Should have one WorkflowInvocation"
+            Expect.equal workflowInvocation.Id "#WorkflowInvocation_MyRun" "WorkflowInvocation ID should match"
+            Expect.sequenceEqual workflowInvocation.SchemaType [LDCreateAction.schemaType;LDLabProcess.schemaType] "WorkflowInvocation should have correct schema type"
+
+            let objects = LDLabProcess.getObjects workflowInvocation
+            Expect.hasLength objects 2 "WorkflowInvocation should have two objects"
+
+
+            
+
+            Expect.isFalse true "dawd"
+        )
     ]
 
 
@@ -2045,6 +2097,8 @@ let main =
         tests_DataMap
         tests_FormalParameter
         tests_YAMLInputValue
+        tests_ToolDescription
+        tests_WorkflowInvocation
         tests_Assay
         tests_Study
         tests_Investigation

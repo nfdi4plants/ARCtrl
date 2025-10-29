@@ -1,5 +1,7 @@
 module TestObjects.CWL.Requirements
 
+open ARCtrl.CWL
+
 let requirementsFileContent ="""requirements:
   - class: DockerRequirement
     dockerImageId: "devcontainer"
@@ -24,3 +26,11 @@ let requirementsFileContent ="""requirements:
         version: [ "5.21-60" ]
   - class: NetworkAccess
     networkAccess: true"""
+
+module Docker =
+
+    let dockerFileMap = Map.ofList ["$include","FSharpArcCapsule/Dockerfile"]
+
+    let dockerRequirement = DockerRequirement.create (dockerImageId = "devcontainer", dockerFile = dockerFileMap)
+
+    let requirement = Requirement.DockerRequirement dockerRequirement

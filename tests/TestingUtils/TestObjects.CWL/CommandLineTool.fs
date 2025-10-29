@@ -1,5 +1,7 @@
 module TestObjects.CWL.CommandLineTool
 
+open ARCtrl.CWL
+
 let cwlFile ="""cwlVersion: v1.2
 class: CommandLineTool
 hints:
@@ -37,3 +39,16 @@ outputs:
     type: File
     outputBinding:
       glob: $(runtime.outdir)/*.csv"""
+
+
+module Basic =
+
+    let basicBaseCommand = ResizeArray ["dotnet"; "fsi"; "script.fsx"]
+
+    let basicCWLTool =
+        CWLToolDescription(
+            outputs = ResizeArray [Outputs.CSV.outputCSV],
+            requirements = ResizeArray [Requirements.Docker.requirement],
+            inputs = ResizeArray [Inputs.File.inputFirstArg; Inputs.String.inputSecondArg])
+
+    let basicProcessingUnit = CWLProcessingUnit.CommandLineTool basicCWLTool
