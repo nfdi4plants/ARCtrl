@@ -5,27 +5,21 @@ open DynamicObj
 open YAMLicious
 open YAMLicious.YAMLiciousTypes
 open YAMLicious.Writer
-
 /// Encoding helpers and functions mirroring the logic in Decode.fs.
 /// Each decode path gets a corresponding encode path that produces
 /// YAML key ordering and scalar formatting matching existing fixtures.
 module Encode =
-    // ------------------------------
-    // Generic YAML node constructors
-    // ------------------------------
-    let private yScalar (s:string) =
-        YAMLElement.Value { Value = s; Comment = None }
 
-    let private yInt (i:int) = YAMLElement.Value { Value = string i; Comment = None }
-    let private yFloat (f:float) =
-        YAMLElement.Value { Value = f.ToString(System.Globalization.CultureInfo.InvariantCulture); Comment = None }
-    let private yBool (b:bool) =
+    // ------------------------------
+    // Basic boolean encoder with lowercase letters
+    // ------------------------------
+    let yBool (b:bool) =
         YAMLElement.Value { Value = (if b then "true" else "false"); Comment = None }
 
-    let private ySeq (elements: YAMLElement list) =
-        YAMLElement.Sequence elements
-
-    let private yMap (pairs: (string * YAMLElement) list) =
+    // ------------------------------
+    // Helper to build YAML mappings preserving order
+    // ------------------------------
+    let yMap (pairs: (string * YAMLElement) list) =
         // Represent a mapping as an Object containing Mapping nodes preserving order.
         // Avoid wrapping scalar/sequence values inside an extra Object layer so YAMLicious prints 'key: value'.
         let normalize = function
@@ -43,30 +37,26 @@ module Encode =
         | Some v -> acc @ [name, encoder v]
         | None -> acc
 
-    let inline private appendList name (encoder:'a -> YAMLElement) (values: ResizeArray<'a>) acc =
-        if isNull (box values) || values.Count = 0 then acc
-        else acc @ [ name, (values |> Seq.map encoder |> List.ofSeq |> ySeq) ]
-
     // ------------------------------
     // CWLType encoder
     // ------------------------------
     let rec encodeCWLType (t:CWLType) : YAMLElement =
         match t with
-        | File _ -> yScalar "File"
-        | Directory _ -> yScalar "Directory"
+        | File _ -> Encode.string "File"
+        | Directory _ -> Encode.string "Directory"
         | Dirent d ->
-            [ "entry", yScalar d.Entry ]
-            |> appendOpt "entryname" yScalar d.Entryname
+            [ "entry", Encode.string d.Entry ]
+            |> appendOpt "entryname" Encode.string d.Entryname
             |> appendOpt "writable" (fun b -> yBool b) d.Writable
             |> yMap
-        | String -> yScalar "string"
-        | Int -> yScalar "int"
-        | Long -> yScalar "long"
-        | Float -> yScalar "float"
-        | Double -> yScalar "double"
-        | Boolean -> yScalar "boolean"
-        | Stdout -> yScalar "stdout"
-        | Null -> yScalar "null"
+        | String -> Encode.string "string"
+        | Int -> Encode.string "int"
+        | Long -> Encode.string "long"
+        | Float -> Encode.string "float"
+        | Double -> Encode.string "double"
+        | Boolean -> Encode.string "boolean"
+        | Stdout -> Encode.string "stdout"
+        | Null -> Encode.string "null"
         | Array inner ->
             let shortForm =
                 match inner with
@@ -81,15 +71,15 @@ module Encode =
                 | Boolean -> Some "boolean[]"
                 | _ -> None
             match shortForm with
-            | Some s -> yScalar s
-            | None -> [ "type", yScalar "array"; "items", encodeCWLType inner ] |> yMap
+            | Some s -> Encode.string s
+            | None -> [ "type", Encode.string "array"; "items", encodeCWLType inner ] |> yMap
 
     // ------------------------------
     // Binding & Port encoders
     // ------------------------------
 
     let encodeOutputBinding (ob:OutputBinding) : YAMLElement =
-        [ ob.Glob |> Option.map (fun g -> "glob", yScalar g) ]
+        [ ob.Glob |> Option.map (fun g -> "glob", Encode.string g) ]
         |> List.choose id
         |> yMap
 
@@ -98,7 +88,7 @@ module Encode =
             []
             |> appendOpt "type" (fun t -> encodeCWLType t) o.Type_
             |> appendOpt "outputBinding" encodeOutputBinding o.OutputBinding
-            |> appendOpt "outputSource" yScalar o.OutputSource
+            |> appendOpt "outputSource" Encode.string o.OutputSource
         match pairs with
         | [ ("type", t) ] -> o.Name, t // only type specified
         | _ ->
@@ -107,9 +97,9 @@ module Encode =
 
     let encodeInputBinding (ib:InputBinding) : YAMLElement =
         []
-        |> appendOpt "prefix" yScalar ib.Prefix
-        |> appendOpt "position" (fun p -> yInt p) ib.Position
-        |> appendOpt "itemSeparator" yScalar ib.ItemSeparator
+        |> appendOpt "prefix" Encode.string ib.Prefix
+        |> appendOpt "position" (fun p -> Encode.int p) ib.Position
+        |> appendOpt "itemSeparator" Encode.string ib.ItemSeparator
         |> appendOpt "separate" yBool ib.Separate
         |> yMap
 
@@ -131,33 +121,33 @@ module Encode =
         s.GetProperties(false)
         |> Seq.choose (fun kvp ->
             match kvp.Value with
-            | :? string as str -> Some (kvp.Key, yScalar str)
+            | :? string as str -> Some (kvp.Key, Encode.string str)
             | _ -> None)
         |> Seq.toList
         |> yMap
 
     let encodeRequirement (r:Requirement) : YAMLElement =
         match r with
-        | InlineJavascriptRequirement -> [ "class", yScalar "InlineJavascriptRequirement" ] |> yMap
+        | InlineJavascriptRequirement -> [ "class", Encode.string "InlineJavascriptRequirement" ] |> yMap
         | SchemaDefRequirement types ->
-            [ "class", yScalar "SchemaDefRequirement";
-              "types", (types |> Seq.map encodeSchemaDefRequirementType |> List.ofSeq |> ySeq) ] |> yMap
+            [ "class", Encode.string "SchemaDefRequirement";
+              "types", (types |> Seq.map encodeSchemaDefRequirementType |> List.ofSeq |> YAMLElement.Sequence) ] |> yMap
         | DockerRequirement dr ->
-            [ "class", yScalar "DockerRequirement" ]
-            |> appendOpt "dockerPull" yScalar dr.DockerPull
+            [ "class", Encode.string "DockerRequirement" ]
+            |> appendOpt "dockerPull" Encode.string dr.DockerPull
             |> appendOpt "dockerFile" (fun m ->
-                m |> Map.toList |> List.map (fun (k,v) -> k, yScalar v) |> yMap) dr.DockerFile
-            |> appendOpt "dockerImageId" yScalar dr.DockerImageId
+                m |> Map.toList |> List.map (fun (k,v) -> k, Encode.string v) |> yMap) dr.DockerFile
+            |> appendOpt "dockerImageId" Encode.string dr.DockerImageId
             |> yMap
         | SoftwareRequirement pkgs ->
             let encodePkg (p:SoftwarePackage) =
                 []
-                |> fun acc -> acc @ [ "package", yScalar p.Package ]
-                |> appendOpt "version" (fun vs -> vs |> Seq.map yScalar |> List.ofSeq |> ySeq) p.Version
-                |> appendOpt "specs" (fun vs -> vs |> Seq.map yScalar |> List.ofSeq |> ySeq) p.Specs
+                |> fun acc -> acc @ [ "package", Encode.string p.Package ]
+                |> appendOpt "version" (fun vs -> vs |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence) p.Version
+                |> appendOpt "specs" (fun vs -> vs |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence) p.Specs
                 |> yMap
-            [ "class", yScalar "SoftwareRequirement";
-              "packages", (pkgs |> Seq.map encodePkg |> List.ofSeq |> ySeq) ] |> yMap
+            [ "class", Encode.string "SoftwareRequirement";
+              "packages", (pkgs |> Seq.map encodePkg |> List.ofSeq |> YAMLElement.Sequence) ] |> yMap
         | InitialWorkDirRequirement listing ->
             let encodeDirent = function
                 | Dirent d ->
@@ -165,44 +155,44 @@ module Encode =
                         if d.Entry.Contains(": ") then
                             let parts = d.Entry.Split([|": "|], 2, StringSplitOptions.None)
                             if parts.Length = 2 then
-                                yMap [ parts.[0], yScalar parts.[1] ]
-                            else yScalar d.Entry
-                        else yScalar d.Entry
+                                yMap [ parts.[0], Encode.string parts.[1] ]
+                            else Encode.string d.Entry
+                        else Encode.string d.Entry
                     [ ]
-                    |> appendOpt "entryname" yScalar d.Entryname
+                    |> appendOpt "entryname" Encode.string d.Entryname
                     |> fun acc -> acc @ [ "entry", entryElement ]
                     |> appendOpt "writable" yBool d.Writable
                     |> yMap
                 | other -> encodeCWLType other // fallback
-            [ "class", yScalar "InitialWorkDirRequirement";
-              "listing", (listing |> Seq.map encodeDirent |> List.ofSeq |> ySeq) ] |> yMap
+            [ "class", Encode.string "InitialWorkDirRequirement";
+              "listing", (listing |> Seq.map encodeDirent |> List.ofSeq |> YAMLElement.Sequence) ] |> yMap
         | EnvVarRequirement envs ->
             let encodeEnv (e:EnvironmentDef) =
                 let v = if e.EnvValue = "true" || e.EnvValue = "false" then "\"" + e.EnvValue + "\"" else e.EnvValue
-                [ "envName", yScalar e.EnvName; "envValue", yScalar v ] |> yMap
-            [ "class", yScalar "EnvVarRequirement";
-              "envDef", (envs |> Seq.map encodeEnv |> List.ofSeq |> ySeq) ] |> yMap
-        | ShellCommandRequirement -> [ "class", yScalar "ShellCommandRequirement" ] |> yMap
+                [ "envName", Encode.string e.EnvName; "envValue", Encode.string v ] |> yMap
+            [ "class", Encode.string "EnvVarRequirement";
+              "envDef", (envs |> Seq.map encodeEnv |> List.ofSeq |> YAMLElement.Sequence) ] |> yMap
+        | ShellCommandRequirement -> [ "class", Encode.string "ShellCommandRequirement" ] |> yMap
         | ResourceRequirement rr ->
             let dynamicPairs =
                 rr.GetProperties(false)
                 |> Seq.choose (fun kvp ->
                     match kvp.Value with
-                    | :? int as i -> Some (kvp.Key, yInt i)
-                    | :? float as f -> Some (kvp.Key, yFloat f)
-                    | :? string as s -> Some (kvp.Key, yScalar s)
+                    | :? int as i -> Some (kvp.Key, Encode.int i)
+                    | :? float as f -> Some (kvp.Key, Encode.float f)
+                    | :? string as s -> Some (kvp.Key, Encode.string s)
                     | :? bool as b -> Some (kvp.Key, yBool b)
                     | _ -> None)
                 |> Seq.toList
-            [ "class", yScalar "ResourceRequirement" ] @ dynamicPairs |> yMap
-        | WorkReuseRequirement -> [ "class", yScalar "WorkReuse" ] |> yMap
-        | NetworkAccessRequirement -> [ "class", yScalar "NetworkAccess"; "networkAccess", yBool true ] |> yMap
-        | InplaceUpdateRequirement -> [ "class", yScalar "InplaceUpdateRequirement" ] |> yMap
-        | ToolTimeLimitRequirement tl -> [ "class", yScalar "ToolTimeLimit"; "timelimit", yFloat tl ] |> yMap
-        | SubworkflowFeatureRequirement -> [ "class", yScalar "SubworkflowFeatureRequirement" ] |> yMap
-        | ScatterFeatureRequirement -> [ "class", yScalar "ScatterFeatureRequirement" ] |> yMap
-        | MultipleInputFeatureRequirement -> [ "class", yScalar "MultipleInputFeatureRequirement" ] |> yMap
-        | StepInputExpressionRequirement -> [ "class", yScalar "StepInputExpressionRequirement" ] |> yMap
+            [ "class", Encode.string "ResourceRequirement" ] @ dynamicPairs |> yMap
+        | WorkReuseRequirement -> [ "class", Encode.string "WorkReuse" ] |> yMap
+        | NetworkAccessRequirement -> [ "class", Encode.string "NetworkAccess"; "networkAccess", yBool true ] |> yMap
+        | InplaceUpdateRequirement -> [ "class", Encode.string "InplaceUpdateRequirement" ] |> yMap
+        | ToolTimeLimitRequirement tl -> [ "class", Encode.string "ToolTimeLimit"; "timelimit", Encode.float tl ] |> yMap
+        | SubworkflowFeatureRequirement -> [ "class", Encode.string "SubworkflowFeatureRequirement" ] |> yMap
+        | ScatterFeatureRequirement -> [ "class", Encode.string "ScatterFeatureRequirement" ] |> yMap
+        | MultipleInputFeatureRequirement -> [ "class", Encode.string "MultipleInputFeatureRequirement" ] |> yMap
+        | StepInputExpressionRequirement -> [ "class", Encode.string "StepInputExpressionRequirement" ] |> yMap
 
     // ------------------------------
     // Workflow step encoders
@@ -210,9 +200,9 @@ module Encode =
     let encodeStepInput (si:StepInput) : (string * YAMLElement) =
         let pairs =
             []
-            |> appendOpt "source" yScalar si.Source
-            |> appendOpt "default" yScalar si.DefaultValue
-            |> appendOpt "valueFrom" yScalar si.ValueFrom
+            |> appendOpt "source" Encode.string si.Source
+            |> appendOpt "default" Encode.string si.DefaultValue
+            |> appendOpt "valueFrom" Encode.string si.ValueFrom
         match pairs with
         | [ ("source", s) ] when si.DefaultValue.IsNone && si.ValueFrom.IsNone -> si.Id, s
         | _ -> si.Id, yMap pairs
@@ -224,20 +214,20 @@ module Encode =
         |> yMap
 
     let encodeStepOutput (so:StepOutput) : YAMLElement =
-        so.Id |> Seq.map yScalar |> List.ofSeq |> ySeq
+        so.Id |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence
 
     let encodeWorkflowStep (ws:WorkflowStep) : (string * YAMLElement) =
         let basePairs =
-            [ "run", yScalar ws.Run
+            [ "run", Encode.string ws.Run
               "in", encodeStepInputs ws.In
               "out", encodeStepOutput ws.Out ]
         let withReq =
             match ws.Requirements with
-            | Some r when r.Count > 0 -> basePairs @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> ySeq) ]
+            | Some r when r.Count > 0 -> basePairs @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
             | _ -> basePairs
         let withHints =
             match ws.Hints with
-            | Some h when h.Count > 0 -> withReq @ [ "hints", (h |> Seq.map encodeRequirement |> List.ofSeq |> ySeq) ]
+            | Some h when h.Count > 0 -> withReq @ [ "hints", (h |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
             | _ -> withReq
         ws.Id, yMap withHints
 
@@ -253,17 +243,17 @@ module Encode =
         // Build each top-level section separately to control blank line placement like fixtures
         let section (pairs:(string*YAMLElement) list) =
             pairs |> yMap |> writeYaml |> fun s -> s.Replace("\r\n","\n").TrimEnd('\n').Split('\n') |> Array.toList
-        let baseLines = section ["cwlVersion", yScalar td.CWLVersion; "class", yScalar "CommandLineTool"]
-        let hintsLines = td.Hints |> Option.map (fun h -> section ["hints", (h |> Seq.map encodeRequirement |> List.ofSeq |> ySeq)])
-        let reqLines = td.Requirements |> Option.map (fun r -> section ["requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> ySeq)])
-        let baseCommandLines = td.BaseCommand |> Option.map (fun bc -> section ["baseCommand", (bc |> Seq.map yScalar |> List.ofSeq |> ySeq)])
+        let baseLines = section ["cwlVersion", Encode.string td.CWLVersion; "class", Encode.string "CommandLineTool"]
+        let hintsLines = td.Hints |> Option.map (fun h -> section ["hints", (h |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence)])
+        let reqLines = td.Requirements |> Option.map (fun r -> section ["requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence)])
+        let baseCommandLines = td.BaseCommand |> Option.map (fun bc -> section ["baseCommand", (bc |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence)])
         let inputsLines = td.Inputs |> Option.map (fun i -> section ["inputs", (i |> Seq.map encodeCWLInput |> Seq.toList |> yMap)])
         let outputsLines = section ["outputs", (td.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> yMap)]
         let metadataLines =
             td.Metadata
             |> Option.map (fun md ->
                 md.GetProperties(false)
-                |> Seq.map (fun kvp -> kvp.Key, match kvp.Value with | :? string as s -> yScalar s | _ -> yScalar (string kvp.Value))
+                |> Seq.map (fun kvp -> kvp.Key, match kvp.Value with | :? string as s -> Encode.string s | _ -> Encode.string (string kvp.Value))
                 |> Seq.toList |> yMap |> writeYaml |> fun s -> s.Replace("\r\n","\n").TrimEnd('\n').Split('\n') |> Array.toList)
 
         let resultLines = [
@@ -292,8 +282,8 @@ module Encode =
     let encodeWorkflowDescription (wd:CWLWorkflowDescription) : string =
         let section (pairs:(string*YAMLElement) list) =
             pairs |> yMap |> writeYaml |> fun s -> s.Replace("\r\n","\n").TrimEnd('\n').Split('\n') |> Array.toList
-        let baseLines = section ["cwlVersion", yScalar wd.CWLVersion; "class", yScalar "Workflow"]
-        let reqLines = wd.Requirements |> Option.map (fun r -> section ["requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> ySeq)])
+        let baseLines = section ["cwlVersion", Encode.string wd.CWLVersion; "class", Encode.string "Workflow"]
+        let reqLines = wd.Requirements |> Option.map (fun r -> section ["requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence)])
         let inputsLines = section ["inputs", (wd.Inputs |> Seq.map encodeCWLInput |> Seq.toList |> yMap)]
         let stepsLines = section ["steps", (wd.Steps |> Seq.map encodeWorkflowStep |> Seq.toList |> yMap)]
         let outputsLines = section ["outputs", (wd.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> yMap)]
@@ -301,7 +291,7 @@ module Encode =
             wd.Metadata
             |> Option.map (fun md ->
                 md.GetProperties(false)
-                |> Seq.map (fun kvp -> kvp.Key, match kvp.Value with | :? string as s -> yScalar s | _ -> yScalar (string kvp.Value))
+                |> Seq.map (fun kvp -> kvp.Key, match kvp.Value with | :? string as s -> Encode.string s | _ -> Encode.string (string kvp.Value))
                 |> Seq.toList |> yMap |> writeYaml |> fun s -> s.Replace("\r\n","\n").TrimEnd('\n').Split('\n') |> Array.toList)
 
         let resultLines = [
