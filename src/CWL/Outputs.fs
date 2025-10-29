@@ -5,7 +5,9 @@ open Fable.Core
 
 type OutputBinding = {
     Glob: string option
-}
+    }
+
+    with static member create(?glob) = {Glob = glob}
 
 [<AttachMembers>]
 type CWLOutput (
