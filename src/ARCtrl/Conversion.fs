@@ -1463,6 +1463,11 @@ type WorkflowConversion =
     static member composeAdditionalType (t : CWL.CWLType) : string =
         t.ToString().ToLowerInvariant() 
 
+    static member decomposeAdditionalType (t : string) : CWL.CWLType =
+        YAMLicious.Reader.read t
+        |> CWL.Decode.cwlTypeDecoder
+        |> fst
+
     static member composeFormalParamInputIdentifiers (prefix : string option) (position : int option) =
         match prefix, position with
         | Some pr, Some po ->               
@@ -1504,6 +1509,19 @@ type WorkflowConversion =
             ?identifiers = identifiers
         )
 
+    static member decomposeInputBindings(identifiers : ResizeArray<LDNode>, ?context : LDContext) =
+        CWL.InputBinding.create(
+            ?prefix = Seq.tryPick (fun n -> LDPropertyValue.tryGetAsPrefix(n, ?context = context)) identifiers,
+            ?position = Seq.tryPick (fun n -> LDPropertyValue.tryGetAsPosition(n, ?context = context)) identifiers
+        )
+
+    static member decomposeInputFromFormalParameter(inp : LDNode, ?context : LDContext, ?graph : LDGraph) =
+        let t = LDFormalParameter.getAdditionalType(inp, ?context = context) |> WorkflowConversion.decomposeAdditionalType
+        let binding = WorkflowConversion.decomposeInputBindings(LDFormalParameter.getIdentifiers(inp, ?context = context, ?graph = graph), ?context = context)
+        let optional = LDFormalParameter.tryGetValueRequiredAsBoolean(inp, ?context = context) |> Option.map (not)
+        let name = LDFormalParameter.getNameAsString(inp, ?context = context)
+        CWL.CWLInput(name, t, binding, ?optional = optional)
+
     static member composeFormalParameterOutputIdentifiers (glob : string option) =
         match glob with
         | Some g ->               
@@ -1512,7 +1530,6 @@ type WorkflowConversion =
             ]
             |> Some
         | None -> None
-        
 
     static member composeFormalParameterFromOutput (out : CWL.CWLOutput, ?workflowName : string, ?runName) =
         let additionalType =
@@ -1532,6 +1549,18 @@ type WorkflowConversion =
             valueRequired = true,
             ?identifiers = identifiers
         )
+
+    static member decomposeOutputBindings(identifiers : ResizeArray<LDNode>, ?context : LDContext) =
+        CWL.OutputBinding.create(
+            ?glob = Seq.tryPick (fun n -> LDPropertyValue.tryGetAsGlob(n, ?context = context)) identifiers
+        )
+
+    static member decomposeOutputFromFormalParameter(inp : LDNode, ?context : LDContext, ?graph : LDGraph) =
+        let t = LDFormalParameter.getAdditionalType(inp, ?context = context) |> WorkflowConversion.decomposeAdditionalType
+        let binding = WorkflowConversion.decomposeOutputBindings(LDFormalParameter.getIdentifiers(inp, ?context = context, ?graph = graph), ?context = context)
+        let optional = LDFormalParameter.tryGetValueRequiredAsBoolean(inp, ?context = context) |> Option.map (not)
+        let name = LDFormalParameter.getNameAsString(inp, ?context = context)
+        CWL.CWLOutput(name, t, binding)
 
     static member composeComputationalTool (tool : Process.Component) =
         let n, na =
