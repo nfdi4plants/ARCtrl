@@ -23,6 +23,7 @@ type LDComputationalWorkflow =
     // Optional properties
     static member description = "http://schema.org/description"
     static member hasPart = "http://schema.org/hasPart"
+    static member additionalType = "http://schema.org/additionalType"
     static member comment = "http://schema.org/comment"
 
     // Getters and setters for recommended properties
@@ -68,6 +69,14 @@ type LDComputationalWorkflow =
         match cw.TryGetPropertyAsSingleton(LDComputationalWorkflow.name, ?context = context) with
         | Some (:? string as n) -> Some n
         | _ -> None
+
+    
+    static member getNameAsString(cw : LDNode, ?context : LDContext) =
+        match cw.TryGetPropertyAsSingleton(LDComputationalWorkflow.name, ?context = context) with
+        | Some (:? string as n) -> n
+        | Some _ -> failwith $"property `name` of object with @id `{cw.Id}` was not a string"
+        | _ -> failwith $"Could not access property `name` of object with @id `{cw.Id}`"
+
 
     static member setNameAsString(cw : LDNode, name : string, ?context : LDContext) =
         cw.SetProperty(LDComputationalWorkflow.name, name, ?context = context)
@@ -117,6 +126,20 @@ type LDComputationalWorkflow =
     static member setHasPart(cw : LDNode, hasParts : string list, ?context : LDContext) =
         cw.SetProperty(LDComputationalWorkflow.hasPart, ResizeArray hasParts, ?context = context)
 
+    static member tryGetAdditionalTypeAsString(cw : LDNode, ?context : LDContext) =
+        match cw.TryGetPropertyAsSingleton(LDComputationalWorkflow.additionalType, ?context = context) with
+        | Some (:? string as at) -> Some at
+        | _ -> None
+
+    static member getAdditionalTypeAsString(cw : LDNode, ?context : LDContext) =
+        match cw.TryGetPropertyAsSingleton(LDComputationalWorkflow.additionalType, ?context = context) with
+        | Some (:? string as at) -> at
+        | Some _ -> failwith $"property `additionalType` of object with @id `{cw.Id}` was not a string"
+        | _ -> failwith $"Could not access property `additionalType` of object with @id `{cw.Id}`"
+
+    static member setAdditionalTypeAsString(cw : LDNode, additionalType : string, ?context : LDContext) =
+        cw.SetProperty(LDComputationalWorkflow.additionalType, additionalType, ?context = context)
+
     static member getComments(cw : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let filter ldObject context = LDComment.validate(ldObject, ?context = context)
         cw.GetPropertyNodes(LDComputationalWorkflow.comment, filter = filter, ?graph = graph, ?context = context)
@@ -126,6 +149,15 @@ type LDComputationalWorkflow =
 
     static member validate(lp : LDNode, ?context : LDContext) =
         lp.HasType(LDComputationalWorkflow.schemaType, ?context = context)
+
+    //static member validateWorkflowDescription(lp : LDNode, ?context : LDContext) =
+    //    lp.HasType(LDComputationalWorkflow.schemaType, ?context = context)
+    //    && (LDComputationalWorkflow.getAdditionalTypeAsString(lp, ?context = context) = "WorkflowDescription")
+
+    //static member validateToolDescription(lp : LDNode, ?context : LDContext) =
+    //    lp.HasType(LDComputationalWorkflow.schemaType, ?context = context)
+    //    && (LDComputationalWorkflow.getAdditionalTypeAsString(lp, ?context = context) = "ToolDescription")
+            
 
     static member create
         (

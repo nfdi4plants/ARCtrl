@@ -34,6 +34,7 @@ type LDWorkflowProtocol =
             ?intendedUse : LDNode,
             ?comments : ResizeArray<LDNode>,
             ?computationalTools : ResizeArray<LDNode>,
+            ?additionalType : ResizeArray<string>,
             ?context : LDContext
         ) =
         let id =
@@ -56,6 +57,7 @@ type LDWorkflowProtocol =
         wp.SetOptionalProperty(LDComputationalWorkflow.hasPart, hasParts, ?context = context)
         wp.SetOptionalProperty(LDLabProtocol.intendedUse, intendedUse, ?context = context)
         wp.SetOptionalProperty(LDLabProtocol.computationalTool, computationalTools, ?context = context)
+        wp.SetOptionalProperty(LDComputationalWorkflow.additionalType, additionalType, ?context = context)
         wp.SetOptionalProperty(LDComputationalWorkflow.comment, comments, ?context = context)
         wp
     

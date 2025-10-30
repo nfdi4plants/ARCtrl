@@ -296,6 +296,31 @@ type BaseTypes =
             failwithf "Could not parse value %s with unit %O and unit reference %O" (Option.defaultValue "" v) u uRef
 
     /// Convert an ISA Component to a CompositeHeader and Cell tuple
+    static member decomposePropertyValue (pv : LDNode, ?context : LDContext) : OntologyAnnotation*Value option*OntologyAnnotation option =
+        let header = BaseTypes.headerOntologyOfPropertyValue(pv, ?context = context)
+        let value =           
+            let v = LDPropertyValue.tryGetValueAsString(pv, ?context = context)
+            let vRef = LDPropertyValue.tryGetValueReferenceAsString(pv, ?context = context)
+            match v,vRef with
+            | _, Some vr ->
+                Some (Value.Ontology (OntologyAnnotation.fromTermAnnotation(vr,?name = v)))
+            | Some v, None ->
+                Value.Name v |> Some
+            | None, None ->
+                None
+        let unit =
+            let u = LDPropertyValue.tryGetUnitTextAsString(pv, ?context = context)
+            let uRef = LDPropertyValue.tryGetUnitCodeAsString(pv, ?context = context)
+            match u,uRef with
+            | Some u, None ->
+                Some (OntologyAnnotation(name = u))
+            | _, Some uRef ->
+                Some (OntologyAnnotation.fromTermAnnotation(uRef, ?name = u))
+            | None, None ->
+                None
+        header, value, unit
+
+    /// Convert an ISA Component to a CompositeHeader and Cell tuple
     static member decomposeComponent (c : LDNode, ?context : LDContext) : CompositeHeader*CompositeCell =
         let header = BaseTypes.headerOntologyOfPropertyValue(c, ?context = context) |> CompositeHeader.Component
         let bodyCell = BaseTypes.cellOfPropertyValue (c, ?context = context)
@@ -1580,6 +1605,14 @@ type WorkflowConversion =
             | None -> None, None
         LDPropertyValue.createComponent(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
 
+    static member decomposeComputationalTool(tool : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        let h,v,u = BaseTypes.decomposePropertyValue(tool, ?context = context)
+        Process.Component.create(
+            ?value = v,
+            ?unit = u,
+            componentType = h
+        )
+
     static member getInputParametersFromProcessingUnit (pu : CWL.CWLProcessingUnit) =
         match pu with
         | CWL.CommandLineTool tool ->
@@ -1588,6 +1621,12 @@ type WorkflowConversion =
             | None -> ResizeArray []
         | CWL.Workflow wf -> 
             wf.Inputs |> ResizeArray.map (fun i -> i)
+
+    
+    static member toolDescriptionTypeName = "ToolDescription"
+
+    static member workflowDescriptionTypeName = "WorkflowDescription"
+
 
     static member composeWorkflowProtocolFromToolDescription (filePath : string, workflow : CWL.CWLToolDescription, ?workflowName : string, ?runName : string) =
         let inputs =
@@ -1599,8 +1638,27 @@ type WorkflowConversion =
         LDWorkflowProtocol.create(
             id = filePath,
             ?inputs = inputs,
-            outputs = outputs
+            outputs = outputs,
+            additionalType = ResizeArray [WorkflowConversion.toolDescriptionTypeName]
         )
+
+    static member decomposeWorkflowProtocolToToolDescription (protocol : LDNode, ?context : LDContext, ?graph : LDGraph) =
+        let inputs =
+            LDComputationalWorkflow.getInputsAsFormalParameters(protocol, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun i -> WorkflowConversion.decomposeInputFromFormalParameter(i, ?context = context, ?graph = graph))
+        let outputs =
+            LDComputationalWorkflow.getOutputsAsFormalParameter(protocol, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun o -> WorkflowConversion.decomposeOutputFromFormalParameter(o, ?context = context, ?graph = graph))
+        CWL.CWLToolDescription(
+            outputs = outputs,
+            inputs = inputs
+        )
+
+    static member composeWorkflowStep (step : CWL.WorkflowStep, workflowID) =
+        let id = $"WorkflowStep_{workflowID}_{step.Id}"
+        let cw = LDComputationalWorkflow.create(id = id, name = step.Id)
+        LDDataset.setIdentifierAsString(cw, step.Run)
+        cw
 
     static member composeWorkflowProtocolFromWorkflow (filePath : string, workflow : CWL.CWLWorkflowDescription, ?workflowName : string, ?runName : string) =
         let inputs =
@@ -1609,8 +1667,37 @@ type WorkflowConversion =
         let outputs =
             workflow.Outputs
             |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
+        let steps =
+            workflow.Steps
+            |> ResizeArray.map (fun s -> WorkflowConversion.composeWorkflowStep(s, filePath))
         LDWorkflowProtocol.create(
             id = filePath,
+            inputs = inputs,
+            outputs = outputs,
+            hasParts = steps,
+            additionalType = ResizeArray [WorkflowConversion.workflowDescriptionTypeName]
+        )
+
+    static member decomposeWorkflowStep (step : LDNode, ?context : LDContext, ?graph : LDGraph) =
+        let name = LDComputationalWorkflow.getNameAsString(step, ?context = context)
+        let run = LDDataset.getIdentifierAsString(step, ?context = context)
+        let inputs = ResizeArray()
+        let output = CWL.StepOutput.create(id = ResizeArray())
+        CWL.WorkflowStep(id = name, in_ = inputs, out_ = output, run = run)
+
+
+    static member decomposeWorkflowProtocolToWorkflow (protocol : LDNode, ?context : LDContext, ?graph : LDGraph) =
+        let inputs =
+            LDComputationalWorkflow.getInputsAsFormalParameters(protocol, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun i -> WorkflowConversion.decomposeInputFromFormalParameter(i, ?context = context, ?graph = graph))
+        let outputs =
+            LDComputationalWorkflow.getOutputsAsFormalParameter(protocol, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun o -> WorkflowConversion.decomposeOutputFromFormalParameter(o, ?context = context, ?graph = graph))
+        let steps =
+            LDComputationalWorkflow.getHasPart(protocol, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun s -> WorkflowConversion.decomposeWorkflowStep(s, ?context = context, ?graph = graph))
+        CWL.CWLWorkflowDescription(
+            steps = steps,
             inputs = inputs,
             outputs = outputs
         )
@@ -1621,6 +1708,15 @@ type WorkflowConversion =
             WorkflowConversion.composeWorkflowProtocolFromToolDescription(filePath, tool, ?workflowName = workflowName, ?runName = runName)
         | CWL.Workflow wf -> 
             WorkflowConversion.composeWorkflowProtocolFromWorkflow(filePath, wf, ?workflowName = workflowName, ?runName = runName)
+
+    static member decomposeWorkflowProtocolToProcessingUnit (protocol : LDNode, ?context : LDContext, ?graph : LDGraph) =
+        match LDComputationalWorkflow.getAdditionalTypeAsString(protocol, ?context = context) with
+        | s when s = WorkflowConversion.workflowDescriptionTypeName ->
+            WorkflowConversion.decomposeWorkflowProtocolToWorkflow(protocol, ?context = context, ?graph = graph)
+            |> CWL.Workflow
+        | s ->
+            WorkflowConversion.decomposeWorkflowProtocolToToolDescription(protocol, ?context = context, ?graph = graph)
+            |> CWL.CommandLineTool              
 
     static member composeWorkflow (workflow : ArcWorkflow, ?fs : FileSystem) =
         let workflowProtocol =
@@ -1670,6 +1766,45 @@ type WorkflowConversion =
             ?creators = creators,
             ?hasParts = hasParts,
             ?comments = comments
+        )
+
+    static member decomposeWorkflow (workflow : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        let workflowProtocol =
+            LDDataset.getMainEntities(workflow, ?graph = graph, ?context = context)
+            |> Seq.find (fun me ->
+                LDComputationalWorkflow.validate(me, ?context = context)
+            )
+        let cwlDescription = 
+            WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(workflowProtocol, ?context = context, ?graph = graph)
+        let version =
+            LDLabProtocol.tryGetVersionAsString(workflowProtocol, ?context = context)
+        let uri =
+            LDLabProtocol.tryGetUrl(workflowProtocol, ?context = context)
+        let components =
+            LDLabProtocol.getComputationalTools(workflowProtocol, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun ct -> WorkflowConversion.decomposeComputationalTool(ct, ?graph = graph, ?context = context))
+        let contacts =
+            LDDataset.getCreators(workflow, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun c -> PersonConversion.decomposePerson(c, ?graph = graph, ?context = context))
+        let comments =
+            LDDataset.getComments(workflow, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
+        let dataMap = 
+            LDDataset.getVariableMeasuredAsFragmentDescriptors(workflow, ?graph = graph, ?context = context)
+            |> fun fds -> DatamapConversion.decomposeFragmentDescriptors(fds, ?graph = graph, ?context = context)
+            |> Option.fromValueWithDefault (DataMap.init())
+
+        ArcWorkflow.create(
+            identifier = LDDataset.getIdentifierAsString(workflow, ?context = context),
+            ?title = LDDataset.tryGetNameAsString(workflow, ?context = context),
+            ?description = LDDataset.tryGetDescriptionAsString(workflow, ?context = context),
+            ?version = version,
+            ?uri = uri,
+            cwlDescription = cwlDescription,
+            components = components,
+            ?datamap = dataMap,
+            contacts = contacts,
+            comments = comments
         )
 
 type RunConversion = 
