@@ -39,7 +39,7 @@ module WorkflowContractExtensions =
                         if p <> path && p <> "workflows/.gitkeep" then Contract.createCreate(p, DTOType.PlainText)
                 if this.CWLDescription.IsSome then
                     let path = Identifier.Workflow.cwlFileNameFromIdentifier this.Identifier
-                    let dto = CWL.Encode.encodeCWLProcessingUnit this.CWLDescription.Value
+                    let dto = CWL.Encode.encodeProcessingUnit this.CWLDescription.Value
                     Contract.createCreate(path, DTOType.CWL, DTO.Text dto)
                 c
             |]

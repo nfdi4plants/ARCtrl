@@ -235,7 +235,7 @@ module Encode =
     // Top-level encoders
     // ------------------------------
 
-    let private writeYaml (element:YAMLElement) =
+    let writeYaml (element:YAMLElement) =
         // Use whitespace=2 to match fixtures (assumed)
         YAMLicious.Writer.write element (Some (fun c -> { c with Whitespace = 2 }))
 
@@ -315,3 +315,7 @@ module Encode =
         merge [] lines |> String.concat "\r\n"
 
 
+    let encodeProcessingUnit (pu : CWLProcessingUnit) :string =
+        match pu with
+        | CommandLineTool td -> encodeToolDescription td
+        | Workflow wd -> encodeWorkflowDescription wd
