@@ -2,12 +2,13 @@ module Tests.CWLWorkflow
 
 open ARCtrl.CWL
 open TestingUtils
+open TestingUtils.CWL
 
 let decodeCWLWorkflowDescription: CWLWorkflowDescription =
     TestObjects.CWL.Workflow.workflowFile
     |> Decode.decodeWorkflow
 
-let testCWLWorkflowDescription =
+let testCWLWorkflowDescriptionDecode =
     testList "Decode" [
         testCase "CWLVersion" <| fun _ ->
             let expected = "v1.2"
@@ -100,9 +101,36 @@ let testCWLWorkflowDescription =
                 Expect.equal actual.[i].Name expected.[i].Name ""
                 Expect.equal actual.[i].OutputBinding expected.[i].OutputBinding ""
                 Expect.equal actual.[i].Type_ expected.[i].Type_ ""
+                Expect.equal actual.[i].OutputSource expected.[i].OutputSource ""
     ]
 
+let testCWLWorkflowDescriptionEncode =
+    testList "Encode" [
+        testList "Workflow negative tests" [
+            testCase "missing outputSource detected" <| fun _ ->
+                let original = TestObjects.CWL.Workflow.workflowFile
+                let decoded = Decode.decodeWorkflow original
+                let encoded = Encode.encodeWorkflowDescription decoded
+                // Simulate user editing and deleting outputSource lines
+                let modified =
+                    encoded.Split('\n')
+                    |> Array.filter (fun l -> not (l.TrimStart().StartsWith("outputSource:")))
+                    |> String.concat "\n"
+                let decodedModified = Decode.decodeWorkflow modified
+                let missing = decodedModified.Outputs |> Seq.filter (fun o -> o.OutputSource.IsNone) |> Seq.toList
+                Expect.isTrue (missing.Length > 0) "At least one output should be missing outputSource after manual removal"
+        ]
+        testList "Workflow Encode RoundTrip" [
+            testCase "workflow encode/decode deterministic & outputSource preserved" <| fun _ ->
+                let original = TestObjects.CWL.Workflow.workflowFile
+                let (encoded1, d1, d2) = assertDeterministic Encode.encodeWorkflowDescription Decode.decodeWorkflow "Workflow" original
+                // Verify outputs have outputSource in both decoded versions
+                assertAllOutputsHaveSource d1
+                assertAllOutputsHaveSource d2
+        ]
+    ]
 let main = 
     testList "CWLWorkflowDescription" [
-        testCWLWorkflowDescription
+        testCWLWorkflowDescriptionDecode
+        testCWLWorkflowDescriptionEncode
     ]

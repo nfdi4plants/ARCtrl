@@ -3,6 +3,7 @@ module Tests.CWLObject
 open ARCtrl.CWL
 open TestingUtils
 open DynamicObj
+open TestingUtils.CWL
 
 let decodeCWLToolDescription: CWLToolDescription =
     TestObjects.CWL.CommandLineTool.cwlFile
@@ -13,7 +14,7 @@ let decodeCWLToolDescriptionMetadata: CWLToolDescription =
     |> Decode.decodeCommandLineTool
 
 
-let testCWLToolDescription =
+let testCWLToolDescriptionDecode =
     testList "Decode" [
         testCase "CWLVersion" <| fun _ ->
             let expected = "v1.2"
@@ -250,8 +251,19 @@ let testCWLToolDescriptionMetadata =
             Expect.equal actual expected ""
     ]
 
+let testCWLToolDescriptionEncode =
+    testList "Encode" [
+        testList "Tool Encode RoundTrip" [
+            testCase "tool encode/decode deterministic & extended requirements" <| fun _ ->
+                let original = TestObjects.CWL.CommandLineTool.cwlFile
+                let (encoded1, _, _) = TestingUtils.CWL.assertDeterministic Encode.encodeToolDescription Decode.decodeCommandLineTool "CommandLineTool" original
+                TestingUtils.CWL.assertRequirementsExtended encoded1
+        ]
+    ]
+
 let main = 
     testList "CWLToolDescription" [
-        testCWLToolDescription
+        testCWLToolDescriptionDecode
+        testCWLToolDescriptionEncode
         testCWLToolDescriptionMetadata
     ]

@@ -53,6 +53,12 @@ module Decode =
             outputBinding
         )
 
+    let outputSourceDecoder: (YAMLiciousTypes.YAMLElement -> string option) =
+        Decode.object(fun get ->
+            let outputSource = get.Optional.Field "outputSource" Decode.string
+            outputSource
+        )
+
     /// Decode a YAMLElement into a Dirent
     let direntDecoder: (YAMLiciousTypes.YAMLElement -> CWLType) =
         Decode.object (fun get ->
@@ -142,24 +148,16 @@ module Decode =
                 for key in dict.Keys do
                     let value = dict.[key]
                     let outputBinding = outputBindingDecoder value
-                    let outputSource = get.Optional.Field "outputSource" Decode.string
-                    let cwlType = 
+                    let outputSource = outputSourceDecoder value
+                    let cwlType =
                         match value with
                         | YAMLElement.Object [YAMLElement.Value v] -> cwlTypeStringMatcher v.Value get |> fst
                         | _ -> cwlTypeDecoder value |> fst
-                    let output =
-                        CWLOutput(
-                            key,
-                            cwlType
-                        )
-                    if outputBinding.IsSome then
-                        DynObj.setOptionalProperty "outputBinding" outputBinding output
-                    if outputSource.IsSome then
-                        DynObj.setOptionalProperty "outputSource" outputSource output
+                    let output = CWLOutput(key, cwlType)
+                    if outputBinding.IsSome then DynObj.setOptionalProperty "outputBinding" outputBinding output
+                    if outputSource.IsSome then DynObj.setOptionalProperty "outputSource" outputSource output
                     output
-            |]
-            |> ResizeArray
-        )
+            |] |> ResizeArray)
 
     /// Access the outputs field and decode a YAMLElement into an Output Array
     let outputsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<CWLOutput>) =
@@ -167,6 +165,7 @@ module Decode =
             let outputs = get.Required.Field "outputs" outputArrayDecoder
             outputs
         )
+
 
     /// Decode a YAMLElement into a DockerRequirement
     let dockerRequirementDecoder (get: Decode.IGetters): DockerRequirement =
