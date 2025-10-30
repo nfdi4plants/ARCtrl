@@ -3,6 +3,7 @@ namespace ARCtrl.CWL
 open DynamicObj
 open Fable.Core
 
+[<AttachMembers>]
 type StepInput = {
     Id: string
     Source: string option
@@ -10,9 +11,21 @@ type StepInput = {
     ValueFrom: string option
 }
 
+    with
+    static member create(id: string, ?source: string, ?defaultValue: string, ?valueFrom: string) =
+        { Id = id
+          Source = source
+          DefaultValue = defaultValue
+          ValueFrom = valueFrom }
+
+[<AttachMembers>]
 type StepOutput = {
     Id: ResizeArray<string>
 }
+
+    with
+    static member create(id: ResizeArray<string>) =
+        { Id = id }
 
 [<AttachMembers>]
 type WorkflowStep (
