@@ -393,12 +393,12 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
 
     // - Column API - //
     /// <summary>
-    /// Return a CompositeColumn for the given column index.
+    /// Return a CompositeColumn for the given column index. Fills the column with empty cells for rows that do not have a value.
     /// </summary>
     /// <param name="columnIndex">0-based Index of the column to return.</param>
-    /// <param name="fillDefault">Tables can be sparse, so if set to true, will fill the column with empty cells for rows that do not have a value. Otherwise will fail for non-existing cells.</param>
-    member this.GetColumn(columnIndex:int, ?fillDefault : bool) : CompositeColumn =
-        let fillDefault = defaultArg fillDefault false
+    /// <param name="failOnMissingCell">Tables can be sparse, so if set to true, will fail for non-existing cells.</param>
+    member this.GetColumn(columnIndex:int, ?failOnMissingCell : bool) : CompositeColumn =
+        let failOnMissingCell = defaultArg failOnMissingCell false
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
         let h = this.Headers.[columnIndex]
         let cells = ResizeArray()
@@ -415,76 +415,76 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
                     if vals.ContainsKey rowIndex then
                         cells.Add _values.ValueMap.[vals.[rowIndex]]
                     else
-                        if fillDefault then
-                            cells.Add emptyCell
-                        else
+                        if failOnMissingCell then
                             failwithf "Could not return column: Unable to find cell for index: (%i, %i)" columnIndex rowIndex
+                        else
+                            cells.Add emptyCell
         CompositeColumn.create(h, cells)
 
     /// <summary>
-    /// Return a CompositeColumn for the given column index.
+    /// Return a CompositeColumn for the given column index. Fills the column with empty cells for rows that do not have a value.
     /// </summary>
     /// <param name="columnIndex">0-based Index of the column to return.</param>
-    /// <param name="fillDefault">Tables can be sparse, so if set to true, will fill the column with empty cells for rows that do not have a value. Otherwise will fail for non-existing cells.</param>s
-    static member getColumn (index:int, ?fillDefault) =
+    /// <param name="failOnMissingCell">Tables can be sparse, so if set to true, will fail for non-existing cells. Otherwise will fill the column with empty cells for rows that do not have a value.</param>s
+    static member getColumn (index:int, ?failOnMissingCell) =
         fun (table:ArcTable) ->
-            table.GetColumn(index, ?fillDefault = fillDefault)
+            table.GetColumn(index, ?failOnMissingCell = failOnMissingCell)
 
     /// <summary>
     /// Returns a column by its header.
-    /// If the header is not found, returns None.
+    /// If the header is not found, returns None. Fills the column with empty cells for rows that do not have a value.
     /// </summary>
     /// <param name="header">The header to search for.</param>
-    /// <param name="fillDefault">Tables can be sparse, so if set to true, will fill the column with empty cells for rows that do not have a value. Otherwise will fail for non-existing cells.</param>
-    member this.TryGetColumnByHeader (header:CompositeHeader, ?fillDefault) =
+    /// <param name="failOnMissingCell">Tables can be sparse, so if set to true, will fail for non-existing cells.</param>
+    member this.TryGetColumnByHeader (header:CompositeHeader, ?failOnMissingCell) =
         let index = this.Headers |> Seq.tryFindIndex (fun x -> x = header)
         index
-        |> Option.map (fun i -> this.GetColumn(i, ?fillDefault = fillDefault))
+        |> Option.map (fun i -> this.GetColumn(i, ?failOnMissingCell = failOnMissingCell))
 
     /// <summary>
     /// Returns a column by its header.
-    /// If the header is not found, returns None.
+    /// If the header is not found, returns None. Fills the column with empty cells for rows that do not have a value.
     /// </summary>
     /// <param name="header">The header to search for.</param>
-    /// <param name="fillDefault">Tables can be sparse, so if set to true, will fill the column with empty cells for rows that do not have a value. Otherwise will fail for non-existing cells.</param>
-    static member tryGetColumnByHeader (header:CompositeHeader, ?fillDefault ) =
+    /// <param name="failOnMissingCell">Tables can be sparse, so if set to true, will fail for non-existing cells.</param>
+    static member tryGetColumnByHeader (header:CompositeHeader, ?failOnMissingCell ) =
         fun (table:ArcTable) ->
-            table.TryGetColumnByHeader(header, ?fillDefault = fillDefault)
+            table.TryGetColumnByHeader(header, ?failOnMissingCell = failOnMissingCell)
 
     /// <summary>
     /// Returns the first column for that the header predicate returns true.
-    /// If the header is not found, returns None.
+    /// If the header is not found, returns None. Fills the column with empty cells for rows that do not have a value.
     /// </summary>
     /// <param name="header">Predicate to search for the header.</param>
-    /// <param name="fillDefault">Tables can be sparse, so if set to true, will fill the column with empty cells for rows that do not have a value. Otherwise will fail for non-existing cells.</param>
-    member this.TryGetColumnByHeaderBy (headerPredicate:CompositeHeader -> bool, ?fillDefault ) = //better name for header / action
+    /// <param name="failOnMissingCell">Tables can be sparse, so if set to true, will fail for non-existing cells.</param>
+    member this.TryGetColumnByHeaderBy (headerPredicate:CompositeHeader -> bool, ?failOnMissingCell ) = //better name for header / action
         this.Headers
         |> Seq.tryFindIndex headerPredicate
-        |> Option.map (fun i -> this.GetColumn(i, ?fillDefault = fillDefault))
+        |> Option.map (fun i -> this.GetColumn(i, ?failOnMissingCell = failOnMissingCell))
 
     /// <summary>
     /// Returns the first column for that the header predicate returns true.
-    /// If the header is not found, returns None.
+    /// If the header is not found, returns None. Fills the column with empty cells for rows that do not have a value.
     /// </summary>
     /// <param name="header">Predicate to search for the header.</param>
-    /// <param name="fillDefault">Tables can be sparse, so if set to true, will fill the column with empty cells for rows that do not have a value. Otherwise will fail for non-existing cells.</param>
-    static member tryGetColumnByHeaderBy (headerPredicate:CompositeHeader -> bool, ?fillDefault) =
+    /// <param name="failOnMissingCell">Tables can be sparse, so if set to true, will fail for non-existing cells.</param>
+    static member tryGetColumnByHeaderBy (headerPredicate:CompositeHeader -> bool, ?failOnMissingCell) =
         fun (table:ArcTable) ->
-            table.TryGetColumnByHeaderBy(headerPredicate, ?fillDefault = fillDefault)
+            table.TryGetColumnByHeaderBy(headerPredicate, ?failOnMissingCell = failOnMissingCell)
 
     /// <summary>
-    /// Returns a column by its header.
+    /// Returns a column by its header. Fills the column with empty cells for rows that do not have a value.
     /// </summary>
     /// <param name="header">Header to search for.</param>
-    /// <param name="fillDefault">Tables can be sparse, so if set to true, will fill the column with empty cells for rows that do not have a value. Otherwise will fail for non-existing cells.</param>
-    member this.GetColumnByHeader (header:CompositeHeader, ?fillDefault) =
-        match this.TryGetColumnByHeader(header, ?fillDefault = fillDefault) with
+    /// <param name="failOnMissingCell">Tables can be sparse, so if set to true, will fail for non-existing cells.</param>
+    member this.GetColumnByHeader (header:CompositeHeader, ?failOnMissingCell) =
+        match this.TryGetColumnByHeader(header, ?failOnMissingCell = failOnMissingCell) with
         | Some c -> c
         | None -> failwithf "Unable to find column with header in table %s: %O" this.Name header
 
-    static member getColumnByHeader (header:CompositeHeader, ?fillDefault) =
+    static member getColumnByHeader (header:CompositeHeader, ?failOnMissingCell) =
         fun (table:ArcTable) ->
-            table.GetColumnByHeader(header, ?fillDefault = fillDefault)
+            table.GetColumnByHeader(header, ?failOnMissingCell = failOnMissingCell)
 
     member this.TryGetInputColumn() =
         let index = this.Headers |> Seq.tryFindIndex (fun x -> x.isInput)
@@ -785,7 +785,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
     /// Splits the table rowWise into a collection of tables, so that each new table has only one value for the given column
     static member SplitByColumnValues(columnIndex) =
         fun (table : ArcTable) ->
-            let column = table.GetColumn(columnIndex, fillDefault = true)
+            let column = table.GetColumn(columnIndex)
             let indexGroups = column.Cells |> ResizeArray.indexed |> ResizeArray.groupBy snd |> ResizeArray.map (fun (g,vs) -> vs |> ResizeArray.map fst)
             indexGroups
             |> ResizeArray.mapi (fun i indexGroup ->
