@@ -15,6 +15,9 @@ let oa_instrumentModel = OntologyAnnotation("instrument model", "MS", "MS:012345
 let oa_SCIEXInstrumentModel = OntologyAnnotation("SCIEX instrument model", "MS", "MS:654321")
 /// "temperature","NCIT","NCIT:0123210"
 let oa_temperature = OntologyAnnotation("temperature","NCIT","NCIT:0123210")
+/// "degreeCelsius","UO","UO:0000027"
+let oa_degreeCelsius = OntologyAnnotation("degreeCelsius","UO","UO:0000027")
+
 
 /// This function can be used to put ArcTable.Values into a nice format for printing/writing to IO
 let tableValues_printable (table:ArcTable) = 
@@ -2661,7 +2664,7 @@ let private tests_Join = testList "Join" [
                 // with unit
                 CompositeColumn.create( 
                     CompositeHeader.Parameter oa_temperature,
-                    ResizeArray [|for i in 0 .. 4 do yield CompositeCell.createUnitized($"{i}",oa_temperature)|]
+                    ResizeArray [|for i in 0 .. 4 do yield CompositeCell.createUnitized($"{i}",oa_degreeCelsius)|]
                 )
             |]
             joinTable.AddColumns(columns)
@@ -2669,7 +2672,9 @@ let private tests_Join = testList "Join" [
             Expect.equal table.ColumnCount 2 "column count"
             Expect.equal table.RowCount 5 "row count"
             Expect.equal (table.GetCellAt(0,0)) (CompositeCell.createTerm (OntologyAnnotation())) "empty term cell"
-            Expect.equal (table.GetCellAt(1,0)) (CompositeCell.createUnitized("",oa_temperature)) "temperature unit cell"
+            Expect.equal (table.GetCellAt(1,0)) (CompositeCell.createUnitized("",oa_degreeCelsius)) "temperature unit cell"
+            // https://github.com/nfdi4plants/ARCtrl/issues/563
+            table.Columns |> ignore
     ]
     testList "TableJoinOption.WithValues" [
         testCase "Add to empty" <| fun _ ->
@@ -2681,7 +2686,7 @@ let private tests_Join = testList "Join" [
                 // with unit
                 CompositeColumn.create( 
                     CompositeHeader.Parameter oa_temperature,
-                    ResizeArray [|for i in 0 .. 4 do yield CompositeCell.createUnitized($"{i}",oa_temperature)|]
+                    ResizeArray [|for i in 0 .. 4 do yield CompositeCell.createUnitized($"{i}",oa_degreeCelsius)|]
                 )
             |]
             joinTable.AddColumns(columns)
@@ -2689,7 +2694,7 @@ let private tests_Join = testList "Join" [
             Expect.equal table.ColumnCount 2 "column count"
             Expect.equal table.RowCount 5 "row count"
             Expect.equal table.Values.[0,0] (CompositeCell.createTerm oa_SCIEXInstrumentModel) "sciex instrument model"
-            Expect.equal table.Values.[1,0] (CompositeCell.createUnitized("0",oa_temperature)) "temperature unit cell"
+            Expect.equal table.Values.[1,0] (CompositeCell.createUnitized("0",oa_degreeCelsius)) "temperature unit cell"
     ]
 ]
 

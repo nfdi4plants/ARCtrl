@@ -322,7 +322,7 @@ let updateReferenceWithSheet =
                 ResizeArray.create 2 (CompositeCell.emptyFreeText)
                 |> ResizeArray.append (ResizeArray.create 2 (CompositeCell.createFreeText descriptionValue1))
             Expect.sequenceEqual
-                (resultTable.GetColumnByHeader(CompositeHeader.ProtocolDescription, fillDefault = true)).Cells
+                (resultTable.GetColumnByHeader(CompositeHeader.ProtocolDescription)).Cells
                 (expectedDescription)
                 "Description value was not taken correctly"
             Expect.sequenceEqual
