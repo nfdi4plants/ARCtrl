@@ -45,7 +45,7 @@ module RunContractExtensions =
                         if p <> path && p <> "runs/.gitkeep" then Contract.createCreate(p, DTOType.PlainText)
                 if this.CWLDescription.IsSome then
                     let path = Identifier.Run.cwlFileNameFromIdentifier this.Identifier
-                    let dto = CWL.Encode.encodeCWLProcessingUnit this.CWLDescription.Value
+                    let dto = CWL.Encode.encodeProcessingUnit this.CWLDescription.Value
                     Contract.createCreate(path, DTOType.CWL, DTO.Text dto)
                 c
             |]

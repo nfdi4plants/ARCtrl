@@ -1486,11 +1486,14 @@ type StudyConversion =
 type WorkflowConversion =
 
     static member composeAdditionalType (t : CWL.CWLType) : string =
-        t.ToString().ToLowerInvariant() 
+        CWL.Encode.encodeCWLType t
+        |> CWL.Encode.writeYaml
+        |> fun s -> s.Trim()
 
     static member decomposeAdditionalType (t : string) : CWL.CWLType =
-        YAMLicious.Reader.read t
-        |> CWL.Decode.cwlTypeDecoder
+        YAMLicious.Decode.object (fun get ->
+            CWL.Decode.cwlTypeStringMatcher t get
+        ) (YAMLicious.YAMLiciousTypes.YAMLElement.Comment "dawd") //Placeholder
         |> fst
 
     static member composeFormalParamInputIdentifiers (prefix : string option) (position : int option) =
@@ -1535,17 +1538,26 @@ type WorkflowConversion =
         )
 
     static member decomposeInputBindings(identifiers : ResizeArray<LDNode>, ?context : LDContext) =
-        CWL.InputBinding.create(
-            ?prefix = Seq.tryPick (fun n -> LDPropertyValue.tryGetAsPrefix(n, ?context = context)) identifiers,
-            ?position = Seq.tryPick (fun n -> LDPropertyValue.tryGetAsPosition(n, ?context = context)) identifiers
-        )
+        let prefix = Seq.tryPick (fun n -> LDPropertyValue.tryGetAsPrefix(n, ?context = context)) identifiers
+        let position = Seq.tryPick (fun n -> LDPropertyValue.tryGetAsPosition(n, ?context = context)) identifiers
+        match prefix, position with
+        | None, None -> None
+        | _ ->
+            CWL.InputBinding.create(
+                ?prefix = prefix,
+                ?position = position
+            )
+            |> Some
 
     static member decomposeInputFromFormalParameter(inp : LDNode, ?context : LDContext, ?graph : LDGraph) =
         let t = LDFormalParameter.getAdditionalType(inp, ?context = context) |> WorkflowConversion.decomposeAdditionalType
         let binding = WorkflowConversion.decomposeInputBindings(LDFormalParameter.getIdentifiers(inp, ?context = context, ?graph = graph), ?context = context)
-        let optional = LDFormalParameter.tryGetValueRequiredAsBoolean(inp, ?context = context) |> Option.map (not)
+        let optional =
+            match LDFormalParameter.tryGetValueRequiredAsBoolean(inp, ?context = context) with
+            | Some true -> None
+            | _ -> Some true
         let name = LDFormalParameter.getNameAsString(inp, ?context = context)
-        CWL.CWLInput(name, t, binding, ?optional = optional)
+        CWL.CWLInput(name, t, ?inputBinding = binding, ?optional = optional)
 
     static member composeFormalParameterOutputIdentifiers (glob : string option) =
         match glob with
