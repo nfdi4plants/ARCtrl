@@ -390,7 +390,7 @@ let private tests_SetISAFromContracts = testList "SetISAFromContracts" [
             )
         let arc = ARC("MyIdentifier")
         arc.SetISAFromContracts [|SimpleISA.Investigation.investigationReadContract; licenseContract|]
-        let expectedLicense = License(LicenseContentType.Fulltext, content = licenseText)
+        let expectedLicense = License(LicenseContentType.Fulltext, content = licenseText, path = licensePath)
         let actualLicense = Expect.wantSome arc.License "License was not set"
         Expect.equal actualLicense expectedLicense "License was not set correctly"
     )

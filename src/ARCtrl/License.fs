@@ -78,7 +78,7 @@ type License( contentType: LicenseContentType, content: string, ?path : string) 
         | {Operation = READ; DTOType = Some DTOType.PlainText; DTO = Some (DTO.Text txt)} when
             c.Path = ArcPathHelper.LICENSEFileName || Seq.contains c.Path ArcPathHelper.alternativeLICENSEFileNames
             ->
-            License.initFulltext txt |> Some
+            License.initFulltext(txt, path = c.Path) |> Some
         | _ -> None
 
     static member GetDefaultLicense () =
