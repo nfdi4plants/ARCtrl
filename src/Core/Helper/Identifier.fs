@@ -29,7 +29,7 @@ let tryCheckValidCharacters (identifier: string) =
 let checkValidCharacters (identifier: string) =
     match tryCheckValidCharacters identifier with
     | true -> ()
-    | false -> failwith $"New identifier \"{identifier}\"contains forbidden characters! Allowed characters are: letters, digits, underscore (_), dash (-) and whitespace ( )."
+    | false -> failwith $"New identifier \"{identifier}\" contains forbidden characters! Allowed characters are: letters, digits, underscore (_), dash (-) and whitespace ( )."
 
 let [<Literal>] MISSING_IDENTIFIER = "MISSING_IDENTIFIER_"
 
