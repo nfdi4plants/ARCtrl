@@ -1,9 +1,15 @@
+### 3.0.0-beta.11+adde9c7b (Released 2025-10-31)
+* Additions:
+    * Add CWL Encoders
+* Bugfixes:
+    * [[#29544557](https://github.com/nfdi4plants/ARCtrl/commit/2954455706ebbb9a4320546a413be867d8d9dd34)] fix read license always containing default path
+
 ### 3.0.0-beta.10+fe1c178d (Released 2025-10-30)
 * Additions:
     * [[#33dc55e8](https://github.com/nfdi4plants/ARCtrl/commit/33dc55e8c990c82a2ccd1b36a8f6b806d2eee2a2)] make autofill of sparse columns default behaviour in ArcTable column getters
 
 ### 3.0.0-beta.9+3aef1ad3 (Released 2025-10-28)
-  * Deletions:
+* Deletions:
     * [[#0671bbb9](https://github.com/nfdi4plants/ARCtrl/commit/0671bbb941db486fed02ad19569be061cc14d27f)] remove cwl references from top level ARC object
 * Bugfixes:
     * [[#342953d2](https://github.com/nfdi4plants/ARCtrl/commit/342953d27848a547e2123dac233fafb5416cb255)] add tests and fixes for run and workflow rename and remove functionality
