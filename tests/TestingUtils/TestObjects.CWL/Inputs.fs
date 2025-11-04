@@ -30,7 +30,7 @@ module File =
 
     let inputFileBinding = InputBinding.create(position = inputFilePosition, prefix = inputFilePrefix)
 
-    let inputFirstArg = CWLInput("firstArg", CWLType.file(), inputBinding = inputFileBinding)
+    let inputFirstArg = CWLInput(inputFileName, inputFileType, inputBinding = inputFileBinding)
 
 
 module String =
@@ -43,6 +43,6 @@ module String =
 
     let inputStringBinding = InputBinding.create(position = inputStringPosition)
 
-    let inputSecondArg = CWLInput("secondArg", CWLType.String, inputBinding = inputStringBinding)
+    let inputSecondArg = CWLInput(inputStringName, inputStringType, inputBinding = inputStringBinding)
 
     

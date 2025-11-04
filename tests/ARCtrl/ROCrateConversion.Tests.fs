@@ -15,6 +15,11 @@ module Helper =
         | :? LDRef as r -> Some r
         | _ -> None
 
+    let tryLDNode (o : obj) =
+        match o with
+        | :? LDNode as n -> Some n
+        | _ -> None
+
     let tableName1 = "Test1"
     let tableName2 = "Test2"
     let oa_species = OntologyAnnotation("species", "GO", "GO:0123456")
@@ -1651,7 +1656,7 @@ let tests_YAMLInputValue =
             let name = "MyInput"
             let runName = "MyRun"
             let filePath = "myfile.txt"
-            let paramValue = CWLParameterReference.create(name, values = ResizeArray.singleton  filePath, type_ = CWLType.file())
+            let paramValue = CWLParameterReference(name, values = ResizeArray.singleton  filePath, type_ = CWLType.file())
             let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
@@ -1661,15 +1666,27 @@ let tests_YAMLInputValue =
             let name' = Expect.wantSome (LDFile.tryGetNameAsString file) "File should have a name"
             Expect.equal name' expectedID "File name should match run and file path"
             let exampleOfWork = Expect.wantSome (LDFile.tryGetExampleOfWork file) "File should have an exampleOfWork"
-            let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryLDRef exampleOfWork) "ExampleOfWork should be a reference"
-            Expect.equal exampleOfWorkAsRef.Id formalParam.Id "ExampleOfWork ID should match name"
+            //let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryLDRef exampleOfWork) "ExampleOfWork should be a reference"
+            let exampleOfWorkAsNode : LDNode = Expect.wantSome (tryLDNode exampleOfWork) "ExampleOfWork should be a node"
+            Expect.equal exampleOfWorkAsNode.Id formalParam.Id "ExampleOfWork ID should match name"
+        )
+        testCase "SimpleFileInRun_Roundabout" (fun () ->
+            let name = "MyInput"
+            let runName = "MyRun"
+            let filePath = "myfile.txt"
+            let paramValue = CWLParameterReference(name, values = ResizeArray.singleton  filePath, type_ = CWLType.file())
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
+            let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
+            let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
+            let paramValue' = RunConversion.decomposeCWLInputValue(file,runName)
+            Expect.equal paramValue' paramValue "Parameter value should match after roundabout"
         )
         testCase "SimpleFileInAssay" (fun () ->
             let name = "MyInput"
             let runName = "MyRun"
             let fileName = "myfile.txt"
             let filePath = ResizeArray.singleton $"../../assays/MyAssay/dataset/{fileName}"
-            let paramValue = CWLParameterReference.create(name, values = filePath, type_ = CWLType.file())
+            let paramValue = CWLParameterReference(name, values = filePath, type_ = CWLType.file())
             let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
@@ -1679,15 +1696,27 @@ let tests_YAMLInputValue =
             let name' = Expect.wantSome (LDFile.tryGetNameAsString file) "File should have a name"
             Expect.equal name' expectedID "File name should match run and file path"
             let exampleOfWork = Expect.wantSome (LDFile.tryGetExampleOfWork file) "File should have an exampleOfWork"
-            let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryLDRef exampleOfWork) "ExampleOfWork should be a reference"
-            Expect.equal exampleOfWorkAsRef.Id formalParam.Id "ExampleOfWork ID should match name"
-
+            //let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryLDRef exampleOfWork) "ExampleOfWork should be a reference"
+            let exampleOfWorkAsNode : LDNode = Expect.wantSome (tryLDNode exampleOfWork) "ExampleOfWork should be a node"
+            Expect.equal exampleOfWorkAsNode.Id formalParam.Id "ExampleOfWork ID should match name"
+        )
+        testCase "SimpleFileInAssay_Roundabout" (fun () ->
+            let name = "MyInput"
+            let runName = "MyRun"
+            let fileName = "myfile.txt"
+            let filePath = ResizeArray.singleton $"../../assays/MyAssay/dataset/{fileName}"
+            let paramValue = CWLParameterReference(name, values = filePath, type_ = CWLType.file())
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
+            let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
+            let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
+            let paramValue' = RunConversion.decomposeCWLInputValue(file,runName)
+            Expect.equal paramValue' paramValue "Parameter value should match after roundabout"
         )
         testCase "SimpleString" (fun () ->
             let name = "MyInput"
             let runName = "MyRun"
             let value = ResizeArray.singleton "verbose"
-            let paramValue = CWLParameterReference.create(name, values = value)
+            let paramValue = CWLParameterReference(name, values = value)
             let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.String)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let propValue = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
@@ -1705,7 +1734,7 @@ let tests_YAMLInputValue =
             let name = "MyInput"
             let runName = "MyRun"
             let value = ResizeArray.singleton "verbose"
-            let paramValue = CWLParameterReference.create(name, values = value, type_ = CWLType.Int)
+            let paramValue = CWLParameterReference(name, values = value, type_ = CWLType.Int)
             let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             Expect.throws (fun () -> RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName) |> ignore) "Should throw for non-matching type"
@@ -1714,7 +1743,7 @@ let tests_YAMLInputValue =
             let name = "MyInput"
             let runName = "MyRun"
             let value = ["a"; "b"]
-            let paramValue = CWLParameterReference.create(name, values = ResizeArray value)
+            let paramValue = CWLParameterReference(name, values = ResizeArray value)
             let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Array(CWLType.String))
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let propValue = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
@@ -1730,7 +1759,7 @@ let tests_YAMLInputValue =
             let runName = "MyRun"
             let value = ["a"; "b"]
             let inputBinding = CWL.InputBinding.create(itemSeparator = ";")
-            let paramValue = CWLParameterReference.create(name, values = ResizeArray value)
+            let paramValue = CWLParameterReference(name, values = ResizeArray value)
             let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Array(CWLType.String), inputBinding = inputBinding)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let propValue = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
@@ -1793,7 +1822,7 @@ let tests_ToolDescription =
 
 let tests_WorkflowInvocation =
     testList "WorkflowInvocation" [
-        testCase "OnlyCWL_BasicToolDescription" (fun () ->
+        ftestCase "OnlyCWL_BasicToolDescription" (fun () ->
             let inputValues = ResizeArray [
                 TestObjects.CWL.YAMLParameterFile.File.fileParameterReference
                 TestObjects.CWL.YAMLParameterFile.String.stringParameterReference
@@ -1801,7 +1830,7 @@ let tests_WorkflowInvocation =
             let run = ArcRun(
                 identifier = "MyRun",
                 cwlDescription = TestObjects.CWL.CommandLineTool.Basic.processingUnit,
-                cwlInput = inputValues        
+                cwlInput = inputValues
             )
             let workflowInvocation = Expect.wantExactlyOne (RunConversion.composeWorkflowInvocationFromArcRun run) "Should have one WorkflowInvocation"
             Expect.equal workflowInvocation.Id "#WorkflowInvocation_MyRun" "WorkflowInvocation ID should match"
@@ -1814,15 +1843,17 @@ let tests_WorkflowInvocation =
             let expectedFilePath = ArcPathHelper.combineMany [|"runs"; run.Identifier; TestObjects.CWL.YAMLParameterFile.File.filePath|]
             Expect.equal inputFile.Id expectedFilePath "Input file path should match"
             let exampleOfWork = Expect.wantSome (LDFile.tryGetExampleOfWork inputFile) "Input file should have an exampleOfWork"
-            let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryLDRef exampleOfWork) "File ExampleOfWork should be a reference"
-            Expect.equal exampleOfWorkAsRef.Id $"#FormalParameter_R_{run.Identifier}_{TestObjects.CWL.Inputs.File.inputFileName}" "File ExampleOfWork ID should match input formal parameter"
+            //let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryLDRef exampleOfWork) "File ExampleOfWork should be a reference"
+            let exampleOfWorkAsNode : LDNode = Expect.wantSome (tryLDNode exampleOfWork) "File ExampleOfWork should be a node"
+            Expect.equal exampleOfWorkAsNode.Id $"#FormalParameter_R_{run.Identifier}_{TestObjects.CWL.Inputs.File.inputFileName}" "File ExampleOfWork ID should match input formal parameter"
 
             let inputString = Expect.wantSome (Seq.tryFind LDPropertyValue.validateCWLParameter objects) "Should have one input string"
             let inputStringValue = Expect.wantSome (LDPropertyValue.tryGetValueAsString inputString) "Input string should have a value"
             Expect.equal inputStringValue TestObjects.CWL.YAMLParameterFile.String.stringValue "Input string value should match"
             let exampleOfWork2 = Expect.wantSome (LDPropertyValue.tryGetExampleOfWork inputString) "Input string should have an exampleOfWork"
-            let exampleOfWorkAsRef2 : LDRef = Expect.wantSome (tryLDRef exampleOfWork2) "String ExampleOfWork should be a reference"
-            Expect.equal exampleOfWorkAsRef2.Id $"#FormalParameter_R_{run.Identifier}_{TestObjects.CWL.Inputs.String.inputStringName}" "String ExampleOfWork ID should match input formal parameter"
+            //let exampleOfWorkAsRef2 : LDRef = Expect.wantSome (tryLDRef exampleOfWork) "String ExampleOfWork should be a reference"
+            let exampleOfWorkAsNode2 : LDNode = Expect.wantSome (tryLDNode exampleOfWork2) "StringExampleOfWork should be a node"
+            Expect.equal exampleOfWorkAsNode2.Id $"#FormalParameter_R_{run.Identifier}_{TestObjects.CWL.Inputs.String.inputStringName}" "String ExampleOfWork ID should match input formal parameter"
 
             let results = LDLabProcess.getResults workflowInvocation
             Expect.hasLength results 0 "WorkflowInvocation should have no results"

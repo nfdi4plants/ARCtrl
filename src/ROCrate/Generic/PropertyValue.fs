@@ -63,6 +63,11 @@ type LDPropertyValue =
     static member setNameAsString(pv : LDNode, name : string, ?context : LDContext) =
         pv.SetProperty(LDPropertyValue.name, name, ?context = context)
 
+    static member getValuesAsString(pv : LDNode, ?context : LDContext) =
+        let filter = fun (o : obj) context -> o :? string
+        pv.GetPropertyValues(LDPropertyValue.value, filter = filter, ?context = context)
+        |> ResizeArray.map (fun (o : obj) -> o :?> string)
+
     static member tryGetValueAsString(pv : LDNode, ?context : LDContext) =
         match pv.TryGetPropertyAsSingleton(LDPropertyValue.value, ?context = context) with
         | Some (:? string as v) -> Some v

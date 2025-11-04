@@ -1830,6 +1830,13 @@ type RunConversion =
         else
             ArcPathHelper.combineMany [| "runs"; runName ; path|]
 
+    static member decomposeCWLInputFilePath (path : string, runName : string) =
+        let prefix = ArcPathHelper.combineMany [| "runs"; runName|]
+        if path.StartsWith(prefix) then
+            path.Replace(prefix, "").TrimStart('/')
+        else
+            ArcPathHelper.combine "../.." path
+
     static member composeCWLInputValue (inputValue : CWL.CWLParameterReference, exampleOfWork : LDNode, inputParam : CWL.CWLInput, runName : string) =
         if inputParam.Type_.IsNone then
             failwith $"Cannot convert param values \"{inputValue.Values}\" as Input parameter \"{inputParam.Name}\" has no type."
@@ -1840,7 +1847,7 @@ type RunConversion =
         match type_ with
         | CWL.CWLType.File _ when inputValue.Values.Count = 1 ->
             let path = RunConversion.composeCWLInputFilePath(inputValue.Values[0], runName)
-            LDFile.createCWLParameter(path, exampleOfWork = exampleOfWork.Id)
+            LDFile.createCWLParameter(path, exampleOfWork = exampleOfWork)
         | _ when type_.ToString().ToLower().Contains("array") ->
             let separator =
                 inputParam.InputBinding
@@ -1858,6 +1865,29 @@ type RunConversion =
                 inputValue.Key,
                 inputValue.Values
             )
+
+    static member decomposeCWLInputValue (inputValue : LDNode, runName : string, ?context : LDContext, ?graph : LDGraph) =
+        let exampleOfWork =
+            match LDFile.tryGetExampleOfWorkAsFormalParameter(inputValue, ?graph = graph, ?context = context) with
+            | Some eow -> eow
+            | None -> failwithf "Input value %s of run %s must have an exampleOfWork property pointing to a CWL formal parameter." inputValue.Id runName
+        let key = LDFormalParameter.getNameAsString(exampleOfWork, ?context = context)
+        if LDFile.validateCWLParameter(inputValue, ?context = context) then
+            let path = RunConversion.decomposeCWLInputFilePath(inputValue.Id, runName)
+            CWL.CWLParameterReference(
+                key = key,
+                values = ResizeArray [path],
+                type_ = CWL.CWLType.file()
+            )
+        else if LDPropertyValue.validateCWLParameter(inputValue, ?context = context) then
+            let values = LDPropertyValue.getValuesAsString(inputValue, ?context = context)
+            CWL.CWLParameterReference(
+                key = key,
+                values = values
+            )
+        else
+            failwithf "Input value %s of run %s is neither a CWL File nor a CWL Parameter." inputValue.Id runName
+
 
     static member composeWorkflowInvocationFromArcRun (run : ArcRun, ?fs : FileSystem) =
         let workflowProtocol =

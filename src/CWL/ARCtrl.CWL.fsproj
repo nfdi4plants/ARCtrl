@@ -8,6 +8,7 @@
   <Import Project="../Package.Metadata.props" />
   
   <ItemGroup> 
+    <Compile Include="HashHelpers.fs" /> 
     <Compile Include="CWLTypes.fs" /> 
     <Compile Include="Requirements.fs" /> 
     <Compile Include="Outputs.fs" /> 

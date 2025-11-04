@@ -19,9 +19,9 @@ module File =
     let filePath = "data/examplePath"
     let fileClass = "File"
 
-    let fileParameterReference = CWLParameterReference.create(key = Inputs.File.inputFileName, values = ResizeArray [filePath])
+    let fileParameterReference = CWLParameterReference(key = Inputs.File.inputFileName, values = ResizeArray [filePath])
 
 module String =
 
     let stringValue = "abcdefg"
-    let stringParameterReference = CWLParameterReference.create(key = Inputs.String.inputStringName, values = ResizeArray [stringValue])
+    let stringParameterReference = CWLParameterReference(key = Inputs.String.inputStringName, values = ResizeArray [stringValue])
