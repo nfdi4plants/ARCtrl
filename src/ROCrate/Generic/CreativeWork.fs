@@ -8,7 +8,7 @@ open ARCtrl.Helper
 [<AttachMembers>]
 type LDCreativeWork =
 
-    static member schemaType = "http://schema.org/Dataset"
+    static member schemaType = "http://schema.org/CreativeWork"
 
     static member identifier = "http://schema.org/identifier"
 
