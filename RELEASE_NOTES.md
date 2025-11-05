@@ -1,3 +1,11 @@
+### 3.0.0-beta.12+cf08594b (Released 2025-11-5)
+
+* Additions:
+    * [[#cf08594b](https://github.com/nfdi4plants/ARCtrl/commit/cf08594bf824d3b3aafc3540ec5f36859a2b1471)] give creativeWork correct type
+* Bugfixes:
+    * [[#aedf8cba](https://github.com/nfdi4plants/ARCtrl/commit/aedf8cba400d30f8abbf8bcf8295b321a20e8470)] Fix space in error message for invalid identifier
+
+
 ### 3.0.0-beta.11+adde9c7b (Released 2025-10-31)
 * Additions:
     * Add CWL Encoders
