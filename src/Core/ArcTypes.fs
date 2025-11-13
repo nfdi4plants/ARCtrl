@@ -1146,7 +1146,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         |> fun x -> x :?> int
 
 [<AttachMembers>]
-type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?comments : ResizeArray<Comment>) =
+type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<OntologyAnnotation>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?comments : ResizeArray<Comment>) =
 
     let mutable identifier : string =
         let identifier = identifier.Trim()
@@ -1186,10 +1186,10 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     member this.StaticHash with get() = staticHash and set(s) = staticHash <- s
 
     static member init(identifier : string) = ArcWorkflow(identifier = identifier)
-    static member create(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?comments : ResizeArray<Comment>) = 
+    static member create(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<OntologyAnnotation>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?comments : ResizeArray<Comment>) = 
         ArcWorkflow(identifier = identifier, ?title = title, ?description = description, ?subWorkflowIdentifiers = subWorkflowIdentifiers, ?workflowType = workflowType, ?uri = uri, ?version = version, ?parameters = parameters, ?components = components, ?datamap = datamap, ?contacts = contacts, ?cwlDescription = cwlDescription, ?comments = comments)
 
-    static member make (identifier : string) (title : string option) (description : string option) (workflowType : OntologyAnnotation option) (uri : string option) (version : string option) (subWorkflowIdentifiers : ResizeArray<string>) (parameters : ResizeArray<Process.ProtocolParameter>) (components : ResizeArray<Process.Component>) (datamap : DataMap option) (contacts : ResizeArray<Person>) (cwlDescription : CWL.CWLProcessingUnit option) (comments : ResizeArray<Comment>) =
+    static member make (identifier : string) (title : string option) (description : string option) (workflowType : OntologyAnnotation option) (uri : string option) (version : string option) (subWorkflowIdentifiers : ResizeArray<string>) (parameters : ResizeArray<OntologyAnnotation>) (components : ResizeArray<Process.Component>) (datamap : DataMap option) (contacts : ResizeArray<Person>) (cwlDescription : CWL.CWLProcessingUnit option) (comments : ResizeArray<Comment>) =
         ArcWorkflow(identifier = identifier, ?title = title, ?description = description, subWorkflowIdentifiers = subWorkflowIdentifiers, ?workflowType = workflowType, ?uri = uri, ?version = version, parameters = parameters, components = components, ?datamap = datamap, contacts = contacts, ?cwlDescription = cwlDescription, comments = comments)
 
     static member FileName = ARCtrl.ArcPathHelper.RunFileName

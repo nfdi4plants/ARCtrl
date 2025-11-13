@@ -193,6 +193,36 @@ module Helper =
             label = label
         )
 
+    //type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?comments : ResizeArray<Comment>) =
+
+    let create_workflow_fullISA () =
+        let identifier = "MyWorkflow"
+        let title = "My Workflow Title"
+        let description = "My Workflow Description"
+        let workflowType = OntologyAnnotation(name = "data processing workflow", tsr = "EDAM", tan = "EDAM:3623")
+        let uri = "http://example.com/myworkflow"
+        let version = "1.0.0"
+        //let subWorkflowIdentifiers = ResizeArray ["SubWorkflow1"; "SubWorkflow2"]
+        //let parameters = ResizeArray [OntologyAnnotation(name = "statistical Method")]
+        let components = ResizeArray [Process.Component.create(value = Value.Name "Proteomiqon", componentType = OntologyAnnotation(name = "Mass Spec Toolkit", tsr = "EDAM", tan = "EDAM:213123"))]
+        let person =
+            let role = OntologyAnnotation(name = "Resarcher", tsr = "PO", tan = "PO:123")
+            ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
+        let comment = Comment("MyCommentKey","MyCommentValue")
+        ArcWorkflow(
+            identifier = identifier,
+            title = title,
+            description = description,
+            workflowType = workflowType,
+            uri = uri,
+            version = version,
+            //subWorkflowIdentifiers = subWorkflowIdentifiers,
+            //parameters = parameters,
+            components = components,
+            contacts = ResizeArray [person],
+            comments = ResizeArray [comment]
+        )
+
     let create_assay_full () =
         let title = "My Assay Title"
         let description = "My Assay Description"
@@ -1866,6 +1896,36 @@ let tests_WorkflowInvocation =
         )
     ]
 
+let tests_ArcWorkflow =
+    testList "ArcWorkflow" [
+        ptestCase "Empty_FromScaffold" (fun () ->
+            let p = ArcWorkflow.init("MyWorkflow")
+            let ro_Workflow = WorkflowConversion.composeWorkflow p
+            let p' = WorkflowConversion.decomposeWorkflow ro_Workflow
+            Expect.equal p' p "Assay should match"
+        )
+        testCase "Full_FromScaffold" (fun () ->
+            let workflow = create_workflow_fullISA()
+            workflow.CWLDescription <- Some TestObjects.CWL.CommandLineTool.Basic.processingUnit
+            let ro_Workflow = WorkflowConversion.composeWorkflow workflow
+            let workflow' = WorkflowConversion.decomposeWorkflow ro_Workflow
+            Expect.equal workflow' workflow "Workflow should match"
+        )
+        testCase  "Full_FromScaffold_Flattened" (fun () ->
+            let workflow = create_workflow_fullISA()
+            workflow.CWLDescription <- Some TestObjects.CWL.CommandLineTool.Basic.processingUnit
+            let ro_Workflow = WorkflowConversion.composeWorkflow workflow
+            let graph = ro_Workflow.Flatten()
+            // Test that flattened worked
+            Expect.isTrue (graph.Nodes.Count > 0) "Graph should have properties"
+            let wf = Expect.wantSome (ro_Workflow.TryGetPropertyAsSingleton(LDDataset.mainEntity)) "ArcWorkflow should still have main workflow"
+            Expect.isTrue (wf :? LDRef) "Workflow should be flattened correctly"
+            //
+            let workflow' = WorkflowConversion.decomposeWorkflow(ro_Workflow, graph = graph)
+            Expect.equal workflow' workflow "Workflow should match"
+        )
+    ]
+
 let tests_Assay =
     testList "Assay" [
         testCase "Empty_FromScaffold" (fun () ->
@@ -2187,6 +2247,7 @@ let main =
         tests_YAMLInputValue
         tests_ToolDescription
         tests_WorkflowInvocation
+        tests_ArcWorkflow
         tests_Assay
         tests_Study
         tests_Investigation

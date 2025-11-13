@@ -1740,6 +1740,9 @@ type WorkflowConversion =
             LDLabProtocol.setVersionAsString(workflowProtocol, workflow.Version.Value)
         if workflow.URI.IsSome then
             LDLabProtocol.setUrl(workflowProtocol, workflow.URI.Value)
+        if workflow.WorkflowType.IsSome then
+            let intendedUse = BaseTypes.composeDefinedTerm(workflow.WorkflowType.Value)
+            LDLabProtocol.setIntendedUseAsDefinedTerm(workflowProtocol, intendedUse)
         //if workflow.Parameters.Count > 0 then
         //    let parameters = 
         //        workflow.Parameters
@@ -1792,6 +1795,9 @@ type WorkflowConversion =
             LDLabProtocol.tryGetVersionAsString(workflowProtocol, ?context = context)
         let uri =
             LDLabProtocol.tryGetUrl(workflowProtocol, ?context = context)
+        let workflowType =
+            LDLabProtocol.tryGetIntendedUseAsDefinedTerm(workflowProtocol, ?graph = graph, ?context = context)
+            |> Option.map (fun iu -> BaseTypes.decomposeDefinedTerm(iu, ?context = context))
         let components =
             LDLabProtocol.getComputationalTools(workflowProtocol, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun ct -> WorkflowConversion.decomposeComputationalTool(ct, ?graph = graph, ?context = context))
@@ -1812,6 +1818,7 @@ type WorkflowConversion =
             ?description = LDDataset.tryGetDescriptionAsString(workflow, ?context = context),
             ?version = version,
             ?uri = uri,
+            ?workflowType = workflowType,
             cwlDescription = cwlDescription,
             components = components,
             ?datamap = dataMap,
