@@ -352,7 +352,7 @@ type LDPropertyValue =
         if subjectOf.IsSome then LDPropertyValue.setSubjectOf(fd, subjectOf.Value, ?context = context)
         fd
 
-    static member createCWLParameter(formalParameterID : string, name : string, values : string ResizeArray, ?context : LDContext) =
+    static member createCWLParameter(exampleOfWork : LDNode, name : string, values : string ResizeArray, ?context : LDContext) =
         let id = LDPropertyValue.genIdCWLParameter(name, values)
         let pv = 
             LDPropertyValue.create(
@@ -362,7 +362,7 @@ type LDPropertyValue =
             )
         if values.Count > 0 then
             pv.SetProperty(LDPropertyValue.value, values, ?context = context)
-        pv.SetProperty(LDPropertyValue.exampleOfWork, LDRef(formalParameterID), ?context = context)
+        pv.SetProperty(LDPropertyValue.exampleOfWork, exampleOfWork, ?context = context)
         pv
 
     static member createDOI(value, ?context : LDContext) =

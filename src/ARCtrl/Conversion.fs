@@ -1855,13 +1855,13 @@ type RunConversion =
                 |> Option.defaultValue ","
             let values = String.concat separator inputValue.Values
             LDPropertyValue.createCWLParameter(
-                exampleOfWork.Id,
+                exampleOfWork,
                 inputValue.Key,
                 ResizeArray.singleton values
             )
         | _ ->
             LDPropertyValue.createCWLParameter(
-                exampleOfWork.Id,
+                exampleOfWork,
                 inputValue.Key,
                 inputValue.Values
             )

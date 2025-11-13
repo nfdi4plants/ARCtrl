@@ -1727,8 +1727,11 @@ let tests_YAMLInputValue =
             let value' = Expect.wantSome (LDPropertyValue.tryGetValueAsString propValue) "PropertyValue should have a value"
             Expect.equal value' "verbose" "PropertyValue value should match input value"
             let exampleOfWork = Expect.wantSome (LDPropertyValue.tryGetExampleOfWork propValue) "PropertyValue should have an exampleOfWork"
-            let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryLDRef exampleOfWork) "ExampleOfWork should be a reference"
-            Expect.equal exampleOfWorkAsRef.Id formalParam.Id "ExampleOfWork ID should match name"
+            // Previously was LDRef, but now a node
+            //let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryLDRef exampleOfWork) "ExampleOfWork should be a reference"
+            //Expect.equal exampleOfWorkAsRef.Id formalParam.Id "ExampleOfWork ID should match name"
+            let exampleOfWorkAsNode : LDNode = Expect.wantSome (tryLDNode exampleOfWork) "ExampleOfWork should be a node"
+            Expect.equal exampleOfWorkAsNode.Id formalParam.Id "ExampleOfWork ID should match name"
         )
         testCase "FailForNonMatchingType" (fun () ->
             let name = "MyInput"
@@ -1822,7 +1825,7 @@ let tests_ToolDescription =
 
 let tests_WorkflowInvocation =
     testList "WorkflowInvocation" [
-        ftestCase "OnlyCWL_BasicToolDescription" (fun () ->
+        testCase "OnlyCWL_BasicToolDescription" (fun () ->
             let inputValues = ResizeArray [
                 TestObjects.CWL.YAMLParameterFile.File.fileParameterReference
                 TestObjects.CWL.YAMLParameterFile.String.stringParameterReference
