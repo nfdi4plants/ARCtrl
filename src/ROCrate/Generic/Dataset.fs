@@ -212,6 +212,10 @@ type LDDataset =
         let filter ldnode context = LDLabProcess.validate(ldnode, ?context = context)
         lp.GetPropertyNodes(LDDataset.about, filter = filter, ?graph = graph, ?context = context)
 
+    static member getAboutsAsWorkflowInvocation(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        let filter ldnode context = LDWorkflowInvocation.validate(ldnode, ?context = context)
+        lp.GetPropertyNodes(LDDataset.about, filter = filter, ?graph = graph, ?context = context)
+
     static member setAbouts(lp : LDNode, abouts : ResizeArray<LDNode>, ?context : LDContext) =
         lp.SetProperty(LDDataset.about, abouts, ?context = context)
 
@@ -312,10 +316,10 @@ type LDDataset =
         LDDataset.validate(lp, ?context = context)
         && lp.AdditionalType.Contains("Assay")
 
-    static member validateARCWorkflow (lp : LDNode, ?context : LDContext) =
+    static member validateARCWorkflow (lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
         LDDataset.validate(lp, ?context = context)
         && lp.AdditionalType.Contains("Workflow")
-        && LDDataset.getMainEntities(lp, ?context = context).Exists(fun ld' -> LDWorkflowProtocol.validate(ld', ?context = context))
+        && LDDataset.getMainEntities(lp, ?graph = graph, ?context = context).Exists(fun ld' -> LDWorkflowProtocol.validate(ld', ?context = context))
 
     static member validateARCRun (lp : LDNode, ?context : LDContext) =
         LDDataset.validate(lp, ?context = context)

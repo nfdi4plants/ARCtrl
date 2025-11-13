@@ -195,7 +195,7 @@ module Helper =
 
     //type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?comments : ResizeArray<Comment>) =
 
-    let create_workflow_fullISA () =
+    let create_workflow_full() =
         let identifier = "MyWorkflow"
         let title = "My Workflow Title"
         let description = "My Workflow Description"
@@ -218,10 +218,38 @@ module Helper =
             version = version,
             //subWorkflowIdentifiers = subWorkflowIdentifiers,
             //parameters = parameters,
+            cwlDescription = TestObjects.CWL.CommandLineTool.Basic.processingUnit,
             components = components,
             contacts = ResizeArray [person],
             comments = ResizeArray [comment]
         )
+
+    let create_run_full() =
+        let identifier = "MyRun"
+        let title = "My Run Title"
+        let description = "My Run Description"
+        let measurementType = OntologyAnnotation(name = "sugar measurement", tsr = "DPBO", tan = "DPBO:0000120")
+        let technologyType = OntologyAnnotation(name = "Photometry", tsr = "NCIT", tan = "NCIT:C65109")
+        let technologyPlatform = OntologyAnnotation(name = "Infinite M200 plate reader (Tecan)", tsr = "DPBO", tan = "DPBO:0000116")
+        let person =
+            let role = OntologyAnnotation(name = "Resarcher", tsr = "PO", tan = "PO:123")
+            ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
+        let table2 = ArcTable.fromArcTableValues("Table2", twoRowsDifferentParamValue.Headers, twoRowsDifferentParamValue.Values)
+        // type ArcRun(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?cwlInput : ResizeArray<CWL.CWLParameterReference>, ?comments : ResizeArray<Comment>) = 
+        ArcRun(
+            identifier = identifier,
+            title = title,
+            description = description,
+            measurementType = measurementType,
+            technologyType = technologyType,
+            technologyPlatform = technologyPlatform,
+            //workflowIdentifiers = ResizeArray ["MyWorkflow"],
+            tables = ResizeArray [singleRowMixedValues; table2],
+            performers = ResizeArray [person],
+            cwlDescription = TestObjects.CWL.CommandLineTool.Basic.processingUnit,
+            cwlInput = ResizeArray [TestObjects.CWL.YAMLParameterFile.File.fileParameterReferenceWithType; TestObjects.CWL.YAMLParameterFile.String.stringParameterReference]
+        )
+       
 
     let create_assay_full () =
         let title = "My Assay Title"
@@ -1905,15 +1933,13 @@ let tests_ArcWorkflow =
             Expect.equal p' p "Assay should match"
         )
         testCase "Full_FromScaffold" (fun () ->
-            let workflow = create_workflow_fullISA()
-            workflow.CWLDescription <- Some TestObjects.CWL.CommandLineTool.Basic.processingUnit
+            let workflow = create_workflow_full()
             let ro_Workflow = WorkflowConversion.composeWorkflow workflow
             let workflow' = WorkflowConversion.decomposeWorkflow ro_Workflow
             Expect.equal workflow' workflow "Workflow should match"
         )
         testCase  "Full_FromScaffold_Flattened" (fun () ->
-            let workflow = create_workflow_fullISA()
-            workflow.CWLDescription <- Some TestObjects.CWL.CommandLineTool.Basic.processingUnit
+            let workflow = create_workflow_full()
             let ro_Workflow = WorkflowConversion.composeWorkflow workflow
             let graph = ro_Workflow.Flatten()
             // Test that flattened worked
@@ -1924,6 +1950,30 @@ let tests_ArcWorkflow =
             let workflow' = WorkflowConversion.decomposeWorkflow(ro_Workflow, graph = graph)
             Expect.equal workflow' workflow "Workflow should match"
         )
+    ]
+
+let tests_ArcRun =
+    testList "Run" [
+        testCase "Full_FromScaffold" (fun () ->
+            let run = create_run_full()
+            let ro_Run = RunConversion.composeRun run
+            let run' = RunConversion.decomposeRun ro_Run
+            Expect.equal run' run "Run should match"
+        )
+        testCase "Full_FromScaffold_Flattened" (fun () ->
+            let run = create_run_full()
+            let ro_Run = RunConversion.composeRun run
+            let graph = ro_Run.Flatten()
+            // Test that flattened worked
+            Expect.isTrue (graph.Nodes.Count > 0) "Graph should have properties"
+            let r = Expect.wantSome (ro_Run.TryGetPropertyAsSingleton(LDDataset.mentions)) "ArcRun should still have associated workflow"
+            Expect.isTrue (r :? LDRef) "Run should be flattened correctly"
+            //
+            let run' = RunConversion.decomposeRun(ro_Run, graph = graph)
+            Expect.equal run' run "Run should match"
+        )
+
+
     ]
 
 let tests_Assay =
@@ -2152,6 +2202,71 @@ let tests_Investigation =
             p'.PublicReleaseDate <- None // As a default value is used otherwise
             Expect.equal p' p "Investigation should match"
         )
+        testCase "AssayAndStudy_FromScaffold_Flattened" (fun () ->
+            let assay = ArcAssay.init("My Assay")
+            let study = ArcStudy.init("My Study")
+            let p = ArcInvestigation(
+                identifier = "My Investigation",
+                title = "My Best Investigation",
+                assays = ResizeArray [assay],
+                studies = ResizeArray [study]
+                )
+            let ro_Investigation = InvestigationConversion.composeInvestigation p
+            let graph = ro_Investigation.Flatten()
+            // Test that flatten worked
+            Expect.isTrue (graph.Nodes.Count > 0) "Graph should have properties"
+            let datasetRef = Expect.wantSome (ro_Investigation.TryGetPropertyAsSingleton(LDDataset.hasPart)) "Investigation should still have sub datasets"
+            Expect.isTrue (datasetRef :? LDRef) "Investigation should be flattened correctly"
+            //
+            let p' = InvestigationConversion.decomposeInvestigation(ro_Investigation, graph = graph)
+            Expect.isSome p'.PublicReleaseDate "PublicReleaseDate default value should be set"
+            p'.PublicReleaseDate <- None // As a default value is used otherwise
+            Expect.equal p' p "Investigation should match"
+        )
+        testCase "AssayStudyWorkflowRun_FromScaffold" (fun () ->
+            let assay = create_assay_full()
+            let study = create_study_full ()
+            let workflow = create_workflow_full()
+            let run = create_run_full()
+            let p = ArcInvestigation(
+                identifier = "My Investigation",
+                title = "My Best Investigation",
+                assays = ResizeArray [assay],
+                studies = ResizeArray [study],
+                workflows = ResizeArray [workflow],
+                runs = ResizeArray [run]
+                )
+            let ro_Investigation = InvestigationConversion.composeInvestigation p
+            let p' = InvestigationConversion.decomposeInvestigation ro_Investigation
+            Expect.isSome p'.PublicReleaseDate "PublicReleaseDate default value should be set"
+            p'.PublicReleaseDate <- None // As a default value is used otherwise
+            Expect.equal p' p "Investigation should match"
+        )
+        testCase "AssayStudyWorkflowRun_FromScaffold_Flattened" (fun () ->
+            let assay = create_assay_full()
+            let study = create_study_full ()
+            let workflow = create_workflow_full()
+            let run = create_run_full()
+            let p = ArcInvestigation(
+                identifier = "My Investigation",
+                title = "My Best Investigation",
+                assays = ResizeArray [assay],
+                studies = ResizeArray [study],
+                workflows = ResizeArray [workflow],
+                runs = ResizeArray [run]
+                )
+            let ro_Investigation = InvestigationConversion.composeInvestigation p
+            let graph = ro_Investigation.Flatten()
+            // Test that flatten worked
+            Expect.isTrue (graph.Nodes.Count > 0) "Graph should have properties"
+            let datasetRef = Expect.wantSome (ro_Investigation.TryGetPropertyAsSingleton(LDDataset.hasPart)) "Investigation should still have sub datasets"
+            Expect.isTrue (datasetRef :? LDRef) "Investigation should be flattened correctly"
+            //
+            let p' = InvestigationConversion.decomposeInvestigation(ro_Investigation, graph = graph)
+            Expect.isSome p'.PublicReleaseDate "PublicReleaseDate default value should be set"
+            p'.PublicReleaseDate <- None // As a default value is used otherwise
+            Expect.equal p' p "Investigation should match"
+        )
         // This test is meant to check, that two processes created from two different tables with the same name are distinctly named
         // This is important to ensure they are not merged
         // https://github.com/nfdi4plants/ARCtrl/issues/514
@@ -2248,6 +2363,7 @@ let main =
         tests_ToolDescription
         tests_WorkflowInvocation
         tests_ArcWorkflow
+        tests_ArcRun
         tests_Assay
         tests_Study
         tests_Investigation

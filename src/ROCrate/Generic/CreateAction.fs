@@ -117,9 +117,9 @@ type LDCreateAction =
 
     static member validate(ca : LDNode, ?context : LDContext) =
         ca.HasType(LDCreateAction.schemaType, ?context = context)
-        && ca.HasProperty(LDCreateAction.agent, ?context = context)
-        && ca.HasProperty(LDCreateAction.object_, ?context = context)
-        && ca.HasProperty(LDCreateAction.result, ?context = context)
+        //&& ca.HasProperty(LDCreateAction.agent, ?context = context)
+        //&& ca.HasProperty(LDCreateAction.object_, ?context = context)
+        //&& ca.HasProperty(LDCreateAction.result, ?context = context)
         && ca.HasProperty(LDCreateAction.instrument, ?context = context)
 
     static member create(name : string, agent : LDNode, instrument : LDNode, ?objects : ResizeArray<LDNode>, ?results : ResizeArray<LDNode>, ?description : string, ?id : string, ?endTime : System.DateTime, ?disambiguatingDescriptions : ResizeArray<string>, ?context : LDContext) =

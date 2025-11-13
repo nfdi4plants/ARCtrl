@@ -1922,28 +1922,32 @@ type RunConversion =
         let processSequence =
             ArcTables(run.Tables).GetProcesses(?fs = fs)
             |> ResizeArray
-        if processSequence.Count = 0 then
+        let mainInvocation =
             LDWorkflowInvocation.create(
                 name = run.Identifier,
                 instrument = workflowProtocol,
                 objects = inputParams,
                 executesLabProtocol = workflowProtocol
             )
+        if processSequence.Count = 0 then
+            mainInvocation
             |> ResizeArray.singleton
         else
             processSequence
             |> ResizeArray.map (fun p ->
                 let id = p.Id.Replace("Process", $"WorkflowInvocation_{run.Identifier}")
-                let inputs = LDLabProcess.getObjects(p) |> ResizeArray.append inputParams
+                let name = LDLabProcess.getNameAsString(p, ?context = p.TryGetContext())
+                let inputs = LDLabProcess.getObjects(p) // |> ResizeArray.append inputParams // Merge process from isa and cwl?
                 let results = LDLabProcess.getResults(p) |> Option.fromSeq
+                let protocol = LDLabProcess.tryGetExecutesLabProtocol(p) // |> Option.defaultValue workflowProtocol
                 let parameterValues = LDLabProcess.getParameterValues(p) |> Option.fromSeq
                 let agents = LDLabProcess.tryGetAgent(p) |> Option.map ResizeArray.singleton
                 let disambiguatingDescriptions = LDLabProcess.getDisambiguatingDescriptionsAsString(p) |> Option.fromSeq
                 LDWorkflowInvocation.create(
-                    name = run.Identifier,
+                    name = name,
                     id = id,
                     instrument = workflowProtocol,
-                    executesLabProtocol = workflowProtocol,
+                    ?executesLabProtocol = protocol,
                     objects = inputs,
                     ?results = results,
                     ?parameterValues = parameterValues,
@@ -1951,7 +1955,21 @@ type RunConversion =
                     ?disambiguatingDescriptions = disambiguatingDescriptions
                 )
             )
-            
+            |> ResizeArray.appendSingleton mainInvocation
+
+    static member decomposeMainWorkflowInvocation (workflowInvocation : LDNode, runName : string, ?context : LDContext, ?graph : LDGraph) : CWL.CWLProcessingUnit*CWL.CWLParameterReference ResizeArray=
+        let cwlDescription =
+            match LDLabProcess.tryGetExecutesLabProtocol(workflowInvocation, ?graph = graph, ?context = context) with
+            | Some wn ->
+                WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(wn, ?context = context, ?graph = graph)
+            | None -> failwith $"Could not decompose workflow invocation for run \"{runName}\": Workflow parameter \"name\" had no assigned value."
+        let parameterRefs =
+            LDLabProcess.getObjects(workflowInvocation, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun iv ->
+                RunConversion.decomposeCWLInputValue(iv, runName = runName, ?context = context, ?graph = graph)
+            )
+        cwlDescription, parameterRefs
+
     static member composeRun (run : ArcRun, ?fs : FileSystem) =
         let workflowInvocations =
             RunConversion.composeWorkflowInvocationFromArcRun(run, ?fs = fs)
@@ -1991,6 +2009,53 @@ type RunConversion =
             ?abouts = workflowInvocations,
             ?mentions = workflowInvocations,
             ?comments = comments
+        )
+
+    static member decomposeRun (run : LDNode, ?graph : LDGraph, ?context : LDContext) : ArcRun=
+        let mainWorkflowInvocation =
+            LDDataset.getAboutsAsWorkflowInvocation(run, ?graph = graph, ?context = context)
+            |> Seq.find (fun wi ->
+                LDLabProcess.getObjects(wi, ?graph = graph, ?context = context)
+                |> Seq.exists (fun i -> LDFile.tryGetExampleOfWorkAsFormalParameter(i, ?graph = graph, ?context = context).IsSome)
+            )
+        let cwlDescription, parameterRefs =
+            RunConversion.decomposeMainWorkflowInvocation(mainWorkflowInvocation, LDDataset.getIdentifierAsString(run, ?context = context), ?context = context, ?graph = graph)
+        let measurementMethod = 
+            LDDataset.tryGetMeasurementMethodAsDefinedTerm(run, ?graph = graph, ?context = context)
+            |> Option.map (fun m -> BaseTypes.decomposeDefinedTerm(m, ?context = context))
+        let measurementTechnique = 
+            LDDataset.tryGetMeasurementTechniqueAsDefinedTerm(run, ?graph = graph, ?context = context)
+            |> Option.map (fun m -> BaseTypes.decomposeDefinedTerm(m, ?context = context))
+        let variableMeasured = 
+            LDDataset.tryGetVariableMeasuredAsMeasurementType(run, ?graph = graph, ?context = context)
+            |> Option.map (fun v -> BaseTypes.decomposePropertyValueToOA(v, ?context = context))
+        let contacts =
+            LDDataset.getCreators(run, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun c -> PersonConversion.decomposePerson(c, ?graph = graph, ?context = context))
+        let comments =
+            LDDataset.getComments(run, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
+        let dataMap = 
+            LDDataset.getVariableMeasuredAsFragmentDescriptors(run, ?graph = graph, ?context = context)
+            |> fun fds -> DatamapConversion.decomposeFragmentDescriptors(fds, ?graph = graph, ?context = context)
+            |> Option.fromValueWithDefault (DataMap.init())
+        let tables = 
+            LDDataset.getAboutsAsLabProcess(run, ?graph = graph, ?context = context)
+            |> ResizeArray.filter (fun wi -> wi.Id <> mainWorkflowInvocation.Id)
+            |> fun ps -> ArcTables.fromProcesses(List.ofSeq ps, ?graph = graph, ?context = context)
+        ArcRun.create(
+            identifier = LDDataset.getIdentifierAsString(run, ?context = context),
+            ?title = LDDataset.tryGetNameAsString(run, ?context = context),
+            ?description = LDDataset.tryGetDescriptionAsString(run, ?context = context),
+            cwlDescription = cwlDescription,
+            cwlInput = parameterRefs,
+            ?measurementType = variableMeasured,
+            ?technologyType = measurementMethod,
+            ?technologyPlatform = measurementTechnique,
+            ?datamap = dataMap,
+            performers = contacts,
+            tables = tables.Tables,
+            comments = comments
         )
 
 
@@ -2069,6 +2134,14 @@ type InvestigationConversion =
             datasets
             |> ResizeArray.filter (fun d -> LDDataset.validateAssay(d, ?context = context))
             |> ResizeArray.map (fun d -> AssayConversion.decomposeAssay(d, ?graph = graph, ?context = context))
+        let workflows = 
+            datasets
+            |> ResizeArray.filter (fun d -> LDDataset.validateARCWorkflow(d, ?graph = graph, ?context = context))
+            |> ResizeArray.map (fun d -> WorkflowConversion.decomposeWorkflow(d, ?graph = graph, ?context = context))
+        let runs =
+            datasets
+            |> ResizeArray.filter (fun d -> LDDataset.validateARCRun(d, ?context = context))
+            |> ResizeArray.map (fun d -> RunConversion.decomposeRun(d, ?graph = graph, ?context = context))
         let comments =
             LDDataset.getComments(investigation, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
@@ -2082,6 +2155,8 @@ type InvestigationConversion =
             publications = publications,
             studies = studies,
             assays = assays,
+            workflows = workflows,
+            runs = runs,
             comments = comments
         )
 
