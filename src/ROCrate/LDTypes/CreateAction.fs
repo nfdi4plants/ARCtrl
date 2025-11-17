@@ -8,7 +8,7 @@ open ARCtrl.Helper
 [<AttachMembers>]
 type LDCreateAction =
 
-    static member schemaType = "https://bioschemas.org/CreateAction"
+    static member schemaType = "http://schema.org/CreateAction"
 
     static member name = "http://schema.org/name"
 

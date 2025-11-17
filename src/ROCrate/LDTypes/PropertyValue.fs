@@ -198,6 +198,7 @@ type LDPropertyValue =
         LDPropertyValue.validate(pv, ?context = context)
         && pv.HasProperty(LDPropertyValue.exampleOfWork, ?context = context)
         && pv.HasProperty(LDPropertyValue.value, ?context = context)
+        && pv.AdditionalType.Contains("WorkflowInput")
 
     static member validateDOI (pv : LDNode, ?context : LDContext) =
         LDPropertyValue.validate(pv, ?context = context)
@@ -363,6 +364,7 @@ type LDPropertyValue =
         if values.Count > 0 then
             pv.SetProperty(LDPropertyValue.value, values, ?context = context)
         pv.SetProperty(LDPropertyValue.exampleOfWork, exampleOfWork, ?context = context)
+        pv.AdditionalType <- ResizeArray ["WorkflowInput"]
         pv
 
     static member createDOI(value, ?context : LDContext) =
