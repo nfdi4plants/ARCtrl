@@ -55,6 +55,19 @@
     <Compile Include="JsonIO\Investigation.fs" />
     <Compile Include="JsonIO\Datamap.fs" />
     <Compile Include="JsonIO\LDObject.fs" />
+    <Compile Include="Conversion\ColumnIndex.fs" />
+    <Compile Include="Conversion\DateTime.fs" />
+    <Compile Include="Conversion\Basic.fs" />
+    <Compile Include="Conversion\Process.fs" />
+    <Compile Include="Conversion\Table.fs" />
+    <Compile Include="Conversion\Datamap.fs" />
+    <Compile Include="Conversion\Person.fs" />
+    <Compile Include="Conversion\ScholarlyArticle.fs" />
+    <Compile Include="Conversion\Workflow.fs" />
+    <Compile Include="Conversion\Assay.fs" />
+    <Compile Include="Conversion\Run.fs" />
+    <Compile Include="Conversion\Study.fs" />
+    <Compile Include="Conversion\Investigation.fs" />
     <Compile Include="Conversion.fs" />
     <Compile Include="ROCrateIO.fs" />
   </ItemGroup>
