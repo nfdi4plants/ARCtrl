@@ -78,7 +78,7 @@ type WorkflowConversion =
             |> Some
 
     static member decomposeInputFromFormalParameter(inp : LDNode, ?context : LDContext, ?graph : LDGraph) =
-        let t = LDFormalParameter.getAdditionalType(inp, ?context = context) |> WorkflowConversion.decomposeAdditionalType
+        let t = inp.AdditionalType |> Seq.exactlyOne |> WorkflowConversion.decomposeAdditionalType
         let binding = WorkflowConversion.decomposeInputBindings(LDFormalParameter.getIdentifiers(inp, ?context = context, ?graph = graph), ?context = context)
         let optional =
             match LDFormalParameter.tryGetValueRequiredAsBoolean(inp, ?context = context) with
@@ -121,7 +121,7 @@ type WorkflowConversion =
         )
 
     static member decomposeOutputFromFormalParameter(inp : LDNode, ?context : LDContext, ?graph : LDGraph) =
-        let t = LDFormalParameter.getAdditionalType(inp, ?context = context) |> WorkflowConversion.decomposeAdditionalType
+        let t = inp.AdditionalType |> Seq.exactlyOne |> WorkflowConversion.decomposeAdditionalType
         let binding = WorkflowConversion.decomposeOutputBindings(LDFormalParameter.getIdentifiers(inp, ?context = context, ?graph = graph), ?context = context)
         let optional = LDFormalParameter.tryGetValueRequiredAsBoolean(inp, ?context = context) |> Option.map (not)
         let name = LDFormalParameter.getNameAsString(inp, ?context = context)

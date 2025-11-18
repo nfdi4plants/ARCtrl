@@ -8,7 +8,6 @@ open ARCtrl.ROCrate
 type LDFormalParameter =
 
     static member schemaType = "https://bioschemas.org/FormalParameter"
-    static member additionalType = "http://schema.org/additionalType"
     // Recommended properties
     static member encodingFormat = "http://schema.org/encodingFormat"
     // Optional properties
@@ -26,14 +25,6 @@ type LDFormalParameter =
     static member url = "http://schema.org/url"
     static member alternateName = "http://schema.org/alternateName"
     static member disambiguatingDescription = "http://schema.org/disambiguatingDescription"
-
-    static member getAdditionalType(fp : LDNode, ?context : LDContext) =
-        match fp.TryGetPropertyAsSingleton(LDFormalParameter.additionalType, ?context = context) with
-        | Some (:? string as at) -> at
-        | _ -> failwith $"property `additionalType` of object with @id `{fp.Id}` was not a string"
-
-    static member setAdditionalTypeAsString(fp : LDNode, additionalType : string, ?context : LDContext) =
-        fp.SetProperty(LDFormalParameter.additionalType, additionalType, ?context = context)
 
     static member getEncodingFormats(fp : LDNode, ?graph : LDGraph, ?context : LDContext) =
         fp.GetPropertyNodes(LDFormalParameter.encodingFormat, ?graph = graph, ?context = context)
@@ -158,14 +149,14 @@ type LDFormalParameter =
 
     static member validate(fp : LDNode, ?context : LDContext) =
         fp.HasType(LDFormalParameter.schemaType, ?context = context)
-        && fp.HasProperty(LDFormalParameter.additionalType, ?context = context)
+        && fp.AdditionalType.Count > 0
 
     static member create(additionalType : string, ?id : string, ?encodingFormats : ResizeArray<LDNode>, ?name : string, ?sameAs : ResizeArray<LDNode>, ?description : string, ?workExample : string, ?defaultValue : string, ?valueRequired : bool, ?identifiers : ResizeArray<LDNode>, ?image : string, ?subjectOfs : ResizeArray<LDNode>, ?url : string, ?alternateNames : ResizeArray<LDNode>, ?disambiguatingDescription : string, ?context : LDContext) =
         let id = match id with
                  | Some i -> i
                  | None -> $"#FormalParameter_{ARCtrl.Helper.Identifier.createMissingIdentifier()}" |> Helper.ID.clean
         let fp = LDNode(id, ResizeArray [LDFormalParameter.schemaType], ?context = context)
-        fp.SetProperty(LDFormalParameter.additionalType, additionalType, ?context = context)
+        fp.AdditionalType <- ResizeArray [additionalType]
         fp.SetOptionalProperty(LDFormalParameter.encodingFormat, encodingFormats, ?context = context)
         fp.SetOptionalProperty(LDFormalParameter.name, name, ?context = context)
         fp.SetOptionalProperty(LDFormalParameter.sameAs, sameAs, ?context = context)
