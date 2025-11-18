@@ -19,7 +19,7 @@
 
 ```fsharp
 #r "nuget: ARCtrl"
-``` 
+```
 
 ```bash
 <PackageReference Include="ARCtrl" Version="1.1.0" />
@@ -55,6 +55,8 @@ Documentation can be found [here](https://nfdi4plants.github.io/nfdi4plants.know
 
 #### Local Setup
 
+##### Windows
+
 On windows you can use the `setup.cmd` to run the following steps automatically!
 
 1. Setup dotnet tools
@@ -63,11 +65,11 @@ On windows you can use the `setup.cmd` to run the following steps automatically!
 
 
 2. Install NPM dependencies
-   
+
     `npm install`
 
 3. Setup python environment
-    
+
     `py -m venv .venv`
 
 4. Install [uv](https://docs.astral.sh/uv/) and dependencies
@@ -77,6 +79,31 @@ On windows you can use the `setup.cmd` to run the following steps automatically!
    3. `.\.venv\Scripts\python.exe -m uv pip install -r pyproject.toml --group dev`
 
 Verify correct setup with `./build.cmd runtests` ✨
+
+##### Linux / macOS
+
+On unix you can use the `setup.sh` to run the following steps automatically!
+
+1. Setup dotnet tools
+
+   `dotnet tool restore`
+
+
+2. Install NPM dependencies
+
+    `npm install`
+
+3. Setup python environment
+
+    `python -m venv .venv`
+
+4. Install [uv](https://docs.astral.sh/uv/) and dependencies
+
+   1. `.venv/bin/python -m pip install -U pip setuptools`
+   2. `.venv/bin/python -m pip install uv`
+   3. `.venv/bin/python -m uv pip install -r pyproject.toml --group dev`
+
+Verify correct setup with `bash build.sh runtests` ✨
 
 ## Branding
 
