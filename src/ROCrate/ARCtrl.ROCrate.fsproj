@@ -18,6 +18,7 @@
     <Compile Include="LDTypes\Comment.fs" />
     <Compile Include="LDTypes\DefinedTerm.fs" />
     <Compile Include="LDTypes\FormalParameter.fs" />
+    <Compile Include="LDTypes\ComputerLanguage.fs" />
     <Compile Include="LDTypes\PropertyValue.fs" />
     <Compile Include="LDTypes\PostalAddress.fs" />
     <Compile Include="LDTypes\Organization.fs" />

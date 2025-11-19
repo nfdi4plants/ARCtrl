@@ -178,6 +178,7 @@ type WorkflowConversion =
         LDWorkflowProtocol.create(
             id = filePath,
             ?inputs = inputs,
+            programmingLanguages = ResizeArray.singleton (LDComputerLanguage.createCWL()),
             outputs = outputs,
             additionalType = ResizeArray [WorkflowConversion.toolDescriptionTypeName]
         )
@@ -214,6 +215,7 @@ type WorkflowConversion =
             id = filePath,
             inputs = inputs,
             outputs = outputs,
+            programmingLanguages = ResizeArray.singleton (LDComputerLanguage.createCWL()),
             hasParts = steps,
             additionalType = ResizeArray [WorkflowConversion.workflowDescriptionTypeName]
         )
