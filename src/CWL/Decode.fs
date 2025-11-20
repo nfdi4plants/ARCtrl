@@ -432,9 +432,7 @@ module Decode =
             steps
         )
 
-    /// Decode a CWL file string written in the YAML format into a CWLToolDescription
-    let decodeCommandLineTool (cwl: string) =
-        let yamlCWL = Decode.read cwl
+    let commandLineToolDecoder (yamlCWL : YAMLElement) =
         let cwlVersion = versionDecoder yamlCWL
         let outputs = outputsDecoder yamlCWL
         let inputs = inputsDecoder yamlCWL
@@ -506,9 +504,13 @@ module Decode =
             description.Metadata <- Some metadata
         description
 
-    /// Decode a CWL file string written in the YAML format into a CWLWorkflowDescription
-    let decodeWorkflow (cwl: string) =
+
+    /// Decode a CWL file string written in the YAML format into a CWLToolDescription
+    let decodeCommandLineTool (cwl: string) =
         let yamlCWL = Decode.read cwl
+        commandLineToolDecoder yamlCWL
+
+    let workflowDecoder (yamlCWL: YAMLElement) =
         let cwlVersion = versionDecoder yamlCWL
         let outputs = outputsDecoder yamlCWL
         let inputs =
@@ -566,3 +568,54 @@ module Decode =
         if metadata.GetProperties(false) |> Seq.length > 0 then
             description.Metadata <- Some metadata
         description
+
+
+    /// Decode a CWL file string written in the YAML format into a CWLWorkflowDescription
+    let decodeWorkflow (cwl: string) =
+        let yamlCWL = Decode.read cwl
+        workflowDecoder yamlCWL
+
+    let decodeCWLProcessingUnit (cwl:string) =
+        let yamlCWL = Decode.read cwl
+        let cls = classDecoder yamlCWL
+        match cls with
+        | "CommandLineTool" -> CommandLineTool (commandLineToolDecoder yamlCWL)
+        | "Workflow" -> Workflow (workflowDecoder yamlCWL)
+        | _ -> failwithf "Invalid CWL class: %s" cls
+
+module DecodeParameters =
+
+    let cwlParameterReferenceDecoder (get : Decode.IGetters) (key: string) (yEle: YAMLElement): CWLParameterReference =
+        match yEle with
+        | YAMLElement.Object[YAMLElement.Value v] ->
+            CWLParameterReference(
+                key = key,
+                values = ResizeArray [v.Value]
+            )
+        | YAMLElement.Object[YAMLElement.Mapping (_,YAMLElement.Object [YAMLElement.Value v1]) ; YAMLElement.Mapping (_,YAMLElement.Object [YAMLElement.Value v2])] ->
+            let t,b = Decode.cwlTypeStringMatcher v1.Value get
+            CWLParameterReference(
+                key = key,
+                values = ResizeArray [v2.Value],
+                type_ = t
+            )
+        | YAMLElement.Object[YAMLElement.Sequence s] ->
+            CWLParameterReference(
+                key = key,
+                values = Decode.resizearray Decode.string (YAMLElement.Sequence s)
+            )
+        | _ -> failwith $"{yEle}"
+
+    let cwlparameterReferenceArrayDecoder: YAMLElement -> ResizeArray<CWLParameterReference> =
+        Decode.object (fun get ->
+            let dict = get.Overflow.FieldList []
+            [|
+                for ele in dict do
+                    cwlParameterReferenceDecoder get ele.Key ele.Value
+            |]
+            |> ResizeArray
+        )
+
+    let decodeYAMLParameterFile (yaml: string) =
+        let yEle = Decode.read yaml
+        cwlparameterReferenceArrayDecoder yEle

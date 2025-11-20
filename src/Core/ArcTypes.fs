@@ -1142,11 +1142,11 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             HashCodes.boxHashSeq this.RegisteredAssayIdentifiers
             HashCodes.boxHashSeq this.Comments
         |]
-        |> HashCodes.boxHashArray
+        |> HashCodes.boxHashArray 
         |> fun x -> x :?> int
 
 [<AttachMembers>]
-type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
+type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<OntologyAnnotation>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?comments : ResizeArray<Comment>) =
 
     let mutable identifier : string =
         let identifier = identifier.Trim()
@@ -1163,6 +1163,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     let mutable components = defaultArg components (ResizeArray())
     let mutable dataMap : DataMap option = datamap
     let mutable contacts = defaultArg contacts (ResizeArray())
+    let mutable cwlDescription = cwlDescription
     let mutable comments  = defaultArg comments (ResizeArray())
     let mutable staticHash : int = 0
 
@@ -1180,15 +1181,16 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     member this.Components with get() = components and set(c) = components <- c
     member this.DataMap with get() = dataMap and set(dm) = dataMap <- dm
     member this.Contacts with get() = contacts and set(c) = contacts <- c
+    member this.CWLDescription with get() = cwlDescription and set(c) = cwlDescription <- c
     member this.Comments with get() = comments and set(c) = comments <- c
     member this.StaticHash with get() = staticHash and set(s) = staticHash <- s
 
     static member init(identifier : string) = ArcWorkflow(identifier = identifier)
-    static member create(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
-        ArcWorkflow(identifier = identifier, ?title = title, ?description = description, ?subWorkflowIdentifiers = subWorkflowIdentifiers, ?workflowType = workflowType, ?uri = uri, ?version = version, ?parameters = parameters, ?components = components, ?datamap = datamap, ?contacts = contacts, ?comments = comments)
+    static member create(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<OntologyAnnotation>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?comments : ResizeArray<Comment>) = 
+        ArcWorkflow(identifier = identifier, ?title = title, ?description = description, ?subWorkflowIdentifiers = subWorkflowIdentifiers, ?workflowType = workflowType, ?uri = uri, ?version = version, ?parameters = parameters, ?components = components, ?datamap = datamap, ?contacts = contacts, ?cwlDescription = cwlDescription, ?comments = comments)
 
-    static member make (identifier : string) (title : string option) (description : string option) (workflowType : OntologyAnnotation option) (uri : string option) (version : string option) (subWorkflowIdentifiers : ResizeArray<string>) (parameters : ResizeArray<Process.ProtocolParameter>) (components : ResizeArray<Process.Component>) (datamap : DataMap option) (contacts : ResizeArray<Person>) (comments : ResizeArray<Comment>) =
-        ArcWorkflow(identifier = identifier, ?title = title, ?description = description, subWorkflowIdentifiers = subWorkflowIdentifiers, ?workflowType = workflowType, ?uri = uri, ?version = version, parameters = parameters, components = components, ?datamap = datamap, contacts = contacts, comments = comments)
+    static member make (identifier : string) (title : string option) (description : string option) (workflowType : OntologyAnnotation option) (uri : string option) (version : string option) (subWorkflowIdentifiers : ResizeArray<string>) (parameters : ResizeArray<OntologyAnnotation>) (components : ResizeArray<Process.Component>) (datamap : DataMap option) (contacts : ResizeArray<Person>) (cwlDescription : CWL.CWLProcessingUnit option) (comments : ResizeArray<Comment>) =
+        ArcWorkflow(identifier = identifier, ?title = title, ?description = description, subWorkflowIdentifiers = subWorkflowIdentifiers, ?workflowType = workflowType, ?uri = uri, ?version = version, parameters = parameters, components = components, ?datamap = datamap, contacts = contacts, ?cwlDescription = cwlDescription, comments = comments)
 
     static member FileName = ARCtrl.ArcPathHelper.RunFileName
 
@@ -1335,6 +1337,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
                 nextComponents
                 nextDataMap
                 nextContacts
+                this.CWLDescription
                 nextComments
         if copyInvestigationRef then workflow.Investigation <- this.Investigation
         workflow
@@ -1351,9 +1354,10 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
         let com = Seq.compare this.Components other.Components
         let dm = this.DataMap = other.DataMap
         let con = Seq.compare this.Contacts other.Contacts
+        let cwl = this.CWLDescription = other.CWLDescription
         let comments = Seq.compare this.Comments other.Comments
         // Todo maybe add reflection check to prove that all members are compared?
-        [|i; t; d; wft; uri; ver; subwf; par; com; dm; con; comments|] |> Seq.forall (fun x -> x = true)
+        [|i; t; d; wft; uri; ver; subwf; par; com; dm; con; cwl; comments|] |> Seq.forall (fun x -> x = true)
 
 
     /// <summary>
@@ -1413,6 +1417,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
             HashCodes.boxHashSeq this.Components
             HashCodes.boxHashOption this.DataMap
             HashCodes.boxHashSeq this.Contacts
+            HashCodes.boxHashOption this.CWLDescription
             HashCodes.boxHashSeq this.Comments
         |]
         |> HashCodes.boxHashArray
@@ -1438,12 +1443,13 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
 
 
 [<AttachMembers>]
-type ArcRun(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
+type ArcRun(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?cwlInput : ResizeArray<CWL.CWLParameterReference>, ?comments : ResizeArray<Comment>) = 
     inherit ArcTables(defaultArg tables <| ResizeArray())
 
     let performers = defaultArg performers <| ResizeArray()
     let comments = defaultArg comments <| ResizeArray()
     let workflowIdentifiers = defaultArg workflowIdentifiers <| ResizeArray()
+    let cwlInput = defaultArg cwlInput <| ResizeArray()
     let mutable identifier : string =
         let identifier = identifier.Trim()
         Helper.Identifier.checkValidCharacters identifier
@@ -1457,6 +1463,8 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     let mutable workflowIdentifiers : ResizeArray<string> = workflowIdentifiers
     let mutable dataMap : DataMap option = datamap
     let mutable performers = performers
+    let mutable cwlDescription = cwlDescription
+    let mutable cwlInput : ResizeArray<CWL.CWLParameterReference> = cwlInput
     let mutable comments  = comments
     let mutable staticHash : int = 0
 
@@ -1472,12 +1480,14 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     member this.WorkflowIdentifiers with get() = workflowIdentifiers and set(w) = workflowIdentifiers <- w
     member this.DataMap with get() = dataMap and set(n) = dataMap <- n
     member this.Performers with get() = performers and set(n) = performers <- n
+    member this.CWLDescription with get() = cwlDescription and set(n) = cwlDescription <- n
+    member this.CWLInput with get() = cwlInput and set(n) = cwlInput <- n
     member this.Comments with get() = comments and set(n) = comments <- n
     member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
 
     static member init (identifier : string) = ArcRun(identifier)
-    static member create (identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
-        ArcRun(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?workflowIdentifiers = workflowIdentifiers, ?tables =tables, ?datamap = datamap, ?performers = performers, ?comments = comments)
+    static member create (identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?cwlInput : ResizeArray<CWL.CWLParameterReference>,  ?comments : ResizeArray<Comment>) = 
+        ArcRun(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?workflowIdentifiers = workflowIdentifiers, ?tables =tables, ?datamap = datamap, ?performers = performers, ?cwlDescription = cwlDescription, ?cwlInput = cwlInput, ?comments = comments)
 
     static member make
         (identifier : string)
@@ -1490,8 +1500,10 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
         (tables : ResizeArray<ArcTable>)
         (datamap : DataMap option)
         (performers : ResizeArray<Person>)
-        (comments : ResizeArray<Comment>) =
-        ArcRun(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, workflowIdentifiers = workflowIdentifiers, tables =tables, ?datamap = datamap, performers = performers, comments = comments)
+        (cwlDescription : CWL.CWLProcessingUnit option)
+        (cwlInput : ResizeArray<CWL.CWLParameterReference>)
+        (comments : ResizeArray<Comment>) = 
+        ArcRun(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, workflowIdentifiers = workflowIdentifiers, tables =tables, ?datamap = datamap, performers = performers, ?cwlDescription = cwlDescription, cwlInput = cwlInput, comments = comments)
 
     static member FileName = ARCtrl.ArcPathHelper.RunFileName
 
@@ -1759,6 +1771,8 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             nextTables
             nextDataMap
             nextPerformers
+            this.CWLDescription
+            this.CWLInput
             nextComments
 
     /// <summary>
@@ -1792,6 +1806,11 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
         if run.Performers.Count <> 0 || updateAlways then
             let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Performers run.Performers
             this.Performers <- s
+        if run.CWLDescription.IsSome || updateAlways then
+            this.CWLDescription <- run.CWLDescription
+        if run.CWLInput.Count <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.CWLInput run.CWLInput
+            this.CWLInput <- s
         if run.Comments.Count <> 0 || updateAlways then
             let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Comments run.Comments
             this.Comments <- s
@@ -1841,9 +1860,11 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
         let dm = this.DataMap = other.DataMap
         let tables = Seq.compare this.Tables other.Tables
         let perf = Seq.compare this.Performers other.Performers
+        let cwl = this.CWLDescription = other.CWLDescription
+        let cwli = Seq.compare this.CWLInput other.CWLInput
         let comments = Seq.compare this.Comments other.Comments
         // Todo maybe add reflection check to prove that all members are compared?
-        [|i; t; d; mst; tt; tp; wf; dm; tables; perf; comments|] |> Seq.forall (fun x -> x = true)
+        [|i; t; d; mst; tt; tp; wf; dm; tables; perf; cwl; cwli; comments|] |> Seq.forall (fun x -> x = true)
 
     /// <summary>
     /// Use this function to check if this ArcRun and the input ArcRun refer to the same object.
@@ -1889,6 +1910,8 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             HashCodes.boxHashSeq this.WorkflowIdentifiers
             HashCodes.boxHashSeq this.Tables
             HashCodes.boxHashSeq this.Performers
+            HashCodes.boxHashOption this.CWLDescription
+            HashCodes.boxHashSeq this.CWLInput
             HashCodes.boxHashSeq this.Comments
         |]
         |> HashCodes.boxHashArray

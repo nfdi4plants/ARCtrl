@@ -63,7 +63,9 @@ module Run =
             workflowIdentifiers
             (ResizeArray())             
             None
-            (ResizeArray())      
+            (ResizeArray())
+            None
+            (ResizeArray())
             (comments)
         
     let fromSparseTable (matrix : SparseTable) : ArcRun =

@@ -61,7 +61,7 @@ module Workflow =
                 subworkflowIdentifiers.Split(';') |> Seq.map (fun s -> s.Trim()) |> ResizeArray
             | None -> ResizeArray()
         let workflowType = OntologyAnnotation.create(?name = workflowType,?tan = workflowTypeTermAccessionNumber,?tsr = workflowTypeTermSourceREF) |> Option.fromValueWithDefault (OntologyAnnotation())
-        let parameters = ProtocolParameter.fromAggregatedStrings ';' parametersName parametersTermSourceREF parametersTermAccessionNumber |> ResizeArray
+        let parameters = OntologyAnnotation.fromAggregatedStrings ';' parametersName parametersTermSourceREF parametersTermAccessionNumber |> ResizeArray
         let components = Component.fromAggregatedStrings ';' componentsName componentsType componentsTypeTermSourceREF componentsTypeTermAccessionNumber |> ResizeArray
         let identifier =
             match identifier with
@@ -85,6 +85,7 @@ module Workflow =
             components
             None
             (ResizeArray())
+            None
             comments
 
     let fromSparseTable (matrix : SparseTable) =
@@ -126,7 +127,7 @@ module Workflow =
                 workflow.Identifier, Identifier.Workflow.fileNameFromIdentifier workflow.Identifier
 
         let wt = Option.defaultValue (OntologyAnnotation()) workflow.WorkflowType |> fun tt -> OntologyAnnotation.toStringObject(tt,true)
-        let pAgg = workflow.Parameters |> List.ofSeq |> ProtocolParameter.toAggregatedStrings ';' 
+        let pAgg = workflow.Parameters |> Array.ofSeq |> OntologyAnnotation.toAggregatedStrings ';' 
         let cAgg = workflow.Components |> List.ofSeq |> Component.toAggregatedStrings ';'
         let subWorkflowsAgg = String.concat ";" workflow.SubWorkflowIdentifiers
 

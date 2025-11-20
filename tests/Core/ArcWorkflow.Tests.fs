@@ -13,9 +13,6 @@ module Helper =
     let oa_temperature = OntologyAnnotation("temperature","NCIT","NCIT:0123210")
     let oa_time = OntologyAnnotation("time","PATO","PATO:0000165")
 
-    let param_temperature = Process.ProtocolParameter.create(ParameterName = oa_temperature)
-    let param_time = Process.ProtocolParameter.create(ParameterName = oa_time)
-
     let component_instrument = Process.Component.create(
         value = Value.Ontology oa_SCIEXInstrumentModel,
         componentType = oa_instrumentModel
@@ -30,7 +27,7 @@ module Helper =
         let uri = "http://example.com/MyWorkflow"
         let version = "1.0.0"
         let subWorkflowIdentifiers = ResizeArray [|"SubWorkflow"|]
-        let parameters = ResizeArray [|param_temperature; param_time|]
+        let parameters = ResizeArray [|oa_temperature; oa_time|]
         let components = ResizeArray [|component_instrument|]
         let contacts = ResizeArray [|Person(firstName = "Kevin", lastName = "Frey")|]
         let comments = ResizeArray [|Comment.create("Comment Name")|]
@@ -52,7 +49,7 @@ let private test_create =
             let uri = "http://example.com/MyWorkflow"
             let version = "1.0.0"
             let subWorkflowIdentifiers = ResizeArray [|"SubWorkflow"|]
-            let parameters = ResizeArray [|param_temperature; param_time|]
+            let parameters = ResizeArray [|oa_temperature; oa_time|]
             let components = ResizeArray [|component_instrument|]
             let contacts = ResizeArray [|Person(firstName = "Kevin", lastName = "Frey")|]
             let comments = ResizeArray [|Comment.create("Comment Name")|]
@@ -76,7 +73,7 @@ let private test_create =
             let uri = "http://example.com/MyWorkflow"
             let version = "1.0.0"
             let subWorkflowIdentifiers = ResizeArray [|"SubWorkflow"|]
-            let parameters = ResizeArray [|param_temperature; param_time|]
+            let parameters = ResizeArray [|oa_temperature; oa_time|]
             let components = ResizeArray [|component_instrument|]
             let contacts = ResizeArray [|Person(firstName = "Kevin", lastName = "Frey")|]
             let comments = ResizeArray [|Comment.create("Comment Name")|]
@@ -112,7 +109,7 @@ let private test_create =
             let uri = Some "http://example.com/MyWorkflow"
             let version = Some "1.0.0"
             let subWorkflowIdentifiers = ResizeArray [|"SubWorkflow"|]
-            let parameters = ResizeArray [|param_temperature; param_time|]
+            let parameters = ResizeArray [|oa_temperature; oa_time|]
             let components = ResizeArray [|component_instrument|]
             let contacts = ResizeArray [|Person.create(firstName = "John", lastName = "Doe")|]
             let comments = ResizeArray [|Comment.create("Comment 1")|]
@@ -130,6 +127,7 @@ let private test_create =
                     components
                     None
                     contacts
+                    None
                     comments
 
             Expect.equal actual.Identifier identifier "identifier"
@@ -184,7 +182,7 @@ let private tests_Copy =
             copy.URI <- Some "http://example.com/NewWorkflow"
             copy.Version <- Some "2.0.0"
             copy.SubWorkflowIdentifiers.Add("NewSubWorkflow")
-            copy.Parameters.Add(Process.ProtocolParameter.create(ParameterName = OntologyAnnotation("NewParameter")))
+            copy.Parameters.Add(OntologyAnnotation("NewParameter"))
             copy.Components.Add(Process.Component.create(Value.Ontology (OntologyAnnotation("NewComponent")), OntologyAnnotation("NewComponentType")))
             copy.Contacts.Add(Person(firstName = "New", lastName = "Person"))
             copy.Comments.Add(Comment.create("New Comment"))

@@ -3,10 +3,17 @@ namespace ARCtrl.CWL
 open DynamicObj
 
 type DockerRequirement = {
-    DockerPull: string option
-    DockerFile: Map<string,string> option
-    DockerImageId: string option
-}
+        DockerPull: string option
+        DockerFile: Map<string,string> option
+        DockerImageId: string option
+    }
+    with 
+    static member create(?dockerPull, ?dockerFile, ?dockerImageId) =
+        {
+            DockerPull = dockerPull
+            DockerFile = dockerFile
+            DockerImageId = dockerImageId
+        }
 
 /// Define an environment variable that will be set in the runtime environment by the workflow platform when executing the command line tool.
 type EnvironmentDef = {

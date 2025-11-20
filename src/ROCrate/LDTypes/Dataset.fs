@@ -48,6 +48,8 @@ type LDDataset =
 
     static member variableMeasured = "http://schema.org/variableMeasured"
 
+    static member mainEntity = "http://schema.org/mainEntity"
+
     static member tryGetIdentifierAsString(lp : LDNode, ?context : LDContext) =
         match lp.TryGetPropertyAsSingleton(LDDataset.identifier, ?context = context) with
         | Some (:? string as n) -> Some n
@@ -210,6 +212,10 @@ type LDDataset =
         let filter ldnode context = LDLabProcess.validate(ldnode, ?context = context)
         lp.GetPropertyNodes(LDDataset.about, filter = filter, ?graph = graph, ?context = context)
 
+    static member getAboutsAsWorkflowInvocation(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        let filter ldnode context = LDWorkflowInvocation.validate(ldnode, ?context = context)
+        lp.GetPropertyNodes(LDDataset.about, filter = filter, ?graph = graph, ?context = context)
+
     static member setAbouts(lp : LDNode, abouts : ResizeArray<LDNode>, ?context : LDContext) =
         lp.SetProperty(LDDataset.about, abouts, ?context = context)
 
@@ -274,6 +280,12 @@ type LDDataset =
     static member setVariableMeasuredAsPropertyValues(lp : LDNode, variableMeasured : ResizeArray<LDNode>, ?context : LDContext) =
         lp.SetProperty(LDDataset.variableMeasured, variableMeasured, ?context = context)
 
+    static member getMainEntities(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        lp.GetPropertyNodes(LDDataset.mainEntity, ?graph = graph, ?context = context)
+
+    static member setMainEntities(lp : LDNode, mainEntities : ResizeArray<LDNode>, ?context : LDContext) =
+        lp.SetProperty(LDDataset.mainEntity, mainEntities, ?context = context)
+
     static member genIDInvesigation() =
         "./"
 
@@ -282,6 +294,12 @@ type LDDataset =
 
     static member genIDAssay(identifier : string) =
         $"assays/{identifier}/"
+
+    static member genIDARCWorkflow(identifier : string) =
+        $"workflows/{identifier}/"
+
+    static member genIDARCRun(identifier : string) =
+        $"runs/{identifier}/"
     
     static member validate(lp : LDNode, ?context : LDContext) =
         lp.HasType(LDDataset.schemaType, ?context = context)
@@ -297,6 +315,15 @@ type LDDataset =
     static member validateAssay (lp : LDNode, ?context : LDContext) =
         LDDataset.validate(lp, ?context = context)
         && lp.AdditionalType.Contains("Assay")
+
+    static member validateARCWorkflow (lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        LDDataset.validate(lp, ?context = context)
+        && lp.AdditionalType.Contains("Workflow")
+        && LDDataset.getMainEntities(lp, ?graph = graph, ?context = context).Exists(fun ld' -> LDWorkflowProtocol.validate(ld', ?context = context))
+
+    static member validateARCRun (lp : LDNode, ?context : LDContext) =
+        LDDataset.validate(lp, ?context = context)
+        && lp.AdditionalType.Contains("Run")
 
     static member create(id : string, ?identier : string, ?creators : ResizeArray<LDNode>, ?dateCreated : System.DateTime, ?datePublished : System.DateTime, ?dateModified : System.DateTime, ?description : string, ?hasParts : ResizeArray<LDNode>, ?name : string, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?url : string, ?abouts : ResizeArray<LDNode>, ?measurementMethod : LDNode, ?measurementTechnique : LDNode, ?variableMeasureds : ResizeArray<LDNode>, ?context : LDContext) =
         let s = LDNode(id, ResizeArray [LDDataset.schemaType], ?context = context)
@@ -340,4 +367,21 @@ type LDDataset =
                  | None -> LDDataset.genIDAssay(identifier)
         let s = LDDataset.create(id, identier = identifier, ?name = name, ?description = description, ?creators = creators, ?hasParts = hasParts, ?measurementMethod = measurementMethod, ?measurementTechnique = measurementTechnique, ?variableMeasureds = variableMeasureds, ?abouts = abouts, ?comments = comments, ?context = context)
         s.AdditionalType <- ResizeArray ["Assay"]
+        s
+
+    static member createARCWorkflow(identifier : string, mainEntities: ResizeArray<LDNode>, ?id : string, ?name : string, ?description : string, ?creators : ResizeArray<LDNode>, ?hasParts : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?context : LDContext) =
+        let id = match id with
+                 | Some i -> i
+                 | None -> LDDataset.genIDARCWorkflow(identifier)
+        let s = LDDataset.create(id, identier = identifier, ?name = name, ?description = description, ?creators = creators, ?hasParts = hasParts, ?comments = comments, ?context = context)
+        s.AdditionalType <- ResizeArray ["Workflow"]
+        s.SetProperty(LDDataset.mainEntity, mainEntities, ?context = context)
+        s
+
+    static member createARCRun(identifier : string, ?id : string, ?name : string, ?description : string, ?creators : ResizeArray<LDNode>, ?hasParts : ResizeArray<LDNode>, ?measurementMethod : LDNode, ?measurementTechnique : LDNode, ?variableMeasureds : ResizeArray<LDNode>, ?abouts : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?context : LDContext) =
+        let id = match id with
+                 | Some i -> i
+                 | None -> LDDataset.genIDARCRun(identifier)
+        let s = LDDataset.create(id, identier = identifier, ?name = name, ?description = description, ?creators = creators, ?hasParts = hasParts, ?measurementMethod = measurementMethod, ?measurementTechnique = measurementTechnique, ?variableMeasureds = variableMeasureds, ?abouts = abouts, ?mentions = mentions, ?comments = comments, ?context = context)
+        s.AdditionalType <- ResizeArray ["Run"]
         s

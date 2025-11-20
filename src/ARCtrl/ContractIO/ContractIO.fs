@@ -20,7 +20,7 @@ let fulfillReadContractAsync basePath (c : Contract) =
                 let! wb = FileSystemHelper.readFileXlsxAsync path
                 let dto = wb |> box |> DTO.Spreadsheet
                 return Ok {c with DTO = Some dto}
-            | Some DTOType.PlainText ->
+            | Some DTOType.PlainText | Some DTOType.CWL | Some DTOType.YAML ->
                 let path = ArcPathHelper.combine basePath c.Path
                 let! text = FileSystemHelper.readFileTextAsync path
                 let dto = text |> DTO.Text

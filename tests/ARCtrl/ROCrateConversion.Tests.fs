@@ -9,6 +9,17 @@ open TestingUtils
 open ARCtrl.FileSystem
 
 module Helper =
+
+    let tryLDRef (o : obj) =
+        match o with
+        | :? LDRef as r -> Some r
+        | _ -> None
+
+    let tryLDNode (o : obj) =
+        match o with
+        | :? LDNode as n -> Some n
+        | _ -> None
+
     let tableName1 = "Test1"
     let tableName2 = "Test2"
     let oa_species = OntologyAnnotation("species", "GO", "GO:0123456")
@@ -181,6 +192,64 @@ module Helper =
             description = description,
             label = label
         )
+
+    //type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?comments : ResizeArray<Comment>) =
+
+    let create_workflow_full() =
+        let identifier = "MyWorkflow"
+        let title = "My Workflow Title"
+        let description = "My Workflow Description"
+        let workflowType = OntologyAnnotation(name = "data processing workflow", tsr = "EDAM", tan = "EDAM:3623")
+        let uri = "http://example.com/myworkflow"
+        let version = "1.0.0"
+        //let subWorkflowIdentifiers = ResizeArray ["SubWorkflow1"; "SubWorkflow2"]
+        //let parameters = ResizeArray [OntologyAnnotation(name = "statistical Method")]
+        let components = ResizeArray [Process.Component.create(value = Value.Name "Proteomiqon", componentType = OntologyAnnotation(name = "Mass Spec Toolkit", tsr = "EDAM", tan = "EDAM:213123"))]
+        let person =
+            let role = OntologyAnnotation(name = "Resarcher", tsr = "PO", tan = "PO:123")
+            ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
+        let comment = Comment("MyCommentKey","MyCommentValue")
+        ArcWorkflow(
+            identifier = identifier,
+            title = title,
+            description = description,
+            workflowType = workflowType,
+            uri = uri,
+            version = version,
+            //subWorkflowIdentifiers = subWorkflowIdentifiers,
+            //parameters = parameters,
+            cwlDescription = TestObjects.CWL.CommandLineTool.Basic.processingUnit,
+            components = components,
+            contacts = ResizeArray [person],
+            comments = ResizeArray [comment]
+        )
+
+    let create_run_full() =
+        let identifier = "MyRun"
+        let title = "My Run Title"
+        let description = "My Run Description"
+        let measurementType = OntologyAnnotation(name = "sugar measurement", tsr = "DPBO", tan = "DPBO:0000120")
+        let technologyType = OntologyAnnotation(name = "Photometry", tsr = "NCIT", tan = "NCIT:C65109")
+        let technologyPlatform = OntologyAnnotation(name = "Infinite M200 plate reader (Tecan)", tsr = "DPBO", tan = "DPBO:0000116")
+        let person =
+            let role = OntologyAnnotation(name = "Resarcher", tsr = "PO", tan = "PO:123")
+            ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
+        let table2 = ArcTable.fromArcTableValues("Table2", twoRowsDifferentParamValue.Headers, twoRowsDifferentParamValue.Values)
+        // type ArcRun(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?cwlInput : ResizeArray<CWL.CWLParameterReference>, ?comments : ResizeArray<Comment>) = 
+        ArcRun(
+            identifier = identifier,
+            title = title,
+            description = description,
+            measurementType = measurementType,
+            technologyType = technologyType,
+            technologyPlatform = technologyPlatform,
+            //workflowIdentifiers = ResizeArray ["MyWorkflow"],
+            tables = ResizeArray [singleRowMixedValues; table2],
+            performers = ResizeArray [person],
+            cwlDescription = TestObjects.CWL.CommandLineTool.Basic.processingUnit,
+            cwlInput = ResizeArray [TestObjects.CWL.YAMLParameterFile.File.fileParameterReferenceWithType; TestObjects.CWL.YAMLParameterFile.String.stringParameterReference]
+        )
+       
 
     let create_assay_full () =
         let title = "My Assay Title"
@@ -1478,6 +1547,435 @@ let tests_GetDataFilesFromProcesses =
         )
     ]
 
+open ARCtrl.CWL
+
+let tests_FormalParameter =
+    testList "FormalParameter" [
+        testList "Input" [
+            testCase "Simple" (fun () ->
+                let name = "MyInput"
+                let t = CWLType.String
+                let input = CWL.CWLInput(name = name, type_ = t)
+                let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+                let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
+                Expect.equal name' name "FormalParameter name should match input name"
+                let isRequired = Expect.wantSome (LDFormalParameter.tryGetValueRequiredAsBoolean formalParameter) "FormalParameter should have valueRequired"
+                Expect.isTrue isRequired "FormalParameter should be required"
+                Expect.hasLength (LDFormalParameter.getIdentifiers formalParameter) 0 "FormalParameter should have no identifiers"
+                //let t' = Expect.wantExactlyOne (formalParameter.AdditionalType) "FormalParameter should have an additionalType"
+                //Expect.equal t' t "FormalParameter type should match input type"
+            )
+            testCase "Simple_Roundabout" (fun () ->
+                let name = "MyInput"
+                let t = CWLType.String
+                let input = CWL.CWLInput(name = name, type_ = t)
+                let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+                let input' = WorkflowConversion.decomposeInputFromFormalParameter formalParameter
+                Expect.equal input' input "Input should match after roundabout"
+            )
+            testCase "Simple_Optional" (fun () ->
+                let name = "MyInput"
+                let t = CWLType.String
+                let input = CWL.CWLInput(name = name, type_ = t, optional = true)
+                let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+                let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
+                Expect.equal name' name "FormalParameter name should match input name"
+                let isRequired = Expect.wantSome (LDFormalParameter.tryGetValueRequiredAsBoolean formalParameter) "FormalParameter should have valueRequired"
+                Expect.isFalse isRequired "FormalParameter should not be required"          
+            )
+            testCase "Prefix" (fun () ->
+                let name = "MyInput"
+                let t = CWLType.String
+                let binding = InputBinding.create(prefix = "--eenput")
+                let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
+                let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+                let identifiers = LDFormalParameter.getIdentifiers formalParameter
+                Expect.hasLength identifiers 1 "FormalParameter should have 1 identifier"
+                let id = identifiers.[0]
+                Expect.isTrue (LDPropertyValue.validatePrefix id) "Identifier should be a prefix"
+                let prefix = Expect.wantSome (LDPropertyValue.tryGetValueAsString id) "Identifier should have a prefix"
+                Expect.equal prefix "--eenput" "Prefix should match input binding"         
+            )
+            testCase "Position" (fun () ->
+                let name = "MyInput"
+                let t = CWLType.String
+                let binding = InputBinding.create(position = 1)
+                let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
+                let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+                let identifiers = LDFormalParameter.getIdentifiers formalParameter
+                Expect.hasLength identifiers 1 "FormalParameter should have 1 identifier"
+                let id = identifiers.[0]
+                Expect.isTrue (LDPropertyValue.validatePosition id) "Identifier should be a position"
+                let position = Expect.wantSome (LDPropertyValue.tryGetValueAsString id) "Identifier should have a position"
+                Expect.equal position "1" "Position should match input binding" 
+            )
+            testCase "PrefixPosition" (fun () ->
+                let name = "MyInput"
+                let t = CWLType.String
+                let binding = InputBinding.create(prefix = "--eenput", position = 1)
+                let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
+                let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+                let identifiers = LDFormalParameter.getIdentifiers formalParameter
+                Expect.hasLength identifiers 2 "FormalParameter should have 2 identifiers"
+                let prefixId = identifiers |> Seq.tryFind LDPropertyValue.validatePrefix |> fun p -> Expect.wantSome p "Should have a prefix identifier"
+                let prefix = Expect.wantSome (LDPropertyValue.tryGetValueAsString prefixId) "Identifier should have a prefix"
+                Expect.equal prefix "--eenput" "Prefix should match input binding"
+                let positionId = identifiers |> Seq.tryFind LDPropertyValue.validatePosition |> fun p ->  Expect.wantSome p "Should have a position identifier"
+                let position = Expect.wantSome (LDPropertyValue.tryGetValueAsString positionId) "Identifier should have a position"
+                Expect.equal position "1" "Position should match input binding"
+            )
+            testCase "PrefixPosition_Roundabout" (fun () ->
+                let name = "MyInput"
+                let t = CWLType.String
+                let binding = InputBinding.create(prefix = "--eenput", position = 1)
+                let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
+                let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+                let input' = WorkflowConversion.decomposeInputFromFormalParameter formalParameter
+                Expect.equal input' input "Input should match after roundabout"
+            )
+            ptestCase "File" (fun () ->
+                let name = "MyInput"
+                let t = CWLType.file()
+                let input = CWL.CWLInput(name = name, type_ = t)
+                let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+                Expect.equal formalParameter.Id "#FormalParameter_MyInput" "FormalParameter ID should match"
+                let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
+                Expect.equal name' name "FormalParameter name should match input name"
+                let isRequired = Expect.wantSome (LDFormalParameter.tryGetValueRequiredAsBoolean formalParameter) "FormalParameter should have valueRequired"
+                Expect.isTrue isRequired "FormalParameter should be required"
+                Expect.hasLength (LDFormalParameter.getIdentifiers formalParameter) 0 "FormalParameter should have no identifiers"
+            )
+        ]
+        testList "Output" [
+            testCase "Simple" (fun () ->
+                let name = "MyOutput"
+                let t = CWLType.String
+                let output = CWL.CWLOutput(name = name, type_ = t)
+                let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
+                let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
+                Expect.equal name' name "FormalParameter name should match output name"
+                let isRequired = Expect.wantSome (LDFormalParameter.tryGetValueRequiredAsBoolean formalParameter) "FormalParameter should have valueRequired"
+                Expect.isTrue isRequired "FormalParameter should be required"
+            )
+            testCase "FromOutput" (fun () ->
+                let name = "MyOutput"
+                let t = CWLType.String
+                let output = CWL.CWLOutput(name = name, type_ = t)
+                let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
+                let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
+                Expect.equal name' name "FormalParameter name should match output name"
+                let isRequired = Expect.wantSome (LDFormalParameter.tryGetValueRequiredAsBoolean formalParameter) "FormalParameter should have valueRequired"
+                Expect.isTrue isRequired "FormalParameter should be required"
+                Expect.hasLength (LDFormalParameter.getIdentifiers formalParameter) 0 "FormalParameter should have no identifiers"           
+            )
+            testCase "File" (fun () ->
+                let name = "MyOutput"
+                let t = CWLType.file()
+                let output = CWL.CWLOutput(name = name, type_ = t)
+                let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
+                let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
+                Expect.equal name' name "FormalParameter name should match output name"
+                let isRequired = Expect.wantSome (LDFormalParameter.tryGetValueRequiredAsBoolean formalParameter) "FormalParameter should have valueRequired"
+                Expect.isTrue isRequired "FormalParameter should be required"
+                Expect.hasLength (LDFormalParameter.getIdentifiers formalParameter) 0 "FormalParameter should have no identifiers"           
+            )
+            testCase "File_GlobBinding" (fun () ->
+                let name = "MyOutput"
+                let t = CWLType.file()
+                let binding : OutputBinding= {Glob = Some "*.txt"}
+                let output = CWL.CWLOutput(name = name, type_ = t, outputBinding = binding)
+                let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
+                let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
+                Expect.equal name' name "FormalParameter name should match output name"
+                let isRequired = Expect.wantSome (LDFormalParameter.tryGetValueRequiredAsBoolean formalParameter) "FormalParameter should have valueRequired"
+                Expect.isTrue isRequired "FormalParameter should be required"
+                let identifiers = LDFormalParameter.getIdentifiers formalParameter
+                Expect.hasLength identifiers 1 "FormalParameter should have one identifiers"
+                let globId = identifiers |> Seq.tryFind LDPropertyValue.validateGlob |> fun p -> Expect.wantSome p "Should have a glob identifier"
+                let glob = Expect.wantSome (LDPropertyValue.tryGetValueAsString globId) "Identifier should have a glob"
+                Expect.equal glob "*.txt" "Glob should match output binding"
+            )
+            testCase "File_GlobBinding_Roundabout" (fun () ->
+                let name = "MyOutput"
+                let t = CWLType.file()
+                let binding : OutputBinding= {Glob = Some "*.txt"}
+                let output = CWL.CWLOutput(name = name, type_ = t, outputBinding = binding)
+                let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
+                let output' = WorkflowConversion.decomposeOutputFromFormalParameter formalParameter
+                Expect.equal output' output "Output should match after roundabout"
+            )
+        ]
+    ]
+
+let tests_YAMLInputValue =
+    
+    testList "YAMLInputValue" [
+        testCase "SimpleFileInRun" (fun () ->
+            let name = "MyInput"
+            let runName = "MyRun"
+            let filePath = "myfile.txt"
+            let paramValue = CWLParameterReference(name, values = ResizeArray.singleton  filePath, type_ = CWLType.file())
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
+            let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
+            let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
+            Expect.sequenceEqual file.SchemaType [LDFile.schemaType] "File should have correct schema type"
+            let expectedID = $"runs/{runName}/{filePath}"
+            Expect.equal file.Id expectedID "File ID should match run and file path"
+            let name' = Expect.wantSome (LDFile.tryGetNameAsString file) "File should have a name"
+            Expect.equal name' expectedID "File name should match run and file path"
+            let exampleOfWork = Expect.wantSome (LDFile.tryGetExampleOfWork file) "File should have an exampleOfWork"
+            //let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryLDRef exampleOfWork) "ExampleOfWork should be a reference"
+            let exampleOfWorkAsNode : LDNode = Expect.wantSome (tryLDNode exampleOfWork) "ExampleOfWork should be a node"
+            Expect.equal exampleOfWorkAsNode.Id formalParam.Id "ExampleOfWork ID should match name"
+        )
+        testCase "SimpleFileInRun_Roundabout" (fun () ->
+            let name = "MyInput"
+            let runName = "MyRun"
+            let filePath = "myfile.txt"
+            let paramValue = CWLParameterReference(name, values = ResizeArray.singleton  filePath, type_ = CWLType.file())
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
+            let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
+            let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
+            let paramValue' = RunConversion.decomposeCWLInputValue(file,runName)
+            Expect.equal paramValue' paramValue "Parameter value should match after roundabout"
+        )
+        testCase "SimpleFileInAssay" (fun () ->
+            let name = "MyInput"
+            let runName = "MyRun"
+            let fileName = "myfile.txt"
+            let filePath = ResizeArray.singleton $"../../assays/MyAssay/dataset/{fileName}"
+            let paramValue = CWLParameterReference(name, values = filePath, type_ = CWLType.file())
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
+            let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
+            let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
+            Expect.sequenceEqual file.SchemaType [LDFile.schemaType] "File should have correct schema type"
+            let expectedID = $"assays/MyAssay/dataset/{fileName}"
+            Expect.equal file.Id expectedID "File ID should match run and file path"
+            let name' = Expect.wantSome (LDFile.tryGetNameAsString file) "File should have a name"
+            Expect.equal name' expectedID "File name should match run and file path"
+            let exampleOfWork = Expect.wantSome (LDFile.tryGetExampleOfWork file) "File should have an exampleOfWork"
+            //let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryLDRef exampleOfWork) "ExampleOfWork should be a reference"
+            let exampleOfWorkAsNode : LDNode = Expect.wantSome (tryLDNode exampleOfWork) "ExampleOfWork should be a node"
+            Expect.equal exampleOfWorkAsNode.Id formalParam.Id "ExampleOfWork ID should match name"
+        )
+        testCase "SimpleFileInAssay_Roundabout" (fun () ->
+            let name = "MyInput"
+            let runName = "MyRun"
+            let fileName = "myfile.txt"
+            let filePath = ResizeArray.singleton $"../../assays/MyAssay/dataset/{fileName}"
+            let paramValue = CWLParameterReference(name, values = filePath, type_ = CWLType.file())
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
+            let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
+            let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
+            let paramValue' = RunConversion.decomposeCWLInputValue(file,runName)
+            Expect.equal paramValue' paramValue "Parameter value should match after roundabout"
+        )
+        testCase "SimpleString" (fun () ->
+            let name = "MyInput"
+            let runName = "MyRun"
+            let value = ResizeArray.singleton "verbose"
+            let paramValue = CWLParameterReference(name, values = value)
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.String)
+            let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
+            let propValue = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
+            Expect.sequenceEqual propValue.SchemaType [LDPropertyValue.schemaType] "PropertyValue should have correct schema type"
+            Expect.isTrue (propValue.Id.StartsWith("#")) "PropertyValue ID should start with #"
+            let name' = Expect.wantSome (LDPropertyValue.tryGetNameAsString propValue) "PropertyValue should have a name"
+            Expect.equal name' name "PropertyValue name should match input name"
+            let value' = Expect.wantSome (LDPropertyValue.tryGetValueAsString propValue) "PropertyValue should have a value"
+            Expect.equal value' "verbose" "PropertyValue value should match input value"
+            let exampleOfWork = Expect.wantSome (LDPropertyValue.tryGetExampleOfWork propValue) "PropertyValue should have an exampleOfWork"
+            // Previously was LDRef, but now a node
+            //let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryLDRef exampleOfWork) "ExampleOfWork should be a reference"
+            //Expect.equal exampleOfWorkAsRef.Id formalParam.Id "ExampleOfWork ID should match name"
+            let exampleOfWorkAsNode : LDNode = Expect.wantSome (tryLDNode exampleOfWork) "ExampleOfWork should be a node"
+            Expect.equal exampleOfWorkAsNode.Id formalParam.Id "ExampleOfWork ID should match name"
+        )
+        testCase "FailForNonMatchingType" (fun () ->
+            let name = "MyInput"
+            let runName = "MyRun"
+            let value = ResizeArray.singleton "verbose"
+            let paramValue = CWLParameterReference(name, values = value, type_ = CWLType.Int)
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
+            let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
+            Expect.throws (fun () -> RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName) |> ignore) "Should throw for non-matching type"
+        )
+        testCase "SimpleArray" (fun () ->
+            let name = "MyInput"
+            let runName = "MyRun"
+            let value = ["a"; "b"]
+            let paramValue = CWLParameterReference(name, values = ResizeArray value)
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Array(CWLType.String))
+            let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
+            let propValue = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
+            Expect.sequenceEqual propValue.SchemaType [LDPropertyValue.schemaType] "PropertyValue should have correct schema type"
+            Expect.isTrue (propValue.Id.StartsWith("#")) "PropertyValue ID should start with #"
+            let name' = Expect.wantSome (LDPropertyValue.tryGetNameAsString propValue) "PropertyValue should have a name"
+            Expect.equal name' name "PropertyValue name should match input name"
+            let value = LDPropertyValue.getValueAsString propValue
+            Expect.equal value "a,b" "PropertyValue value should match input value"  
+        )
+        testCase "SimpleArray_DifferentSeparator" (fun () ->
+            let name = "MyInput"
+            let runName = "MyRun"
+            let value = ["a"; "b"]
+            let inputBinding = CWL.InputBinding.create(itemSeparator = ";")
+            let paramValue = CWLParameterReference(name, values = ResizeArray value)
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Array(CWLType.String), inputBinding = inputBinding)
+            let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
+            let propValue = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
+            Expect.sequenceEqual propValue.SchemaType [LDPropertyValue.schemaType] "PropertyValue should have correct schema type"
+            Expect.isTrue (propValue.Id.StartsWith("#")) "PropertyValue ID should start with #"
+            let name' = Expect.wantSome (LDPropertyValue.tryGetNameAsString propValue) "PropertyValue should have a name"
+            Expect.equal name' name "PropertyValue name should match input name"
+            let value = LDPropertyValue.getValueAsString propValue
+            Expect.equal value "a;b" "PropertyValue value should match input value"
+        )
+    ]
+
+let tests_ToolDescription =
+    testList "ToolDescription" [
+        testCase "BasicTool" (fun () ->
+            let filePath = "tools/echo.cwl"
+            let toolDescription = TestObjects.CWL.CommandLineTool.Basic.cwlTool
+            let ro_Tool = WorkflowConversion.composeWorkflowProtocolFromToolDescription(filePath,toolDescription)
+            Expect.equal ro_Tool.Id filePath "Tool ID should match file path"
+
+            let inputs = LDComputationalWorkflow.getInputs ro_Tool
+            Expect.hasLength inputs 2 "Tool should have one input"
+            let input1 = inputs.[0]
+            let input1Name = Expect.wantSome (LDFormalParameter.tryGetNameAsString input1) "Input should have a name"
+            Expect.equal input1Name TestObjects.CWL.Inputs.File.inputFileName "Input name should match"
+            Expect.sequenceEqual input1.SchemaType [LDFormalParameter.schemaType] "Input should have correct schema type"
+            let input1Ids = LDFormalParameter.getIdentifiers input1
+            Expect.hasLength input1Ids 2 "Input should have two identifiers"
+            let input1Position = input1Ids |> Seq.tryPick LDPropertyValue.tryGetAsPosition |> fun p -> Expect.wantSome p "Should have a position identifier"
+            Expect.equal input1Position TestObjects.CWL.Inputs.File.inputFilePosition "Position should match input binding"
+            let input1Prefix = input1Ids |> Seq.tryPick LDPropertyValue.tryGetAsPrefix |> fun p -> Expect.wantSome p "Should have a prefix identifier"
+            Expect.equal input1Prefix TestObjects.CWL.Inputs.File.inputFilePrefix "Prefix should match input binding"
+            let input2 = inputs.[1]
+            let input2Name = Expect.wantSome (LDFormalParameter.tryGetNameAsString input2) "Input should have a name"
+            Expect.equal input2Name TestObjects.CWL.Inputs.String.inputStringName "Input name should match"
+            Expect.sequenceEqual input2.SchemaType [LDFormalParameter.schemaType] "Input should have correct schema type"
+            let input2Ids = LDFormalParameter.getIdentifiers input2
+            Expect.hasLength input2Ids 1 "Input should have one identifier"
+            let input2Position = input2Ids |> Seq.tryPick LDPropertyValue.tryGetAsPosition |> fun p -> Expect.wantSome p "Should have a position identifier"
+            Expect.equal input2Position TestObjects.CWL.Inputs.String.inputStringPosition "Position should match input binding"
+
+            let outputs = LDComputationalWorkflow.getOutputs ro_Tool
+            Expect.hasLength outputs 1 "Tool should have one output"
+            let output1 = outputs.[0]
+            let output1Name = Expect.wantSome (LDFormalParameter.tryGetNameAsString output1) "Output should have a name"
+            Expect.equal output1Name TestObjects.CWL.Outputs.CSV.outputCSVName "Output name should match"
+            let output1Ids = LDFormalParameter.getIdentifiers output1
+            Expect.hasLength output1Ids 1 "Output should have one identifier"
+            let output1Glob = output1Ids |> Seq.tryPick LDPropertyValue.tryGetAsGlob |> fun p -> Expect.wantSome p "Should have a glob identifier"
+            Expect.equal output1Glob TestObjects.CWL.Outputs.CSV.outputCSVGlobStr "Glob should match output binding"
+        )
+        testCase "BasicTool_Roundabout" (fun () ->
+            let filePath = "tools/echo.cwl"
+            let toolDescription = TestObjects.CWL.CommandLineTool.Basic.cwlTool
+            let ro_Tool = WorkflowConversion.composeWorkflowProtocolFromToolDescription(filePath,toolDescription)
+            let toolDescription' = WorkflowConversion.decomposeWorkflowProtocolToToolDescription ro_Tool
+            Expect.equal toolDescription' toolDescription "Tool description should match after roundabout"
+        )
+    ]
+
+let tests_WorkflowInvocation =
+    testList "WorkflowInvocation" [
+        testCase "OnlyCWL_BasicToolDescription" (fun () ->
+            let inputValues = ResizeArray [
+                TestObjects.CWL.YAMLParameterFile.File.fileParameterReference
+                TestObjects.CWL.YAMLParameterFile.String.stringParameterReference
+            ]
+            let run = ArcRun(
+                identifier = "MyRun",
+                cwlDescription = TestObjects.CWL.CommandLineTool.Basic.processingUnit,
+                cwlInput = inputValues
+            )
+            let workflowInvocation = Expect.wantExactlyOne (RunConversion.composeWorkflowInvocationFromArcRun run) "Should have one WorkflowInvocation"
+            Expect.equal workflowInvocation.Id "#WorkflowInvocation_MyRun" "WorkflowInvocation ID should match"
+            Expect.sequenceEqual workflowInvocation.SchemaType [LDCreateAction.schemaType;LDLabProcess.schemaType] "WorkflowInvocation should have correct schema type"
+
+            let objects = LDLabProcess.getObjects workflowInvocation
+            Expect.hasLength objects 2 "WorkflowInvocation should have two objects"
+
+            let inputFile = Expect.wantSome (Seq.tryFind LDFile.validateCWLParameter objects) "Should have one input file"
+            let expectedFilePath = ArcPathHelper.combineMany [|"runs"; run.Identifier; TestObjects.CWL.YAMLParameterFile.File.filePath|]
+            Expect.equal inputFile.Id expectedFilePath "Input file path should match"
+            let exampleOfWork = Expect.wantSome (LDFile.tryGetExampleOfWork inputFile) "Input file should have an exampleOfWork"
+            //let exampleOfWorkAsRef : LDRef = Expect.wantSome (tryLDRef exampleOfWork) "File ExampleOfWork should be a reference"
+            let exampleOfWorkAsNode : LDNode = Expect.wantSome (tryLDNode exampleOfWork) "File ExampleOfWork should be a node"
+            Expect.equal exampleOfWorkAsNode.Id $"#FormalParameter_R_{run.Identifier}_{TestObjects.CWL.Inputs.File.inputFileName}" "File ExampleOfWork ID should match input formal parameter"
+
+            let inputString = Expect.wantSome (Seq.tryFind LDPropertyValue.validateCWLParameter objects) "Should have one input string"
+            let inputStringValue = Expect.wantSome (LDPropertyValue.tryGetValueAsString inputString) "Input string should have a value"
+            Expect.equal inputStringValue TestObjects.CWL.YAMLParameterFile.String.stringValue "Input string value should match"
+            let exampleOfWork2 = Expect.wantSome (LDPropertyValue.tryGetExampleOfWork inputString) "Input string should have an exampleOfWork"
+            //let exampleOfWorkAsRef2 : LDRef = Expect.wantSome (tryLDRef exampleOfWork) "String ExampleOfWork should be a reference"
+            let exampleOfWorkAsNode2 : LDNode = Expect.wantSome (tryLDNode exampleOfWork2) "StringExampleOfWork should be a node"
+            Expect.equal exampleOfWorkAsNode2.Id $"#FormalParameter_R_{run.Identifier}_{TestObjects.CWL.Inputs.String.inputStringName}" "String ExampleOfWork ID should match input formal parameter"
+
+            let results = LDLabProcess.getResults workflowInvocation
+            Expect.hasLength results 0 "WorkflowInvocation should have no results"
+            //let outputFile = Expect.wantSome (Seq.tryFind LDFile.validateCWLParameter results) "Should have one output file"
+            //let outputFileName = Expect.wantSome (LDFile.tryGetNameAsString outputFile) "Output file should have a name"
+            //Expect.equal outputFileName "runs/MyRun/output.csv" "Output file name should match"
+        )
+    ]
+
+let tests_ArcWorkflow =
+    testList "ArcWorkflow" [
+        ptestCase "Empty_FromScaffold" (fun () ->
+            let p = ArcWorkflow.init("MyWorkflow")
+            let ro_Workflow = WorkflowConversion.composeWorkflow p
+            let p' = WorkflowConversion.decomposeWorkflow ro_Workflow
+            Expect.equal p' p "Assay should match"
+        )
+        testCase "Full_FromScaffold" (fun () ->
+            let workflow = create_workflow_full()
+            let ro_Workflow = WorkflowConversion.composeWorkflow workflow
+            let workflow' = WorkflowConversion.decomposeWorkflow ro_Workflow
+            Expect.equal workflow' workflow "Workflow should match"
+        )
+        testCase  "Full_FromScaffold_Flattened" (fun () ->
+            let workflow = create_workflow_full()
+            let ro_Workflow = WorkflowConversion.composeWorkflow workflow
+            let graph = ro_Workflow.Flatten()
+            // Test that flattened worked
+            Expect.isTrue (graph.Nodes.Count > 0) "Graph should have properties"
+            let wf = Expect.wantSome (ro_Workflow.TryGetPropertyAsSingleton(LDDataset.mainEntity)) "ArcWorkflow should still have main workflow"
+            Expect.isTrue (wf :? LDRef) "Workflow should be flattened correctly"
+            //
+            let workflow' = WorkflowConversion.decomposeWorkflow(ro_Workflow, graph = graph)
+            Expect.equal workflow' workflow "Workflow should match"
+        )
+    ]
+
+let tests_ArcRun =
+    testList "Run" [
+        testCase "Full_FromScaffold" (fun () ->
+            let run = create_run_full()
+            let ro_Run = RunConversion.composeRun run
+            let run' = RunConversion.decomposeRun ro_Run
+            Expect.equal run' run "Run should match"
+        )
+        testCase "Full_FromScaffold_Flattened" (fun () ->
+            let run = create_run_full()
+            let ro_Run = RunConversion.composeRun run
+            let graph = ro_Run.Flatten()
+            // Test that flattened worked
+            Expect.isTrue (graph.Nodes.Count > 0) "Graph should have properties"
+            let r = Expect.wantSome (ro_Run.TryGetPropertyAsSingleton(LDDataset.mentions)) "ArcRun should still have associated workflow"
+            Expect.isTrue (r :? LDRef) "Run should be flattened correctly"
+            //
+            let run' = RunConversion.decomposeRun(ro_Run, graph = graph)
+            Expect.equal run' run "Run should match"
+        )
+
+
+    ]
+
 let tests_Assay =
     testList "Assay" [
         testCase "Empty_FromScaffold" (fun () ->
@@ -1704,6 +2202,71 @@ let tests_Investigation =
             p'.PublicReleaseDate <- None // As a default value is used otherwise
             Expect.equal p' p "Investigation should match"
         )
+        testCase "AssayAndStudy_FromScaffold_Flattened" (fun () ->
+            let assay = ArcAssay.init("My Assay")
+            let study = ArcStudy.init("My Study")
+            let p = ArcInvestigation(
+                identifier = "My Investigation",
+                title = "My Best Investigation",
+                assays = ResizeArray [assay],
+                studies = ResizeArray [study]
+                )
+            let ro_Investigation = InvestigationConversion.composeInvestigation p
+            let graph = ro_Investigation.Flatten()
+            // Test that flatten worked
+            Expect.isTrue (graph.Nodes.Count > 0) "Graph should have properties"
+            let datasetRef = Expect.wantSome (ro_Investigation.TryGetPropertyAsSingleton(LDDataset.hasPart)) "Investigation should still have sub datasets"
+            Expect.isTrue (datasetRef :? LDRef) "Investigation should be flattened correctly"
+            //
+            let p' = InvestigationConversion.decomposeInvestigation(ro_Investigation, graph = graph)
+            Expect.isSome p'.PublicReleaseDate "PublicReleaseDate default value should be set"
+            p'.PublicReleaseDate <- None // As a default value is used otherwise
+            Expect.equal p' p "Investigation should match"
+        )
+        testCase "AssayStudyWorkflowRun_FromScaffold" (fun () ->
+            let assay = create_assay_full()
+            let study = create_study_full ()
+            let workflow = create_workflow_full()
+            let run = create_run_full()
+            let p = ArcInvestigation(
+                identifier = "My Investigation",
+                title = "My Best Investigation",
+                assays = ResizeArray [assay],
+                studies = ResizeArray [study],
+                workflows = ResizeArray [workflow],
+                runs = ResizeArray [run]
+                )
+            let ro_Investigation = InvestigationConversion.composeInvestigation p
+            let p' = InvestigationConversion.decomposeInvestigation ro_Investigation
+            Expect.isSome p'.PublicReleaseDate "PublicReleaseDate default value should be set"
+            p'.PublicReleaseDate <- None // As a default value is used otherwise
+            Expect.equal p' p "Investigation should match"
+        )
+        testCase "AssayStudyWorkflowRun_FromScaffold_Flattened" (fun () ->
+            let assay = create_assay_full()
+            let study = create_study_full ()
+            let workflow = create_workflow_full()
+            let run = create_run_full()
+            let p = ArcInvestigation(
+                identifier = "My Investigation",
+                title = "My Best Investigation",
+                assays = ResizeArray [assay],
+                studies = ResizeArray [study],
+                workflows = ResizeArray [workflow],
+                runs = ResizeArray [run]
+                )
+            let ro_Investigation = InvestigationConversion.composeInvestigation p
+            let graph = ro_Investigation.Flatten()
+            // Test that flatten worked
+            Expect.isTrue (graph.Nodes.Count > 0) "Graph should have properties"
+            let datasetRef = Expect.wantSome (ro_Investigation.TryGetPropertyAsSingleton(LDDataset.hasPart)) "Investigation should still have sub datasets"
+            Expect.isTrue (datasetRef :? LDRef) "Investigation should be flattened correctly"
+            //
+            let p' = InvestigationConversion.decomposeInvestigation(ro_Investigation, graph = graph)
+            Expect.isSome p'.PublicReleaseDate "PublicReleaseDate default value should be set"
+            p'.PublicReleaseDate <- None // As a default value is used otherwise
+            Expect.equal p' p "Investigation should match"
+        )
         // This test is meant to check, that two processes created from two different tables with the same name are distinctly named
         // This is important to ensure they are not merged
         // https://github.com/nfdi4plants/ARCtrl/issues/514
@@ -1795,6 +2358,12 @@ let main =
         tests_Data
         tests_DataContext
         tests_DataMap
+        tests_FormalParameter
+        tests_YAMLInputValue
+        tests_ToolDescription
+        tests_WorkflowInvocation
+        tests_ArcWorkflow
+        tests_ArcRun
         tests_Assay
         tests_Study
         tests_Investigation

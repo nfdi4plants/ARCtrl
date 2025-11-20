@@ -8,12 +8,8 @@ module Helper =
 
     let create_parameters() =
         ResizeArray [
-            Process.ProtocolParameter.create(
-                ParameterName = OntologyAnnotation("Explication", "MS", "MS:123456")
-            )
-            Process.ProtocolParameter.create(
-                ParameterName = OntologyAnnotation("Unit", "MS", "MS:123456")
-            )
+            OntologyAnnotation("Explication", "MS", "MS:123456");
+            OntologyAnnotation("Unit", "MS", "MS:123456")
         ]
 
     let create_component(i) =

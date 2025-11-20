@@ -141,6 +141,10 @@ module Expect =
     let isNotEmpty actual message = Expect.isNotEmpty actual message 
     let hasLength actual expectedLength message = Expect.hasLength actual expectedLength message
 
+    let wantExactlyOne (actual : 'T seq) message =
+        Expect.hasLength actual 1 message
+        Seq.item 0 actual
+
     let isTrue actual message = Expect.isTrue actual message 
     let isFalse actual message = Expect.isFalse actual message 
 

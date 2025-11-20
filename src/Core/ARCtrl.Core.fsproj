@@ -60,6 +60,7 @@
     <Compile Include="IdentifierSetters.fs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\CWL\ARCtrl.CWL.fsproj" />
     <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
   </ItemGroup>
 </Project>

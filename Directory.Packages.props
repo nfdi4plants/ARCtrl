@@ -15,7 +15,7 @@
     <PackageVersion Include="FsSpreadsheet.Js"      Version="7.0.0-alpha.1" />
     <PackageVersion Include="FsSpreadsheet.Py"      Version="7.0.0-alpha.1" />
     <PackageVersion Include="YAMLicious"            Version="0.0.3" />
-    <PackageVersion Include="DynamicObj"            Version="7.0.1" />
+    <PackageVersion Include="DynamicObj"            Version="7.1.0" />
     <PackageVersion Include="Fable.SimpleHttp"      Version="3.5.0" />
     <PackageVersion Include="Fable.Fetch"           Version="2.6.0" />
     <PackageVersion Include="Fable.Node"            Version="1.2.0" />

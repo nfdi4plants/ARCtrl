@@ -8,7 +8,24 @@ type InputBinding = {
     Position: int option
     ItemSeparator: string option
     Separate: bool option
-}
+    }
+
+    with
+
+    static member create
+        (
+            ?prefix: string,
+            ?position: int,
+            ?itemSeparator: string,
+            ?separate: bool
+        ) =
+        {
+            Prefix = prefix
+            Position = position
+            ItemSeparator = itemSeparator
+            Separate = separate
+        }
+
 
 [<AttachMembers>]
 type CWLInput (

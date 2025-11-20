@@ -7,24 +7,36 @@
   <Import Project="../Package.Metadata.props" />
   
   <ItemGroup>
+    <!-- Base types -->
     <Compile Include="Helper.fs" />
     <Compile Include="DynObjExtensions.fs" />
     <Compile Include="LDContext.fs" />
     <Compile Include="ROCrateContext.fs" />
     <Compile Include="LDObject.fs" />
-    <Compile Include="Generic\Comment.fs" />
-    <Compile Include="Generic\DefinedTerm.fs" />
-    <Compile Include="Generic\PropertyValue.fs" />
-    <Compile Include="Generic\PostalAddress.fs" />
-    <Compile Include="Generic\Organization.fs" />
-    <Compile Include="Generic\Person.fs" />
-    <Compile Include="Generic\ScholarlyArticle.fs" />
-    <Compile Include="Generic\Sample.fs" />
-    <Compile Include="Generic\File.fs" />
-    <Compile Include="Generic\LabProtocol.fs" />
-    <Compile Include="Generic\LabProcess.fs" />
-    <Compile Include="Generic\CreativeWork.fs" />
-    <Compile Include="Generic\Dataset.fs" />
+
+    <!-- Generic types -->
+    <Compile Include="LDTypes\Comment.fs" />
+    <Compile Include="LDTypes\DefinedTerm.fs" />
+    <Compile Include="LDTypes\FormalParameter.fs" />
+    <Compile Include="LDTypes\ComputerLanguage.fs" />
+    <Compile Include="LDTypes\PropertyValue.fs" />
+    <Compile Include="LDTypes\PostalAddress.fs" />
+    <Compile Include="LDTypes\Organization.fs" />
+    <Compile Include="LDTypes\Person.fs" />
+    <Compile Include="LDTypes\ScholarlyArticle.fs" />
+    <Compile Include="LDTypes\Sample.fs" />
+    <Compile Include="LDTypes\File.fs" />
+    <Compile Include="LDTypes\LabProtocol.fs" />
+    <Compile Include="LDTypes\LabProcess.fs" />
+    <Compile Include="LDTypes\CreativeWork.fs" />
+    <Compile Include="LDTypes\ComputationalWorkflow.fs" />
+    <Compile Include="LDTypes\CreateAction.fs" />
+    <Compile Include="LDTypes\SoftwareSourceCode.fs" />
+    <Compile Include="LDTypes\WorkflowProtocol.fs" />
+    <Compile Include="LDTypes\WorkflowInvocation.fs" />
+    <Compile Include="LDTypes\Dataset.fs" />
+
+    <!-- ISA Profile types -->
     <Compile Include="ISAProfile\Dataset.fs" />
     <Compile Include="ISAProfile\Investigation.fs" />
     <Compile Include="ISAProfile\Study.fs" />
@@ -36,6 +48,8 @@
     <Compile Include="ISAProfile\PropertyValue.fs" />
     <Compile Include="ISAProfile\Person.fs" />
     <Compile Include="ISAProfile\ScholarlyArticle.fs" />
+
+    <!-- Main module -->
     <Compile Include="ArcROCrateMetadata.fs" />
     <None Include="playground.fsx" />
   </ItemGroup>
