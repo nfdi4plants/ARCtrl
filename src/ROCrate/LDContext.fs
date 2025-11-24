@@ -110,9 +110,12 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
         with get() = name
         and set(value) = name <- value
 
-    member this.AddMapping(term,definition) =
+    member this.AddMapping(term : string,definition : string) =
+        let http = definition.Replace("https://","http://")
+        let https = definition.Replace("http://","https://")
         StringDictionary.addOrUpdate term definition mappings
-        addReverseMapping term definition
+        addReverseMapping term http
+        addReverseMapping term https
         
     member this.TryResolveTerm(term : string) =
         // Handle compact IRI
