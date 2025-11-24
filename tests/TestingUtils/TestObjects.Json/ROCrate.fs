@@ -27,13 +27,13 @@ let definedTerm =
 
 
 let roCrate_minimal = """{
-      "@context": "https://w3id.org/ro/crate/1.2-DRAFT/context", 
+      "@context": "https://w3id.org/ro/crate/1.2/context", 
       "@graph": [
         {
             "@id": "ro-crate-metadata.json",
             "@type": "CreativeWork",
             "about": {"@id": "./"},
-            "conformsTo": {"@id": "https://w3id.org/ro/crate/1.2-DRAFT"}
+            "conformsTo": {"@id": "https://w3id.org/ro/crate/1.2"}
         },   
         {
           "@id": "./",

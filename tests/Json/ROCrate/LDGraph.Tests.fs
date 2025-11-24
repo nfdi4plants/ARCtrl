@@ -16,7 +16,7 @@ let private test_read = testList "Read" [
         Expect.hasLength graph.Nodes 2 "should have 2 nodes"
         let firstExpectedObject = LDNode("ro-crate-metadata.json", ResizeArray ["CreativeWork"])
         firstExpectedObject.SetProperty("about", LDRef("./"))
-        firstExpectedObject.SetProperty("conformsTo", LDRef("https://w3id.org/ro/crate/1.2-DRAFT"))
+        firstExpectedObject.SetProperty("conformsTo", LDRef("https://w3id.org/ro/crate/1.2"))
         let secondExpectedObject = LDNode("./", ResizeArray ["Dataset"])
         Expect.equal graph.Nodes.[0] firstExpectedObject "first node should be the metadata"
         Expect.equal graph.Nodes.[1] secondExpectedObject "second node should be the dataset"
