@@ -10,8 +10,10 @@ type LDComputationalWorkflow =
 
     static member schemaType = "https://bioschemas.org/ComputationalWorkflow"
     // Recommended properties
-    static member input = "https://bioschemas.org/input"
-    static member output = "https://bioschemas.org/output"
+    static member input = "https://bioschemas.org/properties/input"
+    static member inputDeprecated = "https://bioschemas.org/input"
+    static member output = "https://bioschemas.org/properties/output"
+    static member outputDeprecated = "https://bioschemas.org/output"
     static member creator = "http://schema.org/creator"
     static member dateCreated = "http://schema.org/dateCreated"
     static member license = "http://schema.org/license"
@@ -28,21 +30,41 @@ type LDComputationalWorkflow =
 
     // Getters and setters for recommended properties
     static member getInputs(cw : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        cw.GetPropertyNodes(LDComputationalWorkflow.input, ?graph = graph, ?context = context)
+        let l = cw.GetPropertyNodes(LDComputationalWorkflow.input, ?graph = graph, ?context = context)
+        if l.Count = 0 then
+            // Try deprecated property
+            cw.GetPropertyNodes(LDComputationalWorkflow.inputDeprecated, ?graph = graph, ?context = context)
+        else
+            l
 
     static member getInputsAsFormalParameters(cw : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let filter ldObject context = LDFormalParameter.validate(ldObject, ?context = context)
-        cw.GetPropertyNodes(LDComputationalWorkflow.input, filter = filter, ?graph = graph, ?context = context)
+        let l = cw.GetPropertyNodes(LDComputationalWorkflow.input, filter = filter, ?graph = graph, ?context = context)
+        if l.Count = 0 then
+            // Try deprecated property
+            cw.GetPropertyNodes(LDComputationalWorkflow.inputDeprecated, filter = filter, ?graph = graph, ?context = context)
+        else
+            l
 
     static member setInputs(cw : LDNode, inputs : ResizeArray<LDNode>, ?context : LDContext) =
         cw.SetProperty(LDComputationalWorkflow.input, inputs, ?context = context)
 
     static member getOutputs(cw : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        cw.GetPropertyNodes(LDComputationalWorkflow.output, ?graph = graph, ?context = context)
+        let l = cw.GetPropertyNodes(LDComputationalWorkflow.output, ?graph = graph, ?context = context)
+        if l.Count = 0 then
+            // Try deprecated property
+            cw.GetPropertyNodes(LDComputationalWorkflow.outputDeprecated, ?graph = graph, ?context = context)
+        else
+            l
 
     static member getOutputsAsFormalParameter(cw : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let filter ldObject context = LDFormalParameter.validate(ldObject, ?context = context)
-        cw.GetPropertyNodes(LDComputationalWorkflow.output, filter = filter, ?graph = graph, ?context = context)
+        let l = cw.GetPropertyNodes(LDComputationalWorkflow.output, filter = filter, ?graph = graph, ?context = context)
+        if l.Count = 0 then
+            // Try deprecated property
+            cw.GetPropertyNodes(LDComputationalWorkflow.outputDeprecated, filter = filter, ?graph = graph, ?context = context)
+        else
+            l
 
     static member setOutputs(cw : LDNode, outputs : ResizeArray<LDNode>, ?context : LDContext) =
         cw.SetProperty(LDComputationalWorkflow.output, outputs, ?context = context)
@@ -69,14 +91,12 @@ type LDComputationalWorkflow =
         match cw.TryGetPropertyAsSingleton(LDComputationalWorkflow.name, ?context = context) with
         | Some (:? string as n) -> Some n
         | _ -> None
-
-    
+ 
     static member getNameAsString(cw : LDNode, ?context : LDContext) =
         match cw.TryGetPropertyAsSingleton(LDComputationalWorkflow.name, ?context = context) with
         | Some (:? string as n) -> n
         | Some _ -> failwith $"property `name` of object with @id `{cw.Id}` was not a string"
         | _ -> failwith $"Could not access property `name` of object with @id `{cw.Id}`"
-
 
     static member setNameAsString(cw : LDNode, name : string, ?context : LDContext) =
         cw.SetProperty(LDComputationalWorkflow.name, name, ?context = context)
