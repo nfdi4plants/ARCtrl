@@ -15,7 +15,6 @@ let nameCompactIRI = "schema:name"
 
 let nameIRIHttps = "https://schema.org/name"
 let schemaIRIHttps = "https://schema.org/"
-let nameCompactIRIHttps = "schema:name"
 
 let nameIRIAlternative = "http://fantasy-site.org/name"
 
@@ -118,7 +117,7 @@ let tests_getTerm = testList "getTerm" [
         Expect.equal resolved nameTerm "term was not resolved correctly"
     testCase "compactIRI_ignoreHTTPs" <| fun _ ->
         let context = new LDContext()
-        context.AddMapping(nameTerm, nameCompactIRIHttps)
+        context.AddMapping(nameTerm, nameCompactIRI)
         context.AddMapping(schemaTerm, schemaIRIHttps)
         let resolved = context.TryGetTerm(nameIRI)
         let resolved = Expect.wantSome resolved "term was not resolved"
@@ -127,6 +126,20 @@ let tests_getTerm = testList "getTerm" [
         let context = new LDContext()
         context.AddMapping(nameTerm, nameCompactIRI)
         context.AddMapping(schemaTerm, schemaIRI)
+        let resolved = context.TryGetTerm(nameIRIHttps)
+        let resolved = Expect.wantSome resolved "term was not resolved"
+        Expect.equal resolved nameTerm "term was not resolved correctly"
+    testCase "compactIRI_reverseOrder_ignoreHTTPs" <| fun _ -> 
+        let context = new LDContext()
+        context.AddMapping(schemaTerm, schemaIRIHttps)
+        context.AddMapping(nameTerm, nameCompactIRI)
+        let resolved = context.TryGetTerm(nameIRI)
+        let resolved = Expect.wantSome resolved "term was not resolved"
+        Expect.equal resolved nameTerm "term was not resolved correctly"
+    testCase "compactIRI_reverseOrder_ignoreHTTP" <| fun _ -> 
+        let context = new LDContext()
+        context.AddMapping(schemaTerm, schemaIRI)
+        context.AddMapping(nameTerm, nameCompactIRI)
         let resolved = context.TryGetTerm(nameIRIHttps)
         let resolved = Expect.wantSome resolved "term was not resolved"
         Expect.equal resolved nameTerm "term was not resolved correctly"

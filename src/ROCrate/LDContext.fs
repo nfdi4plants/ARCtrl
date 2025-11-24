@@ -53,21 +53,24 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
     /// Dictionary<definition_prefix, (definition_suffix, term)>
     let compactReverseMappings : Dictionary<string,string*string> = Dictionary()
 
-    let addReverseMapping (key : string) (value : string) =
-        StringDictionary.addOrUpdate value key reverseMappings
+    let rec addReverseMapping (key : string) (value : string) =
+        let http = value.Replace("https://","http://")
+        let https = value.Replace("http://","https://")
+        StringDictionary.addOrUpdate http key reverseMappings
+        StringDictionary.addOrUpdate https key reverseMappings
         match value with
         | IRIHelper.CompactIri (prefix,suffix) ->
             StringDictionary.addOrUpdate prefix (suffix,key) compactReverseMappings
             match StringDictionary.tryFind prefix mappings with
             | Some prefix ->
                 let iri = IRIHelper.combine prefix suffix
-                StringDictionary.addOrUpdate iri key reverseMappings
+                addReverseMapping key iri
             | None -> ()
         | _ ->
             match StringDictionary.tryFind key compactReverseMappings with
             | Some (suffix,term) ->
                 let iri = IRIHelper.combine value suffix
-                StringDictionary.addOrUpdate iri term reverseMappings
+                addReverseMapping term iri
             | None -> ()
 
     do for kvp in mappings do
@@ -111,11 +114,11 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
         and set(value) = name <- value
 
     member this.AddMapping(term : string,definition : string) =
-        let http = definition.Replace("https://","http://")
-        let https = definition.Replace("http://","https://")
-        StringDictionary.addOrUpdate term definition mappings
-        addReverseMapping term http
-        addReverseMapping term https
+        try
+            StringDictionary.addOrUpdate term definition mappings
+            addReverseMapping term definition
+        with
+        | ex -> failwithf "Failed to add mapping to context: %s -> %s: %s" term definition ex.Message
         
     member this.TryResolveTerm(term : string) =
         // Handle compact IRI
