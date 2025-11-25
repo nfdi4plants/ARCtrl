@@ -31,8 +31,8 @@ module LDContext =
                             Error fst
                 elif helpers.isString value then
                     let s = helpers.asString value
-                    if s = Context.proxy_V1_2DRAFT then
-                        Ok (Context.initV1_2DRAFT())
+                    if s = Context.proxy_V1_2DRAFT || s = Context.proxy_V1_2 then
+                        Ok (Context.initV1_2())
                     elif s = Context.proxy_V1_1 then
                         Ok (Context.initV1_1())
                     else
@@ -48,6 +48,7 @@ module LDContext =
     let rec encoder (ctx: LDContext) =
         match ctx.Name with
         | Some Context.proxy_V1_2DRAFT -> Encode.string Context.proxy_V1_2DRAFT
+        | Some Context.proxy_V1_2 -> Encode.string Context.proxy_V1_2
         | Some Context.proxy_V1_1 -> Encode.string Context.proxy_V1_1
         | _ ->           
             let mappings = 

@@ -22,7 +22,7 @@ module ARC =
             let id = "ro-crate-metadata.json"
             let schemaType = ResizeArray ["http://schema.org/CreativeWork"]
             let node = LDNode(id, schemaType)
-            node.SetProperty("http://purl.org/dc/terms/conformsTo", LDRef("https://w3id.org/ro/crate/1.1"))
+            node.SetProperty("http://purl.org/dc/terms/conformsTo", LDRef("https://w3id.org/ro/crate/1.2"))
             node.SetProperty("http://schema.org/about", LDRef("./"))
             node
 
@@ -51,7 +51,7 @@ module ARC =
             LDDataset.setSDDatePublishedAsDateTime(isa, System.DateTime.Now)
             LDDataset.setLicenseAsCreativeWork(isa, license)
             let graph = isa.Flatten()
-            let context = LDContext(baseContexts=ResizeArray[Context.initV1_1();Context.initBioschemasContext()])
+            let context = LDContext(baseContexts=ResizeArray[Context.initV1_2();Context.initBioschemasContext()])
             graph.SetContext(context)
             graph.AddNode(ROCrate.metadataFileDescriptor)
             graph.Compact_InPlace()

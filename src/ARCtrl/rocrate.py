@@ -3,7 +3,7 @@ from collections.abc import Callable
 from typing import Any
 from .py.ROCrate.ldobject import LDGraph, LDNode, LDValue, LDRef
 from .py.ROCrate.ldcontext import LDContext
-from .py.ROCrate.rocrate_context import init_v1_1, init_v1_2draft, init_bioschemas_context
+from .py.ROCrate.rocrate_context import init_v1_1, init_v1_2, init_bioschemas_context
 from .py.ROCrate.LDTypes.comment import LDComment
 from .py.ROCrate.LDTypes.defined_term import LDDefinedTerm
 from .py.ROCrate.LDTypes.file import LDFile

@@ -18,9 +18,13 @@ type LDLabProcess =
 
     static member result = "http://schema.org/result"
 
-    static member executesLabProtocol = "https://bioschemas.org/executesLabProtocol"
+    static member executesLabProtocol = "https://bioschemas.org/properties/executesLabProtocol"
 
-    static member parameterValue = "https://bioschemas.org/parameterValue"
+    static member executesLabProtocolDeprecated = "https://bioschemas.org/executesLabProtocol"
+
+    static member parameterValue = "https://bioschemas.org/properties/parameterValue"
+
+    static member parameterValueDeprecated = "https://bioschemas.org/parameterValue"
 
     static member endTime = "http://schema.org/endTime"
 
@@ -88,14 +92,22 @@ type LDLabProcess =
         let filter ldObject context = LDLabProtocol.validate(ldObject, ?context = context)
         match lp.TryGetPropertyAsSingleNode(LDLabProcess.executesLabProtocol, ?graph = graph, ?context = context) with
         | Some l when filter l context -> Some l
-        | _ -> None
+        | _ ->
+            match lp.TryGetPropertyAsSingleNode(LDLabProcess.executesLabProtocolDeprecated, ?graph = graph, ?context = context) with
+            | Some l when filter l context -> Some l
+            | _ -> None
 
     static member setExecutesLabProtocol(lp : LDNode, executesLabProtocol : LDNode, ?context : LDContext) =
         lp.SetProperty(LDLabProcess.executesLabProtocol, executesLabProtocol, ?context = context)
 
     static member getParameterValues(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let filter ldObject context = LDPropertyValue.validate(ldObject, ?context = context)
-        lp.GetPropertyNodes(LDLabProcess.parameterValue, filter = filter, ?graph = graph, ?context = context)
+        let l = lp.GetPropertyNodes(LDLabProcess.parameterValue, filter = filter, ?graph = graph, ?context = context)
+        if l.Count = 0 then
+            // Try deprecated property
+            lp.GetPropertyNodes(LDLabProcess.parameterValueDeprecated, filter = filter, ?graph = graph, ?context = context)
+        else
+            l
 
     static member setParameterValues(lp : LDNode, parameterValues : ResizeArray<LDNode>, ?context : LDContext) =
         lp.SetProperty(LDLabProcess.parameterValue, parameterValues, ?context = context)

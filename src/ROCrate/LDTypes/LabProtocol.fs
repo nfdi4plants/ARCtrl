@@ -11,22 +11,29 @@ type LDLabProtocol =
 
     static member description = "http://schema.org/description"
 
-    static member intendedUse = "https://bioschemas.org/intendedUse"
-
     static member name = "http://schema.org/name"
 
-    static member comment = "http://schema.org/comment"
+    static member computationalTool = "https://bioschemas.org/properties/computationalTool"
 
-    static member computationalTool = "https://bioschemas.org/computationalTool"
+    static member computationalToolDeprecated = "https://bioschemas.org/computationalTool"
 
-    static member labEquipment = "https://bioschemas.org/labEquipment"
+    static member labEquipment = "https://bioschemas.org/properties/labEquipment"
 
-    static member reagent = "https://bioschemas.org/reagent"
+    static member labEquipmentDeprecated = "https://bioschemas.org/labEquipment"
+
+    static member reagent = "https://bioschemas.org/properties/reagent"
+
+    static member reagentDeprecated = "https://bioschemas.org/reagent"
+
+    static member intendedUse = "https://bioschemas.org/properties/intendedUse"
+
+    static member intendedUseDeprecated = "https://bioschemas.org/intendedUse"
 
     static member url = "http://schema.org/url"
 
     static member version = "http://schema.org/version"
 
+    static member comment = "http://schema.org/comment"
 
     static member tryGetDescriptionAsString(lp : LDNode, ?context : LDContext) =
         match lp.TryGetPropertyAsSingleton(LDLabProtocol.description, ?context = context) with
@@ -39,7 +46,10 @@ type LDLabProtocol =
     static member tryGetIntendedUseAsString(lp : LDNode, ?context : LDContext) =
         match lp.TryGetPropertyAsSingleton(LDLabProtocol.intendedUse, ?context = context) with
         | Some (:? string as iu) -> Some iu
-        | _ -> None
+        | _ ->
+            match lp.TryGetPropertyAsSingleton(LDLabProtocol.intendedUseDeprecated, ?context = context) with
+            | Some (:? string as iu) -> Some iu
+            | _ -> None
 
     static member setIntendedUseAsString(lp : LDNode, intendedUse : string, ?context : LDContext) =
         lp.SetProperty(LDLabProtocol.intendedUse, intendedUse, ?context = context)
@@ -48,7 +58,10 @@ type LDLabProtocol =
         let filter ldObject context = LDDefinedTerm.validate(ldObject, ?context = context)
         match lp.TryGetPropertyAsSingleNode(LDLabProtocol.intendedUse, ?graph = graph, ?context = context) with
         | Some iu when filter iu context -> Some iu
-        | _ -> None
+        | _ ->
+            match lp.TryGetPropertyAsSingleNode(LDLabProtocol.intendedUseDeprecated, ?graph = graph, ?context = context) with
+            | Some iu when filter iu context -> Some iu
+            | _ -> None
 
     static member setIntendedUseAsDefinedTerm(lp : LDNode, intendedUse : LDNode, ?context : LDContext) =
         lp.SetProperty(LDLabProtocol.intendedUse, intendedUse, ?context = context)
@@ -74,19 +87,34 @@ type LDLabProtocol =
         lp.SetProperty(LDLabProtocol.comment, comments, ?context = context)
 
     static member getComputationalTools(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        lp.GetPropertyNodes(LDLabProtocol.computationalTool, ?graph = graph, ?context = context)
+        let l = lp.GetPropertyNodes(LDLabProtocol.computationalTool, ?graph = graph, ?context = context)
+        if l.Count = 0 then
+            // try deprecated property
+            lp.GetPropertyNodes(LDLabProtocol.computationalToolDeprecated, ?graph = graph, ?context = context)
+        else
+            l
         
     static member setComputationalTools(lp : LDNode, computationalTools : ResizeArray<LDNode>, ?context : LDContext) =
         lp.SetProperty(LDLabProtocol.computationalTool, computationalTools, ?context = context)
 
     static member getLabEquipments(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        lp.GetPropertyNodes(LDLabProtocol.labEquipment, ?graph = graph, ?context = context)
+        let l = lp.GetPropertyNodes(LDLabProtocol.labEquipment, ?graph = graph, ?context = context)
+        if l.Count = 0 then
+            // try deprecated property
+            lp.GetPropertyNodes(LDLabProtocol.labEquipmentDeprecated, ?graph = graph, ?context = context)
+        else
+            l
 
     static member setLabEquipments(lp : LDNode, labEquipments : ResizeArray<LDNode>, ?context : LDContext) =
         lp.SetProperty(LDLabProtocol.labEquipment, labEquipments, ?context = context)
 
     static member getReagents(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        lp.GetPropertyNodes(LDLabProtocol.reagent, ?graph = graph, ?context = context)
+        let l = lp.GetPropertyNodes(LDLabProtocol.reagent, ?graph = graph, ?context = context)
+        if l.Count = 0 then
+            // try deprecated property
+            lp.GetPropertyNodes(LDLabProtocol.reagentDeprecated, ?graph = graph, ?context = context)
+        else
+            l
 
     static member setReagents(lp : LDNode, reagents : ResizeArray<LDNode>, ?context : LDContext) =
         lp.SetProperty(LDLabProtocol.reagent, reagents, ?context = context)
