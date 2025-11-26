@@ -1,10 +1,61 @@
-### 3.0.0-beta.12+cf08594b (Released 2025-11-5)
+### 3.0.0-beta.13+46b2f157 (Released 2025-11-25)
+Implement ARC WR RO-Crate profile
 
+* Additions:
+    * [[#1ead1b1b](https://github.com/nfdi4plants/ARCtrl/commit/1ead1b1bb7896dda5a4b4313e58d532d0606cefb)] add ARC wr ro crate model (WIP)
+    * [[#745b237d](https://github.com/nfdi4plants/ARCtrl/commit/745b237d892f80fd4b93676b007d31bbd0e658f7)] add formal parameter
+    * [[#da3919f1](https://github.com/nfdi4plants/ARCtrl/commit/da3919f1c2e08326679eab661f7ba64f31aa5a6b)] add computational workflow
+    * [[#73ca8dc4](https://github.com/nfdi4plants/ARCtrl/commit/73ca8dc4af5a14b694ddaa935c6556a80f0c48ee)] add software source code profile
+    * [[#1a3a9346](https://github.com/nfdi4plants/ARCtrl/commit/1a3a93466321b785ae76e1d45fdced9721ad236d)] add createaction
+    * [[#e3deae4b](https://github.com/nfdi4plants/ARCtrl/commit/e3deae4b267ff2a7c96d9e3e94468b13d4994f79)] add workflowprotocol
+    * [[#2834a60b](https://github.com/nfdi4plants/ARCtrl/commit/2834a60b5384788517099d40e3b7a3acc8f26831)] add ARCWorkflow to Dataset
+    * [[#9b872b48](https://github.com/nfdi4plants/ARCtrl/commit/9b872b4860f473145f02cc320f01902839d46b6d)] add arcrun
+    * [[#68fe82a8](https://github.com/nfdi4plants/ARCtrl/commit/68fe82a87cf6a40a6a01df451632d4969318b14e)] add workflowinvocation
+    * [[#f996717d](https://github.com/nfdi4plants/ARCtrl/commit/f996717d9c99b16f6933ef4c7737b710cff0dfc6)] implement first approach to conversion of Workflow object
+    * [[#a8614a50](https://github.com/nfdi4plants/ARCtrl/commit/a8614a508165714dc4de4aff7bdc1a7713577fad)] rename CWL Description to ProcessingUnit and add parsers
+    * [[#2ef72329](https://github.com/nfdi4plants/ARCtrl/commit/2ef72329d0ad5f22ba34d318e49d075b6ed643b8)] add CWLProcessingUnit as property to ArcRun and ArcWorkflow
+    * [[#2fd83c0c](https://github.com/nfdi4plants/ARCtrl/commit/2fd83c0cb29b33c14918fbb8a8945f507f9b35b0)] include cwl files in ARC Scaffold parsing
+    * [[#a9e08c73](https://github.com/nfdi4plants/ARCtrl/commit/a9e08c733ece7cf848b75de2be80f35ae9a76b3f)] add workflow and run cwl parsing tests
+    * [[#3da2226c](https://github.com/nfdi4plants/ARCtrl/commit/3da2226cdabe452ffa6d999c6f31396b7ffcf762)] add CWLParameterReference type
+    * [[#b26929d5](https://github.com/nfdi4plants/ARCtrl/commit/b26929d5385676012dc9aa5ffb6f6a03224bf59d)] add YAML parameter file parsing
+    * [[#3ab9f11e](https://github.com/nfdi4plants/ARCtrl/commit/3ab9f11ed9c452e961d3afb73b05f3437299f04b)] add direct parameterfile decode function
+    * [[#57336cd3](https://github.com/nfdi4plants/ARCtrl/commit/57336cd385474dd3e874f32212df1ab53680db12)] add cwl yml input parameters to run object and arc parsing
+    * [[#c99f8110](https://github.com/nfdi4plants/ARCtrl/commit/c99f8110af5c9b247408d352492d39a85242bedc)] first version of parsing to arc-wr-ro-crate
+    * [[#6292ada2](https://github.com/nfdi4plants/ARCtrl/commit/6292ada21e747a02157c463b97f3c539bd799ebb)] add basic WR to RO-Crate conversion tests
+    * [[#0c76db22](https://github.com/nfdi4plants/ARCtrl/commit/0c76db22fc027659fa100726ff05d6dbc1ed3727)] update rocrate workflow and run compose functions to include fs information
+    * [[#4c202c6a](https://github.com/nfdi4plants/ARCtrl/commit/4c202c6acf318b90644def1e2e4cb7a3fd0770a0)] various changes to ROCrate conversion of CWLInputs
+    * [[#6b33fc55](https://github.com/nfdi4plants/ARCtrl/commit/6b33fc55e57902082483a10cc0719019d60cd63f)] improve cwl ro-crate conversion to include parameter types
+    * [[#f9e657ec](https://github.com/nfdi4plants/ARCtrl/commit/f9e657ecbe3196051585839936b66f72f9b05ed6)] add some cwl test objects and ro-crate conversion tests
+    * [[#cb330cac](https://github.com/nfdi4plants/ARCtrl/commit/cb330cac596cf8c4e7452dfca2097587977f0c41)] finish up first batch of cwl ro-crate parser tests
+    * [[#f5645713](https://github.com/nfdi4plants/ARCtrl/commit/f56457139e4bccf235112ee78437a269a638d74c)] add some basic ro-crate to scaffold workflow converter functions
+    * [[#8e891c0f](https://github.com/nfdi4plants/ARCtrl/commit/8e891c0fb1250787f56fd94ee38d7122d11ff6b0)] finish first implementation to workflow ro-crate reader
+    * [[#d675282c](https://github.com/nfdi4plants/ARCtrl/commit/d675282cc510b4efc4b451d351e95849d2494aac)] add ArcWorkflow ROCrate Conversion tests
+    * [[#57ac6cef](https://github.com/nfdi4plants/ARCtrl/commit/57ac6cefe569f108086fbf54edaa27ceba3f23d0)] finish up first version of workflow and run ro-crate conversion and roundabout tests
+    * [[#76b10538](https://github.com/nfdi4plants/ARCtrl/commit/76b10538d91f07aac23806904ca03f094ac395b6)] some restructuring of the ro-crate types and conversion functions
+    * [[#eac84fed](https://github.com/nfdi4plants/ARCtrl/commit/eac84fed6f17020421dcb5e7ba1eabaa2e37bd3c)] add setup instructions and script for unix
+    * [[#e2ad4b91](https://github.com/nfdi4plants/ARCtrl/commit/e2ad4b9143be95db6ec7164b51d76aebe5e4e015)] add default programmingLanguages for RO-Crate export
+    * [[#db5f90e3](https://github.com/nfdi4plants/ARCtrl/commit/db5f90e35b3daafb10f32adb23540a2376f9fd8e)] make ldcontext resolove http and https as interchangeable
+    * [[#4834ec27](https://github.com/nfdi4plants/ARCtrl/commit/4834ec270c3f1d8ab162d763fb70c3100231b8c5)] update index.ts and rocrate.py
+* Deletions:
+    * [[#14cda2bd](https://github.com/nfdi4plants/ARCtrl/commit/14cda2bdb879e97f6b1edfe0e7028d4bc188092e)] remove some unnecessary fields from ROCrate Workflow
+* Bugfixes:
+    * [[#3ecb5288](https://github.com/nfdi4plants/ARCtrl/commit/3ecb52888df21a2ea468e53fc63bfd464c413abf)] fix tests for dotnet sequences
+    * [[#21d2e174](https://github.com/nfdi4plants/ARCtrl/commit/21d2e1740e9a43251ff579525e986c8fe0ca5bdb)] some fixes and adjustments to JSON-LD base types
+    * [[#c028132a](https://github.com/nfdi4plants/ARCtrl/commit/c028132ab0d64b14165045d4a778b43e419a2d09)] fix and add formalparameter ro-crate conversion tests
+    * [[#f704bd13](https://github.com/nfdi4plants/ARCtrl/commit/f704bd13f032f65e2332ebfbba5028cf01a45bf4)] add first cwlROCrate roundabout tests and according fixes
+    * [[#a15d8c76](https://github.com/nfdi4plants/ARCtrl/commit/a15d8c7632cb9a8b38573ae7570b4b493653c172)] additional fixes towards Workflow Invocation conversion
+    * [[#63325d45](https://github.com/nfdi4plants/ARCtrl/commit/63325d452680a6b494570565168cdcb06fc0438d)] fix workflowinvcation writing test failing
+    * [[#6d0b67ec](https://github.com/nfdi4plants/ARCtrl/commit/6d0b67ec59b0d68c465d2c3ceb2141cd7232cd96)] small fix to createAction URL and WorkflowInput additionalType
+    * [[#14afa248](https://github.com/nfdi4plants/ARCtrl/commit/14afa24879924ae9d4dc26e230c0b0fc7e0ddf2e)] fix FormalParameter lacking additional type property when being written
+    * [[#2791d96e](https://github.com/nfdi4plants/ARCtrl/commit/2791d96e8f3fe4d370e486820b05776f40ae6fad)] fix ld context term resolving for compacted https insensitity
+    * [[#a5409491](https://github.com/nfdi4plants/ARCtrl/commit/a5409491524e8c99fe0c092d0243cbbf0e856014)] update ro-crate context from1.2-DRAFT to 1.2 and fix bioschemas property urls
+    * [[#cc788b37](https://github.com/nfdi4plants/ARCtrl/commit/cc788b37c055822c5d23c9abe24d283657f10649)] fix test failing for updated ro-crate context
+
+### 3.0.0-beta.12+cf08594b (Released 2025-11-5)
 * Additions:
     * [[#cf08594b](https://github.com/nfdi4plants/ARCtrl/commit/cf08594bf824d3b3aafc3540ec5f36859a2b1471)] give creativeWork correct type
 * Bugfixes:
     * [[#aedf8cba](https://github.com/nfdi4plants/ARCtrl/commit/aedf8cba400d30f8abbf8bcf8295b321a20e8470)] Fix space in error message for invalid identifier
-
 
 ### 3.0.0-beta.11+adde9c7b (Released 2025-10-31)
 * Additions:
