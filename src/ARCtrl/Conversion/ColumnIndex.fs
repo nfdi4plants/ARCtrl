@@ -19,13 +19,18 @@ module ColumnIndex =
 
     let orderName = "columnIndex"
 
+    let columndIndexProperty = "https://w3id.org/ro/terms/arc#columnIndex"
+
     let tryGetIndex (node : LDNode) =
-        match node.TryGetPropertyAsSingleton(orderName) with
+        match node.TryGetPropertyAsSingleton(columndIndexProperty) with
         | Some (:? string as ci) -> tryInt ci
-        | _ -> None
+        | _ ->
+            match node.TryGetPropertyAsSingleton(orderName) with
+            | Some (:? string as ci) -> tryInt ci
+            | _ -> None
 
     let setIndex (node : LDNode) (index : int) =
-        node.SetProperty(orderName,(string index))
+        node.SetProperty(columndIndexProperty,(string index))
 
     [<AutoOpen>]
     module ColumnIndexExtensions = 
