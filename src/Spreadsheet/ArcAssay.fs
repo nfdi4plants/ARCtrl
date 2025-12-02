@@ -125,10 +125,10 @@ module ArcAssayExtensions =
                 let annotationTables = 
                     sheets |> Seq.choose ArcTable.tryFromFsWorksheet
                 let datamapSheet =
-                    sheets |> Seq.tryPick DataMapTable.tryFromFsWorksheet
+                    sheets |> Seq.tryPick DatamapTable.tryFromFsWorksheet
                 if annotationTables |> Seq.isEmpty |> not then
                     assayMetadata.Tables <- ResizeArray annotationTables
-                assayMetadata.DataMap <- datamapSheet
+                assayMetadata.Datamap <- datamapSheet
                 assayMetadata
             with
             | err -> failwithf "Could not parse assay: \n%s" err.Message
@@ -148,8 +148,8 @@ module ArcAssayExtensions =
             doc.AddWorksheet metadataSheet
 
             if datamapSheet then
-                assay.DataMap
-                |> Option.iter (DataMapTable.toFsWorksheet >> doc.AddWorksheet)
+                assay.Datamap
+                |> Option.iter (DatamapTable.toFsWorksheet >> doc.AddWorksheet)
      
             assay.Tables
             |> Seq.iteri (fun i -> ArcTable.toFsWorksheet (Some i) >> doc.AddWorksheet)

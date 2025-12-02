@@ -1,4 +1,4 @@
-﻿module ARCtrl.Spreadsheet.DataMapTable
+module ARCtrl.Spreadsheet.DatamapTable
 
 open ARCtrl
 open ArcTable
@@ -25,7 +25,7 @@ let groupColumnsByHeader (columns : list<FsColumn>) =
     )
 
 /// Returns the annotation table of the worksheet if it exists, else returns None
-let tryDataMapTable (sheet : FsWorksheet) =
+let tryDatamapTable (sheet : FsWorksheet) =
     sheet.Tables
     |> Seq.tryFind (fun t -> t.Name.StartsWith datamapTablePrefix)
 
@@ -36,25 +36,25 @@ let composeColumns (columns : seq<FsColumn>) : ResizeArray<DataContext> =
     columns
     |> Seq.toList
     |> groupColumnsByHeader
-    |> List.iter (DataMapColumn.setFromFsColumns dc >> ignore)
+    |> List.iter (DatamapColumn.setFromFsColumns dc >> ignore)
     dc
 
 /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
 let tryFromFsWorksheet (sheet : FsWorksheet) =
     try
-        match tryDataMapTable sheet with
+        match tryDatamapTable sheet with
         | Some (t: FsTable) -> 
             let dataContexts = 
                 t.GetColumns(sheet.CellCollection)
                 |> composeColumns
-            DataMap(dataContexts)
+            Datamap(dataContexts)
             |> Some
         | None ->
             None
     with
     | err -> failwithf "Could not parse datamap table with name \"%s\":\n%s" sheet.Name err.Message
 
-let toFsWorksheet (table : DataMap) =
+let toFsWorksheet (table : Datamap) =
     /// This dictionary is used to add spaces at the end of duplicate headers.
     let stringCount = System.Collections.Generic.Dictionary<string,string>()
     let ws = FsWorksheet("isa_datamap")
@@ -64,7 +64,7 @@ let toFsWorksheet (table : DataMap) =
     else
 
     let columns = 
-        DataMapColumn.toFsColumns table.DataContexts
+        DatamapColumn.toFsColumns table.DataContexts
     let maxRow = columns.Head.Length
     let maxCol = columns.Length
     let fsTable = ws.Table("datamapTable",FsRangeAddress(FsAddress(1,1),FsAddress(maxRow,maxCol)))

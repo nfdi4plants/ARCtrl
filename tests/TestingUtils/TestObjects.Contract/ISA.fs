@@ -39,14 +39,14 @@ module SimpleISA =
                 dto = DTO.Spreadsheet proteomeWB)
 
         let proteomeDatamapTable =
-            DataMap.initWorksheet "Proteome"
+            Datamap.initWorksheet "Proteome"
                 [
-                    DataMap.Data.appendDataColumn 2
-                    DataMap.Explication.appendMeanColumn 2
-                    DataMap.Unit.appendPPMColumn 2
-                    DataMap.ObjectType.appendFloatColumn 2
-                    DataMap.Description.appendDescriptionColumn 2
-                    DataMap.GeneratedBy.appendGeneratedByColumn 2
+                    Datamap.Data.appendDataColumn 2
+                    Datamap.Explication.appendMeanColumn 2
+                    Datamap.Unit.appendPPMColumn 2
+                    Datamap.ObjectType.appendFloatColumn 2
+                    Datamap.Description.appendDescriptionColumn 2
+                    Datamap.GeneratedBy.appendGeneratedByColumn 2
                 ]
 
         let proteomeDatamapWB = 

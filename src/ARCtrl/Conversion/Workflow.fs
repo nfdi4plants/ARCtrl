@@ -281,7 +281,7 @@ type WorkflowConversion =
         //        )
         //    LDLabProtocol.set(workflowProtocol, inputs)
         let fragmentDescriptors =
-            workflow.DataMap
+            workflow.Datamap
             |> Option.map DatamapConversion.composeFragmentDescriptors
         let dataFiles =
             fragmentDescriptors
@@ -340,7 +340,7 @@ type WorkflowConversion =
         let dataMap = 
             LDDataset.getVariableMeasuredAsFragmentDescriptors(workflow, ?graph = graph, ?context = context)
             |> fun fds -> DatamapConversion.decomposeFragmentDescriptors(fds, ?graph = graph, ?context = context)
-            |> Option.fromValueWithDefault (DataMap.init())
+            |> Option.fromValueWithDefault (Datamap.init())
 
         ArcWorkflow.create(
             identifier = LDDataset.getIdentifierAsString(workflow, ?context = context),

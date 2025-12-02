@@ -1,4 +1,4 @@
-module TestObjects.Spreadsheet.DataMap
+module TestObjects.Spreadsheet.Datamap
 
 open ARCtrl
 open FsSpreadsheet
@@ -182,7 +182,7 @@ module Comment =
 
 let initWorksheet (name : string) (appendOperations : (FsCellsCollection -> FsTable -> unit) list) = 
     let w = FsWorksheet(name)
-    let t  = w.Table(DataMapTable.datamapTablePrefix, FsRangeAddress.fromString("A1:A1"))
+    let t  = w.Table(DatamapTable.datamapTablePrefix, FsRangeAddress.fromString("A1:A1"))
     appendOperations 
     |> List.iter (fun o -> o w.CellCollection t)
     ArcTable.addSpacesToEnd w.CellCollection t

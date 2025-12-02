@@ -75,8 +75,8 @@
     <Compile Include="Table\CompositeHeader.fs" />
     <Compile Include="Table\ArcTable.fs" />
     <Compile Include="Table\Templates.fs" />
-    <Compile Include="DataMap\DataContext.fs" />
-    <Compile Include="DataMap\DataMap.fs" />
+    <Compile Include="Datamap\DataContext.fs" />
+    <Compile Include="Datamap\Datamap.fs" />
     <Compile Include="Assay.fs" />
     <Compile Include="Study.fs" />
     <Compile Include="Workflow.fs" />

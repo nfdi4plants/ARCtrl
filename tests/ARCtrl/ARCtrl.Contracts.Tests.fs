@@ -20,7 +20,7 @@ let tests_tryFromContract = testList "tryFromContract" [
         |]
         let investigation = contracts |> Array.choose ArcInvestigation.tryFromReadContract
         Expect.hasLength investigation 1 ""
-    testCase "DataMap" <| fun _ ->
+    testCase "Datamap" <| fun _ ->
         let fswb = TestObjects.Contract.ISA.SimpleISA.Assay.proteomeDatamapWB
         let assayName = "myAssay"
         let contracts = [|
@@ -31,9 +31,9 @@ let tests_tryFromContract = testList "tryFromContract" [
                 DTO.Spreadsheet fswb
             )
         |]
-        let datamap = ARCAux.getAssayDataMapFromContracts assayName contracts
+        let datamap = ARCAux.getAssayDatamapFromContracts assayName contracts
         Expect.isSome datamap "Datamap should have been parsed"
-    testCase "DataMap_WrongIdentifier" <| fun _ ->
+    testCase "Datamap_WrongIdentifier" <| fun _ ->
         let fswb = TestObjects.Contract.ISA.SimpleISA.Assay.proteomeDatamapWB
         let assayName = "myAssay"
         let contracts = [|
@@ -44,9 +44,9 @@ let tests_tryFromContract = testList "tryFromContract" [
                 DTO.Spreadsheet fswb
             )
         |]
-        let datamap = ARCAux.getAssayDataMapFromContracts "wrongAssay" contracts
+        let datamap = ARCAux.getAssayDatamapFromContracts "wrongAssay" contracts
         Expect.isNone datamap "Datamap should not have been parsed"
-    testCase "DataMap_WrongType" <| fun _ ->
+    testCase "Datamap_WrongType" <| fun _ ->
         let fswb = TestObjects.Contract.ISA.SimpleISA.Assay.proteomeDatamapWB
         let assayName = "myAssay"
         let contracts = [|
@@ -57,9 +57,9 @@ let tests_tryFromContract = testList "tryFromContract" [
                 DTO.Spreadsheet fswb
             )
         |]
-        let datamap = ARCAux.getAssayDataMapFromContracts assayName contracts
+        let datamap = ARCAux.getAssayDatamapFromContracts assayName contracts
         Expect.isNone datamap "Datamap should not have been parsed"
-    testCase "DataMap_WrongPath" <| fun _ ->
+    testCase "Datamap_WrongPath" <| fun _ ->
         let fswb = TestObjects.Contract.ISA.SimpleISA.Assay.proteomeDatamapWB
         let assayName = "myAssay"
         let contracts = [|
@@ -70,7 +70,7 @@ let tests_tryFromContract = testList "tryFromContract" [
                 DTO.Spreadsheet fswb
             )
         |]
-        let datamap = ARCAux.getAssayDataMapFromContracts assayName contracts
+        let datamap = ARCAux.getAssayDatamapFromContracts assayName contracts
         Expect.isNone datamap "Datamap should not have been parsed"
     testCase "WorkflowCWL" <| fun _ ->
         let cwl = TestObjects.CWL.CommandLineTool.cwlFile

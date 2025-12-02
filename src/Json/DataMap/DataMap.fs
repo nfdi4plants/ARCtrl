@@ -12,26 +12,26 @@ open OATable
 open StringTable
 
 
-module DataMap = 
+module Datamap = 
 
-    let encoder (dm: DataMap) =
+    let encoder (dm: Datamap) =
         Encode.object [
             "dataContexts", dm.DataContexts |> Seq.map DataContext.encoder |> Encode.seq
         ]
 
-    let decoder : Decoder<DataMap> =
+    let decoder : Decoder<Datamap> =
         Decode.object (fun get ->
             let dataContexts = get.Required.Field "dataContexts" (Decode.resizeArray DataContext.decoder)
-            DataMap(dataContexts)
+            Datamap(dataContexts)
         )   
 
 
-    let encoderCompressed (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (dm: DataMap)  =
+    let encoderCompressed (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (dm: Datamap)  =
         encoder dm
 
-    let decoderCompressed (stringTable : StringTableArray) (oaTable : OATableArray) (cellTable : CellTableArray)  : Decoder<DataMap> =
+    let decoderCompressed (stringTable : StringTableArray) (oaTable : OATableArray) (cellTable : CellTableArray)  : Decoder<Datamap> =
         decoder
-        //Decode.map (fun (t : ArcTable) -> DataMap(t.Headers,t.Values)) (ArcTable.decoderCompressed stringTable oaTable cellTable)
+        //Decode.map (fun (t : ArcTable) -> Datamap(t.Headers,t.Values)) (ArcTable.decoderCompressed stringTable oaTable cellTable)
 
     //module ROCrate =
 

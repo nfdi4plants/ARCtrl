@@ -15,7 +15,7 @@ module Helper =
             OntologyAnnotation("TT", "MS", "MS:696969"), 
             OntologyAnnotation("TP", "MS", "MS:123456", comments = ResizeArray [Comment.create("Hello","Space")]), 
             ResizeArray([Tests.ArcTable.Helper.create_filled(); ArcTable.init("My Second Table")]),
-            DataMap.Helper.create_filled(),
+            Datamap.Helper.create_filled(),
             performers = ResizeArray [|Person.create(firstName="Kevin", lastName="Frey")|],
             comments = ResizeArray [|Comment.create("Hello", "World")|]
         )
@@ -40,7 +40,7 @@ module Helper =
             Expect.equal a1.MeasurementType a2.MeasurementType "MeasurementType"
             Expect.equal a1.TechnologyType a2.TechnologyType "TechnologyType"
             Expect.equal a1.TechnologyPlatform a2.TechnologyPlatform "TechnologyPlatform"
-            Expect.equal a1.DataMap a2.DataMap "DataMap"
+            Expect.equal a1.Datamap a2.Datamap "Datamap"
             Expect.sequenceEqual a1.Tables a2.Tables "Tables"
             Expect.sequenceEqual a1.Performers a2.Performers "Performers"
             Expect.sequenceEqual a1.Comments a2.Comments "Comments"

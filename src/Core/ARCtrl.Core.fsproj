@@ -52,7 +52,7 @@
     <Compile Include="Table\ArcTableAux.fs" />
     <Compile Include="Table\ArcTable.fs" />
     <Compile Include="Table\ArcTables.fs" />
-    <Compile Include="DataMap.fs" />
+    <Compile Include="Datamap.fs" />
     <Compile Include="ArcTypes.fs" />
     <Compile Include="Template.fs" />
     <Compile Include="Templates.fs" />

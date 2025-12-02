@@ -12,31 +12,31 @@ module DatamapContractExtensions =
 
     let (|DatamapPath|_|) (input) =
         match input with
-        | [|AssaysFolderName; anyAssayName; DataMapFileName|] -> 
+        | [|AssaysFolderName; anyAssayName; DatamapFileName|] -> 
             let path = ARCtrl.ArcPathHelper.combineMany input
             Some path
-        | [|StudiesFolderName; anyStudyName; DataMapFileName|] -> 
+        | [|StudiesFolderName; anyStudyName; DatamapFileName|] -> 
             let path = ARCtrl.ArcPathHelper.combineMany input
             Some path
-        | [|WorkflowsFolderName; anyWorkflowName; DataMapFileName|] ->
+        | [|WorkflowsFolderName; anyWorkflowName; DatamapFileName|] ->
             let path = ARCtrl.ArcPathHelper.combineMany input
             Some path
-        | [|RunsFolderName; anyRunName; DataMapFileName|] ->
+        | [|RunsFolderName; anyRunName; DatamapFileName|] ->
             let path = ARCtrl.ArcPathHelper.combineMany input
             Some path
         | _ -> None
 
-    type DataMap with
+    type Datamap with
 
         // Assay
 
         member this.ToCreateContractForAssay (assayIdentifier : string) =
             let path = Identifier.Assay.datamapFileNameFromIdentifier assayIdentifier
-            Contract.createCreate(path, DTOType.ISA_Datamap, DTO.Spreadsheet (this |> DataMap.toFsWorkbook))
+            Contract.createCreate(path, DTOType.ISA_Datamap, DTO.Spreadsheet (this |> Datamap.toFsWorkbook))
 
         member this.ToUpdateContractForAssay (assayIdentifier : string) =
             let path = Identifier.Assay.datamapFileNameFromIdentifier assayIdentifier
-            let c = Contract.createUpdate(path, DTOType.ISA_Datamap, DTO.Spreadsheet (this |> DataMap.toFsWorkbook))
+            let c = Contract.createUpdate(path, DTOType.ISA_Datamap, DTO.Spreadsheet (this |> Datamap.toFsWorkbook))
             c
 
         member this.ToDeleteContractForAssay (assayIdentifier : string) =
@@ -45,11 +45,11 @@ module DatamapContractExtensions =
             c
 
         static member toDeleteContractForAssay (assayIdentifier : string) =
-            fun (dataMap : DataMap) -> 
+            fun (dataMap : Datamap) -> 
                 dataMap.ToDeleteContractForAssay(assayIdentifier)
 
         static member toUpdateContractForAssay (assayIdentifier : string) =
-            fun (dataMap : DataMap) -> 
+            fun (dataMap : Datamap) -> 
                 dataMap.ToUpdateContractForAssay(assayIdentifier)
 
         static member tryFromReadContractForAssay (assayIdentifier : string) (c:Contract) =
@@ -58,7 +58,7 @@ module DatamapContractExtensions =
             | {Path = p; Operation = READ; DTOType = Some DTOType.ISA_Datamap; DTO = Some (DTO.Spreadsheet fsworkbook)} when p = path ->
                 let dm = 
                     fsworkbook :?> FsWorkbook
-                    |> DataMap.fromFsWorkbook                
+                    |> Datamap.fromFsWorkbook                
                 dm.StaticHash <- dm.GetHashCode()
                 dm
                 |> Some 
@@ -68,11 +68,11 @@ module DatamapContractExtensions =
 
         member this.ToCreateContractForStudy (studyIdentifier : string) =
             let path = Identifier.Study.datamapFileNameFromIdentifier studyIdentifier
-            Contract.createCreate(path, DTOType.ISA_Datamap, DTO.Spreadsheet (this |> DataMap.toFsWorkbook))
+            Contract.createCreate(path, DTOType.ISA_Datamap, DTO.Spreadsheet (this |> Datamap.toFsWorkbook))
 
         member this.ToUpdateContractForStudy (studyIdentifier : string) =
             let path = Identifier.Study.datamapFileNameFromIdentifier studyIdentifier
-            let c = Contract.createUpdate(path, DTOType.ISA_Datamap, DTO.Spreadsheet (this |> DataMap.toFsWorkbook))
+            let c = Contract.createUpdate(path, DTOType.ISA_Datamap, DTO.Spreadsheet (this |> Datamap.toFsWorkbook))
             c
 
         member this.ToDeleteContractForStudy (studyIdentifier : string) =
@@ -81,11 +81,11 @@ module DatamapContractExtensions =
             c
 
         static member toDeleteContractForStudy (studyIdentifier : string) =
-            fun (dataMap : DataMap) -> 
+            fun (dataMap : Datamap) -> 
                 dataMap.ToDeleteContractForStudy(studyIdentifier)
 
         static member toUpdateContractForStudy (studyIdentifier : string) =
-            fun (dataMap : DataMap) -> 
+            fun (dataMap : Datamap) -> 
                 dataMap.ToUpdateContractForStudy(studyIdentifier)
 
 
@@ -95,7 +95,7 @@ module DatamapContractExtensions =
             | {Path = p; Operation = READ; DTOType = Some DTOType.ISA_Datamap; DTO = Some (DTO.Spreadsheet fsworkbook)} when p = path->
                 let dm = 
                     fsworkbook :?> FsWorkbook
-                    |> DataMap.fromFsWorkbook                
+                    |> Datamap.fromFsWorkbook                
                 dm.StaticHash <- dm.GetHashCode()
                 Some (dm)
             | _ -> None
@@ -104,11 +104,11 @@ module DatamapContractExtensions =
 
         member this.ToCreateContractForWorkflow (workflowIdentifier : string) =
             let path = Identifier.Workflow.datamapFileNameFromIdentifier workflowIdentifier
-            Contract.createCreate(path, DTOType.ISA_Datamap, DTO.Spreadsheet (this |> DataMap.toFsWorkbook))
+            Contract.createCreate(path, DTOType.ISA_Datamap, DTO.Spreadsheet (this |> Datamap.toFsWorkbook))
 
         member this.ToUpdateContractForWorkflow (workflowIdentifier : string) =
             let path = Identifier.Workflow.datamapFileNameFromIdentifier workflowIdentifier
-            let c = Contract.createUpdate(path, DTOType.ISA_Datamap, DTO.Spreadsheet (this |> DataMap.toFsWorkbook))
+            let c = Contract.createUpdate(path, DTOType.ISA_Datamap, DTO.Spreadsheet (this |> Datamap.toFsWorkbook))
             c
 
         member this.ToDeleteContractForWorkflow (workflowIdentifier : string) =
@@ -117,11 +117,11 @@ module DatamapContractExtensions =
             c
 
         static member toDeleteContractForWorkflow (workflowIdentifier : string) =
-            fun (dataMap : DataMap) -> 
+            fun (dataMap : Datamap) -> 
                 dataMap.ToDeleteContractForWorkflow(workflowIdentifier)
 
         static member toUpdateContractForWorkflow (workflowIdentifier : string) =
-            fun (dataMap : DataMap) -> 
+            fun (dataMap : Datamap) -> 
                 dataMap.ToUpdateContractForWorkflow(workflowIdentifier)
 
         static member tryFromReadContractForWorkflow (workflowIdentifier : string) (c:Contract) =
@@ -130,7 +130,7 @@ module DatamapContractExtensions =
             | {Path = p; Operation = READ; DTOType = Some DTOType.ISA_Datamap; DTO = Some (DTO.Spreadsheet fsworkbook)} when p = path->
                 let dm = 
                     fsworkbook :?> FsWorkbook
-                    |> DataMap.fromFsWorkbook                
+                    |> Datamap.fromFsWorkbook                
                 dm.StaticHash <- dm.GetHashCode()
                 Some (dm)
             | _ -> None
@@ -139,11 +139,11 @@ module DatamapContractExtensions =
 
         member this.ToCreateContractForRun (runIdentifier : string) =
             let path = Identifier.Run.datamapFileNameFromIdentifier runIdentifier
-            Contract.createCreate(path, DTOType.ISA_Datamap, DTO.Spreadsheet (this |> DataMap.toFsWorkbook))
+            Contract.createCreate(path, DTOType.ISA_Datamap, DTO.Spreadsheet (this |> Datamap.toFsWorkbook))
 
         member this.ToUpdateContractForRun (runIdentifier : string) =
             let path = Identifier.Run.datamapFileNameFromIdentifier runIdentifier
-            let c = Contract.createUpdate(path, DTOType.ISA_Datamap, DTO.Spreadsheet (this |> DataMap.toFsWorkbook))
+            let c = Contract.createUpdate(path, DTOType.ISA_Datamap, DTO.Spreadsheet (this |> Datamap.toFsWorkbook))
             c
 
         member this.ToDeleteContractForRun (runIdentifier : string) =
@@ -152,11 +152,11 @@ module DatamapContractExtensions =
             c
 
         static member toDeleteContractForRun (runIdentifier : string) =
-            fun (dataMap : DataMap) -> 
+            fun (dataMap : Datamap) -> 
                 dataMap.ToDeleteContractForRun(runIdentifier)
 
         static member toUpdateContractForRun (runIdentifier : string) =
-            fun (dataMap : DataMap) -> 
+            fun (dataMap : Datamap) -> 
                 dataMap.ToUpdateContractForRun(runIdentifier)
 
         static member tryFromReadContractForRun (runIdentifier : string) (c:Contract) =
@@ -165,7 +165,7 @@ module DatamapContractExtensions =
             | {Path = p; Operation = READ; DTOType = Some DTOType.ISA_Datamap; DTO = Some (DTO.Spreadsheet fsworkbook)} when p = path->
                 let dm = 
                     fsworkbook :?> FsWorkbook
-                    |> DataMap.fromFsWorkbook                
+                    |> Datamap.fromFsWorkbook                
                 dm.StaticHash <- dm.GetHashCode()
                 Some (dm)
             | _ -> None

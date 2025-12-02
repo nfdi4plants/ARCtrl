@@ -1,4 +1,4 @@
-module ARCtrl.Spreadsheet.DataMapHeader
+module ARCtrl.Spreadsheet.DatamapHeader
 
 open ARCtrl
 open ARCtrl.Helper
@@ -46,7 +46,7 @@ module ActivePattern =
 
     let (|Explication|_|) (cells : FsCell list) =
         match cells with
-        | Term DataMapAux.explicationShortHand r ->
+        | Term DatamapAux.explicationShortHand r ->
             (fun (dc : DataContext) (cells : FsCell list) -> 
                 dc.Explication <- Some (r cells)
                 dc
@@ -56,7 +56,7 @@ module ActivePattern =
 
     let (|Unit|_|) (cells : FsCell list) =
         match cells with
-        | Term DataMapAux.unitShortHand r ->
+        | Term DatamapAux.unitShortHand r ->
             (fun (dc : DataContext) (cells : FsCell list) -> 
                 dc.Unit <- Some (r cells)
                 dc
@@ -66,7 +66,7 @@ module ActivePattern =
 
     let (|ObjectType|_|) (cells : FsCell list) =
         match cells with
-        | Term DataMapAux.objectTypeShortHand r ->
+        | Term DatamapAux.objectTypeShortHand r ->
             (fun (dc : DataContext) (cells : FsCell list) -> 
                 dc.ObjectType <- Some (r cells)
                 dc
@@ -77,7 +77,7 @@ module ActivePattern =
     let (|Description|_|) (cells : FsCell list) =
         let cellValues = cells |> List.map (fun c -> c.ValueAsString())
         match cellValues with
-        | [DataMapAux.descriptionShortHand] -> 
+        | [DatamapAux.descriptionShortHand] -> 
             (fun (dc : DataContext) (cells : FsCell list) -> 
                 dc.Description <- freeTextFromFsCells cells |> Option.fromValueWithDefault ""
                 dc
@@ -88,7 +88,7 @@ module ActivePattern =
     let (|GeneratedBy|_|) (cells : FsCell list) =
         let cellValues = cells |> List.map (fun c -> c.ValueAsString())
         match cellValues with
-        | [DataMapAux.generatedByShortHand] -> 
+        | [DatamapAux.generatedByShortHand] -> 
             (fun (dc : DataContext) (cells : FsCell list) -> 
                 dc.GeneratedBy <- freeTextFromFsCells cells |> Option.fromValueWithDefault ""
                 dc
@@ -99,7 +99,7 @@ module ActivePattern =
     let (|Label|_|) (cells : FsCell list) =
         let cellValues = cells |> List.map (fun c -> c.ValueAsString())
         match cellValues with
-        | [DataMapAux.labelShortHand] -> 
+        | [DatamapAux.labelShortHand] -> 
             (fun (dc : DataContext) (cells : FsCell list) -> 
                 dc.Label <- freeTextFromFsCells cells |> Option.fromValueWithDefault ""
                 dc
@@ -110,7 +110,7 @@ module ActivePattern =
     let (|Data|_|) (cells : FsCell list) =
         let cellValues = cells |> List.map (fun c -> c.ValueAsString())
         match cellValues with
-        | DataMapAux.dataShortHand :: cols -> 
+        | DatamapAux.dataShortHand :: cols -> 
             (fun (dc : DataContext) (cells : FsCell list) ->
                 let format = cols |> List.tryFindIndex (fun s -> s.StartsWith("Data Format"))  |> Option.map ((+) 1)
                 let selectorFormat = cols |> List.tryFindIndex (fun s -> s.StartsWith("Data Selector Format"))  |> Option.map ((+) 1)
@@ -175,28 +175,28 @@ let toFsCells (commentKeys : string list) : list<FsCell> =
             FsCell("Data Selector Format")
         ]  
         yield! [
-            FsCell(DataMapAux.explicationShortHand)
+            FsCell(DatamapAux.explicationShortHand)
             FsCell("Term Source REF")
             FsCell("Term Accession Number")
         ]
         yield![
-            FsCell(DataMapAux.unitShortHand)
+            FsCell(DatamapAux.unitShortHand)
             FsCell("Term Source REF")
             FsCell("Term Accession Number")
         ]
         yield![
-            FsCell(DataMapAux.objectTypeShortHand)
+            FsCell(DatamapAux.objectTypeShortHand)
             FsCell("Term Source REF")
             FsCell("Term Accession Number")
         ]
         yield! [
-            FsCell(DataMapAux.descriptionShortHand)
+            FsCell(DatamapAux.descriptionShortHand)
         ]
         yield! [
-            FsCell(DataMapAux.generatedByShortHand)
+            FsCell(DatamapAux.generatedByShortHand)
         ]
         yield! [
-            FsCell(DataMapAux.labelShortHand)
+            FsCell(DatamapAux.labelShortHand)
         ]
         for ck in commentKeys do
             yield FsCell($"Comment [{ck}]")

@@ -10,7 +10,7 @@ let all = testSequenced <| testList "Spreadsheet" [
     CompositeCellTests.main
     CompositeHeaderTests.main
     ArcTableTests.main
-    DataMapTests.main
+    DatamapTests.main
     ArcAssayTests.main
     ArcStudyTests.main
     ArcWorkflowTests.main

@@ -75,7 +75,7 @@ type AssayConversion =
             |> ResizeArray
             |> Option.fromSeq
         let fragmentDescriptors =
-            assay.DataMap
+            assay.Datamap
             |> Option.map DatamapConversion.composeFragmentDescriptors
         let dataFiles = 
             processSequence
@@ -119,7 +119,7 @@ type AssayConversion =
         let dataMap = 
             LDDataset.getVariableMeasuredAsFragmentDescriptors(assay, ?graph = graph, ?context = context)
             |> fun fds -> DatamapConversion.decomposeFragmentDescriptors(fds, ?graph = graph, ?context = context)
-            |> Option.fromValueWithDefault (DataMap.init())
+            |> Option.fromValueWithDefault (Datamap.init())
         let tables = 
             LDDataset.getAboutsAsLabProcess(assay, ?graph = graph, ?context = context)
             |> fun ps -> ArcTables.fromProcesses(List.ofSeq ps, ?graph = graph, ?context = context)

@@ -1,4 +1,4 @@
-module ARCtrl.Spreadsheet.DataMap
+module ARCtrl.Spreadsheet.Datamap
 
 open ARCtrl
 open ArcTable
@@ -11,20 +11,20 @@ let fromFsWorkbook (doc : FsWorkbook) =
         let sheetIsEmpty (sheet : FsWorksheet) = sheet.CellCollection.Count = 0
         let dataMapTable = 
             worksheets
-            |> Seq.tryPick DataMapTable.tryFromFsWorksheet
+            |> Seq.tryPick DatamapTable.tryFromFsWorksheet
         match dataMapTable with
         | Some table -> table
         | None -> 
             if worksheets |> Seq.forall sheetIsEmpty then
-                DataMap.init()
+                Datamap.init()
             else
-                failwith "No DataMapTable was found in any of the sheets of the workbook"
+                failwith "No DatamapTable was found in any of the sheets of the workbook"
     with
     | err -> failwithf "Could not parse datamap: \n%s" err.Message
             
-let toFsWorkbook (dataMap : DataMap) =
+let toFsWorkbook (dataMap : Datamap) =
     let doc = new FsWorkbook()
 
-    DataMapTable.toFsWorksheet dataMap
+    DatamapTable.toFsWorksheet dataMap
     |> doc.AddWorksheet
     doc

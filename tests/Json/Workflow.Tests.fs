@@ -42,7 +42,7 @@ module Helper =
         )
 
     let create_datamap(amount) = 
-        DataMap(ResizeArray [
+        Datamap(ResizeArray [
             for i in 1 .. amount do
                 create_Datacontext i
         ])
@@ -74,7 +74,7 @@ module Helper =
             Expect.sequenceEqual w1.SubWorkflowIdentifiers w2.SubWorkflowIdentifiers "SubWorkflowIdentifiers"
             Expect.sequenceEqual w1.Parameters w2.Parameters "Parameters"
             Expect.sequenceEqual w1.Components w2.Components "Components"
-            Expect.equal w1.DataMap w2.DataMap "DataMap"
+            Expect.equal w1.Datamap w2.Datamap "Datamap"
             Expect.sequenceEqual w1.Contacts w2.Contacts "Contacts"
             Expect.sequenceEqual w1.Comments w2.Comments "Comments"
         |> Some

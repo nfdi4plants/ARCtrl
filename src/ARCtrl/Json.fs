@@ -27,8 +27,8 @@ module JsonHelper =
 
     [<AttachMembers>]
     type DatamapJson() =
-        member _.fromJsonString (s: string) = DataMap.fromJsonString s
-        member _.toJsonString (datamap: DataMap, ?spaces) = DataMap.toJsonString(?spaces=spaces) datamap
+        member _.fromJsonString (s: string) = Datamap.fromJsonString s
+        member _.toJsonString (datamap: Datamap, ?spaces) = Datamap.toJsonString(?spaces=spaces) datamap
 
     [<AttachMembers>]
     type AssayJson() =

@@ -37,7 +37,7 @@ module Study =
             Encode.tryIncludeSeq "Contacts" Person.encoder study.Contacts
             Encode.tryIncludeSeq "StudyDesignDescriptors" OntologyAnnotation.encoder study.StudyDesignDescriptors
             Encode.tryIncludeSeq "Tables" ArcTable.encoder study.Tables
-            Encode.tryInclude "DataMap" DataMap.encoder study.DataMap
+            Encode.tryInclude "Datamap" Datamap.encoder study.Datamap
             Encode.tryIncludeSeq "RegisteredAssayIdentifiers" Encode.string study.RegisteredAssayIdentifiers
             Encode.tryIncludeSeq "Comments" Comment.encoder study.Comments
         ]
@@ -56,7 +56,7 @@ module Study =
                 ?contacts = get.Optional.Field "Contacts" (Decode.resizeArray Person.decoder),
                 ?studyDesignDescriptors = get.Optional.Field "StudyDesignDescriptors" (Decode.resizeArray OntologyAnnotation.decoder),
                 ?tables = get.Optional.Field "Tables" (Decode.resizeArray ArcTable.decoder),
-                ?datamap = get.Optional.Field "DataMap" DataMap.decoder,
+                ?datamap = get.Optional.Field "Datamap" Datamap.decoder,
                 ?registeredAssayIdentifiers = get.Optional.Field "RegisteredAssayIdentifiers" (Decode.resizeArray Decode.string),
                 ?comments = get.Optional.Field "Comments" (Decode.resizeArray Comment.decoder)
             ) 
@@ -77,7 +77,7 @@ module Study =
             Encode.tryIncludeSeq "Contacts" Person.encoder study.Contacts
             Encode.tryIncludeSeq "StudyDesignDescriptors" OntologyAnnotation.encoder study.StudyDesignDescriptors
             Encode.tryIncludeSeq "Tables" (ArcTable.encoderCompressed stringTable oaTable cellTable) study.Tables
-            Encode.tryInclude "DataMap" (DataMap.encoderCompressed stringTable oaTable cellTable) study.DataMap
+            Encode.tryInclude "Datamap" (Datamap.encoderCompressed stringTable oaTable cellTable) study.Datamap
             Encode.tryIncludeSeq "RegisteredAssayIdentifiers" Encode.string study.RegisteredAssayIdentifiers
             Encode.tryIncludeSeq "Comments" Comment.encoder study.Comments
         ]
@@ -96,7 +96,7 @@ module Study =
                 ?contacts = get.Optional.Field "Contacts" (Decode.resizeArray Person.decoder),
                 ?studyDesignDescriptors = get.Optional.Field "StudyDesignDescriptors" (Decode.resizeArray OntologyAnnotation.decoder),
                 ?tables = get.Optional.Field "Tables" (Decode.resizeArray <| ArcTable.decoderCompressed stringTable oaTable cellTable),
-                ?datamap = get.Optional.Field "DataMap" (DataMap.decoderCompressed stringTable oaTable cellTable),
+                ?datamap = get.Optional.Field "Datamap" (Datamap.decoderCompressed stringTable oaTable cellTable),
                 ?registeredAssayIdentifiers = get.Optional.Field "RegisteredAssayIdentifiers" (Decode.resizeArray Decode.string),
                 ?comments = get.Optional.Field "Comments" (Decode.resizeArray Comment.decoder)
             ) 

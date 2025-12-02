@@ -168,7 +168,7 @@ type RunConversion =
             |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
             |> Option.fromSeq
         let fragmentDescriptors =
-            run.DataMap
+            run.Datamap
             |> Option.map DatamapConversion.composeFragmentDescriptors
         let dataFiles = 
             workflowInvocations
@@ -224,7 +224,7 @@ type RunConversion =
         let dataMap = 
             LDDataset.getVariableMeasuredAsFragmentDescriptors(run, ?graph = graph, ?context = context)
             |> fun fds -> DatamapConversion.decomposeFragmentDescriptors(fds, ?graph = graph, ?context = context)
-            |> Option.fromValueWithDefault (DataMap.init())
+            |> Option.fromValueWithDefault (Datamap.init())
         let tables = 
             LDDataset.getAboutsAsLabProcess(run, ?graph = graph, ?context = context)
             |> ResizeArray.filter (fun wi -> wi.Id <> mainWorkflowInvocation.Id)

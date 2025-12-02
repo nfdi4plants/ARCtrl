@@ -98,7 +98,7 @@ module Assay =
     /// <param name="identifier">Any correct assay identifier</param>
     let datamapFileNameFromIdentifier (identifier: string) : string =        
         checkValidCharacters (identifier)
-        ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.AssaysFolderName; identifier; ARCtrl.ArcPathHelper.DataMapFileName|]
+        ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.AssaysFolderName; identifier; ARCtrl.ArcPathHelper.DatamapFileName|]
 
     /// <summary>
     /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `assays/assayIdentifier/isa.datamap.xlsx`.
@@ -106,7 +106,7 @@ module Assay =
     /// <param name="identifier">Any correct assay identifier</param>
     let tryDatamapFileNameFromIdentifier (identifier: string) : string option =        
         if tryCheckValidCharacters (identifier) then
-            ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.AssaysFolderName; identifier; ARCtrl.ArcPathHelper.DataMapFileName|]
+            ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.AssaysFolderName; identifier; ARCtrl.ArcPathHelper.DatamapFileName|]
             |> Some
         else None
 
@@ -165,7 +165,7 @@ module Study =
     /// <param name="identifier">Any correct study identifier</param>
     let datamapFileNameFromIdentifier (identifier: string) : string =
         checkValidCharacters (identifier)
-        ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.StudiesFolderName; identifier; ARCtrl.ArcPathHelper.DataMapFileName|]
+        ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.StudiesFolderName; identifier; ARCtrl.ArcPathHelper.DatamapFileName|]
 
     /// <summary>
     /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `studies/studyIdentifier/isa.investigation.xlsx`.
@@ -173,7 +173,7 @@ module Study =
     /// <param name="identifier">Any correct study identifier</param>
     let tryDatamapFileNameFromIdentifier (identifier: string) : string option =
         if tryCheckValidCharacters (identifier) then
-            ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.StudiesFolderName; identifier; ARCtrl.ArcPathHelper.DataMapFileName|]
+            ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.StudiesFolderName; identifier; ARCtrl.ArcPathHelper.DatamapFileName|]
             |> Some
         else None
 
@@ -250,7 +250,7 @@ module Workflow =
     /// <param name="identifier">Any correct workflow identifier</param>
     let datamapFileNameFromIdentifier (identifier: string) : string =
         checkValidCharacters (identifier)
-        ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.WorkflowsFolderName; identifier; ARCtrl.ArcPathHelper.DataMapFileName|]
+        ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.WorkflowsFolderName; identifier; ARCtrl.ArcPathHelper.DatamapFileName|]
 
     /// <summary>
     /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `workflows/workflowIdentifier/isa.datamap.xlsx`.
@@ -258,7 +258,7 @@ module Workflow =
     /// <param name="identifier">Any correct workflow identifier</param>
     let tryDatamapFileNameFromIdentifier (identifier: string) : string option =
         if tryCheckValidCharacters (identifier) then
-            ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.WorkflowsFolderName; identifier; ARCtrl.ArcPathHelper.DataMapFileName|]
+            ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.WorkflowsFolderName; identifier; ARCtrl.ArcPathHelper.DatamapFileName|]
             |> Some
         else None
 
@@ -352,7 +352,7 @@ module Run =
     /// <param name="identifier">Any correct run identifier</param>
     let datamapFileNameFromIdentifier (identifier: string) : string =
         checkValidCharacters (identifier)
-        ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.RunsFolderName; identifier; ARCtrl.ArcPathHelper.DataMapFileName|]
+        ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.RunsFolderName; identifier; ARCtrl.ArcPathHelper.DatamapFileName|]
 
     /// <summary>
     /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `runs/runIdentifier/isa.datamap.xlsx`.
@@ -360,6 +360,6 @@ module Run =
     /// <param name="identifier">Any correct run identifier</param>
     let tryDatamapFileNameFromIdentifier (identifier: string) : string option =
         if tryCheckValidCharacters (identifier) then
-            ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.RunsFolderName; identifier; ARCtrl.ArcPathHelper.DataMapFileName|]
+            ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.RunsFolderName; identifier; ARCtrl.ArcPathHelper.DatamapFileName|]
             |> Some
         else None

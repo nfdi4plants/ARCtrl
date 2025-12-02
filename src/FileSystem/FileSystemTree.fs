@@ -220,32 +220,32 @@ type FileSystemTree =
     static member createEmptyFolder (name : string) = 
         FileSystemTree.createFolder(name, [|FileSystemTree.createGitKeepFile()|])
 
-    static member createAssayFolder(assayName : string, ?hasDataMap) = 
-        let hasDataMap = defaultArg hasDataMap false
+    static member createAssayFolder(assayName : string, ?hasDatamap) = 
+        let hasDatamap = defaultArg hasDatamap false
         let dataset = FileSystemTree.createEmptyFolder ARCtrl.ArcPathHelper.AssayDatasetFolderName
         let protocols = FileSystemTree.createEmptyFolder ARCtrl.ArcPathHelper.AssayProtocolsFolderName
         let readme = FileSystemTree.createReadmeFile()
         let assayFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.AssayFileName
-        if hasDataMap then
-            let dataMapFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.DataMapFileName
+        if hasDatamap then
+            let dataMapFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.DatamapFileName
             FileSystemTree.createFolder(assayName, [|dataset; protocols; assayFile; readme; dataMapFile|])
         else
             FileSystemTree.createFolder(assayName, [|dataset; protocols; assayFile; readme|])
 
-    static member createStudyFolder(studyName : string, ?hasDataMap) = 
-        let hasDataMap = defaultArg hasDataMap false
+    static member createStudyFolder(studyName : string, ?hasDatamap) = 
+        let hasDatamap = defaultArg hasDatamap false
         let resources = FileSystemTree.createEmptyFolder ARCtrl.ArcPathHelper.StudiesResourcesFolderName
         let protocols = FileSystemTree.createEmptyFolder ARCtrl.ArcPathHelper.StudiesProtocolsFolderName
         let readme = FileSystemTree.createReadmeFile()
         let studyFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.StudyFileName
-        if hasDataMap then
-            let dataMapFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.DataMapFileName
+        if hasDatamap then
+            let dataMapFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.DatamapFileName
             FileSystemTree.createFolder(studyName, [|resources; protocols; studyFile; readme; dataMapFile|])
         else
             FileSystemTree.createFolder(studyName, [|resources; protocols; studyFile; readme|])
 
-    static member createWorkflowFolder(workflowName : string, ?hasCWL, ?hasDataMap) = 
-        let hasDataMap = defaultArg hasDataMap false
+    static member createWorkflowFolder(workflowName : string, ?hasCWL, ?hasDatamap) = 
+        let hasDatamap = defaultArg hasDatamap false
         let hasCWL = defaultArg hasCWL false
         let readme = FileSystemTree.createReadmeFile()
         let workflowFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.WorkflowFileName
@@ -253,11 +253,11 @@ type FileSystemTree =
             workflowFile;
             readme;
             if hasCWL then FileSystemTree.createFile ARCtrl.ArcPathHelper.WorkflowCWLFileName
-            if hasDataMap then FileSystemTree.createFile ARCtrl.ArcPathHelper.DataMapFileName
+            if hasDatamap then FileSystemTree.createFile ARCtrl.ArcPathHelper.DatamapFileName
         |])
 
-    static member createRunFolder(runName : string, ?hasCWL, ?hasYML, ?hasDataMap) = 
-        let hasDataMap = defaultArg hasDataMap false
+    static member createRunFolder(runName : string, ?hasCWL, ?hasYML, ?hasDatamap) = 
+        let hasDatamap = defaultArg hasDatamap false
         let hasCWL = defaultArg hasCWL false
         let hasYML = defaultArg hasYML false
         let readme = FileSystemTree.createReadmeFile()
@@ -267,7 +267,7 @@ type FileSystemTree =
             readme;
             if hasCWL then FileSystemTree.createFile ARCtrl.ArcPathHelper.RunCWLFileName
             if hasYML then FileSystemTree.createFile ARCtrl.ArcPathHelper.RunYMLFileName
-            if hasDataMap then FileSystemTree.createFile ARCtrl.ArcPathHelper.DataMapFileName
+            if hasDatamap then FileSystemTree.createFile ARCtrl.ArcPathHelper.DatamapFileName
         |])
 
     static member createInvestigationFile() = 

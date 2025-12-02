@@ -1,11 +1,11 @@
-module Tests.DataMap
+module Tests.Datamap
 
 open ARCtrl
 open ARCtrl.Json
 open TestingUtils
 
 module Helper =
-    let create_empty() = DataMap.init()
+    let create_empty() = Datamap.init()
     let create_Datacontext (i:int) =
         DataContext(
             $"id_string_{i}",
@@ -23,13 +23,13 @@ module Helper =
         )
 
     let create_filled() = 
-        DataMap(ResizeArray [
+        Datamap(ResizeArray [
             for i in 1 .. 3 do
                 create_Datacontext i
         ])
 
     let compare =
-        fun (d1: DataMap) (d2: DataMap) ->
+        fun (d1: Datamap) (d2: Datamap) ->
             let d1DataContexts =
                 d1.DataContexts
                 |> Array.ofSeq
@@ -52,8 +52,8 @@ let private test_datamapJsonTesting =
     createBaseJsonTests
         "datamap-json"
         create_filled
-        DataMap.toJsonString
-        DataMap.fromJsonString
+        Datamap.toJsonString
+        Datamap.fromJsonString
         None
         compare
 

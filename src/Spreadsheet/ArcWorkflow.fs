@@ -112,8 +112,8 @@ module ArcWorkflowExtensions =
                         ArcWorkflow.create(Identifier.createMissingIdentifier())
                 let sheets = doc.GetWorksheets()
                 let datamapSheet =
-                    sheets |> Seq.tryPick DataMapTable.tryFromFsWorksheet
-                workflowMetadata.DataMap <- datamapSheet
+                    sheets |> Seq.tryPick DatamapTable.tryFromFsWorksheet
+                workflowMetadata.Datamap <- datamapSheet
                 workflowMetadata
             with
             | err -> failwithf "Could not parse assay: \n%s" err.Message

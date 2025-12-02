@@ -1,4 +1,4 @@
-module DataMapTests
+module DatamapTests
 
 
 open ARCtrl
@@ -6,7 +6,7 @@ open ARCtrl.Spreadsheet
 open FsSpreadsheet
 
 open TestingUtils
-open TestObjects.Spreadsheet.DataMap
+open TestObjects.Spreadsheet.Datamap
 
 let private simpleTable = 
     testList "simpleTable" [
@@ -25,7 +25,7 @@ let private simpleTable =
                     ]
         testCase "Read" (fun () -> 
                     
-            let table = DataMapTable.tryFromFsWorksheet ws        
+            let table = DatamapTable.tryFromFsWorksheet ws        
         
             Expect.isSome table "Table was not created"
             let table = table.Value
@@ -57,9 +57,9 @@ let private simpleTable =
             Expect.isEmpty dc.Comments "Comments should be empty"
         )
         testCase "Write" (fun () ->            
-            let table = DataMapTable.tryFromFsWorksheet ws        
+            let table = DatamapTable.tryFromFsWorksheet ws        
             Expect.isSome table "Table was not created"
-            let out = DataMapTable.toFsWorksheet table.Value
+            let out = DatamapTable.toFsWorksheet table.Value
             Expect.workSheetEqual out ws "Worksheet was not correctly written"
            
         )
@@ -82,7 +82,7 @@ let private commentTable =
                     ]
         testCase "Read" (fun () -> 
                     
-            let table = DataMapTable.tryFromFsWorksheet ws        
+            let table = DatamapTable.tryFromFsWorksheet ws        
         
             Expect.isSome table "Table was not created"
             let table = table.Value
@@ -121,9 +121,9 @@ let private commentTable =
             Expect.equal comment.Value (Some Comment.commentValue) "Comment value did not match"
         )
         testCase "Write" (fun () ->            
-            let table = DataMapTable.tryFromFsWorksheet ws        
+            let table = DatamapTable.tryFromFsWorksheet ws        
             Expect.isSome table "Table was not created"
-            let out = DataMapTable.toFsWorksheet table.Value
+            let out = DatamapTable.toFsWorksheet table.Value
             Expect.workSheetEqual out ws "Worksheet was not correctly written"
            
         )
@@ -145,7 +145,7 @@ let private valuelessTable =
                     ]
         testCase "Read" (fun () -> 
                     
-            let table = DataMapTable.tryFromFsWorksheet ws        
+            let table = DatamapTable.tryFromFsWorksheet ws        
         
             Expect.isSome table "Table was not created"
             let table = table.Value
@@ -166,15 +166,15 @@ let private valuelessTable =
 
 let private emptyTable = 
     testList "emptyTable" [
-        let t = DataMap.init()
+        let t = Datamap.init()
         testCase "Write" (fun () -> 
-            let sheet = DataMapTable.toFsWorksheet t
+            let sheet = DatamapTable.toFsWorksheet t
             Expect.equal "isa_datamap" sheet.Name "Worksheet name did not match"
             Expect.equal 0 sheet.Rows.Count "Row count should be 0"           
         )
         testCase "Read" (fun () ->
-            let sheet = DataMapTable.toFsWorksheet t
-            Expect.isNone (DataMapTable.tryFromFsWorksheet sheet) "Table was not created"
+            let sheet = DatamapTable.toFsWorksheet t
+            Expect.isNone (DatamapTable.tryFromFsWorksheet sheet) "Table was not created"
         )
     ]
 
@@ -197,7 +197,7 @@ let private simpleFile =
         wb.AddWorksheet ws
         testCase "Read" (fun () -> 
                     
-            let table = DataMap.fromFsWorkbook wb             
+            let table = Datamap.fromFsWorkbook wb             
 
             Expect.equal table.DataContexts.Count 1 "Wrong number of rows"
 
@@ -227,9 +227,9 @@ let private simpleFile =
         )
         testCase "Write" (fun () -> 
             
-            let table = DataMap.fromFsWorkbook wb     
+            let table = Datamap.fromFsWorkbook wb     
             
-            let out = DataMap.toFsWorkbook table
+            let out = Datamap.toFsWorkbook table
 
             Expect.equal (out.GetWorksheets().Count) 1 "Wrong number of worksheets" 
 
@@ -243,14 +243,14 @@ let private simpleFile =
 let private emptyDatamap = 
     testList "emptyDatamap" [       
         testCase "WriteAndRead" (fun () ->
-            let t = DataMap.init()
-            let wb = DataMap.toFsWorkbook t
-            let datamap = DataMap.fromFsWorkbook wb
-            Expect.equal datamap t "DataMap was not correctly written and read"
+            let t = Datamap.init()
+            let wb = Datamap.toFsWorkbook t
+            let datamap = Datamap.fromFsWorkbook wb
+            Expect.equal datamap t "Datamap was not correctly written and read"
         )
     ]
 let main = 
-    testList "DataMapTableTests" [
+    testList "DatamapTableTests" [
         simpleTable
         commentTable
         valuelessTable

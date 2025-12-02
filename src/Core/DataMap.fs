@@ -6,10 +6,10 @@ open ARCtrl
 open Fable.Core
 
 
-module DataMapAux = 
+module DatamapAux = 
 
     [<Literal>]
-    let dataMapName = "DataMap"
+    let dataMapName = "Datamap"
 
     let dataHeader = CompositeHeader.Input IOType.Data
 
@@ -102,7 +102,7 @@ module DataMapAux =
                 failwith "Length of new column does not match length of data contexts."
 
 [<AttachMembers>]
-type DataMap(dataContexts : ResizeArray<DataContext>) = 
+type Datamap(dataContexts : ResizeArray<DataContext>) = 
     
     let mutable staticHash = 0
     let mutable dataContexts = dataContexts
@@ -111,48 +111,48 @@ type DataMap(dataContexts : ResizeArray<DataContext>) =
 
     member this.DataContexts with get() = dataContexts
 
-    static member init() = DataMap(ResizeArray())
+    static member init() = Datamap(ResizeArray())
 
 
     member this.GetExplicationColumn() =     
-        DataMapAux.getOntologyColumn (fun dc -> dc.Explication) dataContexts
+        DatamapAux.getOntologyColumn (fun dc -> dc.Explication) dataContexts
 
     member this.SetExplicationColumn(cells : CompositeCell []) = 
-        DataMapAux.setOntologyColumn (fun dc oa -> dc.Explication <- oa) cells dataContexts
+        DatamapAux.setOntologyColumn (fun dc oa -> dc.Explication <- oa) cells dataContexts
 
     member this.GetUnitColumn() = 
-        DataMapAux.getOntologyColumn (fun dc -> dc.Unit) dataContexts
+        DatamapAux.getOntologyColumn (fun dc -> dc.Unit) dataContexts
 
     member this.SetUnitColumn(cells : CompositeCell []) =   
-        DataMapAux.setOntologyColumn (fun dc oa -> dc.Unit <- oa) cells dataContexts
+        DatamapAux.setOntologyColumn (fun dc oa -> dc.Unit <- oa) cells dataContexts
 
     member this.GetObjectTypeColumn() =
-        DataMapAux.getOntologyColumn (fun dc -> dc.ObjectType) dataContexts
+        DatamapAux.getOntologyColumn (fun dc -> dc.ObjectType) dataContexts
 
     member this.SetDataTypeColumn(cells : CompositeCell []) =
-        DataMapAux.setOntologyColumn (fun dc oa -> dc.ObjectType <- oa) cells dataContexts
+        DatamapAux.setOntologyColumn (fun dc oa -> dc.ObjectType <- oa) cells dataContexts
 
     member this.GetLabelColumn() =
-        DataMapAux.getStringColumn (fun dc -> dc.Name) dataContexts
+        DatamapAux.getStringColumn (fun dc -> dc.Name) dataContexts
 
     member this.SetLabelColumn(cells : CompositeCell []) =
-        DataMapAux.setStringColumn (fun dc s -> dc.Name <- s) cells dataContexts
+        DatamapAux.setStringColumn (fun dc s -> dc.Name <- s) cells dataContexts
 
     member this.GetDescriptionColumn() =
-        DataMapAux.getStringColumn (fun dc -> dc.Description) dataContexts
+        DatamapAux.getStringColumn (fun dc -> dc.Description) dataContexts
 
     member this.SetDescriptionColumn(cells : CompositeCell []) =
-        DataMapAux.setStringColumn (fun dc s -> dc.Description <- s) cells dataContexts
+        DatamapAux.setStringColumn (fun dc s -> dc.Description <- s) cells dataContexts
        
     member this.GetDataContext(row: int, ?SkipValidation) = 
-        DataMapAux.SanityChecks.rowIndexInBoundaries row dataContexts
+        DatamapAux.SanityChecks.rowIndexInBoundaries row dataContexts
         dataContexts.Item(row)
 
     static member getDataContext(row: int, ?SkipValidation) = 
-        fun (dm : DataMap) -> dm.GetDataContext(row,?SkipValidation = SkipValidation)
+        fun (dm : Datamap) -> dm.GetDataContext(row,?SkipValidation = SkipValidation)
 
     member this.Copy() =
-        DataMap(
+        Datamap(
             dataContexts
             |> Seq.map (fun dc -> dc.Copy())
             |> ResizeArray
@@ -167,4 +167,4 @@ type DataMap(dataContexts : ResizeArray<DataContext>) =
         |> fun x -> x :?> int
 
 
-    static member FileName = ARCtrl.ArcPathHelper.DataMapFileName
+    static member FileName = ARCtrl.ArcPathHelper.DatamapFileName

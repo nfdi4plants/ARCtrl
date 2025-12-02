@@ -13,7 +13,7 @@
     <Compile Include="CompositeCellTests.fs" />
     <Compile Include="CompositeColumnTests.fs" />
     <Compile Include="ArcTableTests.fs" />
-    <Compile Include="DataMapTests.fs" />
+    <Compile Include="DatamapTests.fs" />
     <Compile Include="Identifier.Tests.fs" />
     <Compile Include="StudyFileTests.fs" />
     <Compile Include="AssayFileTests.fs" />
