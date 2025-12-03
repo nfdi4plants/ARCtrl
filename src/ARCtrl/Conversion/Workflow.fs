@@ -337,7 +337,7 @@ type WorkflowConversion =
         let comments =
             LDDataset.getComments(workflow, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
-        let dataMap = 
+        let datamap = 
             LDDataset.getVariableMeasuredAsFragmentDescriptors(workflow, ?graph = graph, ?context = context)
             |> fun fds -> DatamapConversion.decomposeFragmentDescriptors(fds, ?graph = graph, ?context = context)
             |> Option.fromValueWithDefault (Datamap.init())
@@ -351,7 +351,7 @@ type WorkflowConversion =
             ?workflowType = workflowType,
             cwlDescription = cwlDescription,
             components = components,
-            ?datamap = dataMap,
+            ?datamap = datamap,
             contacts = contacts,
             comments = comments
         )

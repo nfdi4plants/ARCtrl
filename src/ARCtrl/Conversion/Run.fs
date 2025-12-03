@@ -221,7 +221,7 @@ type RunConversion =
         let comments =
             LDDataset.getComments(run, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
-        let dataMap = 
+        let datamap = 
             LDDataset.getVariableMeasuredAsFragmentDescriptors(run, ?graph = graph, ?context = context)
             |> fun fds -> DatamapConversion.decomposeFragmentDescriptors(fds, ?graph = graph, ?context = context)
             |> Option.fromValueWithDefault (Datamap.init())
@@ -238,7 +238,7 @@ type RunConversion =
             ?measurementType = variableMeasured,
             ?technologyType = measurementMethod,
             ?technologyPlatform = measurementTechnique,
-            ?datamap = dataMap,
+            ?datamap = datamap,
             performers = contacts,
             tables = tables.Tables,
             comments = comments

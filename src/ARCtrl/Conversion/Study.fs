@@ -67,7 +67,7 @@ type StudyConversion =
         let creators = 
             LDDataset.getCreators(study, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> PersonConversion.decomposePerson(c, ?graph = graph, ?context = context))
-        let dataMap = 
+        let datamap = 
             LDDataset.getVariableMeasuredAsFragmentDescriptors(study, ?graph = graph, ?context = context)
             |> fun fds -> DatamapConversion.decomposeFragmentDescriptors(fds, ?graph = graph, ?context = context)
             |> Option.fromValueWithDefault (Datamap.init())
@@ -83,7 +83,7 @@ type StudyConversion =
             ?description = LDDataset.tryGetDescriptionAsString(study, ?context = context),
             ?submissionDate = dateCreated,
             ?publicReleaseDate = datePublished,
-            ?datamap = dataMap,
+            ?datamap = datamap,
             contacts = creators,
             publications = publications,
             tables = tables.Tables,

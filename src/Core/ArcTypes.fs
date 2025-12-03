@@ -136,7 +136,7 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
     let mutable measurementType : OntologyAnnotation option = measurementType
     let mutable technologyType : OntologyAnnotation option = technologyType
     let mutable technologyPlatform : OntologyAnnotation option = technologyPlatform
-    let mutable dataMap : Datamap option = datamap
+    let mutable datamap : Datamap option = datamap
     let mutable performers = performers
     let mutable comments  = comments
     let mutable staticHash : int = 0
@@ -150,7 +150,7 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
     member this.MeasurementType with get() = measurementType and set(n) = measurementType <- n
     member this.TechnologyType with get() = technologyType and set(n) = technologyType <- n
     member this.TechnologyPlatform with get() = technologyPlatform and set(n) = technologyPlatform <- n
-    member this.Datamap with get() = dataMap and set(n) = dataMap <- n
+    member this.Datamap with get() = datamap and set(n) = datamap <- n
     member this.Performers with get() = performers and set(n) = performers <- n
     member this.Comments with get() = comments and set(n) = comments <- n
     member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
@@ -1161,7 +1161,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     let mutable version = version
     let mutable parameters = defaultArg parameters (ResizeArray())
     let mutable components = defaultArg components (ResizeArray())
-    let mutable dataMap : Datamap option = datamap
+    let mutable datamap : Datamap option = datamap
     let mutable contacts = defaultArg contacts (ResizeArray())
     let mutable cwlDescription = cwlDescription
     let mutable comments  = defaultArg comments (ResizeArray())
@@ -1179,7 +1179,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     member this.Version with get() = version and set(v) = version <- v
     member this.Parameters with get() = parameters and set(p) = parameters <- p
     member this.Components with get() = components and set(c) = components <- c
-    member this.Datamap with get() = dataMap and set(dm) = dataMap <- dm
+    member this.Datamap with get() = datamap and set(dm) = datamap <- dm
     member this.Contacts with get() = contacts and set(c) = contacts <- c
     member this.CWLDescription with get() = cwlDescription and set(c) = cwlDescription <- c
     member this.Comments with get() = comments and set(c) = comments <- c
@@ -1461,7 +1461,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     let mutable technologyType : OntologyAnnotation option = technologyType
     let mutable technologyPlatform : OntologyAnnotation option = technologyPlatform
     let mutable workflowIdentifiers : ResizeArray<string> = workflowIdentifiers
-    let mutable dataMap : Datamap option = datamap
+    let mutable datamap : Datamap option = datamap
     let mutable performers = performers
     let mutable cwlDescription = cwlDescription
     let mutable cwlInput : ResizeArray<CWL.CWLParameterReference> = cwlInput
@@ -1478,7 +1478,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     member this.TechnologyType with get() = technologyType and set(n) = technologyType <- n
     member this.TechnologyPlatform with get() = technologyPlatform and set(n) = technologyPlatform <- n
     member this.WorkflowIdentifiers with get() = workflowIdentifiers and set(w) = workflowIdentifiers <- w
-    member this.Datamap with get() = dataMap and set(n) = dataMap <- n
+    member this.Datamap with get() = datamap and set(n) = datamap <- n
     member this.Performers with get() = performers and set(n) = performers <- n
     member this.CWLDescription with get() = cwlDescription and set(n) = cwlDescription <- n
     member this.CWLInput with get() = cwlInput and set(n) = cwlInput <- n

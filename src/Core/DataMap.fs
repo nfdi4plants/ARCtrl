@@ -9,7 +9,7 @@ open Fable.Core
 module DatamapAux = 
 
     [<Literal>]
-    let dataMapName = "Datamap"
+    let datamapName = "Datamap"
 
     let dataHeader = CompositeHeader.Input IOType.Data
 

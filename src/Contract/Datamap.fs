@@ -45,12 +45,12 @@ module DatamapContractExtensions =
             c
 
         static member toDeleteContractForAssay (assayIdentifier : string) =
-            fun (dataMap : Datamap) -> 
-                dataMap.ToDeleteContractForAssay(assayIdentifier)
+            fun (datamap : Datamap) -> 
+                datamap.ToDeleteContractForAssay(assayIdentifier)
 
         static member toUpdateContractForAssay (assayIdentifier : string) =
-            fun (dataMap : Datamap) -> 
-                dataMap.ToUpdateContractForAssay(assayIdentifier)
+            fun (datamap : Datamap) -> 
+                datamap.ToUpdateContractForAssay(assayIdentifier)
 
         static member tryFromReadContractForAssay (assayIdentifier : string) (c:Contract) =
             let path = Identifier.Assay.datamapFileNameFromIdentifier assayIdentifier
@@ -81,12 +81,12 @@ module DatamapContractExtensions =
             c
 
         static member toDeleteContractForStudy (studyIdentifier : string) =
-            fun (dataMap : Datamap) -> 
-                dataMap.ToDeleteContractForStudy(studyIdentifier)
+            fun (datamap : Datamap) -> 
+                datamap.ToDeleteContractForStudy(studyIdentifier)
 
         static member toUpdateContractForStudy (studyIdentifier : string) =
-            fun (dataMap : Datamap) -> 
-                dataMap.ToUpdateContractForStudy(studyIdentifier)
+            fun (datamap : Datamap) -> 
+                datamap.ToUpdateContractForStudy(studyIdentifier)
 
 
         static member tryFromReadContractForStudy (studyIdentifier : string) (c:Contract) =
@@ -117,12 +117,12 @@ module DatamapContractExtensions =
             c
 
         static member toDeleteContractForWorkflow (workflowIdentifier : string) =
-            fun (dataMap : Datamap) -> 
-                dataMap.ToDeleteContractForWorkflow(workflowIdentifier)
+            fun (datamap : Datamap) -> 
+                datamap.ToDeleteContractForWorkflow(workflowIdentifier)
 
         static member toUpdateContractForWorkflow (workflowIdentifier : string) =
-            fun (dataMap : Datamap) -> 
-                dataMap.ToUpdateContractForWorkflow(workflowIdentifier)
+            fun (datamap : Datamap) -> 
+                datamap.ToUpdateContractForWorkflow(workflowIdentifier)
 
         static member tryFromReadContractForWorkflow (workflowIdentifier : string) (c:Contract) =
             let path = Identifier.Workflow.datamapFileNameFromIdentifier workflowIdentifier
@@ -152,12 +152,12 @@ module DatamapContractExtensions =
             c
 
         static member toDeleteContractForRun (runIdentifier : string) =
-            fun (dataMap : Datamap) -> 
-                dataMap.ToDeleteContractForRun(runIdentifier)
+            fun (datamap : Datamap) -> 
+                datamap.ToDeleteContractForRun(runIdentifier)
 
         static member toUpdateContractForRun (runIdentifier : string) =
-            fun (dataMap : Datamap) -> 
-                dataMap.ToUpdateContractForRun(runIdentifier)
+            fun (datamap : Datamap) -> 
+                datamap.ToUpdateContractForRun(runIdentifier)
 
         static member tryFromReadContractForRun (runIdentifier : string) (c:Contract) =
             let path = Identifier.Run.datamapFileNameFromIdentifier runIdentifier

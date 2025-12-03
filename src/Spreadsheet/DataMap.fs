@@ -9,10 +9,10 @@ let fromFsWorkbook (doc : FsWorkbook) =
     try
         let worksheets = doc.GetWorksheets()
         let sheetIsEmpty (sheet : FsWorksheet) = sheet.CellCollection.Count = 0
-        let dataMapTable = 
+        let datamapTable = 
             worksheets
             |> Seq.tryPick DatamapTable.tryFromFsWorksheet
-        match dataMapTable with
+        match datamapTable with
         | Some table -> table
         | None -> 
             if worksheets |> Seq.forall sheetIsEmpty then
@@ -22,9 +22,9 @@ let fromFsWorkbook (doc : FsWorkbook) =
     with
     | err -> failwithf "Could not parse datamap: \n%s" err.Message
             
-let toFsWorkbook (dataMap : Datamap) =
+let toFsWorkbook (datamap : Datamap) =
     let doc = new FsWorkbook()
 
-    DatamapTable.toFsWorksheet dataMap
+    DatamapTable.toFsWorksheet datamap
     |> doc.AddWorksheet
     doc

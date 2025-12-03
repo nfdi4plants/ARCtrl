@@ -227,8 +227,8 @@ type FileSystemTree =
         let readme = FileSystemTree.createReadmeFile()
         let assayFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.AssayFileName
         if hasDatamap then
-            let dataMapFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.DatamapFileName
-            FileSystemTree.createFolder(assayName, [|dataset; protocols; assayFile; readme; dataMapFile|])
+            let datamapFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.DatamapFileName
+            FileSystemTree.createFolder(assayName, [|dataset; protocols; assayFile; readme; datamapFile|])
         else
             FileSystemTree.createFolder(assayName, [|dataset; protocols; assayFile; readme|])
 
@@ -239,8 +239,8 @@ type FileSystemTree =
         let readme = FileSystemTree.createReadmeFile()
         let studyFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.StudyFileName
         if hasDatamap then
-            let dataMapFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.DatamapFileName
-            FileSystemTree.createFolder(studyName, [|resources; protocols; studyFile; readme; dataMapFile|])
+            let datamapFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.DatamapFileName
+            FileSystemTree.createFolder(studyName, [|resources; protocols; studyFile; readme; datamapFile|])
         else
             FileSystemTree.createFolder(studyName, [|resources; protocols; studyFile; readme|])
 

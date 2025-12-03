@@ -116,7 +116,7 @@ type AssayConversion =
         let perfomers = 
             LDDataset.getCreators(assay, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> PersonConversion.decomposePerson(c, ?graph = graph, ?context = context))
-        let dataMap = 
+        let datamap = 
             LDDataset.getVariableMeasuredAsFragmentDescriptors(assay, ?graph = graph, ?context = context)
             |> fun fds -> DatamapConversion.decomposeFragmentDescriptors(fds, ?graph = graph, ?context = context)
             |> Option.fromValueWithDefault (Datamap.init())
@@ -134,7 +134,7 @@ type AssayConversion =
             ?technologyType = measurementMethod,
             ?technologyPlatform = measurementTechnique,
             tables = tables.Tables,
-            ?datamap = dataMap,
+            ?datamap = datamap,
             performers = perfomers,
             comments = comments
         )
