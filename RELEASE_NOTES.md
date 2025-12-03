@@ -1,3 +1,16 @@
+### 3.0.0-beta.14+b22a48f6 (Released 2025-12-3)
+- Rename DataMap to Datamap!
+
+* Additions:
+    * [[#5b41cc0b](https://github.com/nfdi4plants/ARCtrl/commit/5b41cc0b5ee196d3229ecdaf314bba22250c84e1)] bump to 3.0.0-beta.13
+    * [[#10a9e512](https://github.com/nfdi4plants/ARCtrl/commit/10a9e5121e9277eef408ecb8d524223d5062fb4a)] make columnIndex point to newly created term #507
+    * [[#20e5041b](https://github.com/nfdi4plants/ARCtrl/commit/20e5041b26797d47f67b5cadbe8f028292f6979f)] add Datamap and DataContext to index.ts and __init__.py
+    * [[#61ad36f8](https://github.com/nfdi4plants/ARCtrl/commit/61ad36f80cc190d2eb62f3db294b60d7e242409f)] change propertyNames of Datamap from uppercase to lowercase
+    * [[#b22a48f6](https://github.com/nfdi4plants/ARCtrl/commit/b22a48f694be984cff6346cd41a54dd29fb8c7d5)] Rename DataMap references to Datamap
+* Bugfixes:
+    * [[#ae82d6d5](https://github.com/nfdi4plants/ARCtrl/commit/ae82d6d53231af3f190b3ab980295a88dfab81d3)] fix naming of DataMap to Datamap
+    * [[#f3677f5b](https://github.com/nfdi4plants/ARCtrl/commit/f3677f5b40518dfce9d82cdd242f394fa70d3bd7)] test and fix LDNode parsing of bool properties
+
 ### 3.0.0-beta.13+46b2f157 (Released 2025-11-25)
 Implement ARC WR RO-Crate profile
 
