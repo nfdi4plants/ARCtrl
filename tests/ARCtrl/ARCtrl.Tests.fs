@@ -372,12 +372,12 @@ let private tests_SetISAFromContracts = testList "SetISAFromContracts" [
         arc.SetISAFromContracts contracts
 
         let a1 = arc.GetAssay(SimpleISA.Assay.proteomeIdentifer)
-        let datamap = Expect.wantSome a1.DataMap "Proteome Assay was supposed to have datamap"
+        let datamap = Expect.wantSome a1.Datamap "Proteome Assay was supposed to have datamap"
         
         Expect.equal 2 datamap.DataContexts.Count "Datamap was not read correctly"
 
         let a2 = arc.GetAssay(SimpleISA.Assay.metabolomeIdentifer)
-        Expect.isNone a2.DataMap "Metabolome Assay was not supposed to have datamap"
+        Expect.isNone a2.Datamap "Metabolome Assay was not supposed to have datamap"
     
     )
     testCase "studySameNameAsAssayWithDatamap" (fun () ->
@@ -411,10 +411,10 @@ let private tests_SetISAFromContracts = testList "SetISAFromContracts" [
         Expect.equal arc.Assays.[0].Identifier Assay.Proteome.assayIdentifier "Assay Identifier"
 
         // Assay has datamap, but study should not have it
-        let dm = Expect.wantSome arc.Assays.[0].DataMap "Assay should have a datamap assigned"
+        let dm = Expect.wantSome arc.Assays.[0].Datamap "Assay should have a datamap assigned"
         Expect.hasLength dm.DataContexts 2 "Datamap should have two data contexts"
 
-        Expect.isNone arc.Studies.[0].DataMap "Study should not have a datamap assigned"
+        Expect.isNone arc.Studies.[0].Datamap "Study should not have a datamap assigned"
     )
     testCase "assaySameNameAsStudyWithDatamap" (fun () ->
         // https://github.com/nfdi4plants/ARCtrl/issues/538
@@ -452,9 +452,9 @@ let private tests_SetISAFromContracts = testList "SetISAFromContracts" [
         Expect.equal arc.Assays.[0].Identifier Assay.Proteome.assayIdentifier "Assay Identifier"
 
         // Study has datamap, but assay should not have it
-        Expect.isNone arc.Assays.[0].DataMap "Assay should not have a datamap assigned"
+        Expect.isNone arc.Assays.[0].Datamap "Assay should not have a datamap assigned"
 
-        let dm = Expect.wantSome arc.Studies.[0].DataMap "Study should have a datamap assigned"
+        let dm = Expect.wantSome arc.Studies.[0].Datamap "Study should have a datamap assigned"
         Expect.hasLength dm.DataContexts 2 "Datamap should have two data contexts"
     )
     testCase "license" (fun () ->
@@ -578,8 +578,8 @@ let private tests_writeContracts = testList "write_contracts" [
     testCase "assayWithDatamap" (fun _ ->
         let inv = ArcInvestigation("MyInvestigation", "BestTitle")
         let a = inv.InitAssay("MyAssay")
-        let dm = DataMap.init()
-        a.DataMap <- Some dm
+        let dm = Datamap.init()
+        a.Datamap <- Some dm
         let arc = ARC.fromArcInvestigation(isa = inv)
         let contracts = arc.GetWriteContracts()
         let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
@@ -938,7 +938,7 @@ let private tests_updateContracts = testList "update_contracts" [
         let readContracts = Array.append simpleISAContracts [|SimpleISA.Assay.proteomeDatamapContract|]
         arc.SetISAFromContracts readContracts
 
-        let dm = Expect.wantSome (arc.GetAssay(SimpleISA.Assay.proteomeIdentifer).DataMap) "Assay should have datamap"       
+        let dm = Expect.wantSome (arc.GetAssay(SimpleISA.Assay.proteomeIdentifer).Datamap) "Assay should have datamap"       
         dm.GetDataContext(1).Name <- Some "Hello"
 
         let contracts = arc.GetUpdateContracts()

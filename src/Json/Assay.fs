@@ -17,7 +17,7 @@ module Assay =
             Encode.tryInclude "MeasurementType" OntologyAnnotation.encoder assay.MeasurementType
             Encode.tryInclude "TechnologyType" OntologyAnnotation.encoder assay.TechnologyType
             Encode.tryInclude "TechnologyPlatform" OntologyAnnotation.encoder assay.TechnologyPlatform
-            Encode.tryInclude "DataMap" DataMap.encoder assay.DataMap
+            Encode.tryInclude "Datamap" Datamap.encoder assay.Datamap
             Encode.tryIncludeSeq "Tables" ArcTable.encoder assay.Tables
             Encode.tryIncludeSeq "Performers" Person.encoder assay.Performers
             Encode.tryIncludeSeq "Comments" Comment.encoder assay.Comments
@@ -35,7 +35,7 @@ module Assay =
                 ?technologyType = get.Optional.Field "TechnologyType" OntologyAnnotation.decoder,
                 ?technologyPlatform = get.Optional.Field "TechnologyPlatform" OntologyAnnotation.decoder,
                 ?tables = get.Optional.Field "Tables" (Decode.resizeArray ArcTable.decoder),
-                ?datamap = get.Optional.Field "DataMap" DataMap.decoder,
+                ?datamap = get.Optional.Field "Datamap" Datamap.decoder,
                 ?performers = get.Optional.Field "Performers" (Decode.resizeArray Person.decoder),
                 ?comments = get.Optional.Field "Comments" (Decode.resizeArray Comment.decoder)
             ) 
@@ -54,7 +54,7 @@ module Assay =
             Encode.tryInclude "TechnologyType" OntologyAnnotation.encoder assay.TechnologyType
             Encode.tryInclude "TechnologyPlatform" OntologyAnnotation.encoder assay.TechnologyPlatform
             Encode.tryIncludeSeq "Tables" (ArcTable.encoderCompressed stringTable oaTable cellTable) assay.Tables
-            Encode.tryInclude "DataMap" (DataMap.encoderCompressed stringTable oaTable cellTable) assay.DataMap
+            Encode.tryInclude "Datamap" (Datamap.encoderCompressed stringTable oaTable cellTable) assay.Datamap
             Encode.tryIncludeSeq "Performers" Person.encoder assay.Performers 
             Encode.tryIncludeSeq "Comments" Comment.encoder assay.Comments 
         ]
@@ -71,7 +71,7 @@ module Assay =
                 ?technologyType = get.Optional.Field "TechnologyType" OntologyAnnotation.decoder,
                 ?technologyPlatform = get.Optional.Field "TechnologyPlatform" OntologyAnnotation.decoder,
                 ?tables = get.Optional.Field "Tables" (Decode.resizeArray (ArcTable.decoderCompressed stringTable oaTable cellTable)),
-                ?datamap = get.Optional.Field "DataMap" (DataMap.decoderCompressed stringTable oaTable cellTable),
+                ?datamap = get.Optional.Field "Datamap" (Datamap.decoderCompressed stringTable oaTable cellTable),
                 ?performers = get.Optional.Field "Performers" (Decode.resizeArray Person.decoder),
                 ?comments = get.Optional.Field "Comments" (Decode.resizeArray Comment.decoder)
             ) 

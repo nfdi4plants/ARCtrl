@@ -193,7 +193,7 @@ module Helper =
             label = label
         )
 
-    //type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?comments : ResizeArray<Comment>) =
+    //type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : Datamap, ?contacts : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?comments : ResizeArray<Comment>) =
 
     let create_workflow_full() =
         let identifier = "MyWorkflow"
@@ -235,7 +235,7 @@ module Helper =
             let role = OntologyAnnotation(name = "Resarcher", tsr = "PO", tan = "PO:123")
             ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
         let table2 = ArcTable.fromArcTableValues("Table2", twoRowsDifferentParamValue.Headers, twoRowsDifferentParamValue.Values)
-        // type ArcRun(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?cwlInput : ResizeArray<CWL.CWLParameterReference>, ?comments : ResizeArray<Comment>) = 
+        // type ArcRun(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : Datamap, ?performers : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?cwlInput : ResizeArray<CWL.CWLParameterReference>, ?comments : ResizeArray<Comment>) = 
         ArcRun(
             identifier = identifier,
             title = title,
@@ -1059,17 +1059,17 @@ let private tests_DataContext =
         )
     ]
 
-let private tests_DataMap =
-    testList "DataMap" [
+let private tests_Datamap =
+    testList "Datamap" [
         testCase "Empty" (fun () ->
-            let dm = DataMap.init()
+            let dm = Datamap.init()
             let fds = DatamapConversion.composeFragmentDescriptors dm
             let dm' = DatamapConversion.decomposeFragmentDescriptors fds
             Expect.equal dm dm' "Data map should match"
         )
         testCase "SingleEntry" (fun () ->
             let dc = create_dataContextOfRow "MyFile" 1
-            let dm = DataMap(ResizeArray[dc])
+            let dm = Datamap(ResizeArray[dc])
             let fds = DatamapConversion.composeFragmentDescriptors dm
             let dm' = DatamapConversion.decomposeFragmentDescriptors fds
             Expect.equal dm dm' "Data map should match"
@@ -1077,7 +1077,7 @@ let private tests_DataMap =
         testCase "MultipleEntries" (fun () ->
             let dc1 = create_dataContextOfRow "MyFile" 1
             let dc2 = create_dataContextOfRow "MyFile" 2
-            let dm = DataMap(ResizeArray[dc1;dc2])
+            let dm = Datamap(ResizeArray[dc1;dc2])
             let fds = DatamapConversion.composeFragmentDescriptors dm
             let dm' = DatamapConversion.decomposeFragmentDescriptors fds
             Expect.equal dm dm' "Data map should match"
@@ -2007,11 +2007,11 @@ let tests_Assay =
                 let measurementType = OntologyAnnotation(name = "sugar measurement", tsr = "DPBO", tan = "DPBO:0000120")
                 let dc1 = create_dataContextOfRow "MyFile" 1
                 let dc2 = create_dataContextOfRow "MyFile" 2
-                let dm = DataMap(ResizeArray[dc1;dc2])
+                let dm = Datamap(ResizeArray[dc1;dc2])
                 let assay = ArcAssay("My Assay", measurementType = measurementType, datamap = dm)
                 let ro_Assay = AssayConversion.composeAssay assay
                 let assay' = AssayConversion.decomposeAssay ro_Assay
-                let dm' = Expect.wantSome assay'.DataMap "Assay should have a data map"
+                let dm' = Expect.wantSome assay'.Datamap "Assay should have a data map"
                 Expect.equal dm dm' "Data map should match"
                 let measurementType' = Expect.wantSome assay'.MeasurementType "Assay should have a measurement type"
                 Expect.equal measurementType measurementType' "Measurement type should match"
@@ -2021,7 +2021,7 @@ let tests_Assay =
                 let measurementType = OntologyAnnotation(name = "sugar measurement", tsr = "DPBO", tan = "DPBO:0000120")
                 let dc1 = create_dataContextOfRow "MyFile" 1
                 let dc2 = create_dataContextOfRow "MyFile" 2
-                let dm = DataMap(ResizeArray[dc1;dc2])
+                let dm = Datamap(ResizeArray[dc1;dc2])
                 let assay = ArcAssay("My Assay", measurementType = measurementType, datamap = dm)
                 let ro_Assay = AssayConversion.composeAssay assay
                 let graph = ro_Assay.Flatten()
@@ -2037,7 +2037,7 @@ let tests_Assay =
             testCase "ContextForFiles" (fun () ->
                 let dc1 = create_dataContextOfRow "MyFile" 1
                 let dc2 = create_dataContextOfRow "MyFile" 2
-                let dm = DataMap(ResizeArray[dc1;dc2])
+                let dm = Datamap(ResizeArray[dc1;dc2])
                 let input1 = CompositeCell.createData(create_dataRow "MyFile" 1)
                 let input2 = CompositeCell.createData(create_dataRow "MyFile" 2)
                 let assay = ArcAssay("My Assay", datamap = dm)
@@ -2045,7 +2045,7 @@ let tests_Assay =
                 table.AddColumn(CompositeHeader.Input IOType.Data, ResizeArray [|input1; input2|])
                 let ro_Assay = AssayConversion.composeAssay assay
                 let assay' = AssayConversion.decomposeAssay ro_Assay
-                let dm' = Expect.wantSome assay'.DataMap "Assay should have a data map"
+                let dm' = Expect.wantSome assay'.Datamap "Assay should have a data map"
                 Expect.equal dm dm' "Data map should match"
                 let table' = Expect.wantSome (Seq.tryExactlyOne assay'.Tables) "Assay should have a table"
                 Expect.arcTableEqual table table' "Table should match"
@@ -2054,7 +2054,7 @@ let tests_Assay =
             testCase "ContextForFiles_Flattened" (fun () ->
                 let dc1 = create_dataContextOfRow "MyFile" 1
                 let dc2 = create_dataContextOfRow "MyFile" 2
-                let dm = DataMap(ResizeArray[dc1;dc2])
+                let dm = Datamap(ResizeArray[dc1;dc2])
                 let input1 = CompositeCell.createData(create_dataRow "MyFile" 1)
                 let input2 = CompositeCell.createData(create_dataRow "MyFile" 2)
                 let assay = ArcAssay("My Assay", datamap = dm)
@@ -2072,7 +2072,7 @@ let tests_Assay =
                 Expect.isTrue (dataContextRef :? LDRef) "Data context should be flattened correctly"
                 //
                 let assay' = AssayConversion.decomposeAssay(ro_Assay, graph = graph)
-                let dm' = Expect.wantSome assay'.DataMap "Assay should have a data map"
+                let dm' = Expect.wantSome assay'.Datamap "Assay should have a data map"
                 Expect.equal dm dm' "Data map should match"
                 let table' = Expect.wantSome (Seq.tryExactlyOne assay'.Tables) "Assay should have a table"
                 Expect.arcTableEqual table table' "Table should match"
@@ -2111,7 +2111,7 @@ let tests_Study =
             testCase "ContextForFiles" (fun () ->
                 let dc1 = create_dataContextOfRow "MyFile" 1
                 let dc2 = create_dataContextOfRow "MyFile" 2
-                let dm = DataMap(ResizeArray[dc1;dc2])
+                let dm = Datamap(ResizeArray[dc1;dc2])
                 let input1 = CompositeCell.createData(create_dataRow "MyFile" 1)
                 let input2 = CompositeCell.createData(create_dataRow "MyFile" 2)
                 let study = ArcStudy("My Study", datamap = dm)
@@ -2119,7 +2119,7 @@ let tests_Study =
                 table.AddColumn(CompositeHeader.Input IOType.Data, ResizeArray [|input1; input2|])
                 let ro_Study = StudyConversion.composeStudy study
                 let study' = StudyConversion.decomposeStudy ro_Study
-                let dm' = Expect.wantSome study'.DataMap "Study should have a data map"
+                let dm' = Expect.wantSome study'.Datamap "Study should have a data map"
                 Expect.equal dm dm' "Data map should match"
                 let table' = Expect.wantSome (Seq.tryExactlyOne study'.Tables) "Study should have a table"
                 Expect.arcTableEqual table table' "Table should match"
@@ -2128,7 +2128,7 @@ let tests_Study =
             testCase "ContextForFiles_Flattened" (fun () ->
                 let dc1 = create_dataContextOfRow "MyFile" 1
                 let dc2 = create_dataContextOfRow "MyFile" 2
-                let dm = DataMap(ResizeArray[dc1;dc2])
+                let dm = Datamap(ResizeArray[dc1;dc2])
                 let input1 = CompositeCell.createData(create_dataRow "MyFile" 1)
                 let input2 = CompositeCell.createData(create_dataRow "MyFile" 2)
                 let study = ArcStudy("My Study", datamap = dm)
@@ -2146,7 +2146,7 @@ let tests_Study =
                 Expect.isTrue (dataContextRef :? LDRef) "Data context should be flattened correctly"
                 //
                 let study' = StudyConversion.decomposeStudy(ro_Study, graph = graph)
-                let dm' = Expect.wantSome study'.DataMap "Study should have a data map"
+                let dm' = Expect.wantSome study'.Datamap "Study should have a data map"
                 Expect.equal dm dm' "Data map should match"
                 let table' = Expect.wantSome (Seq.tryExactlyOne study'.Tables) "Study should have a table"
                 Expect.arcTableEqual table table' "Table should match"
@@ -2357,7 +2357,7 @@ let main =
         tests_GetDataFilesFromProcesses
         tests_Data
         tests_DataContext
-        tests_DataMap
+        tests_Datamap
         tests_FormalParameter
         tests_YAMLInputValue
         tests_ToolDescription

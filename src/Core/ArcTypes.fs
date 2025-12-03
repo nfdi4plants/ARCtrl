@@ -121,7 +121,7 @@ module ArcTypesAux =
 
 
 [<AttachMembers>]
-type ArcAssay(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
+type ArcAssay(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : Datamap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
     inherit ArcTables(defaultArg tables <| ResizeArray())
 
     let performers = defaultArg performers <| ResizeArray()
@@ -136,7 +136,7 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
     let mutable measurementType : OntologyAnnotation option = measurementType
     let mutable technologyType : OntologyAnnotation option = technologyType
     let mutable technologyPlatform : OntologyAnnotation option = technologyPlatform
-    let mutable dataMap : DataMap option = datamap
+    let mutable datamap : Datamap option = datamap
     let mutable performers = performers
     let mutable comments  = comments
     let mutable staticHash : int = 0
@@ -150,13 +150,13 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
     member this.MeasurementType with get() = measurementType and set(n) = measurementType <- n
     member this.TechnologyType with get() = technologyType and set(n) = technologyType <- n
     member this.TechnologyPlatform with get() = technologyPlatform and set(n) = technologyPlatform <- n
-    member this.DataMap with get() = dataMap and set(n) = dataMap <- n
+    member this.Datamap with get() = datamap and set(n) = datamap <- n
     member this.Performers with get() = performers and set(n) = performers <- n
     member this.Comments with get() = comments and set(n) = comments <- n
     member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
 
     static member init (identifier : string) = ArcAssay(identifier)
-    static member create (identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
+    static member create (identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : Datamap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
         ArcAssay(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?tables =tables, ?datamap = datamap, ?performers = performers, ?comments = comments)
 
     static member make
@@ -167,7 +167,7 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
         (technologyType : OntologyAnnotation option)
         (technologyPlatform : OntologyAnnotation option)
         (tables : ResizeArray<ArcTable>)
-        (datamap : DataMap option)
+        (datamap : Datamap option)
         (performers : ResizeArray<Person>)
         (comments : ResizeArray<Comment>) =
         ArcAssay(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, tables =tables, ?datamap = datamap, performers = performers, comments = comments)
@@ -409,7 +409,7 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
     member this.Copy() : ArcAssay =
         let nextTables = this.Tables |> ResizeArray.map (fun c -> c.Copy())
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
-        let nextDataMap = this.DataMap |> Option.map (fun d -> d.Copy())
+        let nextDatamap = this.Datamap |> Option.map (fun d -> d.Copy())
         let nextPerformers = this.Performers |> ResizeArray.map (fun c -> c.Copy())
         ArcAssay.make
             this.Identifier
@@ -419,7 +419,7 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
             this.TechnologyType
             this.TechnologyPlatform
             nextTables
-            nextDataMap
+            nextDatamap
             nextPerformers
             nextComments
 
@@ -501,7 +501,7 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
             this.Tables <- assay.Tables
         if assay.Comments.Count <> 0 || updateAlways then
             this.Comments <- assay.Comments
-        this.DataMap <- assay.DataMap
+        this.Datamap <- assay.Datamap
         if assay.Performers.Count <> 0 || updateAlways then
             this.Performers <- assay.Performers
 
@@ -512,7 +512,7 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
         let mst = this.MeasurementType = other.MeasurementType
         let tt = this.TechnologyType = other.TechnologyType
         let tp = this.TechnologyPlatform = other.TechnologyPlatform
-        let dm = this.DataMap = other.DataMap
+        let dm = this.Datamap = other.Datamap
         let tables = Seq.compare this.Tables other.Tables
         let perf = Seq.compare this.Performers other.Performers
         let comments = Seq.compare this.Comments other.Comments
@@ -558,7 +558,7 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
             HashCodes.boxHashOption this.MeasurementType
             HashCodes.boxHashOption this.TechnologyType
             HashCodes.boxHashOption this.TechnologyPlatform
-            HashCodes.boxHashOption this.DataMap
+            HashCodes.boxHashOption this.Datamap
             HashCodes.boxHashSeq this.Tables
             HashCodes.boxHashSeq this.Performers
             HashCodes.boxHashSeq this.Comments
@@ -588,7 +588,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     let mutable publications : ResizeArray<Publication> = publications
     let mutable contacts : ResizeArray<Person> = contacts
     let mutable studyDesignDescriptors : ResizeArray<OntologyAnnotation> = studyDesignDescriptors
-    let mutable datamap : DataMap option = datamap
+    let mutable datamap : Datamap option = datamap
     let mutable registeredAssayIdentifiers : ResizeArray<string> = registeredAssayIdentifiers
     let mutable comments : ResizeArray<Comment> = comments
     let mutable staticHash : int = 0
@@ -604,7 +604,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     member this.Publications with get() = publications and set(n) = publications <- n
     member this.Contacts with get() = contacts and set(n) = contacts <- n
     member this.StudyDesignDescriptors with get() = studyDesignDescriptors and set(n) = studyDesignDescriptors <- n
-    member this.DataMap with get() = datamap and set(n) = datamap <- n
+    member this.Datamap with get() = datamap and set(n) = datamap <- n
     member this.RegisteredAssayIdentifiers with get() = registeredAssayIdentifiers and set(n) = registeredAssayIdentifiers <- n
     member this.Comments with get() = comments and set(n) = comments <- n
     member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
@@ -1002,7 +1002,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         let nextContacts = this.Contacts |> ResizeArray.map (fun c -> c.Copy())
         let nextPublications = this.Publications |> ResizeArray.map (fun c -> c.Copy())
         let nextStudyDesignDescriptors = this.StudyDesignDescriptors |> ResizeArray.map (fun c -> c.Copy())
-        let nextDataMap = this.DataMap |> Option.map (fun d -> d.Copy())
+        let nextDatamap = this.Datamap |> Option.map (fun d -> d.Copy())
         let study =
             ArcStudy.make
                 this.Identifier
@@ -1014,7 +1014,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
                 nextContacts
                 nextStudyDesignDescriptors
                 nextTables
-                nextDataMap
+                nextDatamap
                 nextAssayIdentifiers
                 nextComments
         if copyInvestigationRef then study.Investigation <- this.Investigation
@@ -1045,7 +1045,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         if study.Tables.Count <> 0 || updateAlways then
             let tables = ArcTables.updateReferenceTablesBySheets(ArcTables(this.Tables),ArcTables(study.Tables),?keepUnusedRefTables = keepUnusedRefTables)
             this.Tables <- tables.Tables
-        this.DataMap <- study.DataMap
+        this.Datamap <- study.Datamap
         if study.RegisteredAssayIdentifiers.Count <> 0 || updateAlways then
             this.RegisteredAssayIdentifiers <- study.RegisteredAssayIdentifiers
         if study.Comments.Count <> 0 || updateAlways then
@@ -1057,7 +1057,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         let d = this.Description = other.Description
         let sd = this.SubmissionDate = other.SubmissionDate
         let prd = this.PublicReleaseDate = other.PublicReleaseDate
-        let dm = this.DataMap = other.DataMap
+        let dm = this.Datamap = other.Datamap
         let pub = Seq.compare this.Publications other.Publications
         let con = Seq.compare this.Contacts other.Contacts
         let sdd = Seq.compare this.StudyDesignDescriptors other.StudyDesignDescriptors
@@ -1117,7 +1117,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             HashCodes.boxHashOption this.Description
             HashCodes.boxHashOption this.SubmissionDate
             HashCodes.boxHashOption this.PublicReleaseDate
-            HashCodes.boxHashOption this.DataMap
+            HashCodes.boxHashOption this.Datamap
             HashCodes.boxHashSeq this.Publications
             HashCodes.boxHashSeq this.Contacts
             HashCodes.boxHashSeq this.StudyDesignDescriptors
@@ -1146,7 +1146,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         |> fun x -> x :?> int
 
 [<AttachMembers>]
-type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<OntologyAnnotation>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?comments : ResizeArray<Comment>) =
+type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<OntologyAnnotation>, ?components : ResizeArray<Process.Component>, ?datamap : Datamap, ?contacts : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?comments : ResizeArray<Comment>) =
 
     let mutable identifier : string =
         let identifier = identifier.Trim()
@@ -1161,7 +1161,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     let mutable version = version
     let mutable parameters = defaultArg parameters (ResizeArray())
     let mutable components = defaultArg components (ResizeArray())
-    let mutable dataMap : DataMap option = datamap
+    let mutable datamap : Datamap option = datamap
     let mutable contacts = defaultArg contacts (ResizeArray())
     let mutable cwlDescription = cwlDescription
     let mutable comments  = defaultArg comments (ResizeArray())
@@ -1179,17 +1179,17 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     member this.Version with get() = version and set(v) = version <- v
     member this.Parameters with get() = parameters and set(p) = parameters <- p
     member this.Components with get() = components and set(c) = components <- c
-    member this.DataMap with get() = dataMap and set(dm) = dataMap <- dm
+    member this.Datamap with get() = datamap and set(dm) = datamap <- dm
     member this.Contacts with get() = contacts and set(c) = contacts <- c
     member this.CWLDescription with get() = cwlDescription and set(c) = cwlDescription <- c
     member this.Comments with get() = comments and set(c) = comments <- c
     member this.StaticHash with get() = staticHash and set(s) = staticHash <- s
 
     static member init(identifier : string) = ArcWorkflow(identifier = identifier)
-    static member create(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<OntologyAnnotation>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?comments : ResizeArray<Comment>) = 
+    static member create(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<OntologyAnnotation>, ?components : ResizeArray<Process.Component>, ?datamap : Datamap, ?contacts : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?comments : ResizeArray<Comment>) = 
         ArcWorkflow(identifier = identifier, ?title = title, ?description = description, ?subWorkflowIdentifiers = subWorkflowIdentifiers, ?workflowType = workflowType, ?uri = uri, ?version = version, ?parameters = parameters, ?components = components, ?datamap = datamap, ?contacts = contacts, ?cwlDescription = cwlDescription, ?comments = comments)
 
-    static member make (identifier : string) (title : string option) (description : string option) (workflowType : OntologyAnnotation option) (uri : string option) (version : string option) (subWorkflowIdentifiers : ResizeArray<string>) (parameters : ResizeArray<OntologyAnnotation>) (components : ResizeArray<Process.Component>) (datamap : DataMap option) (contacts : ResizeArray<Person>) (cwlDescription : CWL.CWLProcessingUnit option) (comments : ResizeArray<Comment>) =
+    static member make (identifier : string) (title : string option) (description : string option) (workflowType : OntologyAnnotation option) (uri : string option) (version : string option) (subWorkflowIdentifiers : ResizeArray<string>) (parameters : ResizeArray<OntologyAnnotation>) (components : ResizeArray<Process.Component>) (datamap : Datamap option) (contacts : ResizeArray<Person>) (cwlDescription : CWL.CWLProcessingUnit option) (comments : ResizeArray<Comment>) =
         ArcWorkflow(identifier = identifier, ?title = title, ?description = description, subWorkflowIdentifiers = subWorkflowIdentifiers, ?workflowType = workflowType, ?uri = uri, ?version = version, parameters = parameters, components = components, ?datamap = datamap, contacts = contacts, ?cwlDescription = cwlDescription, comments = comments)
 
     static member FileName = ARCtrl.ArcPathHelper.RunFileName
@@ -1321,7 +1321,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
         let nextSubWorkflowIdentifiers = ResizeArray(this.SubWorkflowIdentifiers)
         let nextParameters = this.Parameters |> ResizeArray.map id
         let nextComponents = this.Components |> ResizeArray.map id
-        let nextDataMap = this.DataMap |> Option.map (fun d -> d.Copy())
+        let nextDatamap = this.Datamap |> Option.map (fun d -> d.Copy())
         let nextContacts = this.Contacts |> ResizeArray.map (fun c -> c.Copy())
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
         let workflow =
@@ -1335,7 +1335,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
                 nextSubWorkflowIdentifiers
                 nextParameters
                 nextComponents
-                nextDataMap
+                nextDatamap
                 nextContacts
                 this.CWLDescription
                 nextComments
@@ -1352,7 +1352,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
         let subwf = Seq.compare this.SubWorkflowIdentifiers other.SubWorkflowIdentifiers
         let par = Seq.compare this.Parameters other.Parameters
         let com = Seq.compare this.Components other.Components
-        let dm = this.DataMap = other.DataMap
+        let dm = this.Datamap = other.Datamap
         let con = Seq.compare this.Contacts other.Contacts
         let cwl = this.CWLDescription = other.CWLDescription
         let comments = Seq.compare this.Comments other.Comments
@@ -1381,7 +1381,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     SubWorkflowIdentifiers = %A,
     Parameters = %A,
     Components = %A,
-    DataMap = %A,
+    Datamap = %A,
     Contacts = %A,
     Comments = %A}"""
             this.Identifier
@@ -1393,7 +1393,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
             this.SubWorkflowIdentifiers
             this.Parameters
             this.Components
-            this.DataMap
+            this.Datamap
             this.Contacts
             this.Comments
 
@@ -1415,7 +1415,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
             HashCodes.boxHashSeq this.SubWorkflowIdentifiers
             HashCodes.boxHashSeq this.Parameters
             HashCodes.boxHashSeq this.Components
-            HashCodes.boxHashOption this.DataMap
+            HashCodes.boxHashOption this.Datamap
             HashCodes.boxHashSeq this.Contacts
             HashCodes.boxHashOption this.CWLDescription
             HashCodes.boxHashSeq this.Comments
@@ -1443,7 +1443,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
 
 
 [<AttachMembers>]
-type ArcRun(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?cwlInput : ResizeArray<CWL.CWLParameterReference>, ?comments : ResizeArray<Comment>) = 
+type ArcRun(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : Datamap, ?performers : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?cwlInput : ResizeArray<CWL.CWLParameterReference>, ?comments : ResizeArray<Comment>) = 
     inherit ArcTables(defaultArg tables <| ResizeArray())
 
     let performers = defaultArg performers <| ResizeArray()
@@ -1461,7 +1461,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     let mutable technologyType : OntologyAnnotation option = technologyType
     let mutable technologyPlatform : OntologyAnnotation option = technologyPlatform
     let mutable workflowIdentifiers : ResizeArray<string> = workflowIdentifiers
-    let mutable dataMap : DataMap option = datamap
+    let mutable datamap : Datamap option = datamap
     let mutable performers = performers
     let mutable cwlDescription = cwlDescription
     let mutable cwlInput : ResizeArray<CWL.CWLParameterReference> = cwlInput
@@ -1478,7 +1478,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     member this.TechnologyType with get() = technologyType and set(n) = technologyType <- n
     member this.TechnologyPlatform with get() = technologyPlatform and set(n) = technologyPlatform <- n
     member this.WorkflowIdentifiers with get() = workflowIdentifiers and set(w) = workflowIdentifiers <- w
-    member this.DataMap with get() = dataMap and set(n) = dataMap <- n
+    member this.Datamap with get() = datamap and set(n) = datamap <- n
     member this.Performers with get() = performers and set(n) = performers <- n
     member this.CWLDescription with get() = cwlDescription and set(n) = cwlDescription <- n
     member this.CWLInput with get() = cwlInput and set(n) = cwlInput <- n
@@ -1486,7 +1486,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
 
     static member init (identifier : string) = ArcRun(identifier)
-    static member create (identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?cwlInput : ResizeArray<CWL.CWLParameterReference>,  ?comments : ResizeArray<Comment>) = 
+    static member create (identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : Datamap, ?performers : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?cwlInput : ResizeArray<CWL.CWLParameterReference>,  ?comments : ResizeArray<Comment>) = 
         ArcRun(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?workflowIdentifiers = workflowIdentifiers, ?tables =tables, ?datamap = datamap, ?performers = performers, ?cwlDescription = cwlDescription, ?cwlInput = cwlInput, ?comments = comments)
 
     static member make
@@ -1498,7 +1498,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
         (technologyPlatform : OntologyAnnotation option)
         (workflowIdentifiers : ResizeArray<string>)
         (tables : ResizeArray<ArcTable>)
-        (datamap : DataMap option)
+        (datamap : Datamap option)
         (performers : ResizeArray<Person>)
         (cwlDescription : CWL.CWLProcessingUnit option)
         (cwlInput : ResizeArray<CWL.CWLParameterReference>)
@@ -1757,7 +1757,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     member this.Copy() : ArcRun =
         let nextTables = this.Tables |> ResizeArray.map (fun c -> c.Copy())
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
-        let nextDataMap = this.DataMap |> Option.map (fun d -> d.Copy())
+        let nextDatamap = this.Datamap |> Option.map (fun d -> d.Copy())
         let nextPerformers = this.Performers |> ResizeArray.map (fun c -> c.Copy())
         let nextWorkflowIdentifiers = this.WorkflowIdentifiers |> ResizeArray.map (fun c -> c)
         ArcRun.make
@@ -1769,7 +1769,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             this.TechnologyPlatform
             nextWorkflowIdentifiers
             nextTables
-            nextDataMap
+            nextDatamap
             nextPerformers
             this.CWLDescription
             this.CWLInput
@@ -1798,8 +1798,8 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
         if run.WorkflowIdentifiers.Count <> 0 || updateAlways then
             let s = ArcTypesAux.updateAppendResizeArray appendSequences this.WorkflowIdentifiers run.WorkflowIdentifiers
             this.WorkflowIdentifiers <- s
-        if run.DataMap.IsSome || updateAlways then
-            this.DataMap <- run.DataMap
+        if run.Datamap.IsSome || updateAlways then
+            this.Datamap <- run.Datamap
         if run.Tables.Count <> 0 || updateAlways then
             let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Tables run.Tables
             this.Tables <- s
@@ -1826,7 +1826,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     TechnologyType = %A,
     TechnologyPlatform = %A,
     WorkflowIdentifiers = %A,
-    DataMap = %A,
+    Datamap = %A,
     Tables = %A,
     Performers = %A,
     Comments = %A
@@ -1838,7 +1838,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             this.TechnologyType
             this.TechnologyPlatform
             this.WorkflowIdentifiers
-            this.DataMap
+            this.Datamap
             this.Tables
             this.Performers
             this.Comments
@@ -1857,7 +1857,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
         let tt = this.TechnologyType = other.TechnologyType
         let tp = this.TechnologyPlatform = other.TechnologyPlatform
         let wf = Seq.compare this.WorkflowIdentifiers other.WorkflowIdentifiers
-        let dm = this.DataMap = other.DataMap
+        let dm = this.Datamap = other.Datamap
         let tables = Seq.compare this.Tables other.Tables
         let perf = Seq.compare this.Performers other.Performers
         let cwl = this.CWLDescription = other.CWLDescription
@@ -1906,7 +1906,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             HashCodes.boxHashOption this.MeasurementType
             HashCodes.boxHashOption this.TechnologyType
             HashCodes.boxHashOption this.TechnologyPlatform
-            HashCodes.boxHashOption this.DataMap
+            HashCodes.boxHashOption this.Datamap
             HashCodes.boxHashSeq this.WorkflowIdentifiers
             HashCodes.boxHashSeq this.Tables
             HashCodes.boxHashSeq this.Performers

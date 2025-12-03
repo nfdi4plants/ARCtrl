@@ -22,7 +22,7 @@ module Helper =
         ResizeArray [|Person.create(firstName="Kevin", lastName="Frey", phone="023382093810")|], 
         ResizeArray [|OntologyAnnotation(); OntologyAnnotation()|],
         ResizeArray [ArcTable.Helper.create_filled(); ArcTable.init("Table 2")],
-        DataMap.Helper.create_filled(),
+        Datamap.Helper.create_filled(),
         registeredAssayIdentifiers = ResizeArray ["Assay 1"; "Assay 2"],
         comments = ResizeArray [|Comment.create("Hello", "World")|]
     )

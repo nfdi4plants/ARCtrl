@@ -30,7 +30,7 @@ type StudyConversion =
             |> ResizeArray
             |> Option.fromSeq
         let fragmentDescriptors =
-            study.DataMap
+            study.Datamap
             |> Option.map DatamapConversion.composeFragmentDescriptors
         let dataFiles = 
             processSequence
@@ -67,10 +67,10 @@ type StudyConversion =
         let creators = 
             LDDataset.getCreators(study, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> PersonConversion.decomposePerson(c, ?graph = graph, ?context = context))
-        let dataMap = 
+        let datamap = 
             LDDataset.getVariableMeasuredAsFragmentDescriptors(study, ?graph = graph, ?context = context)
             |> fun fds -> DatamapConversion.decomposeFragmentDescriptors(fds, ?graph = graph, ?context = context)
-            |> Option.fromValueWithDefault (DataMap.init())
+            |> Option.fromValueWithDefault (Datamap.init())
         let tables = 
             LDDataset.getAboutsAsLabProcess(study, ?graph = graph, ?context = context)
             |> fun ps -> ArcTables.fromProcesses(List.ofSeq ps, ?graph = graph, ?context = context)
@@ -83,7 +83,7 @@ type StudyConversion =
             ?description = LDDataset.tryGetDescriptionAsString(study, ?context = context),
             ?submissionDate = dateCreated,
             ?publicReleaseDate = datePublished,
-            ?datamap = dataMap,
+            ?datamap = datamap,
             contacts = creators,
             publications = publications,
             tables = tables.Tables,

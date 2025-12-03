@@ -13,11 +13,11 @@ open ARCtrl.Helper.Regex.ActivePatterns
 
 type DatamapConversion =
 
-    static member composeFragmentDescriptors (datamap : DataMap) : ResizeArray<LDNode> =
+    static member composeFragmentDescriptors (datamap : Datamap) : ResizeArray<LDNode> =
         datamap.DataContexts
         |> ResizeArray.map BaseTypes.composeFragmentDescriptor
 
-    static member decomposeFragmentDescriptors (fragmentDescriptors : ResizeArray<LDNode>, ?graph : LDGraph, ?context : LDContext) : DataMap =
+    static member decomposeFragmentDescriptors (fragmentDescriptors : ResizeArray<LDNode>, ?graph : LDGraph, ?context : LDContext) : Datamap =
         fragmentDescriptors
         |> ResizeArray.map (fun fd -> BaseTypes.decomposeFragmentDescriptor(fd, ?graph = graph, ?context = context))
-        |> DataMap
+        |> Datamap

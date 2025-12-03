@@ -5580,6 +5580,7 @@ module Context =
                 "intendedUse","https://bioschemas.org/properties/intendedUse"
                 "executesLabProtocol", "https://bioschemas.org/properties/executesLabProtocol"
                 "parameterValue", "https://bioschemas.org/properties/parameterValue"
+                "columnIndex", "https://w3id.org/ro/terms/arc#columnIndex"
             ]
         let c = LDContext.fromMappingSeq terms
         c

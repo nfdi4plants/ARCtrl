@@ -17,7 +17,7 @@ module Workflow =
             Encode.tryInclude "URI" Encode.string workflow.URI
             Encode.tryInclude "Description" Encode.string workflow.Description
             Encode.tryInclude "Version" Encode.string workflow.Version
-            Encode.tryInclude "DataMap" DataMap.encoder workflow.DataMap
+            Encode.tryInclude "Datamap" Datamap.encoder workflow.Datamap
             Encode.tryIncludeSeq "SubWorkflowIdentifiers" Encode.string workflow.SubWorkflowIdentifiers
             Encode.tryIncludeSeq "Parameters" OntologyAnnotation.encoder workflow.Parameters
             Encode.tryIncludeSeq "Components" Component.encoder workflow.Components
@@ -39,7 +39,7 @@ module Workflow =
                 ?subWorkflowIdentifiers = get.Optional.Field "SubWorkflowIdentifiers" (Decode.resizeArray Decode.string),
                 ?parameters = get.Optional.Field "Parameters" (Decode.resizeArray OntologyAnnotation.decoder),
                 ?components = get.Optional.Field "Components" (Decode.resizeArray Component.decoder),
-                ?datamap = get.Optional.Field "DataMap" DataMap.decoder,
+                ?datamap = get.Optional.Field "Datamap" Datamap.decoder,
                 ?contacts = get.Optional.Field "Contacts" (Decode.resizeArray Person.decoder),
                 ?comments = get.Optional.Field "Comments" (Decode.resizeArray Comment.decoder)
             )
@@ -57,7 +57,7 @@ module Workflow =
             Encode.tryInclude "URI" Encode.string workflow.URI
             Encode.tryInclude "Description" Encode.string workflow.Description
             Encode.tryInclude "Version" Encode.string workflow.Version
-            Encode.tryInclude "DataMap" (DataMap.encoderCompressed stringTable oaTable cellTable) workflow.DataMap
+            Encode.tryInclude "Datamap" (Datamap.encoderCompressed stringTable oaTable cellTable) workflow.Datamap
             Encode.tryIncludeSeq "SubWorkflowIdentifiers" Encode.string workflow.SubWorkflowIdentifiers
             Encode.tryIncludeSeq "Parameters" OntologyAnnotation.encoder workflow.Parameters
             Encode.tryIncludeSeq "Components" Component.encoder workflow.Components
@@ -79,7 +79,7 @@ module Workflow =
                 ?subWorkflowIdentifiers = get.Optional.Field "SubWorkflowIdentifiers" (Decode.resizeArray Decode.string),
                 ?parameters = get.Optional.Field "Parameters" (Decode.resizeArray OntologyAnnotation.decoder),
                 ?components = get.Optional.Field "Components" (Decode.resizeArray Component.decoder),
-                ?datamap = get.Optional.Field "DataMap" (DataMap.decoderCompressed stringTable oaTable cellTable),
+                ?datamap = get.Optional.Field "Datamap" (Datamap.decoderCompressed stringTable oaTable cellTable),
                 ?contacts = get.Optional.Field "Contacts" (Decode.resizeArray Person.decoder),
                 ?comments = get.Optional.Field "Comments" (Decode.resizeArray Comment.decoder)
             )

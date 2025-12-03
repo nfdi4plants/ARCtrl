@@ -227,7 +227,19 @@ let test_write = testList "write" [
         Expect.stringEqual output json "Output string is not correct"
 ]
 
+let private test_roundabout = testList "Roundabout" [
+    testCase "BoolProperty" <| fun _ ->
+        let node = LDNode("MyID", ResizeArray["MyType"])
+        node.SetProperty("isTrue", true)
+        let json = LDNode.toROCrateJsonString() node
+        let parsedNode = LDNode.fromROCrateJsonString(json)
+        Expect.equal node parsedNode "Roundabout conversion failed for BoolProperty"
+    
+]
+
+
 let main = testList "LDNode" [
     test_read
     test_write
+    test_roundabout
 ]

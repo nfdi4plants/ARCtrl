@@ -7,7 +7,7 @@ let [<Literal>] PathSeperatorWindows = '\\'
 let seperators = [|PathSeperator; PathSeperatorWindows|]
 
 // Files
-let [<Literal>] DataMapFileName = "isa.datamap.xlsx"
+let [<Literal>] DatamapFileName = "isa.datamap.xlsx"
 let [<Literal>] AssayFileName = "isa.assay.xlsx"
 let [<Literal>] StudyFileName = "isa.study.xlsx"
 let [<Literal>] WorkflowFileName = "isa.workflow.xlsx"

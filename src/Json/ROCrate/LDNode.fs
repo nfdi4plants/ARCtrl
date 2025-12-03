@@ -155,6 +155,7 @@ module rec LDNode =
                     Decode.map box (Decode.string)
                     Decode.map box (Decode.int)
                     Decode.map box (Decode.decimal)
+                    Decode.map box (Decode.bool)
                 ]
         decode(expectObject)
 

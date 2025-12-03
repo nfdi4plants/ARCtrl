@@ -31,21 +31,21 @@ module ARCAux =
         contracts
         |> Array.choose ArcRun.tryFromReadContract
         
-    let getAssayDataMapFromContracts (assayIdentifier) (contracts: Contract []) = 
+    let getAssayDatamapFromContracts (assayIdentifier) (contracts: Contract []) = 
         contracts 
-        |> Array.tryPick (DataMap.tryFromReadContractForAssay assayIdentifier)
+        |> Array.tryPick (Datamap.tryFromReadContractForAssay assayIdentifier)
 
-    let getStudyDataMapFromContracts (studyIdentifier) (contracts: Contract []) = 
+    let getStudyDatamapFromContracts (studyIdentifier) (contracts: Contract []) = 
         contracts 
-        |> Array.tryPick (DataMap.tryFromReadContractForStudy studyIdentifier)
+        |> Array.tryPick (Datamap.tryFromReadContractForStudy studyIdentifier)
 
-    let getWorkflowDataMapFromContracts (workflowIdentifier) (contracts: Contract []) = 
+    let getWorkflowDatamapFromContracts (workflowIdentifier) (contracts: Contract []) = 
         contracts 
-        |> Array.tryPick (DataMap.tryFromReadContractForWorkflow workflowIdentifier)
+        |> Array.tryPick (Datamap.tryFromReadContractForWorkflow workflowIdentifier)
 
-    let getRunDataMapFromContracts (runIdentifier) (contracts: Contract []) = 
+    let getRunDatamapFromContracts (runIdentifier) (contracts: Contract []) = 
         contracts 
-        |> Array.tryPick (DataMap.tryFromReadContractForRun runIdentifier)
+        |> Array.tryPick (Datamap.tryFromReadContractForRun runIdentifier)
 
     let getWorkflowCWLFromContracts (workflowIdentifier) (contracts: Contract []) = 
         contracts 
@@ -75,15 +75,15 @@ module ARCAux =
 
         let assaysFolder = 
             isa.Assays |> Seq.toArray
-            |> Array.map (fun a -> FileSystemTree.createAssayFolder(a.Identifier,a.DataMap.IsSome))
+            |> Array.map (fun a -> FileSystemTree.createAssayFolder(a.Identifier,a.Datamap.IsSome))
             |> FileSystemTree.createAssaysFolder
         let studiesFolder = 
             isa.Studies |> Seq.toArray
-            |> Array.map (fun s -> FileSystemTree.createStudyFolder(s.Identifier,s.DataMap.IsSome))
+            |> Array.map (fun s -> FileSystemTree.createStudyFolder(s.Identifier,s.Datamap.IsSome))
             |> FileSystemTree.createStudiesFolder
         let workflowsFolder =
             isa.Workflows |> Seq.toArray
-            |> Array.map (fun w -> FileSystemTree.createWorkflowFolder(w.Identifier,w.CWLDescription.IsSome, w.DataMap.IsSome))
+            |> Array.map (fun w -> FileSystemTree.createWorkflowFolder(w.Identifier,w.CWLDescription.IsSome, w.Datamap.IsSome))
             |> FileSystemTree.createWorkflowsFolder
         let runsFolder =
             isa.Runs |> Seq.toArray
@@ -92,7 +92,7 @@ module ARCAux =
                     runName = r.Identifier,
                     hasCWL = r.CWLDescription.IsSome,
                     hasYML = (r.CWLInput.Count > 0),
-                    hasDataMap = r.DataMap.IsSome
+                    hasDatamap = r.Datamap.IsSome
                 )
             )
             |> FileSystemTree.createRunsFolder
@@ -481,7 +481,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         let updateTable (dataNameFunction : Data -> string) (t : ArcTable) =
             t.TryGetInputColumn() |> updateColumnOption dataNameFunction
             t.TryGetOutputColumn() |> updateColumnOption dataNameFunction
-        let updateDataMap (dataNameFunction : Data -> string) (dm : DataMap) =
+        let updateDatamap (dataNameFunction : Data -> string) (dm : Datamap) =
             dm.DataContexts |> Seq.iter (fun c ->
                 if c.FilePath.IsSome then
                     let newFilePath = dataNameFunction c
@@ -491,14 +491,14 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         this.Studies |> Seq.iter (fun s ->
             let f (d : Data) = d.GetAbsolutePathForStudy(s.Identifier,checkExistenceFromRoot)
             s.Tables |> Seq.iter (updateTable f)
-            if s.DataMap.IsSome then
-                updateDataMap f s.DataMap.Value
+            if s.Datamap.IsSome then
+                updateDatamap f s.Datamap.Value
         )
         this.Assays |> Seq.iter (fun a ->
             let f (d : Data) = d.GetAbsolutePathForAssay(a.Identifier,checkExistenceFromRoot)
             a.Tables |> Seq.iter (updateTable f)
-            if a.DataMap.IsSome then
-                updateDataMap f a.DataMap.Value
+            if a.Datamap.IsSome then
+                updateDatamap f a.Datamap.Value
         )
 
 
@@ -637,9 +637,9 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                 registeredStudy.UpdateReferenceByStudyFile(study,true)
             | None -> 
                 this.AddStudy(study)
-            let datamap = ARCAux.getStudyDataMapFromContracts study.Identifier contracts
-            if study.DataMap.IsNone then
-                study.DataMap <- datamap
+            let datamap = ARCAux.getStudyDatamapFromContracts study.Identifier contracts
+            if study.Datamap.IsNone then
+                study.Datamap <- datamap
             study.StaticHash <- study.GetLightHashCode()
         )
         assays |> Array.iter (fun assay ->
@@ -656,26 +656,26 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                 |> Array.fold (fun tables study -> 
                     ArcTables.updateReferenceTablesBySheets(ArcTables(study.Tables),tables,false)
                 ) (ArcTables(assay.Tables))
-            let datamap = ARCAux.getAssayDataMapFromContracts assay.Identifier contracts
-            if assay.DataMap.IsNone then
-                assay.DataMap <- datamap
+            let datamap = ARCAux.getAssayDatamapFromContracts assay.Identifier contracts
+            if assay.Datamap.IsNone then
+                assay.Datamap <- datamap
             assay.Tables <- updatedTables.Tables
         )
         workflows |> Array.iter (fun workflow ->
-            let datamap = ARCAux.getWorkflowDataMapFromContracts workflow.Identifier contracts
+            let datamap = ARCAux.getWorkflowDatamapFromContracts workflow.Identifier contracts
             let cwl = ARCAux.getWorkflowCWLFromContracts workflow.Identifier contracts
-            if workflow.DataMap.IsNone then
-                workflow.DataMap <- datamap
+            if workflow.Datamap.IsNone then
+                workflow.Datamap <- datamap
             workflow.CWLDescription <- cwl
             this.AddWorkflow(workflow)
             workflow.StaticHash <- workflow.GetLightHashCode()
         )
         runs |> Array.iter (fun run ->
-            let datamap = ARCAux.getRunDataMapFromContracts run.Identifier contracts
+            let datamap = ARCAux.getRunDatamapFromContracts run.Identifier contracts
             let cwl = ARCAux.getRunCWLFromContracts run.Identifier contracts
             let yml = ARCAux.getRunYMLFromContracts run.Identifier contracts
-            if run.DataMap.IsNone then
-                run.DataMap <- datamap
+            if run.Datamap.IsNone then
+                run.Datamap <- datamap
             run.CWLInput <- yml |> Option.defaultValue (ResizeArray())
             run.CWLDescription <- cwl
             this.AddRun(run)
@@ -714,12 +714,12 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                 Identifier.Study.fileNameFromIdentifier s.Identifier,
                 (DTOType.ISA_Study, ArcStudy.toFsWorkbook s |> box |> DTO.Spreadsheet)
             )
-            if s.DataMap.IsSome (*&& datamapFile*) then 
-                let dm = s.DataMap.Value
+            if s.Datamap.IsSome (*&& datamapFile*) then 
+                let dm = s.Datamap.Value
                 dm.StaticHash <- dm.GetHashCode()
                 filemap.Add (
                     Identifier.Study.datamapFileNameFromIdentifier s.Identifier,
-                    (DTOType.ISA_Datamap, Spreadsheet.DataMap.toFsWorkbook dm |> box |> DTO.Spreadsheet)
+                    (DTOType.ISA_Datamap, Spreadsheet.Datamap.toFsWorkbook dm |> box |> DTO.Spreadsheet)
                 )
                 
         )
@@ -729,12 +729,12 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             filemap.Add (
                 Identifier.Assay.fileNameFromIdentifier a.Identifier,
                 (DTOType.ISA_Assay, ArcAssay.toFsWorkbook a |> box |> DTO.Spreadsheet))     
-            if a.DataMap.IsSome (*&& datamapFile*) then 
-                let dm = a.DataMap.Value
+            if a.Datamap.IsSome (*&& datamapFile*) then 
+                let dm = a.Datamap.Value
                 dm.StaticHash <- dm.GetHashCode()
                 filemap.Add (
                     Identifier.Assay.datamapFileNameFromIdentifier a.Identifier,
-                    (DTOType.ISA_Datamap, Spreadsheet.DataMap.toFsWorkbook dm |> box |> DTO.Spreadsheet)
+                    (DTOType.ISA_Datamap, Spreadsheet.Datamap.toFsWorkbook dm |> box |> DTO.Spreadsheet)
                 )
         )
         this.Workflows
@@ -746,12 +746,12 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             )
             if w.CWLDescription.IsSome then
                 failwith "Not implemented yet: CWL description in ARC.GetWriteContracts"
-            if w.DataMap.IsSome (*&& datamapFile*) then 
-                let dm = w.DataMap.Value
+            if w.Datamap.IsSome (*&& datamapFile*) then 
+                let dm = w.Datamap.Value
                 dm.StaticHash <- dm.GetHashCode()
                 filemap.Add (
                     Identifier.Workflow.datamapFileNameFromIdentifier w.Identifier,
-                    (DTOType.ISA_Datamap, Spreadsheet.DataMap.toFsWorkbook dm |> box |> DTO.Spreadsheet)
+                    (DTOType.ISA_Datamap, Spreadsheet.Datamap.toFsWorkbook dm |> box |> DTO.Spreadsheet)
                 )
         )
         this.Runs
@@ -765,12 +765,12 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                 failwith "Not implemented yet: CWL description in ARC.GetWriteContracts"
             if r.CWLInput.Count > 0 then
                 failwith "Not implemented yet: CWL YAML input in ARC.GetWriteContracts"
-            if r.DataMap.IsSome (*&& datamapFile*) then 
-                let dm = r.DataMap.Value
+            if r.Datamap.IsSome (*&& datamapFile*) then 
+                let dm = r.Datamap.Value
                 dm.StaticHash <- dm.GetHashCode()
                 filemap.Add (
                     Identifier.Run.datamapFileNameFromIdentifier r.Identifier,
-                    (DTOType.ISA_Datamap, Spreadsheet.DataMap.toFsWorkbook dm |> box |> DTO.Spreadsheet)
+                    (DTOType.ISA_Datamap, Spreadsheet.Datamap.toFsWorkbook dm |> box |> DTO.Spreadsheet)
                 )
         )
 
@@ -825,7 +825,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                         yield s.ToUpdateContract()
                     s.StaticHash <- hash
 
-                    match s.DataMap with
+                    match s.Datamap with
                     | Some dm when dm.StaticHash = 0 -> 
                         yield dm.ToCreateContractForStudy(s.Identifier)
                         dm.StaticHash <- dm.GetHashCode()
@@ -843,7 +843,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                         yield a.ToUpdateContract()
                     a.StaticHash <- hash
 
-                    match a.DataMap with
+                    match a.Datamap with
                     | Some dm when dm.StaticHash = 0 -> 
                         yield dm.ToCreateContractForAssay(a.Identifier)
                         dm.StaticHash <- dm.GetHashCode()
@@ -859,7 +859,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                     elif w.StaticHash <> hash then 
                         yield w.ToUpdateContract()
                     w.StaticHash <- hash
-                    match w.DataMap with
+                    match w.Datamap with
                     | Some dm when dm.StaticHash = 0 -> 
                         yield dm.ToCreateContractForWorkflow(w.Identifier)
                         dm.StaticHash <- dm.GetHashCode()
@@ -875,7 +875,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                     elif r.StaticHash <> hash then 
                         yield r.ToUpdateContract()
                     r.StaticHash <- hash
-                    match r.DataMap with
+                    match r.Datamap with
                     | Some dm when dm.StaticHash = 0 -> 
                         yield dm.ToCreateContractForRun(r.Identifier)
                         dm.StaticHash <- dm.GetHashCode()

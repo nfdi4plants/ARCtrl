@@ -17,7 +17,7 @@ module Run =
             Encode.tryInclude "MeasurementType" OntologyAnnotation.encoder run.MeasurementType
             Encode.tryInclude "TechnologyType" OntologyAnnotation.encoder run.TechnologyType
             Encode.tryInclude "TechnologyPlatform" OntologyAnnotation.encoder run.TechnologyPlatform
-            Encode.tryInclude "DataMap" DataMap.encoder run.DataMap
+            Encode.tryInclude "Datamap" Datamap.encoder run.Datamap
             Encode.tryIncludeSeq "WorkflowIdentifiers" Encode.string run.WorkflowIdentifiers
             Encode.tryIncludeSeq "Tables" ArcTable.encoder run.Tables
             Encode.tryIncludeSeq "Performers" Person.encoder run.Performers
@@ -37,7 +37,7 @@ module Run =
                 ?technologyPlatform = get.Optional.Field "TechnologyPlatform" OntologyAnnotation.decoder,
                 ?workflowIdentifiers = get.Optional.Field "WorkflowIdentifiers" (Decode.resizeArray Decode.string),
                 ?tables = get.Optional.Field "Tables" (Decode.resizeArray ArcTable.decoder),
-                ?datamap = get.Optional.Field "DataMap" DataMap.decoder,
+                ?datamap = get.Optional.Field "Datamap" Datamap.decoder,
                 ?performers = get.Optional.Field "Performers" (Decode.resizeArray Person.decoder),
                 ?comments = get.Optional.Field "Comments" (Decode.resizeArray Comment.decoder)
             ) 
@@ -55,7 +55,7 @@ module Run =
             Encode.tryInclude "MeasurementType" OntologyAnnotation.encoder run.MeasurementType
             Encode.tryInclude "TechnologyType" OntologyAnnotation.encoder run.TechnologyType
             Encode.tryInclude "TechnologyPlatform" OntologyAnnotation.encoder run.TechnologyPlatform
-            Encode.tryInclude "DataMap" (DataMap.encoderCompressed stringTable oaTable cellTable) run.DataMap
+            Encode.tryInclude "Datamap" (Datamap.encoderCompressed stringTable oaTable cellTable) run.Datamap
             Encode.tryIncludeSeq "WorkflowIdentifiers" Encode.string run.WorkflowIdentifiers
             Encode.tryIncludeSeq "Tables" (ArcTable.encoderCompressed stringTable oaTable cellTable) run.Tables
             Encode.tryIncludeSeq "Performers" Person.encoder run.Performers
@@ -75,7 +75,7 @@ module Run =
                 ?technologyPlatform = get.Optional.Field "TechnologyPlatform" OntologyAnnotation.decoder,
                 ?workflowIdentifiers = get.Optional.Field "WorkflowIdentifiers" (Decode.resizeArray Decode.string),
                 ?tables = get.Optional.Field "Tables" (Decode.resizeArray (ArcTable.decoderCompressed stringTable oaTable cellTable)),
-                ?datamap = get.Optional.Field "DataMap" (DataMap.decoderCompressed stringTable oaTable cellTable),
+                ?datamap = get.Optional.Field "Datamap" (Datamap.decoderCompressed stringTable oaTable cellTable),
                 ?performers = get.Optional.Field "Performers" (Decode.resizeArray Person.decoder),
                 ?comments = get.Optional.Field "Comments" (Decode.resizeArray Comment.decoder)
             ) 

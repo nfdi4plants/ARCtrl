@@ -2,6 +2,8 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 from .py.Contract.contract import Contract
+from .py.Core.data_context import DataContext
+from .py.Core.datamap import Datamap
 from .py.Core.comment import Comment
 from .py.Core.ontology_annotation import OntologyAnnotation
 from .py.Core.person import Person

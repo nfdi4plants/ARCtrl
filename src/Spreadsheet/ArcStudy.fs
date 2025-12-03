@@ -93,11 +93,11 @@ module ArcStudyExtensions =
                 //                )
                 //    studyMetadata.Tables <- updatedTables.Tables
                 let datamapSheet =
-                    sheets |> Seq.tryPick DataMapTable.tryFromFsWorksheet
+                    sheets |> Seq.tryPick DatamapTable.tryFromFsWorksheet
 
                 if annotationTables |> ResizeArray.isEmpty |> not then
                     studyMetadata.Tables <- annotationTables
-                studyMetadata.DataMap <- datamapSheet
+                studyMetadata.Datamap <- datamapSheet
 
                 studyMetadata,assays
             with
@@ -118,8 +118,8 @@ module ArcStudyExtensions =
             doc.AddWorksheet metadataSheet
 
             if datamapSheet then
-                study.DataMap
-                |> Option.iter (DataMapTable.toFsWorksheet >> doc.AddWorksheet)
+                study.Datamap
+                |> Option.iter (DatamapTable.toFsWorksheet >> doc.AddWorksheet)
 
             study.Tables
             |> Seq.iteri (fun i -> ArcTable.toFsWorksheet (Some i) >> doc.AddWorksheet)

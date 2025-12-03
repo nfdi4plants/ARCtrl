@@ -28,10 +28,10 @@
     <Compile Include="AnnotationTable\CompositeHeader.fs" />
     <Compile Include="AnnotationTable\CompositeColumn.fs" />
     <Compile Include="AnnotationTable\ArcTable.fs" />
-    <Compile Include="DataMapTable\DataMapHeader.fs" />
-    <Compile Include="DataMapTable\DataMapColumn.fs" />
-    <Compile Include="DataMapTable\DataMapTable.fs" />
-    <Compile Include="DataMap.fs" />
+    <Compile Include="DatamapTable\DatamapHeader.fs" />
+    <Compile Include="DatamapTable\DatamapColumn.fs" />
+    <Compile Include="DatamapTable\DatamapTable.fs" />
+    <Compile Include="Datamap.fs" />
     <Compile Include="ArcAssay.fs" />
     <Compile Include="ArcStudy.fs" />
     <Compile Include="ArcWorkflow.fs" />

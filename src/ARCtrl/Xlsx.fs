@@ -20,14 +20,14 @@ module XlsxHelper =
 
     [<AttachMembers>]
     type DatamapXlsx() =
-        member _.fromFsWorkbook (fswb: FsWorkbook) = DataMap.fromFsWorkbook fswb
-        member _.toFsWorkbook (datamap: DataMap) = DataMap.toFsWorkbook datamap
+        member _.fromFsWorkbook (fswb: FsWorkbook) = Datamap.fromFsWorkbook fswb
+        member _.toFsWorkbook (datamap: Datamap) = Datamap.toFsWorkbook datamap
         #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        member _.fromXlsxFileAsync (path: string) = FsWorkbook.fromXlsxFile path |> CrossAsync.map DataMap.fromFsWorkbook
-        member _.toXlsxFileAsync (path: string, datamap: DataMap) = DataMap.toFsWorkbook datamap |> FsWorkbook.toXlsxFile path
+        member _.fromXlsxFileAsync (path: string) = FsWorkbook.fromXlsxFile path |> CrossAsync.map Datamap.fromFsWorkbook
+        member _.toXlsxFileAsync (path: string, datamap: Datamap) = Datamap.toFsWorkbook datamap |> FsWorkbook.toXlsxFile path
         #else
-        member _.fromXlsxFile (path: string) = FsWorkbook.fromXlsxFile path |> DataMap.fromFsWorkbook
-        member _.toXlsxFile (path: string, datamap: DataMap) = DataMap.toFsWorkbook datamap |> FsWorkbook.toXlsxFile path
+        member _.fromXlsxFile (path: string) = FsWorkbook.fromXlsxFile path |> Datamap.fromFsWorkbook
+        member _.toXlsxFile (path: string, datamap: Datamap) = Datamap.toFsWorkbook datamap |> FsWorkbook.toXlsxFile path
         #endif
 
     [<AttachMembers>]

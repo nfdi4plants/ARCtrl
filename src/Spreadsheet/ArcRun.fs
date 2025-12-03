@@ -113,8 +113,8 @@ module ArcRunExtensions =
                 let annotationTables = 
                     sheets |> Seq.choose ArcTable.tryFromFsWorksheet
                 let datamapSheet =
-                    sheets |> Seq.tryPick DataMapTable.tryFromFsWorksheet
-                runMetadata.DataMap <- datamapSheet
+                    sheets |> Seq.tryPick DatamapTable.tryFromFsWorksheet
+                runMetadata.Datamap <- datamapSheet
                 if annotationTables |> Seq.isEmpty |> not then
                     runMetadata.Tables <- ResizeArray annotationTables
                 runMetadata
