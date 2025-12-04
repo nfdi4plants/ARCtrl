@@ -103,7 +103,7 @@ type RunConversion =
                 | Some pr ->
                     RunConversion.composeCWLInputValue(pr, exampleOfWork = ldI, inputParam = i, runName = run.Identifier)
                 | None ->
-                    failwith $"Could not create workflow invocation for run \"{run.Identifier}\": Workflow parameter \"name\" had no assigned value."
+                    failwith $"Could not create workflow invocation for run \"{run.Identifier}\": Workflow parameter \"{name}\" had no assigned value."
             )
         let processSequence =
             ArcTables(run.Tables).GetProcesses(?fs = fs)
@@ -201,8 +201,9 @@ type RunConversion =
         let mainWorkflowInvocation =
             LDDataset.getAboutsAsWorkflowInvocation(run, ?graph = graph, ?context = context)
             |> Seq.find (fun wi ->
-                LDLabProcess.getObjects(wi, ?graph = graph, ?context = context)
-                |> Seq.exists (fun i -> LDFile.tryGetExampleOfWorkAsFormalParameter(i, ?graph = graph, ?context = context).IsSome)
+                match LDLabProcess.tryGetExecutesLabProtocol(wi, ?graph = graph, ?context = context) with
+                | Some lp when LDWorkflowProtocol.validate(lp, ?context = context) -> true
+                | _ -> false
             )
         let cwlDescription, parameterRefs =
             RunConversion.decomposeMainWorkflowInvocation(mainWorkflowInvocation, LDDataset.getIdentifierAsString(run, ?context = context), ?context = context, ?graph = graph)
