@@ -121,6 +121,11 @@ let private test_read = testList "Read" [
         Expect.equal json.Id "MyIdentifier" "id was not parsed correctly"
         Expect.sequenceEqual json.SchemaType ResizeArray["MyType"] "type was not parsed correctly"
         Expect.sequenceEqual json.AdditionalType ResizeArray["additionalType1"; "additionalType2"] "additionalType was not parsed correctly"
+    testCase "nullValue" <| fun _ ->
+        let json = LDNode.fromROCrateJsonString(GenericObjects.withNullValue)
+        Expect.equal json.Id "MyIdentifier" "id was not parsed correctly"
+        Expect.sequenceEqual json.SchemaType ResizeArray["MyType"] "type was not parsed correctly"
+        Expect.isNone (json.TryGetProperty("name")) "field name should be None"
 ]
 
 let test_write = testList "write" [

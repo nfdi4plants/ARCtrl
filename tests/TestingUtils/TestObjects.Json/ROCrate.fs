@@ -404,3 +404,9 @@ module GenericObjects =
             "@type": "MyType",
             "additionalType": ["additionalType1", "additionalType2"]
         }"""
+    let withNullValue =
+        """{
+            "@id": "MyIdentifier",
+            "@type": "MyType",
+            "name": null
+        }"""

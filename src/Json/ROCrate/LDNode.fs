@@ -80,11 +80,20 @@ module rec LDNode =
         ]
         |> Encode.object
 
+    let nullDecoder : Decoder<unit> =
+       { new Decoder<unit> with
+            member _.Decode(helpers, value) =
+                if helpers.isNullValue value then
+                    Ok ()
+                else
+                    ("", BadPrimitive("null", value)) |> Error
+        }
+
     /// Returns a decoder
     ///
     /// If expectObject is set to true, decoder fails if top-level value is not an ROCrate object
     let rec getDecoder (expectObject : bool) : Decoder<obj> = 
-        let rec decode(expectObject) = 
+        let rec decode(expectObject) =
             let decodeObject : Decoder<LDNode> =
                 { new Decoder<LDNode> with
                     member _.Decode(helpers, value) =     
@@ -100,7 +109,8 @@ module rec LDNode =
                                     let o = LDNode(id, t, ?additionalType = at)
                                     for property in properties do
                                         if property <> "@id" && property <> "@type" && property <> "@context" then
-                                            o.SetProperty(property,get.Required.Field property (decode(false)))
+                                            let r = get.Required.Field property (decode(false))
+                                            if r <> null then o.SetProperty(property,r)
                                     if context.IsSome then o.SetContext context.Value
                                     o
                             let result = builder getters               
@@ -156,6 +166,7 @@ module rec LDNode =
                     Decode.map box (Decode.int)
                     Decode.map box (Decode.decimal)
                     Decode.map box (Decode.bool)
+                    Decode.map box (nullDecoder)
                 ]
         decode(expectObject)
 
