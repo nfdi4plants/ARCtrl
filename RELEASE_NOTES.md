@@ -1,3 +1,12 @@
+### 3.0.0-beta.15+b5d48ed9 (Released 2025-12-4)
+* Additions:
+    * [[#5d6abf2a](https://github.com/nfdi4plants/ARCtrl/commit/5d6abf2a66645e79c38e373aadf5d58779754b9f)] Rename tests DataMap to Datamap in Tests
+* Bugfixes:
+    * [[#8fb1cbac](https://github.com/nfdi4plants/ARCtrl/commit/8fb1cbac20e2d0befc3e6e767d11ab6c65e7a8ee)] test and fix bug where nullValues could not be parsed from JSON-LD
+    * [[#92ccbd20](https://github.com/nfdi4plants/ARCtrl/commit/92ccbd20dbefe170158e1de4cdafca9c4d11f1a8)] fix arc run conversion failing for matching table and cwl input names
+    * [[#ae82d6d5](https://github.com/nfdi4plants/ARCtrl/commit/ae82d6d53231af3f190b3ab980295a88dfab81d3)] fix naming of DataMap to Datamap
+    * [[#f3677f5b](https://github.com/nfdi4plants/ARCtrl/commit/f3677f5b40518dfce9d82cdd242f394fa70d3bd7)] test and fix LDNode parsing of bool properties
+
 ### 3.0.0-beta.14+b22a48f6 (Released 2025-12-3)
 - Rename DataMap to Datamap!
 
