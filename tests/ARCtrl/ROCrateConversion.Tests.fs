@@ -1972,6 +1972,39 @@ let tests_ArcRun =
             let run' = RunConversion.decomposeRun(ro_Run, graph = graph)
             Expect.equal run' run "Run should match"
         )
+        testCase "CWLAndISAInputMatch" (fun () ->
+            let inputFileName = "input.txt"
+            let tool = 
+                CWL.CWLToolDescription(
+                    outputs = ResizeArray [TestObjects.CWL.Outputs.CSV.outputCSV],
+                    inputs = ResizeArray [CWL.CWLInput(name = TestObjects.CWL.Inputs.File.inputFileName, type_ = CWLType.file())]
+                )
+                |> CWL.CommandLineTool
+            let table = ArcTable.init("MyTable")
+            table.AddColumn(
+                CompositeHeader.Input IOType.Data,
+                ResizeArray [|CompositeCell.createDataFromString ("runs/MyRun/" + inputFileName) |]
+            )
+            table.AddColumn(
+                CompositeHeader.Output IOType.Data,
+                ResizeArray [|CompositeCell.createDataFromString "MyOutputFile.csv" |]
+            )
+            let ymlParam = CWLParameterReference(
+                key = TestObjects.CWL.Inputs.File.inputFileName,
+                values = ResizeArray [inputFileName],
+                type_ = CWLType.file()
+            )
+            let run = ArcRun(
+                "MyRun",
+                cwlDescription = tool,
+                cwlInput = ResizeArray [ymlParam],
+                tables = ResizeArray [table]
+                )
+            let ro_Run = RunConversion.composeRun run
+            let graph = ro_Run.Flatten()
+            let run' = RunConversion.decomposeRun(ro_Run,graph)
+            Expect.equal run' run "Run should match"
+        )
 
 
     ]
