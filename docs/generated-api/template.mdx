@@ -1,0 +1,317 @@
+---
+title: "Template"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+**Signature:**
+```fsharp
+Template(
+    id: System.Guid,
+    table: ArcTable,
+    ?name: string,
+    ?description: string,
+    ?organisation: Organisation,
+    ?version: string,
+    ?authors: ResizeArray<Person>,
+    ?comments: ResizeArray<Comment>
+)
+```
+**Usage:**
+```fsharp
+open ARCtrl
+
+let tpl = Template(System.Guid.NewGuid(), ArcTable.init "Sheet1")
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+
+**Signature:**
+```py
+Template(
+    id: str,
+    table: ArcTable,
+    name: str | None = None,
+    description: str | None = None,
+    organisation: Organisation | None = None,
+    version: str | None = None,
+    authors: list[Person] | None = None,
+    comments: list[Comment] | None = None,
+)
+```
+**Usage:**
+```py
+from arctrl import Template, ArcTable
+
+tpl = Template(str(uuid4()), ArcTable.init("Sheet1"))
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+**Signature:**
+```ts
+constructor(
+  id: string,
+  table: ArcTable,
+  name?: string,
+  description?: string,
+  organisation?: Organisation,
+  version?: string,
+  authors?: Person[],
+  comments?: Comment[],
+)
+```
+**Usage:**
+```ts
+import { Template, ArcTable } from "@nfdi4plants/arctrl";
+
+const tpl = new Template(crypto.randomUUID(), ArcTable.init("Sheet1"));
+```
+</TabItem>
+</Tabs>
+
+## Fields
+- **ID**: System.Guid
+- **Table**: [ArcTable](./arc-table)
+- **Name**: string option
+- **Description**: string option
+- **Organisation**: Organisation option
+- **Version**: string option
+- **Authors**: [Person](./person) ResizeArray
+- **Comments**: [Comment](./comment) ResizeArray
+- **EndpointRepositories**: [OntologyAnnotation](./ontology-annotation) ResizeArray
+- **Tags**: [OntologyAnnotation](./ontology-annotation) ResizeArray
+- **LastUpdated**: System.DateTime
+- **SemVer**: parsed version (option)
+
+## Methods
+
+### Copy
+**Summary:** Deep copy including table, authors, repos, tags, comments, metadata.
+**Parameters:** none
+**ReturnType:** [Template](./template)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let clone = tpl.Copy()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+clone = tpl.Copy()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const clone = tpl.Copy();
+```
+</TabItem>
+</Tabs>
+
+### ReferenceEquals
+**Summary:** Check reference equality with another template.
+**Parameters:** `other: [Template](./template)`
+**ReturnType:** `bool`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let sameRef = tpl.ReferenceEquals other
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const sameRef = tpl.ReferenceEquals(other);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+same_ref = tpl.ReferenceEquals(other)
+```
+</TabItem>
+</Tabs>
+
+### StructurallyEquals
+**Summary:** Check structural equality with another template.
+**Parameters:** `other: [Template](./template)`
+**ReturnType:** `bool`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let sameStruct = tpl.StructurallyEquals other
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const sameStruct = tpl.StructurallyEquals(other);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+same_struct = tpl.StructurallyEquals(other)
+```
+</TabItem>
+</Tabs>
+
+### Equals
+**Summary:** Override equality using structural comparison.
+**Parameters:** `obj: obj`
+**ReturnType:** `bool`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let eq = tpl.Equals(otherObj)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const eq = tpl.Equals(otherObj);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+eq = tpl.Equals(other_obj)
+```
+</TabItem>
+</Tabs>
+
+### GetHashCode
+**Summary:** Hash consistent with `Equals`.
+**Parameters:** none
+**ReturnType:** `int`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let h = tpl.GetHashCode()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const h = tpl.GetHashCode();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+h = tpl.GetHashCode()
+```
+</TabItem>
+</Tabs>
+
+### ToString
+**Summary:** Debug string with key fields.
+**Parameters:** none
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let txt = tpl.ToString()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const txt = tpl.ToString();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+txt = tpl.ToString()
+```
+</TabItem>
+</Tabs>
+
+### SemVer
+**Summary:** Parsed semantic version of `Version` if available.
+**Parameters:** none
+**ReturnType:** `SemVer option`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let semver = tpl.SemVer
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const semver = tpl.SemVer;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+semver = tpl.SemVer
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### create
+**Summary:** Convenience builder using a new Guid.
+**Parameters:** `table: ArcTable`, optional `name`, `description`, `organisation`, `version`, `authors`, `comments`
+**ReturnType:** [Template](./template)
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let tpl = Template.create(ArcTable.init "Sheet1")
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+tpl = Template.create(ArcTable.init("Sheet1"))
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const tpl = Template.create(ArcTable.init("Sheet1"));
+```
+</TabItem>
+</Tabs>
+
+### init
+**Summary:** Create with Guid, table, and optionals.
+**Parameters:** same as constructor
+**ReturnType:** [Template](./template)
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let tpl = Template.init(System.Guid.NewGuid(), ArcTable.init "Sheet1", name = "MyTemplate")
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+tpl = Template.init(str(uuid4()), ArcTable.init("Sheet1"), name="MyTemplate")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const tpl = Template.init(crypto.randomUUID(), ArcTable.init("Sheet1"), "MyTemplate");
+```
+</TabItem>
+</Tabs>
+
+### make
+**Summary:** Full-argument constructor helper (id, table, name, description, organisation, version, authors, repos, tags, lastUpdated).
+**Parameters:** `id: Guid`, `table: [ArcTable](./arc-table)`, `name: string option`, `description: string option`, `organisation: Organisation option`, `version: string option`, `authors: ResizeArray\<[Person](./person)\>`, `repos: ResizeArray\<[OntologyAnnotation](./ontology-annotation)\>`, `tags: ResizeArray\<[OntologyAnnotation](./ontology-annotation)\>`, `lastUpdated: DateTime option`
+**ReturnType:** [Template](./template)
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let tpl = Template.make(System.Guid.NewGuid(), ArcTable.init "Sheet1", name = Some "Tpl", repos = ResizeArray(), tags = ResizeArray(), lastUpdated = None)
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+tpl = Template.make(str(uuid4()), ArcTable.init("Sheet1"), name="Tpl", repos=[], tags=[], lastUpdated=None)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const tpl = Template.make(crypto.randomUUID(), ArcTable.init("Sheet1"), "Tpl", undefined, undefined, undefined, [], [], [], undefined);
+```
+</TabItem>
+</Tabs>
+

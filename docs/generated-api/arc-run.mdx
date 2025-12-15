@@ -1,0 +1,1219 @@
+---
+title: "ArcRun"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+## Fields
+- `Identifier`: string (unique in investigation)
+- `Investigation`: [ArcInvestigation](./arc-investigation) option (internal)
+- `Title` / `Description`: string option
+- `MeasurementType` / `TechnologyType` / `TechnologyPlatform`: [OntologyAnnotation](./ontology-annotation) option
+- `WorkflowIdentifiers`: string array
+- `Tables`: [ArcTable](./arc-table) array
+- `Datamap`: [Datamap](./datamap) option
+- `Performers`: [Person](./person) array
+- `CWLDescription`: `CWLProcessingUnit` option
+- `CWLInput`: `CWLParameterReference` array
+- `Comments`: [Comment](./comment) array
+- `StaticHash`: int
+- `FileName`: run ISA filename
+- `WorkflowIdentifierCount` / `WorkflowCount`
+- `Workflows`: resolve identifiers to workflows in investigation
+- `VacantWorkflowIdentifiers`: identifiers without backing workflow objects
+
+## Methods
+
+### Constructor
+**Summary:** Create a run with identifiers, optional metadata, tables, datamap, performers, CWL info, and comments.
+**Parameters:**
+- `identifier`: string
+- `title`: string option
+- `description`: string option
+- `measurementType`: [OntologyAnnotation](./ontology-annotation) option
+- `technologyType`: [OntologyAnnotation](./ontology-annotation) option
+- `technologyPlatform`: [OntologyAnnotation](./ontology-annotation) option
+- `workflowIdentifiers`: string array option
+- `tables`: [ArcTable](./arc-table) array option
+- `datamap`: [Datamap](./datamap) option
+- `performers`: [Person](./person) array option
+- `cwlDescription`: `CWLProcessingUnit` option
+- `cwlInput`: `CWLParameterReference` array option
+- `comments`: [Comment](./comment) array option
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+open ARCtrl
+let run = ArcRun(
+  identifier = "Run1",
+  workflowIdentifiers = ResizeArray ["QC"],
+  tables = ResizeArray(),
+  performers = ResizeArray()
+)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+import { ArcRun } from "@nfdi4plants/arctrl";
+
+const run = new ArcRun("Run1", undefined, undefined, undefined, undefined, undefined, ["QC"], [], undefined, []);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+from arctrl import ArcRun
+
+run = ArcRun("Run1", workflowIdentifiers=["QC"], tables=[], performers=[])
+```
+</TabItem>
+</Tabs>
+
+### Copy
+**Summary:** Deep clone including tables, datamap, performers, workflow identifiers, CWL info, and comments.
+**Parameters:** none
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let clone = run.Copy()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const clone = run.Copy();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+clone = run.Copy()
+```
+</TabItem>
+</Tabs>
+
+### UpdateBy
+**Summary:** Merge fields from another run; optional replace-only and append-sequence behaviour.
+**Parameters:**
+- `run`: [ArcRun](./arc-run)
+- `onlyReplaceExisting`: bool option
+- `appendSequences`: bool option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+run.UpdateBy(otherRun, onlyReplaceExisting = true, appendSequences = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+run.UpdateBy(otherRun, true, true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run.UpdateBy(other_run, onlyReplaceExisting=True, appendSequences=True)
+```
+</TabItem>
+</Tabs>
+
+### StructurallyEquals
+**Summary:** Value-based comparison of two runs.
+**Parameters:**
+- `other`: [ArcRun](./arc-run)
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let sameStruct = run.StructurallyEquals other
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const sameStruct = run.StructurallyEquals(other);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+same_struct = run.StructurallyEquals(other)
+```
+</TabItem>
+</Tabs>
+
+### ReferenceEquals
+**Summary:** Reference identity check.
+**Parameters:**
+- `other`: [ArcRun](./arc-run)
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let sameRef = run.ReferenceEquals other
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const sameRef = run.ReferenceEquals(other);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+same_ref = run.ReferenceEquals(other)
+```
+</TabItem>
+</Tabs>
+
+### Equals
+**Summary:** Object equality override using structural comparison.
+**Parameters:**
+- `obj`: obj
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let eq = run.Equals(otherObj)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const eq = run.Equals(otherObj);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+eq = run.Equals(other_obj)
+```
+</TabItem>
+</Tabs>
+
+### GetLightHashCode
+**Summary:** Compute a lightweight hash code (skips datamap).
+**Parameters:** none
+**ReturnType:** int
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let h1 = run.GetLightHashCode()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const h1 = run.GetLightHashCode();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+h1 = run.GetLightHashCode()
+```
+</TabItem>
+</Tabs>
+
+### GetHashCode
+**Summary:** Compute the full hash code.
+**Parameters:** none
+**ReturnType:** int
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let h2 = run.GetHashCode()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const h2 = run.GetHashCode();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+h2 = run.GetHashCode()
+```
+</TabItem>
+</Tabs>
+
+### ToString
+**Summary:** Debug output of the run.
+**Parameters:** none
+**ReturnType:** string
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let s = run.ToString()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const s = run.ToString();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+s = run.ToString()
+```
+</TabItem>
+</Tabs>
+
+### AddToInvestigation
+**Summary:** Attach this run to an investigation.
+**Parameters:**
+- `investigation`: [ArcInvestigation](./arc-investigation)
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+run.AddToInvestigation(inv)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+run.AddToInvestigation(inv);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run.AddToInvestigation(inv)
+```
+</TabItem>
+</Tabs>
+
+### RemoveFromInvestigation
+**Summary:** Detach this run from its investigation.
+**Parameters:** none
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+run.RemoveFromInvestigation()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+run.RemoveFromInvestigation();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run.RemoveFromInvestigation()
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### init
+**Summary:** Create an empty run with the given identifier.
+**Parameters:**
+- `identifier`: string
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run = ArcRun.init "Run1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run = ArcRun.init("Run1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run = ArcRun.init("Run1")
+```
+</TabItem>
+</Tabs>
+
+### create
+**Summary:** Build a run with optional metadata, workflow ids, tables, datamap, performers, CWL info, and comments.
+**Parameters:**
+- `identifier`: string
+- `title`: string option
+- `description`: string option
+- `measurementType`: [OntologyAnnotation](./ontology-annotation) option
+- `technologyType`: [OntologyAnnotation](./ontology-annotation) option
+- `technologyPlatform`: [OntologyAnnotation](./ontology-annotation) option
+- `workflowIdentifiers`: string array option
+- `tables`: [ArcTable](./arc-table) array option
+- `datamap`: [Datamap](./datamap) option
+- `performers`: [Person](./person) array option
+- `cwlDescription`: `CWLProcessingUnit` option
+- `cwlInput`: `CWLParameterReference` array option
+- `comments`: [Comment](./comment) array option
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run = ArcRun.create("Run1", workflowIdentifiers = ResizeArray ["QC"])
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run = ArcRun.create("Run1", undefined, undefined, undefined, undefined, undefined, ["QC"]);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run = ArcRun.create("Run1", workflowIdentifiers=["QC"])
+```
+</TabItem>
+</Tabs>
+
+### make
+**Summary:** Alternate builder covering all fields in order.
+**Parameters:**
+- `identifier`: string
+- `title`: string option
+- `description`: string option
+- `measurementType`: [OntologyAnnotation](./ontology-annotation) option
+- `technologyType`: [OntologyAnnotation](./ontology-annotation) option
+- `technologyPlatform`: [OntologyAnnotation](./ontology-annotation) option
+- `workflowIdentifiers`: string array option
+- `tables`: [ArcTable](./arc-table) array option
+- `datamap`: [Datamap](./datamap) option
+- `performers`: [Person](./person) array option
+- `cwlDescription`: `CWLProcessingUnit` option
+- `cwlInput`: `CWLParameterReference` array option
+- `comments`: [Comment](./comment) array option
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run = ArcRun.make("Run1", "Title", "Desc", None, None, None, ResizeArray(), ResizeArray(), None, ResizeArray(), None, ResizeArray(), ResizeArray())
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run = ArcRun.make("Run1", "Title", "Desc", undefined, undefined, undefined, [], [], undefined, [], undefined, [], []);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run = ArcRun.make("Run1", "Title", "Desc", None, None, None, [], [], None, [], None, [], [])
+```
+</TabItem>
+</Tabs>
+
+### FileName
+**Summary:** ISA-Tab filename for runs.
+**Parameters:** none
+**ReturnType:** string
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let fileName = ArcRun.FileName
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const fileName = ArcRun.FileName;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+file_name = ArcRun.FileName
+```
+</TabItem>
+</Tabs>
+
+### addTable
+**Summary:** Add a table to the run; optional index controls position.
+**Parameters:**
+- `table`: [ArcTable](./arc-table)
+- `index`: int option
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = run |> ArcRun.addTable(ArcTable.init "Outputs", index = 0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.addTable(ArcTable.init("Outputs"), 0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.addTable(ArcTable.init("Outputs"), index=0)(run)
+```
+</TabItem>
+</Tabs>
+
+### addTables
+**Summary:** Add multiple tables at an optional index.
+**Parameters:**
+- `tables`: [ArcTable](./arc-table) array
+- `index`: int option
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = run |> ArcRun.addTables([|ArcTable.init "In"; ArcTable.init "Out"|] |> ResizeArray, index = 0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.addTables([ArcTable.init("In"), ArcTable.init("Out")], 0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.addTables([ArcTable.init("In"), ArcTable.init("Out")], index=0)(run)
+```
+</TabItem>
+</Tabs>
+
+### initTable
+**Summary:** Create and insert an empty table; returns updated run and the table.
+**Parameters:**
+- `tableName`: string
+- `index`: int option
+**ReturnType:** ([ArcRun](./arc-run) * [ArcTable](./arc-table))
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run', table = ArcRun.initTable("Outputs", index = 0) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const [run2, table] = ArcRun.initTable("Outputs", 0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2, table = ArcRun.initTable("Outputs", index=0)(run)
+```
+</TabItem>
+</Tabs>
+
+### initTables
+**Summary:** Create and insert multiple empty tables by name.
+**Parameters:**
+- `tableNames`: string array
+- `index`: int option
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.initTables([|"Inputs"; "Outputs"|], index = 0) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.initTables(["Inputs", "Outputs"], 0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.initTables(["Inputs", "Outputs"], index=0)(run)
+```
+</TabItem>
+</Tabs>
+
+### getTableAt
+**Summary:** Get a copy of a table by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let table = ArcRun.getTableAt(0) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const table = ArcRun.getTableAt(0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+table = ArcRun.getTableAt(0)(run)
+```
+</TabItem>
+</Tabs>
+
+### getTable
+**Summary:** Get a copy of a table by name.
+**Parameters:**
+- `tableName`: string
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let table = ArcRun.getTable("Outputs") run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const table = ArcRun.getTable("Outputs")(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+table = ArcRun.getTable("Outputs")(run)
+```
+</TabItem>
+</Tabs>
+
+### updateTableAt
+**Summary:** Update a table by index using a new value.
+**Parameters:**
+- `index`: int
+- `table`: [ArcTable](./arc-table)
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.updateTableAt(0, ArcTable.init "Outputs") run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.updateTableAt(0, ArcTable.init("Outputs"))(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.updateTableAt(0, ArcTable.init("Outputs"))(run)
+```
+</TabItem>
+</Tabs>
+
+### updateTable
+**Summary:** Update a table by name using a new value.
+**Parameters:**
+- `tableName`: string
+- `table`: [ArcTable](./arc-table)
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.updateTable("Outputs", ArcTable.init "Outputs") run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.updateTable("Outputs", ArcTable.init("Outputs"))(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.updateTable("Outputs", ArcTable.init("Outputs"))(run)
+```
+</TabItem>
+</Tabs>
+
+### setTableAt
+**Summary:** Replace a table at an index without copying.
+**Parameters:**
+- `index`: int
+- `table`: [ArcTable](./arc-table)
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.setTableAt(0, ArcTable.init "Outputs") run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.setTableAt(0, ArcTable.init("Outputs"))(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.setTableAt(0, ArcTable.init("Outputs"))(run)
+```
+</TabItem>
+</Tabs>
+
+### setTable
+**Summary:** Replace a table by name without copying.
+**Parameters:**
+- `tableName`: string
+- `table`: [ArcTable](./arc-table)
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.setTable("Outputs", ArcTable.init "Outputs") run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.setTable("Outputs", ArcTable.init("Outputs"))(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.setTable("Outputs", ArcTable.init("Outputs"))(run)
+```
+</TabItem>
+</Tabs>
+
+### removeTableAt
+**Summary:** Remove a table by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.removeTableAt(0) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.removeTableAt(0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.removeTableAt(0)(run)
+```
+</TabItem>
+</Tabs>
+
+### removeTable
+**Summary:** Remove a table by name.
+**Parameters:**
+- `tableName`: string
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.removeTable("Outputs") run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.removeTable("Outputs")(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.removeTable("Outputs")(run)
+```
+</TabItem>
+</Tabs>
+
+### mapTableAt
+**Summary:** Apply a function to a table at index and update the run.
+**Parameters:**
+- `index`: int
+- `updateFun`: [ArcTable](./arc-table) -> [ArcTable](./arc-table)
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.mapTableAt(0, ArcTable.Copy) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.mapTableAt(0, t => t.Copy())(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.mapTableAt(0, lambda t: t.Copy())(run)
+```
+</TabItem>
+</Tabs>
+
+### mapTable
+**Summary:** Apply a function to a table by name and update the run.
+**Parameters:**
+- `tableName`: string
+- `updateFun`: [ArcTable](./arc-table) -> [ArcTable](./arc-table)
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.mapTable("Outputs", ArcTable.Copy) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.mapTable("Outputs", t => t.Copy())(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.mapTable("Outputs", lambda t: t.Copy())(run)
+```
+</TabItem>
+</Tabs>
+
+### renameTableAt
+**Summary:** Rename a table at an index.
+**Parameters:**
+- `index`: int
+- `newName`: string
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.renameTableAt(0, "OutputsV2") run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.renameTableAt(0, "OutputsV2")(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.renameTableAt(0, "OutputsV2")(run)
+```
+</TabItem>
+</Tabs>
+
+### renameTable
+**Summary:** Rename a table by name.
+**Parameters:**
+- `tableName`: string
+- `newName`: string
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.renameTable("Outputs", "OutputsV2") run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.renameTable("Outputs", "OutputsV2")(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.renameTable("Outputs", "OutputsV2")(run)
+```
+</TabItem>
+</Tabs>
+
+### addColumnAt
+**Summary:** Add a column to a table by index.
+**Parameters:**
+- `tableIndex`: int
+- `header`: [CompositeHeader](./composite-header)
+- `cells`: [CompositeCell](./composite-cell) array option
+- `columnIndex`: int option
+- `forceReplace`: bool option
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.addColumnAt(0, header, columnIndex = 0) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.addColumnAt(0, header, [], 0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.addColumnAt(0, header, [], columnIndex=0)(run)
+```
+</TabItem>
+</Tabs>
+
+### addColumn
+**Summary:** Add a column to a table by name.
+**Parameters:**
+- `tableName`: string
+- `header`: [CompositeHeader](./composite-header)
+- `cells`: [CompositeCell](./composite-cell) array option
+- `columnIndex`: int option
+- `forceReplace`: bool option
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.addColumn("Outputs", header, columnIndex = 0) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.addColumn("Outputs", header, [], 0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.addColumn("Outputs", header, [], columnIndex=0)(run)
+```
+</TabItem>
+</Tabs>
+
+### removeColumnAt
+**Summary:** Remove a column by index from a table index.
+**Parameters:**
+- `tableIndex`: int
+- `columnIndex`: int
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.removeColumnAt(0, 0) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.removeColumnAt(0, 0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.removeColumnAt(0, 0)(run)
+```
+</TabItem>
+</Tabs>
+
+### removeColumn
+**Summary:** Remove a column by index from a named table.
+**Parameters:**
+- `tableName`: string
+- `columnIndex`: int
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.removeColumn("Outputs", 0) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.removeColumn("Outputs", 0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.removeColumn("Outputs", 0)(run)
+```
+</TabItem>
+</Tabs>
+
+### updateColumnAt
+**Summary:** Replace a column at index on a table index.
+**Parameters:**
+- `tableIndex`: int
+- `columnIndex`: int
+- `header`: [CompositeHeader](./composite-header)
+- `cells`: [CompositeCell](./composite-cell) array option
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.updateColumnAt(0, 0, header, cells = None) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.updateColumnAt(0, 0, header, [])(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.updateColumnAt(0, 0, header, [])(run)
+```
+</TabItem>
+</Tabs>
+
+### updateColumn
+**Summary:** Replace a column at index on a named table.
+**Parameters:**
+- `tableName`: string
+- `columnIndex`: int
+- `header`: [CompositeHeader](./composite-header)
+- `cells`: [CompositeCell](./composite-cell) array option
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.updateColumn("Outputs", 0, header, cells = None) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.updateColumn("Outputs", 0, header, [])(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.updateColumn("Outputs", 0, header, [])(run)
+```
+</TabItem>
+</Tabs>
+
+### getColumnAt
+**Summary:** Get a column by table index and column index.
+**Parameters:**
+- `tableIndex`: int
+- `columnIndex`: int
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let col = ArcRun.getColumnAt(0, 0) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const col = ArcRun.getColumnAt(0, 0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col = ArcRun.getColumnAt(0, 0)(run)
+```
+</TabItem>
+</Tabs>
+
+### getColumn
+**Summary:** Get a column by table name and column index.
+**Parameters:**
+- `tableName`: string
+- `columnIndex`: int
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let col = ArcRun.getColumn("Outputs", 0) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const col = ArcRun.getColumn("Outputs", 0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col = ArcRun.getColumn("Outputs", 0)(run)
+```
+</TabItem>
+</Tabs>
+
+### addRowAt
+**Summary:** Add a row to a table by index.
+**Parameters:**
+- `tableIndex`: int
+- `cells`: [CompositeCell](./composite-cell) array option
+- `rowIndex`: int option
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.addRowAt(0, rowIndex = 0) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.addRowAt(0, [], 0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.addRowAt(0, [], rowIndex=0)(run)
+```
+</TabItem>
+</Tabs>
+
+### addRow
+**Summary:** Add a row to a table by name.
+**Parameters:**
+- `tableName`: string
+- `cells`: [CompositeCell](./composite-cell) array option
+- `rowIndex`: int option
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.addRow("Outputs", rowIndex = 0) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.addRow("Outputs", [], 0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.addRow("Outputs", [], rowIndex=0)(run)
+```
+</TabItem>
+</Tabs>
+
+### removeRowAt
+**Summary:** Remove a row by index from a table index.
+**Parameters:**
+- `tableIndex`: int
+- `rowIndex`: int
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.removeRowAt(0, 0) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.removeRowAt(0, 0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.removeRowAt(0, 0)(run)
+```
+</TabItem>
+</Tabs>
+
+### removeRow
+**Summary:** Remove a row by index from a named table.
+**Parameters:**
+- `tableName`: string
+- `rowIndex`: int
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.removeRow("Outputs", 0) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.removeRow("Outputs", 0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.removeRow("Outputs", 0)(run)
+```
+</TabItem>
+</Tabs>
+
+### updateRowAt
+**Summary:** Replace a row at index on a table index.
+**Parameters:**
+- `tableIndex`: int
+- `rowIndex`: int
+- `cells`: [CompositeCell](./composite-cell) array
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.updateRowAt(0, 0, ResizeArray()) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.updateRowAt(0, 0, [])(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.updateRowAt(0, 0, [])(run)
+```
+</TabItem>
+</Tabs>
+
+### updateRow
+**Summary:** Replace a row at index on a named table.
+**Parameters:**
+- `tableName`: string
+- `rowIndex`: int
+- `cells`: [CompositeCell](./composite-cell) array
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.updateRow("Outputs", 0, ResizeArray()) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.updateRow("Outputs", 0, [])(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.updateRow("Outputs", 0, [])(run)
+```
+</TabItem>
+</Tabs>
+
+### getRowAt
+**Summary:** Get a row by table index and row index.
+**Parameters:**
+- `tableIndex`: int
+- `rowIndex`: int
+**ReturnType:** [CompositeCell](./composite-cell) ResizeArray
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let row = ArcRun.getRowAt(0, 0) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const row = ArcRun.getRowAt(0, 0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+row = ArcRun.getRowAt(0, 0)(run)
+```
+</TabItem>
+</Tabs>
+
+### getRow
+**Summary:** Get a row by table name and row index.
+**Parameters:**
+- `tableName`: string
+- `rowIndex`: int
+**ReturnType:** [CompositeCell](./composite-cell) ResizeArray
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let row = ArcRun.getRow("Outputs", 0) run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const row = ArcRun.getRow("Outputs", 0)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+row = ArcRun.getRow("Outputs", 0)(run)
+```
+</TabItem>
+</Tabs>
+
+### setPerformers
+**Summary:** Functional setter for performers on a run.
+**Parameters:**
+- `performers`: [Person](./person) array
+- `run`: [ArcRun](./arc-run)
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run' = ArcRun.setPerformers performers run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run2 = ArcRun.setPerformers(performers)(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run2 = ArcRun.setPerformers(performers)(run)
+```
+</TabItem>
+</Tabs>
+

@@ -1,0 +1,1449 @@
+---
+title: "ArcStudy"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+## Fields
+- `Identifier`: string (unique in investigation)
+- `Investigation`: [ArcInvestigation](./arc-investigation) option (set internally)
+- `Title`: string option
+- `Description`: string option
+- `SubmissionDate`: string option
+- `PublicReleaseDate`: string option
+- `Publications`: [Publication](./publication) ResizeArray
+- `Contacts`: [Person](./person) ResizeArray
+- `StudyDesignDescriptors`: [OntologyAnnotation](./ontology-annotation) ResizeArray
+- `Tables`: [ArcTable](./arc-table) ResizeArray
+- `Datamap`: [Datamap](./datamap) option
+- `RegisteredAssayIdentifiers`: string array
+- `Comments`: [Comment](./comment) ResizeArray
+- `StaticHash`: int
+- `FileName`: study ISA filename
+- `RegisteredAssayIdentifierCount` / `RegisteredAssayCount`
+- `RegisteredAssays`: resolves registered identifiers to assays in parent investigation
+- `VacantAssayIdentifiers`: identifiers without backing assay objects
+- `FileName`: ISA study filename
+
+## Methods
+
+### Constructor
+**Summary:** Create a study with identifiers, optional metadata, publications, contacts, design descriptors, tables, datamap, registered assay ids, and comments.
+**Parameters:**
+- `identifier`: string
+- `title`: string option
+- `description`: string option
+- `submissionDate`: string option
+- `publicReleaseDate`: string option
+- `publications`: [Publication](./publication) array option
+- `contacts`: [Person](./person) array option
+- `studyDesignDescriptors`: [OntologyAnnotation](./ontology-annotation) array option
+- `tables`: [ArcTable](./arc-table) array option
+- `datamap`: [Datamap](./datamap) option
+- `registeredAssayIdentifiers`: string array option
+- `comments`: [Comment](./comment) array option
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+open ARCtrl
+let study = ArcStudy(
+  identifier = "Study1",
+  submissionDate = "2024-01-01",
+  publications = ResizeArray(),
+  contacts = ResizeArray(),
+  studyDesignDescriptors = ResizeArray(),
+  tables = ResizeArray()
+)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+import { ArcStudy } from "@nfdi4plants/arctrl";
+
+const study = new ArcStudy("Study1", undefined, undefined, "2024-01-01", undefined, [], [], [], [], undefined, [], []);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+from arctrl import ArcStudy
+
+study = ArcStudy("Study1", submissionDate="2024-01-01", publications=[], contacts=[], studyDesignDescriptors=[], tables=[])
+```
+</TabItem>
+</Tabs>
+
+### Copy
+**Summary:** Deep copy including tables, datamap, assay registrations, contacts, publications, descriptors, comments; optionally keeps investigation reference.
+**Parameters:**
+- `copyInvestigationRef`: bool option
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let clone = study.Copy(copyInvestigationRef = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const clone = study.Copy(true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+clone = study.Copy(copyInvestigationRef=True)
+```
+</TabItem>
+</Tabs>
+
+### UpdateReferenceByStudyFile
+**Summary:** Merge values from a study file into this study (identifier unchanged).
+**Parameters:**
+- `study`: [ArcStudy](./arc-study)
+- `onlyReplaceExisting`: bool option
+- `keepUnusedRefTables`: bool option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+study.UpdateReferenceByStudyFile(fileStudy, onlyReplaceExisting = true, keepUnusedRefTables = false)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+study.UpdateReferenceByStudyFile(fileStudy, true, false);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study.UpdateReferenceByStudyFile(file_study, onlyReplaceExisting=True, keepUnusedRefTables=False)
+```
+</TabItem>
+</Tabs>
+
+### StructurallyEquals
+**Summary:** Value-based comparison of two studies.
+**Parameters:**
+- `other`: [ArcStudy](./arc-study)
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let sameStruct = study.StructurallyEquals other
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const sameStruct = study.StructurallyEquals(other);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+same_struct = study.StructurallyEquals(other)
+```
+</TabItem>
+</Tabs>
+
+### ReferenceEquals
+**Summary:** Reference identity check.
+**Parameters:**
+- `other`: [ArcStudy](./arc-study)
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let sameRef = study.ReferenceEquals other
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const sameRef = study.ReferenceEquals(other);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+same_ref = study.ReferenceEquals(other)
+```
+</TabItem>
+</Tabs>
+
+### Equals
+**Summary:** Object equality override using structural comparison.
+**Parameters:**
+- `obj`: obj
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let eq = study.Equals(otherObj)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const eq = study.Equals(otherObj);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+eq = study.Equals(other_obj)
+```
+</TabItem>
+</Tabs>
+
+### GetLightHashCode
+**Summary:** Compute a lightweight hash code (skips datamap).
+**Parameters:** none
+**ReturnType:** int
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let h1 = study.GetLightHashCode()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const h1 = study.GetLightHashCode();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+h1 = study.GetLightHashCode()
+```
+</TabItem>
+</Tabs>
+
+### GetHashCode
+**Summary:** Compute the full hash code.
+**Parameters:** none
+**ReturnType:** int
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let h2 = study.GetHashCode()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const h2 = study.GetHashCode();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+h2 = study.GetHashCode()
+```
+</TabItem>
+</Tabs>
+
+### ToString
+**Summary:** Debug string with key fields.
+**Parameters:** none
+**ReturnType:** string
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let s = study.ToString()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const s = study.ToString();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+s = study.ToString()
+```
+</TabItem>
+</Tabs>
+
+### isEmpty
+**Summary:** True when only the identifier is set.
+**Parameters:** none
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let empty = study.isEmpty
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const empty = study.isEmpty;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+empty = study.isEmpty
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### init
+**Summary:** Create an empty study with the given identifier.
+**Parameters:**
+- `identifier`: string
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study = ArcStudy.init "Study1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study = ArcStudy.init("Study1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study = ArcStudy.init("Study1")
+```
+</TabItem>
+</Tabs>
+
+### create
+**Summary:** Build a study with optional metadata, descriptors, tables, datamap, assay registrations, and comments.
+**Parameters:**
+- `identifier`: string
+- `title`: string option
+- `description`: string option
+- `submissionDate`: string option
+- `publicReleaseDate`: string option
+- `publications`: [Publication](./publication) array option
+- `contacts`: [Person](./person) array option
+- `studyDesignDescriptors`: [OntologyAnnotation](./ontology-annotation) array option
+- `tables`: [ArcTable](./arc-table) array option
+- `datamap`: [Datamap](./datamap) option
+- `registeredAssayIdentifiers`: string array option
+- `comments`: [Comment](./comment) array option
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study = ArcStudy.create("Study1", submissionDate = "2024-01-01")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study = ArcStudy.create("Study1", undefined, undefined, "2024-01-01");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study = ArcStudy.create("Study1", submissionDate="2024-01-01")
+```
+</TabItem>
+</Tabs>
+
+### make
+**Summary:** Alternate builder covering all fields in order.
+**Parameters:**
+- `identifier`: string
+- `title`: string option
+- `description`: string option
+- `submissionDate`: string option
+- `publicReleaseDate`: string option
+- `publications`: [Publication](./publication) array option
+- `contacts`: [Person](./person) array option
+- `studyDesignDescriptors`: [OntologyAnnotation](./ontology-annotation) array option
+- `tables`: [ArcTable](./arc-table) array option
+- `datamap`: [Datamap](./datamap) option
+- `registeredAssayIdentifiers`: string array option
+- `comments`: [Comment](./comment) array option
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study = ArcStudy.make("Study1", "Title", "Desc", None, None, ResizeArray(), ResizeArray(), ResizeArray(), ResizeArray(), None, ResizeArray(), ResizeArray())
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study = ArcStudy.make("Study1", "Title", "Desc", undefined, undefined, [], [], [], [], undefined, [], []);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study = ArcStudy.make("Study1", "Title", "Desc", None, None, [], [], [], [], None, [], [])
+```
+</TabItem>
+</Tabs>
+
+### FileName
+**Summary:** ISA-Tab filename for studies.
+**Parameters:** none
+**ReturnType:** string
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let fileName = ArcStudy.FileName
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const fileName = ArcStudy.FileName;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+file_name = ArcStudy.FileName
+```
+</TabItem>
+</Tabs>
+
+### AddRegisteredAssay
+**Summary:** Add an assay instance to registered assays and register its identifier.
+**Parameters:**
+- `assay`: [ArcAssay](./arc-assay)
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+study.AddRegisteredAssay(assay)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+study.AddRegisteredAssay(assay);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study.AddRegisteredAssay(assay)
+```
+</TabItem>
+</Tabs>
+
+### addRegisteredAssay
+**Summary:** Functional wrapper to add a registered assay.
+**Parameters:**
+- `assay`: [ArcAssay](./arc-assay)
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = study |> ArcStudy.addRegisteredAssay assay
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.addRegisteredAssay(assay)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.addRegisteredAssay(assay)(study)
+```
+</TabItem>
+</Tabs>
+
+### InitRegisteredAssay
+**Summary:** Create and register an empty assay by identifier.
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = study |> ArcStudy.InitRegisteredAssay("Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.InitRegisteredAssay("Assay1")(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.InitRegisteredAssay("Assay1")(study)
+```
+</TabItem>
+</Tabs>
+
+### initRegisteredAssay
+**Summary:** Functional builder to register an assay identifier.
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = study |> ArcStudy.initRegisteredAssay "Assay1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.initRegisteredAssay("Assay1")(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.initRegisteredAssay("Assay1")(study)
+```
+</TabItem>
+</Tabs>
+
+### RegisterAssay
+**Summary:** Register an assay identifier on the study.
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+study.RegisterAssay("Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+study.RegisterAssay("Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study.RegisterAssay("Assay1")
+```
+</TabItem>
+</Tabs>
+
+### registerAssay
+**Summary:** Functional registration of an assay identifier.
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = study |> ArcStudy.registerAssay "Assay1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.registerAssay("Assay1")(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.registerAssay("Assay1")(study)
+```
+</TabItem>
+</Tabs>
+
+### DeregisterAssay
+**Summary:** Remove an assay identifier from registrations.
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+study.DeregisterAssay("Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+study.DeregisterAssay("Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study.DeregisterAssay("Assay1")
+```
+</TabItem>
+</Tabs>
+
+### deregisterAssay
+**Summary:** Functional removal of an assay identifier.
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = study |> ArcStudy.deregisterAssay "Assay1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.deregisterAssay("Assay1")(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.deregisterAssay("Assay1")(study)
+```
+</TabItem>
+</Tabs>
+
+### GetRegisteredAssay
+**Summary:** Get a registered assay by identifier (throws if missing).
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** [ArcAssay](./arc-assay)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assay = study.GetRegisteredAssay("Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assay = study.GetRegisteredAssay("Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assay = study.GetRegisteredAssay("Assay1")
+```
+</TabItem>
+</Tabs>
+
+### getRegisteredAssay
+**Summary:** Functional getter for a registered assay by identifier.
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** [ArcAssay](./arc-assay)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assay = study |> ArcStudy.getRegisteredAssay "Assay1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assay = ArcStudy.getRegisteredAssay("Assay1")(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assay = ArcStudy.getRegisteredAssay("Assay1")(study)
+```
+</TabItem>
+</Tabs>
+
+### getRegisteredAssays
+**Summary:** Get all registered assays.
+**Parameters:** none
+**ReturnType:** [ArcAssay](./arc-assay) array
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assays = study |> ArcStudy.getRegisteredAssays
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assays = ArcStudy.getRegisteredAssays(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assays = ArcStudy.getRegisteredAssays(study)
+```
+</TabItem>
+</Tabs>
+
+### getRegisteredAssaysOrIdentifier
+**Summary:** Get registered assays or identifier stubs when investigation missing.
+**Parameters:** none
+**ReturnType:** [ArcAssay](./arc-assay) array
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assays = study |> ArcStudy.getRegisteredAssaysOrIdentifier
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assays = ArcStudy.getRegisteredAssaysOrIdentifier(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assays = ArcStudy.getRegisteredAssaysOrIdentifier(study)
+```
+</TabItem>
+</Tabs>
+
+### addTable
+**Summary:** Add a table; optional index controls position.
+**Parameters:**
+- `table`: [ArcTable](./arc-table)
+- `index`: int option
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = study |> ArcStudy.addTable(ArcTable.init "Study", index = 0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.addTable(ArcTable.init("Study"), 0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.addTable(ArcTable.init("Study"), index=0)(study)
+```
+</TabItem>
+</Tabs>
+
+### addTables
+**Summary:** Add multiple tables at an optional index.
+**Parameters:**
+- `tables`: [ArcTable](./arc-table) array
+- `index`: int option
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = study |> ArcStudy.addTables([|ArcTable.init "S1"; ArcTable.init "S2"|] |> ResizeArray, index = 0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.addTables([ArcTable.init("S1"), ArcTable.init("S2")], 0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.addTables([ArcTable.init("S1"), ArcTable.init("S2")], index=0)(study)
+```
+</TabItem>
+</Tabs>
+
+### initTable
+**Summary:** Create and insert an empty table; returns updated study and the table.
+**Parameters:**
+- `tableName`: string
+- `index`: int option
+**ReturnType:** ([ArcStudy](./arc-study) * [ArcTable](./arc-table))
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study', table = ArcStudy.initTable("Study", index = 0) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const [study2, table] = ArcStudy.initTable("Study", 0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2, table = ArcStudy.initTable("Study", index=0)(study)
+```
+</TabItem>
+</Tabs>
+
+### initTables
+**Summary:** Create and insert multiple empty tables by name.
+**Parameters:**
+- `tableNames`: string array
+- `index`: int option
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.initTables([|"Inputs"; "Outputs"|], index = 0) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.initTables(["Inputs", "Outputs"], 0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.initTables(["Inputs", "Outputs"], index=0)(study)
+```
+</TabItem>
+</Tabs>
+
+### getTableAt
+**Summary:** Get a copy of a table by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let table = ArcStudy.getTableAt(0) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const table = ArcStudy.getTableAt(0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+table = ArcStudy.getTableAt(0)(study)
+```
+</TabItem>
+</Tabs>
+
+### getTable
+**Summary:** Get a copy of a table by name.
+**Parameters:**
+- `tableName`: string
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let table = ArcStudy.getTable("Study") study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const table = ArcStudy.getTable("Study")(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+table = ArcStudy.getTable("Study")(study)
+```
+</TabItem>
+</Tabs>
+
+### updateTableAt
+**Summary:** Update a table by index using a new value.
+**Parameters:**
+- `index`: int
+- `table`: [ArcTable](./arc-table)
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.updateTableAt(0, ArcTable.init "Study") study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.updateTableAt(0, ArcTable.init("Study"))(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.updateTableAt(0, ArcTable.init("Study"))(study)
+```
+</TabItem>
+</Tabs>
+
+### updateTable
+**Summary:** Update a table by name using a new value.
+**Parameters:**
+- `tableName`: string
+- `table`: [ArcTable](./arc-table)
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.updateTable("Study", ArcTable.init "Study") study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.updateTable("Study", ArcTable.init("Study"))(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.updateTable("Study", ArcTable.init("Study"))(study)
+```
+</TabItem>
+</Tabs>
+
+### setTableAt
+**Summary:** Replace a table at an index without copying.
+**Parameters:**
+- `index`: int
+- `table`: [ArcTable](./arc-table)
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.setTableAt(0, ArcTable.init "Study") study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.setTableAt(0, ArcTable.init("Study"))(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.setTableAt(0, ArcTable.init("Study"))(study)
+```
+</TabItem>
+</Tabs>
+
+### setTable
+**Summary:** Replace a table by name without copying.
+**Parameters:**
+- `tableName`: string
+- `table`: [ArcTable](./arc-table)
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.setTable("Study", ArcTable.init "Study") study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.setTable("Study", ArcTable.init("Study"))(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.setTable("Study", ArcTable.init("Study"))(study)
+```
+</TabItem>
+</Tabs>
+
+### removeTableAt
+**Summary:** Remove a table by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.removeTableAt(0) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.removeTableAt(0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.removeTableAt(0)(study)
+```
+</TabItem>
+</Tabs>
+
+### removeTable
+**Summary:** Remove a table by name.
+**Parameters:**
+- `tableName`: string
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.removeTable("Study") study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.removeTable("Study")(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.removeTable("Study")(study)
+```
+</TabItem>
+</Tabs>
+
+### mapTableAt
+**Summary:** Apply a function to a table at index and update the study.
+**Parameters:**
+- `index`: int
+- `updateFun`: [ArcTable](./arc-table) -> [ArcTable](./arc-table)
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.mapTableAt(0, ArcTable.Copy) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.mapTableAt(0, t => t.Copy())(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.mapTableAt(0, lambda t: t.Copy())(study)
+```
+</TabItem>
+</Tabs>
+
+### mapTable
+**Summary:** Apply a function to a table by name and update the study.
+**Parameters:**
+- `tableName`: string
+- `updateFun`: [ArcTable](./arc-table) -> [ArcTable](./arc-table)
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.mapTable("Study", ArcTable.Copy) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.mapTable("Study", t => t.Copy())(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.mapTable("Study", lambda t: t.Copy())(study)
+```
+</TabItem>
+</Tabs>
+
+### renameTableAt
+**Summary:** Rename a table at an index.
+**Parameters:**
+- `index`: int
+- `newName`: string
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.renameTableAt(0, "StudyV2") study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.renameTableAt(0, "StudyV2")(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.renameTableAt(0, "StudyV2")(study)
+```
+</TabItem>
+</Tabs>
+
+### renameTable
+**Summary:** Rename a table by name.
+**Parameters:**
+- `tableName`: string
+- `newName`: string
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.renameTable("Study", "StudyV2") study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.renameTable("Study", "StudyV2")(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.renameTable("Study", "StudyV2")(study)
+```
+</TabItem>
+</Tabs>
+
+### addColumnAt
+**Summary:** Add a column to a table by index.
+**Parameters:**
+- `tableIndex`: int
+- `header`: [CompositeHeader](./composite-header)
+- `cells`: [CompositeCell](./composite-cell) array option
+- `columnIndex`: int option
+- `forceReplace`: bool option
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.addColumnAt(0, header, columnIndex = 0) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.addColumnAt(0, header, [], 0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.addColumnAt(0, header, [], columnIndex=0)(study)
+```
+</TabItem>
+</Tabs>
+
+### addColumn
+**Summary:** Add a column to a table by name.
+**Parameters:**
+- `tableName`: string
+- `header`: [CompositeHeader](./composite-header)
+- `cells`: [CompositeCell](./composite-cell) array option
+- `columnIndex`: int option
+- `forceReplace`: bool option
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.addColumn("Study", header, columnIndex = 0) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.addColumn("Study", header, [], 0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.addColumn("Study", header, [], columnIndex=0)(study)
+```
+</TabItem>
+</Tabs>
+
+### removeColumnAt
+**Summary:** Remove a column by index from a table index.
+**Parameters:**
+- `tableIndex`: int
+- `columnIndex`: int
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.removeColumnAt(0, 0) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.removeColumnAt(0, 0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.removeColumnAt(0, 0)(study)
+```
+</TabItem>
+</Tabs>
+
+### removeColumn
+**Summary:** Remove a column by index from a named table.
+**Parameters:**
+- `tableName`: string
+- `columnIndex`: int
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.removeColumn("Study", 0) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.removeColumn("Study", 0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.removeColumn("Study", 0)(study)
+```
+</TabItem>
+</Tabs>
+
+### updateColumnAt
+**Summary:** Replace a column at index on a table index.
+**Parameters:**
+- `tableIndex`: int
+- `columnIndex`: int
+- `header`: [CompositeHeader](./composite-header)
+- `cells`: [CompositeCell](./composite-cell) array option
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.updateColumnAt(0, 0, header, cells = None) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.updateColumnAt(0, 0, header, [])(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.updateColumnAt(0, 0, header, [])(study)
+```
+</TabItem>
+</Tabs>
+
+### updateColumn
+**Summary:** Replace a column at index on a named table.
+**Parameters:**
+- `tableName`: string
+- `columnIndex`: int
+- `header`: [CompositeHeader](./composite-header)
+- `cells`: [CompositeCell](./composite-cell) array option
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.updateColumn("Study", 0, header, cells = None) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.updateColumn("Study", 0, header, [])(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.updateColumn("Study", 0, header, [])(study)
+```
+</TabItem>
+</Tabs>
+
+### getColumnAt
+**Summary:** Get a column by table index and column index.
+**Parameters:**
+- `tableIndex`: int
+- `columnIndex`: int
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let col = ArcStudy.getColumnAt(0, 0) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const col = ArcStudy.getColumnAt(0, 0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col = ArcStudy.getColumnAt(0, 0)(study)
+```
+</TabItem>
+</Tabs>
+
+### getColumn
+**Summary:** Get a column by table name and column index.
+**Parameters:**
+- `tableName`: string
+- `columnIndex`: int
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let col = ArcStudy.getColumn("Study", 0) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const col = ArcStudy.getColumn("Study", 0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col = ArcStudy.getColumn("Study", 0)(study)
+```
+</TabItem>
+</Tabs>
+
+### addRowAt
+**Summary:** Add a row to a table by index.
+**Parameters:**
+- `tableIndex`: int
+- `cells`: [CompositeCell](./composite-cell) array option
+- `rowIndex`: int option
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.addRowAt(0, rowIndex = 0) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.addRowAt(0, [], 0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.addRowAt(0, [], rowIndex=0)(study)
+```
+</TabItem>
+</Tabs>
+
+### addRow
+**Summary:** Add a row to a table by name.
+**Parameters:**
+- `tableName`: string
+- `cells`: [CompositeCell](./composite-cell) array option
+- `rowIndex`: int option
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.addRow("Study", rowIndex = 0) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.addRow("Study", [], 0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.addRow("Study", [], rowIndex=0)(study)
+```
+</TabItem>
+</Tabs>
+
+### removeRowAt
+**Summary:** Remove a row by index from a table index.
+**Parameters:**
+- `tableIndex`: int
+- `rowIndex`: int
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.removeRowAt(0, 0) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.removeRowAt(0, 0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.removeRowAt(0, 0)(study)
+```
+</TabItem>
+</Tabs>
+
+### removeRow
+**Summary:** Remove a row by index from a named table.
+**Parameters:**
+- `tableName`: string
+- `rowIndex`: int
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.removeRow("Study", 0) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.removeRow("Study", 0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.removeRow("Study", 0)(study)
+```
+</TabItem>
+</Tabs>
+
+### updateRowAt
+**Summary:** Replace a row at index on a table index.
+**Parameters:**
+- `tableIndex`: int
+- `rowIndex`: int
+- `cells`: [CompositeCell](./composite-cell) array
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.updateRowAt(0, 0, ResizeArray()) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.updateRowAt(0, 0, [])(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.updateRowAt(0, 0, [])(study)
+```
+</TabItem>
+</Tabs>
+
+### updateRow
+**Summary:** Replace a row at index on a named table.
+**Parameters:**
+- `tableName`: string
+- `rowIndex`: int
+- `cells`: [CompositeCell](./composite-cell) array
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study' = ArcStudy.updateRow("Study", 0, ResizeArray()) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study2 = ArcStudy.updateRow("Study", 0, [])(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study2 = ArcStudy.updateRow("Study", 0, [])(study)
+```
+</TabItem>
+</Tabs>
+
+### getRowAt
+**Summary:** Get a row by table index and row index.
+**Parameters:**
+- `tableIndex`: int
+- `rowIndex`: int
+**ReturnType:** [CompositeCell](./composite-cell) ResizeArray
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let row = ArcStudy.getRowAt(0, 0) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const row = ArcStudy.getRowAt(0, 0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+row = ArcStudy.getRowAt(0, 0)(study)
+```
+</TabItem>
+</Tabs>
+
+### getRow
+**Summary:** Get a row by table name and row index.
+**Parameters:**
+- `tableName`: string
+- `rowIndex`: int
+**ReturnType:** [CompositeCell](./composite-cell) ResizeArray
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let row = ArcStudy.getRow("Study", 0) study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const row = ArcStudy.getRow("Study", 0)(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+row = ArcStudy.getRow("Study", 0)(study)
+```
+</TabItem>
+</Tabs>
+

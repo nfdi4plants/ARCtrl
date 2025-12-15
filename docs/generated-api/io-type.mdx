@@ -1,0 +1,252 @@
+---
+title: "IOType"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+**Signature:**
+```fsharp
+type IOType =
+  | Source
+  | Sample
+  | Data
+  | Material
+  | FreeText of string
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+
+**Signature (factory values):**
+```py
+IOType.Source
+IOType.Sample
+IOType.Data
+IOType.Material
+IOType.FreeText(text: str)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+**Signature (factory values):**
+```ts
+IOType.Source
+IOType.Sample
+IOType.Data
+IOType.Material
+IOType.FreeText(text: string)
+```
+</TabItem>
+</Tabs>
+
+## Fields
+None.
+
+## Methods
+
+### asInput
+**Summary:** Format this IOType as an ISA input header label.
+**Parameters:** none
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let inputLabel = io.asInput
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const inputLabel = io.asInput;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+input_label = io.asInput
+```
+</TabItem>
+</Tabs>
+
+### asOutput
+**Summary:** Format this IOType as an ISA output header label.
+**Parameters:** none
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let outputLabel = io.asOutput
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const outputLabel = io.asOutput;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+output_label = io.asOutput
+```
+</TabItem>
+</Tabs>
+
+### Merge
+**Summary:** Choose a compatible, more specific IOType or fail if incompatible.
+**Parameters:** `other: [IOType](./io-type)`
+**ReturnType:** [IOType](./io-type)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let merged = io.Merge IOType.Source
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const merged = io.Merge(IOType.Source);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+merged = io.Merge(IOType.Source)
+```
+</TabItem>
+</Tabs>
+
+### ToString
+**Summary:** Friendly name for the IOType.
+**Parameters:** none
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let s = io.ToString()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const s = io.ToString();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+s = io.ToString()
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### All
+**Summary:** All predefined IOType values.
+**Parameters:** none
+**ReturnType:** [IOType](./io-type)[]
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let all = IOType.All
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const all = IOType.All;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+all = IOType.All
+```
+</TabItem>
+</Tabs>
+
+### Cases
+**Summary:** Reflection tags for union cases.
+**Parameters:** none
+**ReturnType:** `(int * string)[]`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let cases = IOType.Cases
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const cases = IOType.Cases;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+cases = IOType.Cases
+```
+</TabItem>
+</Tabs>
+
+### ofString
+**Summary:** Parse core IOType names or create FreeText.
+**Parameters:** `str: string`
+**ReturnType:** [IOType](./io-type)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let io = IOType.ofString "Sample"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const io = IOType.ofString("Sample");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+io = IOType.ofString("Sample")
+```
+</TabItem>
+</Tabs>
+
+### tryOfHeaderString
+**Summary:** Parse `Input [X]` or `Output [X]` header text into an IOType.
+**Parameters:** `str: string`
+**ReturnType:** [IOType](./io-type) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let parsed = IOType.tryOfHeaderString "Input [Source Name]"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const parsed = IOType.tryOfHeaderString("Input [Source Name]");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+parsed = IOType.tryOfHeaderString("Input [Source Name]")
+```
+</TabItem>
+</Tabs>
+
+#### Usage Examples
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let io = IOType.ofString "Sample"
+let merged = io.Merge IOType.Source
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+from arctrl import IOType
+
+io = IOType.ofString("Sample")
+merged = io.Merge(IOType.Source)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+import { IOType } from "@nfdi4plants/arctrl";
+
+const io = IOType.ofString("Sample");
+const merged = io.Merge(IOType.Source);
+```
+</TabItem>
+</Tabs>

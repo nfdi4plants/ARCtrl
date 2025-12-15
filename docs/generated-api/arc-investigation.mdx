@@ -1,0 +1,3196 @@
+---
+title: "ArcInvestigation"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+## Fields
+- `Identifier`: string (unique)
+- `Title`: string option
+- `Description`: string option
+- `SubmissionDate`: string option
+- `PublicReleaseDate`: string option
+- `OntologySourceReferences`: [OntologySourceReference](./ontology-annotation) ResizeArray
+- `Publications`: [Publication](./publication) ResizeArray
+- `Contacts`: [Person](./person) ResizeArray
+- `Assays`: [ArcAssay](./arc-assay) ResizeArray
+- `Studies`: [ArcStudy](./arc-study) ResizeArray
+- `Workflows`: [ArcWorkflow](./arc-workflow) ResizeArray
+- `Runs`: [ArcRun](./arc-run) ResizeArray
+- `RegisteredStudyIdentifiers`: string array
+- `Comments`: [Comment](./comment) ResizeArray
+- `Remarks`: Remark ResizeArray
+- `StaticHash`: int
+- `FileName`: investigation ISA filename
+- `AssayCount` / `StudyCount` / `WorkflowCount` / `RunCount`
+- `AssayIdentifiers` / `StudyIdentifiers` / `WorkflowIdentifiers` / `RunIdentifiers`
+- `RegisteredStudies`
+- `RegisteredStudyIdentifierCount`
+- `VacantStudyIdentifiers`
+- `UnregisteredAssays`
+- `UnregisteredStudies`
+
+## Methods
+
+### Constructor
+**Summary:** Create an investigation with identifiers, optional metadata, ontology sources, publications, contacts, assays, studies, workflows, runs, registered study ids, comments, and remarks.
+**Parameters:**
+- `identifier`: string
+- `title`: string option
+- `description`: string option
+- `submissionDate`: string option
+- `publicReleaseDate`: string option
+- `ontologySourceReferences`: [OntologySourceReference](./ontology-annotation) array option
+- `publications`: [Publication](./publication) array option
+- `contacts`: [Person](./person) array option
+- `assays`: [ArcAssay](./arc-assay) array option
+- `studies`: [ArcStudy](./arc-study) array option
+- `workflows`: [ArcWorkflow](./arc-workflow) array option
+- `runs`: [ArcRun](./arc-run) array option
+- `registeredStudyIdentifiers`: string array option
+- `comments`: [Comment](./comment) array option
+- `remarks`: Remark array option
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+open ARCtrl
+let isa = ArcInvestigation(
+    identifier = "ARC1",
+    contacts = ResizeArray [ Person.create("Alice") ],
+    assays = ResizeArray(),
+    studies = ResizeArray(),
+    workflows = ResizeArray(),
+    runs = ResizeArray()
+)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+import { ArcInvestigation, Person } from "@nfdi4plants/arctrl";
+
+const isa = new ArcInvestigation(
+  "ARC1",
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  [new Person("Alice")],
+  [],
+  [],
+  [],
+  [],
+  [],
+  [],
+);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+from arctrl import ArcInvestigation, Person
+
+isa = ArcInvestigation("ARC1", contacts=[Person("Alice")], assays=[], studies=[], workflows=[], runs=[])
+```
+</TabItem>
+</Tabs>
+
+### Copy
+**Summary:** Deep clone including assays, studies, workflows, runs, contacts, publications, ontology sources, comments, remarks, and registered study identifiers.
+**Parameters:** none
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let clone = isa.Copy()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const clone = isa.Copy();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+clone = isa.Copy()
+```
+</TabItem>
+</Tabs>
+
+### StructurallyEquals
+**Summary:** Value-based comparison of two investigations.
+**Parameters:**
+- `other`: [ArcInvestigation](./arc-investigation)
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let sameStruct = isa.StructurallyEquals other
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const sameStruct = isa.StructurallyEquals(other);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+same_struct = isa.StructurallyEquals(other)
+```
+</TabItem>
+</Tabs>
+
+### ReferenceEquals
+**Summary:** Reference identity check.
+**Parameters:**
+- `other`: [ArcInvestigation](./arc-investigation)
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let sameRef = isa.ReferenceEquals other
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const sameRef = isa.ReferenceEquals(other);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+same_ref = isa.ReferenceEquals(other)
+```
+</TabItem>
+</Tabs>
+
+### Equals
+**Summary:** Object equality override using structural comparison.
+**Parameters:**
+- `obj`: obj
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let eq = isa.Equals(otherObj)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const eq = isa.Equals(otherObj);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+eq = isa.Equals(other_obj)
+```
+</TabItem>
+</Tabs>
+
+### GetLightHashCode
+**Summary:** Compute a lightweight hash code.
+**Parameters:** none
+**ReturnType:** int
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let h1 = isa.GetLightHashCode()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const h1 = isa.GetLightHashCode();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+h1 = isa.GetLightHashCode()
+```
+</TabItem>
+</Tabs>
+
+### GetHashCode
+**Summary:** Compute the full hash code.
+**Parameters:** none
+**ReturnType:** int
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let h2 = isa.GetHashCode()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const h2 = isa.GetHashCode();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+h2 = isa.GetHashCode()
+```
+</TabItem>
+</Tabs>
+
+### ToString
+**Summary:** Debug output of the investigation.
+**Parameters:** none
+**ReturnType:** string
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let s = isa.ToString()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const s = isa.ToString();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+s = isa.ToString()
+```
+</TabItem>
+</Tabs>
+
+### GetAllPersons
+**Summary:** Collect distinct performers and contacts across investigation, studies, and assays.
+**Parameters:** none
+**ReturnType:** [Person](./person) array
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let persons = isa.GetAllPersons()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const persons = isa.GetAllPersons();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+persons = isa.GetAllPersons()
+```
+</TabItem>
+</Tabs>
+
+### GetAllPublications
+**Summary:** Collect distinct publications across investigation and studies.
+**Parameters:** none
+**ReturnType:** [Publication](./publication) array
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let pubs = isa.GetAllPublications()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const pubs = isa.GetAllPublications();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+pubs = isa.GetAllPublications()
+```
+</TabItem>
+</Tabs>
+
+### DeregisterMissingAssays
+**Summary:** Remove assay registrations that have no backing assay.
+**Parameters:** none
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.DeregisterMissingAssays()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.DeregisterMissingAssays();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.DeregisterMissingAssays()
+```
+</TabItem>
+</Tabs>
+
+### UpdateIOTypeByEntityID
+**Summary:** Infer IO column types across tables based on entity ids.
+**Parameters:** none
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.UpdateIOTypeByEntityID()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.UpdateIOTypeByEntityID();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.UpdateIOTypeByEntityID()
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### init
+**Summary:** Create an empty investigation with the given identifier.
+**Parameters:**
+- `identifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa = ArcInvestigation.init "ARC1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa = ArcInvestigation.init("ARC1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa = ArcInvestigation.init("ARC1")
+```
+</TabItem>
+</Tabs>
+
+### create
+**Summary:** Build an investigation with optional metadata, ontology sources, publications, contacts, assays, studies, workflows, runs, study registrations, comments, and remarks.
+**Parameters:**
+- `identifier`: string
+- `title`: string option
+- `description`: string option
+- `submissionDate`: string option
+- `publicReleaseDate`: string option
+- `ontologySourceReferences`: [OntologySourceReference](./ontology-annotation) array option
+- `publications`: [Publication](./publication) array option
+- `contacts`: [Person](./person) array option
+- `assays`: [ArcAssay](./arc-assay) array option
+- `studies`: [ArcStudy](./arc-study) array option
+- `workflows`: [ArcWorkflow](./arc-workflow) array option
+- `runs`: [ArcRun](./arc-run) array option
+- `registeredStudyIdentifiers`: string array option
+- `comments`: [Comment](./comment) array option
+- `remarks`: Remark array option
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa = ArcInvestigation.create("ARC1", contacts = ResizeArray [Person.create "Alice"])
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa = ArcInvestigation.create("ARC1", undefined, undefined, undefined, undefined, undefined, undefined, [Person.create("Alice")]);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa = ArcInvestigation.create("ARC1", contacts=[Person.create("Alice")])
+```
+</TabItem>
+</Tabs>
+
+### make
+**Summary:** Alternate builder covering all fields in order.
+**Parameters:**
+- `identifier`: string
+- `title`: string option
+- `description`: string option
+- `submissionDate`: string option
+- `publicReleaseDate`: string option
+- `ontologySourceReferences`: [OntologySourceReference](./ontology-annotation) array option
+- `publications`: [Publication](./publication) array option
+- `contacts`: [Person](./person) array option
+- `assays`: [ArcAssay](./arc-assay) array option
+- `studies`: [ArcStudy](./arc-study) array option
+- `workflows`: [ArcWorkflow](./arc-workflow) array option
+- `runs`: [ArcRun](./arc-run) array option
+- `registeredStudyIdentifiers`: string array option
+- `comments`: [Comment](./comment) array option
+- `remarks`: Remark array option
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa = ArcInvestigation.make("ARC1", "Title", "Desc", None, None, ResizeArray(), ResizeArray(), ResizeArray(), ResizeArray(), ResizeArray(), ResizeArray(), ResizeArray(), ResizeArray(), ResizeArray(), ResizeArray())
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa = ArcInvestigation.make("ARC1", "Title", "Desc", undefined, undefined, [], [], [], [], [], [], [], [], [], []);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa = ArcInvestigation.make("ARC1", "Title", "Desc", None, None, [], [], [], [], [], [], [], [], [], [])
+```
+</TabItem>
+</Tabs>
+
+### deregisterMissingAssays
+**Summary:** Functional helper to remove missing assay registrations.
+**Parameters:** none
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let clean = ArcInvestigation.deregisterMissingAssays isa
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const clean = ArcInvestigation.deregisterMissingAssays(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+clean = ArcInvestigation.deregisterMissingAssays(isa)
+```
+</TabItem>
+</Tabs>
+
+### FileName
+**Summary:** ISA-Tab filename for investigations.
+**Parameters:** none
+**ReturnType:** string
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let fileName = ArcInvestigation.FileName
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const fileName = ArcInvestigation.FileName;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+file_name = ArcInvestigation.FileName
+```
+</TabItem>
+</Tabs>
+
+
+### AddAssay
+**Summary:** Add an assay instance and optionally register it in all studies.
+**Parameters:**
+- `assay`: [ArcAssay](./arc-assay)
+- `registerIn`: string array option (study identifiers)
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.AddAssay(ArcAssay.init "Assay1", registerIn = ResizeArray())
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.AddAssay(ArcAssay.init("Assay1"), []);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.AddAssay(ArcAssay.init("Assay1"), [])
+```
+</TabItem>
+</Tabs>
+
+### addAssay
+**Summary:** Functional wrapper to add an assay and optionally register it.
+**Parameters:**
+- `assay`: [ArcAssay](./arc-assay)
+- `registerIn`: string array option
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.addAssay(ArcAssay.init "Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.addAssay(ArcAssay.init("Assay1"))(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.addAssay(ArcAssay.init("Assay1"))(isa)
+```
+</TabItem>
+</Tabs>
+
+### InitAssay
+**Summary:** Create and add an empty assay; optionally register it in studies.
+**Parameters:**
+- `assayIdentifier`: string
+- `registerIn`: string array option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.InitAssay("Assay1", registerIn = ResizeArray())
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.InitAssay("Assay1", []);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.InitAssay("Assay1", [])
+```
+</TabItem>
+</Tabs>
+
+### initAssay
+**Summary:** Functional builder to add an empty assay and optionally register it.
+**Parameters:**
+- `assayIdentifier`: string
+- `registerIn`: string array option
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.initAssay("Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.initAssay("Assay1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.initAssay("Assay1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### DeleteAssayAt
+**Summary:** Delete an assay by index without deregistering from studies.
+**Parameters:**
+- `index`: int
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.DeleteAssayAt(0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.DeleteAssayAt(0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.DeleteAssayAt(0)
+```
+</TabItem>
+</Tabs>
+
+### deleteAssayAt
+**Summary:** Functional delete of an assay by index (no deregistration).
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.deleteAssayAt 0
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.deleteAssayAt(0)(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.deleteAssayAt(0)(isa)
+```
+</TabItem>
+</Tabs>
+
+### DeleteAssay
+**Summary:** Delete an assay by identifier without deregistering from studies.
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.DeleteAssay("Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.DeleteAssay("Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.DeleteAssay("Assay1")
+```
+</TabItem>
+</Tabs>
+
+### deleteAssay
+**Summary:** Functional delete of an assay by identifier (no deregistration).
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.deleteAssay "Assay1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.deleteAssay("Assay1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.deleteAssay("Assay1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### RemoveAssayAt
+**Summary:** Remove an assay by index and deregister it from all studies.
+**Parameters:**
+- `index`: int
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.RemoveAssayAt(0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.RemoveAssayAt(0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.RemoveAssayAt(0)
+```
+</TabItem>
+</Tabs>
+
+### removeAssayAt
+**Summary:** Functional removal of an assay by index with deregistration.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.removeAssayAt 0
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.removeAssayAt(0)(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.removeAssayAt(0)(isa)
+```
+</TabItem>
+</Tabs>
+
+### RemoveAssay
+**Summary:** Remove an assay by identifier and deregister it from all studies.
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.RemoveAssay("Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.RemoveAssay("Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.RemoveAssay("Assay1")
+```
+</TabItem>
+</Tabs>
+
+### removeAssay
+**Summary:** Functional removal of an assay by identifier with deregistration.
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.removeAssay "Assay1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.removeAssay("Assay1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.removeAssay("Assay1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### RenameAssay
+**Summary:** Rename an assay identifier and update study registrations.
+**Parameters:**
+- `oldIdentifier`: string
+- `newIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.RenameAssay("Assay1", "Assay2")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.RenameAssay("Assay1", "Assay2");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.RenameAssay("Assay1", "Assay2")
+```
+</TabItem>
+</Tabs>
+
+### renameAssay
+**Summary:** Functional rename of an assay identifier with registration updates.
+**Parameters:**
+- `oldIdentifier`: string
+- `newIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.renameAssay("Assay1", "Assay2")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.renameAssay("Assay1", "Assay2")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.renameAssay("Assay1", "Assay2")(isa)
+```
+</TabItem>
+</Tabs>
+
+### SetAssayAt
+**Summary:** Replace an assay at a given index.
+**Parameters:**
+- `index`: int
+- `assay`: [ArcAssay](./arc-assay)
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.SetAssayAt(0, ArcAssay.init "Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.SetAssayAt(0, ArcAssay.init("Assay1"));
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.SetAssayAt(0, ArcAssay.init("Assay1"))
+```
+</TabItem>
+</Tabs>
+
+### setAssayAt
+**Summary:** Functional replacement of an assay at index.
+**Parameters:**
+- `index`: int
+- `assay`: [ArcAssay](./arc-assay)
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.setAssayAt(0, ArcAssay.init "Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.setAssayAt(0, ArcAssay.init("Assay1"))(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.setAssayAt(0, ArcAssay.init("Assay1"))(isa)
+```
+</TabItem>
+</Tabs>
+
+### SetAssay
+**Summary:** Replace an assay by identifier.
+**Parameters:**
+- `assayIdentifier`: string
+- `assay`: [ArcAssay](./arc-assay)
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.SetAssay("Assay1", ArcAssay.init "Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.SetAssay("Assay1", ArcAssay.init("Assay1"));
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.SetAssay("Assay1", ArcAssay.init("Assay1"))
+```
+</TabItem>
+</Tabs>
+
+### setAssay
+**Summary:** Functional replacement of an assay by identifier.
+**Parameters:**
+- `assayIdentifier`: string
+- `assay`: [ArcAssay](./arc-assay)
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.setAssay("Assay1", ArcAssay.init "Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.setAssay("Assay1", ArcAssay.init("Assay1"))(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.setAssay("Assay1", ArcAssay.init("Assay1"))(isa)
+```
+</TabItem>
+</Tabs>
+
+### GetAssayIndex
+**Summary:** Get the index of an assay by identifier (throws if missing).
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** int
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let idx = isa.GetAssayIndex("Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const idx = isa.GetAssayIndex("Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+idx = isa.GetAssayIndex("Assay1")
+```
+</TabItem>
+</Tabs>
+
+### getAssayIndex
+**Summary:** Functional index lookup for an assay identifier.
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** int
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let idx = isa |> ArcInvestigation.getAssayIndex "Assay1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const idx = ArcInvestigation.getAssayIndex("Assay1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+idx = ArcInvestigation.getAssayIndex("Assay1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### GetAssayAt
+**Summary:** Get an assay by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcAssay](./arc-assay)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assay = isa.GetAssayAt(0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assay = isa.GetAssayAt(0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assay = isa.GetAssayAt(0)
+```
+</TabItem>
+</Tabs>
+
+### getAssayAt
+**Summary:** Functional getter for an assay by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcAssay](./arc-assay)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assay = isa |> ArcInvestigation.getAssayAt 0
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assay = ArcInvestigation.getAssayAt(0)(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assay = ArcInvestigation.getAssayAt(0)(isa)
+```
+</TabItem>
+</Tabs>
+
+### GetAssay
+**Summary:** Get an assay by identifier (throws if missing).
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** [ArcAssay](./arc-assay)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assay = isa.GetAssay("Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assay = isa.GetAssay("Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assay = isa.GetAssay("Assay1")
+```
+</TabItem>
+</Tabs>
+
+### getAssay
+**Summary:** Functional getter for an assay by identifier.
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** [ArcAssay](./arc-assay)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assay = isa |> ArcInvestigation.getAssay "Assay1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assay = ArcInvestigation.getAssay("Assay1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assay = ArcInvestigation.getAssay("Assay1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### TryGetAssay
+**Summary:** Try to get an assay by identifier.
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** [ArcAssay](./arc-assay) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assayOpt = isa.TryGetAssay("Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assayOpt = isa.TryGetAssay("Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assay_opt = isa.TryGetAssay("Assay1")
+```
+</TabItem>
+</Tabs>
+
+### tryGetAssay
+**Summary:** Functional try-get assay by identifier.
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** [ArcAssay](./arc-assay) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assayOpt = isa |> ArcInvestigation.tryGetAssay "Assay1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assayOpt = ArcInvestigation.tryGetAssay("Assay1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assay_opt = ArcInvestigation.tryGetAssay("Assay1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### ContainsAssay
+**Summary:** Check if an assay identifier exists.
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let hasAssay = isa.ContainsAssay("Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const hasAssay = isa.ContainsAssay("Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+has_assay = isa.ContainsAssay("Assay1")
+```
+</TabItem>
+</Tabs>
+
+### containsAssay
+**Summary:** Functional check for an assay identifier.
+**Parameters:**
+- `assayIdentifier`: string
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let hasAssay = isa |> ArcInvestigation.containsAssay "Assay1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const hasAssay = ArcInvestigation.containsAssay("Assay1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+has_assay = ArcInvestigation.containsAssay("Assay1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### RegisterAssayAt
+**Summary:** Register an assay identifier in a study at index.
+**Parameters:**
+- `studyIndex`: int
+- `assayIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.RegisterAssayAt(0, "Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.RegisterAssayAt(0, "Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.RegisterAssayAt(0, "Assay1")
+```
+</TabItem>
+</Tabs>
+
+### registerAssayAt
+**Summary:** Functional registration of an assay in a study by index.
+**Parameters:**
+- `studyIndex`: int
+- `assayIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.registerAssayAt(0, "Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.registerAssayAt(0, "Assay1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.registerAssayAt(0, "Assay1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### RegisterAssay
+**Summary:** Register an assay identifier in a study by identifier.
+**Parameters:**
+- `studyIdentifier`: string
+- `assayIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.RegisterAssay("Study1", "Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.RegisterAssay("Study1", "Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.RegisterAssay("Study1", "Assay1")
+```
+</TabItem>
+</Tabs>
+
+### registerAssay
+**Summary:** Functional registration of an assay identifier in a study by identifier.
+**Parameters:**
+- `studyIdentifier`: string
+- `assayIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.registerAssay("Study1", "Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.registerAssay("Study1", "Assay1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.registerAssay("Study1", "Assay1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### DeregisterAssayAt
+**Summary:** Remove an assay registration from a study by index.
+**Parameters:**
+- `studyIndex`: int
+- `assayIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.DeregisterAssayAt(0, "Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.DeregisterAssayAt(0, "Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.DeregisterAssayAt(0, "Assay1")
+```
+</TabItem>
+</Tabs>
+
+### deregisterAssayAt
+**Summary:** Functional removal of an assay registration by study index.
+**Parameters:**
+- `studyIndex`: int
+- `assayIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.deregisterAssayAt(0, "Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.deregisterAssayAt(0, "Assay1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.deregisterAssayAt(0, "Assay1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### DeregisterAssay
+**Summary:** Remove an assay registration by study identifier.
+**Parameters:**
+- `studyIdentifier`: string
+- `assayIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.DeregisterAssay("Study1", "Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.DeregisterAssay("Study1", "Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.DeregisterAssay("Study1", "Assay1")
+```
+</TabItem>
+</Tabs>
+
+### deregisterAssay
+**Summary:** Functional removal of an assay registration by study identifier.
+**Parameters:**
+- `studyIdentifier`: string
+- `assayIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.deregisterAssay("Study1", "Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.deregisterAssay("Study1", "Assay1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.deregisterAssay("Study1", "Assay1")(isa)
+```
+</TabItem>
+</Tabs>
+
+
+### AddStudy
+**Summary:** Add a study instance.
+**Parameters:**
+- `study`: [ArcStudy](./arc-study)
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.AddStudy(ArcStudy.init "Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.AddStudy(ArcStudy.init("Study1"));
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.AddStudy(ArcStudy.init("Study1"))
+```
+</TabItem>
+</Tabs>
+
+### addStudy
+**Summary:** Functional wrapper to add a study.
+**Parameters:**
+- `study`: [ArcStudy](./arc-study)
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.addStudy(ArcStudy.init "Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.addStudy(ArcStudy.init("Study1"))(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.addStudy(ArcStudy.init("Study1"))(isa)
+```
+</TabItem>
+</Tabs>
+
+### InitStudy
+**Summary:** Create and add an empty study.
+**Parameters:**
+- `studyIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.InitStudy("Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.InitStudy("Study1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.InitStudy("Study1")
+```
+</TabItem>
+</Tabs>
+
+### initStudy
+**Summary:** Functional builder to add an empty study.
+**Parameters:**
+- `studyIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.initStudy "Study1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.initStudy("Study1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.initStudy("Study1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### RegisterStudy
+**Summary:** Register a study identifier in the investigation.
+**Parameters:**
+- `studyIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.RegisterStudy("Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.RegisterStudy("Study1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.RegisterStudy("Study1")
+```
+</TabItem>
+</Tabs>
+
+### registerStudy
+**Summary:** Functional registration of a study identifier.
+**Parameters:**
+- `studyIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.registerStudy "Study1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.registerStudy("Study1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.registerStudy("Study1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### AddRegisteredStudy
+**Summary:** Add a study and register its identifier.
+**Parameters:**
+- `study`: [ArcStudy](./arc-study)
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.AddRegisteredStudy(ArcStudy.init "Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.AddRegisteredStudy(ArcStudy.init("Study1"));
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.AddRegisteredStudy(ArcStudy.init("Study1"))
+```
+</TabItem>
+</Tabs>
+
+### addRegisteredStudy
+**Summary:** Functional wrapper to add and register a study.
+**Parameters:**
+- `study`: [ArcStudy](./arc-study)
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.addRegisteredStudy(ArcStudy.init "Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.addRegisteredStudy(ArcStudy.init("Study1"))(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.addRegisteredStudy(ArcStudy.init("Study1"))(isa)
+```
+</TabItem>
+</Tabs>
+
+### DeleteStudyAt
+**Summary:** Delete a study by index without deregistration.
+**Parameters:**
+- `index`: int
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.DeleteStudyAt(0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.DeleteStudyAt(0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.DeleteStudyAt(0)
+```
+</TabItem>
+</Tabs>
+
+### deleteStudyAt
+**Summary:** Functional delete of a study by index (no deregistration).
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.deleteStudyAt 0
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.deleteStudyAt(0)(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.deleteStudyAt(0)(isa)
+```
+</TabItem>
+</Tabs>
+
+### DeleteStudy
+**Summary:** Delete a study by identifier without deregistration.
+**Parameters:**
+- `studyIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.DeleteStudy("Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.DeleteStudy("Study1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.DeleteStudy("Study1")
+```
+</TabItem>
+</Tabs>
+
+### deleteStudy
+**Summary:** Functional delete of a study by identifier (no deregistration).
+**Parameters:**
+- `studyIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.deleteStudy "Study1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.deleteStudy("Study1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.deleteStudy("Study1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### RemoveStudyAt
+**Summary:** Remove a study by index and deregister it.
+**Parameters:**
+- `index`: int
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.RemoveStudyAt(0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.RemoveStudyAt(0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.RemoveStudyAt(0)
+```
+</TabItem>
+</Tabs>
+
+### removeStudyAt
+**Summary:** Functional removal of a study by index with deregistration.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.removeStudyAt 0
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.removeStudyAt(0)(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.removeStudyAt(0)(isa)
+```
+</TabItem>
+</Tabs>
+
+### RemoveStudy
+**Summary:** Remove a study by identifier and deregister it.
+**Parameters:**
+- `studyIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.RemoveStudy("Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.RemoveStudy("Study1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.RemoveStudy("Study1")
+```
+</TabItem>
+</Tabs>
+
+### removeStudy
+**Summary:** Functional removal of a study by identifier with deregistration.
+**Parameters:**
+- `studyIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.removeStudy "Study1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.removeStudy("Study1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.removeStudy("Study1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### RenameStudy
+**Summary:** Rename a study identifier and update registrations.
+**Parameters:**
+- `oldIdentifier`: string
+- `newIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.RenameStudy("Study1", "Study2")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.RenameStudy("Study1", "Study2");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.RenameStudy("Study1", "Study2")
+```
+</TabItem>
+</Tabs>
+
+### renameStudy
+**Summary:** Functional rename of a study identifier with registration updates.
+**Parameters:**
+- `oldIdentifier`: string
+- `newIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.renameStudy("Study1", "Study2")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.renameStudy("Study1", "Study2")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.renameStudy("Study1", "Study2")(isa)
+```
+</TabItem>
+</Tabs>
+
+### SetStudyAt
+**Summary:** Replace a study at index.
+**Parameters:**
+- `index`: int
+- `study`: [ArcStudy](./arc-study)
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.SetStudyAt(0, ArcStudy.init "Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.SetStudyAt(0, ArcStudy.init("Study1"));
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.SetStudyAt(0, ArcStudy.init("Study1"))
+```
+</TabItem>
+</Tabs>
+
+### setStudyAt
+**Summary:** Functional replacement of a study at index.
+**Parameters:**
+- `index`: int
+- `study`: [ArcStudy](./arc-study)
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.setStudyAt(0, ArcStudy.init "Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.setStudyAt(0, ArcStudy.init("Study1"))(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.setStudyAt(0, ArcStudy.init("Study1"))(isa)
+```
+</TabItem>
+</Tabs>
+
+### SetStudy
+**Summary:** Replace a study by identifier.
+**Parameters:**
+- `studyIdentifier`: string
+- `study`: [ArcStudy](./arc-study)
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.SetStudy("Study1", ArcStudy.init "Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.SetStudy("Study1", ArcStudy.init("Study1"));
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.SetStudy("Study1", ArcStudy.init("Study1"))
+```
+</TabItem>
+</Tabs>
+
+### setStudy
+**Summary:** Functional replacement of a study by identifier.
+**Parameters:**
+- `studyIdentifier`: string
+- `study`: [ArcStudy](./arc-study)
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.setStudy("Study1", ArcStudy.init "Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.setStudy("Study1", ArcStudy.init("Study1"))(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.setStudy("Study1", ArcStudy.init("Study1"))(isa)
+```
+</TabItem>
+</Tabs>
+
+### GetStudyIndex
+**Summary:** Get the index of a study by identifier (throws if missing).
+**Parameters:**
+- `studyIdentifier`: string
+**ReturnType:** int
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let idx = isa.GetStudyIndex("Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const idx = isa.GetStudyIndex("Study1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+idx = isa.GetStudyIndex("Study1")
+```
+</TabItem>
+</Tabs>
+
+### getStudyIndex
+**Summary:** Functional index lookup for a study identifier.
+**Parameters:**
+- `studyIdentifier`: string
+**ReturnType:** int
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let idx = isa |> ArcInvestigation.getStudyIndex "Study1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const idx = ArcInvestigation.getStudyIndex("Study1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+idx = ArcInvestigation.getStudyIndex("Study1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### GetStudyAt
+**Summary:** Get a study by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study = isa.GetStudyAt(0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study = isa.GetStudyAt(0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study = isa.GetStudyAt(0)
+```
+</TabItem>
+</Tabs>
+
+### getStudyAt
+**Summary:** Functional getter for a study by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study = isa |> ArcInvestigation.getStudyAt 0
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study = ArcInvestigation.getStudyAt(0)(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study = ArcInvestigation.getStudyAt(0)(isa)
+```
+</TabItem>
+</Tabs>
+
+### GetStudy
+**Summary:** Get a study by identifier (throws if missing).
+**Parameters:**
+- `studyIdentifier`: string
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study = isa.GetStudy("Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study = isa.GetStudy("Study1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study = isa.GetStudy("Study1")
+```
+</TabItem>
+</Tabs>
+
+### getStudy
+**Summary:** Functional getter for a study by identifier.
+**Parameters:**
+- `studyIdentifier`: string
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study = isa |> ArcInvestigation.getStudy "Study1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study = ArcInvestigation.getStudy("Study1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study = ArcInvestigation.getStudy("Study1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### TryGetStudy
+**Summary:** Try to get a study by identifier.
+**Parameters:**
+- `studyIdentifier`: string
+**ReturnType:** [ArcStudy](./arc-study) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let studyOpt = isa.TryGetStudy("Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const studyOpt = isa.TryGetStudy("Study1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study_opt = isa.TryGetStudy("Study1")
+```
+</TabItem>
+</Tabs>
+
+### tryGetStudy
+**Summary:** Functional try-get study by identifier.
+**Parameters:**
+- `studyIdentifier`: string
+**ReturnType:** [ArcStudy](./arc-study) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let studyOpt = isa |> ArcInvestigation.tryGetStudy "Study1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const studyOpt = ArcInvestigation.tryGetStudy("Study1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study_opt = ArcInvestigation.tryGetStudy("Study1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### ContainsStudy
+**Summary:** Check if a study identifier exists.
+**Parameters:**
+- `studyIdentifier`: string
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let hasStudy = isa.ContainsStudy("Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const hasStudy = isa.ContainsStudy("Study1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+has_study = isa.ContainsStudy("Study1")
+```
+</TabItem>
+</Tabs>
+
+### containsStudy
+**Summary:** Functional check for a study identifier.
+**Parameters:**
+- `studyIdentifier`: string
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let hasStudy = isa |> ArcInvestigation.containsStudy "Study1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const hasStudy = ArcInvestigation.containsStudy("Study1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+has_study = ArcInvestigation.containsStudy("Study1")(isa)
+```
+</TabItem>
+</Tabs>
+
+
+### AddWorkflow
+**Summary:** Add a workflow instance.
+**Parameters:**
+- `workflow`: [ArcWorkflow](./arc-workflow)
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.AddWorkflow(ArcWorkflow.init "WF1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.AddWorkflow(ArcWorkflow.init("WF1"));
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.AddWorkflow(ArcWorkflow.init("WF1"))
+```
+</TabItem>
+</Tabs>
+
+### addWorkflow
+**Summary:** Functional wrapper to add a workflow.
+**Parameters:**
+- `workflow`: [ArcWorkflow](./arc-workflow)
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.addWorkflow(ArcWorkflow.init "WF1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.addWorkflow(ArcWorkflow.init("WF1"))(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.addWorkflow(ArcWorkflow.init("WF1"))(isa)
+```
+</TabItem>
+</Tabs>
+
+### InitWorkflow
+**Summary:** Create and add an empty workflow.
+**Parameters:**
+- `workflowIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.InitWorkflow("WF1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.InitWorkflow("WF1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.InitWorkflow("WF1")
+```
+</TabItem>
+</Tabs>
+
+### initWorkflow
+**Summary:** Functional builder to add an empty workflow.
+**Parameters:**
+- `workflowIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.initWorkflow "WF1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.initWorkflow("WF1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.initWorkflow("WF1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### DeleteWorkflowAt
+**Summary:** Delete a workflow by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.DeleteWorkflowAt(0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.DeleteWorkflowAt(0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.DeleteWorkflowAt(0)
+```
+</TabItem>
+</Tabs>
+
+### deleteWorkflowAt
+**Summary:** Functional delete of a workflow by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.deleteWorkflowAt 0
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.deleteWorkflowAt(0)(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.deleteWorkflowAt(0)(isa)
+```
+</TabItem>
+</Tabs>
+
+### DeleteWorkflow
+**Summary:** Delete a workflow by identifier and clean references.
+**Parameters:**
+- `workflowIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.DeleteWorkflow("WF1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.DeleteWorkflow("WF1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.DeleteWorkflow("WF1")
+```
+</TabItem>
+</Tabs>
+
+### deleteWorkflow
+**Summary:** Functional delete of a workflow by identifier with reference cleanup.
+**Parameters:**
+- `workflowIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.deleteWorkflow "WF1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.deleteWorkflow("WF1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.deleteWorkflow("WF1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### RenameWorkflow
+**Summary:** Rename a workflow identifier and update sub-workflow and run references.
+**Parameters:**
+- `oldIdentifier`: string
+- `newIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.RenameWorkflow("WF1", "WF2")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.RenameWorkflow("WF1", "WF2");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.RenameWorkflow("WF1", "WF2")
+```
+</TabItem>
+</Tabs>
+
+### renameWorkflow
+**Summary:** Functional rename of a workflow identifier with reference updates.
+**Parameters:**
+- `oldIdentifier`: string
+- `newIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.renameWorkflow("WF1", "WF2")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.renameWorkflow("WF1", "WF2")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.renameWorkflow("WF1", "WF2")(isa)
+```
+</TabItem>
+</Tabs>
+
+### SetWorkflowAt
+**Summary:** Replace a workflow at index.
+**Parameters:**
+- `index`: int
+- `workflow`: [ArcWorkflow](./arc-workflow)
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.SetWorkflowAt(0, ArcWorkflow.init "WF1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.SetWorkflowAt(0, ArcWorkflow.init("WF1"));
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.SetWorkflowAt(0, ArcWorkflow.init("WF1"))
+```
+</TabItem>
+</Tabs>
+
+### setWorkflowAt
+**Summary:** Functional replacement of a workflow at index.
+**Parameters:**
+- `index`: int
+- `workflow`: [ArcWorkflow](./arc-workflow)
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.setWorkflowAt(0, ArcWorkflow.init "WF1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.setWorkflowAt(0, ArcWorkflow.init("WF1"))(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.setWorkflowAt(0, ArcWorkflow.init("WF1"))(isa)
+```
+</TabItem>
+</Tabs>
+
+### SetWorkflow
+**Summary:** Replace a workflow by identifier.
+**Parameters:**
+- `workflowIdentifier`: string
+- `workflow`: [ArcWorkflow](./arc-workflow)
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.SetWorkflow("WF1", ArcWorkflow.init "WF1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.SetWorkflow("WF1", ArcWorkflow.init("WF1"));
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.SetWorkflow("WF1", ArcWorkflow.init("WF1"))
+```
+</TabItem>
+</Tabs>
+
+### setWorkflow
+**Summary:** Functional replacement of a workflow by identifier.
+**Parameters:**
+- `workflowIdentifier`: string
+- `workflow`: [ArcWorkflow](./arc-workflow)
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.setWorkflow("WF1", ArcWorkflow.init "WF1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.setWorkflow("WF1", ArcWorkflow.init("WF1"))(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.setWorkflow("WF1", ArcWorkflow.init("WF1"))(isa)
+```
+</TabItem>
+</Tabs>
+
+### GetWorkflowIndex
+**Summary:** Get the index of a workflow by identifier.
+**Parameters:**
+- `workflowIdentifier`: string
+**ReturnType:** int
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let idx = isa.GetWorkflowIndex("WF1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const idx = isa.GetWorkflowIndex("WF1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+idx = isa.GetWorkflowIndex("WF1")
+```
+</TabItem>
+</Tabs>
+
+### getWorkflowIndex
+**Summary:** Functional index lookup for a workflow identifier.
+**Parameters:**
+- `workflowIdentifier`: string
+**ReturnType:** int
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let idx = isa |> ArcInvestigation.getWorkflowIndex "WF1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const idx = ArcInvestigation.getWorkflowIndex("WF1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+idx = ArcInvestigation.getWorkflowIndex("WF1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### GetWorkflowAt
+**Summary:** Get a workflow by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wf = isa.GetWorkflowAt(0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wf = isa.GetWorkflowAt(0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf = isa.GetWorkflowAt(0)
+```
+</TabItem>
+</Tabs>
+
+### getWorkflowAt
+**Summary:** Functional getter for a workflow by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wf = isa |> ArcInvestigation.getWorkflowAt 0
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wf = ArcInvestigation.getWorkflowAt(0)(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf = ArcInvestigation.getWorkflowAt(0)(isa)
+```
+</TabItem>
+</Tabs>
+
+### GetWorkflow
+**Summary:** Get a workflow by identifier.
+**Parameters:**
+- `workflowIdentifier`: string
+**ReturnType:** [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wf = isa.GetWorkflow("WF1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wf = isa.GetWorkflow("WF1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf = isa.GetWorkflow("WF1")
+```
+</TabItem>
+</Tabs>
+
+### getWorkflow
+**Summary:** Functional getter for a workflow by identifier.
+**Parameters:**
+- `workflowIdentifier`: string
+**ReturnType:** [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wf = isa |> ArcInvestigation.getWorkflow "WF1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wf = ArcInvestigation.getWorkflow("WF1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf = ArcInvestigation.getWorkflow("WF1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### TryGetWorkflow
+**Summary:** Try to get a workflow by identifier.
+**Parameters:**
+- `workflowIdentifier`: string
+**ReturnType:** [ArcWorkflow](./arc-workflow) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wfOpt = isa.TryGetWorkflow("WF1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wfOpt = isa.TryGetWorkflow("WF1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf_opt = isa.TryGetWorkflow("WF1")
+```
+</TabItem>
+</Tabs>
+
+### tryGetWorkflow
+**Summary:** Functional try-get workflow by identifier.
+**Parameters:**
+- `workflowIdentifier`: string
+**ReturnType:** [ArcWorkflow](./arc-workflow) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wfOpt = isa |> ArcInvestigation.tryGetWorkflow "WF1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wfOpt = ArcInvestigation.tryGetWorkflow("WF1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf_opt = ArcInvestigation.tryGetWorkflow("WF1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### ContainsWorkflow
+**Summary:** Check if a workflow identifier exists.
+**Parameters:**
+- `workflowIdentifier`: string
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let hasWf = isa.ContainsWorkflow("WF1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const hasWf = isa.ContainsWorkflow("WF1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+has_wf = isa.ContainsWorkflow("WF1")
+```
+</TabItem>
+</Tabs>
+
+### containsWorkflow
+**Summary:** Functional check for a workflow identifier.
+**Parameters:**
+- `workflowIdentifier`: string
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let hasWf = isa |> ArcInvestigation.containsWorkflow "WF1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const hasWf = ArcInvestigation.containsWorkflow("WF1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+has_wf = ArcInvestigation.containsWorkflow("WF1")(isa)
+```
+</TabItem>
+</Tabs>
+
+
+### AddRun
+**Summary:** Add a run instance.
+**Parameters:**
+- `run`: [ArcRun](./arc-run)
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.AddRun(ArcRun.init "Run1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.AddRun(ArcRun.init("Run1"));
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.AddRun(ArcRun.init("Run1"))
+```
+</TabItem>
+</Tabs>
+
+### addRun
+**Summary:** Functional wrapper to add a run.
+**Parameters:**
+- `run`: [ArcRun](./arc-run)
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.addRun(ArcRun.init "Run1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.addRun(ArcRun.init("Run1"))(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.addRun(ArcRun.init("Run1"))(isa)
+```
+</TabItem>
+</Tabs>
+
+### InitRun
+**Summary:** Create and add an empty run.
+**Parameters:**
+- `runIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.InitRun("Run1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.InitRun("Run1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.InitRun("Run1")
+```
+</TabItem>
+</Tabs>
+
+### initRun
+**Summary:** Functional builder to add an empty run.
+**Parameters:**
+- `runIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.initRun "Run1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.initRun("Run1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.initRun("Run1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### DeleteRunAt
+**Summary:** Delete a run by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.DeleteRunAt(0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.DeleteRunAt(0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.DeleteRunAt(0)
+```
+</TabItem>
+</Tabs>
+
+### deleteRunAt
+**Summary:** Functional delete of a run by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.deleteRunAt 0
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.deleteRunAt(0)(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.deleteRunAt(0)(isa)
+```
+</TabItem>
+</Tabs>
+
+### DeleteRun
+**Summary:** Delete a run by identifier.
+**Parameters:**
+- `runIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.DeleteRun("Run1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.DeleteRun("Run1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.DeleteRun("Run1")
+```
+</TabItem>
+</Tabs>
+
+### deleteRun
+**Summary:** Functional delete of a run by identifier.
+**Parameters:**
+- `runIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.deleteRun "Run1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.deleteRun("Run1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.deleteRun("Run1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### RenameRun
+**Summary:** Rename a run identifier.
+**Parameters:**
+- `oldIdentifier`: string
+- `newIdentifier`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.RenameRun("Run1", "Run2")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.RenameRun("Run1", "Run2");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.RenameRun("Run1", "Run2")
+```
+</TabItem>
+</Tabs>
+
+### renameRun
+**Summary:** Functional rename of a run identifier.
+**Parameters:**
+- `oldIdentifier`: string
+- `newIdentifier`: string
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.renameRun("Run1", "Run2")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.renameRun("Run1", "Run2")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.renameRun("Run1", "Run2")(isa)
+```
+</TabItem>
+</Tabs>
+
+### SetRunAt
+**Summary:** Replace a run at index.
+**Parameters:**
+- `index`: int
+- `run`: [ArcRun](./arc-run)
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.SetRunAt(0, ArcRun.init "Run1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.SetRunAt(0, ArcRun.init("Run1"));
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.SetRunAt(0, ArcRun.init("Run1"))
+```
+</TabItem>
+</Tabs>
+
+### setRunAt
+**Summary:** Functional replacement of a run at index.
+**Parameters:**
+- `index`: int
+- `run`: [ArcRun](./arc-run)
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.setRunAt(0, ArcRun.init "Run1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.setRunAt(0, ArcRun.init("Run1"))(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.setRunAt(0, ArcRun.init("Run1"))(isa)
+```
+</TabItem>
+</Tabs>
+
+### SetRun
+**Summary:** Replace a run by identifier.
+**Parameters:**
+- `runIdentifier`: string
+- `run`: [ArcRun](./arc-run)
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+isa.SetRun("Run1", ArcRun.init "Run1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+isa.SetRun("Run1", ArcRun.init("Run1"));
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa.SetRun("Run1", ArcRun.init("Run1"))
+```
+</TabItem>
+</Tabs>
+
+### setRun
+**Summary:** Functional replacement of a run by identifier.
+**Parameters:**
+- `runIdentifier`: string
+- `run`: [ArcRun](./arc-run)
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isa' = isa |> ArcInvestigation.setRun("Run1", ArcRun.init "Run1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isa2 = ArcInvestigation.setRun("Run1", ArcRun.init("Run1"))(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+isa2 = ArcInvestigation.setRun("Run1", ArcRun.init("Run1"))(isa)
+```
+</TabItem>
+</Tabs>
+
+### GetRunIndex
+**Summary:** Get the index of a run by identifier.
+**Parameters:**
+- `runIdentifier`: string
+**ReturnType:** int
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let idx = isa.GetRunIndex("Run1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const idx = isa.GetRunIndex("Run1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+idx = isa.GetRunIndex("Run1")
+```
+</TabItem>
+</Tabs>
+
+### getRunIndex
+**Summary:** Functional index lookup for a run identifier.
+**Parameters:**
+- `runIdentifier`: string
+**ReturnType:** int
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let idx = isa |> ArcInvestigation.getRunIndex "Run1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const idx = ArcInvestigation.getRunIndex("Run1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+idx = ArcInvestigation.getRunIndex("Run1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### GetRunAt
+**Summary:** Get a run by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run = isa.GetRunAt(0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run = isa.GetRunAt(0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run = isa.GetRunAt(0)
+```
+</TabItem>
+</Tabs>
+
+### getRunAt
+**Summary:** Functional getter for a run by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run = isa |> ArcInvestigation.getRunAt 0
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run = ArcInvestigation.getRunAt(0)(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run = ArcInvestigation.getRunAt(0)(isa)
+```
+</TabItem>
+</Tabs>
+
+### GetRun
+**Summary:** Get a run by identifier.
+**Parameters:**
+- `runIdentifier`: string
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run = isa.GetRun("Run1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run = isa.GetRun("Run1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run = isa.GetRun("Run1")
+```
+</TabItem>
+</Tabs>
+
+### getRun
+**Summary:** Functional getter for a run by identifier.
+**Parameters:**
+- `runIdentifier`: string
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run = isa |> ArcInvestigation.getRun "Run1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run = ArcInvestigation.getRun("Run1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run = ArcInvestigation.getRun("Run1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### TryGetRun
+**Summary:** Try to get a run by identifier.
+**Parameters:**
+- `runIdentifier`: string
+**ReturnType:** [ArcRun](./arc-run) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let runOpt = isa.TryGetRun("Run1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const runOpt = isa.TryGetRun("Run1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run_opt = isa.TryGetRun("Run1")
+```
+</TabItem>
+</Tabs>
+
+### tryGetRun
+**Summary:** Functional try-get run by identifier.
+**Parameters:**
+- `runIdentifier`: string
+**ReturnType:** [ArcRun](./arc-run) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let runOpt = isa |> ArcInvestigation.tryGetRun "Run1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const runOpt = ArcInvestigation.tryGetRun("Run1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run_opt = ArcInvestigation.tryGetRun("Run1")(isa)
+```
+</TabItem>
+</Tabs>
+
+### ContainsRun
+**Summary:** Check if a run identifier exists.
+**Parameters:**
+- `runIdentifier`: string
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let hasRun = isa.ContainsRun("Run1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const hasRun = isa.ContainsRun("Run1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+has_run = isa.ContainsRun("Run1")
+```
+</TabItem>
+</Tabs>
+
+### containsRun
+**Summary:** Functional check for a run identifier.
+**Parameters:**
+- `runIdentifier`: string
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let hasRun = isa |> ArcInvestigation.containsRun "Run1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const hasRun = ArcInvestigation.containsRun("Run1")(isa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+has_run = ArcInvestigation.containsRun("Run1")(isa)
+```
+</TabItem>
+</Tabs>
+

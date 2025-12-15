@@ -1,0 +1,2622 @@
+---
+title: "ArcTable"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+## Fields
+- `Name`: string
+- `Headers`: [CompositeHeader](./composite-header) ResizeArray
+- `Values`: ArcTableValues (internal)
+- `ColumnRefs`: internal mapping
+- `RowCount`: int (mutable)
+- `ColumnCount`: int (computed)
+- `Columns`: [CompositeColumn](./composite-column) ResizeArray (computed)
+- `ColumnCount` / `RowCount` accessors
+
+## Methods
+
+### Constructor
+**Summary:** Create a table with a name, optional headers, and optional column values.
+**Parameters:**
+- `name`: string
+- `headers`: [CompositeHeader](./composite-header) array option
+- `columns`: [CompositeCell](./composite-cell) array array option
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+open ARCtrl
+let t = ArcTable(name = "Table1", headers = ResizeArray(), columns = ResizeArray())
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+import { ArcTable } from "@nfdi4plants/arctrl";
+
+const t = new ArcTable("Table1", [], []);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+from arctrl import ArcTable
+
+t = ArcTable("Table1", headers=[], columns=[])
+```
+</TabItem>
+</Tabs>
+
+### Validate
+**Summary:** Check headers and values for consistency; optionally raise an exception.
+**Parameters:**
+- `raiseException`: bool option
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let ok = t.Validate(raiseException = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const ok = t.Validate(true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+ok = t.Validate(raiseException=True)
+```
+</TabItem>
+</Tabs>
+
+### Copy
+**Summary:** Deep clone of headers and values.
+**Parameters:** none
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let clone = t.Copy()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const clone = t.Copy();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+clone = t.Copy()
+```
+</TabItem>
+</Tabs>
+
+### TryGetCellAt
+**Summary:** Try to retrieve a cell by column and row.
+**Parameters:**
+- `column`: int
+- `row`: int
+**ReturnType:** [CompositeCell](./composite-cell) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let cellOpt = t.TryGetCellAt(0, 0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const cellOpt = t.TryGetCellAt(0, 0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+cell_opt = t.TryGetCellAt(0, 0)
+```
+</TabItem>
+</Tabs>
+
+### GetCellAt
+**Summary:** Get a cell by column and row (throws if missing).
+**Parameters:**
+- `column`: int
+- `row`: int
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let cell = t.GetCellAt(0, 0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const cell = t.GetCellAt(0, 0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+cell = t.GetCellAt(0, 0)
+```
+</TabItem>
+</Tabs>
+
+### UpdateCellAt
+**Summary:** Update a cell at column and row; optional validation skip.
+**Parameters:**
+- `column`: int
+- `row`: int
+- `cell`: [CompositeCell](./composite-cell)
+- `skipValidation`: bool option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.UpdateCellAt(0, 0, CompositeCell.createFreeText "v", skipValidation = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.UpdateCellAt(0, 0, CompositeCell.createFreeText("v"), true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.UpdateCellAt(0, 0, CompositeCell.createFreeText("v"), skipValidation=True)
+```
+</TabItem>
+</Tabs>
+
+### SetCellAt
+**Summary:** Set a cell, extending rows if needed; optional validation skip.
+**Parameters:**
+- `column`: int
+- `row`: int
+- `cell`: [CompositeCell](./composite-cell)
+- `skipValidation`: bool option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.SetCellAt(0, 0, CompositeCell.createFreeText "v", skipValidation = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.SetCellAt(0, 0, CompositeCell.createFreeText("v"), true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.SetCellAt(0, 0, CompositeCell.createFreeText("v"), skipValidation=True)
+```
+</TabItem>
+</Tabs>
+
+### UpdateCellsBy
+**Summary:** Map all cells with indices; optional validation skip.
+**Parameters:**
+- `f`: int -> int -> [CompositeCell](./composite-cell) -> [CompositeCell](./composite-cell)
+- `skipValidation`: bool option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.UpdateCellsBy((fun c r cell -> cell), skipValidation = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.UpdateCellsBy((c, r, cell) => cell, true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.UpdateCellsBy(lambda c, r, cell: cell, skipValidation=True)
+```
+</TabItem>
+</Tabs>
+
+### UpdateCellBy
+**Summary:** Map a single cell with indices; optional validation skip.
+**Parameters:**
+- `column`: int
+- `row`: int
+- `f`: int -> int -> [CompositeCell](./composite-cell) -> [CompositeCell](./composite-cell)
+- `skipValidation`: bool option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.UpdateCellBy(0, 0, (fun c r cell -> cell), skipValidation = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.UpdateCellBy(0, 0, (c, r, cell) => cell, true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.UpdateCellBy(0, 0, lambda c, r, cell: cell, skipValidation=True)
+```
+</TabItem>
+</Tabs>
+
+### UpdateHeader
+**Summary:** Replace a header and optionally convert cells to match.
+**Parameters:**
+- `index`: int
+- `newHeader`: [CompositeHeader](./composite-header)
+- `forceConvertCells`: bool option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.UpdateHeader(0, CompositeHeader.FreeText "Name", forceConvertCells = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.UpdateHeader(0, CompositeHeader.FreeText("Name"), true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.UpdateHeader(0, CompositeHeader.FreeText("Name"), forceConvertCells=True)
+```
+</TabItem>
+</Tabs>
+
+### IterColumns
+**Summary:** Iterate columns with an action.
+**Parameters:**
+- `action`: [CompositeColumn](./composite-column) -> unit
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.IterColumns(fun col -> ())
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.IterColumns(col => {});
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.IterColumns(lambda col: None)
+```
+</TabItem>
+</Tabs>
+
+### IteriColumns
+**Summary:** Iterate columns with index.
+**Parameters:**
+- `action`: int -> [CompositeColumn](./composite-column) -> unit
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.IteriColumns(fun i col -> ())
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.IteriColumns((i, col) => {});
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.IteriColumns(lambda i, col: None)
+```
+</TabItem>
+</Tabs>
+
+### AddColumn
+**Summary:** Insert or replace a column at an optional index.
+**Parameters:**
+- `header`: [CompositeHeader](./composite-header)
+- `cells`: [CompositeCell](./composite-cell) array option
+- `index`: int option
+- `forceReplace`: bool option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.AddColumn(CompositeHeader.FreeText "Name", ResizeArray(), index = 0, forceReplace = false)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.AddColumn(CompositeHeader.FreeText("Name"), [], 0, false);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.AddColumn(CompositeHeader.FreeText("Name"), [], index=0, forceReplace=False)
+```
+</TabItem>
+</Tabs>
+
+### AddColumnFill
+**Summary:** Insert a column filled with a constant cell value.
+**Parameters:**
+- `header`: [CompositeHeader](./composite-header)
+- `cell`: [CompositeCell](./composite-cell)
+- `index`: int option
+- `forceReplace`: bool option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.AddColumnFill(CompositeHeader.FreeText "Constant", CompositeCell.createFreeText "v")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.AddColumnFill(CompositeHeader.FreeText("Constant"), CompositeCell.createFreeText("v"));
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.AddColumnFill(CompositeHeader.FreeText("Constant"), CompositeCell.createFreeText("v"))
+```
+</TabItem>
+</Tabs>
+
+### UpdateColumn
+**Summary:** Replace a column header and cells at index.
+**Parameters:**
+- `index`: int
+- `header`: [CompositeHeader](./composite-header)
+- `cells`: [CompositeCell](./composite-cell) array option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.UpdateColumn(0, CompositeHeader.FreeText "Name", cells = None)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.UpdateColumn(0, CompositeHeader.FreeText("Name"), []);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.UpdateColumn(0, CompositeHeader.FreeText("Name"), [])
+```
+</TabItem>
+</Tabs>
+
+### InsertColumn
+**Summary:** Insert a column at index (alias to AddColumn with index).
+**Parameters:**
+- `index`: int
+- `header`: [CompositeHeader](./composite-header)
+- `cells`: [CompositeCell](./composite-cell) array option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.InsertColumn(0, CompositeHeader.FreeText "Name", ResizeArray())
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.InsertColumn(0, CompositeHeader.FreeText("Name"), []);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.InsertColumn(0, CompositeHeader.FreeText("Name"), [])
+```
+</TabItem>
+</Tabs>
+
+### AppendColumn
+**Summary:** Append a column at the end.
+**Parameters:**
+- `header`: [CompositeHeader](./composite-header)
+- `cells`: [CompositeCell](./composite-cell) array option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.AppendColumn(CompositeHeader.FreeText "Name", ResizeArray())
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.AppendColumn(CompositeHeader.FreeText("Name"), []);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.AppendColumn(CompositeHeader.FreeText("Name"), [])
+```
+</TabItem>
+</Tabs>
+
+### AddColumns
+**Summary:** Bulk add or replace columns at an optional index.
+**Parameters:**
+- `columns`: [CompositeColumn](./composite-column) array
+- `index`: int option
+- `forceReplace`: bool option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.AddColumns(ResizeArray(), index = 0, forceReplace = false)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.AddColumns([], 0, false);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.AddColumns([], index=0, forceReplace=False)
+```
+</TabItem>
+</Tabs>
+
+### RemoveColumn
+**Summary:** Remove a column by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.RemoveColumn(0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.RemoveColumn(0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.RemoveColumn(0)
+```
+</TabItem>
+</Tabs>
+
+### RemoveColumns
+**Summary:** Remove multiple columns by index list.
+**Parameters:**
+- `indices`: int array
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.RemoveColumns([|0;1|] |> ResizeArray)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.RemoveColumns([0, 1]);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.RemoveColumns([0, 1])
+```
+</TabItem>
+</Tabs>
+
+### GetColumn
+**Summary:** Get a column by index, filling missing cells if requested.
+**Parameters:**
+- `index`: int
+- `failOnMissingCell`: bool option
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let col = t.GetColumn(0, failOnMissingCell = false)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const col = t.GetColumn(0, false);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col = t.GetColumn(0, failOnMissingCell=False)
+```
+</TabItem>
+</Tabs>
+
+### TryGetColumnByHeader
+**Summary:** Try to get a column by exact header.
+**Parameters:**
+- `header`: [CompositeHeader](./composite-header)
+- `failOnMissingCell`: bool option
+**ReturnType:** [CompositeColumn](./composite-column) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let colOpt = t.TryGetColumnByHeader(CompositeHeader.FreeText "Name", failOnMissingCell = false)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const colOpt = t.TryGetColumnByHeader(CompositeHeader.FreeText("Name"), false);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col_opt = t.TryGetColumnByHeader(CompositeHeader.FreeText("Name"), failOnMissingCell=False)
+```
+</TabItem>
+</Tabs>
+
+### TryGetColumnByHeaderBy
+**Summary:** Try to get a column by predicate on headers.
+**Parameters:**
+- `predicate`: [CompositeHeader](./composite-header) -> bool
+- `failOnMissingCell`: bool option
+**ReturnType:** [CompositeColumn](./composite-column) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let colOpt = t.TryGetColumnByHeaderBy((fun h -> true), failOnMissingCell = false)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const colOpt = t.TryGetColumnByHeaderBy(_ => true, false);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col_opt = t.TryGetColumnByHeaderBy(lambda h: True, failOnMissingCell=False)
+```
+</TabItem>
+</Tabs>
+
+### GetColumnByHeader
+**Summary:** Get a column by exact header (throws if missing).
+**Parameters:**
+- `header`: [CompositeHeader](./composite-header)
+- `failOnMissingCell`: bool option
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let col = t.GetColumnByHeader(CompositeHeader.FreeText "Name", failOnMissingCell = false)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const col = t.GetColumnByHeader(CompositeHeader.FreeText("Name"), false);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col = t.GetColumnByHeader(CompositeHeader.FreeText("Name"), failOnMissingCell=False)
+```
+</TabItem>
+</Tabs>
+
+### TryGetInputColumn
+**Summary:** Get the first Input column if present.
+**Parameters:** none
+**ReturnType:** [CompositeColumn](./composite-column) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let inputCol = t.TryGetInputColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const inputCol = t.TryGetInputColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+input_col = t.TryGetInputColumn()
+```
+</TabItem>
+</Tabs>
+
+### GetInputColumn
+**Summary:** Get the first Input column (throws if missing).
+**Parameters:** none
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let inputCol = t.GetInputColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const inputCol = t.GetInputColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+input_col = t.GetInputColumn()
+```
+</TabItem>
+</Tabs>
+
+### TryGetOutputColumn
+**Summary:** Get the first Output column if present.
+**Parameters:** none
+**ReturnType:** [CompositeColumn](./composite-column) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let outputCol = t.TryGetOutputColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const outputCol = t.TryGetOutputColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+output_col = t.TryGetOutputColumn()
+```
+</TabItem>
+</Tabs>
+
+### GetOutputColumn
+**Summary:** Get the first Output column (throws if missing).
+**Parameters:** none
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let outputCol = t.GetOutputColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const outputCol = t.GetOutputColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+output_col = t.GetOutputColumn()
+```
+</TabItem>
+</Tabs>
+
+### MoveColumn
+**Summary:** Move a column from a start index to an end index.
+**Parameters:**
+- `startCol`: int
+- `endCol`: int
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.MoveColumn(0, 1)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.MoveColumn(0, 1);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.MoveColumn(0, 1)
+```
+</TabItem>
+</Tabs>
+
+### RescanValueMap
+**Summary:** Rebuild the internal value map from current cells.
+**Parameters:** none
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.RescanValueMap()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.RescanValueMap();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.RescanValueMap()
+```
+</TabItem>
+</Tabs>
+
+### AddRow
+**Summary:** Insert a row at an optional index.
+**Parameters:**
+- `cells`: [CompositeCell](./composite-cell) array option
+- `rowIndex`: int option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.AddRow(rowIndex = 0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.AddRow([], 0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.AddRow(rowIndex=0)
+```
+</TabItem>
+</Tabs>
+
+### AppendRow
+**Summary:** Append a row at the end.
+**Parameters:**
+- `cells`: [CompositeCell](./composite-cell) array option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.AppendRow()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.AppendRow();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.AppendRow()
+```
+</TabItem>
+</Tabs>
+
+### InsertRow
+**Summary:** Insert a row at a specific index.
+**Parameters:**
+- `index`: int
+- `cells`: [CompositeCell](./composite-cell) array option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.InsertRow(0, ResizeArray())
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.InsertRow(0, []);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.InsertRow(0, [])
+```
+</TabItem>
+</Tabs>
+
+### AddRows
+**Summary:** Add multiple rows at an optional index.
+**Parameters:**
+- `rows`: [CompositeCell](./composite-cell) array array
+- `index`: int option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.AddRows([|ResizeArray()|] |> ResizeArray, index = 0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.AddRows([[]], 0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.AddRows([[]], index=0)
+```
+</TabItem>
+</Tabs>
+
+### AddRowsEmpty
+**Summary:** Add a number of empty rows using header-aware empty cells.
+**Parameters:**
+- `rowCount`: int
+- `index`: int option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.AddRowsEmpty(3, index = 0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.AddRowsEmpty(3, 0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.AddRowsEmpty(3, index=0)
+```
+</TabItem>
+</Tabs>
+
+### UpdateRow
+**Summary:** Replace a row at index with new cells.
+**Parameters:**
+- `rowIndex`: int
+- `cells`: [CompositeCell](./composite-cell) array
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.UpdateRow(0, ResizeArray [CompositeCell.createFreeText "v"])
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.UpdateRow(0, [CompositeCell.createFreeText("v")]);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.UpdateRow(0, [CompositeCell.createFreeText("v")])
+```
+</TabItem>
+</Tabs>
+
+### RemoveRow
+**Summary:** Remove a row by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.RemoveRow(0)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.RemoveRow(0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.RemoveRow(0)
+```
+</TabItem>
+</Tabs>
+
+### RemoveRows
+**Summary:** Remove multiple rows by index list.
+**Parameters:**
+- `indices`: int array
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.RemoveRows([|0;1|] |> ResizeArray)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.RemoveRows([0, 1]);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.RemoveRows([0, 1])
+```
+</TabItem>
+</Tabs>
+
+### GetRow
+**Summary:** Get a row by index; optional validation skip.
+**Parameters:**
+- `rowIndex`: int
+- `SkipValidation`: bool option
+**ReturnType:** [CompositeCell](./composite-cell) ResizeArray
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let row = t.GetRow(0, SkipValidation = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const row = t.GetRow(0, true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+row = t.GetRow(0, SkipValidation=True)
+```
+</TabItem>
+</Tabs>
+
+### Join
+**Summary:** Merge another table with header/value alignment and options.
+**Parameters:**
+- `table`: [ArcTable](./arc-table)
+- `index`: int option
+- `joinOptions`: obj option
+- `forceReplace`: bool option
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.Join(other, forceReplace = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.Join(other, undefined, undefined, true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.Join(other, forceReplace=True)
+```
+</TabItem>
+</Tabs>
+
+### AddProtocolTypeColumn
+**Summary:** Add a protocol type column.
+**Parameters:**
+- `unit`: unit
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.AddProtocolTypeColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.AddProtocolTypeColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.AddProtocolTypeColumn()
+```
+</TabItem>
+</Tabs>
+
+### AddProtocolVersionColumn
+**Summary:** Add a protocol version column.
+**Parameters:** none
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.AddProtocolVersionColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.AddProtocolVersionColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.AddProtocolVersionColumn()
+```
+</TabItem>
+</Tabs>
+
+### AddProtocolUriColumn
+**Summary:** Add a protocol URI column.
+**Parameters:** none
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.AddProtocolUriColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.AddProtocolUriColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.AddProtocolUriColumn()
+```
+</TabItem>
+</Tabs>
+
+### AddProtocolDescriptionColumn
+**Summary:** Add a protocol description column.
+**Parameters:** none
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.AddProtocolDescriptionColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.AddProtocolDescriptionColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.AddProtocolDescriptionColumn()
+```
+</TabItem>
+</Tabs>
+
+### AddProtocolNameColumn
+**Summary:** Add a protocol name column.
+**Parameters:** none
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+t.AddProtocolNameColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+t.AddProtocolNameColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t.AddProtocolNameColumn()
+```
+</TabItem>
+</Tabs>
+
+### GetProtocolTypeColumn
+**Summary:** Get the protocol type column (throws if missing).
+**Parameters:** none
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let col = t.GetProtocolTypeColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const col = t.GetProtocolTypeColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col = t.GetProtocolTypeColumn()
+```
+</TabItem>
+</Tabs>
+
+### GetProtocolVersionColumn
+**Summary:** Get the protocol version column (throws if missing).
+**Parameters:** none
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let col = t.GetProtocolVersionColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const col = t.GetProtocolVersionColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col = t.GetProtocolVersionColumn()
+```
+</TabItem>
+</Tabs>
+
+### GetProtocolUriColumn
+**Summary:** Get the protocol URI column (throws if missing).
+**Parameters:** none
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let col = t.GetProtocolUriColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const col = t.GetProtocolUriColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col = t.GetProtocolUriColumn()
+```
+</TabItem>
+</Tabs>
+
+### GetProtocolDescriptionColumn
+**Summary:** Get the protocol description column (throws if missing).
+**Parameters:** none
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let col = t.GetProtocolDescriptionColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const col = t.GetProtocolDescriptionColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col = t.GetProtocolDescriptionColumn()
+```
+</TabItem>
+</Tabs>
+
+### GetProtocolNameColumn
+**Summary:** Get the protocol name column (throws if missing).
+**Parameters:** none
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let col = t.GetProtocolNameColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const col = t.GetProtocolNameColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col = t.GetProtocolNameColumn()
+```
+</TabItem>
+</Tabs>
+
+### TryGetProtocolNameColumn
+**Summary:** Try to get the protocol name column.
+**Parameters:** none
+**ReturnType:** [CompositeColumn](./composite-column) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let colOpt = t.TryGetProtocolNameColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const colOpt = t.TryGetProtocolNameColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col_opt = t.TryGetProtocolNameColumn()
+```
+</TabItem>
+</Tabs>
+
+### GetComponentColumns
+**Summary:** Get component columns only.
+**Parameters:** none
+**ReturnType:** [CompositeColumn](./composite-column) ResizeArray
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let comps = t.GetComponentColumns()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const comps = t.GetComponentColumns();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+comps = t.GetComponentColumns()
+```
+</TabItem>
+</Tabs>
+
+### SplitByColumnValues
+**Summary:** Split into tables grouped by the value of a column index.
+**Parameters:**
+- `columnIndex`: int
+**ReturnType:** [ArcTable](./arc-table) ResizeArray
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let parts = t.SplitByColumnValues 0
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const parts = t.SplitByColumnValues(0);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+parts = t.SplitByColumnValues(0)
+```
+</TabItem>
+</Tabs>
+
+### SplitByColumnValuesByHeader
+**Summary:** Split into tables grouped by header value.
+**Parameters:**
+- `header`: [CompositeHeader](./composite-header)
+**ReturnType:** [ArcTable](./arc-table) ResizeArray
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let parts = t.SplitByColumnValuesByHeader(CompositeHeader.FreeText "Name")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const parts = t.SplitByColumnValuesByHeader(CompositeHeader.FreeText("Name"));
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+parts = t.SplitByColumnValuesByHeader(CompositeHeader.FreeText("Name"))
+```
+</TabItem>
+</Tabs>
+
+### SplitByProtocolREF
+**Summary:** Split by `ProtocolREF` values.
+**Parameters:** none
+**ReturnType:** [ArcTable](./arc-table) ResizeArray
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let parts = t.SplitByProtocolREF()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const parts = t.SplitByProtocolREF();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+parts = t.SplitByProtocolREF()
+```
+</TabItem>
+</Tabs>
+
+### UpdateReferenceByAnnotationTable
+**Summary:** Rebuild protocol table from an annotation table.
+**Parameters:**
+- `refTable`: [ArcTable](./arc-table)
+- `annotationTable`: [ArcTable](./arc-table)
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let updated = ArcTable.updateReferenceByAnnotationTable(refTable, annotationTable)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const updated = ArcTable.updateReferenceByAnnotationTable(refTable, annotationTable);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+updated = ArcTable.updateReferenceByAnnotationTable(refTable, annotationTable)
+```
+</TabItem>
+</Tabs>
+
+### append
+**Summary:** Align headers and append rows from two tables.
+**Parameters:**
+- `table1`: [ArcTable](./arc-table)
+- `table2`: [ArcTable](./arc-table)
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let merged = ArcTable.append t other
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const merged = ArcTable.append(t, other);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+merged = ArcTable.append(t, other)
+```
+</TabItem>
+</Tabs>
+
+### StructurallyEquals
+**Summary:** Hash-based structural equality.
+**Parameters:**
+- `other`: [ArcTable](./arc-table)
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let sameStruct = t.StructurallyEquals other
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const sameStruct = t.StructurallyEquals(other);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+same_struct = t.StructurallyEquals(other)
+```
+</TabItem>
+</Tabs>
+
+### ReferenceEquals
+**Summary:** Object identity check.
+**Parameters:**
+- `other`: [ArcTable](./arc-table)
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let sameRef = t.ReferenceEquals other
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const sameRef = t.ReferenceEquals(other);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+same_ref = t.ReferenceEquals(other)
+```
+</TabItem>
+</Tabs>
+
+### Equals
+**Summary:** Object equality override.
+**Parameters:**
+- `obj`: obj
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let eq = t.Equals(otherObj)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const eq = t.Equals(otherObj);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+eq = t.Equals(other_obj)
+```
+</TabItem>
+</Tabs>
+
+### GetHashCode
+**Summary:** Hash code override.
+**Parameters:** none
+**ReturnType:** int
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let h = t.GetHashCode()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const h = t.GetHashCode();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+h = t.GetHashCode()
+```
+</TabItem>
+</Tabs>
+
+### ToString
+**Summary:** Pretty-printed representation of the table.
+**Parameters:** none
+**ReturnType:** string
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let s = t.ToString()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const s = t.ToString();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+s = t.ToString()
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### create
+**Summary:** Create a table from name, headers, and values.
+**Parameters:**
+- `name`: string
+- `headers`: [CompositeHeader](./composite-header) array
+- `values`: obj
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t = ArcTable.create("Table1", ResizeArray(), ResizeArray())
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t = ArcTable.create("Table1", [], []);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t = ArcTable.create("Table1", [], [])
+```
+</TabItem>
+</Tabs>
+
+### init
+**Summary:** Create an empty table with the given name.
+**Parameters:**
+- `name`: string
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t = ArcTable.init "Table1"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t = ArcTable.init("Table1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t = ArcTable.init("Table1")
+```
+</TabItem>
+</Tabs>
+
+### fromArcTableValues
+**Summary:** Build a table from a value map.
+**Parameters:**
+- `name`: string
+- `headers`: [CompositeHeader](./composite-header) array
+- `values`: obj
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t = ArcTable.fromArcTableValues("Table1", ResizeArray(), ResizeArray())
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t = ArcTable.fromArcTableValues("Table1", [], []);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t = ArcTable.fromArcTableValues("Table1", [], [])
+```
+</TabItem>
+</Tabs>
+
+### createFromRows
+**Summary:** Create a table by appending rows to headers.
+**Parameters:**
+- `name`: string
+- `headers`: [CompositeHeader](./composite-header) array
+- `rows`: [CompositeCell](./composite-cell) array array
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t = ArcTable.createFromRows("Table1", ResizeArray(), ResizeArray())
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t = ArcTable.createFromRows("Table1", [], []);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t = ArcTable.createFromRows("Table1", [], [])
+```
+</TabItem>
+</Tabs>
+
+### validate
+**Summary:** Functional validation helper.
+**Parameters:**
+- `raiseException`: bool option
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let ok = ArcTable.validate(raiseException = true) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const ok = ArcTable.validate(true)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+ok = ArcTable.validate(True)(t)
+```
+</TabItem>
+</Tabs>
+
+### columnCount
+**Summary:** Functional getter for column count.
+**Parameters:** none
+**ReturnType:** int
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let cols = ArcTable.columnCount t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const cols = ArcTable.columnCount(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+cols = ArcTable.columnCount(t)
+```
+</TabItem>
+</Tabs>
+
+### rowCount
+**Summary:** Functional getter for row count.
+**Parameters:** none
+**ReturnType:** int
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let rows = ArcTable.rowCount t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const rows = ArcTable.rowCount(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+rows = ArcTable.rowCount(t)
+```
+</TabItem>
+</Tabs>
+
+### setRowCount
+**Summary:** Functional setter that resizes row count.
+**Parameters:**
+- `newRowCount`: int
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.setRowCount 3 t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.setRowCount(3)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.setRowCount(3)(t)
+```
+</TabItem>
+</Tabs>
+
+### tryGetCellAt
+**Summary:** Functional try-get cell by column and row.
+**Parameters:**
+- `column`: int
+- `row`: int
+**ReturnType:** [CompositeCell](./composite-cell) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let cellOpt = ArcTable.tryGetCellAt(0, 0) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const cellOpt = ArcTable.tryGetCellAt(0, 0)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+cell_opt = ArcTable.tryGetCellAt(0, 0)(t)
+```
+</TabItem>
+</Tabs>
+
+### getCellAt
+**Summary:** Functional get cell by column and row.
+**Parameters:**
+- `column`: int
+- `row`: int
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let cell = ArcTable.getCellAt(0, 0) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const cell = ArcTable.getCellAt(0, 0)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+cell = ArcTable.getCellAt(0, 0)(t)
+```
+</TabItem>
+</Tabs>
+
+### iterColumns
+**Summary:** Functional iterate columns.
+**Parameters:**
+- `action`: [CompositeColumn](./composite-column) -> unit
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+ArcTable.iterColumns (fun col -> ()) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+ArcTable.iterColumns(col => {})(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+ArcTable.iterColumns(lambda col: None)(t)
+```
+</TabItem>
+</Tabs>
+
+### iteriColumns
+**Summary:** Functional iterate columns with index.
+**Parameters:**
+- `action`: int -> [CompositeColumn](./composite-column) -> unit
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+ArcTable.iteriColumns (fun i col -> ()) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+ArcTable.iteriColumns((i, col) => {})(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+ArcTable.iteriColumns(lambda i, col: None)(t)
+```
+</TabItem>
+</Tabs>
+
+### updateCellAt
+**Summary:** Functional update of a cell by column and row.
+**Parameters:**
+- `column`: int
+- `row`: int
+- `cell`: [CompositeCell](./composite-cell)
+- `skipValidation`: bool option
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.updateCellAt(0, 0, CompositeCell.createFreeText "v", skipValidation = true) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.updateCellAt(0, 0, CompositeCell.createFreeText("v"), true)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.updateCellAt(0, 0, CompositeCell.createFreeText("v"), skipValidation=True)(t)
+```
+</TabItem>
+</Tabs>
+
+### setCellAt
+**Summary:** Functional set of a cell by column and row.
+**Parameters:**
+- `column`: int
+- `row`: int
+- `cell`: [CompositeCell](./composite-cell)
+- `skipValidation`: bool option
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.setCellAt(0, 0, CompositeCell.createFreeText "v", skipValidation = true) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.setCellAt(0, 0, CompositeCell.createFreeText("v"), true)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.setCellAt(0, 0, CompositeCell.createFreeText("v"), skipValidation=True)(t)
+```
+</TabItem>
+</Tabs>
+
+### updateCellsBy
+**Summary:** Functional map over all cells.
+**Parameters:**
+- `f`: int -> int -> [CompositeCell](./composite-cell) -> [CompositeCell](./composite-cell)
+- `skipValidation`: bool option
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.updateCellsBy((fun c r cell -> cell), skipValidation = true) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.updateCellsBy((c, r, cell) => cell, true)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.updateCellsBy(lambda c, r, cell: cell, skipValidation=True)(t)
+```
+</TabItem>
+</Tabs>
+
+### updateCellBy
+**Summary:** Functional map of a single cell.
+**Parameters:**
+- `column`: int
+- `row`: int
+- `f`: int -> int -> [CompositeCell](./composite-cell) -> [CompositeCell](./composite-cell)
+- `skipValidation`: bool option
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.updateCellBy(0, 0, (fun c r cell -> cell), skipValidation = true) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.updateCellBy(0, 0, (c, r, cell) => cell, true)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.updateCellBy(0, 0, lambda c, r, cell: cell, skipValidation=True)(t)
+```
+</TabItem>
+</Tabs>
+
+### addColumn
+**Summary:** Functional column insert/replace.
+**Parameters:**
+- `header`: [CompositeHeader](./composite-header)
+- `cells`: [CompositeCell](./composite-cell) array option
+- `index`: int option
+- `forceReplace`: bool option
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.addColumn(CompositeHeader.FreeText "Name", ResizeArray(), index = 0, forceReplace = false) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.addColumn(CompositeHeader.FreeText("Name"), [], 0, false)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.addColumn(CompositeHeader.FreeText("Name"), [], index=0, forceReplace=False)(t)
+```
+</TabItem>
+</Tabs>
+
+### addColumnFill
+**Summary:** Functional add of a filled column.
+**Parameters:**
+- `header`: [CompositeHeader](./composite-header)
+- `cell`: [CompositeCell](./composite-cell)
+- `index`: int option
+- `forceReplace`: bool option
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.addColumnFill(CompositeHeader.FreeText "Constant", CompositeCell.createFreeText "v") t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.addColumnFill(CompositeHeader.FreeText("Constant"), CompositeCell.createFreeText("v"))(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.addColumnFill(CompositeHeader.FreeText("Constant"), CompositeCell.createFreeText("v"))(t)
+```
+</TabItem>
+</Tabs>
+
+### updateColumn
+**Summary:** Functional replace of a column by index.
+**Parameters:**
+- `index`: int
+- `header`: [CompositeHeader](./composite-header)
+- `cells`: [CompositeCell](./composite-cell) array option
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.updateColumn(0, CompositeHeader.FreeText "Name", cells = None) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.updateColumn(0, CompositeHeader.FreeText("Name"), [])(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.updateColumn(0, CompositeHeader.FreeText("Name"), [])(t)
+```
+</TabItem>
+</Tabs>
+
+### insertColumn
+**Summary:** Functional insert column at index.
+**Parameters:**
+- `index`: int
+- `header`: [CompositeHeader](./composite-header)
+- `cells`: [CompositeCell](./composite-cell) array option
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.insertColumn(0, CompositeHeader.FreeText "Name", ResizeArray()) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.insertColumn(0, CompositeHeader.FreeText("Name"), [])(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.insertColumn(0, CompositeHeader.FreeText("Name"), [])(t)
+```
+</TabItem>
+</Tabs>
+
+### appendColumn
+**Summary:** Functional append column.
+**Parameters:**
+- `header`: [CompositeHeader](./composite-header)
+- `cells`: [CompositeCell](./composite-cell) array option
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.appendColumn(CompositeHeader.FreeText "Name", ResizeArray()) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.appendColumn(CompositeHeader.FreeText("Name"), [])(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.appendColumn(CompositeHeader.FreeText("Name"), [])(t)
+```
+</TabItem>
+</Tabs>
+
+### addColumns
+**Summary:** Functional bulk add or replace columns.
+**Parameters:**
+- `columns`: [CompositeColumn](./composite-column) array
+- `index`: int option
+- `forceReplace`: bool option
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.addColumns(ResizeArray(), index = 0, forceReplace = false) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.addColumns([], 0, false)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.addColumns([], index=0, forceReplace=False)(t)
+```
+</TabItem>
+</Tabs>
+
+### removeColumn
+**Summary:** Functional remove column by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.removeColumn 0 t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.removeColumn(0)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.removeColumn(0)(t)
+```
+</TabItem>
+</Tabs>
+
+### removeColumns
+**Summary:** Functional remove multiple columns by indices.
+**Parameters:**
+- `indices`: int array
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.removeColumns([|0;1|] |> ResizeArray) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.removeColumns([0, 1])(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.removeColumns([0, 1])(t)
+```
+</TabItem>
+</Tabs>
+
+### getColumn
+**Summary:** Functional get column by index.
+**Parameters:**
+- `index`: int
+- `failOnMissingCell`: bool option
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let col = ArcTable.getColumn(0, failOnMissingCell = false) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const col = ArcTable.getColumn(0, false)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col = ArcTable.getColumn(0, failOnMissingCell=False)(t)
+```
+</TabItem>
+</Tabs>
+
+### tryGetColumnByHeader
+**Summary:** Functional try-get column by header.
+**Parameters:**
+- `header`: [CompositeHeader](./composite-header)
+- `failOnMissingCell`: bool option
+**ReturnType:** [CompositeColumn](./composite-column) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let colOpt = ArcTable.tryGetColumnByHeader(CompositeHeader.FreeText "Name", failOnMissingCell = false) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const colOpt = ArcTable.tryGetColumnByHeader(CompositeHeader.FreeText("Name"), false)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col_opt = ArcTable.tryGetColumnByHeader(CompositeHeader.FreeText("Name"), failOnMissingCell=False)(t)
+```
+</TabItem>
+</Tabs>
+
+### tryGetColumnByHeaderBy
+**Summary:** Functional try-get column by header predicate.
+**Parameters:**
+- `predicate`: [CompositeHeader](./composite-header) -> bool
+- `failOnMissingCell`: bool option
+**ReturnType:** [CompositeColumn](./composite-column) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let colOpt = ArcTable.tryGetColumnByHeaderBy((fun h -> true), failOnMissingCell = false) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const colOpt = ArcTable.tryGetColumnByHeaderBy(_ => true, false)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col_opt = ArcTable.tryGetColumnByHeaderBy(lambda h: True, failOnMissingCell=False)(t)
+```
+</TabItem>
+</Tabs>
+
+### getColumnByHeader
+**Summary:** Functional get column by header.
+**Parameters:**
+- `header`: [CompositeHeader](./composite-header)
+- `failOnMissingCell`: bool option
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let col = ArcTable.getColumnByHeader(CompositeHeader.FreeText "Name", failOnMissingCell = false) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const col = ArcTable.getColumnByHeader(CompositeHeader.FreeText("Name"), false)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col = ArcTable.getColumnByHeader(CompositeHeader.FreeText("Name"), failOnMissingCell=False)(t)
+```
+</TabItem>
+</Tabs>
+
+### tryGetInputColumn
+**Summary:** Functional get first Input column if present.
+**Parameters:** none
+**ReturnType:** [CompositeColumn](./composite-column) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let inputCol = ArcTable.tryGetInputColumn t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const inputCol = ArcTable.tryGetInputColumn(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+input_col = ArcTable.tryGetInputColumn(t)
+```
+</TabItem>
+</Tabs>
+
+### getInputColumn
+**Summary:** Functional get first Input column.
+**Parameters:** none
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let inputCol = ArcTable.getInputColumn t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const inputCol = ArcTable.getInputColumn(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+input_col = ArcTable.getInputColumn(t)
+```
+</TabItem>
+</Tabs>
+
+### tryGetOutputColumn
+**Summary:** Functional get first Output column if present.
+**Parameters:** none
+**ReturnType:** [CompositeColumn](./composite-column) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let outputCol = ArcTable.tryGetOutputColumn t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const outputCol = ArcTable.tryGetOutputColumn(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+output_col = ArcTable.tryGetOutputColumn(t)
+```
+</TabItem>
+</Tabs>
+
+### getOutputColumn
+**Summary:** Functional get first Output column.
+**Parameters:** none
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let outputCol = ArcTable.getOutputColumn t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const outputCol = ArcTable.getOutputColumn(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+output_col = ArcTable.getOutputColumn(t)
+```
+</TabItem>
+</Tabs>
+
+### moveColumn
+**Summary:** Functional move of a column.
+**Parameters:**
+- `startCol`: int
+- `endCol`: int
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.moveColumn(0, 1) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.moveColumn(0, 1)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.moveColumn(0, 1)(t)
+```
+</TabItem>
+</Tabs>
+
+### addRow
+**Summary:** Functional insert row.
+**Parameters:**
+- `cells`: [CompositeCell](./composite-cell) array option
+- `rowIndex`: int option
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.addRow(rowIndex = 0) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.addRow([], 0)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.addRow([], rowIndex=0)(t)
+```
+</TabItem>
+</Tabs>
+
+### appendRow
+**Summary:** Functional append row.
+**Parameters:**
+- `cells`: [CompositeCell](./composite-cell) array option
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.appendRow [] t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.appendRow([])(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.appendRow([])(t)
+```
+</TabItem>
+</Tabs>
+
+### insertRow
+**Summary:** Functional insert row at index.
+**Parameters:**
+- `index`: int
+- `cells`: [CompositeCell](./composite-cell) array option
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.insertRow(0, []) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.insertRow(0, [])(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.insertRow(0, [])(t)
+```
+</TabItem>
+</Tabs>
+
+### addRows
+**Summary:** Functional add multiple rows at optional index.
+**Parameters:**
+- `rows`: [CompositeCell](./composite-cell) array array
+- `index`: int option
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.addRows([|ResizeArray()|] |> ResizeArray, index = 0) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.addRows([[]], 0)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.addRows([[]], index=0)(t)
+```
+</TabItem>
+</Tabs>
+
+### addRowsEmpty
+**Summary:** Functional add empty rows.
+**Parameters:**
+- `rowCount`: int
+- `index`: int option
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.addRowsEmpty(3, index = 0) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.addRowsEmpty(3, 0)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.addRowsEmpty(3, index=0)(t)
+```
+</TabItem>
+</Tabs>
+
+### updateRow
+**Summary:** Functional replace a row by index.
+**Parameters:**
+- `rowIndex`: int
+- `cells`: [CompositeCell](./composite-cell) array
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.updateRow(0, ResizeArray()) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.updateRow(0, [])(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.updateRow(0, [])(t)
+```
+</TabItem>
+</Tabs>
+
+### removeRow
+**Summary:** Functional remove row by index.
+**Parameters:**
+- `index`: int
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.removeRow 0 t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.removeRow(0)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.removeRow(0)(t)
+```
+</TabItem>
+</Tabs>
+
+### removeRows
+**Summary:** Functional remove multiple rows by indices.
+**Parameters:**
+- `indices`: int array
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.removeRows([|0;1|] |> ResizeArray) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.removeRows([0, 1])(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.removeRows([0, 1])(t)
+```
+</TabItem>
+</Tabs>
+
+### getRow
+**Summary:** Functional get row by index.
+**Parameters:**
+- `rowIndex`: int
+- `SkipValidation`: bool option
+**ReturnType:** [CompositeCell](./composite-cell) ResizeArray
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let row = ArcTable.getRow(0, SkipValidation = true) t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const row = ArcTable.getRow(0, true)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+row = ArcTable.getRow(0, SkipValidation=True)(t)
+```
+</TabItem>
+</Tabs>
+
+### join
+**Summary:** Functional join of two tables.
+**Parameters:**
+- `index`: int option
+- `joinOptions`: obj option
+- `forceReplace`: bool option
+- `table`: [ArcTable](./arc-table)
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let t' = ArcTable.join(?index = None, ?joinOptions = None, ?forceReplace = Some true) other t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const t2 = ArcTable.join(undefined, undefined, true)(other)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+t2 = ArcTable.join(None, None, True)(other)(t)
+```
+</TabItem>
+</Tabs>
+
+### splitByColumnValues
+**Summary:** Functional split by column index.
+**Parameters:**
+- `columnIndex`: int
+**ReturnType:** [ArcTable](./arc-table) ResizeArray
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let parts = ArcTable.SplitByColumnValues 0 t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const parts = ArcTable.SplitByColumnValues(0)(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+parts = ArcTable.SplitByColumnValues(0)(t)
+```
+</TabItem>
+</Tabs>
+
+### splitByColumnValuesByHeader
+**Summary:** Functional split by column header.
+**Parameters:**
+- `header`: [CompositeHeader](./composite-header)
+**ReturnType:** [ArcTable](./arc-table) ResizeArray
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let parts = ArcTable.SplitByColumnValuesByHeader(CompositeHeader.FreeText "Name") t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const parts = ArcTable.SplitByColumnValuesByHeader(CompositeHeader.FreeText("Name"))(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+parts = ArcTable.SplitByColumnValuesByHeader(CompositeHeader.FreeText("Name"))(t)
+```
+</TabItem>
+</Tabs>
+
+### splitByProtocolREF
+**Summary:** Functional split by `ProtocolREF`.
+**Parameters:** none
+**ReturnType:** [ArcTable](./arc-table) ResizeArray
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let parts = ArcTable.SplitByProtocolREF t
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const parts = ArcTable.SplitByProtocolREF(t);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+parts = ArcTable.SplitByProtocolREF(t)
+```
+</TabItem>
+</Tabs>
+
+### updateReferenceByAnnotationTable
+**Summary:** Functional protocol table rebuild from annotations.
+**Parameters:**
+- `refTable`: [ArcTable](./arc-table)
+- `annotationTable`: [ArcTable](./arc-table)
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let updated = ArcTable.updateReferenceByAnnotationTable(refTable, annotationTable)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const updated = ArcTable.updateReferenceByAnnotationTable(refTable, annotationTable);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+updated = ArcTable.updateReferenceByAnnotationTable(refTable, annotationTable)
+```
+</TabItem>
+</Tabs>
+
+### append (static)
+**Summary:** Functional append helper.
+**Parameters:**
+- `table1`: [ArcTable](./arc-table)
+- `table2`: [ArcTable](./arc-table)
+**ReturnType:** [ArcTable](./arc-table)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let merged = ArcTable.append table1 table2
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const merged = ArcTable.append(table1, table2);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+merged = ArcTable.append(table1, table2)
+```
+</TabItem>
+</Tabs>
+

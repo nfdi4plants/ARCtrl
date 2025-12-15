@@ -1,0 +1,175 @@
+---
+title: "Contract"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl.Contract`
+
+## Fields
+- **DTOType**: `ISA_Assay | ISA_Study | ISA_Workflow | ISA_Run | ISA_Investigation | ISA_Datamap | JSON | Markdown | CWL | YAML | PlainText | CLI` (StringEnum).
+- **DTO**: `Spreadsheet of obj | Text of string | CLITool of CLITool` with helpers `isSpreadsheet`, `isText`, `isCLITool`, `AsSpreadsheet`, `AsText`, `AsCLITool`.
+- **Operation**: `CREATE | UPDATE | DELETE | READ | EXECUTE | RENAME`.
+- **CLITool**: record `{ Name: string; Arguments: string array }` with `create` factory.
+- **Contract**: record `{ Operation; Path; DTOType: DTOType option; DTO: DTO option }`.
+
+## Static Methods
+
+### create
+**Summary:** Build a contract with operation, target path, and optional DTO info.
+**Parameters:** `op: Operation`, `path: string`, `dtoType: DTOType option`, `dto: DTO option`
+**ReturnType:** [Contract](./contract)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = Contract.create(Operation.CREATE, "runs/run.json", dtoType = DTOType.JSON)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = Contract.create("CREATE", "runs/run.json", "JSON");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = Contract.create("CREATE", "runs/run.json", dtoType="JSON")
+```
+</TabItem>
+</Tabs>
+
+### createCreate
+**Summary:** Convenience factory for a create operation.
+**Parameters:** `path: string`, `dtoType: DTOType`, `dto: DTO option`
+**ReturnType:** [Contract](./contract)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = Contract.createCreate("runs/run.json", DTOType.JSON, dto = None)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = Contract.createCreate("runs/run.json", "JSON");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = Contract.createCreate("runs/run.json", "JSON")
+```
+</TabItem>
+</Tabs>
+
+### createUpdate
+**Summary:** Create an update contract for an existing path.
+**Parameters:** `path: string`, `dtoType: DTOType`, `dto: DTO`
+**ReturnType:** [Contract](./contract)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = Contract.createUpdate("runs/run.json", DTOType.JSON, dto)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = Contract.createUpdate("runs/run.json", "JSON", dto);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = Contract.createUpdate("runs/run.json", "JSON", dto)
+```
+</TabItem>
+</Tabs>
+
+### createDelete
+**Summary:** Create a delete contract for a path.
+**Parameters:** `path: string`
+**ReturnType:** [Contract](./contract)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = Contract.createDelete "runs/run.json"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = Contract.createDelete("runs/run.json");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = Contract.createDelete("runs/run.json")
+```
+</TabItem>
+</Tabs>
+
+### createRead
+**Summary:** Create a read contract using a DTO type to pick handler.
+**Parameters:** `path: string`, `dtoType: DTOType`
+**ReturnType:** [Contract](./contract)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = Contract.createRead("runs/run.json", DTOType.JSON)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = Contract.createRead("runs/run.json", "JSON");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = Contract.createRead("runs/run.json", "JSON")
+```
+</TabItem>
+</Tabs>
+
+### createExecute
+**Summary:** Create an execute contract for a CLI tool with optional working path.
+**Parameters:** `dto: CLITool`, `path: string option`
+**ReturnType:** [Contract](./contract)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let tool = CLITool.create("tool", [|"--help"|])
+let c = Contract.createExecute(tool, path = None)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const tool = { Name: "tool", Arguments: ["--help"] };
+const c = Contract.createExecute(tool);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+tool = CLITool("tool", ["--help"])
+c = Contract.createExecute(tool)
+```
+</TabItem>
+</Tabs>
+
+### createRename
+**Summary:** Create a rename contract (old path in `Path`, new path in `DTO.Text`).
+**Parameters:** `oldPath: string`, `newPath: string`
+**ReturnType:** [Contract](./contract)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = Contract.createRename("old/file", "new/file")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = Contract.createRename("old/file", "new/file");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = Contract.createRename("old/file", "new/file")
+```
+</TabItem>
+</Tabs>
+
+**Notes:** `Path` is ARC-root-relative. `DTOType` selects IO handler for read/write. `createRename` uses `Path` as old path and `DTO.Text` as new path. DTO helpers: `isSpreadsheet/isText/isCLITool`, `AsSpreadsheet/AsText/AsCLITool`. CLITool factory: `CLITool.create(name, args)`.

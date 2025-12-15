@@ -1,0 +1,222 @@
+---
+title: "Publication"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+**Signature:**
+```fsharp
+Publication(
+    ?pubMedID: URI,
+    ?doi: string,
+    ?authors: string,
+    ?title: string,
+    ?status: OntologyAnnotation,
+    ?comments: ResizeArray<Comment>
+)
+```
+**Usage:**
+```fsharp
+open ARCtrl
+
+let pub = Publication(doi = "10.1000/xyz", title = "Great Paper")
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+
+**Signature:**
+```py
+Publication(
+    pubMedID: str | None = None,
+    doi: str | None = None,
+    authors: str | None = None,
+    title: str | None = None,
+    status: OntologyAnnotation | None = None,
+    comments: list[Comment] | None = None,
+)
+```
+**Usage:**
+```py
+from arctrl import Publication
+
+pub = Publication(doi="10.1000/xyz", title="Great Paper")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+**Signature:**
+```ts
+constructor(
+  pubMedID?: string,
+  doi?: string,
+  authors?: string,
+  title?: string,
+  status?: OntologyAnnotation,
+  comments?: Comment[],
+)
+```
+**Usage:**
+```ts
+import { Publication } from "@nfdi4plants/arctrl";
+
+const pub = new Publication(undefined, "10.1000/xyz", undefined, "Great Paper");
+```
+</TabItem>
+</Tabs>
+
+## Fields
+- **PubMedID**: URI option
+- **DOI**: string option
+- **Authors**: string option
+- **Title**: string option
+- **Status**: [OntologyAnnotation](./ontology-annotation) option
+- **Comments**: [Comment](./comment) ResizeArray
+
+## Methods
+
+### Copy
+**Summary:** Deep copy including comments.
+**Parameters:** none
+**ReturnType:** [Publication](./publication)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let copy = pub.Copy()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+copy = pub.Copy()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const copy = pub.Copy();
+```
+</TabItem>
+</Tabs>
+
+### Equals / GetHashCode
+**Summary:** Structural equality and matching hash across PubMedID/DOI/Authors/Title/Status/Comments.
+**Parameters:** `obj: obj`
+**ReturnType:** `bool` / `int`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let eq = pub.Equals(other)
+let h = pub.GetHashCode()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+eq = pub.Equals(other)
+h = pub.GetHashCode()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const eq = pub.Equals(other);
+const h = pub.GetHashCode();
+```
+</TabItem>
+</Tabs>
+
+### ToString
+**Summary:** Pretty string of populated fields.
+**Parameters:** none
+**ReturnType:** string
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let txt = pub.ToString()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+txt = pub.ToString()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const txt = pub.ToString();
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### make
+**Summary:** Build a publication from components.
+**Parameters:**
+- `?pubMedID: URI`
+- `?doi: string`
+- `?authors: string`
+- `?title: string`
+- `?status: OntologyAnnotation`
+- `comments: ResizeArray\<Comment\>`
+**ReturnType:** [Publication](./publication)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let pub = Publication.make None (Some "10.1000/xyz") None (Some "Great Paper") None (ResizeArray())
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+pub = Publication.make(None, "10.1000/xyz", None, "Great Paper", None, [])
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const pub = Publication.make(undefined, "10.1000/xyz", undefined, "Great Paper", undefined, []);
+```
+</TabItem>
+</Tabs>
+
+### create
+**Summary:** Convenience constructor with optionals.
+**Parameters:** Same as `make` but optional.
+**ReturnType:** [Publication](./publication)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let pub = Publication.create(doi = "10.1000/xyz", title = "Great Paper")
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+pub = Publication.create(doi="10.1000/xyz", title="Great Paper")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const pub = Publication.create({ doi: "10.1000/xyz", title: "Great Paper" });
+```
+</TabItem>
+</Tabs>
+
+### empty
+**Summary:** Create an empty publication.
+**Parameters:** - ()
+**ReturnType:** [Publication](./publication)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let pub = Publication.empty()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+pub = Publication.empty()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const pub = Publication.empty();
+```
+</TabItem>
+</Tabs>

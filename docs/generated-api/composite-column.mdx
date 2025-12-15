@@ -1,0 +1,221 @@
+---
+title: "CompositeColumn"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+**Signature:**
+```fsharp
+{ Header: CompositeHeader; Cells: ResizeArray<CompositeCell> }
+```
+**Construction:**
+```fsharp
+let col = CompositeColumn.create(header, cells)
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+
+**Signature:**
+```py
+CompositeColumn.create(header: CompositeHeader, cells: list[CompositeCell] | None = None)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+**Signature:**
+```ts
+CompositeColumn.create(header: CompositeHeader, cells?: CompositeCell[])
+```
+</TabItem>
+</Tabs>
+
+## Fields
+- **Header**: [CompositeHeader](./composite-header)
+- **Cells**: [CompositeCell](./composite-cell) ResizeArray
+
+## Methods
+
+### Validate
+**Summary:** Check header/cell compatibility; optionally throw.
+**Parameters:** `?raiseException: bool`
+**ReturnType:** `bool`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let ok = col.Validate(raiseException = true)
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+ok = col.Validate(raiseException=True)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const ok = col.Validate(true);
+```
+</TabItem>
+</Tabs>
+
+### TryGetColumnUnits
+**Summary:** Retrieve ontology units if the column is unitized.
+**Parameters:** none
+**ReturnType:** `ResizeArray&lt;[OntologyAnnotation](./ontology-annotation)&gt; option`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let units = col.TryGetColumnUnits()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+units = col.TryGetColumnUnits()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const units = col.TryGetColumnUnits();
+```
+</TabItem>
+</Tabs>
+
+### GetDefaultEmptyCell
+**Summary:** Heuristic empty cell based on header kind.
+**Parameters:** none
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let empty = col.GetDefaultEmptyCell()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+empty = col.GetDefaultEmptyCell()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const empty = col.GetDefaultEmptyCell();
+```
+</TabItem>
+</Tabs>
+
+### IsUnique
+**Summary:** Indicates whether the header is marked unique.
+**Parameters:** none
+**ReturnType:** `bool`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let unique = col.IsUnique
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+unique = col.IsUnique
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const unique = col.IsUnique;
+```
+</TabItem>
+</Tabs>
+
+### Copy
+**Summary:** Deep copy of header and cells.
+**Parameters:** none
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let copy = col.Copy()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+copy = col.Copy()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const copy = col.Copy();
+```
+</TabItem>
+</Tabs>
+
+### ToString
+**Summary:** Debug rendering of header and cells (when available).
+**Parameters:** none
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let text = col.ToString()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+text = col.ToString()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const text = col.ToString();
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### create
+**Summary:** Construct a column from header and optional cells.
+**Parameters:** `header: [CompositeHeader](./composite-header)`, `cells: ResizeArray&lt;CompositeCell&gt; option`
+**ReturnType:** [CompositeColumn](./composite-column)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let col = CompositeColumn.create(header, cells)
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+col = CompositeColumn.create(header, cells)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const col = CompositeColumn.create(header, cells);
+```
+</TabItem>
+</Tabs>
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let col = CompositeColumn.create(CompositeHeader.FreeText "Name", ResizeArray [CompositeCell.createFreeText "Alice"])
+let ok = col.Validate()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+from arctrl import CompositeColumn, CompositeHeader, CompositeCell
+
+col = CompositeColumn.create(CompositeHeader.FreeText("Name"), [CompositeCell.createFreeText("Alice")])
+ok = col.Validate()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+import { CompositeColumn, CompositeHeader, CompositeCell } from "@nfdi4plants/arctrl";
+
+const col = CompositeColumn.create(CompositeHeader.FreeText("Name"), [CompositeCell.createFreeText("Alice")]);
+const ok = col.Validate();
+```
+</TabItem>
+</Tabs>

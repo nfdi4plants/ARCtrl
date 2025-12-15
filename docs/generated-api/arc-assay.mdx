@@ -1,0 +1,573 @@
+---
+title: "ArcAssay"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+**Signature:**
+```fsharp
+ArcAssay(
+    identifier: string, 
+    ?title : string, 
+    ?description : string, 
+    ?measurementType : OntologyAnnotation, 
+    ?technologyType : OntologyAnnotation, 
+    ?technologyPlatform : OntologyAnnotation, 
+    ?tables: ResizeArray<ArcTable>, 
+    ?datamap : DataMap, 
+    ?performers : ResizeArray<Person>, 
+    ?comments : ResizeArray<Comment>
+)
+```
+**Usage:**
+```fsharp
+open ARCtrl
+
+let arcAssay = ArcAssay(identifier, title, description, measurement_type, technology_type, technology_platform, tables, datamap, performers, comments)
+```
+</TabItem>
+
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+**Signature:**
+```ts
+constructor(
+    identifier: string, 
+    title?: string, 
+    description?: string, 
+    measurementType?: OntologyAnnotation, 
+    technologyType?: OntologyAnnotation, 
+    technologyPlatform?: OntologyAnnotation, 
+    tables?: ArcTable[], 
+    datamap?: Datamap, 
+    performers?: Person[], 
+    comments?: Comment$[]
+)
+```
+
+**Usage:**
+```ts
+import { ArcAssay } from "@nfdi4plants/arctrl";
+
+const arcAssay = new ArcAssay(identifier, title, description, measurement_type, technology_type, technology_platform, tables, datamap, performers, comments);
+```
+</TabItem>
+
+<TabItem label="Python" icon='seti:python'>
+
+**Signature:**
+```py
+ArcAssay(
+    identifier: str, 
+    title: str | None = None, 
+    description: str | None = None, 
+    measurement_type: OntologyAnnotation | None = None, 
+    technology_type: OntologyAnnotation | None = None, 
+    technology_platform: OntologyAnnotation | None = None, 
+    tables: Array[ArcTable] | None = None, 
+    datamap: DataMap | None = None, 
+    performers: Array[Person] | None = None, 
+    comments: Array[Comment] | None = None
+)
+```
+
+**Usage:**
+
+```py
+from arctrl import ArcAssay
+
+arcAssay = ArcAssay(identifier, title, description, measurement_type, technology_type, technology_platform, tables, datamap, performers, comments)
+```
+
+</TabItem>
+</Tabs>
+
+## Fields
+
+- **Identifier**: string
+- **Investigation**: [ArcInvestigation](./arc-investigation) option
+- **Title**: string option
+- **Description**: string option
+- **MeasurementType**: [OntologyAnnotation](./ontology-annotation) option
+- **TechnologyType**: [OntologyAnnotation](./ontology-annotation) option
+- **TechnologyPlatform**: [OntologyAnnotation](./ontology-annotation) option
+- **DataMap**: [DataMap](./datamap) option
+- **Performers**: [Person](./person) ResizeArray
+- **Comments**: [Comment](./comment) ResizeArray
+- **StaticHash**: int
+- **StudiesRegisteredIn**: ArcStudy ResizeArray
+
+## Methods
+
+### AddToInvestigation
+
+**Summary:** Adds the assay to the given [ArcInvestigation](./arc-investigation).
+
+**Parameters:** 
+- `investigation`: [ArcInvestigation](./arc-investigation) 
+
+**ReturnType**: ()
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+
+```fsharp
+open ARCtrl
+
+let arcAssay = ArcAssay()
+arcAssay.AddToInvestigation(investigation)
+```
+</TabItem>
+
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+```ts
+import { ArcAssay } from "@nfdi4plants/arctrl";
+
+const arcAssay = new ArcAssay();
+arcAssay.AddToInvestigation(investigation);
+```
+</TabItem>
+
+<TabItem label="Python" icon='seti:python'>
+
+```py
+from arctrl import ArcAssay
+
+arcAssay = ArcAssay()
+arcAssay.AddToInvestigation(investigation)
+```
+
+</TabItem>
+</Tabs>
+
+### Copy
+
+**Summary:** Member Copy of [ArcAssay](./arc-assay).
+
+**Parameters:** 
+- ()
+
+**ReturnType**: [ArcAssay](./arc-assay)
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+
+```fsharp
+open ARCtrl
+
+let arcAssay = ArcAssay()
+arcAssay.Copy(__unit)
+```
+</TabItem>
+
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+```ts
+import { ArcAssay } from "@nfdi4plants/arctrl";
+
+const arcAssay = new ArcAssay();
+arcAssay.Copy(__unit);
+```
+</TabItem>
+
+<TabItem label="Python" icon='seti:python'>
+
+```py
+from arctrl import ArcAssay
+
+arcAssay = ArcAssay()
+arcAssay.Copy(__unit)
+```
+
+</TabItem>
+</Tabs>
+
+### GetLightHashCode
+
+**Summary:** Gets light hash code from [ArcAssay](./arc-assay).
+
+**Parameters:**
+- ()
+
+**ReturnType:** int
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+
+```fsharp
+open ARCtrl
+
+let arcAssay = ArcAssay()
+arcAssay.GetLightHashCode(__unit)
+```
+</TabItem>
+
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+```ts
+import { ArcAssay } from "@nfdi4plants/arctrl";
+
+const arcAssay = new ArcAssay();
+arcAssay.GetLightHashCode(__unit);
+```
+</TabItem>
+
+<TabItem label="Python" icon='seti:python'>
+
+```py
+from arctrl import ArcAssay
+
+arcAssay = ArcAssay()
+arcAssay.GetLightHashCode(__unit)
+```
+
+</TabItem>
+</Tabs>
+
+### ReferenceEquals
+
+**Summary:** Member ReferenceEquals of [ArcAssay](./arc-assay).
+
+**Parameters:**
+- `other`: [ArcAssay](./arc-assay)
+
+**ReturnType:** bool
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+
+```fsharp
+open ARCtrl
+
+let arcAssay = ArcAssay()
+arcAssay.ReferenceEquals(other)
+```
+</TabItem>
+
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+```ts
+import { ArcAssay } from "@nfdi4plants/arctrl";
+
+const arcAssay = new ArcAssay();
+arcAssay.ReferenceEquals(other);
+```
+</TabItem>
+
+<TabItem label="Python" icon='seti:python'>
+
+```py
+from arctrl import ArcAssay
+
+arcAssay = ArcAssay()
+arcAssay.ReferenceEquals(other)
+```
+
+</TabItem>
+</Tabs>
+
+### RemoveFromInvestigation
+
+**Summary:** Removes from investigation from [ArcAssay](./arc-assay).
+
+**Parameters:**
+- ()
+
+**ReturnType:** ()
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+
+```fsharp
+open ARCtrl
+
+let arcAssay = ArcAssay()
+arcAssay.RemoveFromInvestigation(__unit)
+```
+</TabItem>
+
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+```ts
+import { ArcAssay } from "@nfdi4plants/arctrl";
+
+const arcAssay = new ArcAssay();
+arcAssay.RemoveFromInvestigation(__unit);
+```
+</TabItem>
+
+<TabItem label="Python" icon='seti:python'>
+
+```py
+from arctrl import ArcAssay
+
+arcAssay = ArcAssay()
+arcAssay.RemoveFromInvestigation(__unit)
+```
+
+</TabItem>
+</Tabs>
+
+### StructurallyEquals
+
+**Summary:** Member StructurallyEquals of [ArcAssay](./arc-assay).
+
+**Parameters:**
+- `other`: [ArcAssay](./arc-assay)
+
+**ReturnType:** bool
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+
+```fsharp
+open ARCtrl
+
+let arcAssay = ArcAssay()
+arcAssay.StructurallyEquals(other)
+```
+</TabItem>
+
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+```ts
+import { ArcAssay } from "@nfdi4plants/arctrl";
+
+const arcAssay = new ArcAssay();
+arcAssay.StructurallyEquals(other);
+```
+</TabItem>
+
+<TabItem label="Python" icon='seti:python'>
+
+```py
+from arctrl import ArcAssay
+
+arcAssay = ArcAssay()
+arcAssay.StructurallyEquals(other)
+```
+
+</TabItem>
+</Tabs>
+
+### UpdateBy
+
+**Summary:** Updates by of [ArcAssay](./arc-assay).
+
+**Parameters:**
+- `assay`: [ArcAssay](./arc-assay)
+- `?onlyReplaceExisting`: bool
+- `?appendSequences`: bool
+
+**ReturnType:** ()
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+
+```fsharp
+open ARCtrl
+
+let arcAssay = ArcAssay()
+arcAssay.UpdateBy(assay, only_replace_existing, append_sequences)
+```
+</TabItem>
+
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+```ts
+import { ArcAssay } from "@nfdi4plants/arctrl";
+
+const arcAssay = new ArcAssay();
+arcAssay.UpdateBy(assay, only_replace_existing, append_sequences);
+```
+</TabItem>
+
+<TabItem label="Python" icon='seti:python'>
+
+```py
+from arctrl import ArcAssay
+
+arcAssay = ArcAssay()
+arcAssay.UpdateBy(assay, only_replace_existing, append_sequences)
+```
+
+</TabItem>
+</Tabs>
+
+### UpdateReferenceByAssayFile
+
+**Summary:** Updates reference by assay file of [ArcAssay](./arc-assay).
+
+**Parameters:**
+- `assay`: [ArcAssay](./arc-assay)
+- `?onlyReplaceExisting`: bool
+
+**ReturnType:** ()
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+
+```fsharp
+open ARCtrl
+
+let arcAssay = ArcAssay()
+arcAssay.UpdateReferenceByAssayFile(assay, only_replace_existing)
+```
+</TabItem>
+
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+```ts
+import { ArcAssay } from "@nfdi4plants/arctrl";
+
+const arcAssay = new ArcAssay();
+arcAssay.UpdateReferenceByAssayFile(assay, only_replace_existing);
+```
+</TabItem>
+
+<TabItem label="Python" icon='seti:python'>
+
+```py
+from arctrl import ArcAssay
+
+arcAssay = ArcAssay()
+arcAssay.UpdateReferenceByAssayFile(assay, only_replace_existing)
+```
+
+</TabItem>
+</Tabs>
+
+
+
+## Static Methods
+
+### FileName
+
+**Summary:** Member FileName of [ArcAssay](./arc-assay).
+
+**ReturnType:** string
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+
+```fsharp
+open ARCtrl
+
+ArcAssay.FileName
+```
+</TabItem>
+
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+```ts
+import { ArcAssay } from "@nfdi4plants/arctrl";
+
+ArcAssay.FileName();
+```
+</TabItem>
+
+<TabItem label="Python" icon='seti:python'>
+
+```py
+from arctrl import ArcAssay
+
+ArcAssay.FileName()
+```
+
+</TabItem>
+</Tabs>
+
+### add_column
+
+**Summary:** Adds column to [ArcAssay](./arc-assay).
+
+**Python signature:** `def add_column(table_name: str, header: CompositeHeader, cells: Array[CompositeCell] | None = None, column_index: int | None = None, force_replace: bool | None = None) -> Callable[[ArcAssay], ArcAssay]`
+
+**Parameters:**
+- `tableName`: string
+- `header`: [CompositeHeader](./composite-header)
+- `?cells`: [CompositeCell](./composite-cell) ResizeArray
+- `?columnIndex`: int
+- `?forceReplace`: bool
+
+ReturnType: [ArcAssay](./arc-assay) -> [ArcAssay](./arc-assay)
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+
+```fsharp
+open ARCtrl
+
+ArcAssay.add_column(table_name, header, cells, column_index, force_replace)
+```
+</TabItem>
+
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+```ts
+import { ArcAssay } from "@nfdi4plants/arctrl";
+
+ArcAssay.add_column(table_name, header, cells, column_index, force_replace);
+```
+</TabItem>
+
+<TabItem label="Python" icon='seti:python'>
+
+```py
+from arctrl import ArcAssay
+
+ArcAssay.add_column(table_name, header, cells, column_index, force_replace)
+```
+
+</TabItem>
+</Tabs>
+
+### add_column_at
+
+**Summary:** Adds column at to [ArcAssay](./arc-assay).
+
+**Python signature:** `def add_column_at(table_index: int, header: CompositeHeader, cells: Array[CompositeCell] | None = None, column_index: int | None = None, force_replace: bool | None = None) -> Callable[[ArcAssay], ArcAssay]`
+
+**Parameters:**
+- `tableIndex`: int
+- `header`: [CompositeHeader](./composite-header)
+- `?cells`: [CompositeCell](./composite-cell) ResizeArray
+- `?columnIndex`: int
+- `?forceReplace`: bool
+
+ReturnType: [ArcAssay](./arc-assay) -> [ArcAssay](./arc-assay)
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+
+```fsharp
+open ARCtrl
+
+ArcAssay.add_column_at(table_index, header, cells, column_index, force_replace)
+```
+</TabItem>
+
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+```ts
+import { ArcAssay } from "@nfdi4plants/arctrl";
+
+ArcAssay.add_column_at(table_index, header, cells, column_index, force_replace);
+```
+</TabItem>
+
+<TabItem label="Python" icon='seti:python'>
+
+```py
+from arctrl import ArcAssay
+
+ArcAssay.add_column_at(table_index, header, cells, column_index, force_replace)
+```
+
+</TabItem>
+</Tabs>

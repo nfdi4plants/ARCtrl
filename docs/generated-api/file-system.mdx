@@ -1,0 +1,180 @@
+---
+title: "FileSystem"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl.FileSystem`
+
+## Fields
+None.
+
+## Methods
+
+### Constructor
+**Summary:** Create a file system with a tree and optional commit history.
+**Parameters:** `tree: [FileSystemTree](./file-system-tree)`, `history: Commit array option`
+**ReturnType:** [FileSystem](./file-system)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+// Signature
+{ Tree: FileSystemTree; History: Commit array }
+
+// Usage
+let fs = FileSystem.create(tree, history)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+// Signature
+{ Tree: FileSystemTree; History: Commit[] }
+
+// Usage
+const fs = FileSystem.create(tree, history);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+# Signature
+{ "Tree": FileSystemTree, "History": list[Commit] }
+
+# Usage
+fs = FileSystem.create(tree, history)
+```
+</TabItem>
+</Tabs>
+
+### AddFile
+**Summary:** Add a file path into the tree (mutating).
+**Parameters:** `path: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+fs.AddFile("assays/Assay1/a.txt")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+fs.AddFile("assays/Assay1/a.txt");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+fs.AddFile("assays/Assay1/a.txt")
+```
+</TabItem>
+</Tabs>
+
+### Union
+**Summary:** Merge two file systems, combining trees and histories.
+**Parameters:** `other: [FileSystem](./file-system)`
+**ReturnType:** [FileSystem](./file-system)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let merged = fs.Union(other)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const merged = fs.Union(other);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+merged = fs.Union(other)
+```
+</TabItem>
+</Tabs>
+
+### Copy
+**Summary:** Deep clone the file system tree and history.
+**Parameters:** none
+**ReturnType:** [FileSystem](./file-system)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let clone = fs.Copy()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const clone = fs.Copy();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+clone = fs.Copy()
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### create
+**Summary:** Build a file system from a tree and optional commit history.
+**Parameters:** `tree: [FileSystemTree](./file-system-tree)`, `history: Commit array option`
+**ReturnType:** [FileSystem](./file-system)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let fs = FileSystem.create(tree, history)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const fs = FileSystem.create(tree, history);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+fs = FileSystem.create(tree, history)
+```
+</TabItem>
+</Tabs>
+
+### fromFilePaths
+**Summary:** Construct a file system from raw path strings (rooted at `root`).
+**Parameters:** `paths: string[]`
+**ReturnType:** [FileSystem](./file-system)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let fs = FileSystem.fromFilePaths [|"study/assay.txt"|]
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const fs = FileSystem.fromFilePaths(["study/assay.txt"]);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+fs = FileSystem.fromFilePaths(["study/assay.txt"])
+```
+</TabItem>
+</Tabs>
+
+### addFile
+**Summary:** Functional wrapper that returns a new filesystem with the path added.
+**Parameters:** `path: string`
+**ReturnType:** [FileSystem](./file-system) \-> [FileSystem](./file-system)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let fs' = fs |> FileSystem.addFile "study/assay.txt"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const fs2 = FileSystem.addFile("study/assay.txt")(fs);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+fs2 = FileSystem.addFile("study/assay.txt")(fs)
+```
+</TabItem>
+</Tabs>

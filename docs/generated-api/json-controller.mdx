@@ -1,0 +1,1337 @@
+---
+title: "JsonController"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+`JsonController` exposes typed helpers for serialising/deserialising ARC objects to JSON, ISA-JSON, and RO-Crate JSON.
+
+## Fields
+None.
+
+## Methods
+
+### OntologyAnnotation.fromJsonString
+**Summary:** Deserialize an ontology annotation from JSON.
+**Parameters:** `json: string`
+**ReturnType:** [OntologyAnnotation](./ontology-annotation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let oa = JsonController.OntologyAnnotation.fromJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const oa = JsonController.OntologyAnnotation.fromJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+oa = JsonController.OntologyAnnotation.fromJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### OntologyAnnotation.toJsonString
+**Summary:** Serialize an ontology annotation to JSON.
+**Parameters:** `annotation: [OntologyAnnotation](./ontology-annotation)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.OntologyAnnotation.toJsonString annotation
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.OntologyAnnotation.toJsonString(annotation);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.OntologyAnnotation.toJsonString(annotation)
+```
+</TabItem>
+</Tabs>
+
+### OntologyAnnotation.fromISAJsonString
+**Summary:** Deserialize an ontology annotation from ISA-JSON.
+**Parameters:** `json: string`
+**ReturnType:** [OntologyAnnotation](./ontology-annotation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let oa = JsonController.OntologyAnnotation.fromISAJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const oa = JsonController.OntologyAnnotation.fromISAJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+oa = JsonController.OntologyAnnotation.fromISAJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### OntologyAnnotation.toISAJsonString
+**Summary:** Serialize an ontology annotation to ISA-JSON.
+**Parameters:** `annotation: [OntologyAnnotation](./ontology-annotation)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.OntologyAnnotation.toISAJsonString annotation
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.OntologyAnnotation.toISAJsonString(annotation);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.OntologyAnnotation.toISAJsonString(annotation)
+```
+</TabItem>
+</Tabs>
+
+### OntologyAnnotation.fromROCrateJsonString
+**Summary:** Deserialize an ontology annotation from RO-Crate JSON.
+**Parameters:** `json: string`
+**ReturnType:** [OntologyAnnotation](./ontology-annotation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let oa = JsonController.OntologyAnnotation.fromROCrateJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const oa = JsonController.OntologyAnnotation.fromROCrateJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+oa = JsonController.OntologyAnnotation.fromROCrateJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### OntologyAnnotation.toROCrateJsonString
+**Summary:** Serialize an ontology annotation to RO-Crate JSON-LD.
+**Parameters:** `annotation: [OntologyAnnotation](./ontology-annotation)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.OntologyAnnotation.toROCrateJsonString annotation
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.OntologyAnnotation.toROCrateJsonString(annotation);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.OntologyAnnotation.toROCrateJsonString(annotation)
+```
+</TabItem>
+</Tabs>
+
+### Person.fromJsonString
+**Summary:** Deserialize a person from JSON.
+**Parameters:** `json: string`
+**ReturnType:** [Person](./person)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let person = JsonController.Person.fromJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const person = JsonController.Person.fromJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+person = JsonController.Person.fromJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Person.toJsonString
+**Summary:** Serialize a person to JSON.
+**Parameters:** `person: [Person](./person)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Person.toJsonString person
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Person.toJsonString(person);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Person.toJsonString(person)
+```
+</TabItem>
+</Tabs>
+
+### Person.fromISAJsonString
+**Summary:** Deserialize a person from ISA-JSON.
+**Parameters:** `json: string`
+**ReturnType:** [Person](./person)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let person = JsonController.Person.fromISAJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const person = JsonController.Person.fromISAJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+person = JsonController.Person.fromISAJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Person.toISAJsonString
+**Summary:** Serialize a person to ISA-JSON with optional ID referencing.
+**Parameters:** `person: [Person](./person)`, `useIDReferencing: bool`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Person.toISAJsonString(person, useIDReferencing = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Person.toISAJsonString(person, true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Person.toISAJsonString(person, True)
+```
+</TabItem>
+</Tabs>
+
+### Person.fromROCrateJsonString
+**Summary:** Deserialize a person from RO-Crate JSON.
+**Parameters:** `json: string`
+**ReturnType:** [Person](./person)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let person = JsonController.Person.fromROCrateJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const person = JsonController.Person.fromROCrateJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+person = JsonController.Person.fromROCrateJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Person.toROCrateJsonString
+**Summary:** Serialize a person to RO-Crate JSON-LD.
+**Parameters:** `person: [Person](./person)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Person.toROCrateJsonString person
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Person.toROCrateJsonString(person);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Person.toROCrateJsonString(person)
+```
+</TabItem>
+</Tabs>
+
+### Datamap.fromJsonString
+**Summary:** Deserialize a datamap from JSON.
+**Parameters:** `json: string`
+**ReturnType:** [Datamap](./datamap)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let datamap = JsonController.Datamap.fromJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const datamap = JsonController.Datamap.fromJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+datamap = JsonController.Datamap.fromJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Datamap.toJsonString
+**Summary:** Serialize a datamap to JSON.
+**Parameters:** `datamap: [Datamap](./datamap)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Datamap.toJsonString datamap
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Datamap.toJsonString(datamap);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Datamap.toJsonString(datamap)
+```
+</TabItem>
+</Tabs>
+
+### Assay.fromJsonString
+**Summary:** Deserialize an assay from JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcAssay](./arc-assay)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assay = JsonController.Assay.fromJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assay = JsonController.Assay.fromJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assay = JsonController.Assay.fromJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Assay.toJsonString
+**Summary:** Serialize an assay to JSON.
+**Parameters:** `assay: [ArcAssay](./arc-assay)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Assay.toJsonString assay
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Assay.toJsonString(assay);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Assay.toJsonString(assay)
+```
+</TabItem>
+</Tabs>
+
+### Assay.fromCompressedJsonString
+**Summary:** Deserialize an assay from compressed JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcAssay](./arc-assay)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assay = JsonController.Assay.fromCompressedJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assay = JsonController.Assay.fromCompressedJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assay = JsonController.Assay.fromCompressedJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Assay.toCompressedJsonString
+**Summary:** Serialize an assay to compressed JSON.
+**Parameters:** `assay: [ArcAssay](./arc-assay)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Assay.toCompressedJsonString assay
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Assay.toCompressedJsonString(assay);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Assay.toCompressedJsonString(assay)
+```
+</TabItem>
+</Tabs>
+
+### Assay.fromISAJsonString
+**Summary:** Deserialize an assay from ISA-JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcAssay](./arc-assay)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assay = JsonController.Assay.fromISAJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assay = JsonController.Assay.fromISAJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assay = JsonController.Assay.fromISAJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Assay.toISAJsonString
+**Summary:** Serialize an assay to ISA-JSON with optional ID referencing.
+**Parameters:** `assay: [ArcAssay](./arc-assay)`, `useIDReferencing: bool`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Assay.toISAJsonString(assay, useIDReferencing = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Assay.toISAJsonString(assay, true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Assay.toISAJsonString(assay, True)
+```
+</TabItem>
+</Tabs>
+
+### Assay.fromROCrateJsonString
+**Summary:** Deserialize an assay from RO-Crate JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcAssay](./arc-assay)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assay = JsonController.Assay.fromROCrateJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assay = JsonController.Assay.fromROCrateJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assay = JsonController.Assay.fromROCrateJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Assay.toROCrateJsonString
+**Summary:** Serialize an assay to RO-Crate JSON-LD.
+**Parameters:** `assay: [ArcAssay](./arc-assay)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Assay.toROCrateJsonString assay
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Assay.toROCrateJsonString(assay);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Assay.toROCrateJsonString(assay)
+```
+</TabItem>
+</Tabs>
+
+### Study.fromJsonString
+**Summary:** Deserialize a study from JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study = JsonController.Study.fromJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study = JsonController.Study.fromJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study = JsonController.Study.fromJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Study.toJsonString
+**Summary:** Serialize a study to JSON.
+**Parameters:** `study: [ArcStudy](./arc-study)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Study.toJsonString study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Study.toJsonString(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Study.toJsonString(study)
+```
+</TabItem>
+</Tabs>
+
+### Study.fromCompressedJsonString
+**Summary:** Deserialize a study from compressed JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study = JsonController.Study.fromCompressedJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study = JsonController.Study.fromCompressedJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study = JsonController.Study.fromCompressedJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Study.toCompressedJsonString
+**Summary:** Serialize a study to compressed JSON.
+**Parameters:** `study: [ArcStudy](./arc-study)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Study.toCompressedJsonString study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Study.toCompressedJsonString(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Study.toCompressedJsonString(study)
+```
+</TabItem>
+</Tabs>
+
+### Study.fromISAJsonString
+**Summary:** Deserialize a study from ISA-JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study = JsonController.Study.fromISAJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study = JsonController.Study.fromISAJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study = JsonController.Study.fromISAJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Study.toISAJsonString
+**Summary:** Serialize a study to ISA-JSON with optional ID referencing.
+**Parameters:** `study: [ArcStudy](./arc-study)`, `useIDReferencing: bool`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Study.toISAJsonString(study, useIDReferencing = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Study.toISAJsonString(study, true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Study.toISAJsonString(study, True)
+```
+</TabItem>
+</Tabs>
+
+### Study.fromROCrateJsonString
+**Summary:** Deserialize a study from RO-Crate JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study = JsonController.Study.fromROCrateJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study = JsonController.Study.fromROCrateJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study = JsonController.Study.fromROCrateJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Study.toROCrateJsonString
+**Summary:** Serialize a study to RO-Crate JSON-LD.
+**Parameters:** `study: [ArcStudy](./arc-study)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Study.toROCrateJsonString study
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Study.toROCrateJsonString(study);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Study.toROCrateJsonString(study)
+```
+</TabItem>
+</Tabs>
+
+### Workflow.fromJsonString
+**Summary:** Deserialize a workflow from JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let workflow = JsonController.Workflow.fromJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const workflow = JsonController.Workflow.fromJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+workflow = JsonController.Workflow.fromJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Workflow.toJsonString
+**Summary:** Serialize a workflow to JSON.
+**Parameters:** `workflow: [ArcWorkflow](./arc-workflow)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Workflow.toJsonString workflow
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Workflow.toJsonString(workflow);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Workflow.toJsonString(workflow)
+```
+</TabItem>
+</Tabs>
+
+### Workflow.fromCompressedJsonString
+**Summary:** Deserialize a workflow from compressed JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let workflow = JsonController.Workflow.fromCompressedJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const workflow = JsonController.Workflow.fromCompressedJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+workflow = JsonController.Workflow.fromCompressedJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Workflow.toCompressedJsonString
+**Summary:** Serialize a workflow to compressed JSON.
+**Parameters:** `workflow: [ArcWorkflow](./arc-workflow)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Workflow.toCompressedJsonString workflow
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Workflow.toCompressedJsonString(workflow);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Workflow.toCompressedJsonString(workflow)
+```
+</TabItem>
+</Tabs>
+
+### Workflow.fromISAJsonString
+**Summary:** Deserialize a workflow from ISA-JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let workflow = JsonController.Workflow.fromISAJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const workflow = JsonController.Workflow.fromISAJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+workflow = JsonController.Workflow.fromISAJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Workflow.toISAJsonString
+**Summary:** Serialize a workflow to ISA-JSON with optional ID referencing.
+**Parameters:** `workflow: [ArcWorkflow](./arc-workflow)`, `useIDReferencing: bool`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Workflow.toISAJsonString(workflow, useIDReferencing = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Workflow.toISAJsonString(workflow, true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Workflow.toISAJsonString(workflow, True)
+```
+</TabItem>
+</Tabs>
+
+### Workflow.fromROCrateJsonString
+**Summary:** Deserialize a workflow from RO-Crate JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let workflow = JsonController.Workflow.fromROCrateJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const workflow = JsonController.Workflow.fromROCrateJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+workflow = JsonController.Workflow.fromROCrateJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Workflow.toROCrateJsonString
+**Summary:** Serialize a workflow to RO-Crate JSON-LD.
+**Parameters:** `workflow: [ArcWorkflow](./arc-workflow)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Workflow.toROCrateJsonString workflow
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Workflow.toROCrateJsonString(workflow);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Workflow.toROCrateJsonString(workflow)
+```
+</TabItem>
+</Tabs>
+
+### Run.fromJsonString
+**Summary:** Deserialize a run from JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run = JsonController.Run.fromJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run = JsonController.Run.fromJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run = JsonController.Run.fromJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Run.toJsonString
+**Summary:** Serialize a run to JSON.
+**Parameters:** `run: [ArcRun](./arc-run)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Run.toJsonString run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Run.toJsonString(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Run.toJsonString(run)
+```
+</TabItem>
+</Tabs>
+
+### Run.fromCompressedJsonString
+**Summary:** Deserialize a run from compressed JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run = JsonController.Run.fromCompressedJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run = JsonController.Run.fromCompressedJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run = JsonController.Run.fromCompressedJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Run.toCompressedJsonString
+**Summary:** Serialize a run to compressed JSON.
+**Parameters:** `run: [ArcRun](./arc-run)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Run.toCompressedJsonString run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Run.toCompressedJsonString(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Run.toCompressedJsonString(run)
+```
+</TabItem>
+</Tabs>
+
+### Run.fromISAJsonString
+**Summary:** Deserialize a run from ISA-JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run = JsonController.Run.fromISAJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run = JsonController.Run.fromISAJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run = JsonController.Run.fromISAJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Run.toISAJsonString
+**Summary:** Serialize a run to ISA-JSON with optional ID referencing.
+**Parameters:** `run: [ArcRun](./arc-run)`, `useIDReferencing: bool`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Run.toISAJsonString(run, useIDReferencing = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Run.toISAJsonString(run, true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Run.toISAJsonString(run, True)
+```
+</TabItem>
+</Tabs>
+
+### Run.fromROCrateJsonString
+**Summary:** Deserialize a run from RO-Crate JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run = JsonController.Run.fromROCrateJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run = JsonController.Run.fromROCrateJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run = JsonController.Run.fromROCrateJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Run.toROCrateJsonString
+**Summary:** Serialize a run to RO-Crate JSON-LD.
+**Parameters:** `run: [ArcRun](./arc-run)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Run.toROCrateJsonString run
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Run.toROCrateJsonString(run);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Run.toROCrateJsonString(run)
+```
+</TabItem>
+</Tabs>
+
+### Investigation.fromJsonString
+**Summary:** Deserialize an investigation from JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let inv = JsonController.Investigation.fromJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const inv = JsonController.Investigation.fromJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+inv = JsonController.Investigation.fromJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Investigation.toJsonString
+**Summary:** Serialize an investigation to JSON.
+**Parameters:** `investigation: [ArcInvestigation](./arc-investigation)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Investigation.toJsonString investigation
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Investigation.toJsonString(investigation);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Investigation.toJsonString(investigation)
+```
+</TabItem>
+</Tabs>
+
+### Investigation.fromCompressedJsonString
+**Summary:** Deserialize an investigation from compressed JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let inv = JsonController.Investigation.fromCompressedJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const inv = JsonController.Investigation.fromCompressedJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+inv = JsonController.Investigation.fromCompressedJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Investigation.toCompressedJsonString
+**Summary:** Serialize an investigation to compressed JSON.
+**Parameters:** `investigation: [ArcInvestigation](./arc-investigation)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Investigation.toCompressedJsonString investigation
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Investigation.toCompressedJsonString(investigation);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Investigation.toCompressedJsonString(investigation)
+```
+</TabItem>
+</Tabs>
+
+### Investigation.fromISAJsonString
+**Summary:** Deserialize an investigation from ISA-JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let inv = JsonController.Investigation.fromISAJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const inv = JsonController.Investigation.fromISAJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+inv = JsonController.Investigation.fromISAJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Investigation.toISAJsonString
+**Summary:** Serialize an investigation to ISA-JSON with optional ID referencing.
+**Parameters:** `investigation: [ArcInvestigation](./arc-investigation)`, `useIDReferencing: bool`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Investigation.toISAJsonString(investigation, useIDReferencing = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Investigation.toISAJsonString(investigation, true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Investigation.toISAJsonString(investigation, True)
+```
+</TabItem>
+</Tabs>
+
+### Investigation.fromROCrateJsonString
+**Summary:** Deserialize an investigation from RO-Crate JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let inv = JsonController.Investigation.fromROCrateJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const inv = JsonController.Investigation.fromROCrateJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+inv = JsonController.Investigation.fromROCrateJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### Investigation.toROCrateJsonString
+**Summary:** Serialize an investigation to RO-Crate JSON-LD.
+**Parameters:** `investigation: [ArcInvestigation](./arc-investigation)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.Investigation.toROCrateJsonString investigation
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.Investigation.toROCrateJsonString(investigation);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.Investigation.toROCrateJsonString(investigation)
+```
+</TabItem>
+</Tabs>
+
+### ARC.fromROCrateJsonString
+**Summary:** Deserialize an ARC from RO-Crate JSON.
+**Parameters:** `json: string`
+**ReturnType:** [ARC](./arc)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let arc = JsonController.ARC.fromROCrateJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const arc = JsonController.ARC.fromROCrateJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc = JsonController.ARC.fromROCrateJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### ARC.toROCrateJsonString
+**Summary:** Serialize an ARC to RO-Crate JSON-LD.
+**Parameters:** `arc: [ARC](./arc)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.ARC.toROCrateJsonString arc
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.ARC.toROCrateJsonString(arc);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.ARC.toROCrateJsonString(arc)
+```
+</TabItem>
+</Tabs>
+
+### LDGraph.fromROCrateJsonString
+**Summary:** Deserialize an RO-Crate graph from JSON.
+**Parameters:** `json: string`
+**ReturnType:** [LDGraph](./ldgraph)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let graph = JsonController.LDGraph.fromROCrateJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const graph = JsonController.LDGraph.fromROCrateJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+graph = JsonController.LDGraph.fromROCrateJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### LDGraph.toROCrateJsonString
+**Summary:** Serialize an RO-Crate graph to JSON-LD.
+**Parameters:** `graph: [LDGraph](./ldgraph)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.LDGraph.toROCrateJsonString graph
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.LDGraph.toROCrateJsonString(graph);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.LDGraph.toROCrateJsonString(graph)
+```
+</TabItem>
+</Tabs>
+
+### LDNode.fromROCrateJsonString
+**Summary:** Deserialize an RO-Crate node from JSON.
+**Parameters:** `json: string`
+**ReturnType:** [LDNode](./ldnode)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let node = JsonController.LDNode.fromROCrateJsonString json
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const node = JsonController.LDNode.fromROCrateJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+node = JsonController.LDNode.fromROCrateJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### LDNode.toROCrateJsonString
+**Summary:** Serialize an RO-Crate node to JSON-LD.
+**Parameters:** `node: [LDNode](./ldnode)`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = JsonController.LDNode.toROCrateJsonString node
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = JsonController.LDNode.toROCrateJsonString(node);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json_str = JsonController.LDNode.toROCrateJsonString(node)
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+None.

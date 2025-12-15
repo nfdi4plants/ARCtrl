@@ -1,0 +1,1544 @@
+---
+title: "ARC"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+## Fields
+None.
+
+## Methods
+
+### Constructor
+**Summary:** Create an ARC with investigation metadata, ISA objects, optional file system, and license.
+**Parameters:** `identifier: string`, optional metadata (`title`, `description`, `submissionDate`, `publicReleaseDate`), collections (`ontologySourceReferences`, `publications`, `contacts`, `assays`, `studies`, `workflows`, `runs`, `registeredStudyIdentifiers`, `comments`, `remarks`), `fs: FileSystem.FileSystem`, `license: License`
+**ReturnType:** [ARC](./arc)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+open ARCtrl
+let arc = ARC(
+    identifier = "ARC1",
+    title = "My ARC",
+    assays = ResizeArray(),
+    fs = FileSystem.FileSystem.create(FileSystem.FileSystemTree.createRootFolder [||])
+)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+import { ARC, FileSystem, FileSystemTree } from "@nfdi4plants/arctrl";
+
+const arc = new ARC(
+  "ARC1",
+  "My ARC",
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  undefined,
+  [],
+  [],
+  [],
+  [],
+  [],
+  [],
+  FileSystem.create(FileSystemTree.createRootFolder([])),
+);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+from arctrl import ARC, FileSystem, FileSystemTree
+
+arc = ARC(
+    "ARC1",
+    title="My ARC",
+    assays=[],
+    fs=FileSystem.create(FileSystemTree.createRootFolder([])),
+)
+```
+</TabItem>
+</Tabs>
+
+### Copy
+**Summary:** Deep clone including investigation, file system, license, and all ISA objects.
+**Parameters:** none
+**ReturnType:** [ARC](./arc)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let clone = arc.Copy()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const clone = arc.Copy();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+clone = arc.Copy()
+```
+</TabItem>
+</Tabs>
+
+### SetLicenseFulltext
+**Summary:** Create or update the `License` with fulltext content and optional path override.
+**Parameters:** `fulltext: string`, `path: string option`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+arc.SetLicenseFulltext("MIT license text", path = Some "LICENSE")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+arc.SetLicenseFulltext("MIT license text", "LICENSE");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc.SetLicenseFulltext("MIT license text", path="LICENSE")
+```
+</TabItem>
+</Tabs>
+
+### TryWriteAsync
+**Summary:** Create write contracts and persist the ARC asynchronously, returning a result.
+**Parameters:** `arcPath: string`
+**ReturnType:** Result\<[Contract](./contract)[], string[]\> (cross-language promise/result)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = arc.TryWriteAsync("./my-arc")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await arc.TryWriteAsync("./my-arc");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await arc.TryWriteAsync("./my-arc")
+```
+</TabItem>
+</Tabs>
+
+### WriteAsync
+**Summary:** Create write contracts and persist the ARC asynchronously, throwing on failure.
+**Parameters:** `arcPath: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+do! arc.WriteAsync("./my-arc")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+await arc.WriteAsync("./my-arc");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+await arc.WriteAsync("./my-arc")
+```
+</TabItem>
+</Tabs>
+
+### Write
+**Summary:** Synchronous wrapper that writes the ARC; throws on failure.
+**Parameters:** `arcPath: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+arc.Write("./my-arc")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+arc.Write("./my-arc");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc.Write("./my-arc")
+```
+</TabItem>
+</Tabs>
+
+### TryUpdateAsync
+**Summary:** Diff current state and update ARC on disk asynchronously, returning a result.
+**Parameters:** `arcPath: string`
+**ReturnType:** Result\<[Contract](./contract)[], string[]\>
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = arc.TryUpdateAsync("./my-arc")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await arc.TryUpdateAsync("./my-arc");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await arc.TryUpdateAsync("./my-arc")
+```
+</TabItem>
+</Tabs>
+
+### UpdateAsync
+**Summary:** Diff current state and update ARC on disk asynchronously; throws on failure.
+**Parameters:** `arcPath: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+do! arc.UpdateAsync("./my-arc")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+await arc.UpdateAsync("./my-arc");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+await arc.UpdateAsync("./my-arc")
+```
+</TabItem>
+</Tabs>
+
+### Update
+**Summary:** Synchronous wrapper that diffs and updates ARC on disk; throws on failure.
+**Parameters:** `arcPath: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+arc.Update("./my-arc")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+arc.Update("./my-arc");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc.Update("./my-arc")
+```
+</TabItem>
+</Tabs>
+
+### TryRemoveAssayAsync
+**Summary:** Remove an assay asynchronously, returning a result.
+**Parameters:** `arcPath: string`, `assayId: string`
+**ReturnType:** Result\<[Contract](./contract)[], string[]\>
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = arc.TryRemoveAssayAsync("./my-arc", "Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await arc.TryRemoveAssayAsync("./my-arc", "Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await arc.TryRemoveAssayAsync("./my-arc", "Assay1")
+```
+</TabItem>
+</Tabs>
+
+### RemoveAssayAsync
+**Summary:** Remove an assay asynchronously, throwing on failure.
+**Parameters:** `arcPath: string`, `assayId: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+do! arc.RemoveAssayAsync("./my-arc", "Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+await arc.RemoveAssayAsync("./my-arc", "Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+await arc.RemoveAssayAsync("./my-arc", "Assay1")
+```
+</TabItem>
+</Tabs>
+
+### RemoveAssay
+**Summary:** Synchronously remove an assay, throwing on failure.
+**Parameters:** `arcPath: string`, `assayId: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+arc.RemoveAssay("./my-arc", "Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+arc.RemoveAssay("./my-arc", "Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc.RemoveAssay("./my-arc", "Assay1")
+```
+</TabItem>
+</Tabs>
+
+### TryRemoveStudyAsync
+**Summary:** Remove a study by identifier asynchronously, returning a result.
+**Parameters:** `arcPath: string`, `studyId: string`
+**ReturnType:** Result\<[Contract](./contract)[], string[]\>
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = arc.TryRemoveStudyAsync("./my-arc", "Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await arc.TryRemoveStudyAsync("./my-arc", "Study1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await arc.TryRemoveStudyAsync("./my-arc", "Study1")
+```
+</TabItem>
+</Tabs>
+
+### RemoveStudyAsync
+**Summary:** Remove a study asynchronously, throwing on failure.
+**Parameters:** `arcPath: string`, `studyId: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+do! arc.RemoveStudyAsync("./my-arc", "Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+await arc.RemoveStudyAsync("./my-arc", "Study1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+await arc.RemoveStudyAsync("./my-arc", "Study1")
+```
+</TabItem>
+</Tabs>
+
+### RemoveStudy
+**Summary:** Synchronously remove a study, throwing on failure.
+**Parameters:** `arcPath: string`, `studyId: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+arc.RemoveStudy("./my-arc", "Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+arc.RemoveStudy("./my-arc", "Study1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc.RemoveStudy("./my-arc", "Study1")
+```
+</TabItem>
+</Tabs>
+
+### TryRemoveRunAsync
+**Summary:** Remove a run by identifier asynchronously, returning a result.
+**Parameters:** `arcPath: string`, `runId: string`
+**ReturnType:** Result\<[Contract](./contract)[], string[]\>
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = arc.TryRemoveRunAsync("./my-arc", "Run1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await arc.TryRemoveRunAsync("./my-arc", "Run1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await arc.TryRemoveRunAsync("./my-arc", "Run1")
+```
+</TabItem>
+</Tabs>
+
+### RemoveRunAsync
+**Summary:** Remove a run asynchronously, throwing on failure.
+**Parameters:** `arcPath: string`, `runId: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+do! arc.RemoveRunAsync("./my-arc", "Run1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+await arc.RemoveRunAsync("./my-arc", "Run1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+await arc.RemoveRunAsync("./my-arc", "Run1")
+```
+</TabItem>
+</Tabs>
+
+### RemoveRun
+**Summary:** Synchronously remove a run, throwing on failure.
+**Parameters:** `arcPath: string`, `runId: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+arc.RemoveRun("./my-arc", "Run1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+arc.RemoveRun("./my-arc", "Run1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc.RemoveRun("./my-arc", "Run1")
+```
+</TabItem>
+</Tabs>
+
+### TryRemoveWorkflowAsync
+**Summary:** Remove a workflow by identifier asynchronously, returning a result.
+**Parameters:** `arcPath: string`, `workflowId: string`
+**ReturnType:** Result\<[Contract](./contract)[], string[]\>
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = arc.TryRemoveWorkflowAsync("./my-arc", "WF1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await arc.TryRemoveWorkflowAsync("./my-arc", "WF1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await arc.TryRemoveWorkflowAsync("./my-arc", "WF1")
+```
+</TabItem>
+</Tabs>
+
+### RemoveWorkflowAsync
+**Summary:** Remove a workflow asynchronously, throwing on failure.
+**Parameters:** `arcPath: string`, `workflowId: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+do! arc.RemoveWorkflowAsync("./my-arc", "WF1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+await arc.RemoveWorkflowAsync("./my-arc", "WF1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+await arc.RemoveWorkflowAsync("./my-arc", "WF1")
+```
+</TabItem>
+</Tabs>
+
+### RemoveWorkflow
+**Summary:** Synchronously remove a workflow, throwing on failure.
+**Parameters:** `arcPath: string`, `workflowId: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+arc.RemoveWorkflow("./my-arc", "WF1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+arc.RemoveWorkflow("./my-arc", "WF1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc.RemoveWorkflow("./my-arc", "WF1")
+```
+</TabItem>
+</Tabs>
+
+### TryRenameAssayAsync
+**Summary:** Rename an assay asynchronously, updating FS paths and returning a result.
+**Parameters:** `arcPath: string`, `oldId: string`, `newId: string`
+**ReturnType:** Result\<[Contract](./contract)[], string[]\>
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = arc.TryRenameAssayAsync("./my-arc", "Old", "New")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await arc.TryRenameAssayAsync("./my-arc", "Old", "New");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await arc.TryRenameAssayAsync("./my-arc", "Old", "New")
+```
+</TabItem>
+</Tabs>
+
+### RenameAssayAsync
+**Summary:** Rename an assay asynchronously, throwing on failure.
+**Parameters:** `arcPath: string`, `oldId: string`, `newId: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+do! arc.RenameAssayAsync("./my-arc", "Old", "New")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+await arc.RenameAssayAsync("./my-arc", "Old", "New");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+await arc.RenameAssayAsync("./my-arc", "Old", "New")
+```
+</TabItem>
+</Tabs>
+
+### RenameAssay
+**Summary:** Synchronously rename an assay, throwing on failure.
+**Parameters:** `arcPath: string`, `oldId: string`, `newId: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+arc.RenameAssay("./my-arc", "Old", "New")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+arc.RenameAssay("./my-arc", "Old", "New");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc.RenameAssay("./my-arc", "Old", "New")
+```
+</TabItem>
+</Tabs>
+
+### TryRenameStudyAsync
+**Summary:** Rename a study asynchronously with FS updates, returning a result.
+**Parameters:** `arcPath: string`, `oldId: string`, `newId: string`
+**ReturnType:** Result\<[Contract](./contract)[], string[]\>
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = arc.TryRenameStudyAsync("./my-arc", "Old", "New")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await arc.TryRenameStudyAsync("./my-arc", "Old", "New");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await arc.TryRenameStudyAsync("./my-arc", "Old", "New")
+```
+</TabItem>
+</Tabs>
+
+### RenameStudyAsync
+**Summary:** Rename a study asynchronously, throwing on failure.
+**Parameters:** `arcPath: string`, `oldId: string`, `newId: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+do! arc.RenameStudyAsync("./my-arc", "Old", "New")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+await arc.RenameStudyAsync("./my-arc", "Old", "New");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+await arc.RenameStudyAsync("./my-arc", "Old", "New")
+```
+</TabItem>
+</Tabs>
+
+### RenameStudy
+**Summary:** Synchronously rename a study, throwing on failure.
+**Parameters:** `arcPath: string`, `oldId: string`, `newId: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+arc.RenameStudy("./my-arc", "Old", "New")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+arc.RenameStudy("./my-arc", "Old", "New");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc.RenameStudy("./my-arc", "Old", "New")
+```
+</TabItem>
+</Tabs>
+
+### TryRenameRunAsync
+**Summary:** Rename a run asynchronously with FS updates, returning a result.
+**Parameters:** `arcPath: string`, `oldId: string`, `newId: string`
+**ReturnType:** Result\<[Contract](./contract)[], string[]\>
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = arc.TryRenameRunAsync("./my-arc", "Old", "New")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await arc.TryRenameRunAsync("./my-arc", "Old", "New");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await arc.TryRenameRunAsync("./my-arc", "Old", "New")
+```
+</TabItem>
+</Tabs>
+
+### RenameRunAsync
+**Summary:** Rename a run asynchronously, throwing on failure.
+**Parameters:** `arcPath: string`, `oldId: string`, `newId: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+do! arc.RenameRunAsync("./my-arc", "Old", "New")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+await arc.RenameRunAsync("./my-arc", "Old", "New");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+await arc.RenameRunAsync("./my-arc", "Old", "New")
+```
+</TabItem>
+</Tabs>
+
+### RenameRun
+**Summary:** Synchronously rename a run, throwing on failure.
+**Parameters:** `arcPath: string`, `oldId: string`, `newId: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+arc.RenameRun("./my-arc", "Old", "New")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+arc.RenameRun("./my-arc", "Old", "New");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc.RenameRun("./my-arc", "Old", "New")
+```
+</TabItem>
+</Tabs>
+
+### TryRenameWorkflowAsync
+**Summary:** Rename a workflow asynchronously with FS updates, returning a result.
+**Parameters:** `arcPath: string`, `oldId: string`, `newId: string`
+**ReturnType:** Result\<[Contract](./contract)[], string[]\>
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = arc.TryRenameWorkflowAsync("./my-arc", "Old", "New")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await arc.TryRenameWorkflowAsync("./my-arc", "Old", "New");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await arc.TryRenameWorkflowAsync("./my-arc", "Old", "New")
+```
+</TabItem>
+</Tabs>
+
+### RenameWorkflowAsync
+**Summary:** Rename a workflow asynchronously, throwing on failure.
+**Parameters:** `arcPath: string`, `oldId: string`, `newId: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+do! arc.RenameWorkflowAsync("./my-arc", "Old", "New")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+await arc.RenameWorkflowAsync("./my-arc", "Old", "New");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+await arc.RenameWorkflowAsync("./my-arc", "Old", "New")
+```
+</TabItem>
+</Tabs>
+
+### RenameWorkflow
+**Summary:** Synchronously rename a workflow, throwing on failure.
+**Parameters:** `arcPath: string`, `oldId: string`, `newId: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+arc.RenameWorkflow("./my-arc", "Old", "New")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+arc.RenameWorkflow("./my-arc", "Old", "New");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc.RenameWorkflow("./my-arc", "Old", "New")
+```
+</TabItem>
+</Tabs>
+
+### GetAssayRemoveContracts
+**Summary:** Build contracts to remove an assay and update ARC/FS.
+**Parameters:** `assayId: string`
+**ReturnType:** [Contract](./contract)[]
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let contracts = arc.GetAssayRemoveContracts("Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const contracts = arc.GetAssayRemoveContracts("Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+contracts = arc.GetAssayRemoveContracts("Assay1")
+```
+</TabItem>
+</Tabs>
+
+### GetRunRemoveContracts
+**Summary:** Build contracts to remove a run and update ARC/FS.
+**Parameters:** `runId: string`
+**ReturnType:** [Contract](./contract)[]
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let contracts = arc.GetRunRemoveContracts("Run1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const contracts = arc.GetRunRemoveContracts("Run1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+contracts = arc.GetRunRemoveContracts("Run1")
+```
+</TabItem>
+</Tabs>
+
+### GetWorkflowRemoveContracts
+**Summary:** Build contracts to remove a workflow and update ARC/FS.
+**Parameters:** `workflowId: string`
+**ReturnType:** [Contract](./contract)[]
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let contracts = arc.GetWorkflowRemoveContracts("WF1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const contracts = arc.GetWorkflowRemoveContracts("WF1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+contracts = arc.GetWorkflowRemoveContracts("WF1")
+```
+</TabItem>
+</Tabs>
+
+### GetStudyRemoveContracts
+**Summary:** Build contracts to remove a study and update ARC/FS.
+**Parameters:** `studyId: string`
+**ReturnType:** [Contract](./contract)[]
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let contracts = arc.GetStudyRemoveContracts("Study1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const contracts = arc.GetStudyRemoveContracts("Study1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+contracts = arc.GetStudyRemoveContracts("Study1")
+```
+</TabItem>
+</Tabs>
+
+### GetAssayRenameContracts
+**Summary:** Build contracts to rename an assay and update ARC/FS.
+**Parameters:** `oldId: string`, `newId: string`
+**ReturnType:** [Contract](./contract)[]
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let contracts = arc.GetAssayRenameContracts("Old", "New")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const contracts = arc.GetAssayRenameContracts("Old", "New");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+contracts = arc.GetAssayRenameContracts("Old", "New")
+```
+</TabItem>
+</Tabs>
+
+### GetRunRenameContracts
+**Summary:** Build contracts to rename a run and update ARC/FS.
+**Parameters:** `oldId: string`, `newId: string`
+**ReturnType:** [Contract](./contract)[]
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let contracts = arc.GetRunRenameContracts("Old", "New")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const contracts = arc.GetRunRenameContracts("Old", "New");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+contracts = arc.GetRunRenameContracts("Old", "New")
+```
+</TabItem>
+</Tabs>
+
+### GetWorkflowRenameContracts
+**Summary:** Build contracts to rename a workflow and update ARC/FS.
+**Parameters:** `oldId: string`, `newId: string`
+**ReturnType:** [Contract](./contract)[]
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let contracts = arc.GetWorkflowRenameContracts("Old", "New")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const contracts = arc.GetWorkflowRenameContracts("Old", "New");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+contracts = arc.GetWorkflowRenameContracts("Old", "New")
+```
+</TabItem>
+</Tabs>
+
+### GetStudyRenameContracts
+**Summary:** Build contracts to rename a study and update ARC/FS.
+**Parameters:** `oldId: string`, `newId: string`
+**ReturnType:** [Contract](./contract)[]
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let contracts = arc.GetStudyRenameContracts("Old", "New")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const contracts = arc.GetStudyRenameContracts("Old", "New");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+contracts = arc.GetStudyRenameContracts("Old", "New")
+```
+</TabItem>
+</Tabs>
+
+### GetReadContracts
+**Summary:** Emit read contracts from the current file system.
+**Parameters:** none
+**ReturnType:** [Contract](./contract)[]
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let contracts = arc.GetReadContracts()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const contracts = arc.GetReadContracts();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+contracts = arc.GetReadContracts()
+```
+</TabItem>
+</Tabs>
+
+### SetISAFromContracts
+**Summary:** Hydrate ARC ISA (studies, assays, workflows, runs, datamaps, license) from contracts and refresh hashes.
+**Parameters:** `contracts: [Contract](./contract)[]`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+arc.SetISAFromContracts(contracts)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+arc.SetISAFromContracts(contracts);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc.SetISAFromContracts(contracts)
+```
+</TabItem>
+</Tabs>
+
+### GetWriteContracts
+**Summary:** Produce full CREATE contracts for the current ARC state.
+**Parameters:** `skipUpdateFS: bool option`
+**ReturnType:** [Contract](./contract)[]
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let contracts = arc.GetWriteContracts(skipUpdateFS = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const contracts = arc.GetWriteContracts(true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+contracts = arc.GetWriteContracts(True)
+```
+</TabItem>
+</Tabs>
+
+### GetUpdateContracts
+**Summary:** Produce UPDATE/CREATE contracts for changed or new ISA objects.
+**Parameters:** `skipUpdateFS: bool option`
+**ReturnType:** [Contract](./contract)[]
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let contracts = arc.GetUpdateContracts(skipUpdateFS = false)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const contracts = arc.GetUpdateContracts(false);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+contracts = arc.GetUpdateContracts(False)
+```
+</TabItem>
+</Tabs>
+
+### UpdateFileSystem
+**Summary:** Rebuild the file system tree from the current ARC state.
+**Parameters:** none
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+arc.UpdateFileSystem()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+arc.UpdateFileSystem();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc.UpdateFileSystem()
+```
+</TabItem>
+</Tabs>
+
+### SetFilePaths
+**Summary:** Replace the file system tree from explicit paths.
+**Parameters:** `filePaths: string[]`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+arc.SetFilePaths([|"assays/Assay1/a.txt"|])
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+arc.SetFilePaths(["assays/Assay1/a.txt"]);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc.SetFilePaths(["assays/Assay1/a.txt"])
+```
+</TabItem>
+</Tabs>
+
+### ToFilePaths
+**Summary:** Enumerate file system paths, optionally skipping root or FS update.
+**Parameters:** `removeRoot: bool option`, `skipUpdateFS: bool option`
+**ReturnType:** `string[]`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let paths = arc.ToFilePaths(removeRoot = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const paths = arc.ToFilePaths(true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+paths = arc.ToFilePaths(True)
+```
+</TabItem>
+</Tabs>
+
+### MakeDataFilesAbsolute
+**Summary:** Rewrite data column and datamap file paths to ARC-root absolute paths when files exist.
+**Parameters:** none
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+arc.MakeDataFilesAbsolute()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+arc.MakeDataFilesAbsolute();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc.MakeDataFilesAbsolute()
+```
+</TabItem>
+</Tabs>
+
+### GetRegisteredPayload
+**Summary:** Return the file system subset for registered ISA payload.
+**Parameters:** `IgnoreHidden: bool option`
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let payload = arc.GetRegisteredPayload(IgnoreHidden = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const payload = arc.GetRegisteredPayload(true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+payload = arc.GetRegisteredPayload(True)
+```
+</TabItem>
+</Tabs>
+
+### GetAdditionalPayload
+**Summary:** Return the file system subset for non-registered payload.
+**Parameters:** `IgnoreHidden: bool option`
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let payload = arc.GetAdditionalPayload(IgnoreHidden = false)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const payload = arc.GetAdditionalPayload(false);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+payload = arc.GetAdditionalPayload(False)
+```
+</TabItem>
+</Tabs>
+
+### GetGitInitContracts
+**Summary:** Create git init/add-remote contracts with optional default ignore/attributes.
+**Parameters:** `remoteUrl: string`, `merge: bool option`, `branch: string option`, `token: string option`, `nolfs: bool option`, `defaultGitignore: bool option`, `defaultGitattributes: bool option`
+**ReturnType:** [Contract](./contract)[]
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let contracts = arc.GetGitInitContracts("https://example.com/repo.git", defaultGitignore = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const contracts = arc.GetGitInitContracts("https://example.com/repo.git", undefined, undefined, undefined, undefined, true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+contracts = arc.GetGitInitContracts("https://example.com/repo.git", defaultGitignore=True)
+```
+</TabItem>
+</Tabs>
+
+### GetValidationPackagesConfigWriteContract
+**Summary:** Create a write contract for `.arc/validation_packages.yml` and update FS.
+**Parameters:** `vpc: ValidationPackagesConfig`
+**ReturnType:** [Contract](./contract)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = arc.GetValidationPackagesConfigWriteContract(vpc)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = arc.GetValidationPackagesConfigWriteContract(vpc);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = arc.GetValidationPackagesConfigWriteContract(vpc)
+```
+</TabItem>
+</Tabs>
+
+### GetValidationPackagesConfigDeleteContract
+**Summary:** Create a delete contract for `.arc/validation_packages.yml` and update FS.
+**Parameters:** `vpc: ValidationPackagesConfig`
+**ReturnType:** [Contract](./contract)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = arc.GetValidationPackagesConfigDeleteContract(vpc)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = arc.GetValidationPackagesConfigDeleteContract(vpc);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = arc.GetValidationPackagesConfigDeleteContract(vpc)
+```
+</TabItem>
+</Tabs>
+
+### GetValidationPackagesConfigReadContract
+**Summary:** Create a read contract for `.arc/validation_packages.yml`.
+**Parameters:** none
+**ReturnType:** [Contract](./contract)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = arc.GetValidationPackagesConfigReadContract()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = arc.GetValidationPackagesConfigReadContract();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = arc.GetValidationPackagesConfigReadContract()
+```
+</TabItem>
+</Tabs>
+
+### GetValidationPackagesConfigFromReadContract
+**Summary:** Hydrate validation packages config from a read contract and update FS.
+**Parameters:** `contract: [Contract](./contract)`
+**ReturnType:** `ValidationPackagesConfig`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let cfg = arc.GetValidationPackagesConfigFromReadContract(contract)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const cfg = arc.GetValidationPackagesConfigFromReadContract(contract);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+cfg = arc.GetValidationPackagesConfigFromReadContract(contract)
+```
+</TabItem>
+</Tabs>
+
+### GetLicenseWriteContract
+**Summary:** Create a license write contract (defaulting when missing).
+**Parameters:** none
+**ReturnType:** [Contract](./contract)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = arc.GetLicenseWriteContract()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = arc.GetLicenseWriteContract();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = arc.GetLicenseWriteContract()
+```
+</TabItem>
+</Tabs>
+
+### ToROCrateJsonString
+**Summary:** Export ARC (metadata, FS, license) to RO-Crate JSON-LD.
+**Parameters:** `spaces: int option`
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let json = arc.ToROCrateJsonString(spaces = Some 2)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const json = arc.ToROCrateJsonString(2);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+json = arc.ToROCrateJsonString(2)
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### fromArcInvestigation
+**Summary:** Wrap an investigation with optional file system and license into an ARC.
+**Parameters:** `isa: ArcInvestigation`, `fs: FileSystem.FileSystem option`, `license: License option`
+**ReturnType:** [ARC](./arc)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let arc = ARC.fromArcInvestigation(ArcInvestigation.init "ARC1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const arc = ARC.fromArcInvestigation(ArcInvestigation.init("ARC1"));
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc = ARC.fromArcInvestigation(ArcInvestigation.init("ARC1"))
+```
+</TabItem>
+</Tabs>
+
+### fromFilePaths
+**Summary:** Build an ARC from known file paths (FS only, placeholder identifier if missing).
+**Parameters:** `filePaths: string[]`
+**ReturnType:** [ARC](./arc)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let arc = ARC.fromFilePaths([|"investigation.xlsx"|])
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const arc = ARC.fromFilePaths(["investigation.xlsx"]);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc = ARC.fromFilePaths(["investigation.xlsx"])
+```
+</TabItem>
+</Tabs>
+
+### tryLoadAsync
+**Summary:** Read FS, create ARC, fulfil read contracts, and set ISA/FS/license asynchronously.
+**Parameters:** `arcPath: string`
+**ReturnType:** Result\<[ARC](./arc), string[]\> (async result/promise)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = ARC.tryLoadAsync("./my-arc")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await ARC.tryLoadAsync("./my-arc");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await ARC.tryLoadAsync("./my-arc")
+```
+</TabItem>
+</Tabs>
+
+### loadAsync
+**Summary:** Load an ARC asynchronously, throwing on failure.
+**Parameters:** `arcPath: string`
+**ReturnType:** [ARC](./arc) (async)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! arc = ARC.loadAsync("./my-arc")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const arc = await ARC.loadAsync("./my-arc");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc = await ARC.loadAsync("./my-arc")
+```
+</TabItem>
+</Tabs>
+
+### load
+**Summary:** Load an ARC synchronously, throwing on failure.
+**Parameters:** `arcPath: string`
+**ReturnType:** [ARC](./arc)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let arc = ARC.load("./my-arc")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const arc = ARC.load("./my-arc");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc = ARC.load("./my-arc")
+```
+</TabItem>
+</Tabs>
+
+### fromROCrateJsonString
+**Summary:** Decode RO-Crate JSON into an ARC with FS and license.
+**Parameters:** `json: string`
+**ReturnType:** [ARC](./arc)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let arc = ARC.fromROCrateJsonString(json)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const arc = ARC.fromROCrateJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc = ARC.fromROCrateJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### fromDeprecatedROCrateJsonString
+**Summary:** Decode legacy RO-Crate JSON into an ARC.
+**Parameters:** `json: string`
+**ReturnType:** [ARC](./arc)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let arc = ARC.fromDeprecatedROCrateJsonString(json)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const arc = ARC.fromDeprecatedROCrateJsonString(json);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+arc = ARC.fromDeprecatedROCrateJsonString(json)
+```
+</TabItem>
+</Tabs>
+
+### toROCrateJsonString (static function)
+**Summary:** Functional form to encode ARC to RO-Crate JSON-LD.
+**Parameters:** `spaces: int option`
+**ReturnType:** `[ARC](./arc) \-> string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let encoder = ARC.toROCrateJsonString(spaces = Some 2)
+let json = encoder arc
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const encoder = ARC.toROCrateJsonString(2);
+const json = encoder(arc);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+encoder = ARC.toROCrateJsonString(2)
+json = encoder(arc)
+```
+</TabItem>
+</Tabs>
+
+### getCloneContract
+**Summary:** Build a git clone contract.
+**Parameters:** `remoteUrl: string`, `merge: bool option`, `branch: string option`, `token: string option`, `nolfs: bool option`
+**ReturnType:** [Contract](./contract)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = ARC.getCloneContract("https://example.com/repo.git")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = ARC.getCloneContract("https://example.com/repo.git");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = ARC.getCloneContract("https://example.com/repo.git")
+```
+</TabItem>
+</Tabs>
+
+### DefaultContracts
+**Summary:** Default git-related contracts (`.gitignore`, `.gitattributes`).
+**Parameters:** none
+**ReturnType:** `Map\<string, [Contract](./contract)\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let defaults = ARC.DefaultContracts
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const defaults = ARC.DefaultContracts;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+defaults = ARC.DefaultContracts
+```
+</TabItem>
+</Tabs>

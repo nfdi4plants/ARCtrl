@@ -1,0 +1,388 @@
+---
+title: "CompositeHeader"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+**Signature:**
+```fsharp
+type CompositeHeader =
+  | Component of OntologyAnnotation
+  | Characteristic of OntologyAnnotation
+  | Factor of OntologyAnnotation
+  | Parameter of OntologyAnnotation
+  | ProtocolType
+  | ProtocolDescription
+  | ProtocolUri
+  | ProtocolVersion
+  | ProtocolREF
+  | Performer
+  | Date
+  | Input of IOType
+  | Output of IOType
+  | FreeText of string
+  | Comment of string
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+
+**Signature (union exposed as factory helpers):**
+```py
+CompositeHeader.Component(oa)
+CompositeHeader.Characteristic(oa)
+CompositeHeader.Factor(oa)
+CompositeHeader.Parameter(oa)
+CompositeHeader.ProtocolType
+CompositeHeader.ProtocolDescription
+CompositeHeader.ProtocolUri
+CompositeHeader.ProtocolVersion
+CompositeHeader.ProtocolREF
+CompositeHeader.Performer
+CompositeHeader.Date
+CompositeHeader.Input(io: IOType)
+CompositeHeader.Output(io: IOType)
+CompositeHeader.FreeText(text: str)
+CompositeHeader.Comment(key: str)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+**Signature (union-like factories):**
+```ts
+CompositeHeader.Component(oa: OntologyAnnotation)
+CompositeHeader.Characteristic(oa: OntologyAnnotation)
+CompositeHeader.Factor(oa: OntologyAnnotation)
+CompositeHeader.Parameter(oa: OntologyAnnotation)
+CompositeHeader.ProtocolType
+CompositeHeader.ProtocolDescription
+CompositeHeader.ProtocolUri
+CompositeHeader.ProtocolVersion
+CompositeHeader.ProtocolREF
+CompositeHeader.Performer
+CompositeHeader.Date
+CompositeHeader.Input(io: IOType)
+CompositeHeader.Output(io: IOType)
+CompositeHeader.FreeText(text: string)
+CompositeHeader.Comment(key: string)
+```
+</TabItem>
+</Tabs>
+
+## Fields
+- Union cases carry data as listed in the signature.
+
+## Methods
+
+### ToString
+**Summary:** Render ISA-style header text (e.g., `Characteristic[Organism]`).
+**Parameters:** none
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let text = header.ToString()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+text = header.ToString()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const text = header.ToString();
+```
+</TabItem>
+</Tabs>
+
+### ToTerm
+**Summary:** Get an `OntologyAnnotation` representing the header (IO headers are converted to OA-backed terms).
+**Parameters:** none
+**ReturnType:** [OntologyAnnotation](./ontology-annotation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let term = header.ToTerm()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+term = header.ToTerm()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const term = header.ToTerm();
+```
+</TabItem>
+</Tabs>
+
+### IsTermColumn
+**Summary:** Whether the header holds an ontology term.
+**Parameters:** none
+**ReturnType:** `bool`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isTerm = header.IsTermColumn
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+is_term = header.IsTermColumn
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isTerm = header.IsTermColumn;
+```
+</TabItem>
+</Tabs>
+
+### IsDataColumn
+**Summary:** Whether the header represents data (input/output).
+**Parameters:** none
+**ReturnType:** `bool`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isData = header.IsDataColumn
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+is_data = header.IsDataColumn
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isData = header.IsDataColumn;
+```
+</TabItem>
+</Tabs>
+
+### IsInput
+**Summary:** Whether the header is an input column.
+**Parameters:** none
+**ReturnType:** `bool`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isInput = header.IsInput
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+is_input = header.IsInput
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isInput = header.IsInput;
+```
+</TabItem>
+</Tabs>
+
+### IsOutput
+**Summary:** Whether the header is an output column.
+**Parameters:** none
+**ReturnType:** `bool`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isOutput = header.IsOutput
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+is_output = header.IsOutput
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isOutput = header.IsOutput;
+```
+</TabItem>
+</Tabs>
+
+### IsUnique
+**Summary:** Whether the header requires unique values.
+**Parameters:** none
+**ReturnType:** `bool`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let unique = header.IsUnique
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+unique = header.IsUnique
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const unique = header.IsUnique;
+```
+</TabItem>
+</Tabs>
+
+### TryInput
+**Summary:** Extract `IOType` when the header represents input; returns none otherwise.
+**Parameters:** none
+**ReturnType:** [IOType](./io-type) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let input = header.TryInput()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+input_io = header.TryInput()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const input = header.TryInput();
+```
+</TabItem>
+</Tabs>
+
+### TryOutput
+**Summary:** Extract `IOType` when the header represents output; returns none otherwise.
+**Parameters:** none
+**ReturnType:** [IOType](./io-type) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let output = header.TryOutput()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+output_io = header.TryOutput()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const output = header.TryOutput();
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### Cases
+**Summary:** Return tag/name pairs for the union cases.
+**Parameters:** none
+**ReturnType:** `(int * string)[]`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let cases = CompositeHeader.Cases()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+cases = CompositeHeader.Cases()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const cases = CompositeHeader.Cases();
+```
+</TabItem>
+</Tabs>
+
+### jsGetColumnMetaType
+**Summary:** JS helper: returns 0/1/2/3 meta-type hint for column creation.
+**Parameters:** `tag: int`
+**ReturnType:** `int`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let meta = CompositeHeader.jsGetColumnMetaType 11
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+meta = CompositeHeader.jsGetColumnMetaType(11)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const meta = CompositeHeader.jsGetColumnMetaType(11);
+```
+</TabItem>
+</Tabs>
+
+### OfHeaderString
+**Summary:** Parse an ISA header string into a `CompositeHeader`.
+**Parameters:** `str: string`
+**ReturnType:** [CompositeHeader](./composite-header)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let header = CompositeHeader.OfHeaderString "Characteristic[Organism]"
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+header = CompositeHeader.OfHeaderString("Characteristic[Organism]")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const header = CompositeHeader.OfHeaderString("Characteristic[Organism]");
+```
+</TabItem>
+</Tabs>
+
+### IOType.ofString
+**Summary:** Create an `IOType` from plain text.
+**Parameters:** `str: string`
+**ReturnType:** [IOType](./io-type)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let io = IOType.ofString "Sample"
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+io = IOType.ofString("Sample")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const io = IOType.ofString("Sample");
+```
+</TabItem>
+</Tabs>
+
+### IOType.tryOfHeaderString
+**Summary:** Try to parse an `IOType` from ISA header text.
+**Parameters:** `str: string`
+**ReturnType:** `IOType option`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let parsed = IOType.tryOfHeaderString "Input [Source Name]"
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+parsed = IOType.tryOfHeaderString("Input [Source Name]")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const parsed = IOType.tryOfHeaderString("Input [Source Name]");
+```
+</TabItem>
+</Tabs>

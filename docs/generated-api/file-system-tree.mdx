@@ -1,0 +1,714 @@
+---
+title: "FileSystemTree"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl.FileSystem`
+
+## Fields
+
+### FileSystemTree
+**Summary:** Discriminated union for file and folder nodes.
+**Parameters:**
+- `File of name: string`
+- `Folder of name: string * children: [FileSystemTree](./file-system-tree) array`
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+type FileSystemTree =
+  | File of name:string
+  | Folder of name:string * children:FileSystemTree array
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+// Use helpers; Name/isFolder/isFile mirror DU properties
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+# Use helpers; Name/isFolder/isFile mirror DU properties
+```
+</TabItem>
+</Tabs>
+
+## Methods
+
+### TryGetPath
+**Summary:** Resolve a child node by ARC-relative path.
+**Parameters:**
+- `path`: string
+**ReturnType:** [FileSystemTree](./file-system-tree) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let node = root.TryGetPath("assays/Assay1")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const node = root.TryGetPath("assays/Assay1");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+node = root.TryGetPath("assays/Assay1")
+```
+</TabItem>
+</Tabs>
+
+### TryGetChildByName
+**Summary:** Get a direct child by name, if present.
+**Parameters:**
+- `name`: string
+**ReturnType:** [FileSystemTree](./file-system-tree) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let child = root.TryGetChildByName("assays")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const child = root.TryGetChildByName("assays");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+child = root.TryGetChildByName("assays")
+```
+</TabItem>
+</Tabs>
+
+### ContainsChildWithName
+**Summary:** Check whether a direct child exists with a given name.
+**Parameters:**
+- `name`: string
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let hasAssays = root.ContainsChildWithName("assays")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const hasAssays = root.ContainsChildWithName("assays");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+has_assays = root.ContainsChildWithName("assays")
+```
+</TabItem>
+</Tabs>
+
+### toFilePaths
+**Summary:** Flatten a tree into path strings.
+**Parameters:**
+- `removeRoot`: bool option
+**ReturnType:** string array
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let paths = tree.toFilePaths(removeRoot = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const paths = tree.toFilePaths(true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+paths = tree.toFilePaths(True)
+```
+</TabItem>
+</Tabs>
+
+### AddFile
+**Summary:** Mutate the tree by adding a file path.
+**Parameters:**
+- `path`: string
+**ReturnType:** unit
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+root.AddFile("assays/Assay1/a.txt")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+root.AddFile("assays/Assay1/a.txt");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+root.AddFile("assays/Assay1/a.txt")
+```
+</TabItem>
+</Tabs>
+
+### Union
+**Summary:** Functionally merge distinct paths from another tree.
+**Parameters:**
+- `otherTree`: [FileSystemTree](./file-system-tree)
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let merged = root.Union(other)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const merged = root.Union(other);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+merged = root.Union(other)
+```
+</TabItem>
+</Tabs>
+
+### Copy
+**Summary:** Deep clone the tree.
+**Parameters:**
+- ()
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let clone = root.Copy()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const clone = root.Copy();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+clone = root.Copy()
+```
+</TabItem>
+</Tabs>
+
+### filterFiles
+**Summary:** Filter tree to files matching predicate.
+**Parameters:**
+- `predicate`: [FileSystemTree](./file-system-tree) -> bool
+**ReturnType:** [FileSystemTree](./file-system-tree) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let filtered = root.filterFiles (fun _ -> true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const filtered = root.filterFiles(() => true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+filtered = root.filterFiles(lambda _: True)
+```
+</TabItem>
+</Tabs>
+
+### filterFolders
+**Summary:** Filter tree to folders matching predicate.
+**Parameters:**
+- `predicate`: [FileSystemTree](./file-system-tree) -> bool
+**ReturnType:** [FileSystemTree](./file-system-tree) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let filtered = root.filterFolders (fun _ -> true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const filtered = root.filterFolders(() => true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+filtered = root.filterFolders(lambda _: True)
+```
+</TabItem>
+</Tabs>
+
+### filter
+**Summary:** Filter tree with a predicate over all nodes.
+**Parameters:**
+- `predicate`: [FileSystemTree](./file-system-tree) -> bool
+**ReturnType:** [FileSystemTree](./file-system-tree) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let filtered = root.filter (fun _ -> true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const filtered = root.filter(() => true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+filtered = root.filter(lambda _: True)
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### createFile
+**Summary:** Build a file node.
+**Parameters:**
+- `name`: string
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let f = FileSystemTree.createFile "file.txt"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const f = FileSystemTree.createFile("file.txt");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+f = FileSystemTree.createFile("file.txt")
+```
+</TabItem>
+</Tabs>
+
+### createFolder
+**Summary:** Build a folder node with optional children.
+**Parameters:**
+- `name`: string
+- `children`: [FileSystemTree](./file-system-tree) array option
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let d = FileSystemTree.createFolder("dir", [|f|])
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const d = FileSystemTree.createFolder("dir", [f]);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+d = FileSystemTree.createFolder("dir", [f])
+```
+</TabItem>
+</Tabs>
+
+### createRootFolder
+**Summary:** Build the root folder node with children.
+**Parameters:**
+- `children`: [FileSystemTree](./file-system-tree) array
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let root = FileSystemTree.createRootFolder [||]
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const root = FileSystemTree.createRootFolder([]);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+root = FileSystemTree.createRootFolder([])
+```
+</TabItem>
+</Tabs>
+
+### ROOT_NAME
+**Summary:** Constant root folder name.
+**Parameters:**
+- ()
+**ReturnType:** string
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let name = FileSystemTree.ROOT_NAME
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const name = FileSystemTree.ROOT_NAME;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+name = FileSystemTree.ROOT_NAME
+```
+</TabItem>
+</Tabs>
+
+### fromFilePaths
+**Summary:** Build a tree from file paths.
+**Parameters:**
+- `paths`: string array
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let tree = FileSystemTree.fromFilePaths [|"root/assays/a.txt"|]
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const tree = FileSystemTree.fromFilePaths(["root/assays/a.txt"]);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+tree = FileSystemTree.fromFilePaths(["root/assays/a.txt"])
+```
+</TabItem>
+</Tabs>
+
+### addFile
+**Summary:** Functional wrapper to add a file path.
+**Parameters:**
+- `path`: string
+**ReturnType:** [FileSystemTree](./file-system-tree) \-> [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let root' = root |> FileSystemTree.addFile "assays/Assay1/a.txt"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const root2 = FileSystemTree.addFile("assays/Assay1/a.txt")(root);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+root2 = FileSystemTree.addFile("assays/Assay1/a.txt")(root)
+```
+</TabItem>
+</Tabs>
+
+### createGitKeepFile
+**Summary:** Helper to create a `.gitkeep` file node.
+**Parameters:**
+- ()
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let keep = FileSystemTree.createGitKeepFile()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const keep = FileSystemTree.createGitKeepFile();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+keep = FileSystemTree.createGitKeepFile()
+```
+</TabItem>
+</Tabs>
+
+### createReadmeFile
+**Summary:** Helper to create a README file node.
+**Parameters:**
+- ()
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let readme = FileSystemTree.createReadmeFile()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const readme = FileSystemTree.createReadmeFile();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+readme = FileSystemTree.createReadmeFile()
+```
+</TabItem>
+</Tabs>
+
+### createEmptyFolder
+**Summary:** Helper to create an empty folder node.
+**Parameters:**
+- `name`: string
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let empty = FileSystemTree.createEmptyFolder("data")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const empty = FileSystemTree.createEmptyFolder("data");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+empty = FileSystemTree.createEmptyFolder("data")
+```
+</TabItem>
+</Tabs>
+
+### createAssayFolder
+**Summary:** Helper to create an assay subtree with optional datamap file.
+**Parameters:**
+- `assayName`: string
+- `hasDatamap`: bool option
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assay = FileSystemTree.createAssayFolder("Assay1", hasDatamap = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assay = FileSystemTree.createAssayFolder("Assay1", true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assay = FileSystemTree.createAssayFolder("Assay1", hasDatamap=True)
+```
+</TabItem>
+</Tabs>
+
+### createStudyFolder
+**Summary:** Helper to create a study subtree with optional datamap file.
+**Parameters:**
+- `studyName`: string
+- `hasDatamap`: bool option
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study = FileSystemTree.createStudyFolder("Study1", hasDatamap = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study = FileSystemTree.createStudyFolder("Study1", true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study = FileSystemTree.createStudyFolder("Study1", hasDatamap=True)
+```
+</TabItem>
+</Tabs>
+
+### createWorkflowFolder
+**Summary:** Helper to create a workflow subtree with optional CWL/datamap files.
+**Parameters:**
+- `workflowName`: string
+- `hasCWL`: bool option
+- `hasDatamap`: bool option
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let workflow = FileSystemTree.createWorkflowFolder("Workflow1", hasCWL = true, hasDatamap = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const workflow = FileSystemTree.createWorkflowFolder("Workflow1", true, true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+workflow = FileSystemTree.createWorkflowFolder("Workflow1", hasCWL=True, hasDatamap=True)
+```
+</TabItem>
+</Tabs>
+
+### createRunFolder
+**Summary:** Helper to create a run subtree with optional CWL/YML/datamap files.
+**Parameters:**
+- `runName`: string
+- `hasCWL`: bool option
+- `hasYML`: bool option
+- `hasDatamap`: bool option
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run = FileSystemTree.createRunFolder("Run1", hasCWL = true, hasYML = true, hasDatamap = false)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run = FileSystemTree.createRunFolder("Run1", true, true, false);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run = FileSystemTree.createRunFolder("Run1", hasCWL=True, hasYML=True, hasDatamap=False)
+```
+</TabItem>
+</Tabs>
+
+### createInvestigationFile
+**Summary:** Helper to create the investigation file node.
+**Parameters:**
+- ()
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let inv = FileSystemTree.createInvestigationFile()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const inv = FileSystemTree.createInvestigationFile();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+inv = FileSystemTree.createInvestigationFile()
+```
+</TabItem>
+</Tabs>
+
+### createLicenseFile
+**Summary:** Helper to create the license file node.
+**Parameters:**
+- ()
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let lic = FileSystemTree.createLicenseFile()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const lic = FileSystemTree.createLicenseFile();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+lic = FileSystemTree.createLicenseFile()
+```
+</TabItem>
+</Tabs>
+
+### createAssaysFolder
+**Summary:** Helper to create the top-level `assays` folder.
+**Parameters:**
+- ()
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assays = FileSystemTree.createAssaysFolder()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assays = FileSystemTree.createAssaysFolder();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assays = FileSystemTree.createAssaysFolder()
+```
+</TabItem>
+</Tabs>
+
+### createStudiesFolder
+**Summary:** Helper to create the top-level `studies` folder.
+**Parameters:**
+- ()
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let studies = FileSystemTree.createStudiesFolder()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const studies = FileSystemTree.createStudiesFolder();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+studies = FileSystemTree.createStudiesFolder()
+```
+</TabItem>
+</Tabs>
+
+### createWorkflowsFolder
+**Summary:** Helper to create the top-level `workflows` folder.
+**Parameters:**
+- ()
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let workflows = FileSystemTree.createWorkflowsFolder()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const workflows = FileSystemTree.createWorkflowsFolder();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+workflows = FileSystemTree.createWorkflowsFolder()
+```
+</TabItem>
+</Tabs>
+
+### createRunsFolder
+**Summary:** Helper to create the top-level `runs` folder.
+**Parameters:**
+- ()
+**ReturnType:** [FileSystemTree](./file-system-tree)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let runs = FileSystemTree.createRunsFolder()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const runs = FileSystemTree.createRunsFolder();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+runs = FileSystemTree.createRunsFolder()
+```
+</TabItem>
+</Tabs>

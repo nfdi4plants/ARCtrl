@@ -1,0 +1,232 @@
+---
+title: "Comment"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+**Signature:**
+```fsharp
+Comment(?name: string, ?value: string)
+```
+**Usage:**
+```fsharp
+open ARCtrl
+
+let c = Comment(name = "note", value = "text")
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+
+**Signature:**
+```py
+Comment(name: str | None = None, value: str | None = None)
+```
+**Usage:**
+```py
+from arctrl import Comment
+
+c = Comment(name="note", value="text")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+**Signature:**
+```ts
+constructor(name?: string, value?: string)
+```
+**Usage:**
+```ts
+import { Comment } from "@nfdi4plants/arctrl";
+
+const c = new Comment("note", "text");
+```
+</TabItem>
+</Tabs>
+
+## Fields
+- **Name**: string option
+- **Value**: string option
+
+## Methods
+
+### Copy
+**Summary:** Create a deep copy of the current `Comment` (clones `Name` and `Value`).
+**Parameters:** none
+**ReturnType:** [Comment](./comment)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let copy = c.Copy()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+copy = c.Copy()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const copy = c.Copy();
+```
+</TabItem>
+</Tabs>
+
+### Equals
+**Summary:** Structural equality on `Name` and `Value`.
+**Parameters:** `obj: obj`
+**ReturnType:** `bool`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let isSame = c.Equals(other)
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+is_same = c.Equals(other)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const isSame = c.Equals(other);
+```
+</TabItem>
+</Tabs>
+
+### GetHashCode
+**Summary:** Hash code over `Name`/`Value` (matches `Equals`).
+**Parameters:** none
+**ReturnType:** `int`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let h = c.GetHashCode()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+h = c.GetHashCode()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const h = c.GetHashCode();
+```
+</TabItem>
+</Tabs>
+
+### ToString
+**Summary:** Formatted text `Comment { Name = "..", Value = ".." }` (omits missing fields).
+**Parameters:** none
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let s = c.ToString()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+s = c.ToString()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const s = c.ToString();
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### make
+**Summary:** Construct a `Comment` from optional name/value.
+**Parameters:** `name: string option`, `value: string option`
+**ReturnType:** [Comment](./comment)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = Comment.make "note" "text"
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = Comment.make("note", "text")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = Comment.make("note", "text");
+```
+</TabItem>
+</Tabs>
+
+### create
+**Summary:** Alias of `make` with optional parameters.
+**Parameters:** `name: string option`, `value: string option`
+**ReturnType:** [Comment](./comment)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = Comment.create(name = "note", value = "text")
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = Comment.create(name="note", value="text")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = Comment.create({ name: "note", value: "text" });
+```
+</TabItem>
+</Tabs>
+
+### toString
+**Summary:** Convert to tuple of `(name, value)`; missing fields become empty strings.
+**Parameters:** `comment: [Comment](./comment)`
+**ReturnType:** `(string * string)`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let name, value = Comment.toString c
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+name, value = Comment.toString(c)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const [name, value] = Comment.toString(c);
+```
+</TabItem>
+</Tabs>
+
+### fromString
+**Summary:** Parse `Comment` from the formatted `ToString` output (regex-based).
+**Parameters:** `s: string`
+**ReturnType:** [Comment](./comment)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let parsed = Comment.fromString("Comment { Name = \"note\", Value = \"text\" }")
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+parsed = Comment.fromString("Comment { Name = \"note\", Value = \"text\" }")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const parsed = Comment.fromString("Comment { Name = \"note\", Value = \"text\" }");
+```
+</TabItem>
+</Tabs>

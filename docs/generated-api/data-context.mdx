@@ -1,0 +1,216 @@
+---
+title: "DataContext"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+**Signature:**
+```fsharp
+DataContext(
+    ?id: string,
+    ?name: string,
+    ?dataType: string,
+    ?format: string,
+    ?selectorFormat: string,
+    ?explication: OntologyAnnotation,
+    ?unit: OntologyAnnotation,
+    ?objectType: OntologyAnnotation,
+    ?label: string,
+    ?description: string,
+    ?generatedBy: string,
+    ?comments: ResizeArray<Comment>
+)
+```
+**Usage:**
+```fsharp
+open ARCtrl
+
+let dc = DataContext(name = "file1", dataType = "text/csv", format = "csv")
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+
+**Signature:**
+```py
+DataContext(
+    id: str | None = None,
+    name: str | None = None,
+    dataType: str | None = None,
+    format: str | None = None,
+    selectorFormat: str | None = None,
+    explication: OntologyAnnotation | None = None,
+    unit: OntologyAnnotation | None = None,
+    objectType: OntologyAnnotation | None = None,
+    label: str | None = None,
+    description: str | None = None,
+    generatedBy: str | None = None,
+    comments: list[Comment] | None = None,
+)
+```
+**Usage:**
+```py
+from arctrl import DataContext
+
+dc = DataContext(name="file1", dataType="text/csv", format="csv")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+**Signature:**
+```ts
+constructor(
+  id?: string,
+  name?: string,
+  dataType?: string,
+  format?: string,
+  selectorFormat?: string,
+  explication?: OntologyAnnotation,
+  unit?: OntologyAnnotation,
+  objectType?: OntologyAnnotation,
+  label?: string,
+  description?: string,
+  generatedBy?: string,
+  comments?: Comment[],
+)
+```
+**Usage:**
+```ts
+import { DataContext } from "@nfdi4plants/arctrl";
+
+const dc = new DataContext(undefined, "file1", "text/csv", "csv");
+```
+</TabItem>
+</Tabs>
+
+## Fields
+- **ID**: string option (inherited Data)
+- **Name**: string option (inherited Data)
+- **DataType**: string option (inherited Data)
+- **Format**: string option (inherited Data)
+- **SelectorFormat**: string option (inherited Data)
+- **Comments**: [Comment](./comment) ResizeArray
+- **Explication**: [OntologyAnnotation](./ontology-annotation) option
+- **Unit**: [OntologyAnnotation](./ontology-annotation) option
+- **ObjectType**: [OntologyAnnotation](./ontology-annotation) option
+- **Label**: string option
+- **Description**: string option
+- **GeneratedBy**: string option
+
+## Methods
+
+### AsData
+**Summary:** Downcast to the base `Data`, dropping DataContext-only fields.
+**Parameters:** none
+**ReturnType:** [Data](./data)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let data = dc.AsData()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const data = dc.AsData();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+data = dc.AsData()
+```
+</TabItem>
+</Tabs>
+
+### Copy
+**Summary:** Deep clone including ontology fields and comments.
+**Parameters:** none
+**ReturnType:** [DataContext](./data-context)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let clone = dc.Copy()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const clone = dc.Copy();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+clone = dc.Copy()
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### fromData
+**Summary:** Promote a `Data` into a `DataContext` with optional ontology/metadata fields.
+**Parameters:** `data: [Data](./data)`, `explication: [OntologyAnnotation](./ontology-annotation) option`, `unit: [OntologyAnnotation](./ontology-annotation) option`, `objectType: [OntologyAnnotation](./ontology-annotation) option`, `label: string option`, `description: string option`, `generatedBy: string option`
+**ReturnType:** [DataContext](./data-context)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let dc = DataContext.fromData(data, explication = oa)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const dc = DataContext.fromData(data, oa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+dc = DataContext.fromData(data, explication=oa)
+```
+</TabItem>
+</Tabs>
+
+### createAsPV
+**Summary:** Build a property-value style `DataContext` with optional ontology/unit.
+**Parameters:** `alternateName: string option`, `measurementMethod: [OntologyAnnotation](./ontology-annotation) option`, `description: string option`, `category: [OntologyAnnotation](./ontology-annotation) option`, `value: string option`, `unit: [OntologyAnnotation](./ontology-annotation) option`
+**ReturnType:** [DataContext](./data-context)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let pv = DataContext.createAsPV (Some "Label") None None None (Some "5") None
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const pv = DataContext.createAsPV("Label", undefined, undefined, undefined, "5", undefined);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+pv = DataContext.createAsPV("Label", None, None, None, "5", None)
+```
+</TabItem>
+</Tabs>
+
+#### Usage Examples
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let dc = DataContext.createAsPV (Some "Label") None None None None None
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+from arctrl import DataContext
+
+dc = DataContext.createAsPV("Label", None, None, None, None, None)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+import { DataContext } from "@nfdi4plants/arctrl";
+
+const dc = DataContext.createAsPV("Label", undefined, undefined, undefined, undefined, undefined);
+```
+</TabItem>
+</Tabs>

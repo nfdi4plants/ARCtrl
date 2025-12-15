@@ -1,0 +1,410 @@
+---
+title: "Datamap"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+**Signature:**
+```fsharp
+Datamap(dataContexts: ResizeArray<DataContext>)
+```
+**Usage:**
+```fsharp
+open ARCtrl
+
+let dm = Datamap(ResizeArray())
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+
+**Signature:**
+```py
+Datamap(dataContexts: list[DataContext])
+```
+**Usage:**
+```py
+from arctrl import Datamap
+
+dm = Datamap([])
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+**Signature:**
+```ts
+constructor(dataContexts: DataContext[])
+```
+**Usage:**
+```ts
+import { Datamap } from "@nfdi4plants/arctrl";
+
+const dm = new Datamap([]);
+```
+</TabItem>
+</Tabs>
+
+## Fields
+- **DataContexts**: [DataContext](./data-context) ResizeArray
+- **StaticHash**: int
+
+## Methods
+
+### GetExplicationColumn
+**Summary:** Retrieve explication cells.
+**Parameters:** none
+**ReturnType:** `ResizeArray\<[CompositeCell](./composite-cell)\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let cells = dm.GetExplicationColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const cells = dm.GetExplicationColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+cells = dm.GetExplicationColumn()
+```
+</TabItem>
+</Tabs>
+
+### SetExplicationColumn
+**Summary:** Replace explication cells.
+**Parameters:** `cells: ResizeArray\<[CompositeCell](./composite-cell)\>`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+dm.SetExplicationColumn cells
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+dm.SetExplicationColumn(cells);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+dm.SetExplicationColumn(cells)
+```
+</TabItem>
+</Tabs>
+
+### GetUnitColumn
+**Summary:** Retrieve unit cells.
+**Parameters:** none
+**ReturnType:** `ResizeArray\<[CompositeCell](./composite-cell)\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let cells = dm.GetUnitColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const cells = dm.GetUnitColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+cells = dm.GetUnitColumn()
+```
+</TabItem>
+</Tabs>
+
+### SetUnitColumn
+**Summary:** Replace unit cells.
+**Parameters:** `cells: ResizeArray\<[CompositeCell](./composite-cell)\>`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+dm.SetUnitColumn cells
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+dm.SetUnitColumn(cells);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+dm.SetUnitColumn(cells)
+```
+</TabItem>
+</Tabs>
+
+### GetObjectTypeColumn
+**Summary:** Retrieve object-type cells.
+**Parameters:** none
+**ReturnType:** `ResizeArray\<[CompositeCell](./composite-cell)\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let cells = dm.GetObjectTypeColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const cells = dm.GetObjectTypeColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+cells = dm.GetObjectTypeColumn()
+```
+</TabItem>
+</Tabs>
+
+### SetDataTypeColumn
+**Summary:** Replace data-type cells.
+**Parameters:** `cells: ResizeArray\<[CompositeCell](./composite-cell)\>`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+dm.SetDataTypeColumn cells
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+dm.SetDataTypeColumn(cells);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+dm.SetDataTypeColumn(cells)
+```
+</TabItem>
+</Tabs>
+
+### GetLabelColumn
+**Summary:** Retrieve label cells.
+**Parameters:** none
+**ReturnType:** `ResizeArray\<[CompositeCell](./composite-cell)\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let cells = dm.GetLabelColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const cells = dm.GetLabelColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+cells = dm.GetLabelColumn()
+```
+</TabItem>
+</Tabs>
+
+### SetLabelColumn
+**Summary:** Replace label cells.
+**Parameters:** `cells: ResizeArray\<[CompositeCell](./composite-cell)\>`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+dm.SetLabelColumn cells
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+dm.SetLabelColumn(cells);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+dm.SetLabelColumn(cells)
+```
+</TabItem>
+</Tabs>
+
+### GetDescriptionColumn
+**Summary:** Retrieve description cells.
+**Parameters:** none
+**ReturnType:** `ResizeArray\<[CompositeCell](./composite-cell)\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let cells = dm.GetDescriptionColumn()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const cells = dm.GetDescriptionColumn();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+cells = dm.GetDescriptionColumn()
+```
+</TabItem>
+</Tabs>
+
+### SetDescriptionColumn
+**Summary:** Replace description cells.
+**Parameters:** `cells: ResizeArray\<[CompositeCell](./composite-cell)\>`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+dm.SetDescriptionColumn cells
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+dm.SetDescriptionColumn(cells);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+dm.SetDescriptionColumn(cells)
+```
+</TabItem>
+</Tabs>
+
+### GetDataContext
+**Summary:** Fetch a `DataContext` row; optionally skip validation.
+**Parameters:** `row: int`, `SkipValidation: bool option`
+**ReturnType:** [DataContext](./data-context)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let dc = dm.GetDataContext(0, SkipValidation = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const dc = dm.GetDataContext(0, true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+dc = dm.GetDataContext(0, SkipValidation=True)
+```
+</TabItem>
+</Tabs>
+
+### Copy
+**Summary:** Deep clone the datamap including all data contexts.
+**Parameters:** none
+**ReturnType:** [Datamap](./datamap)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let clone = dm.Copy()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const clone = dm.Copy();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+clone = dm.Copy()
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### init
+**Summary:** Create an empty datamap.
+**Parameters:** none
+**ReturnType:** [Datamap](./datamap)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let dm = Datamap.init()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const dm = Datamap.init();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+dm = Datamap.init()
+```
+</TabItem>
+</Tabs>
+
+### getDataContext
+**Summary:** Functional accessor for a row in the datamap.
+**Parameters:** `row: int`, `SkipValidation: bool option`, `datamap: [Datamap](./datamap)`
+**ReturnType:** [DataContext](./data-context)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let dc = Datamap.getDataContext(0, SkipValidation = true) dm
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const dc = Datamap.getDataContext(0, true)(dm);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+dc = Datamap.getDataContext(0, SkipValidation=True)(dm)
+```
+</TabItem>
+</Tabs>
+
+### FileName
+**Summary:** Default filename for serialized datamaps.
+**Parameters:** none
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let name = Datamap.FileName
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const name = Datamap.FileName;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+name = Datamap.FileName
+```
+</TabItem>
+</Tabs>
+
+#### Usage Examples
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let dm = Datamap.init()
+let dc = dm.GetDataContext(0, SkipValidation = true)
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+from arctrl import Datamap
+
+dm = Datamap.init()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+import { Datamap } from "@nfdi4plants/arctrl";
+
+const dm = Datamap.init();
+```
+</TabItem>
+</Tabs>

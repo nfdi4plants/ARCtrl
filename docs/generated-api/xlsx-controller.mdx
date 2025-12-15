@@ -1,0 +1,550 @@
+---
+title: "XlsxController"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+`XlsxController` bundles helpers to convert ARC entities to/from `FsWorkbook` and XLSX files.
+
+**Platform note:** JS/TS targets expose the `*Async` methods; .NET/Python targets expose the sync `fromXlsxFile`/`toXlsxFile` methods.
+
+## Fields
+None.
+
+## Methods
+
+### Datamap.fromFsWorkbook
+**Summary:** Convert `FsWorkbook` into a `Datamap` (sync).
+**Parameters:** `fswb: FsWorkbook`
+**ReturnType:** [Datamap](./datamap)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let datamap = XlsxController.Datamap.fromFsWorkbook fswb
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+datamap = XlsxController.Datamap.fromFsWorkbook(fswb)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const datamap = XlsxController.Datamap.fromFsWorkbook(fswb);
+```
+</TabItem>
+</Tabs>
+
+### Datamap.toFsWorkbook
+**Summary:** Render `Datamap` to `FsWorkbook` (sync).
+**Parameters:** `datamap: Datamap`
+**ReturnType:** `FsWorkbook`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wb = XlsxController.Datamap.toFsWorkbook datamap
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wb = XlsxController.Datamap.toFsWorkbook(datamap)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wb = XlsxController.Datamap.toFsWorkbook(datamap);
+```
+</TabItem>
+</Tabs>
+
+### Datamap.fromXlsxFile / fromXlsxFileAsync
+**Summary:** Load `Datamap` from XLSX file path.
+**Parameters:** `path: string`
+**ReturnType:** [Datamap](./datamap) (sync) / `Task\<[Datamap](./datamap)\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+// .NET
+let datamap = XlsxController.Datamap.fromXlsxFile "./datamap.xlsx"
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+# .NET/Python targets
+datamap = XlsxController.Datamap.fromXlsxFile("./datamap.xlsx")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+// JS/TS (async)
+const datamap = await XlsxController.Datamap.fromXlsxFileAsync("./datamap.xlsx");
+```
+</TabItem>
+</Tabs>
+
+### Datamap.toXlsxFile / toXlsxFileAsync
+**Summary:** Persist `Datamap` to XLSX on disk.
+**Parameters:** `path: string`, `datamap: Datamap`
+**ReturnType:** `unit` / `Task\<unit\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+XlsxController.Datamap.toXlsxFile("./datamap.xlsx", datamap)
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+XlsxController.Datamap.toXlsxFile("./datamap.xlsx", datamap)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+await XlsxController.Datamap.toXlsxFileAsync("./datamap.xlsx", datamap);
+```
+</TabItem>
+</Tabs>
+
+### Assay.fromFsWorkbook
+**Summary:** Convert `FsWorkbook` into `ArcAssay`.
+**Parameters:** `fswb: FsWorkbook`
+**ReturnType:** [ArcAssay](./arc-assay)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assay = XlsxController.Assay.fromFsWorkbook fswb
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assay = XlsxController.Assay.fromFsWorkbook(fswb)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assay = XlsxController.Assay.fromFsWorkbook(fswb);
+```
+</TabItem>
+</Tabs>
+
+### Assay.toFsWorkbook
+**Summary:** Render `ArcAssay` to `FsWorkbook`.
+**Parameters:** `assay: ArcAssay`
+**ReturnType:** `FsWorkbook`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wb = XlsxController.Assay.toFsWorkbook assay
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wb = XlsxController.Assay.toFsWorkbook(assay)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wb = XlsxController.Assay.toFsWorkbook(assay);
+```
+</TabItem>
+</Tabs>
+
+### Assay.fromXlsxFile / fromXlsxFileAsync
+**Summary:** Load assay from XLSX path.
+**Parameters:** `path: string`
+**ReturnType:** [ArcAssay](./arc-assay) / `Task\<[ArcAssay](./arc-assay)\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let assay = XlsxController.Assay.fromXlsxFile "./isa.assay.xlsx"
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+assay = XlsxController.Assay.fromXlsxFile("./isa.assay.xlsx")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const assay = await XlsxController.Assay.fromXlsxFileAsync("./isa.assay.xlsx");
+```
+</TabItem>
+</Tabs>
+
+### Assay.toXlsxFile / toXlsxFileAsync
+**Summary:** Save assay to XLSX.
+**Parameters:** `path: string`, `assay: ArcAssay`
+**ReturnType:** `unit` / `Task\<unit\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+XlsxController.Assay.toXlsxFile("./isa.assay.xlsx", assay)
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+XlsxController.Assay.toXlsxFile("./isa.assay.xlsx", assay)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+await XlsxController.Assay.toXlsxFileAsync("./isa.assay.xlsx", assay);
+```
+</TabItem>
+</Tabs>
+
+### Study.fromFsWorkbook
+**Summary:** Convert `FsWorkbook` into `ArcStudy`.
+**Parameters:** `fswb: FsWorkbook`
+**ReturnType:** [ArcStudy](./arc-study)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study = XlsxController.Study.fromFsWorkbook fswb
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study = XlsxController.Study.fromFsWorkbook(fswb)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study = XlsxController.Study.fromFsWorkbook(fswb);
+```
+</TabItem>
+</Tabs>
+
+### Study.toFsWorkbook
+**Summary:** Render study (and optional assays) to `FsWorkbook`.
+**Parameters:** `study: ArcStudy`, optional `assays: ResizeArray\<ArcAssay\>`
+**ReturnType:** `FsWorkbook`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wb = XlsxController.Study.toFsWorkbook(study, ?assays=assays)
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wb = XlsxController.Study.toFsWorkbook(study, assays=assays)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wb = XlsxController.Study.toFsWorkbook(study, assays);
+```
+</TabItem>
+</Tabs>
+
+### Study.fromXlsxFile / fromXlsxFileAsync
+**Summary:** Load study from XLSX.
+**Parameters:** `path: string`
+**ReturnType:** [ArcStudy](./arc-study) / `Task\<[ArcStudy](./arc-study)\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let study = XlsxController.Study.fromXlsxFile "./isa.study.xlsx"
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+study = XlsxController.Study.fromXlsxFile("./isa.study.xlsx")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const study = await XlsxController.Study.fromXlsxFileAsync("./isa.study.xlsx");
+```
+</TabItem>
+</Tabs>
+
+### Study.toXlsxFile / toXlsxFileAsync
+**Summary:** Save study (and optional assays) to XLSX.
+**Parameters:** `path: string`, `study: ArcStudy`, optional `assays: ResizeArray\<ArcAssay\>`
+**ReturnType:** `unit` / `Task\<unit\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+XlsxController.Study.toXlsxFile("./isa.study.xlsx", study, ?assays=assays)
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+XlsxController.Study.toXlsxFile("./isa.study.xlsx", study, assays=assays)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+await XlsxController.Study.toXlsxFileAsync("./isa.study.xlsx", study, assays);
+```
+</TabItem>
+</Tabs>
+
+### Workflow.fromFsWorkbook
+**Summary:** Convert `FsWorkbook` into `ArcWorkflow`.
+**Parameters:** `fswb: FsWorkbook`
+**ReturnType:** [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let workflow = XlsxController.Workflow.fromFsWorkbook fswb
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+workflow = XlsxController.Workflow.fromFsWorkbook(fswb)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const workflow = XlsxController.Workflow.fromFsWorkbook(fswb);
+```
+</TabItem>
+</Tabs>
+
+### Workflow.toFsWorkbook
+**Summary:** Render `ArcWorkflow` to `FsWorkbook`.
+**Parameters:** `workflow: ArcWorkflow`
+**ReturnType:** `FsWorkbook`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wb = XlsxController.Workflow.toFsWorkbook workflow
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wb = XlsxController.Workflow.toFsWorkbook(workflow)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wb = XlsxController.Workflow.toFsWorkbook(workflow);
+```
+</TabItem>
+</Tabs>
+
+### Workflow.fromXlsxFile / fromXlsxFileAsync
+**Summary:** Load workflow from XLSX path.
+**Parameters:** `path: string`
+**ReturnType:** [ArcWorkflow](./arc-workflow) / `Task\<[ArcWorkflow](./arc-workflow)\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let workflow = XlsxController.Workflow.fromXlsxFile "./isa.workflow.xlsx"
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+workflow = XlsxController.Workflow.fromXlsxFile("./isa.workflow.xlsx")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const workflow = await XlsxController.Workflow.fromXlsxFileAsync("./isa.workflow.xlsx");
+```
+</TabItem>
+</Tabs>
+
+### Workflow.toXlsxFile / toXlsxFileAsync
+**Summary:** Save workflow to XLSX.
+**Parameters:** `path: string`, `workflow: ArcWorkflow`
+**ReturnType:** `unit` / `Task\<unit\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+XlsxController.Workflow.toXlsxFile("./isa.workflow.xlsx", workflow)
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+XlsxController.Workflow.toXlsxFile("./isa.workflow.xlsx", workflow)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+await XlsxController.Workflow.toXlsxFileAsync("./isa.workflow.xlsx", workflow);
+```
+</TabItem>
+</Tabs>
+
+### Run.fromFsWorkbook
+**Summary:** Convert `FsWorkbook` into `ArcRun`.
+**Parameters:** `fswb: FsWorkbook`
+**ReturnType:** [ArcRun](./arc-run)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run = XlsxController.Run.fromFsWorkbook fswb
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run = XlsxController.Run.fromFsWorkbook(fswb)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run = XlsxController.Run.fromFsWorkbook(fswb);
+```
+</TabItem>
+</Tabs>
+
+### Run.toFsWorkbook
+**Summary:** Render `ArcRun` to `FsWorkbook`.
+**Parameters:** `run: ArcRun`
+**ReturnType:** `FsWorkbook`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wb = XlsxController.Run.toFsWorkbook run
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wb = XlsxController.Run.toFsWorkbook(run)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wb = XlsxController.Run.toFsWorkbook(run);
+```
+</TabItem>
+</Tabs>
+
+### Run.fromXlsxFile / fromXlsxFileAsync
+**Summary:** Load run from XLSX.
+**Parameters:** `path: string`
+**ReturnType:** [ArcRun](./arc-run) / `Task\<[ArcRun](./arc-run)\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let run = XlsxController.Run.fromXlsxFile "./isa.run.xlsx"
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+run = XlsxController.Run.fromXlsxFile("./isa.run.xlsx")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const run = await XlsxController.Run.fromXlsxFileAsync("./isa.run.xlsx");
+```
+</TabItem>
+</Tabs>
+
+### Run.toXlsxFile / toXlsxFileAsync
+**Summary:** Save run to XLSX.
+**Parameters:** `path: string`, `run: ArcRun`
+**ReturnType:** `unit` / `Task\<unit\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+XlsxController.Run.toXlsxFile("./isa.run.xlsx", run)
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+XlsxController.Run.toXlsxFile("./isa.run.xlsx", run)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+await XlsxController.Run.toXlsxFileAsync("./isa.run.xlsx", run);
+```
+</TabItem>
+</Tabs>
+
+### Investigation.fromFsWorkbook
+**Summary:** Convert `FsWorkbook` into `ArcInvestigation`.
+**Parameters:** `fswb: FsWorkbook`
+**ReturnType:** [ArcInvestigation](./arc-investigation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let inv = XlsxController.Investigation.fromFsWorkbook fswb
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+inv = XlsxController.Investigation.fromFsWorkbook(fswb)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const inv = XlsxController.Investigation.fromFsWorkbook(fswb);
+```
+</TabItem>
+</Tabs>
+
+### Investigation.toFsWorkbook
+**Summary:** Render investigation to `FsWorkbook`.
+**Parameters:** `investigation: ArcInvestigation`
+**ReturnType:** `FsWorkbook`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wb = XlsxController.Investigation.toFsWorkbook investigation
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wb = XlsxController.Investigation.toFsWorkbook(investigation)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wb = XlsxController.Investigation.toFsWorkbook(investigation);
+```
+</TabItem>
+</Tabs>
+
+### Investigation.fromXlsxFile / fromXlsxFileAsync
+**Summary:** Load investigation from XLSX.
+**Parameters:** `path: string`
+**ReturnType:** [ArcInvestigation](./arc-investigation) / `Task\<[ArcInvestigation](./arc-investigation)\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let inv = XlsxController.Investigation.fromXlsxFile "./isa.investigation.xlsx"
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+inv = XlsxController.Investigation.fromXlsxFile("./isa.investigation.xlsx")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const inv = await XlsxController.Investigation.fromXlsxFileAsync("./isa.investigation.xlsx");
+```
+</TabItem>
+</Tabs>
+
+### Investigation.toXlsxFile / toXlsxFileAsync
+**Summary:** Save investigation to XLSX.
+**Parameters:** `path: string`, `investigation: ArcInvestigation`
+**ReturnType:** `unit` / `Task\<unit\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+XlsxController.Investigation.toXlsxFile("./isa.investigation.xlsx", investigation)
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+XlsxController.Investigation.toXlsxFile("./isa.investigation.xlsx", investigation)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+await XlsxController.Investigation.toXlsxFileAsync("./isa.investigation.xlsx", investigation);
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+None documented.

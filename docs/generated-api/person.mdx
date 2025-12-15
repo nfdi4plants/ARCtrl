@@ -1,0 +1,349 @@
+---
+title: "Person"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+**Signature:**
+```fsharp
+Person(
+    ?orcid: string,
+    ?lastName: string,
+    ?firstName: string,
+    ?midInitials: string,
+    ?email: string,
+    ?phone: string,
+    ?fax: string,
+    ?address: string,
+    ?affiliation: string,
+    ?roles: ResizeArray<OntologyAnnotation>,
+    ?comments: ResizeArray<Comment>
+)
+```
+**Usage:**
+```fsharp
+open ARCtrl
+
+let p = Person(firstName = "Ada", lastName = "Lovelace", email = "ada@example.org")
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+
+**Signature:**
+```py
+Person(
+    orcid: str | None = None,
+    lastName: str | None = None,
+    firstName: str | None = None,
+    midInitials: str | None = None,
+    email: str | None = None,
+    phone: str | None = None,
+    fax: str | None = None,
+    address: str | None = None,
+    affiliation: str | None = None,
+    roles: list[OntologyAnnotation] | None = None,
+    comments: list[Comment] | None = None,
+)
+```
+**Usage:**
+```py
+from arctrl import Person
+
+p = Person(firstName="Ada", lastName="Lovelace", email="ada@example.org")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+**Signature:**
+```ts
+constructor(
+  orcid?: string,
+  lastName?: string,
+  firstName?: string,
+  midInitials?: string,
+  email?: string,
+  phone?: string,
+  fax?: string,
+  address?: string,
+  affiliation?: string,
+  roles?: OntologyAnnotation[],
+  comments?: Comment[],
+)
+```
+**Usage:**
+```ts
+import { Person } from "@nfdi4plants/arctrl";
+
+const p = new Person(undefined, "Lovelace", "Ada", undefined, "ada@example.org");
+```
+</TabItem>
+</Tabs>
+
+## Fields
+- **ORCID**: string option
+- **LastName**: string option
+- **FirstName**: string option
+- **MidInitials**: string option
+- **EMail**: string option
+- **Phone**: string option
+- **Fax**: string option
+- **Address**: string option
+- **Affiliation**: string option
+- **Roles**: [OntologyAnnotation](./ontology-annotation) ResizeArray
+- **Comments**: [Comment](./comment) ResizeArray
+
+## Methods
+
+### Copy
+**Summary:** Deep copy including roles and comments.
+**Parameters:** none
+**ReturnType:** [Person](./person)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let copy = p.Copy()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+copy = p.Copy()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const copy = p.Copy();
+```
+</TabItem>
+</Tabs>
+
+### ToString
+**Summary:** Pretty string with all populated fields.
+**Parameters:** none
+**ReturnType:** string
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let txt = p.ToString()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+txt = p.ToString()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const txt = p.ToString();
+```
+</TabItem>
+</Tabs>
+
+### Equals / GetHashCode
+**Summary:** Structural equality and matching hash across all fields (including roles/comments).
+**Parameters:** `obj: obj`
+**ReturnType:** `bool` / `int`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let eq = p.Equals(other)
+let h = p.GetHashCode()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+eq = p.Equals(other)
+h = p.GetHashCode()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const eq = p.Equals(other);
+const h = p.GetHashCode();
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### make
+**Summary:** Build a `Person` with explicit args.
+**Parameters:**
+- `?orcid: string`
+- `?lastName: string`
+- `?firstName: string`
+- `?midInitials: string`
+- `?email: string`
+- `?phone: string`
+- `?fax: string`
+- `?address: string`
+- `?affiliation: string`
+- `roles: ResizeArray\<OntologyAnnotation\>`
+- `comments: ResizeArray\<Comment\>`
+**ReturnType:** [Person](./person)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let p = Person.make None (Some "Lovelace") (Some "Ada") None (Some "ada@example.org") None None None None (ResizeArray()) (ResizeArray())
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+p = Person.make(None, "Lovelace", "Ada", None, "ada@example.org", None, None, None, None, [], [])
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const p = Person.make(undefined, "Lovelace", "Ada", undefined, "ada@example.org", undefined, undefined, undefined, undefined, [], []);
+```
+</TabItem>
+</Tabs>
+
+### create
+**Summary:** Convenience constructor with optionals.
+**Parameters:** Same as `make` but optional.
+**ReturnType:** [Person](./person)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let p = Person.create(firstName = "Ada", lastName = "Lovelace", email = "ada@example.org")
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+p = Person.create(firstName="Ada", lastName="Lovelace", email="ada@example.org")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const p = Person.create({ firstName: "Ada", lastName: "Lovelace", email: "ada@example.org" });
+```
+</TabItem>
+</Tabs>
+
+### empty
+**Summary:** Create a person with all fields empty.
+**Parameters:** - ()
+**ReturnType:** [Person](./person)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let p = Person.empty
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+p = Person.empty
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const p = Person.empty;
+```
+</TabItem>
+</Tabs>
+
+### tryGetByFullName
+**Summary:** Find person by first, middle initials, and last name.
+**Parameters:**
+- `firstName: string`
+- `midInitials: string`
+- `lastName: string`
+- `persons: Person[]`
+**ReturnType:** [Person](./person) option
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let found = Person.tryGetByFullName "Ada" "" "Lovelace" persons
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+found = Person.tryGetByFullName("Ada", "", "Lovelace", persons)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const found = Person.tryGetByFullName("Ada", "", "Lovelace", persons);
+```
+</TabItem>
+</Tabs>
+
+### existsByFullName
+**Summary:** Check existence by full name.
+**Parameters:**
+- `firstName: string`
+- `midInitials: string`
+- `lastName: string`
+- `persons: Person[]`
+**ReturnType:** bool
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let exists = Person.existsByFullName "Ada" "" "Lovelace" persons
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+exists = Person.existsByFullName("Ada", "", "Lovelace", persons)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const exists = Person.existsByFullName("Ada", "", "Lovelace", persons);
+```
+</TabItem>
+</Tabs>
+
+### add
+**Summary:** Append a person to a list.
+**Parameters:**
+- `persons: Person list`
+- `person: Person`
+**ReturnType:** [Person](./person) list
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let next = Person.add persons p
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+next = Person.add(persons, p)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const next = Person.add(persons, p);
+```
+</TabItem>
+</Tabs>
+
+### removeByFullName
+**Summary:** Remove persons matching full name.
+**Parameters:**
+- `firstName: string`
+- `midInitials: string`
+- `lastName: string`
+- `persons: Person[]`
+**ReturnType:** [Person](./person)[]
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let remaining = Person.removeByFullName "Ada" "" "Lovelace" persons
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+remaining = Person.removeByFullName("Ada", "", "Lovelace", persons)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const remaining = Person.removeByFullName("Ada", "", "Lovelace", persons);
+```
+</TabItem>
+</Tabs>

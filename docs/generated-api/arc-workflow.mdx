@@ -1,0 +1,697 @@
+---
+title: "ArcWorkflow"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+## Fields
+None.
+
+## Methods
+
+### Constructor
+**Summary:** Create a workflow with metadata, parameters, components, optional datamap, contacts, CWL, and comments.
+**Parameters:** `identifier: string`, optional `title`, `description`, `workflowType`, `uri`, `version`, `subWorkflowIdentifiers`, `parameters`, `components`, `datamap`, `contacts`, `cwlDescription`, `comments`
+**ReturnType:** [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+// Signature
+ArcWorkflow(
+  identifier: string,
+  ?title: string,
+  ?description: string,
+  ?workflowType: OntologyAnnotation,
+  ?uri: string,
+  ?version: string,
+  ?subWorkflowIdentifiers: ResizeArray<string>,
+  ?parameters: ResizeArray<OntologyAnnotation>,
+  ?components: ResizeArray<Process.Component>,
+  ?datamap: Datamap,
+  ?contacts: ResizeArray<Person>,
+  ?cwlDescription: CWL.CWLProcessingUnit,
+  ?comments: ResizeArray<Comment>
+)
+
+// Usage
+open ARCtrl
+let wf = ArcWorkflow(
+  identifier = "QC",
+  uri = "https://workflowhub.eu/qc",
+  parameters = ResizeArray(),
+  components = ResizeArray()
+)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+// Signature
+constructor(
+  identifier: string,
+  title?: string,
+  description?: string,
+  workflowType?: OntologyAnnotation,
+  uri?: string,
+  version?: string,
+  subWorkflowIdentifiers?: string[],
+  parameters?: OntologyAnnotation[],
+  components?: Process.Component[],
+  datamap?: Datamap,
+  contacts?: Person[],
+  cwlDescription?: CWL.CWLProcessingUnit,
+  comments?: Comment[],
+)
+
+// Usage
+import { ArcWorkflow } from "@nfdi4plants/arctrl";
+
+const wf = new ArcWorkflow("QC", undefined, undefined, undefined, "https://workflowhub.eu/qc");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+# Signature
+ArcWorkflow(
+  identifier: str,
+  title: str | None = None,
+  description: str | None = None,
+  workflowType: OntologyAnnotation | None = None,
+  uri: str | None = None,
+  version: str | None = None,
+  subWorkflowIdentifiers: list[str] | None = None,
+  parameters: list[OntologyAnnotation] | None = None,
+  components: list[Process.Component] | None = None,
+  datamap: Datamap | None = None,
+  contacts: list[Person] | None = None,
+  cwlDescription: CWLProcessingUnit | None = None,
+  comments: list[Comment] | None = None,
+)
+
+# Usage
+from arctrl import ArcWorkflow
+
+wf = ArcWorkflow("QC", uri="https://workflowhub.eu/qc")
+```
+</TabItem>
+</Tabs>
+
+### Copy
+**Summary:** Deep copy including parameters, components, datamap, contacts, sub-workflow identifiers, and comments; can retain investigation reference.
+**Parameters:** `copyInvestigationRef: bool option`
+**ReturnType:** [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let clone = wf.Copy(copyInvestigationRef = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const clone = wf.Copy(true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+clone = wf.Copy(copyInvestigationRef=True)
+```
+</TabItem>
+</Tabs>
+
+### StructurallyEquals
+**Summary:** Compare workflows by value.
+**Parameters:** `other: ArcWorkflow`
+**ReturnType:** `bool`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let same = wf.StructurallyEquals other
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const same = wf.StructurallyEquals(other);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+same = wf.StructurallyEquals(other)
+```
+</TabItem>
+</Tabs>
+
+### Equals
+**Summary:** Override equality using structural comparison.
+**Parameters:** `obj: obj`
+**ReturnType:** `bool`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let eq = wf.Equals(otherObj)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const eq = wf.Equals(otherObj);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+eq = wf.Equals(other_obj)
+```
+</TabItem>
+</Tabs>
+
+### ReferenceEquals
+**Summary:** Check reference equality.
+**Parameters:** `other: ArcWorkflow`
+**ReturnType:** `bool`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let sameRef = wf.ReferenceEquals other
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const sameRef = wf.ReferenceEquals(other);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+same_ref = wf.ReferenceEquals(other)
+```
+</TabItem>
+</Tabs>
+
+### GetLightHashCode
+**Summary:** Hash code ignoring datamap.
+**Parameters:** none
+**ReturnType:** `int`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let h = wf.GetLightHashCode()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const h = wf.GetLightHashCode();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+h = wf.GetLightHashCode()
+```
+</TabItem>
+</Tabs>
+
+### GetHashCode
+**Summary:** Full hash including datamap.
+**Parameters:** none
+**ReturnType:** `int`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let h = wf.GetHashCode()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const h = wf.GetHashCode();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+h = wf.GetHashCode()
+```
+</TabItem>
+</Tabs>
+
+### ToString
+**Summary:** Render debug output for the workflow.
+**Parameters:** none
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let s = wf.ToString()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const s = wf.ToString();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+s = wf.ToString()
+```
+</TabItem>
+</Tabs>
+
+### AddToInvestigation
+**Summary:** Attach this workflow to an investigation.
+**Parameters:** `investigation: ArcInvestigation`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+wf.AddToInvestigation(inv)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+wf.AddToInvestigation(inv);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf.AddToInvestigation(inv)
+```
+</TabItem>
+</Tabs>
+
+### RemoveFromInvestigation
+**Summary:** Detach this workflow from its investigation.
+**Parameters:** none
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+wf.RemoveFromInvestigation()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+wf.RemoveFromInvestigation();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf.RemoveFromInvestigation()
+```
+</TabItem>
+</Tabs>
+
+### AddSubWorkflow
+**Summary:** Add a sub-workflow reference to this workflow.
+**Parameters:** `subWorkflow: ArcWorkflow`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+wf.AddSubWorkflow(sub)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+wf.AddSubWorkflow(sub);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf.AddSubWorkflow(sub)
+```
+</TabItem>
+</Tabs>
+
+### InitSubWorkflow
+**Summary:** Initialize and attach an empty sub-workflow stub by identifier.
+**Parameters:** `subWorkflowIdentifier: string`
+**ReturnType:** [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let sub = wf.InitSubWorkflow("QC")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const sub = wf.InitSubWorkflow("QC");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+sub = wf.InitSubWorkflow("QC")
+```
+</TabItem>
+</Tabs>
+
+### RegisterSubWorkflow
+**Summary:** Register a sub-workflow identifier without an object.
+**Parameters:** `subWorkflowIdentifier: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+wf.RegisterSubWorkflow("QC")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+wf.RegisterSubWorkflow("QC");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf.RegisterSubWorkflow("QC")
+```
+</TabItem>
+</Tabs>
+
+### DeregisterSubWorkflow
+**Summary:** Remove a registered sub-workflow identifier.
+**Parameters:** `subWorkflowIdentifier: string`
+**ReturnType:** `unit`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+wf.DeregisterSubWorkflow("QC")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+wf.DeregisterSubWorkflow("QC");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf.DeregisterSubWorkflow("QC")
+```
+</TabItem>
+</Tabs>
+
+### GetRegisteredSubWorkflow
+**Summary:** Resolve a registered sub-workflow by identifier.
+**Parameters:** `subWorkflowIdentifier: string`
+**ReturnType:** [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let sub = wf.GetRegisteredSubWorkflow("QC")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const sub = wf.GetRegisteredSubWorkflow("QC");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+sub = wf.GetRegisteredSubWorkflow("QC")
+```
+</TabItem>
+</Tabs>
+
+### GetRegisteredSubWorkflows
+**Summary:** Return all registered sub-workflows.
+**Parameters:** none
+**ReturnType:** [ArcWorkflow](./arc-workflow)[]
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let subs = wf.getRegisteredSubWorkflows()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const subs = wf.getRegisteredSubWorkflows();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+subs = wf.getRegisteredSubWorkflows()
+```
+</TabItem>
+</Tabs>
+
+### GetRegisteredSubWorkflowsOrIdentifier
+**Summary:** Resolve registered sub-workflows or return identifiers when objects are missing.
+**Parameters:** none
+**ReturnType:** `obj` (workflow or identifier placeholder)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let subs = wf.GetRegisteredSubWorkflowsOrIdentifier()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const subs = wf.GetRegisteredSubWorkflowsOrIdentifier();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+subs = wf.GetRegisteredSubWorkflowsOrIdentifier()
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### init
+**Summary:** Initialize a workflow with an identifier.
+**Parameters:** `identifier: string`
+**ReturnType:** [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wf = ArcWorkflow.init "Assemble"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wf = ArcWorkflow.init("Assemble");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf = ArcWorkflow.init("Assemble")
+```
+</TabItem>
+</Tabs>
+
+### create
+**Summary:** Create a workflow with optional metadata and content.
+**Parameters:** `identifier: string`, optional `title`, `description`, `workflowType`, `uri`, `version`, `subWorkflowIdentifiers`, `parameters`, `components`, `datamap`, `contacts`, `cwlDescription`, `comments`
+**ReturnType:** [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wf = ArcWorkflow.create("QC", uri = "https://workflowhub.eu/qc")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wf = ArcWorkflow.create("QC", undefined, undefined, undefined, "https://workflowhub.eu/qc");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf = ArcWorkflow.create("QC", uri="https://workflowhub.eu/qc")
+```
+</TabItem>
+</Tabs>
+
+### make
+**Summary:** Functional factory accepting all workflow fields positionally.
+**Parameters:** `identifier: string`, `title: string`, `description: string`, `workflowType: OntologyAnnotation`, `uri: string`, `version: string`, `subWorkflowIdentifiers: ResizeArray\<string\>`, `parameters: ResizeArray\<OntologyAnnotation\>`, `components: ResizeArray\<Process.Component\>`, `datamap: Datamap`, `contacts: ResizeArray\<Person\>`, `cwlDescription: CWL.CWLProcessingUnit`, `comments: ResizeArray\<Comment\>`
+**ReturnType:** [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wf = ArcWorkflow.make("QC", "Title", "Desc", oa, "uri", "v1", ResizeArray(), ResizeArray(), ResizeArray(), None, ResizeArray(), None, ResizeArray())
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wf = ArcWorkflow.make("QC", "Title", "Desc", oa, "uri", "v1", [], [], [], undefined, [], undefined, []);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf = ArcWorkflow.make("QC", "Title", "Desc", oa, "uri", "v1", [], [], [], None, [], None, [])
+```
+</TabItem>
+</Tabs>
+
+### FileName
+**Summary:** Workflow ISA file name.
+**Parameters:** none
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let name = ArcWorkflow.FileName
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const name = ArcWorkflow.FileName;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+name = ArcWorkflow.FileName
+```
+</TabItem>
+</Tabs>
+
+### addSubWorkflow
+**Summary:** Functional wrapper to add a sub-workflow.
+**Parameters:** `subWorkflow: ArcWorkflow`
+**ReturnType:** [ArcWorkflow](./arc-workflow) \-> [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wf' = wf |> ArcWorkflow.addSubWorkflow sub
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wf2 = ArcWorkflow.addSubWorkflow(sub)(wf);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf2 = ArcWorkflow.addSubWorkflow(sub)(wf)
+```
+</TabItem>
+</Tabs>
+
+### initSubWorkflow
+**Summary:** Functional wrapper to init a sub-workflow stub by identifier.
+**Parameters:** `subWorkflowIdentifier: string`
+**ReturnType:** [ArcWorkflow](./arc-workflow) \-> [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wf' = wf |> ArcWorkflow.initSubWorkflow "QC"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wf2 = ArcWorkflow.initSubWorkflow("QC")(wf);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf2 = ArcWorkflow.initSubWorkflow("QC")(wf)
+```
+</TabItem>
+</Tabs>
+
+### registerSubWorkflow
+**Summary:** Functional wrapper to register a sub-workflow identifier.
+**Parameters:** `subWorkflowIdentifier: string`
+**ReturnType:** [ArcWorkflow](./arc-workflow) \-> [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wf' = wf |> ArcWorkflow.registerSubWorkflow "QC"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wf2 = ArcWorkflow.registerSubWorkflow("QC")(wf);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf2 = ArcWorkflow.registerSubWorkflow("QC")(wf)
+```
+</TabItem>
+</Tabs>
+
+### deregisterSubWorkflow
+**Summary:** Functional wrapper to remove a sub-workflow identifier.
+**Parameters:** `subWorkflowIdentifier: string`
+**ReturnType:** [ArcWorkflow](./arc-workflow) \-> [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let wf' = wf |> ArcWorkflow.deregisterSubWorkflow "QC"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const wf2 = ArcWorkflow.deregisterSubWorkflow("QC")(wf);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+wf2 = ArcWorkflow.deregisterSubWorkflow("QC")(wf)
+```
+</TabItem>
+</Tabs>
+
+### getRegisteredSubWorkflow
+**Summary:** Functional accessor to resolve a sub-workflow by identifier.
+**Parameters:** `subWorkflowIdentifier: string`
+**ReturnType:** [ArcWorkflow](./arc-workflow) \-> [ArcWorkflow](./arc-workflow)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let getter = ArcWorkflow.getRegisteredSubWorkflow "QC"
+let sub = getter wf
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const getter = ArcWorkflow.getRegisteredSubWorkflow("QC");
+const sub = getter(wf);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+getter = ArcWorkflow.getRegisteredSubWorkflow("QC")
+sub = getter(wf)
+```
+</TabItem>
+</Tabs>
+
+### getRegisteredSubWorkflows
+**Summary:** Functional accessor returning registered sub-workflows.
+**Parameters:** none
+**ReturnType:** [ArcWorkflow](./arc-workflow) \-> [ArcWorkflow](./arc-workflow)[]
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let subs = ArcWorkflow.getRegisteredSubWorkflows() wf
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const subs = ArcWorkflow.getRegisteredSubWorkflows()(wf);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+subs = ArcWorkflow.getRegisteredSubWorkflows()(wf)
+```
+</TabItem>
+</Tabs>
+
+### getRegisteredSubWorkflowsOrIdentifier
+**Summary:** Functional accessor returning registered sub-workflows or identifiers when missing.
+**Parameters:** none
+**ReturnType:** [ArcWorkflow](./arc-workflow) \-> obj
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let subs = ArcWorkflow.getRegisteredSubWorkflowsOrIdentifier() wf
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const subs = ArcWorkflow.getRegisteredSubWorkflowsOrIdentifier()(wf);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+subs = ArcWorkflow.getRegisteredSubWorkflowsOrIdentifier()(wf)
+```
+</TabItem>
+</Tabs>

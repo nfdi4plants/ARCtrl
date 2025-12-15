@@ -1,0 +1,633 @@
+---
+title: "CompositeCell"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+**Signature (DU cases):**
+```fsharp
+type CompositeCell =
+  | Term of OntologyAnnotation
+  | FreeText of string
+  | Unitized of string * OntologyAnnotation
+  | Data of Data
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+
+**Signature (factories):**
+```py
+CompositeCell.createTerm(oa)
+CompositeCell.createFreeText(text)
+CompositeCell.createUnitized(value, oa=None)
+CompositeCell.createData(data)
+CompositeCell.createDataFromString(value, format=None, selectorFormat=None)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+**Signature (factories):**
+```ts
+CompositeCell.createTerm(oa: OntologyAnnotation)
+CompositeCell.createFreeText(text: string)
+CompositeCell.createUnitized(value: string, oa?: OntologyAnnotation)
+CompositeCell.createData(d: Data)
+CompositeCell.createDataFromString(value: string, format?: string, selectorFormat?: string)
+```
+</TabItem>
+</Tabs>
+
+## Fields
+- `Term of OntologyAnnotation`
+- `FreeText of string`
+- `Unitized of string * OntologyAnnotation`
+- `Data of Data`
+
+## Methods
+
+### GetContent
+**Summary:** Return string payloads for the cell case (Term/Unitized/Data/FreeText).
+**Parameters:** none
+**ReturnType:** `string[]`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let parts = cell.GetContent()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const parts = cell.GetContent();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+parts = cell.GetContent()
+```
+</TabItem>
+</Tabs>
+
+### ToUnitizedCell
+**Summary:** Convert to a unitized cell; creates empty value when needed.
+**Parameters:** none
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let unitized = cell.ToUnitizedCell()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const unitized = cell.ToUnitizedCell();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+unitized = cell.ToUnitizedCell()
+```
+</TabItem>
+</Tabs>
+
+### ToTermCell
+**Summary:** Convert to a term cell, deriving ontology from the current case.
+**Parameters:** none
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let termCell = cell.ToTermCell()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const termCell = cell.ToTermCell();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+term_cell = cell.ToTermCell()
+```
+</TabItem>
+</Tabs>
+
+### ToFreeTextCell
+**Summary:** Convert to free-text representation of the current case.
+**Parameters:** none
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let textCell = cell.ToFreeTextCell()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const textCell = cell.ToFreeTextCell();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+text_cell = cell.ToFreeTextCell()
+```
+</TabItem>
+</Tabs>
+
+### ToDataCell
+**Summary:** Convert to a data cell, using current content as data name when needed.
+**Parameters:** none
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let dataCell = cell.ToDataCell()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const dataCell = cell.ToDataCell();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+data_cell = cell.ToDataCell()
+```
+</TabItem>
+</Tabs>
+
+### GetEmptyCell
+**Summary:** Produce the default empty value matching the current case.
+**Parameters:** none
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let empty = cell.GetEmptyCell()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const empty = cell.GetEmptyCell();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+empty = cell.GetEmptyCell()
+```
+</TabItem>
+</Tabs>
+
+### UpdateWithOA
+**Summary:** Replace ontology info while keeping the stored value for unitized cells.
+**Parameters:** `oa: [OntologyAnnotation](./ontology-annotation)`
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let updated = cell.UpdateWithOA oa
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const updated = cell.UpdateWithOA(oa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+updated = cell.UpdateWithOA(oa)
+```
+</TabItem>
+</Tabs>
+
+### ValidateAgainstHeader
+**Summary:** Check if the cell is compatible with a header; optionally throw.
+**Parameters:** `header: [CompositeHeader](./composite-header)`, `raiseException: bool option`
+**ReturnType:** `bool`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let ok = cell.ValidateAgainstHeader(header, raiseException = true)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const ok = cell.ValidateAgainstHeader(header, true);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+ok = cell.ValidateAgainstHeader(header, raiseException=True)
+```
+</TabItem>
+</Tabs>
+
+### Copy
+**Summary:** Deep copy including nested ontology/data payloads.
+**Parameters:** none
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let copy = cell.Copy()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const copy = cell.Copy();
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+copy = cell.Copy()
+```
+</TabItem>
+</Tabs>
+
+### AsUnitized
+**Summary:** Access unitized payload; throws if not unitized.
+**Parameters:** none
+**ReturnType:** `(string * [OntologyAnnotation](./ontology-annotation))`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let v, unit = cell.AsUnitized
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const [v, unit] = cell.AsUnitized;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+v, unit = cell.AsUnitized
+```
+</TabItem>
+</Tabs>
+
+### AsTerm
+**Summary:** Access term payload; throws if not a term cell.
+**Parameters:** none
+**ReturnType:** [OntologyAnnotation](./ontology-annotation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let term = cell.AsTerm
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const term = cell.AsTerm;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+term = cell.AsTerm
+```
+</TabItem>
+</Tabs>
+
+### AsFreeText
+**Summary:** Access free-text payload; throws if not free-text.
+**Parameters:** none
+**ReturnType:** `string`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let text = cell.AsFreeText
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const text = cell.AsFreeText;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+text = cell.AsFreeText
+```
+</TabItem>
+</Tabs>
+
+### AsData
+**Summary:** Access data payload; throws if not a data cell.
+**Parameters:** none
+**ReturnType:** [Data](./data)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let d = cell.AsData
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const d = cell.AsData;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+d = cell.AsData
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### createTerm
+**Summary:** Build a term cell from an ontology annotation.
+**Parameters:** `oa: [OntologyAnnotation](./ontology-annotation)`
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = CompositeCell.createTerm oa
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = CompositeCell.createTerm(oa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = CompositeCell.createTerm(oa)
+```
+</TabItem>
+</Tabs>
+
+### createTermFromString
+**Summary:** Build a term cell from plain name and optional source/accession.
+**Parameters:** `name: string`, `tsr: string option`, `tan: string option`
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = CompositeCell.createTermFromString("organism", tsr = "NCBITaxon", tan = "9606")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = CompositeCell.createTermFromString("organism", "NCBITaxon", "9606");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = CompositeCell.createTermFromString("organism", tsr="NCBITaxon", tan="9606")
+```
+</TabItem>
+</Tabs>
+
+### createUnitized
+**Summary:** Build a unitized cell from value and ontology.
+**Parameters:** `value: string`, `oa: [OntologyAnnotation](./ontology-annotation) option`
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = CompositeCell.createUnitized("5", oa)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = CompositeCell.createUnitized("5", oa);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = CompositeCell.createUnitized("5", oa)
+```
+</TabItem>
+</Tabs>
+
+### createUnitizedFromString
+**Summary:** Build a unitized cell from value and raw ontology strings.
+**Parameters:** `value: string`, `name: string option`, `tsr: string option`, `tan: string option`
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = CompositeCell.createUnitizedFromString("5", name = "meter")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = CompositeCell.createUnitizedFromString("5", "meter");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = CompositeCell.createUnitizedFromString("5", name="meter")
+```
+</TabItem>
+</Tabs>
+
+### createFreeText
+**Summary:** Build a free-text cell.
+**Parameters:** `text: string`
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = CompositeCell.createFreeText "hello"
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = CompositeCell.createFreeText("hello");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = CompositeCell.createFreeText("hello")
+```
+</TabItem>
+</Tabs>
+
+### createData
+**Summary:** Build a data cell from a `Data` instance.
+**Parameters:** `data: [Data](./data)`
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = CompositeCell.createData data
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = CompositeCell.createData(data);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = CompositeCell.createData(data)
+```
+</TabItem>
+</Tabs>
+
+### createDataFromString
+**Summary:** Build a data cell from strings with optional formats.
+**Parameters:** `value: string`, `format: string option`, `selectorFormat: string option`
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let c = CompositeCell.createDataFromString("file.bam", format = "BAM")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const c = CompositeCell.createDataFromString("file.bam", "BAM");
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+c = CompositeCell.createDataFromString("file.bam", format="BAM")
+```
+</TabItem>
+</Tabs>
+
+### emptyTerm
+**Summary:** Predefined empty term cell.
+**Parameters:** none
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let empty = CompositeCell.emptyTerm
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const empty = CompositeCell.emptyTerm;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+empty = CompositeCell.emptyTerm
+```
+</TabItem>
+</Tabs>
+
+### emptyFreeText
+**Summary:** Predefined empty free-text cell.
+**Parameters:** none
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let empty = CompositeCell.emptyFreeText
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const empty = CompositeCell.emptyFreeText;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+empty = CompositeCell.emptyFreeText
+```
+</TabItem>
+</Tabs>
+
+### emptyUnitized
+**Summary:** Predefined empty unitized cell.
+**Parameters:** none
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let empty = CompositeCell.emptyUnitized
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const empty = CompositeCell.emptyUnitized;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+empty = CompositeCell.emptyUnitized
+```
+</TabItem>
+</Tabs>
+
+### emptyData
+**Summary:** Predefined empty data cell.
+**Parameters:** none
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let empty = CompositeCell.emptyData
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const empty = CompositeCell.emptyData;
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+empty = CompositeCell.emptyData
+```
+</TabItem>
+</Tabs>
+
+### updateWithOA
+**Summary:** Functional alias of `UpdateWithOA`.
+**Parameters:** `oa: [OntologyAnnotation](./ontology-annotation)`, `cell: [CompositeCell](./composite-cell)`
+**ReturnType:** [CompositeCell](./composite-cell)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let updated = CompositeCell.updateWithOA oa cell
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const updated = CompositeCell.updateWithOA(oa, cell);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+updated = CompositeCell.updateWithOA(oa, cell)
+```
+</TabItem>
+</Tabs>
+
+#### Usage Examples
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+open ARCtrl
+
+let term = CompositeCell.createTerm (OntologyAnnotation(name = "Organism"))
+let unit = CompositeCell.createUnitized("5", OntologyAnnotation(name = "meter"))
+let txt  = CompositeCell.createFreeText "hello"
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+from arctrl import CompositeCell, OntologyAnnotation
+
+term = CompositeCell.createTerm(OntologyAnnotation(name="Organism"))
+unit = CompositeCell.createUnitized("5", OntologyAnnotation(name="meter"))
+txt = CompositeCell.createFreeText("hello")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+import { CompositeCell, OntologyAnnotation } from "@nfdi4plants/arctrl";
+
+const term = CompositeCell.createTerm(new OntologyAnnotation("Organism"));
+const unit = CompositeCell.createUnitized("5", new OntologyAnnotation("meter"));
+const txt = CompositeCell.createFreeText("hello");
+```
+</TabItem>
+</Tabs>

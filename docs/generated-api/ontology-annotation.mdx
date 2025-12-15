@@ -1,0 +1,426 @@
+---
+title: "OntologyAnnotation"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl`
+
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+**Signature:**
+```fsharp
+OntologyAnnotation(
+    ?name: string,
+    ?tsr: string,
+    ?tan: string,
+    ?comments: ResizeArray<Comment>
+)
+```
+**Usage:**
+```fsharp
+open ARCtrl
+
+let oa = OntologyAnnotation(name = "mass spectrometry", tsr = "MS", tan = "MS:1000121")
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+
+**Signature:**
+```py
+OntologyAnnotation(
+    name: str | None = None,
+    tsr: str | None = None,
+    tan: str | None = None,
+    comments: list[Comment] | None = None,
+)
+```
+**Usage:**
+```py
+from arctrl import OntologyAnnotation
+
+oa = OntologyAnnotation(name="mass spectrometry", tsr="MS", tan="MS:1000121")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+
+**Signature:**
+```ts
+constructor(name?: string, tsr?: string, tan?: string, comments?: Comment[])
+```
+**Usage:**
+```ts
+import { OntologyAnnotation } from "@nfdi4plants/arctrl";
+
+const oa = new OntologyAnnotation("mass spectrometry", "MS", "MS:1000121");
+```
+</TabItem>
+</Tabs>
+
+## Fields
+- **Name**: string option
+- **TermSourceREF**: string option
+- **TermAccessionNumber**: string option
+- **Comments**: [Comment](./comment) ResizeArray
+- **TANInfo**: {| IDSpace: string; LocalID: string |} option
+
+## Methods
+
+### TermAccessionShort
+**Summary:** Short form `IDSpace:LocalID`; empty string if TAN missing.
+**Parameters:** none
+**ReturnType:** string
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let short = oa.TermAccessionShort
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+short = oa.TermAccessionShort
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const short = oa.TermAccessionShort;
+```
+</TabItem>
+</Tabs>
+
+### TermAccessionOntobeeUrl
+**Summary:** Ontobee URL if TAN can be parsed; otherwise empty string.
+**Parameters:** none
+**ReturnType:** string
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let url = oa.TermAccessionOntobeeUrl
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+url = oa.TermAccessionOntobeeUrl
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const url = oa.TermAccessionOntobeeUrl;
+```
+</TabItem>
+</Tabs>
+
+### TermAccessionAndOntobeeUrlIfShort
+**Summary:** Returns TAN; if TAN is short form, returns Ontobee URL instead.
+**Parameters:** none
+**ReturnType:** string
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let s = oa.TermAccessionAndOntobeeUrlIfShort
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+s = oa.TermAccessionAndOntobeeUrlIfShort
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const s = oa.TermAccessionAndOntobeeUrlIfShort;
+```
+</TabItem>
+</Tabs>
+
+### ToString
+**Summary:** Render as `{ Name = ...; TSR = ...; TAN = ... }`.
+**Parameters:** none
+**ReturnType:** string
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let txt = oa.ToString()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+txt = oa.ToString()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const txt = oa.ToString();
+```
+</TabItem>
+</Tabs>
+
+### Copy
+**Summary:** Deep copy including comments.
+**Parameters:** none
+**ReturnType:** [OntologyAnnotation](./ontology-annotation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let clone = oa.Copy()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+clone = oa.Copy()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const clone = oa.Copy();
+```
+</TabItem>
+</Tabs>
+
+### Equals / GetHashCode
+**Summary:** Structural equality and matching hash.
+**Parameters:** `obj: obj`
+**ReturnType:** `bool` / `int`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let eq = oa.Equals(other)
+let h = oa.GetHashCode()
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+eq = oa.Equals(other)
+h = oa.GetHashCode()
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const eq = oa.Equals(other);
+const h = oa.GetHashCode();
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+
+### make
+**Summary:** Build an ontology annotation.
+**Parameters:** `?name: string`, `?tsr: string`, `?tan: string`, `comments: ResizeArray\<Comment\>`
+**ReturnType:** [OntologyAnnotation](./ontology-annotation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let oa = OntologyAnnotation.make (Some "MS") (Some "MS") (Some "MS:1000121") (ResizeArray())
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+oa = OntologyAnnotation.make("mass spectrometry", "MS", "MS:1000121", [])
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const oa = OntologyAnnotation.make("mass spectrometry", "MS", "MS:1000121", []);
+```
+</TabItem>
+</Tabs>
+
+### create
+**Summary:** Convenience constructor (trims empty values).
+**Parameters:** same as `make` but optional
+**ReturnType:** [OntologyAnnotation](./ontology-annotation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let oa = OntologyAnnotation.create(name = "mass spectrometry", tsr = "MS", tan = "MS:1000121")
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+oa = OntologyAnnotation.create(name="mass spectrometry", tsr="MS", tan="MS:1000121")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const oa = OntologyAnnotation.create({ name: "mass spectrometry", tsr: "MS", tan: "MS:1000121" });
+```
+</TabItem>
+</Tabs>
+
+### createUriAnnotation
+**Summary:** Build Ontobee PURL from TSR and local TAN.
+**Parameters:** `termSourceRef: string`, `localTAN: string`
+**ReturnType:** string
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let url = OntologyAnnotation.createUriAnnotation "MS" "1000121"
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+url = OntologyAnnotation.createUriAnnotation("MS", "1000121")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const url = OntologyAnnotation.createUriAnnotation("MS", "1000121");
+```
+</TabItem>
+</Tabs>
+
+### fromTermAnnotation
+**Summary:** Parse short or full TAN string to OntologyAnnotation (optional name).
+**Parameters:** `tan: string`, `?name: string`
+**ReturnType:** [OntologyAnnotation](./ontology-annotation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let oa = OntologyAnnotation.fromTermAnnotation("MS:1000121", name = "mass spectrometry")
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+oa = OntologyAnnotation.fromTermAnnotation("MS:1000121", name="mass spectrometry")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const oa = OntologyAnnotation.fromTermAnnotation("MS:1000121", { name: "mass spectrometry" });
+```
+</TabItem>
+</Tabs>
+
+### toStringObject
+**Summary:** Convert to object with term name, source, accession; optionally PURL-ify short TANs.
+**Parameters:** `oa: OntologyAnnotation`, `?asOntobeePurlUrlIfShort: bool`
+**ReturnType:** `{ TermName: string; TermSourceREF: string; TermAccessionNumber: string }`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let obj = OntologyAnnotation.toStringObject(oa, asOntobeePurlUrlIfShort = true)
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+obj = OntologyAnnotation.toStringObject(oa, asOntobeePurlUrlIfShort=True)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const obj = OntologyAnnotation.toStringObject(oa, true);
+```
+</TabItem>
+</Tabs>
+
+### Static Methods
+
+### make
+**Summary:** Build an ontology annotation.
+**Parameters:** `?name: string`, `?tsr: string`, `?tan: string`, `comments: ResizeArray\<Comment\>`
+**ReturnType:** [OntologyAnnotation](./ontology-annotation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let oa = OntologyAnnotation.make (Some "MS") (Some "MS") (Some "MS:1000121") (ResizeArray())
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+oa = OntologyAnnotation.make("mass spectrometry", "MS", "MS:1000121", [])
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const oa = OntologyAnnotation.make("mass spectrometry", "MS", "MS:1000121", []);
+```
+</TabItem>
+</Tabs>
+
+### create
+**Summary:** Convenience constructor (trims empty values).
+**Parameters:** same as `make` but optional
+**ReturnType:** [OntologyAnnotation](./ontology-annotation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let oa = OntologyAnnotation.create(name = "mass spectrometry", tsr = "MS", tan = "MS:1000121")
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+oa = OntologyAnnotation.create(name="mass spectrometry", tsr="MS", tan="MS:1000121")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const oa = OntologyAnnotation.create({ name: "mass spectrometry", tsr: "MS", tan: "MS:1000121" });
+```
+</TabItem>
+</Tabs>
+
+### createUriAnnotation
+**Summary:** Build Ontobee PURL from TSR and local TAN.
+**Parameters:** `termSourceRef: string`, `localTAN: string`
+**ReturnType:** string
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let url = OntologyAnnotation.createUriAnnotation "MS" "1000121"
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+url = OntologyAnnotation.createUriAnnotation("MS", "1000121")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const url = OntologyAnnotation.createUriAnnotation("MS", "1000121");
+```
+</TabItem>
+</Tabs>
+
+### fromTermAnnotation
+**Summary:** Parse short or full TAN string to OntologyAnnotation.
+**Parameters:** `tan: string`, `?name: string`
+**ReturnType:** [OntologyAnnotation](./ontology-annotation)
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let oa = OntologyAnnotation.fromTermAnnotation("MS:1000121", name = "mass spectrometry")
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+oa = OntologyAnnotation.fromTermAnnotation("MS:1000121", name="mass spectrometry")
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const oa = OntologyAnnotation.fromTermAnnotation("MS:1000121", { name: "mass spectrometry" });
+```
+</TabItem>
+</Tabs>
+
+### toStringObject
+**Summary:** Convert to object with term name, source, accession; optionally PURL-ify short TANs.
+**Parameters:** `oa: OntologyAnnotation`, `?asOntobeePurlUrlIfShort: bool`
+**ReturnType:** `{ TermName: string; TermSourceREF: string; TermAccessionNumber: string }`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let obj = OntologyAnnotation.toStringObject(oa, asOntobeePurlUrlIfShort = true)
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+obj = OntologyAnnotation.toStringObject(oa, asOntobeePurlUrlIfShort=True)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const obj = OntologyAnnotation.toStringObject(oa, true);
+```
+</TabItem>
+</Tabs>

@@ -1,0 +1,193 @@
+---
+title: "Contract IO"
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+Namespace: `ARCtrl.Contract`
+
+Functions to fulfil `Contract` records against disk.
+
+## Fields
+None.
+
+## Methods
+
+### fulfillReadContractAsync
+**Summary:** Load DTO from disk by DTOType (ISA_* spreadsheet, PlainText, CWL, YAML).
+**Parameters:** `basePath: string`, `contract: Contract`
+**ReturnType:** async result / promise
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! dto = Contract.fulfillReadContractAsync("./arc", contract)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const dto = await Contract.fulfillReadContractAsync("./arc", contract);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+dto = await Contract.fulfillReadContractAsync("./arc", contract)
+```
+</TabItem>
+</Tabs>
+
+### fulfillWriteContractAsync
+**Summary:** Write DTO to disk, creating directories as needed.
+**Parameters:** `basePath: string`, `contract: Contract`
+**ReturnType:** async result / promise
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = Contract.fulfillWriteContractAsync("./arc", contract)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await Contract.fulfillWriteContractAsync("./arc", contract);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await Contract.fulfillWriteContractAsync("./arc", contract)
+```
+</TabItem>
+</Tabs>
+
+### fulfillUpdateContractAsync
+**Summary:** Overwrite or update an existing path using DTO contents.
+**Parameters:** `basePath: string`, `contract: Contract`
+**ReturnType:** async result / promise
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = Contract.fulfillUpdateContractAsync("./arc", contract)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await Contract.fulfillUpdateContractAsync("./arc", contract);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await Contract.fulfillUpdateContractAsync("./arc", contract)
+```
+</TabItem>
+</Tabs>
+
+### fullfillRenameContractAsync
+**Summary:** Rename using `DTO.Text` as the new path.
+**Parameters:** `basePath: string`, `contract: Contract`
+**ReturnType:** async result / promise
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = Contract.fullfillRenameContractAsync("./arc", contract)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await Contract.fullfillRenameContractAsync("./arc", contract);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await Contract.fullfillRenameContractAsync("./arc", contract)
+```
+</TabItem>
+</Tabs>
+
+### fullfillDeleteContractAsync
+**Summary:** Delete the target path.
+**Parameters:** `basePath: string`, `contract: Contract`
+**ReturnType:** async result / promise
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = Contract.fullfillDeleteContractAsync("./arc", contract)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await Contract.fullfillDeleteContractAsync("./arc", contract);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await Contract.fullfillDeleteContractAsync("./arc", contract)
+```
+</TabItem>
+</Tabs>
+
+### fullFillContract
+**Summary:** Dispatch a single contract to the appropriate fulfill function (read/write/update/delete/rename/execute).
+**Parameters:** `basePath: string`, `contract: Contract`
+**ReturnType:** async result / promise
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = Contract.fullFillContract "./arc" contract
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await Contract.fullFillContract("./arc", contract);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await Contract.fullFillContract("./arc", contract)
+```
+</TabItem>
+</Tabs>
+
+### fullfillContractBatchAsyncBy
+**Summary:** Execute a list of contracts with a custom handler.
+**Parameters:** `handler: [Contract](./contract) \-> Async\<Result\<unit,_\>\>`, `basePath: string`, `contracts: [Contract](./contract)[]`
+**ReturnType:** `Async\<Result\<unit,_\>\>` / `Promise\<Result\<unit,_\>\>`
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = Contract.fullfillContractBatchAsyncBy(handler, "./arc", contracts)
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await Contract.fullfillContractBatchAsyncBy(handler, "./arc", contracts);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await Contract.fullfillContractBatchAsyncBy(handler, "./arc", contracts)
+```
+</TabItem>
+</Tabs>
+
+### fullFillContractBatchAsync
+**Summary:** Execute a list of contracts using default handlers.
+**Parameters:** `basePath: string`, `contracts: Contract[]`
+**ReturnType:** async result / promise
+<Tabs>
+<TabItem label="FSharp" icon='seti:f-sharp'>
+```fsharp
+let! res = Contract.fullFillContractBatchAsync "./arc" contracts
+```
+</TabItem>
+<TabItem label="JavaScript" icon='seti:javascript'>
+```ts
+const res = await Contract.fullFillContractBatchAsync("./arc", contracts);
+```
+</TabItem>
+<TabItem label="Python" icon='seti:python'>
+```py
+res = await Contract.fullFillContractBatchAsync("./arc", contracts)
+```
+</TabItem>
+</Tabs>
+
+## Static Methods
+None documented.
