@@ -37,6 +37,20 @@ module Encode =
         | Some v -> acc @ [name, encoder v]
         | None -> acc
 
+    let normalizeDocString (doc:string) =
+        doc.Replace("\r\n","\n").TrimEnd('\n').TrimEnd('\r')
+
+    let encodeLabel (label:string) : (string * YAMLElement) =
+        "label", Encode.string label
+
+    let encodeDoc (doc:string) : (string * YAMLElement) =
+        "doc", Encode.string (normalizeDocString doc)
+
+    let inline private appendOptPair pairOpt acc =
+        match pairOpt with
+        | Some pair -> acc @ [pair]
+        | None -> acc
+
     // ------------------------------
     // CWLType encoder
     // ------------------------------
@@ -243,7 +257,11 @@ module Encode =
         // Build each top-level section separately to control blank line placement like fixtures
         let section (pairs:(string*YAMLElement) list) =
             pairs |> yMap |> writeYaml |> fun s -> s.Replace("\r\n","\n").TrimEnd('\n').Split('\n') |> Array.toList
-        let baseLines = section ["cwlVersion", Encode.string td.CWLVersion; "class", Encode.string "CommandLineTool"]
+        let basePairs =
+            [ "cwlVersion", Encode.string td.CWLVersion; "class", Encode.string "CommandLineTool" ]
+            |> appendOptPair (td.Label |> Option.map encodeLabel)
+            |> appendOptPair (td.Doc |> Option.map encodeDoc)
+        let baseLines = section basePairs
         let hintsLines = td.Hints |> Option.map (fun h -> section ["hints", (h |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence)])
         let reqLines = td.Requirements |> Option.map (fun r -> section ["requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence)])
         let baseCommandLines = td.BaseCommand |> Option.map (fun bc -> section ["baseCommand", (bc |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence)])
@@ -282,7 +300,11 @@ module Encode =
     let encodeWorkflowDescription (wd:CWLWorkflowDescription) : string =
         let section (pairs:(string*YAMLElement) list) =
             pairs |> yMap |> writeYaml |> fun s -> s.Replace("\r\n","\n").TrimEnd('\n').Split('\n') |> Array.toList
-        let baseLines = section ["cwlVersion", Encode.string wd.CWLVersion; "class", Encode.string "Workflow"]
+        let basePairs =
+            [ "cwlVersion", Encode.string wd.CWLVersion; "class", Encode.string "Workflow" ]
+            |> appendOptPair (wd.Label |> Option.map encodeLabel)
+            |> appendOptPair (wd.Doc |> Option.map encodeDoc)
+        let baseLines = section basePairs
         let reqLines = wd.Requirements |> Option.map (fun r -> section ["requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence)])
         let inputsLines = section ["inputs", (wd.Inputs |> Seq.map encodeCWLInput |> Seq.toList |> yMap)]
         let stepsLines = section ["steps", (wd.Steps |> Seq.map encodeWorkflowStep |> Seq.toList |> yMap)]

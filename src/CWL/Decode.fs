@@ -425,6 +425,12 @@ module Decode =
             |]
             |> ResizeArray
         )
+
+    let docDecoder =
+        Decode.object (fun get -> get.Optional.Field "doc" Decode.string)
+
+    let labelDecoder: (YAMLiciousTypes.YAMLElement -> string option) =
+        Decode.object (fun get -> get.Optional.Field "label" Decode.string)
     
     let stepsDecoder =
         Decode.object (fun get ->
@@ -456,8 +462,6 @@ module Decode =
                             "outputs";
                             "class";
                             "id";
-                            "label";
-                            "doc";
                             "requirements";
                             "hints";
                             "cwlVersion";
@@ -540,8 +544,6 @@ module Decode =
                             "class";
                             "steps";
                             "id";
-                            "label";
-                            "doc";
                             "requirements";
                             "hints";
                             "cwlVersion";
@@ -556,8 +558,6 @@ module Decode =
                 (
                     get.MultipleOptional.FieldList [
                         "id";
-                        "label";
-                        "doc"
                     ]
                 )
         ) |> ignore

@@ -11,7 +11,9 @@ type CWLToolDescription (
         ?requirements: ResizeArray<Requirement>,
         ?hints: ResizeArray<Requirement>,
         ?inputs: ResizeArray<CWLInput>,
-        ?metadata: DynamicObj
+        ?metadata: DynamicObj,
+        ?label: string,
+        ?doc: string
     ) =
     inherit DynamicObj ()
 
@@ -22,6 +24,8 @@ type CWLToolDescription (
     let mutable _hints: ResizeArray<Requirement> option = hints
     let mutable _inputs: ResizeArray<CWLInput> option = inputs
     let mutable _metadata: DynamicObj option = metadata
+    let mutable _label: string option = label
+    let mutable _doc: string option = doc
 
     member this.CWLVersion
         with get() = _cwlVersion
@@ -50,3 +54,11 @@ type CWLToolDescription (
     member this.Metadata
         with get() = _metadata
         and set(metadata) = _metadata <- metadata
+
+    member this.Label
+        with get() = _label
+        and set(label) = _label <- label
+
+    member this.Doc
+        with get() = _doc
+        and set(doc) = _doc <- doc
