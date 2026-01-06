@@ -206,14 +206,12 @@ module Decode =
         Decode.object (fun get ->
             let typeField = get.Required.Field "type" id
             match typeField with
-            | YAMLElement.Object [YAMLElement.Value v] when v.Value = "record" -> 
-                inputRecordSchemaDecoder element :> obj
-            | YAMLElement.Object [YAMLElement.Value v] when v.Value = "enum" -> 
-                inputEnumSchemaDecoder element :> obj
-            | YAMLElement.Object [YAMLElement.Value v] when v.Value = "array" -> 
-                inputArraySchemaDecoder element :> obj
             | YAMLElement.Object [YAMLElement.Value v] -> 
-                v.Value :> obj // Simple type string
+                match v.Value with
+                | "record" -> inputRecordSchemaDecoder element :> obj
+                | "enum" -> inputEnumSchemaDecoder element :> obj
+                | "array" -> inputArraySchemaDecoder element :> obj
+                | simpleType -> simpleType :> obj // Simple type string
             | _ -> 
                 // Type is itself a complex nested object, recurse
                 inputComplexTypeDecoder typeField
@@ -568,8 +566,20 @@ module Decode =
 
     let outputStepsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<string>) =
         Decode.object (fun get ->
-            let outputs = get.Required.Field "out" (Decode.resizearray Decode.string)
-            outputs
+            let outField = get.Optional.Field "out" id
+            match outField with
+            | Some (YAMLElement.Object [YAMLElement.Value v]) when v.Value = "[]" ->
+                // Empty array represented as string "[]"
+                ResizeArray()
+            | Some (YAMLElement.Object [YAMLElement.Sequence []]) | Some (YAMLElement.Sequence []) ->
+                // Empty sequence
+                ResizeArray()
+            | Some value ->
+                // Non-empty array - decode normally
+                Decode.resizearray Decode.string value
+            | None ->
+                // Field not present
+                ResizeArray()
         )
 
     let stepArrayDecoder =
@@ -787,10 +797,54 @@ module DecodeParameters =
                 type_ = t
             )
         | YAMLElement.Object[YAMLElement.Sequence s] ->
-            CWLParameterReference(
-                key = key,
-                values = Decode.resizearray Decode.string (YAMLElement.Sequence s)
-            )
+            // Check what type of sequence this is by examining the first element
+            match s |> List.tryHead with
+            | Some (YAMLElement.Object mappings) ->
+                // Check if mappings actually contains Mapping elements (not just Value)
+                let hasMappings = mappings |> List.exists (function
+                    | YAMLElement.Mapping _ -> true
+                    | _ -> false)
+                
+                if not hasMappings then
+                    // Not actually mappings, just wrapped values - use default decoder
+                    CWLParameterReference(
+                        key = key,
+                        values = Decode.resizearray Decode.string (YAMLElement.Sequence s)
+                    )
+                else
+                    // Check if it's a File/Directory object with a "class" field
+                    let hasClassField = mappings |> List.exists (function
+                        | YAMLElement.Mapping (k, _) when k.Value = "class" -> true
+                        | _ -> false)
+                    
+                    if hasClassField then
+                        // Sequence of File/Directory objects - extract paths
+                        let paths = ResizeArray<string>()
+                        for item in s do
+                            match item with
+                            | YAMLElement.Object itemMappings ->
+                                for mapping in itemMappings do
+                                    match mapping with
+                                    | YAMLElement.Mapping (k, YAMLElement.Object [YAMLElement.Value v]) when k.Value = "path" ->
+                                        paths.Add(v.Value)
+                                    | _ -> ()
+                            | _ -> ()
+                        CWLParameterReference(
+                            key = key,
+                            values = paths,
+                            type_ = File (FileInstance())
+                        )
+                    else
+                        // Sequence of complex record objects (no "class" field)
+                        // Return empty placeholder
+                        CWLParameterReference(key = key, values = ResizeArray())
+            | _ ->
+                // Simple values sequence (strings, numbers, etc.) or empty
+                // Use original decoder logic
+                CWLParameterReference(
+                    key = key,
+                    values = Decode.resizearray Decode.string (YAMLElement.Sequence s)
+                )
         | _ -> failwith $"{yEle}"
 
     let cwlparameterReferenceArrayDecoder: YAMLElement -> ResizeArray<CWLParameterReference> =
