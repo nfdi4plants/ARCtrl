@@ -370,6 +370,30 @@ module Decode =
             fieldValue
         )
 
+    /// Decode a YAMLElement into a ResizeArray<string> option for the source field
+    /// Handles both single string values and arrays of strings
+    let sourceArrayFieldDecoder field : (YAMLiciousTypes.YAMLElement -> ResizeArray<string> option) =
+        Decode.object(fun get ->
+            let sourceField = get.Optional.Field field id
+            match sourceField with
+            | Some sourceValue ->
+                match sourceValue with
+                | YAMLElement.Object [YAMLElement.Value v] -> 
+                    // Single string value
+                    Some (ResizeArray([v.Value]))
+                | YAMLElement.Value v ->
+                    // Single string value (unwrapped)
+                    Some (ResizeArray([v.Value]))
+                | YAMLElement.Object [YAMLElement.Sequence s] ->
+                    // Array of strings wrapped
+                    Some (Decode.resizearray Decode.string (YAMLElement.Sequence s))
+                | YAMLElement.Sequence s ->
+                    // Array of strings unwrapped
+                    Some (Decode.resizearray Decode.string (YAMLElement.Sequence s))
+                | _ -> None
+            | None -> None
+        )
+
     let inputStepDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<StepInput>) =
         Decode.object (fun get ->
             let dict = get.Overflow.FieldList []
@@ -379,16 +403,17 @@ module Decode =
                     let source =
                         let s1 =
                             match value with
-                            | YAMLElement.Object [YAMLElement.Value v] -> Some v.Value
+                            | YAMLElement.Object [YAMLElement.Value v] -> Some (ResizeArray([v.Value]))
                             | _ -> None
-                        let s2 = stringOptionFieldDecoder "source" value
+                        let s2 = sourceArrayFieldDecoder "source" value
                         match s1,s2 with
                         | Some s1, _ -> Some s1
                         | _, Some s2 -> Some s2
                         | _ -> None
                     let defaultValue = stringOptionFieldDecoder "default" value
                     let valueFrom = stringOptionFieldDecoder "valueFrom" value
-                    { Id = key; Source = source; DefaultValue = defaultValue; ValueFrom = valueFrom }
+                    let linkMerge = stringOptionFieldDecoder "linkMerge" value
+                    { Id = key; Source = source; DefaultValue = defaultValue; ValueFrom = valueFrom; LinkMerge = linkMerge }
             |]
             |> ResizeArray
         )

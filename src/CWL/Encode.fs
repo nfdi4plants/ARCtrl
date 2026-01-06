@@ -211,14 +211,27 @@ module Encode =
     // ------------------------------
     // Workflow step encoders
     // ------------------------------
+    
+    /// Encode a ResizeArray<string> as either a single string or a sequence
+    let encodeSourceArray (sources:ResizeArray<string>) : YAMLElement =
+        match sources.Count with
+        | 1 -> Encode.string sources.[0]
+        | _ -> 
+            // Create sequence with each item as an Object[Value] to force block-style rendering
+            sources 
+            |> Seq.map (fun s -> YAMLElement.Object [YAMLElement.Value { Value = s; Comment = None }])
+            |> List.ofSeq 
+            |> YAMLElement.Sequence
+    
     let encodeStepInput (si:StepInput) : (string * YAMLElement) =
         let pairs =
             []
-            |> appendOpt "source" Encode.string si.Source
+            |> appendOpt "source" encodeSourceArray si.Source
             |> appendOpt "default" Encode.string si.DefaultValue
             |> appendOpt "valueFrom" Encode.string si.ValueFrom
+            |> appendOpt "linkMerge" Encode.string si.LinkMerge
         match pairs with
-        | [ ("source", s) ] when si.DefaultValue.IsNone && si.ValueFrom.IsNone -> si.Id, s
+        | [ ("source", s) ] when si.DefaultValue.IsNone && si.ValueFrom.IsNone && si.LinkMerge.IsNone -> si.Id, s
         | _ -> si.Id, yMap pairs
 
     let encodeStepInputs (inputs:ResizeArray<StepInput>) : YAMLElement =

@@ -6,18 +6,19 @@ open Fable.Core
 [<AttachMembers>]
 type StepInput = {
     Id: string
-    Source: string option
+    Source: ResizeArray<string> option
     DefaultValue: string option
     ValueFrom: string option
+    LinkMerge: string option
 }
 
     with
-    static member create(id: string, ?source: string, ?defaultValue: string, ?valueFrom: string) =
+    static member create(id: string, ?source: ResizeArray<string>, ?defaultValue: string, ?valueFrom: string, ?linkMerge: string ) =
         { Id = id
           Source = source
           DefaultValue = defaultValue
-          ValueFrom = valueFrom }
-
+          ValueFrom = valueFrom
+          LinkMerge = linkMerge }
 [<AttachMembers>]
 type StepOutput = {
     Id: ResizeArray<string>

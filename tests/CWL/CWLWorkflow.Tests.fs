@@ -60,25 +60,37 @@ let testCWLWorkflowDescriptionDecode =
             testList "In" [
                 testCase "MzMLToMzlite" <| fun _ ->
                     let expected = ResizeArray [|
-                        {Id = "stageDirectory"; Source = Some "stage"; DefaultValue = None; ValueFrom = None};
-                        {Id = "inputDirectory"; Source = Some "inputMzML"; DefaultValue = None; ValueFrom = None};
-                        {Id = "params"; Source = Some "paramsMzML"; DefaultValue = None; ValueFrom = None};
-                        {Id = "outputDirectory"; Source = Some "outputMzML"; DefaultValue = None; ValueFrom = None};
-                        {Id = "parallelismLevel"; Source = Some "cores"; DefaultValue = None; ValueFrom = None}
+                        {Id = "stageDirectory"; Source = Some (ResizeArray [|"stage"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
+                        {Id = "inputDirectory"; Source = Some (ResizeArray [|"inputMzML"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
+                        {Id = "params"; Source = Some (ResizeArray [|"paramsMzML"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
+                        {Id = "outputDirectory"; Source = Some (ResizeArray [|"outputMzML"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
+                        {Id = "parallelismLevel"; Source = Some (ResizeArray [|"cores"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None}
                     |]
                     let actual = workflowSteps.[0].In
-                    Expect.sequenceEqual actual expected ""
+                    Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
+                        Expect.equal actual.Id expected.Id ""
+                        Expect.sequenceEqual actual.Source.Value expected.Source.Value ""
+                        Expect.equal actual.DefaultValue expected.DefaultValue ""
+                        Expect.equal actual.ValueFrom expected.ValueFrom ""
+                        Expect.equal actual.LinkMerge expected.LinkMerge ""
+                    ) expected actual
                 testCase "PeptideSpectrumMatching" <| fun _ ->
                     let expected = ResizeArray [|
-                        {Id = "stageDirectory"; Source = Some "stage"; DefaultValue = None; ValueFrom = None};
-                        {Id = "inputDirectory"; Source = Some "MzMLToMzlite/dir"; DefaultValue = None; ValueFrom = None };
-                        {Id = "database"; Source = Some "db"; DefaultValue = None; ValueFrom = None};
-                        {Id = "params"; Source = Some "paramsPSM"; DefaultValue = None; ValueFrom = None};
-                        {Id = "outputDirectory"; Source = Some "outputPSM"; DefaultValue = None; ValueFrom = None}
-                        {Id = "parallelismLevel"; Source = Some "cores"; DefaultValue = None; ValueFrom = None};
+                        {Id = "stageDirectory"; Source = Some (ResizeArray [|"stage"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
+                        {Id = "inputDirectory"; Source = Some (ResizeArray [|"MzMLToMzlite/dir1";"MzMLToMzlite/dir2"|]); DefaultValue = None; ValueFrom = None; LinkMerge = Some "merge_flattened"};
+                        {Id = "database"; Source = Some (ResizeArray [|"db"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
+                        {Id = "params"; Source = Some (ResizeArray [|"paramsPSM"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
+                        {Id = "outputDirectory"; Source = Some (ResizeArray [|"outputPSM"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None}
+                        {Id = "parallelismLevel"; Source = Some (ResizeArray [|"cores"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
                     |]
                     let actual = workflowSteps.[1].In
-                    Expect.sequenceEqual actual expected ""
+                    Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
+                        Expect.equal actual.Id expected.Id ""
+                        Expect.sequenceEqual actual.Source.Value expected.Source.Value ""
+                        Expect.equal actual.DefaultValue expected.DefaultValue ""
+                        Expect.equal actual.ValueFrom expected.ValueFrom ""
+                        Expect.equal actual.LinkMerge expected.LinkMerge ""
+                    ) expected actual
             ]
             testList "Out" [
                 testCase "MzMLToMzlite" <| fun _ ->
