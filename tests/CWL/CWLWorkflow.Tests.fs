@@ -1,6 +1,7 @@
 module Tests.CWLWorkflow
 
 open ARCtrl.CWL
+open DynamicObj
 open TestingUtils
 open TestingUtils.CWL
 
@@ -28,13 +29,33 @@ let testCWLWorkflowDescriptionDecode =
                 CWLInput ("outputPSM", CWLType.Directory (DirectoryInstance()));
                 CWLInput ("inputMzML", CWLType.Directory (DirectoryInstance()));
                 CWLInput ("paramsMzML", CWLType.File (FileInstance()));
-                CWLInput ("paramsPSM", CWLType.File (FileInstance()))
+                CWLInput ("paramsPSM", CWLType.File (FileInstance()));
+                // Note: sampleRecord has complex type and will be checked separately
             |]
             let actual = decodeCWLWorkflowDescription.Inputs
-            for i = 0 to actual.Count - 1 do
+            // Check the simple inputs (first 8)
+            for i = 0 to 7 do
                 Expect.equal actual.[i].Name expected.[i].Name ""
                 Expect.equal actual.[i].InputBinding expected.[i].InputBinding ""
                 Expect.equal actual.[i].Type_ expected.[i].Type_ ""
+            // Check that sampleRecord exists
+            Expect.equal actual.Count 9 "Should have 9 inputs including sampleRecord"
+            Expect.equal actual.[8].Name "sampleRecord" ""
+        testCase "sampleRecord complex type" <| fun _ ->
+            let sampleRecordInput = decodeCWLWorkflowDescription.Inputs.[8]
+            Expect.equal sampleRecordInput.Name "sampleRecord" ""
+            let typeValue : obj option = DynObj.tryGetPropertyValue "type" sampleRecordInput
+            Expect.isSome typeValue "sampleRecord should have a type property"
+            match typeValue with
+            | Some (:? InputArraySchema as arraySchema) ->
+                Expect.equal arraySchema.Type "array" ""
+                match arraySchema.Items with
+                | :? InputRecordSchema as recordSchema ->
+                    Expect.equal recordSchema.Type "record" ""
+                    Expect.isSome recordSchema.Fields "record should have fields"
+                    Expect.equal recordSchema.Fields.Value.Count 2 "Should have 2 fields: readsOfOneSample and sampleName"
+                | _ -> failwithf "Expected InputRecordSchema for array items but got: %A" arraySchema.Items
+            | _ -> failwithf "Expected InputArraySchema for sampleRecord type but got: %A" typeValue
         testList "steps" [
             let workflowSteps = decodeCWLWorkflowDescription.Steps
             testList "IDs" [

@@ -57,14 +57,40 @@ type CWLType =
 
     static member directory() = Directory(DirectoryInstance())
 
-type InputRecordSchema () =
-    inherit DynamicObj ()
+/// Represents a field in an InputRecordSchema
+type InputRecordField = {
+    Name: string
+    Type: obj // Can be string, InputRecordSchema, InputEnumSchema, InputArraySchema, or array
+    Doc: string option
+    Label: string option
+}
 
-type InputEnumSchema () =
-    inherit DynamicObj ()
+/// Represents a record schema for workflow input parameters
+type InputRecordSchema = {
+    Type: string // Always "record"
+    Fields: ResizeArray<InputRecordField> option
+    Label: string option
+    Doc: string option
+    Name: string option
+}
 
-type InputArraySchema () =
-    inherit DynamicObj ()
+/// Represents an enum schema for workflow input parameters
+type InputEnumSchema = {
+    Type: string // Always "enum"
+    Symbols: ResizeArray<string>
+    Label: string option
+    Doc: string option
+    Name: string option
+}
+
+/// Represents an array schema for workflow input parameters
+type InputArraySchema = {
+    Type: string // Always "array"
+    Items: obj // Can be string, InputRecordSchema, InputEnumSchema, InputArraySchema
+    Label: string option
+    Doc: string option
+    Name: string option
+}
 
 type SchemaDefRequirementType (types, definitions) as this =
     inherit DynamicObj ()

@@ -89,6 +89,52 @@ module Encode =
             | None -> [ "type", Encode.string "array"; "items", encodeCWLType inner ] |> yMap
 
     // ------------------------------
+    // InputRecordSchema encoders
+    // ------------------------------
+
+    let rec encodeInputRecordField (field:InputRecordField) : (string * YAMLElement) =
+        let typeElement =
+            match field.Type with
+            | :? string as s -> yMap [ "type", Encode.string s ]
+            | :? InputRecordSchema as schema -> yMap [ "type", encodeInputRecordSchema schema ]
+            | :? InputEnumSchema as schema -> yMap [ "type", encodeInputEnumSchema schema ]
+            | :? InputArraySchema as schema -> yMap [ "type", encodeInputArraySchema schema ]
+            | _ -> yMap [ "type", Encode.string (field.Type.ToString()) ]
+        field.Name, typeElement
+
+    and encodeInputRecordSchema (schema:InputRecordSchema) : YAMLElement =
+        let fieldsElement =
+            match schema.Fields with
+            | Some fs ->
+                let fieldPairs = fs |> Seq.map encodeInputRecordField |> Seq.toList
+                yMap fieldPairs
+            | None -> yMap []
+        
+        let pairs =
+            [ "type", Encode.string "record" ]
+            @ (if schema.Fields.IsSome && schema.Fields.Value.Count > 0 then [ "fields", fieldsElement ] else [])
+        
+        yMap pairs
+
+    and encodeInputEnumSchema (schema:InputEnumSchema) : YAMLElement =
+        let pairs =
+            [ "type", Encode.string "enum" ]
+            @ [ "symbols", (schema.Symbols |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence) ]
+        
+        yMap pairs
+
+    and encodeInputArraySchema (schema:InputArraySchema) : YAMLElement =
+        let itemsElement =
+            match schema.Items with
+            | :? string as s -> Encode.string s
+            | :? InputRecordSchema as schema -> encodeInputRecordSchema schema
+            | :? InputEnumSchema as schema -> encodeInputEnumSchema schema
+            | :? InputArraySchema as schema -> encodeInputArraySchema schema
+            | obj -> Encode.string (obj.ToString())
+        
+        yMap [ "type", Encode.string "array"; "items", itemsElement ]
+
+    // ------------------------------
     // Binding & Port encoders
     // ------------------------------
 
@@ -118,9 +164,19 @@ module Encode =
         |> yMap
 
     let encodeCWLInput (i:CWLInput) : (string * YAMLElement) =
+        // Check if type is a complex schema stored as dynamic property
+        let typeProperty = DynObj.tryGetPropertyValue "type" i
+        let typeElement =
+            match typeProperty with
+            | Some (:? InputRecordSchema as schema) -> Some (yMap [ "type", encodeInputRecordSchema schema ])
+            | Some (:? InputEnumSchema as schema) -> Some (yMap [ "type", encodeInputEnumSchema schema ])
+            | Some (:? InputArraySchema as schema) -> Some (yMap [ "type", encodeInputArraySchema schema ])
+            | Some _ -> i.Type_ |> Option.map encodeCWLType
+            | None -> i.Type_ |> Option.map encodeCWLType
+        
         let pairs =
             []
-            |> appendOpt "type" encodeCWLType i.Type_
+            |> appendOpt "type" id typeElement
             |> appendOpt "inputBinding" encodeInputBinding i.InputBinding
             |> appendOpt "optional" yBool i.Optional
         match pairs with

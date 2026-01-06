@@ -15,6 +15,16 @@ inputs:
   inputMzML: Directory
   paramsMzML: File
   paramsPSM: File
+  sampleRecord:
+    type:
+      type: array
+      items:
+        type: record
+        fields:
+          readsOfOneSample:
+            type: File[]
+          sampleName:
+            type: string?
 
 steps:
   MzMLToMzlite:
