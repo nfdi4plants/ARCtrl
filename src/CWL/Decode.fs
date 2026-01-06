@@ -445,6 +445,8 @@ module Decode =
         let requirements = requirementsDecoder yamlCWL
         let hints = hintsDecoder yamlCWL
         let baseCommand = baseCommandDecoder yamlCWL
+        let doc = docDecoder yamlCWL
+        let label = labelDecoder yamlCWL
         let description =
             CWLToolDescription(
                 outputs,
@@ -462,6 +464,8 @@ module Decode =
                             "outputs";
                             "class";
                             "id";
+                            "label";
+                            "doc";
                             "requirements";
                             "hints";
                             "cwlVersion";
@@ -484,8 +488,6 @@ module Decode =
                 (
                     get.MultipleOptional.FieldList [
                         "id";
-                        "label";
-                        "doc";
                         "arguments";
                         "stdin";
                         "stderr";
@@ -504,6 +506,10 @@ module Decode =
             description.Hints <- hints
         if baseCommand.IsSome then
             description.BaseCommand <- baseCommand
+        if doc.IsSome then
+            description.Doc <- doc
+        if label.IsSome then
+            description.Label <- label
         if metadata.GetProperties(false) |> Seq.length > 0 then
             description.Metadata <- Some metadata
         description
@@ -524,6 +530,8 @@ module Decode =
         let requirements = requirementsDecoder yamlCWL
         let hints = hintsDecoder yamlCWL
         let steps = stepsDecoder yamlCWL
+        let doc = docDecoder yamlCWL
+        let label = labelDecoder yamlCWL
         let description =
             CWLWorkflowDescription(
                 steps,
@@ -541,6 +549,8 @@ module Decode =
                         get.Overflow.FieldList [
                             "inputs";
                             "outputs";
+                            "label";
+                            "doc";
                             "class";
                             "steps";
                             "id";
@@ -565,6 +575,10 @@ module Decode =
             description.Requirements <- requirements
         if hints.IsSome then
             description.Hints <- hints
+        if doc.IsSome then
+            description.Doc <- doc
+        if label.IsSome then
+            description.Label <- label
         if metadata.GetProperties(false) |> Seq.length > 0 then
             description.Metadata <- Some metadata
         description
