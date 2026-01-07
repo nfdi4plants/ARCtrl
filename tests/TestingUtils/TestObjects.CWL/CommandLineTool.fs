@@ -63,3 +63,19 @@ module WithRequirements =
             inputs = ResizeArray [Inputs.File.inputFirstArg; Inputs.String.inputSecondArg])
 
     let processingUnit = CWLProcessingUnit.CommandLineTool cwlTool
+
+module NestedArray =
+
+    let cwlFile = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs:
+  IndexInput: File[]
+  sampleRecordFiles:
+    type:
+      type: array
+      items:
+        type: array
+        items: File
+outputs: []
+"""

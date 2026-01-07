@@ -14,6 +14,19 @@ open ARCtrl.Helper.Regex.ActivePatterns
 
 type RunConversion = 
 
+    /// Helper function to format CWLType for display in error messages
+    static member private formatCWLType (type_ : CWL.CWLType) =
+        CWL.Encode.encodeCWLType type_
+        |> CWL.Encode.writeYaml
+        |> fun s -> s.Trim()
+
+    /// Helper function to check if a CWLType is or contains an Array type
+    static member private isArrayType (type_ : CWL.CWLType) =
+        match type_ with
+        | CWL.CWLType.Array _ -> true
+        | CWL.CWLType.Union types -> types |> Seq.exists (function CWL.CWLType.Array _ -> true | _ -> false)
+        | _ -> false
+
     /// File paths in CWL files are relative to the file itself. In RO-Crate, we use relative paths from the root of the crate.
     ///
     /// This function replaces the relative paths in the CWL input file with paths relative to the root of the crate.
@@ -36,12 +49,14 @@ type RunConversion =
         let type_ = inputParam.Type_.Value
         if inputValue.Type.IsSome then
             if inputValue.Type.Value <> type_ then
-                failwith $"Type ({inputValue.Type.Value.ToString()}) of yml input value \"{inputValue.Key}\" does not match type of workflow input parameter ({type_.ToString()})."
+                let typeStr = RunConversion.formatCWLType inputValue.Type.Value
+                let paramTypeStr = RunConversion.formatCWLType type_
+                failwith $"Type ({typeStr}) of yml input value \"{inputValue.Key}\" does not match type of workflow input parameter ({paramTypeStr})."
         match type_ with
         | CWL.CWLType.File _ when inputValue.Values.Count = 1 ->
             let path = RunConversion.composeCWLInputFilePath(inputValue.Values[0], runName)
             LDFile.createCWLParameter(path, exampleOfWork = exampleOfWork)
-        | _ when type_.ToString().ToLower().Contains("array") ->
+        | _ when RunConversion.isArrayType type_ ->
             let separator =
                 inputParam.InputBinding
                 |> Option.bind (fun ib -> ib.ItemSeparator)

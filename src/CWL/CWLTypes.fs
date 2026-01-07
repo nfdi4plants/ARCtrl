@@ -33,8 +33,40 @@ type DirentInstance = {
     Writable: bool option
 }
 
+/// Represents a field in an InputRecordSchema
+and InputRecordField = {
+    Name: string
+    Type: CWLType
+    Doc: string option
+    Label: string option
+}
+
+/// Represents a record schema for workflow input parameters
+and InputRecordSchema = {
+    Fields: ResizeArray<InputRecordField> option
+    Label: string option
+    Doc: string option
+    Name: string option
+}
+
+/// Represents an enum schema for workflow input parameters
+and InputEnumSchema = {
+    Symbols: ResizeArray<string>
+    Label: string option
+    Doc: string option
+    Name: string option
+}
+
+/// Represents an array schema for workflow input parameters
+and InputArraySchema = {
+    Items: CWLType
+    Label: string option
+    Doc: string option
+    Name: string option
+}
+
 /// Primitive types with the concept of a file and directory as a builtin type.
-type CWLType =
+and CWLType =
     /// Represents a file (or group of files when secondaryFiles is provided)
     | File of FileInstance
     /// Represents a directory to present to a command line tool.
@@ -51,46 +83,14 @@ type CWLType =
     | Boolean
     | Stdout
     | Null
-    | Array of CWLType
+    | Array of InputArraySchema
+    | Record of InputRecordSchema
+    | Enum of InputEnumSchema
+    | Union of ResizeArray<CWLType>
 
     static member file() = File(FileInstance())
 
     static member directory() = Directory(DirectoryInstance())
-
-/// Represents a field in an InputRecordSchema
-type InputRecordField = {
-    Name: string
-    Type: obj // Can be string, InputRecordSchema, InputEnumSchema, InputArraySchema, or array
-    Doc: string option
-    Label: string option
-}
-
-/// Represents a record schema for workflow input parameters
-type InputRecordSchema = {
-    Type: string // Always "record"
-    Fields: ResizeArray<InputRecordField> option
-    Label: string option
-    Doc: string option
-    Name: string option
-}
-
-/// Represents an enum schema for workflow input parameters
-type InputEnumSchema = {
-    Type: string // Always "enum"
-    Symbols: ResizeArray<string>
-    Label: string option
-    Doc: string option
-    Name: string option
-}
-
-/// Represents an array schema for workflow input parameters
-type InputArraySchema = {
-    Type: string // Always "array"
-    Items: obj // Can be string, InputRecordSchema, InputEnumSchema, InputArraySchema
-    Label: string option
-    Doc: string option
-    Name: string option
-}
 
 type SchemaDefRequirementType (types, definitions) as this =
     inherit DynamicObj ()

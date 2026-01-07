@@ -1805,7 +1805,7 @@ let tests_YAMLInputValue =
             let runName = "MyRun"
             let value = ["a"; "b"]
             let paramValue = CWLParameterReference(name, values = ResizeArray value)
-            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Array(CWLType.String))
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Array({ Items = CWLType.String; Label = None; Doc = None; Name = None }))
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let propValue = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
             Expect.sequenceEqual propValue.SchemaType [LDPropertyValue.schemaType] "PropertyValue should have correct schema type"
@@ -1821,7 +1821,7 @@ let tests_YAMLInputValue =
             let value = ["a"; "b"]
             let inputBinding = CWL.InputBinding.create(itemSeparator = ";")
             let paramValue = CWLParameterReference(name, values = ResizeArray value)
-            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Array(CWLType.String), inputBinding = inputBinding)
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Array({ Items = CWLType.String; Label = None; Doc = None; Name = None }), inputBinding = inputBinding)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let propValue = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
             Expect.sequenceEqual propValue.SchemaType [LDPropertyValue.schemaType] "PropertyValue should have correct schema type"

@@ -71,9 +71,45 @@ module Encode =
         | Boolean -> Encode.string "boolean"
         | Stdout -> Encode.string "stdout"
         | Null -> Encode.string "null"
-        | Array inner ->
+        | Union types ->
+            // Check if this is an optional type (union of null and one other type)
+            let typesList = types |> Seq.toList
+            match typesList with
+            | [Null; otherType] | [otherType; Null] ->
+                // Optional type - use short form with "?"
+                match otherType with
+                | File _ -> Encode.string "File?"
+                | Directory _ -> Encode.string "Directory?"
+                | String -> Encode.string "string?"
+                | Int -> Encode.string "int?"
+                | Long -> Encode.string "long?"
+                | Float -> Encode.string "float?"
+                | Double -> Encode.string "double?"
+                | Boolean -> Encode.string "boolean?"
+                | Array arraySchema ->
+                    // Optional array - check if items are simple
+                    match arraySchema.Items with
+                    | File _ -> Encode.string "File[]?"
+                    | Directory _ -> Encode.string "Directory[]?"
+                    | String -> Encode.string "string[]?"
+                    | Int -> Encode.string "int[]?"
+                    | Long -> Encode.string "long[]?"
+                    | Float -> Encode.string "float[]?"
+                    | Double -> Encode.string "double[]?"
+                    | Boolean -> Encode.string "boolean[]?"
+                    | _ -> 
+                        // Complex optional array - use full form
+                        YAMLElement.Sequence [ Encode.string "null"; encodeInputArraySchema arraySchema ]
+                | _ ->
+                    // Complex optional type - use array form [null, type]
+                    typesList |> List.map encodeCWLType |> YAMLElement.Sequence
+            | _ ->
+                // General union - use array form
+                typesList |> List.map encodeCWLType |> YAMLElement.Sequence
+        | Array arraySchema ->
+            // Try to use short form for simple arrays
             let shortForm =
-                match inner with
+                match arraySchema.Items with
                 | File _ -> Some "File[]"
                 | Directory _ -> Some "Directory[]"
                 | Dirent _ -> Some "Dirent[]"
@@ -86,21 +122,16 @@ module Encode =
                 | _ -> None
             match shortForm with
             | Some s -> Encode.string s
-            | None -> [ "type", Encode.string "array"; "items", encodeCWLType inner ] |> yMap
+            | None -> encodeInputArraySchema arraySchema
+        | Record recordSchema -> encodeInputRecordSchema recordSchema
+        | Enum enumSchema -> encodeInputEnumSchema enumSchema
 
     // ------------------------------
     // InputRecordSchema encoders
     // ------------------------------
 
-    let rec encodeInputRecordField (field:InputRecordField) : (string * YAMLElement) =
-        let typeElement =
-            match field.Type with
-            | :? string as s -> yMap [ "type", Encode.string s ]
-            | :? InputRecordSchema as schema -> yMap [ "type", encodeInputRecordSchema schema ]
-            | :? InputEnumSchema as schema -> yMap [ "type", encodeInputEnumSchema schema ]
-            | :? InputArraySchema as schema -> yMap [ "type", encodeInputArraySchema schema ]
-            | _ -> yMap [ "type", Encode.string (field.Type.ToString()) ]
-        field.Name, typeElement
+    and encodeInputRecordField (field:InputRecordField) : (string * YAMLElement) =
+        field.Name, yMap [ "type", encodeCWLType field.Type ]
 
     and encodeInputRecordSchema (schema:InputRecordSchema) : YAMLElement =
         let fieldsElement =
@@ -110,11 +141,7 @@ module Encode =
                 yMap fieldPairs
             | None -> yMap []
         
-        let pairs =
-            [ "type", Encode.string "record" ]
-            @ (if schema.Fields.IsSome && schema.Fields.Value.Count > 0 then [ "fields", fieldsElement ] else [])
-        
-        yMap pairs
+        yMap [ "type", Encode.string "record"; "fields", fieldsElement ]
 
     and encodeInputEnumSchema (schema:InputEnumSchema) : YAMLElement =
         let pairs =
@@ -124,15 +151,7 @@ module Encode =
         yMap pairs
 
     and encodeInputArraySchema (schema:InputArraySchema) : YAMLElement =
-        let itemsElement =
-            match schema.Items with
-            | :? string as s -> Encode.string s
-            | :? InputRecordSchema as schema -> encodeInputRecordSchema schema
-            | :? InputEnumSchema as schema -> encodeInputEnumSchema schema
-            | :? InputArraySchema as schema -> encodeInputArraySchema schema
-            | obj -> Encode.string (obj.ToString())
-        
-        yMap [ "type", Encode.string "array"; "items", itemsElement ]
+        yMap [ "type", Encode.string "array"; "items", encodeCWLType schema.Items ]
 
     // ------------------------------
     // Binding & Port encoders
@@ -144,9 +163,52 @@ module Encode =
         |> yMap
 
     let encodeCWLOutput (o:CWLOutput) : (string * YAMLElement) =
+        let typeElement = o.Type_ |> Option.map (fun t ->
+            match t with
+            | Union types ->
+                // Check if this is a simple optional (encodeCWLType handles the short form)
+                let typesList = types |> Seq.toList
+                match typesList with
+                | [Null; otherType] | [otherType; Null] ->
+                    // Simple optional or optional simple array - use short form
+                    match otherType with
+                    | File _ | Directory _ | String | Int | Long | Float | Double | Boolean ->
+                        encodeCWLType t
+                    | Array arraySchema ->
+                        match arraySchema.Items with
+                        | File _ | Directory _ | String | Int | Long | Float | Double | Boolean ->
+                            encodeCWLType t
+                        | _ ->
+                            // Complex optional array
+                            encodeCWLType t
+                    | _ ->
+                        // Complex optional type
+                        encodeCWLType t
+                | _ ->
+                    // General union
+                    encodeCWLType t
+            | Array arraySchema ->
+                // Check if we can use short form
+                match arraySchema.Items with
+                | File _ | Directory _ | Dirent _ | String | Int | Long | Float | Double | Boolean ->
+                    encodeCWLType t
+                | _ ->
+                    // Complex array - need full schema form wrapped in "type"
+                    yMap [ "type", encodeInputArraySchema arraySchema ]
+            | Record recordSchema ->
+                // Record needs full schema form wrapped in "type"
+                yMap [ "type", encodeInputRecordSchema recordSchema ]
+            | Enum enumSchema ->
+                // Enum needs full schema form wrapped in "type"
+                yMap [ "type", encodeInputEnumSchema enumSchema ]
+            | _ ->
+                // Simple types
+                encodeCWLType t
+        )
+        
         let pairs =
             []
-            |> appendOpt "type" (fun t -> encodeCWLType t) o.Type_
+            |> appendOpt "type" id typeElement
             |> appendOpt "outputBinding" encodeOutputBinding o.OutputBinding
             |> appendOpt "outputSource" Encode.string o.OutputSource
         match pairs with
@@ -164,15 +226,48 @@ module Encode =
         |> yMap
 
     let encodeCWLInput (i:CWLInput) : (string * YAMLElement) =
-        // Check if type is a complex schema stored as dynamic property
-        let typeProperty = DynObj.tryGetPropertyValue "type" i
-        let typeElement =
-            match typeProperty with
-            | Some (:? InputRecordSchema as schema) -> Some (yMap [ "type", encodeInputRecordSchema schema ])
-            | Some (:? InputEnumSchema as schema) -> Some (yMap [ "type", encodeInputEnumSchema schema ])
-            | Some (:? InputArraySchema as schema) -> Some (yMap [ "type", encodeInputArraySchema schema ])
-            | Some _ -> i.Type_ |> Option.map encodeCWLType
-            | None -> i.Type_ |> Option.map encodeCWLType
+        let typeElement = i.Type_ |> Option.map (fun t ->
+            match t with
+            | Union types ->
+                // Check if this is a simple optional (encodeCWLType handles the short form)
+                let typesList = types |> Seq.toList
+                match typesList with
+                | [Null; otherType] | [otherType; Null] ->
+                    // Simple optional or optional simple array - use short form
+                    match otherType with
+                    | File _ | Directory _ | String | Int | Long | Float | Double | Boolean ->
+                        encodeCWLType t
+                    | Array arraySchema ->
+                        match arraySchema.Items with
+                        | File _ | Directory _ | String | Int | Long | Float | Double | Boolean ->
+                            encodeCWLType t
+                        | _ ->
+                            // Complex optional array
+                            encodeCWLType t
+                    | _ ->
+                        // Complex optional type
+                        encodeCWLType t
+                | _ ->
+                    // General union
+                    encodeCWLType t
+            | Array arraySchema ->
+                // Check if we can use short form
+                match arraySchema.Items with
+                | File _ | Directory _ | Dirent _ | String | Int | Long | Float | Double | Boolean ->
+                    encodeCWLType t
+                | _ ->
+                    // Complex array - need full schema form wrapped in "type"
+                    yMap [ "type", encodeInputArraySchema arraySchema ]
+            | Record recordSchema ->
+                // Record needs full schema form wrapped in "type"
+                yMap [ "type", encodeInputRecordSchema recordSchema ]
+            | Enum enumSchema ->
+                // Enum needs full schema form wrapped in "type"
+                yMap [ "type", encodeInputEnumSchema enumSchema ]
+            | _ ->
+                // Simple types
+                encodeCWLType t
+        )
         
         let pairs =
             []

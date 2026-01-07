@@ -72,36 +72,42 @@ module Decode =
         )
 
     /// Decode the contained type of a CWL Array
-    let cwlArrayTypeDecoder: (YAMLiciousTypes.YAMLElement -> CWLType) =
+    let rec cwlSimpleTypeFromString (s: string) =
+        match s with
+        | "File" -> File (FileInstance ())
+        | "Directory" -> Directory (DirectoryInstance ())
+        | "string" -> String
+        | "int" -> Int
+        | "long" -> Long
+        | "float" -> Float
+        | "double" -> Double
+        | "boolean" -> Boolean
+        | "stdout" -> Stdout
+        | "null" -> Null
+        | _ -> failwith $"Invalid CWL simple type: {s}"
+
+    /// Decode an InputArraySchema from a YAMLElement
+    and inputArraySchemaDecoder: (YAMLiciousTypes.YAMLElement -> InputArraySchema) =
         Decode.object (fun get ->
-            let items = get.Required.Field "items" Decode.string
-            match items with
-            | "File" -> Array (File (FileInstance ()))
-            | "Directory" -> Array (Directory (DirectoryInstance ()))
-            | "Dirent" -> Array (get.Required.Field "listing" direntDecoder)
-            | "string" -> Array String
-            | "int" -> Array Int
-            | "long" -> Array Long
-            | "float" -> Array Float
-            | "double" -> Array Double
-            | "boolean" -> Array Boolean
-            | _ -> failwith "Invalid CWL type"
+            // Decode items - can be string or complex type
+            let itemsValue = get.Required.Field "items" id
+            let decodedItems = cwlTypeDecoder' itemsValue
+            
+            {
+                Items = decodedItems
+                Label = get.Optional.Field "label" Decode.string
+                Doc = get.Optional.Field "doc" Decode.string
+                Name = get.Optional.Field "name" Decode.string
+            }
         )
     /// Decode an InputRecordField from a YAMLElement
-    let rec inputRecordFieldDecoder: (YAMLiciousTypes.YAMLElement -> InputRecordField) =
+    and inputRecordFieldDecoder: (YAMLiciousTypes.YAMLElement -> InputRecordField) =
         Decode.object (fun get ->
             let name = get.Required.Field "name" Decode.string
             
             // Decode the type field (can be string or complex type)
             let typeValue = get.Required.Field "type" id
-            let decodedType =
-                match typeValue with
-                | YAMLElement.Value v | YAMLElement.Object [YAMLElement.Value v] -> 
-                    v.Value :> obj
-                | YAMLElement.Object _ ->
-                    // Complex type - decode recursively
-                    inputComplexTypeDecoder typeValue
-                | _ -> failwith "Unexpected type format in InputRecordField"
+            let decodedType = cwlTypeDecoder' typeValue
             
             {
                 Name = name
@@ -125,27 +131,7 @@ module Decode =
                 | Some dict ->
                     let fields = ResizeArray<InputRecordField>()
                     for kvp in dict do
-                        // Value can be just the type string or full object with type field
-                        let fieldType = 
-                            match kvp.Value with
-                            | YAMLElement.Object [YAMLElement.Value v] ->
-                                v.Value :> obj
-                            | YAMLElement.Object _ ->
-                                Decode.object (fun get3 ->
-                                    let typeValue = get3.Optional.Field "type" id
-                                    match typeValue with
-                                    | Some (YAMLElement.Value v) | Some (YAMLElement.Object [YAMLElement.Value v]) ->
-                                        v.Value :> obj
-                                    | Some (YAMLElement.Object _) ->
-                                        inputComplexTypeDecoder (kvp.Value)
-                                    | None ->
-                                        // No type field means value is the type itself
-                                        match kvp.Value with
-                                        | YAMLElement.Object [YAMLElement.Value v] -> v.Value :> obj
-                                        | _ -> inputComplexTypeDecoder (kvp.Value)
-                                    | _ -> failwith "Unexpected YAML element type in field type"
-                                ) kvp.Value
-                            | _ -> "" :> obj
+                        let fieldType = cwlTypeDecoder' kvp.Value
                         
                         fields.Add({
                             Name = kvp.Key
@@ -157,7 +143,6 @@ module Decode =
                 | None -> None
             
             {
-                Type = "record"
                 Fields = decodedFields
                 Label = get.Optional.Field "label" Decode.string
                 Doc = get.Optional.Field "doc" Decode.string
@@ -171,7 +156,6 @@ module Decode =
             let symbols = get.Required.Field "symbols" (Decode.resizearray Decode.string)
             
             {
-                Type = "enum"
                 Symbols = symbols
                 Label = get.Optional.Field "label" Decode.string
                 Doc = get.Optional.Field "doc" Decode.string
@@ -179,43 +163,55 @@ module Decode =
             }
         )
 
-    /// Decode an InputArraySchema from a YAMLElement
-    and inputArraySchemaDecoder: (YAMLiciousTypes.YAMLElement -> InputArraySchema) =
-        Decode.object (fun get ->
-            // Decode items - can be string or complex type
-            let itemsValue = get.Required.Field "items" id
-            let decodedItems =
-                match itemsValue with
-                | YAMLElement.Value v | YAMLElement.Object [YAMLElement.Value v] ->
-                    v.Value :> obj
-                | YAMLElement.Object _ ->
-                    inputComplexTypeDecoder itemsValue
-                | _ -> failwith "Unexpected items format in InputArraySchema"
+    /// Decode a CWLType from a YAMLElement (handles all types including complex schemas)
+    and cwlTypeDecoder' (element: YAMLiciousTypes.YAMLElement): CWLType =
+        let parseTypeString (typeStr: string) =
+            // Handle optional suffix
+            let stripped, isOptional = 
+                if typeStr.EndsWith("?") then
+                    typeStr.Replace("?", ""), true
+                else
+                    typeStr, false
             
-            {
-                Type = "array"
-                Items = decodedItems
-                Label = get.Optional.Field "label" Decode.string
-                Doc = get.Optional.Field "doc" Decode.string
-                Name = get.Optional.Field "name" Decode.string
-            }
-        )
-
-    /// Decode complex input types (record, enum, array) from a YAMLElement
-    and inputComplexTypeDecoder (element: YAMLiciousTypes.YAMLElement): obj =
-        Decode.object (fun get ->
-            let typeField = get.Required.Field "type" id
-            match typeField with
-            | YAMLElement.Object [YAMLElement.Value v] -> 
-                match v.Value with
-                | "record" -> inputRecordSchemaDecoder element :> obj
-                | "enum" -> inputEnumSchemaDecoder element :> obj
-                | "array" -> inputArraySchemaDecoder element :> obj
-                | simpleType -> simpleType :> obj // Simple type string
-            | _ -> 
-                // Type is itself a complex nested object, recurse
-                inputComplexTypeDecoder typeField
-        ) element
+            // Handle array suffix
+            let baseType = 
+                if stripped.EndsWith("[]") then
+                    let baseType = stripped.Replace("[]", "")
+                    Array { Items = cwlSimpleTypeFromString baseType; Label = None; Doc = None; Name = None }
+                else
+                    cwlSimpleTypeFromString stripped
+            
+            // Wrap in Union if optional
+            if isOptional then
+                Union (ResizeArray [Null; baseType])
+            else
+                baseType
+        
+        match element with
+        | YAMLElement.Value v | YAMLElement.Object [YAMLElement.Value v] ->
+            // Simple type string
+            parseTypeString v.Value
+        | YAMLElement.Sequence items ->
+            // Union type
+            let types = items |> List.map cwlTypeDecoder' |> ResizeArray
+            Union types
+        | YAMLElement.Object _ ->
+            // Complex type - check for type field
+            Decode.object (fun get ->
+                let typeField = get.Optional.Field "type" id
+                match typeField with
+                | Some (YAMLElement.Object [YAMLElement.Value v]) ->
+                    match v.Value with
+                    | "record" -> Record (inputRecordSchemaDecoder element)
+                    | "enum" -> Enum (inputEnumSchemaDecoder element)
+                    | "array" -> Array (inputArraySchemaDecoder element)
+                    | simpleType -> parseTypeString simpleType
+                | Some (YAMLElement.Object _) ->
+                    // Nested complex type
+                    cwlTypeDecoder' (get.Required.Field "type" id)
+                | _ -> failwith "Unexpected type format in cwlTypeDecoder'"
+            ) element
+        | _ -> failwith "Unexpected YAMLElement in cwlTypeDecoder'"
     /// Match the input string to the possible CWL types and checks if it is optional
     let cwlTypeStringMatcher (t: string) (get: Decode.IGetters) =
         let optional, newT =
@@ -223,29 +219,43 @@ module Decode =
                 true, t.Replace("?", "")
             else
                 false, t
-        match newT with
-        | "File" -> File (FileInstance ())
-        | "Directory" -> Directory (DirectoryInstance ())
-        | "Dirent" -> (get.Required.Field "listing" direntDecoder)
-        | "string" -> String
-        | "int" -> Int
-        | "long" -> Long
-        | "float" -> Float
-        | "double" -> Double
-        | "boolean" -> Boolean
-        | "File[]" -> Array (File (FileInstance ()))
-        | "Directory[]" -> Array (Directory (DirectoryInstance ()))
-        | "Dirent[]" -> Array (get.Required.Field "listing" direntDecoder)
-        | "string[]" -> Array String
-        | "int[]" -> Array Int
-        | "long[]" -> Array Long
-        | "float[]" -> Array Float
-        | "double[]" -> Array Double
-        | "boolean[]" -> Array Boolean
-        | "stdout" -> Stdout
-        | "null" -> Null
-        | _ -> failwith "Invalid CWL type"
-        , optional
+        let cwlType =
+            if newT.EndsWith("[]") then
+                let baseType = newT.Replace("[]", "")
+                let baseItem = 
+                    match baseType with
+                    | "File" -> File (FileInstance ())
+                    | "Directory" -> Directory (DirectoryInstance ())
+                    | "Dirent" -> (get.Required.Field "listing" direntDecoder)
+                    | "string" -> String
+                    | "int" -> Int
+                    | "long" -> Long
+                    | "float" -> Float
+                    | "double" -> Double
+                    | "boolean" -> Boolean
+                    | _ -> failwith "Invalid CWL type"
+                Array { Items = baseItem; Label = None; Doc = None; Name = None }
+            else
+                match newT with
+                | "File" -> File (FileInstance ())
+                | "Directory" -> Directory (DirectoryInstance ())
+                | "Dirent" -> (get.Required.Field "listing" direntDecoder)
+                | "string" -> String
+                | "int" -> Int
+                | "long" -> Long
+                | "float" -> Float
+                | "double" -> Double
+                | "boolean" -> Boolean
+                | "stdout" -> Stdout
+                | "null" -> Null
+                | _ -> failwith "Invalid CWL type"
+        // Wrap in Union if optional
+        let finalType = 
+            if optional then
+                Union (ResizeArray [Null; cwlType])
+            else
+                cwlType
+        finalType, optional
 
     /// Access the type field and decode a YAMLElement into a CWLType
     let cwlTypeDecoder: (YAMLiciousTypes.YAMLElement -> CWLType*bool) =
@@ -264,8 +274,8 @@ module Decode =
             | Some t ->
                 cwlTypeStringMatcher t get
             | None -> 
-                let cwlTypeArray = get.Required.Field "type" cwlArrayTypeDecoder
-                cwlTypeArray, false
+                let cwlType = get.Required.Field "type" cwlTypeDecoder'
+                cwlType, false
         )
 
     /// Decode a YAMLElement into an Output Array
@@ -450,33 +460,31 @@ module Decode =
                     let value = dict.[key]
                     let inputBinding = inputBindingDecoder value
                     
-                    // Check if value has a complex type field (object with mappings, not just a simple value)
-                    let hasComplexType =
-                        Decode.object (fun get2 ->
-                            let typeField = get2.Optional.Field "type" id
-                            match typeField with
-                            | Some (YAMLElement.Object [YAMLElement.Value _]) -> false // Simple type string
-                            | Some (YAMLElement.Object _) -> true // Complex type with mappings
-                            | _ -> false
-                        ) value
-                    
-                    let input =
-                        if hasComplexType then
-                            // Complex type - decode and store as dynamic property
-                            let complexTypeObj = inputComplexTypeDecoder value
-                            let input = CWLInput(key)
-                            DynObj.setProperty "type" complexTypeObj input
-                            input
-                        else
-                            // Simple type - use existing logic
-                            let cwlType,optional = 
+                    // Decode using unified cwlTypeDecoder'
+                    let cwlType, optional = 
+                        match value with
+                        | YAMLElement.Object [YAMLElement.Value v] -> 
+                            cwlTypeStringMatcher v.Value get
+                        | YAMLElement.Object mappings ->
+                            // Check if this has a "type" field
+                            let hasTypeField =
+                                mappings |> List.exists (fun m ->
+                                    match m with
+                                    | YAMLElement.Mapping (k, _) when k.Value = "type" -> true
+                                    | _ -> false
+                                )
+                            if hasTypeField then
+                                cwlTypeDecoder value
+                            else
+                                // No type field, treat as type string
                                 match value with
                                 | YAMLElement.Object [YAMLElement.Value v] -> cwlTypeStringMatcher v.Value get
-                                | _ -> cwlTypeDecoder value
-                            let input = CWLInput(key, cwlType)
-                            if optional then
-                                DynObj.setOptionalProperty "optional" (Some true) input
-                            input
+                                | _ -> failwith "Unexpected input format without type field"
+                        | _ -> failwith "Unexpected input format in inputArrayDecoder"
+                    
+                    let input = CWLInput(key, cwlType)
+                    if optional then
+                        DynObj.setOptionalProperty "optional" (Some true) input
                     
                     if inputBinding.IsSome then
                         DynObj.setOptionalProperty "inputBinding" inputBinding input
@@ -494,7 +502,22 @@ module Decode =
 
     let baseCommandDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<string> option) =
         Decode.object (fun get ->
-            get.Optional.Field "baseCommand" (Decode.resizearray Decode.string)
+            let baseCommandField = get.Optional.Field "baseCommand" id
+            match baseCommandField with
+            | Some (YAMLElement.Object [YAMLElement.Value v]) ->
+                // Single string value
+                Some (ResizeArray([v.Value]))
+            | Some (YAMLElement.Value v) ->
+                // Single string value (unwrapped)
+                Some (ResizeArray([v.Value]))
+            | Some (YAMLElement.Object [YAMLElement.Sequence s]) ->
+                // Array of strings wrapped
+                Some (Decode.resizearray Decode.string (YAMLElement.Sequence s))
+            | Some (YAMLElement.Sequence s) ->
+                // Array of strings unwrapped
+                Some (Decode.resizearray Decode.string (YAMLElement.Sequence s))
+            | None -> None
+            | _ -> None
         )
 
     let versionDecoder: (YAMLiciousTypes.YAMLElement -> string) =
@@ -829,10 +852,11 @@ module DecodeParameters =
                                         paths.Add(v.Value)
                                     | _ -> ()
                             | _ -> ()
+                        // Since this is a sequence of Files, the type should be File[] (Array)
                         CWLParameterReference(
                             key = key,
                             values = paths,
-                            type_ = File (FileInstance())
+                            type_ = Array { Items = File (FileInstance()); Label = None; Doc = None; Name = None }
                         )
                     else
                         // Sequence of complex record objects (no "class" field)

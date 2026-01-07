@@ -44,18 +44,15 @@ let testCWLWorkflowDescriptionDecode =
         testCase "sampleRecord complex type" <| fun _ ->
             let sampleRecordInput = decodeCWLWorkflowDescription.Inputs.[8]
             Expect.equal sampleRecordInput.Name "sampleRecord" ""
-            let typeValue : obj option = DynObj.tryGetPropertyValue "type" sampleRecordInput
-            Expect.isSome typeValue "sampleRecord should have a type property"
-            match typeValue with
-            | Some (:? InputArraySchema as arraySchema) ->
-                Expect.equal arraySchema.Type "array" ""
+            Expect.isSome sampleRecordInput.Type_ "sampleRecord should have a type"
+            match sampleRecordInput.Type_ with
+            | Some (Array arraySchema) ->
                 match arraySchema.Items with
-                | :? InputRecordSchema as recordSchema ->
-                    Expect.equal recordSchema.Type "record" ""
+                | Record recordSchema ->
                     Expect.isSome recordSchema.Fields "record should have fields"
                     Expect.equal recordSchema.Fields.Value.Count 2 "Should have 2 fields: readsOfOneSample and sampleName"
-                | _ -> failwithf "Expected InputRecordSchema for array items but got: %A" arraySchema.Items
-            | _ -> failwithf "Expected InputArraySchema for sampleRecord type but got: %A" typeValue
+                | _ -> failwithf "Expected Record for array items but got: %A" arraySchema.Items
+            | _ -> failwithf "Expected Array for sampleRecord type but got: %A" sampleRecordInput.Type_
         testList "steps" [
             let workflowSteps = decodeCWLWorkflowDescription.Steps
             testList "IDs" [
