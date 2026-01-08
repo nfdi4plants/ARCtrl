@@ -193,6 +193,10 @@ type RunConversion =
         let dataFiles = 
             workflowInvocations
             |> Option.map (fun ps -> AssayConversion.getDataFilesFromProcesses(ps, ?fragmentDescriptors = fragmentDescriptors))
+        let hasParts =
+            match dataFiles with
+            | Some df -> ResizeArray.appendSingleton workflowProtocol df |> Some
+            | None -> ResizeArray.singleton workflowProtocol |> Some
         let variableMeasureds =
             match variableMeasured, fragmentDescriptors with
             | Some vm, Some fds -> ResizeArray.appendSingleton vm fds |> Some
@@ -209,7 +213,7 @@ type RunConversion =
             ?name = run.Title,
             ?description = run.Description, 
             ?creators = creators,
-            ?hasParts = dataFiles,
+            ?hasParts = hasParts,
             ?measurementMethod = measurementMethod,
             ?measurementTechnique = measurementTechnique,
             ?variableMeasureds = variableMeasureds,
