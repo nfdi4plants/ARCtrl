@@ -297,8 +297,10 @@ type WorkflowConversion =
             |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
             |> Option.fromSeq
         let hasParts =
-            dataFiles
-            |> Option.fromSeq
+            if dataFiles.Count = 0 then
+                ResizeArray.singleton workflowProtocol |> Some
+            else
+                ResizeArray.appendSingleton workflowProtocol dataFiles |> Some
         let comments =
             workflow.Comments
             |> ResizeArray.map (fun c -> BaseTypes.composeComment c)
