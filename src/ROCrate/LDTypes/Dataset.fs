@@ -50,6 +50,8 @@ type LDDataset =
 
     static member mainEntity = "http://schema.org/mainEntity"
 
+    static member conformsTo = "http://purl.org/dc/terms/conformsTo"
+
     static member tryGetIdentifierAsString(lp : LDNode, ?context : LDContext) =
         match lp.TryGetPropertyAsSingleton(LDDataset.identifier, ?context = context) with
         | Some (:? string as n) -> Some n
@@ -389,4 +391,11 @@ type LDDataset =
         let s = LDDataset.create(id, identier = identifier, ?name = name, ?description = description, ?creators = creators, ?hasParts = hasParts, ?measurementMethod = measurementMethod, ?measurementTechnique = measurementTechnique, ?variableMeasureds = variableMeasureds, ?abouts = abouts, ?mentions = mentions, ?comments = comments, ?context = context)
         s.AdditionalType <- ResizeArray ["Run"]
         mainEntities |> Option.iter (fun me -> s.SetProperty(LDDataset.mainEntity, me, ?context = context))
+        // Add conformsTo for workflow run profiles
+        let conformsToRefs = ResizeArray [
+            LDRef("https://w3id.org/ro/wfrun/process/0.5")
+            LDRef("https://w3id.org/ro/wfrun/workflow/0.5")
+            LDRef("https://w3id.org/workflowhub/workflow-ro-crate/1.0")
+        ]
+        s.SetProperty(LDDataset.conformsTo, conformsToRefs, ?context = context)
         s
