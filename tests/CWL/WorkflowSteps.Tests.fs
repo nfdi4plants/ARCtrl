@@ -35,19 +35,32 @@ let testWorkflowStep =
         testList "In" [
             testCase "MzMLToMzlite" <| fun _ ->
                 let expected = ResizeArray [|
-                    {Id = "stageDirectory"; Source = Some "stage"; DefaultValue = None; ValueFrom = None};
-                    {Id = "inputDirectory"; Source = Some "inputMzML"; DefaultValue = None; ValueFrom = None}
+                    {Id = "stageDirectory"; Source = Some (ResizeArray [|"stage"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
+                    {Id = "inputDirectory"; Source = Some (ResizeArray [|"inputMzML"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None}
                 |]
                 let actual = decodeWorkflowStep.[0].In
-                Expect.sequenceEqual actual expected ""
+                Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
+                    Expect.equal actual.Id expected.Id ""
+                    Expect.sequenceEqual actual.Source.Value expected.Source.Value ""
+                    Expect.equal actual.DefaultValue expected.DefaultValue ""
+                    Expect.equal actual.ValueFrom expected.ValueFrom ""
+                    Expect.equal actual.LinkMerge expected.LinkMerge ""
+                ) expected actual
             testCase "PeptideSpectrumMatching" <| fun _ ->
                 let expected = ResizeArray [|
-                    {Id = "stageDirectory"; Source = Some "stage"; DefaultValue = None; ValueFrom = None};
-                    {Id = "inputDirectory"; Source = Some "MzMLToMzlite/dir"; DefaultValue = None; ValueFrom = None };
-                    {Id = "parallelismLevel"; Source = None; DefaultValue = Some "8"; ValueFrom = None};
-                    {Id = "outputDirectory"; Source = None; DefaultValue = None; ValueFrom = Some "output"}|]
+                    {Id = "stageDirectory"; Source = Some (ResizeArray [|"stage"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
+                    {Id = "inputDirectory"; Source = Some (ResizeArray [|"MzMLToMzlite/dir1";"MzMLToMzlite/dir2"|]); DefaultValue = None; ValueFrom = None; LinkMerge = Some "merge_flattened"};
+                    {Id = "parallelismLevel"; Source = None; DefaultValue = Some "8"; ValueFrom = None; LinkMerge = None};
+                    {Id = "outputDirectory"; Source = None; DefaultValue = None; ValueFrom = Some "output"; LinkMerge = None}|]
                 let actual = decodeWorkflowStep.[1].In
-                Expect.sequenceEqual actual expected ""
+                Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
+                    Expect.equal actual.Id expected.Id ""
+                    if expected.Source.IsSome then
+                        Expect.sequenceEqual actual.Source.Value expected.Source.Value ""
+                    Expect.equal actual.DefaultValue expected.DefaultValue ""
+                    Expect.equal actual.ValueFrom expected.ValueFrom ""
+                    Expect.equal actual.LinkMerge expected.LinkMerge ""
+                ) expected actual
         ]
         testList "Out" [
             testCase "MzMLToMzlite" <| fun _ ->

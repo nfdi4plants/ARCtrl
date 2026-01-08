@@ -27,13 +27,34 @@ let testInput =
         testList "File optional" [
             let fileItem = decodeInput.[2]
             testCase "Name" <| fun _ -> Expect.equal "argOptional"  fileItem.Name ""
-            testCase "Type" <| fun _ -> Expect.equal (File (FileInstance()))  fileItem.Type_.Value ""
+            testCase "Type" <| fun _ -> 
+                Expect.isTrue (
+                    match fileItem.Type_.Value with
+                    | Union types ->
+                        types.Count = 2 &&
+                        types.[0] = Null &&
+                        (match types.[1] with File _ -> true | _ -> false)
+                    | _ -> false
+                ) "Should be Union of [Null; File]"
             testCase "Optional" <| fun _ -> Expect.equal (Some true) fileItem.Optional ""
         ]
         testList "File array optional" [
             let fileItem = decodeInput.[3]
             testCase "Name" <| fun _ -> Expect.equal "argOptionalMap"  fileItem.Name ""
-            testCase "Type" <| fun _ -> Expect.equal (Array (File (FileInstance())))  fileItem.Type_.Value ""
+            testCase "Type" <| fun _ -> 
+                Expect.isTrue (
+                    match fileItem.Type_.Value with
+                    | Union types ->
+                        types.Count = 2 &&
+                        types.[0] = Null &&
+                        (match types.[1] with
+                         | Array arraySchema ->
+                             match arraySchema.Items with
+                             | File _ -> true
+                             | _ -> false
+                         | _ -> false)
+                    | _ -> false
+                ) "Should be Union of [Null; File[]]"
             testCase "Optional" <| fun _ -> Expect.equal (Some true) fileItem.Optional ""
         ]
         testList "String" [

@@ -261,9 +261,42 @@ let testCWLToolDescriptionEncode =
         ]
     ]
 
+let testNestedArrayDecoding =
+    testList "Nested Array Decoding" [
+        testCase "Decode nested array (array of arrays)" <| fun _ ->
+            let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.NestedArray.cwlFile
+            let inputs = decoded.Inputs.Value
+            
+            // Check IndexInput is File[]
+            let indexInput = inputs |> Seq.find (fun i -> i.Name = "IndexInput")
+            Expect.isTrue (
+                match indexInput.Type_.Value with
+                | Array arraySchema -> 
+                    match arraySchema.Items with
+                    | File _ -> true
+                    | _ -> false
+                | _ -> false
+            ) "IndexInput should be File[]"
+            
+            // Check sampleRecordFiles is File[][] - nested Array with Array items
+            let sampleRecordFiles = inputs |> Seq.find (fun i -> i.Name = "sampleRecordFiles")
+            Expect.isTrue (
+                match sampleRecordFiles.Type_.Value with
+                | Array outerArraySchema ->
+                    match outerArraySchema.Items with
+                    | Array innerArraySchema ->
+                        match innerArraySchema.Items with
+                        | File _ -> true
+                        | _ -> false
+                    | _ -> false
+                | _ -> false
+            ) "sampleRecordFiles should be File[][]"
+    ]
+
 let main = 
     testList "CWLToolDescription" [
         testCWLToolDescriptionDecode
         testCWLToolDescriptionEncode
         testCWLToolDescriptionMetadata
+        testNestedArrayDecoding
     ]

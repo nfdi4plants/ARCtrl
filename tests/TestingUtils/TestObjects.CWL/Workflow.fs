@@ -15,6 +15,16 @@ inputs:
   inputMzML: Directory
   paramsMzML: File
   paramsPSM: File
+  sampleRecord:
+    type:
+      type: array
+      items:
+        type: record
+        fields:
+          readsOfOneSample:
+            type: File[]
+          sampleName:
+            type: string?
 
 steps:
   MzMLToMzlite:
@@ -30,7 +40,11 @@ steps:
     run: ./runs/PeptideSpectrumMatching/proteomiqon-peptidespectrummatching.cwl
     in:
       stageDirectory: stage
-      inputDirectory: MzMLToMzlite/dir
+      inputDirectory:
+        source:
+          - MzMLToMzlite/dir1
+          - MzMLToMzlite/dir2
+        linkMerge: merge_flattened
       database: db
       params: paramsPSM
       outputDirectory: outputPSM

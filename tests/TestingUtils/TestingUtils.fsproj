@@ -5,6 +5,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="TestObjects.CWL\Descriptions.fs" />
     <Compile Include="TestObjects.CWL\WorkflowSteps.fs" />
     <Compile Include="TestObjects.CWL\Workflow.fs" />
     <Compile Include="TestObjects.CWL\Requirements.fs" />

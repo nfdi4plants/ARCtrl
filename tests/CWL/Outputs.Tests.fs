@@ -67,7 +67,7 @@ let testOutput =
                 let actual = fileArrayItem.Name
                 Expect.equal actual expected ""
             testCase "Type" <| fun _ ->
-                let expected = Array (File (FileInstance()))
+                let expected = Array { Items = File (FileInstance()); Label = None; Doc = None; Name = None }
                 let actual = fileArrayItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "OutputBinding" <| fun _ ->
@@ -82,7 +82,7 @@ let testOutput =
                 let actual = fileArrayItem.Name
                 Expect.equal actual expected ""
             testCase "Type" <| fun _ ->
-                let expected = Array (File (FileInstance()))
+                let expected = Array { Items = File (FileInstance()); Label = None; Doc = None; Name = None }
                 let actual = fileArrayItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "OutputBinding" <| fun _ ->

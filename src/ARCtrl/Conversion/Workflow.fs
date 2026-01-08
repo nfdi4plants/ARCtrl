@@ -177,6 +177,7 @@ type WorkflowConversion =
             |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
         LDWorkflowProtocol.create(
             id = filePath,
+            name = filePath,
             ?inputs = inputs,
             programmingLanguages = ResizeArray.singleton (LDComputerLanguage.createCWL()),
             outputs = outputs,
@@ -213,6 +214,7 @@ type WorkflowConversion =
             |> ResizeArray.map (fun s -> WorkflowConversion.composeWorkflowStep(s, filePath))
         LDWorkflowProtocol.create(
             id = filePath,
+            name = filePath,
             inputs = inputs,
             outputs = outputs,
             programmingLanguages = ResizeArray.singleton (LDComputerLanguage.createCWL()),
@@ -297,8 +299,10 @@ type WorkflowConversion =
             |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
             |> Option.fromSeq
         let hasParts =
-            dataFiles
-            |> Option.fromSeq
+            if dataFiles.Count = 0 then
+                ResizeArray.singleton workflowProtocol |> Some
+            else
+                ResizeArray.appendSingleton workflowProtocol dataFiles |> Some
         let comments =
             workflow.Comments
             |> ResizeArray.map (fun c -> BaseTypes.composeComment c)

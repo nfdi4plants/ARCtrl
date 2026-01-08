@@ -26,6 +26,14 @@ module ARC =
             node.SetProperty("http://schema.org/about", LDRef("./"))
             node
 
+        static member metadataFileDescriptorWfRun =
+            let id = "ro-crate-metadata.json"
+            let schemaType = ResizeArray ["http://schema.org/CreativeWork"]
+            let node = LDNode(id, schemaType)
+            node.SetProperty("http://purl.org/dc/terms/conformsTo", [LDRef("https://w3id.org/ro/crate/1.1");LDRef("https://w3id.org/workflowhub/workflow-ro-crate/1.0")])
+            node.SetProperty("http://schema.org/about", LDRef("./"))
+            node
+
         static member createLicenseNode (license : License option) =
             match license with
                 | Some license ->
@@ -82,6 +90,41 @@ module ARC =
                     failwith "RO-Crate graph did not contain root data Entity"
             )
 
+        static member packDatasetAsCrate (dataset : LDNode, datasetName:string, datasetDescription:string, metadataFileDescriptor: option<LDNode>, license : option<License>) =
+            let metadataFileDescriptor = defaultArg metadataFileDescriptor ROCrate.metadataFileDescriptor
+            let license = ROCrate.createLicenseNode(license)
+            // Create the main entity node with all properties from the dataset, but with @id "./"
+            let mainEntity = LDDataset.create(id = "./", name = datasetName, description = datasetDescription)
+            dataset.GetProperties(false)
+            |> Seq.iter (fun kv ->
+                printfn "%A" kv
+                mainEntity.SetProperty(kv.Key, kv.Value)
+            )
+            // Set additional properties
+            LDDataset.setSDDatePublishedAsDateTime(mainEntity, System.DateTime.Now)
+            LDDataset.setLicenseAsCreativeWork(mainEntity, license)
+            // LDDataset.setHasParts(mainEntity,(dataset.GetPropertyValues"http://schema.org/mainEntity") |> Seq.map (fun x -> x :?> LDNode) |> ResizeArray)
+            // Flatten the dataset into a graph
+            let graph = mainEntity.Flatten()
+            // Add context 
+            let context = LDContext(baseContexts=ResizeArray[Context.initV1_2();Context.initBioschemasContext()])
+            graph.SetContext(context)
+            // Add file descriptor
+            graph.AddNode(metadataFileDescriptor)
+            // Compact nodes according to context (e.g. "https://schema.org/CreativeWork" -> "CreativeWork")
+            graph.Compact_InPlace()
+            graph
+
+        static member writeRunAsCrate(arcRun:ArcRun, fileSystem: FileSystem, datasetName: string, datasetDescription: string, ?license : License) =
+            let runDataset = arcRun.ToROCrateRun(fs = fileSystem)
+            ROCrate.packDatasetAsCrate(runDataset, datasetName, datasetDescription, Some ROCrate.metadataFileDescriptorWfRun,license)
+            |> LDGraph.toROCrateJsonString(2)
+
+        static member writeWorkflowAsCrate(arcWorkflow:ArcWorkflow, fileSystem: FileSystem, datasetName: string, datasetDescription: string, ?license : License) =
+            let workflowDataset = arcWorkflow.ToROCrateWorkflow(fs = fileSystem)
+            ROCrate.packDatasetAsCrate(workflowDataset, datasetName, datasetDescription, Some ROCrate.metadataFileDescriptorWfRun, license)
+            |> LDGraph.toROCrateJsonString(2)
+            
         static member decoderDeprecated : Decoder<ArcInvestigation> =
             LDNode.decoder
             |> Decode.map (fun ldnode ->
