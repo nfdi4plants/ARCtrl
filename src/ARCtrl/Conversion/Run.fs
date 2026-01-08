@@ -172,6 +172,11 @@ type RunConversion =
         cwlDescription, parameterRefs
 
     static member composeRun (run : ArcRun, ?fs : FileSystem) =
+        let workflowProtocol =
+            let workflowFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
+            match run.CWLDescription with
+            | Some pu -> WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(workflowFilePath, pu, runName = run.Identifier)
+            | None -> failwithf "Run %s must have a CWL description" run.Identifier
         let workflowInvocations =
             RunConversion.composeWorkflowInvocationFromArcRun(run, ?fs = fs)
             |> Option.fromSeq
@@ -200,6 +205,7 @@ type RunConversion =
             |> Option.fromSeq
         LDDataset.createARCRun(
             identifier = run.Identifier,
+            mainEntities = ResizeArray.singleton workflowProtocol,
             ?name = run.Title,
             ?description = run.Description, 
             ?creators = creators,
