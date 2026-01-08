@@ -177,6 +177,7 @@ type WorkflowConversion =
             |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
         LDWorkflowProtocol.create(
             id = filePath,
+            name = filePath,
             ?inputs = inputs,
             programmingLanguages = ResizeArray.singleton (LDComputerLanguage.createCWL()),
             outputs = outputs,
@@ -213,6 +214,7 @@ type WorkflowConversion =
             |> ResizeArray.map (fun s -> WorkflowConversion.composeWorkflowStep(s, filePath))
         LDWorkflowProtocol.create(
             id = filePath,
+            name = filePath,
             inputs = inputs,
             outputs = outputs,
             programmingLanguages = ResizeArray.singleton (LDComputerLanguage.createCWL()),

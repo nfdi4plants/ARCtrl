@@ -223,6 +223,7 @@ type RunConversion =
         )
 
     static member decomposeRun (run : LDNode, ?graph : LDGraph, ?context : LDContext) : ArcRun=
+        let workflowProtocol = LDDataset.tryGetMainEntityAsWorkflowProtocol(run, ?graph = graph, ?context = context)
         let mainWorkflowInvocation =
             LDDataset.getAboutsAsWorkflowInvocation(run, ?graph = graph, ?context = context)
             |> Seq.find (fun wi ->
@@ -231,7 +232,15 @@ type RunConversion =
                 | _ -> false
             )
         let cwlDescription, parameterRefs =
-            RunConversion.decomposeMainWorkflowInvocation(mainWorkflowInvocation, LDDataset.getIdentifierAsString(run, ?context = context), ?context = context, ?graph = graph)
+            match workflowProtocol with
+            | Some wp ->
+                WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(wp, ?context = context, ?graph = graph),
+                LDLabProcess.getObjects(mainWorkflowInvocation, ?graph = graph, ?context = context)
+                |> ResizeArray.map (fun iv ->
+                    RunConversion.decomposeCWLInputValue(iv, runName = LDDataset.getIdentifierAsString(run, ?context = context), ?context = context, ?graph = graph)
+                )
+            | None ->
+                RunConversion.decomposeMainWorkflowInvocation(mainWorkflowInvocation, LDDataset.getIdentifierAsString(run, ?context = context), ?context = context, ?graph = graph)
         let measurementMethod = 
             LDDataset.tryGetMeasurementMethodAsDefinedTerm(run, ?graph = graph, ?context = context)
             |> Option.map (fun m -> BaseTypes.decomposeDefinedTerm(m, ?context = context))

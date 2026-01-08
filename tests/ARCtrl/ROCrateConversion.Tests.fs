@@ -2005,6 +2005,47 @@ let tests_ArcRun =
             let run' = RunConversion.decomposeRun(ro_Run,graph)
             Expect.equal run' run "Run should match"
         )
+        testCase "WorkflowProtocolAsMainEntity" (fun () ->
+            let run = create_run_full()
+            let ro_Run = RunConversion.composeRun run
+            
+            // Test that workflow protocol is in mainEntity
+            let mainEntities = LDDataset.getMainEntities(ro_Run)
+            Expect.equal mainEntities.Count 1 "Should have one main entity"
+            let workflowProtocol = mainEntities.[0]
+            Expect.isTrue (LDWorkflowProtocol.validate(workflowProtocol)) "Main entity should be a workflow protocol"
+            
+            // Test that workflow protocol is also in hasParts
+            let hasParts = LDDataset.getHasParts(ro_Run)
+            let workflowInHasParts = hasParts |> Seq.exists (fun hp -> hp.Id = workflowProtocol.Id)
+            Expect.isTrue workflowInHasParts "Workflow protocol should be in hasParts"
+            
+            // Test that workflow protocol is a File
+            Expect.isTrue (LDFile.validate(workflowProtocol)) "Workflow protocol should be a File"
+            
+            // Test decomposition works with mainEntity
+            let run' = RunConversion.decomposeRun ro_Run
+            Expect.equal run' run "Run should match after decomposition"
+        )
+        testCase "WorkflowProtocolAsMainEntity_Flattened" (fun () ->
+            let run = create_run_full()
+            let ro_Run = RunConversion.composeRun run
+            let graph = ro_Run.Flatten()
+            
+            // Test that mainEntity is still accessible after flattening
+            let mainEntityRef = Expect.wantSome (ro_Run.TryGetPropertyAsSingleton(LDDataset.mainEntity)) "Run should have mainEntity"
+            Expect.isTrue (mainEntityRef :? LDRef) "MainEntity should be flattened to LDRef"
+            
+            // Retrieve workflow protocol from graph
+            let mainEntities = LDDataset.getMainEntities(ro_Run, graph = graph)
+            Expect.equal mainEntities.Count 1 "Should have one main entity"
+            let workflowProtocol = mainEntities.[0]
+            Expect.isTrue (LDWorkflowProtocol.validate(workflowProtocol)) "Main entity should be a workflow protocol"
+            
+            // Test decomposition works with mainEntity and graph
+            let run' = RunConversion.decomposeRun(ro_Run, graph = graph)
+            Expect.equal run' run "Run should match after decomposition with graph"
+        )
 
 
     ]
