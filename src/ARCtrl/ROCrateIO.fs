@@ -120,13 +120,13 @@ module ARC =
             
             // Validate required dataset properties
             let requiredDatasetProperties = [
-                "http://schema.org/identifier"
-                "http://schema.org/name"
-                "http://schema.org/description"
-                "http://schema.org/about"
-                "http://schema.org/mentions"
-                "http://schema.org/creator"
-                "http://schema.org/hasPart"
+                LDDataset.identifier
+                LDDataset.name
+                LDDataset.description
+                LDDataset.about
+                LDDataset.mentions
+                LDDataset.creator
+                LDDataset.hasPart
             ]
             
             let missingDatasetProps = 
@@ -148,10 +148,10 @@ module ARC =
                 | None -> failwith "Run dataset 'about' property must contain a workflowInvocation"
             
             let requiredWfInvocationProperties = [
-                "http://schema.org/name"
-                "http://schema.org/instrument"
-                "http://schema.org/result"
-                "http://schema.org/object"
+                LDCreateAction.name
+                LDCreateAction.instrument
+                LDCreateAction.result
+                LDCreateAction.object_
             ]
             
             let missingWfInvocationProps = 
@@ -173,12 +173,12 @@ module ARC =
             
             // Validate required dataset properties
             let requiredDatasetProperties = [
-                "http://schema.org/identifier"
-                "http://schema.org/name"
-                "http://schema.org/description"
-                "http://schema.org/mainEntity"
-                "http://schema.org/hasPart"
-                "http://schema.org/creator"
+                LDDataset.identifier
+                LDDataset.name
+                LDDataset.description
+                LDDataset.mainEntity
+                LDDataset.hasPart
+                LDDataset.creator
             ]
             
             let missingDatasetProps = 
@@ -199,14 +199,14 @@ module ARC =
                 | None -> failwith "Workflow dataset 'mainEntity' property must contain a workflow protocol"
             
             let requiredProtocolProperties = [
-                "http://schema.org/creator"
-                "http://schema.org/name"
-                "https://bioschemas.org/properties/input"
-                "https://bioschemas.org/properties/output"
-                "http://schema.org/programmingLanguage"
-                "http://schema.org/url"
-                "http://schema.org/version"
-                "http://schema.org/dateCreated"
+                LDComputationalWorkflow.creator
+                LDComputationalWorkflow.name
+                LDComputationalWorkflow.input
+                LDComputationalWorkflow.output
+                LDComputationalWorkflow.programmingLanguage
+                LDComputationalWorkflow.url
+                LDComputationalWorkflow.version
+                LDComputationalWorkflow.dateCreated
             ]
             
             let missingProtocolProps = 

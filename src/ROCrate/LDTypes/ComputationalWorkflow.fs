@@ -69,12 +69,12 @@ type LDComputationalWorkflow =
     static member setOutputs(cw : LDNode, outputs : ResizeArray<LDNode>, ?context : LDContext) =
         cw.SetProperty(LDComputationalWorkflow.output, outputs, ?context = context)
 
-    static member getCreator(cw : LDNode, ?graph : LDGraph, ?context : LDContext) =
+    static member getCreators(cw : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let filter ldObject context = LDPerson.validate(ldObject, ?context = context) || LDOrganization.validate(ldObject, ?context = context)
         cw.GetPropertyNodes(LDComputationalWorkflow.creator, filter = filter, ?graph = graph, ?context = context)
 
-    static member setCreator(cw : LDNode, creator : ResizeArray<LDNode>, ?context : LDContext) =
-        cw.SetProperty(LDComputationalWorkflow.creator, creator, ?context = context)
+    static member setCreators(cw : LDNode, creators : ResizeArray<LDNode>, ?context : LDContext) =
+        cw.SetProperty(LDComputationalWorkflow.creator, creators, ?context = context)
     static member tryGetDateCreated(cw : LDNode, ?context : LDContext) =
         match cw.TryGetPropertyAsSingleton(LDComputationalWorkflow.dateCreated, ?context = context) with
         | Some (:? string as d) -> Some d

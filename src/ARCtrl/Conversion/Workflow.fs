@@ -275,7 +275,7 @@ type WorkflowConversion =
             |> Option.fromSeq
         let dateCreated = System.DateTime.UtcNow
         if creators.IsSome then
-            LDComputationalWorkflow.setCreator(workflowProtocol, creators.Value)
+            LDComputationalWorkflow.setCreators(workflowProtocol, creators.Value)
         LDComputationalWorkflow.setSdPublisher(workflowProtocol, publisher)
         LDComputationalWorkflow.setDateCreatedAsDateTime(workflowProtocol, dateCreated)
         if workflow.Version.IsSome then
