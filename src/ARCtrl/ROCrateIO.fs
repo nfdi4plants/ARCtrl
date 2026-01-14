@@ -101,7 +101,7 @@ module ARC =
                 mainEntity.SetProperty(kv.Key, kv.Value)
             )
             // Set additional properties
-            LDDataset.setSDDatePublishedAsDateTime(mainEntity, System.DateTime.Now)
+            LDDataset.setDateCreatedAsDateTime(mainEntity, System.DateTime.Now)
             LDDataset.setLicenseAsCreativeWork(mainEntity, license)
             // LDDataset.setHasParts(mainEntity,(dataset.GetPropertyValues"http://schema.org/mainEntity") |> Seq.map (fun x -> x :?> LDNode) |> ResizeArray)
             // Flatten the dataset into a graph
@@ -117,12 +117,12 @@ module ARC =
 
         static member writeRunAsCrate(arcRun:ArcRun, fileSystem: FileSystem, license : License) =
             let runDataset = arcRun.ToROCrateRun(fs = fileSystem)
-            ROCrate.packDatasetAsCrate(runDataset, arcRun.Identifier, arcRun.Description.Value, Some ROCrate.metadataFileDescriptorWfRun,license)
+            ROCrate.packDatasetAsCrate(runDataset, arcRun.Title.Value, arcRun.Description.Value, Some ROCrate.metadataFileDescriptorWfRun,license)
             |> LDGraph.toROCrateJsonString(2)
 
         static member writeWorkflowAsCrate(arcWorkflow:ArcWorkflow, fileSystem: FileSystem, license : License) =
             let workflowDataset = arcWorkflow.ToROCrateWorkflow(fs = fileSystem)
-            ROCrate.packDatasetAsCrate(workflowDataset, arcWorkflow.Identifier, arcWorkflow.Description.Value, Some ROCrate.metadataFileDescriptorWfRun, license)
+            ROCrate.packDatasetAsCrate(workflowDataset, arcWorkflow.Title.Value, arcWorkflow.Description.Value, Some ROCrate.metadataFileDescriptorWfRun, license)
             |> LDGraph.toROCrateJsonString(2)
             
         static member decoderDeprecated : Decoder<ArcInvestigation> =
