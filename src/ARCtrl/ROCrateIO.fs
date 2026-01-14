@@ -117,11 +117,109 @@ module ARC =
 
         static member writeRunAsCrate(arcRun:ArcRun, fileSystem: FileSystem, license : License) =
             let runDataset = arcRun.ToROCrateRun(fs = fileSystem)
+            
+            // Validate required dataset properties
+            let requiredDatasetProperties = [
+                "http://schema.org/identifier"
+                "http://schema.org/name"
+                "http://schema.org/description"
+                "http://schema.org/about"
+                "http://schema.org/mentions"
+                "http://schema.org/creator"
+                "http://schema.org/hasPart"
+            ]
+            
+            let missingDatasetProps = 
+                requiredDatasetProperties 
+                |> List.filter (fun prop -> not (runDataset.HasProperty(prop)))
+            
+            if not (List.isEmpty missingDatasetProps) then
+                let missingPropsStr = 
+                    missingDatasetProps 
+                    |> List.map (fun p -> p.Replace("http://schema.org/", ""))
+                    |> String.concat ", "
+                failwithf "Run dataset is missing required properties: %s" missingPropsStr
+            
+            // Validate required workflowInvocation properties
+            let workflowInvocation = 
+                let abouts = LDDataset.getAboutsAsWorkflowInvocation(runDataset)
+                match Seq.tryHead abouts with
+                | Some wi -> wi
+                | None -> failwith "Run dataset 'about' property must contain a workflowInvocation"
+            
+            let requiredWfInvocationProperties = [
+                "http://schema.org/name"
+                "http://schema.org/instrument"
+                "http://schema.org/result"
+                "http://schema.org/object"
+            ]
+            
+            let missingWfInvocationProps = 
+                requiredWfInvocationProperties 
+                |> List.filter (fun prop -> not (workflowInvocation.HasProperty(prop)))
+            
+            if not (List.isEmpty missingWfInvocationProps) then
+                let missingPropsStr = 
+                    missingWfInvocationProps 
+                    |> List.map (fun p -> p.Replace("http://schema.org/", ""))
+                    |> String.concat ", "
+                failwithf "WorkflowInvocation is missing required properties: %s" missingPropsStr
+            
             ROCrate.packDatasetAsCrate(runDataset, arcRun.Title.Value, arcRun.Description.Value, Some ROCrate.metadataFileDescriptorWfRun,license)
             |> LDGraph.toROCrateJsonString(2)
 
         static member writeWorkflowAsCrate(arcWorkflow:ArcWorkflow, fileSystem: FileSystem, license : License) =
             let workflowDataset = arcWorkflow.ToROCrateWorkflow(fs = fileSystem)
+            
+            // Validate required dataset properties
+            let requiredDatasetProperties = [
+                "http://schema.org/identifier"
+                "http://schema.org/name"
+                "http://schema.org/description"
+                "http://schema.org/mainEntity"
+                "http://schema.org/hasPart"
+                "http://schema.org/creator"
+            ]
+            
+            let missingDatasetProps = 
+                requiredDatasetProperties 
+                |> List.filter (fun prop -> not (workflowDataset.HasProperty(prop)))
+            
+            if not (List.isEmpty missingDatasetProps) then
+                let missingPropsStr = 
+                    missingDatasetProps 
+                    |> List.map (fun p -> p.Replace("http://schema.org/", ""))
+                    |> String.concat ", "
+                failwithf "Workflow dataset is missing required properties: %s" missingPropsStr
+            
+            // Validate required workflow protocol (mainEntity) properties
+            let workflowProtocol : LDNode = 
+                match LDDataset.tryGetMainEntityAsWorkflowProtocol(workflowDataset) with
+                | Some protocol -> protocol
+                | None -> failwith "Workflow dataset 'mainEntity' property must contain a workflow protocol"
+            
+            let requiredProtocolProperties = [
+                "http://schema.org/creator"
+                "http://schema.org/name"
+                "https://bioschemas.org/properties/input"
+                "https://bioschemas.org/properties/output"
+                "http://schema.org/programmingLanguage"
+                "http://schema.org/url"
+                "http://schema.org/version"
+                "http://schema.org/dateCreated"
+            ]
+            
+            let missingProtocolProps = 
+                requiredProtocolProperties 
+                |> List.filter (fun prop -> not (workflowProtocol.HasProperty(prop)))
+            
+            if not (List.isEmpty missingProtocolProps) then
+                let missingPropsStr = 
+                    missingProtocolProps 
+                    |> List.map (fun p -> p.Replace("http://schema.org/", ""))
+                    |> String.concat ", "
+                failwithf "Workflow protocol is missing required properties: %s" missingPropsStr
+            
             ROCrate.packDatasetAsCrate(workflowDataset, arcWorkflow.Title.Value, arcWorkflow.Description.Value, Some ROCrate.metadataFileDescriptorWfRun, license)
             |> LDGraph.toROCrateJsonString(2)
             
