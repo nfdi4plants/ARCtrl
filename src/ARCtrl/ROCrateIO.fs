@@ -97,7 +97,6 @@ module ARC =
             let mainEntity = LDDataset.create(id = "./", name = datasetName, description = datasetDescription)
             dataset.GetProperties(false)
             |> Seq.iter (fun kv ->
-                printfn "%A" kv
                 mainEntity.SetProperty(kv.Key, kv.Value)
             )
             // Set additional properties
