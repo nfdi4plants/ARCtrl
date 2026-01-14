@@ -90,9 +90,9 @@ module ARC =
                     failwith "RO-Crate graph did not contain root data Entity"
             )
 
-        static member packDatasetAsCrate (dataset : LDNode, datasetName:string, datasetDescription:string, metadataFileDescriptor: option<LDNode>, license : option<License>) =
+        static member packDatasetAsCrate (dataset : LDNode, datasetName:string, datasetDescription:string, metadataFileDescriptor: option<LDNode>, license : License) =
             let metadataFileDescriptor = defaultArg metadataFileDescriptor ROCrate.metadataFileDescriptor
-            let license = ROCrate.createLicenseNode(license)
+            let license = ROCrate.createLicenseNode(Some license)
             // Create the main entity node with all properties from the dataset, but with @id "./"
             let mainEntity = LDDataset.create(id = "./", name = datasetName, description = datasetDescription)
             dataset.GetProperties(false)
@@ -115,14 +115,14 @@ module ARC =
             graph.Compact_InPlace()
             graph
 
-        static member writeRunAsCrate(arcRun:ArcRun, fileSystem: FileSystem, datasetName: string, datasetDescription: string, ?license : License) =
+        static member writeRunAsCrate(arcRun:ArcRun, fileSystem: FileSystem, license : License) =
             let runDataset = arcRun.ToROCrateRun(fs = fileSystem)
-            ROCrate.packDatasetAsCrate(runDataset, datasetName, datasetDescription, Some ROCrate.metadataFileDescriptorWfRun,license)
+            ROCrate.packDatasetAsCrate(runDataset, arcRun.Identifier, arcRun.Description.Value, Some ROCrate.metadataFileDescriptorWfRun,license)
             |> LDGraph.toROCrateJsonString(2)
 
-        static member writeWorkflowAsCrate(arcWorkflow:ArcWorkflow, fileSystem: FileSystem, datasetName: string, datasetDescription: string, ?license : License) =
+        static member writeWorkflowAsCrate(arcWorkflow:ArcWorkflow, fileSystem: FileSystem, license : License) =
             let workflowDataset = arcWorkflow.ToROCrateWorkflow(fs = fileSystem)
-            ROCrate.packDatasetAsCrate(workflowDataset, datasetName, datasetDescription, Some ROCrate.metadataFileDescriptorWfRun, license)
+            ROCrate.packDatasetAsCrate(workflowDataset, arcWorkflow.Identifier, arcWorkflow.Description.Value, Some ROCrate.metadataFileDescriptorWfRun, license)
             |> LDGraph.toROCrateJsonString(2)
             
         static member decoderDeprecated : Decoder<ArcInvestigation> =
