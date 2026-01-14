@@ -268,6 +268,8 @@ type WorkflowConversion =
             match workflow.CWLDescription with
             | Some pu -> WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(workflowFilePath, pu, workflowName = workflow.Identifier)
             | None -> failwithf "Workflow %s must have a CWL description" workflow.Identifier
+        let publisher = LDOrganization.create("DataPLANT")
+        LDComputationalWorkflow.setSdPublisher(workflowProtocol, publisher)
         if workflow.Version.IsSome then
             LDLabProtocol.setVersionAsString(workflowProtocol, workflow.Version.Value)
         if workflow.URI.IsSome then
