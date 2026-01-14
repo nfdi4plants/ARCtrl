@@ -269,7 +269,15 @@ type WorkflowConversion =
             | Some pu -> WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(workflowFilePath, pu, workflowName = workflow.Identifier)
             | None -> failwithf "Workflow %s must have a CWL description" workflow.Identifier
         let publisher = LDOrganization.create("DataPLANT")
+        let creators =
+            workflow.Contacts
+            |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
+            |> Option.fromSeq
+        let dateCreated = System.DateTime.UtcNow
+        if creators.IsSome then
+            LDComputationalWorkflow.setCreator(workflowProtocol, creators.Value)
         LDComputationalWorkflow.setSdPublisher(workflowProtocol, publisher)
+        LDComputationalWorkflow.setDateCreatedAsDateTime(workflowProtocol, dateCreated)
         if workflow.Version.IsSome then
             LDLabProtocol.setVersionAsString(workflowProtocol, workflow.Version.Value)
         if workflow.URI.IsSome then
@@ -296,10 +304,6 @@ type WorkflowConversion =
                 workflow.Components
                 |> ResizeArray.map WorkflowConversion.composeComputationalTool
             LDLabProtocol.setComputationalTools(workflowProtocol, softwareTools)
-        let creators =
-            workflow.Contacts
-            |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
-            |> Option.fromSeq
         let hasParts =
             if dataFiles.Count = 0 then
                 ResizeArray.singleton workflowProtocol |> Some

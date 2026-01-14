@@ -73,7 +73,7 @@ type LDComputationalWorkflow =
         let filter ldObject context = LDPerson.validate(ldObject, ?context = context) || LDOrganization.validate(ldObject, ?context = context)
         cw.GetPropertyNodes(LDComputationalWorkflow.creator, filter = filter, ?graph = graph, ?context = context)
 
-    static member setCreator(cw : LDNode, creator : LDNode, ?context : LDContext) =
+    static member setCreator(cw : LDNode, creator : ResizeArray<LDNode>, ?context : LDContext) =
         cw.SetProperty(LDComputationalWorkflow.creator, creator, ?context = context)
     static member tryGetDateCreated(cw : LDNode, ?context : LDContext) =
         match cw.TryGetPropertyAsSingleton(LDComputationalWorkflow.dateCreated, ?context = context) with
@@ -81,7 +81,8 @@ type LDComputationalWorkflow =
         | _ -> None
     static member setDateCreated(cw : LDNode, date : string, ?context : LDContext) =
         cw.SetProperty(LDComputationalWorkflow.dateCreated, date, ?context = context)
-
+    static member setDateCreatedAsDateTime(lp : LDNode, dateCreated : System.DateTime, ?context : LDContext) =
+        lp.SetProperty(LDComputationalWorkflow.dateCreated, dateCreated, ?context = context)
     static member getLicenses(cw : LDNode, ?graph : LDGraph, ?context : LDContext) =
         cw.GetPropertyNodes(LDComputationalWorkflow.license, ?graph = graph, ?context = context)
     static member setLicenses(cw : LDNode, licenses : ResizeArray<LDNode>, ?context : LDContext) =
