@@ -30,18 +30,6 @@ module InvestigationExtensions =
         member this.ToCompressedJsonString(?spaces) = 
             ArcInvestigation.toCompressedJsonString(?spaces=spaces) this
 
-        static member fromROCrateJsonString (s:string) = 
-            Decode.fromJsonString Investigation.ROCrate.decoder s
-
-        /// exports in json-ld format
-        static member toROCrateJsonString(?spaces) =
-            fun (obj:ArcInvestigation) ->
-                Investigation.ROCrate.encoder obj
-                |> Encode.toJsonString (Encode.defaultSpaces spaces)
-
-        member this.ToROCrateJsonString(?spaces) = 
-            ArcInvestigation.toROCrateJsonString(?spaces=spaces) this
-
         static member toISAJsonString(?spaces, ?useIDReferencing) =
             let useIDReferencing = Option.defaultValue false useIDReferencing
             let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None

@@ -53,9 +53,9 @@ module ARC =
             | path, Some text -> Some (License(contentType = Fulltext,content = text, path = path))
             | path, None -> Some (License(contentType = Fulltext,content = "", path = path))
 
-        static member encoder (isa : ArcInvestigation, ?license : License, ?fs : FileSystem) =
+        static member encoder (isa : ArcInvestigation, ?license : License, ?fs : FileSystem, ?ignoreBrokenWR) =
             let license = ROCrate.createLicenseNode(license)
-            let isa = isa.ToROCrateInvestigation(?fs = fs)
+            let isa = isa.ToROCrateInvestigation(?fs = fs, ?ignoreBrokenWR = ignoreBrokenWR)
             LDDataset.setSDDatePublishedAsDateTime(isa, System.DateTime.Now)
             LDDataset.setLicenseAsCreativeWork(isa, license)
             let graph = isa.Flatten()

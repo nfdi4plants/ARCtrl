@@ -2413,6 +2413,46 @@ let tests_Investigation =
             Expect.arcTableEqual table1' table1 "Table1 should match"
             Expect.arcTableEqual table2' table2 "Table2 should match"
         )
+        testCase "RunNoCWL" (fun () ->
+            let run = ArcRun("MyRun")
+            let p = ArcInvestigation(
+                identifier = "My Investigation",
+                title = "My Best Investigation",
+                runs = ResizeArray [run]
+                )
+            Expect.throws (fun () -> InvestigationConversion.composeInvestigation p |> ignore ) "Investigation with Run without CWL should throw error"
+        )
+        testCase "RunNoCWL_Ignore" (fun () ->
+            let run = ArcRun("MyRun")
+            let p = ArcInvestigation(
+                identifier = "My Investigation",
+                title = "My Best Investigation",
+                runs = ResizeArray [run]
+                )
+            let ro_Investigation = InvestigationConversion.composeInvestigation(p,ignoreBrokenWR = true)
+            let datasets = LDDataset.getHasPartsAsDataset ro_Investigation
+            Expect.hasLength datasets 0 "Investigation should have no sub datasets (runs ignored)"
+        )
+        testCase "WorkflowNoCWL" (fun () ->
+            let workflow = ArcWorkflow("MyWorkflow")
+            let p = ArcInvestigation(
+                identifier = "My Investigation",
+                title = "My Best Investigation",
+                workflows = ResizeArray [workflow]
+                )
+            Expect.throws (fun () -> InvestigationConversion.composeInvestigation p |> ignore ) "Investigation with Workflow without CWL should throw error"
+        )
+        testCase "WorkflowNoCWL_Ignore" (fun () ->
+            let workflow = ArcWorkflow("MyWorkflow")
+            let p = ArcInvestigation(
+                identifier = "My Investigation",
+                title = "My Best Investigation",
+                workflows = ResizeArray [workflow]
+                )
+            let ro_Investigation = InvestigationConversion.composeInvestigation(p,ignoreBrokenWR = true)
+            let datasets = LDDataset.getHasPartsAsDataset ro_Investigation
+            Expect.hasLength datasets 0 "Investigation should have no sub datasets (workflows ignored)"
+        )
     ]
 
 

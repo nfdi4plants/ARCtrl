@@ -12,7 +12,7 @@ open ARCtrl.Helper.Regex.ActivePatterns
 
 type InvestigationConversion =
 
-    static member composeInvestigation (investigation : ArcInvestigation, ?fs : FileSystem) =
+    static member composeInvestigation (investigation : ArcInvestigation, ?fs : FileSystem, ?ignoreBrokenWR) =
         let name = match investigation.Title with | Some t -> t | None -> failwith "Investigation must have a title"
         let dateCreated = investigation.SubmissionDate |> Option.bind DateTime.tryFromString
         let datePublished =
@@ -36,8 +36,20 @@ type InvestigationConversion =
             [
                 yield! (investigation.Assays |> ResizeArray.map (fun a -> AssayConversion.composeAssay(a, ?fs = fs)))
                 yield! (investigation.Studies |> ResizeArray.map (fun s -> StudyConversion.composeStudy(s, ?fs = fs)))
-                yield! (investigation.Workflows |> ResizeArray.map (fun w -> WorkflowConversion.composeWorkflow(w, ?fs = fs)))
-                yield! (investigation.Runs |> ResizeArray.map (fun r -> RunConversion.composeRun(r, ?fs = fs)))
+                yield! (investigation.Workflows |> ResizeArray.choose (fun w ->
+                    try 
+                        WorkflowConversion.composeWorkflow(w, ?fs = fs) |> Some
+                    with
+                    | _ when ignoreBrokenWR.IsSome && ignoreBrokenWR.Value -> None
+                    | err -> raise err
+                ))
+                yield! (investigation.Runs |> ResizeArray.choose (fun r ->
+                    try 
+                        RunConversion.composeRun(r, ?fs = fs) |> Some
+                    with
+                    | _ when ignoreBrokenWR.IsSome && ignoreBrokenWR.Value -> None
+                    | err -> raise err
+                ))
             ]
             |> ResizeArray
             |> Option.fromSeq
