@@ -2023,6 +2023,30 @@ let tests_ArcRun =
             // Test that workflow protocol is a File
             Expect.isTrue (LDFile.validate(workflowProtocol)) "Workflow protocol should be a File"
             
+            // Test workflow protocol has required properties
+            let inputs = LDComputationalWorkflow.getInputs workflowProtocol
+            Expect.isTrue (inputs.Count > 0) "Workflow protocol should have inputs"
+            
+            let outputs = LDComputationalWorkflow.getOutputs workflowProtocol
+            Expect.isTrue (outputs.Count > 0) "Workflow protocol should have outputs"
+            
+            let programmingLanguages = LDComputationalWorkflow.getProgrammingLanguages workflowProtocol
+            Expect.hasLength programmingLanguages 1 "Workflow protocol should have one programming language"
+            Expect.isTrue (LDComputerLanguage.validateCWL(programmingLanguages.[0])) "Programming language should be CWL"
+            
+            // Test workflow protocol has creator, publisher, and dateCreated
+            let creators = LDComputationalWorkflow.getCreators workflowProtocol
+            Expect.equal creators.Count 1 "Workflow protocol should have one creator"
+            Expect.isTrue (LDPerson.validate(creators.[0])) "Creator should be a Person"
+            
+            let publisher = Expect.wantSome (LDComputationalWorkflow.tryGetSdPublisher workflowProtocol) "Workflow protocol should have a publisher"
+            Expect.isTrue (LDOrganization.validate(publisher)) "Publisher should be an Organization"
+            let publisherName = Expect.wantSome (LDOrganization.tryGetNameAsString publisher) "Publisher should have a name"
+            Expect.equal publisherName "DataPLANT" "Publisher name should be DataPLANT"
+            
+            let dateCreated = Expect.wantSome (LDComputationalWorkflow.tryGetDateCreatedAsDateTime workflowProtocol) "Workflow protocol should have dateCreated"
+            Expect.isSome (Some dateCreated) "DateCreated should exist"
+            
             // Test decomposition works with mainEntity
             let run' = RunConversion.decomposeRun ro_Run
             Expect.equal run' run "Run should match after decomposition"
@@ -2041,6 +2065,30 @@ let tests_ArcRun =
             Expect.equal mainEntities.Count 1 "Should have one main entity"
             let workflowProtocol = mainEntities.[0]
             Expect.isTrue (LDWorkflowProtocol.validate(workflowProtocol)) "Main entity should be a workflow protocol"
+            
+            // Test workflow protocol has required properties after flattening
+            let inputs = LDComputationalWorkflow.getInputs(workflowProtocol, graph = graph)
+            Expect.isTrue (inputs.Count > 0) "Workflow protocol should have inputs"
+            
+            let outputs = LDComputationalWorkflow.getOutputs(workflowProtocol, graph = graph)
+            Expect.isTrue (outputs.Count > 0) "Workflow protocol should have outputs"
+            
+            let programmingLanguages = LDComputationalWorkflow.getProgrammingLanguages(workflowProtocol, graph = graph)
+            Expect.hasLength programmingLanguages 1 "Workflow protocol should have one programming language"
+            Expect.isTrue (LDComputerLanguage.validateCWL(programmingLanguages.[0])) "Programming language should be CWL"
+            
+            // Test workflow protocol has creator, publisher, and dateCreated after flattening
+            let creators = LDComputationalWorkflow.getCreators(workflowProtocol, graph = graph)
+            Expect.equal creators.Count 1 "Workflow protocol should have one creator"
+            Expect.isTrue (LDPerson.validate(creators.[0])) "Creator should be a Person"
+            
+            let publisher = Expect.wantSome (LDComputationalWorkflow.tryGetSdPublisher(workflowProtocol, graph = graph)) "Workflow protocol should have a publisher"
+            Expect.isTrue (LDOrganization.validate(publisher)) "Publisher should be an Organization"
+            let publisherName = Expect.wantSome (LDOrganization.tryGetNameAsString publisher) "Publisher should have a name"
+            Expect.equal publisherName "DataPLANT" "Publisher name should be DataPLANT"
+            
+            let dateCreated = Expect.wantSome (LDComputationalWorkflow.tryGetDateCreatedAsDateTime workflowProtocol) "Workflow protocol should have dateCreated"
+            Expect.isSome (Some dateCreated) "DateCreated should exist"
             
             // Test decomposition works with mainEntity and graph
             let run' = RunConversion.decomposeRun(ro_Run, graph = graph)

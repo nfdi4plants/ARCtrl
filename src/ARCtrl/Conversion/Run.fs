@@ -187,6 +187,12 @@ type RunConversion =
             run.Performers
             |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
             |> Option.fromSeq
+        let publisher = LDOrganization.create("DataPLANT")
+        let dateCreated = System.DateTime.UtcNow
+        if creators.IsSome then
+            LDComputationalWorkflow.setCreators(workflowProtocol, creators.Value)
+        LDComputationalWorkflow.setSdPublisher(workflowProtocol, publisher)
+        LDComputationalWorkflow.setDateCreatedAsDateTime(workflowProtocol, dateCreated)
         let fragmentDescriptors =
             run.Datamap
             |> Option.map DatamapConversion.composeFragmentDescriptors

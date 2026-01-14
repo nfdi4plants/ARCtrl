@@ -79,6 +79,10 @@ type LDComputationalWorkflow =
         match cw.TryGetPropertyAsSingleton(LDComputationalWorkflow.dateCreated, ?context = context) with
         | Some (:? string as d) -> Some d
         | _ -> None
+    static member tryGetDateCreatedAsDateTime(lp : LDNode, ?context : LDContext) =
+        match lp.TryGetPropertyAsSingleton(LDComputationalWorkflow.dateCreated, ?context = context) with
+        | Some (:? System.DateTime as n) -> Some n
+        | _ -> None
     static member setDateCreated(cw : LDNode, date : string, ?context : LDContext) =
         cw.SetProperty(LDComputationalWorkflow.dateCreated, date, ?context = context)
     static member setDateCreatedAsDateTime(lp : LDNode, dateCreated : System.DateTime, ?context : LDContext) =
