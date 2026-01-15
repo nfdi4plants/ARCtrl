@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@nfdi4plants/arctrl",
-  "version": "3.0.0-beta.15",
+  "version": "3.0.0-beta.16",
   "description": "Top level ARC DataModel and API function descriptions.",
   "repository": {
     "type": "git",

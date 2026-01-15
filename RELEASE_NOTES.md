@@ -1,3 +1,34 @@
+### 3.0.0-beta.16+3d215088 (Released 2026-1-15)
+* Additions:
+    * [[#841914d0](https://github.com/nfdi4plants/ARCtrl/commit/841914d07b3aea768d73396f930077c008832f18)] add custom equaltiy to cwltype and mutually recursive types
+    * [[#eca0b6f2](https://github.com/nfdi4plants/ARCtrl/commit/eca0b6f25e201b7dc8c25461a15e35d927696687)] add missing properties to main wf of run, expand tests
+    * [[#12e8d516](https://github.com/nfdi4plants/ARCtrl/commit/12e8d51655cc452a031bf053ef05af5af068de2a)] change naming and use static members for property names
+    * [[#d7fa4d7d](https://github.com/nfdi4plants/ARCtrl/commit/d7fa4d7db18da79237166c1f476426e22279af21)] write creators and dateCreated to WorkflowProtocol as well
+    * [[#c0b8da3a](https://github.com/nfdi4plants/ARCtrl/commit/c0b8da3af522acc0ca00353026e4bc29bbc546a8)] add checks for mandatory parent profile fields
+    * [[#b9e89003](https://github.com/nfdi4plants/ARCtrl/commit/b9e8900306d2fa0f620b26db0899d8cd032abd3a)] optionally allow skipping broken runs and worklows for RO-Crate conversion
+    * [[#e0315b0c](https://github.com/nfdi4plants/ARCtrl/commit/e0315b0ce1763398e1cf1ca012e4ff11e387ae5b)] set dataplant as workflow publisher during conversion
+    * [[#5a74153b](https://github.com/nfdi4plants/ARCtrl/commit/5a74153bdb6743ab3836881b246092c7be71ce11)] change name to take from titel to match mapping file
+    * [[#b47526de](https://github.com/nfdi4plants/ARCtrl/commit/b47526de3ed8afa5e78f02bf7115f24581af0589)] take name and description from run/wf, make license mandatory
+    * [[#23a815fa](https://github.com/nfdi4plants/ARCtrl/commit/23a815fa85fc55748191b76f9a0a10f6d2188ec6)] add automatic workflow and run profile export
+    * [[#4d4ad978](https://github.com/nfdi4plants/ARCtrl/commit/4d4ad978e61e5cc658814d4fe55fcf807593850b)] add files and workflow to hasParts during run conversion
+    * [[#7ad8b0e4](https://github.com/nfdi4plants/ARCtrl/commit/7ad8b0e470203adf14f56f5b0c98097207e57920)] add workflow to hasParts of workflow in conversion
+    * [[#cd97732e](https://github.com/nfdi4plants/ARCtrl/commit/cd97732e3e4530741bb3fcf198b7766a252ce43e)] add mainEntity during conversion to rocrate run
+    * [[#45d2ba15](https://github.com/nfdi4plants/ARCtrl/commit/45d2ba15c808b1cf46e063dd2f9621bd92581a27)] Unify CWL type system with mutual recursion and Union support
+    * [[#b78841c1](https://github.com/nfdi4plants/ARCtrl/commit/b78841c19bc4f3802ff1feb7d02867cfc5f0d3f6)] allow empty outputs, cleanup
+    * [[#ec97b23d](https://github.com/nfdi4plants/ARCtrl/commit/ec97b23d371201ca2630a391ef005cde4cb67e4e)] Add support for records
+    * [[#34bc061e](https://github.com/nfdi4plants/ARCtrl/commit/34bc061e030dbbc059c8d2819a5080eb6c8a0d48)] add list decoding/encoding for source in inputStep
+    * [[#b2cafe13](https://github.com/nfdi4plants/ARCtrl/commit/b2cafe13632cc5b857563311bbf099db25c72302)] add decoders to processing units
+    * [[#df648f1b](https://github.com/nfdi4plants/ARCtrl/commit/df648f1bceaf7fb36a819eab98ab255e5203d382)] bump yamlicious version for multiline doc handling
+    * [[#9db593ec](https://github.com/nfdi4plants/ARCtrl/commit/9db593ec1a50f1c0515524c6734539b945512fac)] update logo
+    * [[#5d6abf2a](https://github.com/nfdi4plants/ARCtrl/commit/5d6abf2a66645e79c38e373aadf5d58779754b9f)] Rename tests DataMap to Datamap in Tests
+* Deletions:
+    * [[#d4fbac35](https://github.com/nfdi4plants/ARCtrl/commit/d4fbac35e4f0586c0912242f6b68b816fbcc24a3)] remove print
+    * [[#4f6ca3dc](https://github.com/nfdi4plants/ARCtrl/commit/4f6ca3dc8bd7ad4048a7bc151fac68ba1e12b095)] add main entityCheck and fallback for executingLabProtocol during run decomposition
+    * [[#b0365fea](https://github.com/nfdi4plants/ARCtrl/commit/b0365fea03291c102bef9fb030bbb7d298a12d35)] Delete duplicate tests/TestingUtils/Descriptions.fs
+* Bugfixes:
+    * [[#d028b933](https://github.com/nfdi4plants/ARCtrl/commit/d028b933ff102b5dd463a024887e4f3f58db8ec0)] fix description exected newlines
+    * [[#5d1f000f](https://github.com/nfdi4plants/ARCtrl/commit/5d1f000f68305349ddc1b558eee23b1bad114ee7)] add fixes for cwl doc and label reading
+
 ### 3.0.0-beta.15+b5d48ed9 (Released 2025-12-4)
 * Additions:
     * [[#5d6abf2a](https://github.com/nfdi4plants/ARCtrl/commit/5d6abf2a66645e79c38e373aadf5d58779754b9f)] Rename tests DataMap to Datamap in Tests
