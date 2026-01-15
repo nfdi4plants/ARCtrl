@@ -50,6 +50,8 @@ type LDDataset =
 
     static member mainEntity = "http://schema.org/mainEntity"
 
+    static member conformsTo = "http://purl.org/dc/terms/conformsTo"
+
     static member tryGetIdentifierAsString(lp : LDNode, ?context : LDContext) =
         match lp.TryGetPropertyAsSingleton(LDDataset.identifier, ?context = context) with
         | Some (:? string as n) -> Some n
@@ -283,6 +285,10 @@ type LDDataset =
     static member getMainEntities(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
         lp.GetPropertyNodes(LDDataset.mainEntity, ?graph = graph, ?context = context)
 
+    static member tryGetMainEntityAsWorkflowProtocol(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        LDDataset.getMainEntities(lp, ?graph = graph, ?context = context)
+        |> Seq.tryFind (fun n -> LDWorkflowProtocol.validate(n, ?context = context))
+
     static member setMainEntities(lp : LDNode, mainEntities : ResizeArray<LDNode>, ?context : LDContext) =
         lp.SetProperty(LDDataset.mainEntity, mainEntities, ?context = context)
 
@@ -378,10 +384,18 @@ type LDDataset =
         s.SetProperty(LDDataset.mainEntity, mainEntities, ?context = context)
         s
 
-    static member createARCRun(identifier : string, ?id : string, ?name : string, ?description : string, ?creators : ResizeArray<LDNode>, ?hasParts : ResizeArray<LDNode>, ?measurementMethod : LDNode, ?measurementTechnique : LDNode, ?variableMeasureds : ResizeArray<LDNode>, ?abouts : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?context : LDContext) =
+    static member createARCRun(identifier : string, ?mainEntities: ResizeArray<LDNode>, ?id : string, ?name : string, ?description : string, ?creators : ResizeArray<LDNode>, ?hasParts : ResizeArray<LDNode>, ?measurementMethod : LDNode, ?measurementTechnique : LDNode, ?variableMeasureds : ResizeArray<LDNode>, ?abouts : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?context : LDContext) =
         let id = match id with
                  | Some i -> i
                  | None -> LDDataset.genIDARCRun(identifier)
         let s = LDDataset.create(id, identier = identifier, ?name = name, ?description = description, ?creators = creators, ?hasParts = hasParts, ?measurementMethod = measurementMethod, ?measurementTechnique = measurementTechnique, ?variableMeasureds = variableMeasureds, ?abouts = abouts, ?mentions = mentions, ?comments = comments, ?context = context)
         s.AdditionalType <- ResizeArray ["Run"]
+        mainEntities |> Option.iter (fun me -> s.SetProperty(LDDataset.mainEntity, me, ?context = context))
+        // Add conformsTo for workflow run profiles
+        let conformsToRefs = ResizeArray [
+            LDRef("https://w3id.org/ro/wfrun/process/0.5")
+            LDRef("https://w3id.org/ro/wfrun/workflow/0.5")
+            LDRef("https://w3id.org/workflowhub/workflow-ro-crate/1.0")
+        ]
+        s.SetProperty(LDDataset.conformsTo, conformsToRefs, ?context = context)
         s

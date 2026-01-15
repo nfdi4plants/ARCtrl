@@ -1805,7 +1805,7 @@ let tests_YAMLInputValue =
             let runName = "MyRun"
             let value = ["a"; "b"]
             let paramValue = CWLParameterReference(name, values = ResizeArray value)
-            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Array(CWLType.String))
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Array({ Items = CWLType.String; Label = None; Doc = None; Name = None }))
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let propValue = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
             Expect.sequenceEqual propValue.SchemaType [LDPropertyValue.schemaType] "PropertyValue should have correct schema type"
@@ -1821,7 +1821,7 @@ let tests_YAMLInputValue =
             let value = ["a"; "b"]
             let inputBinding = CWL.InputBinding.create(itemSeparator = ";")
             let paramValue = CWLParameterReference(name, values = ResizeArray value)
-            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Array(CWLType.String), inputBinding = inputBinding)
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Array({ Items = CWLType.String; Label = None; Doc = None; Name = None }), inputBinding = inputBinding)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let propValue = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
             Expect.sequenceEqual propValue.SchemaType [LDPropertyValue.schemaType] "PropertyValue should have correct schema type"
@@ -2004,6 +2004,95 @@ let tests_ArcRun =
             let graph = ro_Run.Flatten()
             let run' = RunConversion.decomposeRun(ro_Run,graph)
             Expect.equal run' run "Run should match"
+        )
+        testCase "WorkflowProtocolAsMainEntity" (fun () ->
+            let run = create_run_full()
+            let ro_Run = RunConversion.composeRun run
+            
+            // Test that workflow protocol is in mainEntity
+            let mainEntities = LDDataset.getMainEntities(ro_Run)
+            Expect.equal mainEntities.Count 1 "Should have one main entity"
+            let workflowProtocol = mainEntities.[0]
+            Expect.isTrue (LDWorkflowProtocol.validate(workflowProtocol)) "Main entity should be a workflow protocol"
+            
+            // Test that workflow protocol is also in hasParts
+            let hasParts = LDDataset.getHasParts(ro_Run)
+            let workflowInHasParts = hasParts |> Seq.exists (fun hp -> hp.Id = workflowProtocol.Id)
+            Expect.isTrue workflowInHasParts "Workflow protocol should be in hasParts"
+            
+            // Test that workflow protocol is a File
+            Expect.isTrue (LDFile.validate(workflowProtocol)) "Workflow protocol should be a File"
+            
+            // Test workflow protocol has required properties
+            let inputs = LDComputationalWorkflow.getInputs workflowProtocol
+            Expect.isTrue (inputs.Count > 0) "Workflow protocol should have inputs"
+            
+            let outputs = LDComputationalWorkflow.getOutputs workflowProtocol
+            Expect.isTrue (outputs.Count > 0) "Workflow protocol should have outputs"
+            
+            let programmingLanguages = LDComputationalWorkflow.getProgrammingLanguages workflowProtocol
+            Expect.hasLength programmingLanguages 1 "Workflow protocol should have one programming language"
+            Expect.isTrue (LDComputerLanguage.validateCWL(programmingLanguages.[0])) "Programming language should be CWL"
+            
+            // Test workflow protocol has creator, publisher, and dateCreated
+            let creators = LDComputationalWorkflow.getCreators workflowProtocol
+            Expect.equal creators.Count 1 "Workflow protocol should have one creator"
+            Expect.isTrue (LDPerson.validate(creators.[0])) "Creator should be a Person"
+            
+            let publisher = Expect.wantSome (LDComputationalWorkflow.tryGetSdPublisher workflowProtocol) "Workflow protocol should have a publisher"
+            Expect.isTrue (LDOrganization.validate(publisher)) "Publisher should be an Organization"
+            let publisherName = Expect.wantSome (LDOrganization.tryGetNameAsString publisher) "Publisher should have a name"
+            Expect.equal publisherName "DataPLANT" "Publisher name should be DataPLANT"
+            
+            let dateCreated = Expect.wantSome (LDComputationalWorkflow.tryGetDateCreatedAsDateTime workflowProtocol) "Workflow protocol should have dateCreated"
+            Expect.isSome (Some dateCreated) "DateCreated should exist"
+            
+            // Test decomposition works with mainEntity
+            let run' = RunConversion.decomposeRun ro_Run
+            Expect.equal run' run "Run should match after decomposition"
+        )
+        testCase "WorkflowProtocolAsMainEntity_Flattened" (fun () ->
+            let run = create_run_full()
+            let ro_Run = RunConversion.composeRun run
+            let graph = ro_Run.Flatten()
+            
+            // Test that mainEntity is still accessible after flattening
+            let mainEntityRef = Expect.wantSome (ro_Run.TryGetPropertyAsSingleton(LDDataset.mainEntity)) "Run should have mainEntity"
+            Expect.isTrue (mainEntityRef :? LDRef) "MainEntity should be flattened to LDRef"
+            
+            // Retrieve workflow protocol from graph
+            let mainEntities = LDDataset.getMainEntities(ro_Run, graph = graph)
+            Expect.equal mainEntities.Count 1 "Should have one main entity"
+            let workflowProtocol = mainEntities.[0]
+            Expect.isTrue (LDWorkflowProtocol.validate(workflowProtocol)) "Main entity should be a workflow protocol"
+            
+            // Test workflow protocol has required properties after flattening
+            let inputs = LDComputationalWorkflow.getInputs(workflowProtocol, graph = graph)
+            Expect.isTrue (inputs.Count > 0) "Workflow protocol should have inputs"
+            
+            let outputs = LDComputationalWorkflow.getOutputs(workflowProtocol, graph = graph)
+            Expect.isTrue (outputs.Count > 0) "Workflow protocol should have outputs"
+            
+            let programmingLanguages = LDComputationalWorkflow.getProgrammingLanguages(workflowProtocol, graph = graph)
+            Expect.hasLength programmingLanguages 1 "Workflow protocol should have one programming language"
+            Expect.isTrue (LDComputerLanguage.validateCWL(programmingLanguages.[0])) "Programming language should be CWL"
+            
+            // Test workflow protocol has creator, publisher, and dateCreated after flattening
+            let creators = LDComputationalWorkflow.getCreators(workflowProtocol, graph = graph)
+            Expect.equal creators.Count 1 "Workflow protocol should have one creator"
+            Expect.isTrue (LDPerson.validate(creators.[0])) "Creator should be a Person"
+            
+            let publisher = Expect.wantSome (LDComputationalWorkflow.tryGetSdPublisher(workflowProtocol, graph = graph)) "Workflow protocol should have a publisher"
+            Expect.isTrue (LDOrganization.validate(publisher)) "Publisher should be an Organization"
+            let publisherName = Expect.wantSome (LDOrganization.tryGetNameAsString publisher) "Publisher should have a name"
+            Expect.equal publisherName "DataPLANT" "Publisher name should be DataPLANT"
+            
+            let dateCreated = Expect.wantSome (LDComputationalWorkflow.tryGetDateCreatedAsDateTime workflowProtocol) "Workflow protocol should have dateCreated"
+            Expect.isSome (Some dateCreated) "DateCreated should exist"
+            
+            // Test decomposition works with mainEntity and graph
+            let run' = RunConversion.decomposeRun(ro_Run, graph = graph)
+            Expect.equal run' run "Run should match after decomposition with graph"
         )
 
 
@@ -2371,6 +2460,46 @@ let tests_Investigation =
             let table2' = assay'.GetTable("Growth")
             Expect.arcTableEqual table1' table1 "Table1 should match"
             Expect.arcTableEqual table2' table2 "Table2 should match"
+        )
+        testCase "RunNoCWL" (fun () ->
+            let run = ArcRun("MyRun")
+            let p = ArcInvestigation(
+                identifier = "My Investigation",
+                title = "My Best Investigation",
+                runs = ResizeArray [run]
+                )
+            Expect.throws (fun () -> InvestigationConversion.composeInvestigation p |> ignore ) "Investigation with Run without CWL should throw error"
+        )
+        testCase "RunNoCWL_Ignore" (fun () ->
+            let run = ArcRun("MyRun")
+            let p = ArcInvestigation(
+                identifier = "My Investigation",
+                title = "My Best Investigation",
+                runs = ResizeArray [run]
+                )
+            let ro_Investigation = InvestigationConversion.composeInvestigation(p,ignoreBrokenWR = true)
+            let datasets = LDDataset.getHasPartsAsDataset ro_Investigation
+            Expect.hasLength datasets 0 "Investigation should have no sub datasets (runs ignored)"
+        )
+        testCase "WorkflowNoCWL" (fun () ->
+            let workflow = ArcWorkflow("MyWorkflow")
+            let p = ArcInvestigation(
+                identifier = "My Investigation",
+                title = "My Best Investigation",
+                workflows = ResizeArray [workflow]
+                )
+            Expect.throws (fun () -> InvestigationConversion.composeInvestigation p |> ignore ) "Investigation with Workflow without CWL should throw error"
+        )
+        testCase "WorkflowNoCWL_Ignore" (fun () ->
+            let workflow = ArcWorkflow("MyWorkflow")
+            let p = ArcInvestigation(
+                identifier = "My Investigation",
+                title = "My Best Investigation",
+                workflows = ResizeArray [workflow]
+                )
+            let ro_Investigation = InvestigationConversion.composeInvestigation(p,ignoreBrokenWR = true)
+            let datasets = LDDataset.getHasPartsAsDataset ro_Investigation
+            Expect.hasLength datasets 0 "Investigation should have no sub datasets (workflows ignored)"
         )
     ]
 

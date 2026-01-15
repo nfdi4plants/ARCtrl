@@ -177,6 +177,7 @@ type WorkflowConversion =
             |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
         LDWorkflowProtocol.create(
             id = filePath,
+            name = filePath,
             ?inputs = inputs,
             programmingLanguages = ResizeArray.singleton (LDComputerLanguage.createCWL()),
             outputs = outputs,
@@ -213,6 +214,7 @@ type WorkflowConversion =
             |> ResizeArray.map (fun s -> WorkflowConversion.composeWorkflowStep(s, filePath))
         LDWorkflowProtocol.create(
             id = filePath,
+            name = filePath,
             inputs = inputs,
             outputs = outputs,
             programmingLanguages = ResizeArray.singleton (LDComputerLanguage.createCWL()),
@@ -266,6 +268,16 @@ type WorkflowConversion =
             match workflow.CWLDescription with
             | Some pu -> WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(workflowFilePath, pu, workflowName = workflow.Identifier)
             | None -> failwithf "Workflow %s must have a CWL description" workflow.Identifier
+        let publisher = LDOrganization.create("DataPLANT")
+        let creators =
+            workflow.Contacts
+            |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
+            |> Option.fromSeq
+        let dateCreated = System.DateTime.UtcNow
+        if creators.IsSome then
+            LDComputationalWorkflow.setCreators(workflowProtocol, creators.Value)
+        LDComputationalWorkflow.setSdPublisher(workflowProtocol, publisher)
+        LDComputationalWorkflow.setDateCreatedAsDateTime(workflowProtocol, dateCreated)
         if workflow.Version.IsSome then
             LDLabProtocol.setVersionAsString(workflowProtocol, workflow.Version.Value)
         if workflow.URI.IsSome then
@@ -292,13 +304,11 @@ type WorkflowConversion =
                 workflow.Components
                 |> ResizeArray.map WorkflowConversion.composeComputationalTool
             LDLabProtocol.setComputationalTools(workflowProtocol, softwareTools)
-        let creators =
-            workflow.Contacts
-            |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
-            |> Option.fromSeq
         let hasParts =
-            dataFiles
-            |> Option.fromSeq
+            if dataFiles.Count = 0 then
+                ResizeArray.singleton workflowProtocol |> Some
+            else
+                ResizeArray.appendSingleton workflowProtocol dataFiles |> Some
         let comments =
             workflow.Comments
             |> ResizeArray.map (fun c -> BaseTypes.composeComment c)

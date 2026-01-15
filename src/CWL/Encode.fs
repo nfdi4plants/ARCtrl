@@ -37,6 +37,20 @@ module Encode =
         | Some v -> acc @ [name, encoder v]
         | None -> acc
 
+    let normalizeDocString (doc:string) =
+        doc.Replace("\r\n","\n").TrimEnd('\n').TrimEnd('\r')
+
+    let encodeLabel (label:string) : (string * YAMLElement) =
+        "label", Encode.string label
+
+    let encodeDoc (doc:string) : (string * YAMLElement) =
+        "doc", Encode.string (normalizeDocString doc)
+
+    let inline private appendOptPair pairOpt acc =
+        match pairOpt with
+        | Some pair -> acc @ [pair]
+        | None -> acc
+
     // ------------------------------
     // CWLType encoder
     // ------------------------------
@@ -57,9 +71,45 @@ module Encode =
         | Boolean -> Encode.string "boolean"
         | Stdout -> Encode.string "stdout"
         | Null -> Encode.string "null"
-        | Array inner ->
+        | Union types ->
+            // Check if this is an optional type (union of null and one other type)
+            let typesList = types |> Seq.toList
+            match typesList with
+            | [Null; otherType] | [otherType; Null] ->
+                // Optional type - use short form with "?"
+                match otherType with
+                | File _ -> Encode.string "File?"
+                | Directory _ -> Encode.string "Directory?"
+                | String -> Encode.string "string?"
+                | Int -> Encode.string "int?"
+                | Long -> Encode.string "long?"
+                | Float -> Encode.string "float?"
+                | Double -> Encode.string "double?"
+                | Boolean -> Encode.string "boolean?"
+                | Array arraySchema ->
+                    // Optional array - check if items are simple
+                    match arraySchema.Items with
+                    | File _ -> Encode.string "File[]?"
+                    | Directory _ -> Encode.string "Directory[]?"
+                    | String -> Encode.string "string[]?"
+                    | Int -> Encode.string "int[]?"
+                    | Long -> Encode.string "long[]?"
+                    | Float -> Encode.string "float[]?"
+                    | Double -> Encode.string "double[]?"
+                    | Boolean -> Encode.string "boolean[]?"
+                    | _ -> 
+                        // Complex optional array - use full form
+                        YAMLElement.Sequence [ Encode.string "null"; encodeInputArraySchema arraySchema ]
+                | _ ->
+                    // Complex optional type - use array form [null, type]
+                    typesList |> List.map encodeCWLType |> YAMLElement.Sequence
+            | _ ->
+                // General union - use array form
+                typesList |> List.map encodeCWLType |> YAMLElement.Sequence
+        | Array arraySchema ->
+            // Try to use short form for simple arrays
             let shortForm =
-                match inner with
+                match arraySchema.Items with
                 | File _ -> Some "File[]"
                 | Directory _ -> Some "Directory[]"
                 | Dirent _ -> Some "Dirent[]"
@@ -72,7 +122,36 @@ module Encode =
                 | _ -> None
             match shortForm with
             | Some s -> Encode.string s
-            | None -> [ "type", Encode.string "array"; "items", encodeCWLType inner ] |> yMap
+            | None -> encodeInputArraySchema arraySchema
+        | Record recordSchema -> encodeInputRecordSchema recordSchema
+        | Enum enumSchema -> encodeInputEnumSchema enumSchema
+
+    // ------------------------------
+    // InputRecordSchema encoders
+    // ------------------------------
+
+    and encodeInputRecordField (field:InputRecordField) : (string * YAMLElement) =
+        field.Name, yMap [ "type", encodeCWLType field.Type ]
+
+    and encodeInputRecordSchema (schema:InputRecordSchema) : YAMLElement =
+        let fieldsElement =
+            match schema.Fields with
+            | Some fs ->
+                let fieldPairs = fs |> Seq.map encodeInputRecordField |> Seq.toList
+                yMap fieldPairs
+            | None -> yMap []
+        
+        yMap [ "type", Encode.string "record"; "fields", fieldsElement ]
+
+    and encodeInputEnumSchema (schema:InputEnumSchema) : YAMLElement =
+        let pairs =
+            [ "type", Encode.string "enum" ]
+            @ [ "symbols", (schema.Symbols |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence) ]
+        
+        yMap pairs
+
+    and encodeInputArraySchema (schema:InputArraySchema) : YAMLElement =
+        yMap [ "type", Encode.string "array"; "items", encodeCWLType schema.Items ]
 
     // ------------------------------
     // Binding & Port encoders
@@ -84,9 +163,52 @@ module Encode =
         |> yMap
 
     let encodeCWLOutput (o:CWLOutput) : (string * YAMLElement) =
+        let typeElement = o.Type_ |> Option.map (fun t ->
+            match t with
+            | Union types ->
+                // Check if this is a simple optional (encodeCWLType handles the short form)
+                let typesList = types |> Seq.toList
+                match typesList with
+                | [Null; otherType] | [otherType; Null] ->
+                    // Simple optional or optional simple array - use short form
+                    match otherType with
+                    | File _ | Directory _ | String | Int | Long | Float | Double | Boolean ->
+                        encodeCWLType t
+                    | Array arraySchema ->
+                        match arraySchema.Items with
+                        | File _ | Directory _ | String | Int | Long | Float | Double | Boolean ->
+                            encodeCWLType t
+                        | _ ->
+                            // Complex optional array
+                            encodeCWLType t
+                    | _ ->
+                        // Complex optional type
+                        encodeCWLType t
+                | _ ->
+                    // General union
+                    encodeCWLType t
+            | Array arraySchema ->
+                // Check if we can use short form
+                match arraySchema.Items with
+                | File _ | Directory _ | Dirent _ | String | Int | Long | Float | Double | Boolean ->
+                    encodeCWLType t
+                | _ ->
+                    // Complex array - need full schema form wrapped in "type"
+                    yMap [ "type", encodeInputArraySchema arraySchema ]
+            | Record recordSchema ->
+                // Record needs full schema form wrapped in "type"
+                yMap [ "type", encodeInputRecordSchema recordSchema ]
+            | Enum enumSchema ->
+                // Enum needs full schema form wrapped in "type"
+                yMap [ "type", encodeInputEnumSchema enumSchema ]
+            | _ ->
+                // Simple types
+                encodeCWLType t
+        )
+        
         let pairs =
             []
-            |> appendOpt "type" (fun t -> encodeCWLType t) o.Type_
+            |> appendOpt "type" id typeElement
             |> appendOpt "outputBinding" encodeOutputBinding o.OutputBinding
             |> appendOpt "outputSource" Encode.string o.OutputSource
         match pairs with
@@ -104,9 +226,52 @@ module Encode =
         |> yMap
 
     let encodeCWLInput (i:CWLInput) : (string * YAMLElement) =
+        let typeElement = i.Type_ |> Option.map (fun t ->
+            match t with
+            | Union types ->
+                // Check if this is a simple optional (encodeCWLType handles the short form)
+                let typesList = types |> Seq.toList
+                match typesList with
+                | [Null; otherType] | [otherType; Null] ->
+                    // Simple optional or optional simple array - use short form
+                    match otherType with
+                    | File _ | Directory _ | String | Int | Long | Float | Double | Boolean ->
+                        encodeCWLType t
+                    | Array arraySchema ->
+                        match arraySchema.Items with
+                        | File _ | Directory _ | String | Int | Long | Float | Double | Boolean ->
+                            encodeCWLType t
+                        | _ ->
+                            // Complex optional array
+                            encodeCWLType t
+                    | _ ->
+                        // Complex optional type
+                        encodeCWLType t
+                | _ ->
+                    // General union
+                    encodeCWLType t
+            | Array arraySchema ->
+                // Check if we can use short form
+                match arraySchema.Items with
+                | File _ | Directory _ | Dirent _ | String | Int | Long | Float | Double | Boolean ->
+                    encodeCWLType t
+                | _ ->
+                    // Complex array - need full schema form wrapped in "type"
+                    yMap [ "type", encodeInputArraySchema arraySchema ]
+            | Record recordSchema ->
+                // Record needs full schema form wrapped in "type"
+                yMap [ "type", encodeInputRecordSchema recordSchema ]
+            | Enum enumSchema ->
+                // Enum needs full schema form wrapped in "type"
+                yMap [ "type", encodeInputEnumSchema enumSchema ]
+            | _ ->
+                // Simple types
+                encodeCWLType t
+        )
+        
         let pairs =
             []
-            |> appendOpt "type" encodeCWLType i.Type_
+            |> appendOpt "type" id typeElement
             |> appendOpt "inputBinding" encodeInputBinding i.InputBinding
             |> appendOpt "optional" yBool i.Optional
         match pairs with
@@ -197,14 +362,27 @@ module Encode =
     // ------------------------------
     // Workflow step encoders
     // ------------------------------
+    
+    /// Encode a ResizeArray<string> as either a single string or a sequence
+    let encodeSourceArray (sources:ResizeArray<string>) : YAMLElement =
+        match sources.Count with
+        | 1 -> Encode.string sources.[0]
+        | _ -> 
+            // Create sequence with each item as an Object[Value] to force block-style rendering
+            sources 
+            |> Seq.map (fun s -> YAMLElement.Object [YAMLElement.Value { Value = s; Comment = None }])
+            |> List.ofSeq 
+            |> YAMLElement.Sequence
+    
     let encodeStepInput (si:StepInput) : (string * YAMLElement) =
         let pairs =
             []
-            |> appendOpt "source" Encode.string si.Source
+            |> appendOpt "source" encodeSourceArray si.Source
             |> appendOpt "default" Encode.string si.DefaultValue
             |> appendOpt "valueFrom" Encode.string si.ValueFrom
+            |> appendOpt "linkMerge" Encode.string si.LinkMerge
         match pairs with
-        | [ ("source", s) ] when si.DefaultValue.IsNone && si.ValueFrom.IsNone -> si.Id, s
+        | [ ("source", s) ] when si.DefaultValue.IsNone && si.ValueFrom.IsNone && si.LinkMerge.IsNone -> si.Id, s
         | _ -> si.Id, yMap pairs
 
     let encodeStepInputs (inputs:ResizeArray<StepInput>) : YAMLElement =
@@ -243,7 +421,11 @@ module Encode =
         // Build each top-level section separately to control blank line placement like fixtures
         let section (pairs:(string*YAMLElement) list) =
             pairs |> yMap |> writeYaml |> fun s -> s.Replace("\r\n","\n").TrimEnd('\n').Split('\n') |> Array.toList
-        let baseLines = section ["cwlVersion", Encode.string td.CWLVersion; "class", Encode.string "CommandLineTool"]
+        let basePairs =
+            [ "cwlVersion", Encode.string td.CWLVersion; "class", Encode.string "CommandLineTool" ]
+            |> appendOptPair (td.Label |> Option.map encodeLabel)
+            |> appendOptPair (td.Doc |> Option.map encodeDoc)
+        let baseLines = section basePairs
         let hintsLines = td.Hints |> Option.map (fun h -> section ["hints", (h |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence)])
         let reqLines = td.Requirements |> Option.map (fun r -> section ["requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence)])
         let baseCommandLines = td.BaseCommand |> Option.map (fun bc -> section ["baseCommand", (bc |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence)])
@@ -282,7 +464,11 @@ module Encode =
     let encodeWorkflowDescription (wd:CWLWorkflowDescription) : string =
         let section (pairs:(string*YAMLElement) list) =
             pairs |> yMap |> writeYaml |> fun s -> s.Replace("\r\n","\n").TrimEnd('\n').Split('\n') |> Array.toList
-        let baseLines = section ["cwlVersion", Encode.string wd.CWLVersion; "class", Encode.string "Workflow"]
+        let basePairs =
+            [ "cwlVersion", Encode.string wd.CWLVersion; "class", Encode.string "Workflow" ]
+            |> appendOptPair (wd.Label |> Option.map encodeLabel)
+            |> appendOptPair (wd.Doc |> Option.map encodeDoc)
+        let baseLines = section basePairs
         let reqLines = wd.Requirements |> Option.map (fun r -> section ["requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence)])
         let inputsLines = section ["inputs", (wd.Inputs |> Seq.map encodeCWLInput |> Seq.toList |> yMap)]
         let stepsLines = section ["steps", (wd.Steps |> Seq.map encodeWorkflowStep |> Seq.toList |> yMap)]

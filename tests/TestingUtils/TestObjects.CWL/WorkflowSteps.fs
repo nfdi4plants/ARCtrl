@@ -14,7 +14,10 @@ let workflowStepsFileContent ="""steps:
       stageDirectory:
         source: stage
       inputDirectory:
-        source: MzMLToMzlite/dir
+        source:
+          - MzMLToMzlite/dir1
+          - MzMLToMzlite/dir2
+        linkMerge: merge_flattened
       parallelismLevel:
         default: 8
       outputDirectory:

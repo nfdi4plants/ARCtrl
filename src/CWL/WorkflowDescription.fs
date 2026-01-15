@@ -12,7 +12,9 @@ type CWLWorkflowDescription(
     ?cwlVersion: string,
     ?requirements: ResizeArray<Requirement>,
     ?hints: ResizeArray<Requirement>,
-    ?metadata: DynamicObj
+    ?metadata: DynamicObj,
+    ?label: string,
+    ?doc: string
 ) =
     inherit DynamicObj()
 
@@ -23,6 +25,8 @@ type CWLWorkflowDescription(
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<Requirement> option = hints
     let mutable _metadata: DynamicObj option = metadata
+    let mutable _label: string option = label
+    let mutable _doc: string option = doc
 
     member this.CWLVersion
         with get() = _cwlVersion
@@ -51,3 +55,11 @@ type CWLWorkflowDescription(
     member this.Metadata
         with get() = _metadata
         and set(metadata) = _metadata <- metadata
+
+    member this.Label
+        with get() = _label
+        and set(label) = _label <- label
+
+    member this.Doc
+        with get() = _doc
+        and set(doc) = _doc <- doc

@@ -34,7 +34,7 @@ module TypeExtensions =
         static member fromROCrateRun (a : LDNode, ?graph : LDGraph, ?context : LDContext) = RunConversion.decomposeRun(a, ?graph = graph, ?context = context)
 
     type ArcInvestigation with
-        member this.ToROCrateInvestigation(?fs) = InvestigationConversion.composeInvestigation(this, ?fs = fs)
+        member this.ToROCrateInvestigation(?fs, ?ignoreBrokenWR) = InvestigationConversion.composeInvestigation(this, ?fs = fs, ?ignoreBrokenWR = ignoreBrokenWR)
     
         static member fromROCrateInvestigation (a : LDNode, ?graph : LDGraph, ?context : LDContext) = InvestigationConversion.decomposeInvestigation(a, ?graph = graph, ?context = context)
 
@@ -94,7 +94,7 @@ module TypeExtensions =
             ArcRun.fromROCrateRun(a, ?graph = graph, ?context = context)
 
         // Investigation
-        static member arcInvestigationToDataset(a : ArcInvestigation, ?fs) = a.ToROCrateInvestigation(?fs = fs)
+        static member arcInvestigationToDataset(a : ArcInvestigation, ?fs, ?ignoreBrokenWR) = a.ToROCrateInvestigation(?fs = fs, ?ignoreBrokenWR = ignoreBrokenWR)
 
         static member datasetToArcInvestigation(a : LDNode, ?graph : LDGraph, ?context : LDContext) =
             ArcInvestigation.fromROCrateInvestigation(a, ?graph = graph, ?context = context)       

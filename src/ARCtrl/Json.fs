@@ -71,11 +71,11 @@ module JsonHelper =
         member _.fromJsonString (s: string) = ArcInvestigation.fromJsonString s
         member _.fromCompressedJsonString (s: string) = ArcInvestigation.fromCompressedJsonString s
         member _.fromISAJsonString (s: string) = ArcInvestigation.fromISAJsonString s
-        member _.fromROCrateJsonString (s: string) = ArcInvestigation.fromROCrateJsonString s
+        //member _.fromROCrateJsonString (s: string) = ArcInvestigation.fromROCrateJsonString s
         member _.toJsonString (investigation: ArcInvestigation, ?spaces) = ArcInvestigation.toJsonString(?spaces=spaces) investigation
         member _.toCompressedJsonString (investigation: ArcInvestigation, ?spaces) = ArcInvestigation.toCompressedJsonString(?spaces=spaces) investigation
         member _.toISAJsonString (investigation: ArcInvestigation, ?spaces, ?useIDReferencing) = ArcInvestigation.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) investigation
-        member _.toROCrateJsonString(investigation: ArcInvestigation, ?spaces) = ArcInvestigation.toROCrateJsonString(?spaces=spaces) investigation
+        //member _.toROCrateJsonString(investigation: ArcInvestigation, ?spaces) = ArcInvestigation.toROCrateJsonString(?spaces=spaces) investigation
 
     [<AttachMembers>]
     type ARCJson() =

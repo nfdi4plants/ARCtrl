@@ -14,6 +14,19 @@ open ARCtrl.Helper.Regex.ActivePatterns
 
 type RunConversion = 
 
+    /// Helper function to format CWLType for display in error messages
+    static member private formatCWLType (type_ : CWL.CWLType) =
+        CWL.Encode.encodeCWLType type_
+        |> CWL.Encode.writeYaml
+        |> fun s -> s.Trim()
+
+    /// Helper function to check if a CWLType is or contains an Array type
+    static member private isArrayType (type_ : CWL.CWLType) =
+        match type_ with
+        | CWL.CWLType.Array _ -> true
+        | CWL.CWLType.Union types -> types |> Seq.exists (function CWL.CWLType.Array _ -> true | _ -> false)
+        | _ -> false
+
     /// File paths in CWL files are relative to the file itself. In RO-Crate, we use relative paths from the root of the crate.
     ///
     /// This function replaces the relative paths in the CWL input file with paths relative to the root of the crate.
@@ -36,12 +49,14 @@ type RunConversion =
         let type_ = inputParam.Type_.Value
         if inputValue.Type.IsSome then
             if inputValue.Type.Value <> type_ then
-                failwith $"Type ({inputValue.Type.Value.ToString()}) of yml input value \"{inputValue.Key}\" does not match type of workflow input parameter ({type_.ToString()})."
+                let typeStr = RunConversion.formatCWLType inputValue.Type.Value
+                let paramTypeStr = RunConversion.formatCWLType type_
+                failwith $"Type ({typeStr}) of yml input value \"{inputValue.Key}\" does not match type of workflow input parameter ({paramTypeStr})."
         match type_ with
         | CWL.CWLType.File _ when inputValue.Values.Count = 1 ->
             let path = RunConversion.composeCWLInputFilePath(inputValue.Values[0], runName)
             LDFile.createCWLParameter(path, exampleOfWork = exampleOfWork)
-        | _ when type_.ToString().ToLower().Contains("array") ->
+        | _ when RunConversion.isArrayType type_ ->
             let separator =
                 inputParam.InputBinding
                 |> Option.bind (fun ib -> ib.ItemSeparator)
@@ -157,6 +172,11 @@ type RunConversion =
         cwlDescription, parameterRefs
 
     static member composeRun (run : ArcRun, ?fs : FileSystem) =
+        let workflowProtocol =
+            let workflowFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
+            match run.CWLDescription with
+            | Some pu -> WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(workflowFilePath, pu, runName = run.Identifier)
+            | None -> failwithf "Run %s must have a CWL description" run.Identifier
         let workflowInvocations =
             RunConversion.composeWorkflowInvocationFromArcRun(run, ?fs = fs)
             |> Option.fromSeq
@@ -167,12 +187,22 @@ type RunConversion =
             run.Performers
             |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
             |> Option.fromSeq
+        let publisher = LDOrganization.create("DataPLANT")
+        let dateCreated = System.DateTime.UtcNow
+        if creators.IsSome then
+            LDComputationalWorkflow.setCreators(workflowProtocol, creators.Value)
+        LDComputationalWorkflow.setSdPublisher(workflowProtocol, publisher)
+        LDComputationalWorkflow.setDateCreatedAsDateTime(workflowProtocol, dateCreated)
         let fragmentDescriptors =
             run.Datamap
             |> Option.map DatamapConversion.composeFragmentDescriptors
         let dataFiles = 
             workflowInvocations
             |> Option.map (fun ps -> AssayConversion.getDataFilesFromProcesses(ps, ?fragmentDescriptors = fragmentDescriptors))
+        let hasParts =
+            match dataFiles with
+            | Some df -> ResizeArray.appendSingleton workflowProtocol df |> Some
+            | None -> ResizeArray.singleton workflowProtocol |> Some
         let variableMeasureds =
             match variableMeasured, fragmentDescriptors with
             | Some vm, Some fds -> ResizeArray.appendSingleton vm fds |> Some
@@ -185,10 +215,11 @@ type RunConversion =
             |> Option.fromSeq
         LDDataset.createARCRun(
             identifier = run.Identifier,
+            mainEntities = ResizeArray.singleton workflowProtocol,
             ?name = run.Title,
             ?description = run.Description, 
             ?creators = creators,
-            ?hasParts = dataFiles,
+            ?hasParts = hasParts,
             ?measurementMethod = measurementMethod,
             ?measurementTechnique = measurementTechnique,
             ?variableMeasureds = variableMeasureds,
@@ -198,6 +229,7 @@ type RunConversion =
         )
 
     static member decomposeRun (run : LDNode, ?graph : LDGraph, ?context : LDContext) : ArcRun=
+        let workflowProtocol = LDDataset.tryGetMainEntityAsWorkflowProtocol(run, ?graph = graph, ?context = context)
         let mainWorkflowInvocation =
             LDDataset.getAboutsAsWorkflowInvocation(run, ?graph = graph, ?context = context)
             |> Seq.find (fun wi ->
@@ -206,7 +238,15 @@ type RunConversion =
                 | _ -> false
             )
         let cwlDescription, parameterRefs =
-            RunConversion.decomposeMainWorkflowInvocation(mainWorkflowInvocation, LDDataset.getIdentifierAsString(run, ?context = context), ?context = context, ?graph = graph)
+            match workflowProtocol with
+            | Some wp ->
+                WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(wp, ?context = context, ?graph = graph),
+                LDLabProcess.getObjects(mainWorkflowInvocation, ?graph = graph, ?context = context)
+                |> ResizeArray.map (fun iv ->
+                    RunConversion.decomposeCWLInputValue(iv, runName = LDDataset.getIdentifierAsString(run, ?context = context), ?context = context, ?graph = graph)
+                )
+            | None ->
+                RunConversion.decomposeMainWorkflowInvocation(mainWorkflowInvocation, LDDataset.getIdentifierAsString(run, ?context = context), ?context = context, ?graph = graph)
         let measurementMethod = 
             LDDataset.tryGetMeasurementMethodAsDefinedTerm(run, ?graph = graph, ?context = context)
             |> Option.map (fun m -> BaseTypes.decomposeDefinedTerm(m, ?context = context))
