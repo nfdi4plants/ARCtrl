@@ -1,6 +1,7 @@
 namespace ARCtrl
 
 open ARCtrl.CWL
+open Fable.Core
 
 module YamlHelper =
 
@@ -18,9 +19,9 @@ module YamlHelper =
                 |> Seq.map (fun p -> 
                     let values = 
                         if p.Values.Count = 1 then
-                            Encode.string p.Values.[0]
+                            YAMLicious.Encode.string p.Values.[0]
                         else
-                            Encode.list (p.Values |> Seq.map Encode.string |> Seq.toList)
+                            YAMLicious.Encode.seq YAMLicious.Encode.string p.Values
                     (p.Key, values)
                 )
                 |> Seq.toList
