@@ -159,6 +159,10 @@ module Expect =
     let exists actual asserter message = Expect.exists actual asserter message 
     let containsAll actual expected message = Expect.containsAll actual expected message
 
+    let stringContains (actual: string) (substring: string) message =
+        if not (actual.Contains(substring)) then
+            failwithf "%s. Expected string to contain '%s', but it did not. Actual: %s" message substring actual
+
     let wantFaster (f : unit -> 'T) (maxMilliseconds : int) (message : string) = 
         let stopwatch = Stopwatch()
         stopwatch.Start()
