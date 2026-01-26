@@ -86,6 +86,24 @@ module Decode =
         | "null" -> Null
         | _ -> failwith $"Invalid CWL simple type: {s}"
 
+    /// Recursively parse array shorthand notation (File[][], string[][][], etc.)
+    let rec parseArrayShorthand (typeStr: string) : CWLType option =
+        if typeStr.EndsWith("[]") then
+            let innerType = typeStr.Substring(0, typeStr.Length - 2)
+            // Try to parse the inner type recursively
+            match parseArrayShorthand innerType with
+            | Some innerCwlType ->
+                // Nested array
+                Some (Array { Items = innerCwlType; Label = None; Doc = None; Name = None })
+            | None ->
+                // Base type with array suffix
+                try
+                    let baseType = cwlSimpleTypeFromString innerType
+                    Some (Array { Items = baseType; Label = None; Doc = None; Name = None })
+                with _ -> None
+        else
+            None
+
     /// Decode an InputArraySchema from a YAMLElement
     and inputArraySchemaDecoder: (YAMLiciousTypes.YAMLElement -> InputArraySchema) =
         Decode.object (fun get ->
@@ -173,13 +191,11 @@ module Decode =
                 else
                     typeStr, false
             
-            // Handle array suffix
+            // Try to parse as array shorthand (handles arbitrary nesting recursively)
             let baseType = 
-                if stripped.EndsWith("[]") then
-                    let baseType = stripped.Replace("[]", "")
-                    Array { Items = cwlSimpleTypeFromString baseType; Label = None; Doc = None; Name = None }
-                else
-                    cwlSimpleTypeFromString stripped
+                match parseArrayShorthand stripped with
+                | Some arrayType -> arrayType
+                | None -> cwlSimpleTypeFromString stripped
             
             // Wrap in Union if optional
             if isOptional then
@@ -219,23 +235,13 @@ module Decode =
                 true, t.Replace("?", "")
             else
                 false, t
+        
+        // Try to parse as array shorthand (handles arbitrary nesting recursively)
         let cwlType =
-            if newT.EndsWith("[]") then
-                let baseType = newT.Replace("[]", "")
-                let baseItem = 
-                    match baseType with
-                    | "File" -> File (FileInstance ())
-                    | "Directory" -> Directory (DirectoryInstance ())
-                    | "Dirent" -> (get.Required.Field "listing" direntDecoder)
-                    | "string" -> String
-                    | "int" -> Int
-                    | "long" -> Long
-                    | "float" -> Float
-                    | "double" -> Double
-                    | "boolean" -> Boolean
-                    | _ -> failwith "Invalid CWL type"
-                Array { Items = baseItem; Label = None; Doc = None; Name = None }
-            else
+            match parseArrayShorthand newT with
+            | Some arrayType -> arrayType
+            | None ->
+                // Not an array, check for simple types or Dirent
                 match newT with
                 | "File" -> File (FileInstance ())
                 | "Directory" -> Directory (DirectoryInstance ())
@@ -249,6 +255,7 @@ module Decode =
                 | "stdout" -> Stdout
                 | "null" -> Null
                 | _ -> failwith "Invalid CWL type"
+        
         // Wrap in Union if optional
         let finalType = 
             if optional then

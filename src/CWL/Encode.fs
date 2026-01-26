@@ -52,6 +52,25 @@ module Encode =
         | None -> acc
 
     // ------------------------------
+    // Helper for recursive array shorthand detection
+    // ------------------------------
+    let rec tryGetArrayShorthand (cwlType: CWLType) : string option =
+        match cwlType with
+        | File _ -> Some "File"
+        | Directory _ -> Some "Directory"
+        | Dirent _ -> Some "Dirent"
+        | String -> Some "string"
+        | Int -> Some "int"
+        | Long -> Some "long"
+        | Float -> Some "float"
+        | Double -> Some "double"
+        | Boolean -> Some "boolean"
+        | Array innerSchema ->
+            // Recursively get shorthand for inner type and append []
+            tryGetArrayShorthand innerSchema.Items |> Option.map (fun s -> s + "[]")
+        | _ -> None
+
+    // ------------------------------
     // CWLType encoder
     // ------------------------------
     let rec encodeCWLType (t:CWLType) : YAMLElement =
@@ -87,17 +106,10 @@ module Encode =
                 | Double -> Encode.string "double?"
                 | Boolean -> Encode.string "boolean?"
                 | Array arraySchema ->
-                    // Optional array - check if items are simple
-                    match arraySchema.Items with
-                    | File _ -> Encode.string "File[]?"
-                    | Directory _ -> Encode.string "Directory[]?"
-                    | String -> Encode.string "string[]?"
-                    | Int -> Encode.string "int[]?"
-                    | Long -> Encode.string "long[]?"
-                    | Float -> Encode.string "float[]?"
-                    | Double -> Encode.string "double[]?"
-                    | Boolean -> Encode.string "boolean[]?"
-                    | _ -> 
+                    // Optional array - use recursive shorthand detection
+                    match tryGetArrayShorthand arraySchema.Items with
+                    | Some shorthand -> Encode.string (shorthand + "[]?")
+                    | None ->
                         // Complex optional array - use full form
                         YAMLElement.Sequence [ Encode.string "null"; encodeInputArraySchema arraySchema ]
                 | _ ->
@@ -107,21 +119,9 @@ module Encode =
                 // General union - use array form
                 typesList |> List.map encodeCWLType |> YAMLElement.Sequence
         | Array arraySchema ->
-            // Try to use short form for simple arrays
-            let shortForm =
-                match arraySchema.Items with
-                | File _ -> Some "File[]"
-                | Directory _ -> Some "Directory[]"
-                | Dirent _ -> Some "Dirent[]"
-                | String -> Some "string[]"
-                | Int -> Some "int[]"
-                | Long -> Some "long[]"
-                | Float -> Some "float[]"
-                | Double -> Some "double[]"
-                | Boolean -> Some "boolean[]"
-                | _ -> None
-            match shortForm with
-            | Some s -> Encode.string s
+            // Try to use short form for arrays (handles arbitrary nesting depth recursively)
+            match tryGetArrayShorthand arraySchema.Items with
+            | Some shorthand -> Encode.string (shorthand + "[]")
             | None -> encodeInputArraySchema arraySchema
         | Record recordSchema -> encodeInputRecordSchema recordSchema
         | Enum enumSchema -> encodeInputEnumSchema enumSchema
@@ -505,3 +505,54 @@ module Encode =
         match pu with
         | CommandLineTool td -> encodeToolDescription td
         | Workflow wd -> encodeWorkflowDescription wd
+
+    /// Escape a string for JSON
+    let private jsonEscapeString (s: string) =
+        s.Replace("\\", "\\\\")
+         .Replace("\"", "\\\"")
+         .Replace("\n", "\\n")
+         .Replace("\r", "\\r")
+         .Replace("\t", "\\t")
+
+    /// Encode a CWLType to a JSON string
+    /// Note: This is only called for complex types without shorthand notation
+    let rec encodeCWLTypeJson (t: CWLType) : string =
+        match t with
+        | Union types ->
+            // Union of complex types - use array form
+            let encodedTypes = types |> Seq.toList |> List.map encodeCWLTypeJson
+            "[" + String.concat "," encodedTypes + "]"
+        | Array arraySchema ->
+            // Array of complex type
+            encodeInputArraySchemaJson arraySchema
+        | Record recordSchema -> encodeInputRecordSchemaJson recordSchema
+        | Enum enumSchema -> encodeInputEnumSchemaJson enumSchema
+        | _ -> 
+            // Fallback for any simple type (shouldn't be reached, but include for safety)
+            failwith "encodeCWLTypeJson should only be called for complex types"
+
+    and encodeInputRecordFieldJson (field: InputRecordField) : string =
+        sprintf "\"%s\":{\"type\":%s}" (jsonEscapeString field.Name) (encodeCWLTypeJson field.Type)
+
+    and encodeInputRecordSchemaJson (schema: InputRecordSchema) : string =
+        let fieldsJson =
+            match schema.Fields with
+            | Some fs -> 
+                fs |> Seq.map encodeInputRecordFieldJson |> String.concat ","
+            | None -> ""
+        
+        sprintf "{\"type\":\"record\",\"fields\":{%s}}" fieldsJson
+
+    and encodeInputEnumSchemaJson (schema: InputEnumSchema) : string =
+        let symbolsJson = 
+            schema.Symbols 
+            |> Seq.map (fun s -> sprintf "\"%s\"" (jsonEscapeString s)) 
+            |> String.concat ","
+        sprintf "{\"type\":\"enum\",\"symbols\":[%s]}" symbolsJson
+
+    and encodeInputArraySchemaJson (schema: InputArraySchema) : string =
+        sprintf "{\"type\":\"array\",\"items\":%s}" (encodeCWLTypeJson schema.Items)
+
+    /// Convert a CWLType to a compact JSON string for use in JSON serialization
+    let cwlTypeToJsonString (t: CWLType) : string =
+        encodeCWLTypeJson t

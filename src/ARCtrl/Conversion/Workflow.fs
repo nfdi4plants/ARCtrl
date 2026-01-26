@@ -14,9 +14,33 @@ open ARCtrl.Helper.Regex.ActivePatterns
 type WorkflowConversion =
 
     static member composeAdditionalType (t : CWL.CWLType) : string =
-        CWL.Encode.encodeCWLType t
-        |> CWL.Encode.writeYaml
-        |> fun s -> s.Trim()
+        // Check if this is a complex type that needs JSON encoding
+        let isComplexType =
+            match t with
+            | CWL.Record _ | CWL.Enum _ -> true
+            | CWL.Array arraySchema ->
+                // Complex if array doesn't have shorthand (array of record/enum)
+                CWL.Encode.tryGetArrayShorthand arraySchema.Items |> Option.isNone
+            | CWL.Union types ->
+                // Complex if not a simple optional type
+                let typesList = types |> Seq.toList
+                match typesList with
+                | [CWL.Null; otherType] | [otherType; CWL.Null] ->
+                    match otherType with
+                    | CWL.Record _ | CWL.Enum _ -> true
+                    | CWL.Array arraySchema ->
+                        CWL.Encode.tryGetArrayShorthand arraySchema.Items |> Option.isNone
+                    | _ -> false
+                | _ -> true // Multi-type union is complex
+            | _ -> false
+        
+        // Use JSON format for complex types, YAML shorthand for simple types
+        if isComplexType then
+            CWL.Encode.cwlTypeToJsonString t
+        else
+            CWL.Encode.encodeCWLType t
+            |> CWL.Encode.writeYaml
+            |> fun s -> s.Trim()
 
     static member decomposeAdditionalType (t : string) : CWL.CWLType =
         YAMLicious.Decode.object (fun get ->
