@@ -515,7 +515,7 @@ module Encode =
          .Replace("\t", "\\t")
 
     /// Encode a CWLType to a JSON string
-    /// Note: This is only called for complex types without shorthand notation
+    /// Note: This is called for complex types and their nested simple types
     let rec encodeCWLTypeJson (t: CWLType) : string =
         match t with
         | Union types ->
@@ -528,8 +528,9 @@ module Encode =
         | Record recordSchema -> encodeInputRecordSchemaJson recordSchema
         | Enum enumSchema -> encodeInputEnumSchemaJson enumSchema
         | _ -> 
-            // Fallback for any simple type (shouldn't be reached, but include for safety)
-            failwith "encodeCWLTypeJson should only be called for complex types"
+            // Simple type - encode as JSON string with YAML representation
+            let yamlForm = encodeCWLType t |> writeYaml
+            sprintf "\"%s\"" (jsonEscapeString (yamlForm.Trim()))
 
     and encodeInputRecordFieldJson (field: InputRecordField) : string =
         sprintf "\"%s\":{\"type\":%s}" (jsonEscapeString field.Name) (encodeCWLTypeJson field.Type)
