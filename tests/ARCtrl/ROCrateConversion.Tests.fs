@@ -2001,6 +2001,120 @@ let tests_AdditionalTypeEncoding =
         ]
     ]
 
+let tests_AdditionalTypeErrorHandling =
+    testList "AdditionalType_ErrorHandling" [
+        testList "MalformedInput" [
+            testCase "InvalidYAML_ShouldThrow" (fun () ->
+                let invalidYaml = "{{not valid yaml"
+                Expect.throws 
+                    (fun () -> WorkflowConversion.decomposeAdditionalType invalidYaml |> ignore)
+                    "Should throw on invalid YAML syntax"
+            )
+            testCase "UnknownType_ShouldThrow" (fun () ->
+                let unknownType = "unknownPrimitiveType"
+                Expect.throws 
+                    (fun () -> WorkflowConversion.decomposeAdditionalType unknownType |> ignore)
+                    "Should throw on unknown type string"
+            )
+            testCase "MalformedRecord_MissingFields" (fun () ->
+                // Records without fields are actually valid - creates empty record
+                let malformedRecord = "{type: record}"
+                let result = WorkflowConversion.decomposeAdditionalType malformedRecord
+                match result with
+                | CWLType.Record schema -> 
+                    Expect.isTrue (schema.Fields.IsNone || schema.Fields.Value.Count = 0) "Should create empty record"
+                | _ -> failwith "Should decode as record type"
+            )
+            testCase "MalformedEnum_MissingSymbols" (fun () ->
+                let malformedEnum = "{type: enum}"  // Missing required 'symbols' property
+                Expect.throws 
+                    (fun () -> WorkflowConversion.decomposeAdditionalType malformedEnum |> ignore)
+                    "Should throw on enum without symbols"
+            )
+        ]
+        testList "EdgeCases" [
+            testCase "DeeplyNestedRecord" (fun () ->
+                // Test record containing a field that is itself a record
+                let innerField = { Name = "innerField"; Type = CWLType.String; Doc = None; Label = None }
+                let innerRecord = { Fields = Some (ResizeArray [innerField]); Label = None; Doc = None; Name = None }
+                let outerField = { Name = "outerField"; Type = CWLType.Record innerRecord; Doc = None; Label = None }
+                let outerRecord = { Fields = Some (ResizeArray [outerField]); Label = None; Doc = None; Name = None }
+                let original = CWLType.Record outerRecord
+                
+                let encoded = WorkflowConversion.composeAdditionalType original
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                
+                Expect.equal decoded original "Deeply nested record should round-trip correctly"
+            )
+            testCase "UnicodeInFieldNames" (fun () ->
+                let field1 = { Name = "名前"; Type = CWLType.String; Doc = None; Label = None }
+                let field2 = { Name = "年齢"; Type = CWLType.Int; Doc = None; Label = None }
+                let schema = { Fields = Some (ResizeArray [field1; field2]); Label = None; Doc = None; Name = None }
+                let original = CWLType.Record schema
+                
+                let encoded = WorkflowConversion.composeAdditionalType original
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                
+                Expect.equal decoded original "Unicode field names should round-trip correctly"
+            )
+            testCase "UnicodeInEnumSymbols" (fun () ->
+                let symbols = ResizeArray ["オプション1"; "オプション2"; "オプション3"]
+                let schema = { Symbols = symbols; Label = None; Doc = None; Name = None }
+                let original = CWLType.Enum schema
+                
+                let encoded = WorkflowConversion.composeAdditionalType original
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                
+                Expect.equal decoded original "Unicode enum symbols should round-trip correctly"
+            )
+            testCase "EmptyEnumSymbols_NotSupported" (fun () ->
+                // Empty enum symbols cause decoder error - this is a known limitation
+                let schema = { Symbols = ResizeArray []; Label = None; Doc = None; Name = None }
+                let original = CWLType.Enum schema
+                
+                let encoded = WorkflowConversion.composeAdditionalType original
+                // Decoding empty enum currently fails - this is acceptable as empty enums are semantically invalid
+                Expect.throws
+                    (fun () -> WorkflowConversion.decomposeAdditionalType encoded |> ignore)
+                    "Empty enum should fail to decode (known limitation)"
+            )
+            testCase "NullInNonOptionalUnion" (fun () ->
+                // Test union with null not in optional position: [String, Null, Int]
+                let union = ResizeArray [CWLType.String; CWLType.Null; CWLType.Int]
+                let original = CWLType.Union union
+                
+                let encoded = WorkflowConversion.composeAdditionalType original
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                
+                Expect.equal decoded original "Multi-type union with null should round-trip correctly"
+            )
+            testCase "ComplexOptionalType_RecordWithNull" (fun () ->
+                // Test optional complex type: [Null, Record]
+                let field = { Name = "field"; Type = CWLType.String; Doc = None; Label = None }
+                let recordSchema = { Fields = Some (ResizeArray [field]); Label = None; Doc = None; Name = None }
+                let union = ResizeArray [CWLType.Null; CWLType.Record recordSchema]
+                let original = CWLType.Union union
+                
+                let encoded = WorkflowConversion.composeAdditionalType original
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                
+                Expect.equal decoded original "Optional record type should round-trip correctly"
+            )
+            testCase "ArrayOfUnions_NotSupported" (fun () ->
+                // Array containing union types is not currently supported
+                let unionType = CWLType.Union (ResizeArray [CWLType.String; CWLType.Int])
+                let arraySchema = { Items = unionType; Label = None; Doc = None; Name = None }
+                let original = CWLType.Array arraySchema
+                
+                let encoded = WorkflowConversion.composeAdditionalType original
+                // Decoding arrays of unions currently fails - this is a known limitation
+                Expect.throws
+                    (fun () -> WorkflowConversion.decomposeAdditionalType encoded |> ignore)
+                    "Array of unions should fail to decode (known limitation)"
+            )
+        ]
+    ]
+
 let tests_YAMLInputValue =
     
     testList "YAMLInputValue" [
@@ -2817,6 +2931,7 @@ let main =
         tests_FormalParameter
         tests_AdditionalTypeDecoding
         tests_AdditionalTypeEncoding
+        tests_AdditionalTypeErrorHandling
         tests_YAMLInputValue
         tests_ToolDescription
         tests_WorkflowInvocation
