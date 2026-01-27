@@ -135,6 +135,42 @@ module Decode =
             }
         )
 
+    /// Attempt to decode fields as flow-style array: [{name: x, type: y}]
+    and tryDecodeFieldsAsArray (element: YAMLElement) : ResizeArray<InputRecordField> option =
+        try
+            Decode.resizearray inputRecordFieldDecoder element |> Some
+        with
+        | ex when 
+            ex.Message.Contains("Expected") || 
+            ex.Message.Contains("Required") ||
+            ex.Message.Contains("decode") ->
+            // Decoding failed due to schema mismatch, not system error
+            None
+        // Let other exceptions (OutOfMemory, StackOverflow, etc.) propagate
+
+    /// Attempt to decode fields as map-style: {fieldName: type}
+    and tryDecodeFieldsAsMap (element: YAMLElement) : ResizeArray<InputRecordField> option =
+        try
+            let dict = Decode.object (fun get2 -> get2.Overflow.FieldList []) element
+            let fields = ResizeArray<InputRecordField>()
+            for kvp in dict do
+                let fieldType = cwlTypeDecoder' kvp.Value
+                fields.Add({
+                    Name = kvp.Key
+                    Type = fieldType
+                    Doc = None
+                    Label = None
+                })
+            Some fields
+        with
+        | ex when 
+            ex.Message.Contains("Expected") || 
+            ex.Message.Contains("Required") ||
+            ex.Message.Contains("decode") ->
+            // Decoding failed due to schema mismatch, not system error
+            None
+        // Let other exceptions (OutOfMemory, StackOverflow, etc.) propagate
+
     /// Decode an InputRecordSchema from a YAMLElement
     and inputRecordSchemaDecoder: (YAMLiciousTypes.YAMLElement -> InputRecordSchema) =
         Decode.object (fun get ->
@@ -148,26 +184,10 @@ module Decode =
                     // Empty array case: fields: []
                     Some (ResizeArray<InputRecordField>())
                 | Some element ->
-                    // Try to decode as an array (flow-style: [{name: x, type: y}])
-                    try
-                        let fields = Decode.resizearray inputRecordFieldDecoder element
-                        Some fields
-                    with _ ->
-                        // Fall back to map form (block-style: {x: y})
-                        try
-                            let dict = Decode.object (fun get2 -> get2.Overflow.FieldList []) element
-                            let fields = ResizeArray<InputRecordField>()
-                            for kvp in dict do
-                                let fieldType = cwlTypeDecoder' kvp.Value
-                                
-                                fields.Add({
-                                    Name = kvp.Key
-                                    Type = fieldType
-                                    Doc = None
-                                    Label = None
-                                })
-                            Some fields
-                        with _ -> None
+                    // Try flow-style first, then fall back to map-style
+                    match tryDecodeFieldsAsArray element with
+                    | Some fields -> Some fields
+                    | None -> tryDecodeFieldsAsMap element
                 | None -> None
             
             {
