@@ -2040,7 +2040,8 @@ let tests_AdditionalTypeErrorHandling =
     testList "AdditionalType_ErrorHandling" [
         testList "MalformedInput" [
             testCase "InvalidYAML_ShouldThrow" (fun () ->
-                let invalidYaml = "{{not valid yaml"
+                // Unclosed flow sequence bracket is invalid YAML syntax
+                let invalidYaml = "{type: record, fields: [unclosed"
                 Expect.throws 
                     (fun () -> WorkflowConversion.decomposeAdditionalType invalidYaml |> ignore)
                     "Should throw on invalid YAML syntax"
@@ -2051,10 +2052,10 @@ let tests_AdditionalTypeErrorHandling =
                     (fun () -> WorkflowConversion.decomposeAdditionalType unknownType |> ignore)
                     "Should throw on unknown type string"
             )
-            testCase "MalformedRecord_MissingFields" (fun () ->
-                // Records without fields are actually valid - creates empty record
-                let malformedRecord = "{type: record}"
-                let result = WorkflowConversion.decomposeAdditionalType malformedRecord
+            testCase "RecordWithoutFieldsProperty_CreatesEmptyRecord" (fun () ->
+                // CWL specification allows records without explicit 'fields' property
+                let recordWithoutFields = "{type: record}"
+                let result = WorkflowConversion.decomposeAdditionalType recordWithoutFields
                 match result with
                 | CWLType.Record schema -> 
                     Expect.isTrue (schema.Fields.IsNone || schema.Fields.Value.Count = 0) "Should create empty record"
@@ -2070,11 +2071,8 @@ let tests_AdditionalTypeErrorHandling =
         testList "EdgeCases" [
             testCase "DeeplyNestedRecord" (fun () ->
                 // Test record containing a field that is itself a record
-                let innerField = { Name = "innerField"; Type = CWLType.String; Doc = None; Label = None }
-                let innerRecord = { Fields = Some (ResizeArray [innerField]); Label = None; Doc = None; Name = None }
-                let outerField = { Name = "outerField"; Type = CWLType.Record innerRecord; Doc = None; Label = None }
-                let outerRecord = { Fields = Some (ResizeArray [outerField]); Label = None; Doc = None; Name = None }
-                let original = CWLType.Record outerRecord
+                let innerRecord = Helper.CWL.record [Helper.CWL.field "innerField" CWLType.String]
+                let original = Helper.CWL.record [Helper.CWL.field "outerField" innerRecord]
                 
                 let encoded = WorkflowConversion.composeAdditionalType original
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
@@ -2082,10 +2080,10 @@ let tests_AdditionalTypeErrorHandling =
                 Expect.equal decoded original "Deeply nested record should round-trip correctly"
             )
             testCase "UnicodeInFieldNames" (fun () ->
-                let field1 = { Name = "名前"; Type = CWLType.String; Doc = None; Label = None }
-                let field2 = { Name = "年齢"; Type = CWLType.Int; Doc = None; Label = None }
-                let schema = { Fields = Some (ResizeArray [field1; field2]); Label = None; Doc = None; Name = None }
-                let original = CWLType.Record schema
+                let original = Helper.CWL.record [
+                    Helper.CWL.field "名前" CWLType.String
+                    Helper.CWL.field "年齢" CWLType.Int
+                ]
                 
                 let encoded = WorkflowConversion.composeAdditionalType original
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
@@ -2093,9 +2091,7 @@ let tests_AdditionalTypeErrorHandling =
                 Expect.equal decoded original "Unicode field names should round-trip correctly"
             )
             testCase "UnicodeInEnumSymbols" (fun () ->
-                let symbols = ResizeArray ["オプション1"; "オプション2"; "オプション3"]
-                let schema = { Symbols = symbols; Label = None; Doc = None; Name = None }
-                let original = CWLType.Enum schema
+                let original = Helper.CWL.enum ["オプション1"; "オプション2"; "オプション3"]
                 
                 let encoded = WorkflowConversion.composeAdditionalType original
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
@@ -2125,10 +2121,9 @@ let tests_AdditionalTypeErrorHandling =
             )
             testCase "ComplexOptionalType_RecordWithNull" (fun () ->
                 // Test optional complex type: [Null, Record]
-                let field = { Name = "field"; Type = CWLType.String; Doc = None; Label = None }
-                let recordSchema = { Fields = Some (ResizeArray [field]); Label = None; Doc = None; Name = None }
-                let union = ResizeArray [CWLType.Null; CWLType.Record recordSchema]
-                let original = CWLType.Union union
+                let original = Helper.CWL.optional (
+                    Helper.CWL.record [Helper.CWL.field "field" CWLType.String]
+                )
                 
                 let encoded = WorkflowConversion.composeAdditionalType original
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
