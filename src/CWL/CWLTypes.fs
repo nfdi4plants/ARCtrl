@@ -33,6 +33,8 @@ type DirentInstance = {
     Writable: bool option
 }
 
+/// Represents an enumeration type with a defined set of valid symbol values.
+/// Per the CWL specification, symbol order is semantically significant and preserved during serialization.
 [<CustomEquality; NoComparison>]
 type InputEnumSchema = {
     Symbols: ResizeArray<string>
@@ -41,6 +43,9 @@ type InputEnumSchema = {
     Name: string option
 }
     with
+        /// Equality comparison that treats symbol order as significant.
+        /// Two enums are equal only if their symbols appear in the same order.
+        /// This follows the CWL specification where enum symbol order matters.
         override this.Equals(o: obj): bool =
             match o with
             | :? InputEnumSchema as other ->

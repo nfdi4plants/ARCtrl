@@ -29,10 +29,14 @@ type WorkflowConversion =
         // Check if it's a simple string (shorthand like "File[]", "string?")
         match yamlElement with
         | YAMLicious.YAMLiciousTypes.YAMLElement.Value _ ->
-            // Shorthand format
+            // Shorthand format: parse string directly without YAML context
+            // Note: YAMLicious.Decode.object requires a YAMLElement for its API,
+            // but cwlTypeStringMatcher only uses the 'get' function and ignores the element.
+            // This placeholder satisfies the function without affecting the actual parsing.
+            let placeholderElement = YAMLicious.YAMLiciousTypes.YAMLElement.Comment "unused-shorthand-context"
             YAMLicious.Decode.object (fun get ->
                 CWL.Decode.cwlTypeStringMatcher t get
-            ) (YAMLicious.YAMLiciousTypes.YAMLElement.Comment "placeholder")
+            ) placeholderElement
             |> fst
         | YAMLicious.YAMLiciousTypes.YAMLElement.Object [YAMLicious.YAMLiciousTypes.YAMLElement.Sequence items] ->
             // YAML array wrapped in Object (happens when parsing multi-line YAML arrays)
