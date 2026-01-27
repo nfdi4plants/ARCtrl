@@ -1707,6 +1707,157 @@ let tests_FormalParameter =
         ]
     ]
 
+let tests_AdditionalTypeDecoding =
+    testList "AdditionalTypeDecoding" [
+        testList "SimpleTypes_FromYAML" [
+            testCase "String" (fun () ->
+                let encoded = "string"
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded CWLType.String "Should decode string from YAML"
+            )
+            testCase "Int" (fun () ->
+                let encoded = "int"
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded CWLType.Int "Should decode int from YAML"
+            )
+            testCase "File" (fun () ->
+                let expected = CWLType.file()
+                let encoded = "File"
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded expected "Should decode File from YAML"
+            )
+            testCase "FileArray" (fun () ->
+                let expected = CWLType.Array { Items = CWLType.file(); Label = None; Doc = None; Name = None }
+                let encoded = "File[]"
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded expected "Should decode File[] from YAML"
+            )
+            testCase "StringArray" (fun () ->
+                let expected = CWLType.Array { Items = CWLType.String; Label = None; Doc = None; Name = None }
+                let encoded = "string[]"
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded expected "Should decode string[] from YAML"
+            )
+            testCase "NestedFileArray" (fun () ->
+                let inner = { Items = CWLType.file(); Label = None; Doc = None; Name = None }
+                let expected = CWLType.Array { Items = CWLType.Array inner; Label = None; Doc = None; Name = None }
+                let encoded = "File[][]"
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded expected "Should decode File[][] from YAML"
+            )
+            testCase "DeeplyNestedStringArray" (fun () ->
+                let innerArray = { Items = CWLType.String; Label = None; Doc = None; Name = None }
+                let middleArray = { Items = CWLType.Array innerArray; Label = None; Doc = None; Name = None }
+                let expected = CWLType.Array { Items = CWLType.Array middleArray; Label = None; Doc = None; Name = None }
+                let encoded = "string[][][]"
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded expected "Should decode string[][][] from YAML"
+            )
+        ]
+        testList "ComplexTypes_FromYAML" [
+            testCase "Record" (fun () ->
+                let field1 = { Name = "name"; Type = CWLType.String; Doc = None; Label = None }
+                let field2 = { Name = "age"; Type = CWLType.Int; Doc = None; Label = None }
+                let original = CWLType.Record { Fields = Some (ResizeArray [field1; field2]); Label = None; Doc = None; Name = None }
+                let encoded = WorkflowConversion.composeAdditionalType original
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded original "Should decode Record correctly"
+            )
+            testCase "Enum" (fun () ->
+                let original = CWLType.Enum { Symbols = ResizeArray ["option1"; "option2"; "option3"]; Label = None; Doc = None; Name = None }
+                let encoded = WorkflowConversion.composeAdditionalType original
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded original "Should decode Enum correctly"
+            )
+            testCase "RecordArray" (fun () ->
+                let field = { Name = "value"; Type = CWLType.String; Doc = None; Label = None }
+                let recordSchema = { Fields = Some (ResizeArray [field]); Label = None; Doc = None; Name = None }
+                let original = CWLType.Array { Items = CWLType.Record recordSchema; Label = None; Doc = None; Name = None }
+                let encoded = WorkflowConversion.composeAdditionalType original
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded original "Should decode RecordArray correctly"
+            )
+            testCase "EnumArray" (fun () ->
+                let enumSchema = { Symbols = ResizeArray ["A"; "B"; "C"]; Label = None; Doc = None; Name = None }
+                let original = CWLType.Array { Items = CWLType.Enum enumSchema; Label = None; Doc = None; Name = None }
+                let encoded = WorkflowConversion.composeAdditionalType original
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded original "Should decode EnumArray correctly"
+            )
+        ]
+        testList "OptionalTypes" [
+            testCase "OptionalString_YAML" (fun () ->
+                let expected = CWLType.Union (ResizeArray [CWLType.Null; CWLType.String])
+                let encoded = "string?"
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded expected "Should decode optional string correctly"
+            )
+            testCase "OptionalFileArray_YAML" (fun () ->
+                let fileArray = { Items = CWLType.file(); Label = None; Doc = None; Name = None }
+                let expected = CWLType.Union (ResizeArray [CWLType.Null; CWLType.Array fileArray])
+                let encoded = "File[]?"
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded expected "Should decode optional File[] correctly"
+            )
+            testCase "OptionalRecord_YAML" (fun () ->
+                let field = { Name = "id"; Type = CWLType.String; Doc = None; Label = None }
+                let recordSchema = { Fields = Some (ResizeArray [field]); Label = None; Doc = None; Name = None }
+                let original = CWLType.Union (ResizeArray [CWLType.Null; CWLType.Record recordSchema])
+                let encoded = WorkflowConversion.composeAdditionalType original
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded original "Should round-trip optional Record correctly"
+            )
+        ]
+        testList "EdgeCases" [
+            testCase "EmptyRecord" (fun () ->
+                let original = CWLType.Record { Fields = Some (ResizeArray []); Label = None; Doc = None; Name = None }
+                let encoded = WorkflowConversion.composeAdditionalType original
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded original "Should decode empty Record correctly"
+            )
+            testCase "SingleSymbolEnum" (fun () ->
+                let original = CWLType.Enum { Symbols = ResizeArray ["only"]; Label = None; Doc = None; Name = None }
+                let encoded = WorkflowConversion.composeAdditionalType original
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded original "Should decode single symbol Enum correctly"
+            )
+        ]
+        testList "RoundTrip" [
+            testCase "SimpleType_RoundTrip" (fun () ->
+                let original = CWLType.String
+                let encoded = WorkflowConversion.composeAdditionalType original
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded original "String should round-trip correctly"
+            )
+            testCase "Array_RoundTrip" (fun () ->
+                let original = CWLType.Array { Items = CWLType.String; Label = None; Doc = None; Name = None }
+                let encoded = WorkflowConversion.composeAdditionalType original
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded original "Array should round-trip correctly"
+            )
+            testCase "Record_RoundTrip" (fun () ->
+                let field1 = { Name = "name"; Type = CWLType.String; Doc = None; Label = None }
+                let field2 = { Name = "count"; Type = CWLType.Int; Doc = None; Label = None }
+                let original = CWLType.Record { Fields = Some (ResizeArray [field1; field2]); Label = None; Doc = None; Name = None }
+                let encoded = WorkflowConversion.composeAdditionalType original
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded original "Record should round-trip correctly"
+            )
+            testCase "Enum_RoundTrip" (fun () ->
+                let original = CWLType.Enum { Symbols = ResizeArray ["red"; "green"; "blue"]; Label = None; Doc = None; Name = None }
+                let encoded = WorkflowConversion.composeAdditionalType original
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded original "Enum should round-trip correctly"
+            )
+            testCase "OptionalString_RoundTrip" (fun () ->
+                let original = CWLType.Union (ResizeArray [CWLType.Null; CWLType.String])
+                let encoded = WorkflowConversion.composeAdditionalType original
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                Expect.equal decoded original "Optional string should round-trip correctly"
+            )
+        ]
+    ]
+
 let tests_AdditionalTypeEncoding =
     testList "AdditionalTypeEncoding" [
         testList "SimpleTypes_UseYAML" [
@@ -1753,24 +1904,22 @@ let tests_AdditionalTypeEncoding =
                 Expect.equal encoded "string[][][]" "string[][][] should encode to YAML shorthand"
             )
         ]
-        testList "ComplexTypes_UseJSON" [
+        testList "ComplexTypes_UseYAML" [
             testCase "Record" (fun () ->
                 let field1 = { Name = "name"; Type = CWLType.String; Doc = None; Label = None }
                 let field2 = { Name = "age"; Type = CWLType.Int; Doc = None; Label = None }
                 let schema = { Fields = Some (ResizeArray [field1; field2]); Label = None; Doc = None; Name = None }
                 let t = CWLType.Record schema
                 let encoded = WorkflowConversion.composeAdditionalType t
-                Expect.stringContains encoded "\"type\":\"record\"" "Record should encode to JSON"
-                Expect.stringContains encoded "\"fields\"" "Record should have fields in JSON"
-                Expect.stringContains encoded "\"name\"" "Record should contain field names"
+                let expected = "{type: record, fields: [{name: name, type: string}, {name: age, type: int}]}"
+                Expect.equal encoded expected "Record should encode to single-line YAML"
             )
             testCase "Enum" (fun () ->
                 let schema = { Symbols = ResizeArray ["option1"; "option2"; "option3"]; Label = None; Doc = None; Name = None }
                 let t = CWLType.Enum schema
                 let encoded = WorkflowConversion.composeAdditionalType t
-                Expect.stringContains encoded "\"type\":\"enum\"" "Enum should encode to JSON"
-                Expect.stringContains encoded "\"symbols\"" "Enum should have symbols in JSON"
-                Expect.stringContains encoded "\"option1\"" "Enum should contain symbol values"
+                let expected = "{type: enum, symbols: [option1, option2, option3]}"
+                Expect.equal encoded expected "Enum should encode to single-line YAML"
             )
             testCase "RecordArray" (fun () ->
                 let field = { Name = "value"; Type = CWLType.String; Doc = None; Label = None }
@@ -1778,18 +1927,16 @@ let tests_AdditionalTypeEncoding =
                 let arraySchema = { Items = CWLType.Record recordSchema; Label = None; Doc = None; Name = None }
                 let t = CWLType.Array arraySchema
                 let encoded = WorkflowConversion.composeAdditionalType t
-                Expect.stringContains encoded "\"type\":\"array\"" "Array of records should encode to JSON"
-                Expect.stringContains encoded "\"items\"" "Array should have items in JSON"
-                Expect.stringContains encoded "\"type\":\"record\"" "Array items should be record type"
+                let expected = "{type: array, items: {type: record, fields: [{name: value, type: string}]}}"
+                Expect.equal encoded expected "Array of records should encode to single-line YAML"
             )
             testCase "EnumArray" (fun () ->
                 let enumSchema = { Symbols = ResizeArray ["A"; "B"; "C"]; Label = None; Doc = None; Name = None }
                 let arraySchema = { Items = CWLType.Enum enumSchema; Label = None; Doc = None; Name = None }
                 let t = CWLType.Array arraySchema
                 let encoded = WorkflowConversion.composeAdditionalType t
-                Expect.stringContains encoded "\"type\":\"array\"" "Array of enums should encode to JSON"
-                Expect.stringContains encoded "\"type\":\"enum\"" "Array items should be enum type"
-                Expect.stringContains encoded "\"symbols\"" "Enum should have symbols"
+                let expected = "{type: array, items: {type: enum, symbols: [A, B, C]}}"
+                Expect.equal encoded expected "Array of enums should encode to single-line YAML"
             )
         ]
         testList "OptionalTypes" [
@@ -1804,12 +1951,13 @@ let tests_AdditionalTypeEncoding =
                 let encoded = WorkflowConversion.composeAdditionalType t
                 Expect.equal encoded "File[]?" "Optional File[] should use YAML shorthand"
             )
-            testCase "OptionalRecord_JSON" (fun () ->
+            testCase "OptionalRecord_YAML" (fun () ->
                 let field = { Name = "name"; Type = CWLType.String; Doc = None; Label = None }
                 let recordSchema = { Fields = Some (ResizeArray [field]); Label = None; Doc = None; Name = None }
                 let t = CWLType.Union (ResizeArray [CWLType.Null; CWLType.Record recordSchema])
                 let encoded = WorkflowConversion.composeAdditionalType t
-                Expect.stringContains encoded "\"type\":\"record\"" "Optional record should use JSON encoding"
+                let expected = "[\"null\", {type: record, fields: [{name: name, type: string}]}]"
+                Expect.equal encoded expected "Optional record should use single-line YAML encoding"
             )
         ]
         testList "EdgeCases" [
@@ -1817,13 +1965,15 @@ let tests_AdditionalTypeEncoding =
                 let schema = { Fields = None; Label = None; Doc = None; Name = None }
                 let t = CWLType.Record schema
                 let encoded = WorkflowConversion.composeAdditionalType t
-                Expect.stringContains encoded "\"type\":\"record\"" "Empty record should encode to JSON"
+                let expected = "{type: record, fields: []}"
+                Expect.equal encoded expected "Empty record should encode to single-line YAML"
             )
             testCase "SingleSymbolEnum" (fun () ->
                 let schema = { Symbols = ResizeArray ["only"]; Label = None; Doc = None; Name = None }
                 let t = CWLType.Enum schema
                 let encoded = WorkflowConversion.composeAdditionalType t
-                Expect.stringContains encoded "\"symbols\":[\"only\"]" "Single symbol enum should encode correctly"
+                let expected = "{type: enum, symbols: [only]}"
+                Expect.equal encoded expected "Single symbol enum should encode to single-line YAML"
             )
         ]
         testList "Integration_WithFormalParameter" [
@@ -1837,7 +1987,8 @@ let tests_AdditionalTypeEncoding =
                 Expect.equal name' "MyRecordInput" "FormalParameter name should match input name"
                 Expect.isTrue (formalParameter.AdditionalType.Count > 0) "FormalParameter should have additionalType"
                 let additionalType = formalParameter.AdditionalType.[0]
-                Expect.stringContains additionalType "\"type\":\"record\"" "AdditionalType should be JSON-encoded record"
+                let expected = "{type: record, fields: [{name: name, type: string}]}"
+                Expect.equal additionalType expected "AdditionalType should be single-line YAML-encoded record"
             )
             testCase "FileArrayInput_CreatesValidFormalParameter" (fun () ->
                 let arraySchema = { Items = CWLType.file(); Label = None; Doc = None; Name = None }
@@ -2664,6 +2815,7 @@ let main =
         tests_DataContext
         tests_Datamap
         tests_FormalParameter
+        tests_AdditionalTypeDecoding
         tests_AdditionalTypeEncoding
         tests_YAMLInputValue
         tests_ToolDescription
