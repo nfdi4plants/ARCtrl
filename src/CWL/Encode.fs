@@ -11,6 +11,57 @@ open YAMLicious.Writer
 module Encode =
 
     // ------------------------------
+    // Type classification helpers - Single source of truth for CWL type categorization
+    // ------------------------------
+    
+    /// Active pattern to classify CWL types as primitive (with shorthand) or complex (requiring full YAML)
+    let rec (|PrimitiveType|ComplexType|) (t: CWLType) =
+        match t with
+        | File _ -> PrimitiveType "File"
+        | Directory _ -> PrimitiveType "Directory"
+        | Dirent _ -> PrimitiveType "Dirent"
+        | String -> PrimitiveType "string"
+        | Int -> PrimitiveType "int"
+        | Long -> PrimitiveType "long"
+        | Float -> PrimitiveType "float"
+        | Double -> PrimitiveType "double"
+        | Boolean -> PrimitiveType "boolean"
+        | Null -> PrimitiveType "null"
+        | Stdout -> PrimitiveType "stdout"
+        | Record _ | Enum _ | Union _ -> ComplexType
+        | Array arraySchema ->
+            // Arrays are primitive only if their items are primitive
+            match arraySchema.Items with
+            | PrimitiveType _ -> PrimitiveType "array"
+            | ComplexType -> ComplexType
+
+    /// Try to get shorthand notation for a CWL type (e.g., "File", "string[]", "int[][]")
+    /// Returns None for complex types that require full YAML serialization
+    let rec tryGetArrayShorthand (cwlType: CWLType) : string option =
+        match cwlType with
+        | PrimitiveType name when name <> "array" -> Some name
+        | Array arraySchema ->
+            // Recursively get shorthand for inner type and append []
+            tryGetArrayShorthand arraySchema.Items |> Option.map (fun s -> s + "[]")
+        | _ -> None
+
+    /// Determine if a type requires full YAML serialization (complex type)
+    let rec isComplexType (t: CWLType) : bool =
+        match t with
+        | Record _ | Enum _ -> true
+        | Array arraySchema ->
+            // Complex if array doesn't have shorthand (array of record/enum)
+            tryGetArrayShorthand arraySchema.Items |> Option.isNone
+        | Union types ->
+            // Complex if not a simple optional type
+            let typesList = types |> Seq.toList
+            match typesList with
+            | [Null; otherType] | [otherType; Null] ->
+                isComplexType otherType
+            | _ -> true // Multi-type union is complex
+        | _ -> false
+
+    // ------------------------------
     // Basic boolean encoder with lowercase letters
     // ------------------------------
     let yBool (b:bool) =
@@ -50,25 +101,6 @@ module Encode =
         match pairOpt with
         | Some pair -> acc @ [pair]
         | None -> acc
-
-    // ------------------------------
-    // Helper for recursive array shorthand detection
-    // ------------------------------
-    let rec tryGetArrayShorthand (cwlType: CWLType) : string option =
-        match cwlType with
-        | File _ -> Some "File"
-        | Directory _ -> Some "Directory"
-        | Dirent _ -> Some "Dirent"
-        | String -> Some "string"
-        | Int -> Some "int"
-        | Long -> Some "long"
-        | Float -> Some "float"
-        | Double -> Some "double"
-        | Boolean -> Some "boolean"
-        | Array innerSchema ->
-            // Recursively get shorthand for inner type and append []
-            tryGetArrayShorthand innerSchema.Items |> Option.map (fun s -> s + "[]")
-        | _ -> None
 
     // ------------------------------
     // CWLType encoder
