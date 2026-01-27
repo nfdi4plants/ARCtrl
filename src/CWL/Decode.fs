@@ -138,26 +138,36 @@ module Decode =
     /// Decode an InputRecordSchema from a YAMLElement
     and inputRecordSchemaDecoder: (YAMLiciousTypes.YAMLElement -> InputRecordSchema) =
         Decode.object (fun get ->
-            // Decode fields using Overflow to get the map form
-            let fieldsDict = 
-                get.Optional.Field 
-                    "fields" 
-                    (Decode.object (fun get2 -> get2.Overflow.FieldList []))
-            
+            // Try to decode fields as an array (flow-style) or as a map (block-style)
             let decodedFields =
-                match fieldsDict with
-                | Some dict ->
-                    let fields = ResizeArray<InputRecordField>()
-                    for kvp in dict do
-                        let fieldType = cwlTypeDecoder' kvp.Value
-                        
-                        fields.Add({
-                            Name = kvp.Key
-                            Type = fieldType
-                            Doc = None
-                            Label = None
-                        })
-                    Some fields
+                // Get the fields element directly
+                let fieldsElement = get.Optional.Field "fields" id
+                
+                match fieldsElement with
+                | Some (YAMLElement.Object []) ->
+                    // Empty array case: fields: []
+                    Some (ResizeArray<InputRecordField>())
+                | Some element ->
+                    // Try to decode as an array (flow-style: [{name: x, type: y}])
+                    try
+                        let fields = Decode.resizearray inputRecordFieldDecoder element
+                        Some fields
+                    with _ ->
+                        // Fall back to map form (block-style: {x: y})
+                        try
+                            let dict = Decode.object (fun get2 -> get2.Overflow.FieldList []) element
+                            let fields = ResizeArray<InputRecordField>()
+                            for kvp in dict do
+                                let fieldType = cwlTypeDecoder' kvp.Value
+                                
+                                fields.Add({
+                                    Name = kvp.Key
+                                    Type = fieldType
+                                    Doc = None
+                                    Label = None
+                                })
+                            Some fields
+                        with _ -> None
                 | None -> None
             
             {
