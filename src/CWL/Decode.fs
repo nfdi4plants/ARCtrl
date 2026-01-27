@@ -631,6 +631,9 @@ module Decode =
         Decode.object (fun get ->
             let outField = get.Optional.Field "out" id
             match outField with
+            | Some (YAMLElement.Object []) ->
+                // Empty object representation of empty array
+                ResizeArray()
             | Some (YAMLElement.Object [YAMLElement.Value v]) when v.Value = "[]" ->
                 // Empty array represented as string "[]"
                 ResizeArray()
