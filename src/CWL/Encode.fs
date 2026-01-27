@@ -563,7 +563,7 @@ module Encode =
 
     and encodeInputRecordFieldYaml (field: InputRecordField) : string =
         let typeYaml = encodeCWLTypeYaml field.Type
-        sprintf "{name: %s, type: %s}" field.Name typeYaml
+        $"{{name: {field.Name}, type: {typeYaml}}}"
 
     and encodeInputRecordSchemaYaml (schema: InputRecordSchema) : string =
         let fieldsYaml =
@@ -577,18 +577,17 @@ module Encode =
         if fieldsYaml = "" then
             "{type: record, fields: []}"
         else
-            sprintf "{type: record, fields: [%s]}" fieldsYaml
+            $"{{type: record, fields: [{fieldsYaml}]}}"
 
     and encodeInputEnumSchemaYaml (schema: InputEnumSchema) : string =
         let symbolsYaml = 
             schema.Symbols 
-            |> Seq.map (fun s -> s)
             |> String.concat ", "
-        sprintf "{type: enum, symbols: [%s]}" symbolsYaml
+        $"{{type: enum, symbols: [{symbolsYaml}]}}"
 
     and encodeInputArraySchemaYaml (schema: InputArraySchema) : string =
         let itemsYaml = encodeCWLTypeYaml schema.Items
-        sprintf "{type: array, items: %s}" itemsYaml
+        $"{{type: array, items: {itemsYaml}}}"
 
     /// Convert a CWLType to a YAML-formatted string for use in serialization
     let cwlTypeToYamlString (t: CWLType) : string =
