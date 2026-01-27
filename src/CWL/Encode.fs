@@ -506,54 +506,58 @@ module Encode =
         | CommandLineTool td -> encodeToolDescription td
         | Workflow wd -> encodeWorkflowDescription wd
 
-    /// Escape a string for JSON
-    let private jsonEscapeString (s: string) =
-        s.Replace("\\", "\\\\")
-         .Replace("\"", "\\\"")
-         .Replace("\n", "\\n")
-         .Replace("\r", "\\r")
-         .Replace("\t", "\\t")
-
-    /// Encode a CWLType to a JSON string
-    /// Note: This is called for complex types and their nested simple types
-    let rec encodeCWLTypeJson (t: CWLType) : string =
+    /// Encode a CWLType to a single-line YAML string using flow/inline style
+    /// This produces YAML that doesn't contain newlines and can be embedded in JSON
+    let rec encodeCWLTypeYaml (t: CWLType) : string =
         match t with
         | Union types ->
-            // Union of complex types - use array form
-            let encodedTypes = types |> Seq.toList |> List.map encodeCWLTypeJson
-            "[" + String.concat "," encodedTypes + "]"
+            // Union - use YAML flow array notation [type1, type2]
+            let encodedTypes = 
+                types 
+                |> Seq.map encodeCWLTypeYaml
+                |> String.concat ", "
+            "[" + encodedTypes + "]"
         | Array arraySchema ->
-            // Array of complex type
-            encodeInputArraySchemaJson arraySchema
-        | Record recordSchema -> encodeInputRecordSchemaJson recordSchema
-        | Enum enumSchema -> encodeInputEnumSchemaJson enumSchema
+            encodeInputArraySchemaYaml arraySchema
+        | Record recordSchema -> encodeInputRecordSchemaYaml recordSchema
+        | Enum enumSchema -> encodeInputEnumSchemaYaml enumSchema
+        | Null ->
+            // Null needs to be quoted in YAML to distinguish from null value
+            "\"null\""
         | _ -> 
-            // Simple type - encode as JSON string with YAML representation
+            // Simple type - just the type name
             let yamlForm = encodeCWLType t |> writeYaml
-            sprintf "\"%s\"" (jsonEscapeString (yamlForm.Trim()))
+            yamlForm.Trim()
 
-    and encodeInputRecordFieldJson (field: InputRecordField) : string =
-        sprintf "\"%s\":{\"type\":%s}" (jsonEscapeString field.Name) (encodeCWLTypeJson field.Type)
+    and encodeInputRecordFieldYaml (field: InputRecordField) : string =
+        let typeYaml = encodeCWLTypeYaml field.Type
+        sprintf "{name: %s, type: %s}" field.Name typeYaml
 
-    and encodeInputRecordSchemaJson (schema: InputRecordSchema) : string =
-        let fieldsJson =
+    and encodeInputRecordSchemaYaml (schema: InputRecordSchema) : string =
+        let fieldsYaml =
             match schema.Fields with
-            | Some fs -> 
-                fs |> Seq.map encodeInputRecordFieldJson |> String.concat ","
-            | None -> ""
+            | Some fs when fs.Count > 0 -> 
+                fs 
+                |> Seq.map encodeInputRecordFieldYaml
+                |> String.concat ", "
+            | _ -> ""
         
-        sprintf "{\"type\":\"record\",\"fields\":{%s}}" fieldsJson
+        if fieldsYaml = "" then
+            "{type: record, fields: []}"
+        else
+            sprintf "{type: record, fields: [%s]}" fieldsYaml
 
-    and encodeInputEnumSchemaJson (schema: InputEnumSchema) : string =
-        let symbolsJson = 
+    and encodeInputEnumSchemaYaml (schema: InputEnumSchema) : string =
+        let symbolsYaml = 
             schema.Symbols 
-            |> Seq.map (fun s -> sprintf "\"%s\"" (jsonEscapeString s)) 
-            |> String.concat ","
-        sprintf "{\"type\":\"enum\",\"symbols\":[%s]}" symbolsJson
+            |> Seq.map (fun s -> s)
+            |> String.concat ", "
+        sprintf "{type: enum, symbols: [%s]}" symbolsYaml
 
-    and encodeInputArraySchemaJson (schema: InputArraySchema) : string =
-        sprintf "{\"type\":\"array\",\"items\":%s}" (encodeCWLTypeJson schema.Items)
+    and encodeInputArraySchemaYaml (schema: InputArraySchema) : string =
+        let itemsYaml = encodeCWLTypeYaml schema.Items
+        sprintf "{type: array, items: %s}" itemsYaml
 
-    /// Convert a CWLType to a compact JSON string for use in JSON serialization
-    let cwlTypeToJsonString (t: CWLType) : string =
-        encodeCWLTypeJson t
+    /// Convert a CWLType to a YAML-formatted string for use in serialization
+    let cwlTypeToYamlString (t: CWLType) : string =
+        encodeCWLTypeYaml t
