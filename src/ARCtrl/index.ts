@@ -9,6 +9,7 @@ export { ArcTable } from './ts/Core/Table/ArcTable.js'
 export { Template, Organisation } from './ts/Core/Template.js'
 export { Templates } from './ts/Core/Templates.js'
 export { JsonController } from './ts/Json.js'
+export { YamlController } from './ts/Yaml.js'
 export { XlsxController } from './ts/Xlsx.js'
 export { Person } from './ts/Core/Person.js'
 export { Publication } from './ts/Core/Publication.js'
@@ -18,6 +19,45 @@ export { Contract } from './ts/Contract/Contract.js'
 export { WebController} from './ts/Template.Web.js'
 export { FileSystem } from './ts/FileSystem/FileSystem.js'
 export { FileSystemTree } from './ts/FileSystem/FileSystemTree.js'
+
+/// CWL
+import { CWLProcessingUnit } from './ts/CWL/CWLProcessingUnit.js'
+import { CWLType, FileInstance, DirectoryInstance, DirentInstance, InputEnumSchema, InputRecordField, InputRecordSchema, InputArraySchema, SchemaDefRequirementType, SoftwarePackage } from './ts/CWL/CWLTypes.js'
+import { CWLParameterReference } from './ts/CWL/ParameterReference.js'
+import { CWLInput, InputBinding } from './ts/CWL/Inputs.js'
+import { CWLOutput, OutputBinding } from './ts/CWL/Outputs.js'
+import { CWLToolDescription } from './ts/CWL/ToolDescription.js'
+import { CWLWorkflowDescription } from './ts/CWL/WorkflowDescription.js'
+import { WorkflowStep, StepInput, StepOutput } from './ts/CWL/WorkflowSteps.js'
+import { Requirement, DockerRequirement, EnvironmentDef, ResourceRequirementInstance } from './ts/CWL/Requirements.js'
+
+export const CWL = {
+    CWLProcessingUnit,
+    CWLType,
+    FileInstance,
+    DirectoryInstance,
+    DirentInstance,
+    InputEnumSchema,
+    InputRecordField,
+    InputRecordSchema,
+    InputArraySchema,
+    SchemaDefRequirementType,
+    SoftwarePackage,
+    CWLParameterReference,
+    CWLInput,
+    InputBinding,
+    CWLOutput,
+    OutputBinding,
+    CWLToolDescription,
+    CWLWorkflowDescription,
+    WorkflowStep,
+    StepInput,
+    StepOutput,
+    Requirement,
+    DockerRequirement,
+    EnvironmentDef,
+    ResourceRequirementInstance
+};
 
 /// RO-Crate
 import { LDNode, LDGraph, LDRef, LDValue} from './ts/ROCrate/LDObject.js'

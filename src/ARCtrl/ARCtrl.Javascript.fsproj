@@ -79,6 +79,7 @@
     <Compile Include="Template.Web.fs" />
     <Compile Include="ARC.fs" />
     <Compile Include="Json.fs" />
+    <Compile Include="Yaml.fs" />
     <Compile Include="Xlsx.fs" />
   </ItemGroup>
 

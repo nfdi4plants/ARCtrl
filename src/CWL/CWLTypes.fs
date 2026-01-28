@@ -33,12 +33,31 @@ type DirentInstance = {
     Writable: bool option
 }
 
+/// Represents an enumeration type with a defined set of valid symbol values.
+/// Per the CWL specification, symbol order is semantically significant and preserved during serialization.
+[<CustomEquality; NoComparison>]
 type InputEnumSchema = {
     Symbols: ResizeArray<string>
     Label: string option
     Doc: string option
     Name: string option
 }
+    with
+        /// Equality comparison that treats symbol order as significant.
+        /// Two enums are equal only if their symbols appear in the same order.
+        /// This follows the CWL specification where enum symbol order matters.
+        override this.Equals(o: obj): bool =
+            match o with
+            | :? InputEnumSchema as other ->
+                this.Label = other.Label &&
+                this.Doc = other.Doc &&
+                this.Name = other.Name &&
+                this.Symbols.Count = other.Symbols.Count &&
+                Seq.forall2 (=) this.Symbols other.Symbols
+            | _ -> false
+
+        override this.GetHashCode(): int =
+            hash (this.Symbols |> Seq.toList, this.Label, this.Doc, this.Name)
 
 /// Represents a field in an InputRecordSchema
 [<CustomEquality; NoComparison>]
@@ -144,9 +163,9 @@ and [<CustomEquality; NoComparison>] CWLType =
             | Boolean, Boolean -> true
             | Stdout, Stdout -> true
             | Null, Null -> true
-            | Array a1, Array a2 -> a1 = a2
-            | Record r1, Record r2 -> r1 = r2
-            | Enum e1, Enum e2 -> e1 = e2
+            | Array a1, Array a2 -> a1.Equals(a2)
+            | Record r1, Record r2 -> r1.Equals(r2)
+            | Enum e1, Enum e2 -> e1.Equals(e2)
             | Union u1, Union u2 -> 
                 u1.Count = u2.Count && 
                 Seq.forall2 (fun (t1: CWLType) (t2: CWLType) -> t1.Equals(t2)) u1 u2

@@ -14,6 +14,22 @@ module ResizeArray =
 
 module Decode =
 
+    /// Determines if an exception represents a recoverable decoding error.
+    /// Returns true for schema mismatches; false for system errors that should propagate.
+    let private isRecoverableDecodingError (ex: exn) : bool =
+        match ex with
+        // Type-based matching for known exception types
+        | :? System.Collections.Generic.KeyNotFoundException -> true
+        | :? System.ArgumentException -> true
+        | :? System.FormatException -> true
+        | :? System.InvalidOperationException 
+            when ex.Message.Contains("decode") -> true
+        // Message-based fallback for library-specific exceptions
+        | _ when ex.Message.Contains("Expected") -> true
+        | _ when ex.Message.Contains("Required") -> true
+        // All other exceptions (including system-critical) should propagate
+        | _ -> false
+
     /// Decode key value pairs into a dynamic object, while preserving their tree structure
     let rec overflowDecoder (dynObj: DynamicObj) (dict: System.Collections.Generic.Dictionary<string,YAMLElement>) =
         for e in dict do
@@ -37,7 +53,7 @@ module Decode =
         match yEle with
         | YAMLElement.Value v | YAMLElement.Object [YAMLElement.Value v] -> v.Value
         | YAMLElement.Object [YAMLElement.Mapping (c,YAMLElement.Object [YAMLElement.Value v])] -> sprintf "%s: %s" c.Value v.Value
-        | _ -> failwithf "%A" yEle
+        | _ -> raise (System.ArgumentException($"Unexpected YAMLElement format in decodeStringOrExpression: %A{yEle}"))
 
     /// Decode a YAMLElement into a glob search pattern for output binding
     let outputBindingGlobDecoder: (YAMLiciousTypes.YAMLElement -> OutputBinding) =
@@ -84,10 +100,29 @@ module Decode =
         | "boolean" -> Boolean
         | "stdout" -> Stdout
         | "null" -> Null
-        | _ -> failwith $"Invalid CWL simple type: {s}"
+        | _ -> raise (System.ArgumentException($"Invalid CWL simple type: {s}"))
+
+
+    /// Recursively parse array shorthand notation (File[][], string[][][], etc.)
+    let rec parseArrayShorthand (typeStr: string) : CWLType option =
+        if typeStr.EndsWith("[]") then
+            let innerType = typeStr.Substring(0, typeStr.Length - 2)
+            // Try to parse the inner type recursively
+            match parseArrayShorthand innerType with
+            | Some innerCwlType ->
+                // Nested array
+                Some (Array { Items = innerCwlType; Label = None; Doc = None; Name = None })
+            | None ->
+                // Base type with array suffix
+                try
+                    let baseType = cwlSimpleTypeFromString innerType
+                    Some (Array { Items = baseType; Label = None; Doc = None; Name = None })
+                with ex when isRecoverableDecodingError ex -> None
+        else
+            None
 
     /// Decode an InputArraySchema from a YAMLElement
-    and inputArraySchemaDecoder: (YAMLiciousTypes.YAMLElement -> InputArraySchema) =
+    let rec inputArraySchemaDecoder: (YAMLiciousTypes.YAMLElement -> InputArraySchema) =
         Decode.object (fun get ->
             // Decode items - can be string or complex type
             let itemsValue = get.Required.Field "items" id
@@ -117,29 +152,45 @@ module Decode =
             }
         )
 
+    /// Attempt to decode fields as flow-style array: [{name: x, type: y}]
+    and tryDecodeFieldsAsArray (element: YAMLElement) : ResizeArray<InputRecordField> option =
+        try
+            Decode.resizearray inputRecordFieldDecoder element |> Some
+        with ex when isRecoverableDecodingError ex -> None
+
+    /// Attempt to decode fields as map-style: {fieldName: type}
+    and tryDecodeFieldsAsMap (element: YAMLElement) : ResizeArray<InputRecordField> option =
+        try
+            let dict = Decode.object (fun get2 -> get2.Overflow.FieldList []) element
+            let fields = ResizeArray<InputRecordField>()
+            for kvp in dict do
+                let fieldType = cwlTypeDecoder' kvp.Value
+                fields.Add({
+                    Name = kvp.Key
+                    Type = fieldType
+                    Doc = None
+                    Label = None
+                })
+            Some fields
+        with ex when isRecoverableDecodingError ex -> None
+
     /// Decode an InputRecordSchema from a YAMLElement
     and inputRecordSchemaDecoder: (YAMLiciousTypes.YAMLElement -> InputRecordSchema) =
         Decode.object (fun get ->
-            // Decode fields using Overflow to get the map form
-            let fieldsDict = 
-                get.Optional.Field 
-                    "fields" 
-                    (Decode.object (fun get2 -> get2.Overflow.FieldList []))
-            
+            // Try to decode fields as an array (flow-style) or as a map (block-style)
             let decodedFields =
-                match fieldsDict with
-                | Some dict ->
-                    let fields = ResizeArray<InputRecordField>()
-                    for kvp in dict do
-                        let fieldType = cwlTypeDecoder' kvp.Value
-                        
-                        fields.Add({
-                            Name = kvp.Key
-                            Type = fieldType
-                            Doc = None
-                            Label = None
-                        })
-                    Some fields
+                // Get the fields element directly
+                let fieldsElement = get.Optional.Field "fields" id
+                
+                match fieldsElement with
+                | Some (YAMLElement.Object []) ->
+                    // Empty array case: fields: []
+                    Some (ResizeArray<InputRecordField>())
+                | Some element ->
+                    // Try flow-style first, then fall back to map-style
+                    match tryDecodeFieldsAsArray element with
+                    | Some fields -> Some fields
+                    | None -> tryDecodeFieldsAsMap element
                 | None -> None
             
             {
@@ -173,13 +224,11 @@ module Decode =
                 else
                     typeStr, false
             
-            // Handle array suffix
+            // Try to parse as array shorthand (handles arbitrary nesting recursively)
             let baseType = 
-                if stripped.EndsWith("[]") then
-                    let baseType = stripped.Replace("[]", "")
-                    Array { Items = cwlSimpleTypeFromString baseType; Label = None; Doc = None; Name = None }
-                else
-                    cwlSimpleTypeFromString stripped
+                match parseArrayShorthand stripped with
+                | Some arrayType -> arrayType
+                | None -> cwlSimpleTypeFromString stripped
             
             // Wrap in Union if optional
             if isOptional then
@@ -209,9 +258,9 @@ module Decode =
                 | Some (YAMLElement.Object _) ->
                     // Nested complex type
                     cwlTypeDecoder' (get.Required.Field "type" id)
-                | _ -> failwith "Unexpected type format in cwlTypeDecoder'"
+                | _ -> raise (System.ArgumentException("Unexpected type format in cwlTypeDecoder'"))
             ) element
-        | _ -> failwith "Unexpected YAMLElement in cwlTypeDecoder'"
+        | _ -> raise (System.ArgumentException("Unexpected YAMLElement in cwlTypeDecoder'"))
     /// Match the input string to the possible CWL types and checks if it is optional
     let cwlTypeStringMatcher (t: string) (get: Decode.IGetters) =
         let optional, newT =
@@ -219,23 +268,13 @@ module Decode =
                 true, t.Replace("?", "")
             else
                 false, t
+        
+        // Try to parse as array shorthand (handles arbitrary nesting recursively)
         let cwlType =
-            if newT.EndsWith("[]") then
-                let baseType = newT.Replace("[]", "")
-                let baseItem = 
-                    match baseType with
-                    | "File" -> File (FileInstance ())
-                    | "Directory" -> Directory (DirectoryInstance ())
-                    | "Dirent" -> (get.Required.Field "listing" direntDecoder)
-                    | "string" -> String
-                    | "int" -> Int
-                    | "long" -> Long
-                    | "float" -> Float
-                    | "double" -> Double
-                    | "boolean" -> Boolean
-                    | _ -> failwith "Invalid CWL type"
-                Array { Items = baseItem; Label = None; Doc = None; Name = None }
-            else
+            match parseArrayShorthand newT with
+            | Some arrayType -> arrayType
+            | None ->
+                // Not an array, check for simple types or Dirent
                 match newT with
                 | "File" -> File (FileInstance ())
                 | "Directory" -> Directory (DirectoryInstance ())
@@ -249,6 +288,7 @@ module Decode =
                 | "stdout" -> Stdout
                 | "null" -> Null
                 | _ -> failwith "Invalid CWL type"
+        
         // Wrap in Union if optional
         let finalType = 
             if optional then
@@ -268,7 +308,7 @@ module Decode =
                             match value with
                             | YAMLElement.Value v | YAMLElement.Object [YAMLElement.Value v] -> Some v.Value
                             | YAMLElement.Object o -> None
-                            | _ -> failwith "Unexpected YAMLElement"
+                            | _ -> raise (System.ArgumentException("Unexpected YAMLElement in cwlTypeDecoder"))
                     )
             match cwlType with
             | Some t ->
@@ -414,7 +454,7 @@ module Decode =
                     | "ScatterFeatureRequirement" -> ScatterFeatureRequirement
                     | "MultipleInputFeatureRequirement" -> MultipleInputFeatureRequirement
                     | "StepInputExpressionRequirement" -> StepInputExpressionRequirement
-                    | _ -> failwith "Invalid requirement"
+                    | _ -> raise (System.ArgumentException($"Invalid or unsupported requirement class: {cls}"))
                 )
             )
 
@@ -479,8 +519,8 @@ module Decode =
                                 // No type field, treat as type string
                                 match value with
                                 | YAMLElement.Object [YAMLElement.Value v] -> cwlTypeStringMatcher v.Value get
-                                | _ -> failwith "Unexpected input format without type field"
-                        | _ -> failwith "Unexpected input format in inputArrayDecoder"
+                                | _ -> raise (System.ArgumentException("Unexpected input format without type field"))
+                        | _ -> raise (System.ArgumentException("Unexpected input format in inputArrayDecoder"))
                     
                     let input = CWLInput(key, cwlType)
                     if optional then
@@ -591,6 +631,9 @@ module Decode =
         Decode.object (fun get ->
             let outField = get.Optional.Field "out" id
             match outField with
+            | Some (YAMLElement.Object []) ->
+                // Empty object representation of empty array
+                ResizeArray()
             | Some (YAMLElement.Object [YAMLElement.Value v]) when v.Value = "[]" ->
                 // Empty array represented as string "[]"
                 ResizeArray()
@@ -732,7 +775,7 @@ module Decode =
         let inputs =
             match inputsDecoder yamlCWL with
             | Some i -> i
-            | None -> failwith "Inputs are required for a workflow"
+            | None -> raise (System.InvalidOperationException("Inputs are required for a workflow"))
         let requirements = requirementsDecoder yamlCWL
         let hints = hintsDecoder yamlCWL
         let steps = stepsDecoder yamlCWL
@@ -801,7 +844,7 @@ module Decode =
         match cls with
         | "CommandLineTool" -> CommandLineTool (commandLineToolDecoder yamlCWL)
         | "Workflow" -> Workflow (workflowDecoder yamlCWL)
-        | _ -> failwithf "Invalid CWL class: %s" cls
+        | _ -> raise (System.ArgumentException($"Invalid or unsupported CWL class: {cls}"))
 
 module DecodeParameters =
 
@@ -869,7 +912,7 @@ module DecodeParameters =
                     key = key,
                     values = Decode.resizearray Decode.string (YAMLElement.Sequence s)
                 )
-        | _ -> failwith $"{yEle}"
+        | _ -> raise (System.ArgumentException($"Unexpected YAMLElement format in cwlParameterReferenceDecoder: %A{yEle}"))
 
     let cwlparameterReferenceArrayDecoder: YAMLElement -> ResizeArray<CWLParameterReference> =
         Decode.object (fun get ->

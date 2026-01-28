@@ -14,15 +14,37 @@ open ARCtrl.Helper.Regex.ActivePatterns
 type WorkflowConversion =
 
     static member composeAdditionalType (t : CWL.CWLType) : string =
-        CWL.Encode.encodeCWLType t
-        |> CWL.Encode.writeYaml
-        |> fun s -> s.Trim()
+        // Use JSON format for complex types, YAML shorthand for simple types
+        if CWL.Encode.isComplexType t then
+            CWL.Encode.cwlTypeToYamlString t
+        else
+            CWL.Encode.encodeCWLType t
+            |> CWL.Encode.writeYaml
+            |> fun s -> s.Trim()
 
     static member decomposeAdditionalType (t : string) : CWL.CWLType =
-        YAMLicious.Decode.object (fun get ->
-            CWL.Decode.cwlTypeStringMatcher t get
-        ) (YAMLicious.YAMLiciousTypes.YAMLElement.Comment "dawd") //Placeholder
-        |> fst
+        // Try to parse as YAML (handles both shorthand and YAML-formatted complex types)
+        let yamlElement = YAMLicious.Reader.read t
+        
+        // Check if it's a simple string (shorthand like "File[]", "string?")
+        match yamlElement with
+        | YAMLicious.YAMLiciousTypes.YAMLElement.Value _ ->
+            // Shorthand format: parse string directly without YAML context
+            // Note: YAMLicious.Decode.object requires a YAMLElement for its API,
+            // but cwlTypeStringMatcher only uses the 'get' function and ignores the element.
+            // This placeholder satisfies the function without affecting the actual parsing.
+            let placeholderElement = YAMLicious.YAMLiciousTypes.YAMLElement.Comment "unused-shorthand-context"
+            YAMLicious.Decode.object (fun get ->
+                CWL.Decode.cwlTypeStringMatcher t get
+            ) placeholderElement
+            |> fst
+        | YAMLicious.YAMLiciousTypes.YAMLElement.Object [YAMLicious.YAMLiciousTypes.YAMLElement.Sequence items] ->
+            // YAML array wrapped in Object (happens when parsing multi-line YAML arrays)
+            // Unwrap and treat as Union
+            CWL.Decode.cwlTypeDecoder' (YAMLicious.YAMLiciousTypes.YAMLElement.Sequence items)
+        | _ ->
+            // Complex type in YAML format
+            CWL.Decode.cwlTypeDecoder' yamlElement
 
     static member composeFormalParamInputIdentifiers (prefix : string option) (position : int option) =
         match prefix, position with

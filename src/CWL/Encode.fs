@@ -11,6 +11,57 @@ open YAMLicious.Writer
 module Encode =
 
     // ------------------------------
+    // Type classification helpers - Single source of truth for CWL type categorization
+    // ------------------------------
+    
+    /// Active pattern to classify CWL types as primitive (with shorthand) or complex (requiring full YAML)
+    let rec (|PrimitiveType|ComplexType|) (t: CWLType) =
+        match t with
+        | File _ -> PrimitiveType "File"
+        | Directory _ -> PrimitiveType "Directory"
+        | Dirent _ -> PrimitiveType "Dirent"
+        | String -> PrimitiveType "string"
+        | Int -> PrimitiveType "int"
+        | Long -> PrimitiveType "long"
+        | Float -> PrimitiveType "float"
+        | Double -> PrimitiveType "double"
+        | Boolean -> PrimitiveType "boolean"
+        | Null -> PrimitiveType "null"
+        | Stdout -> PrimitiveType "stdout"
+        | Record _ | Enum _ | Union _ -> ComplexType
+        | Array arraySchema ->
+            // Arrays are primitive only if their items are primitive
+            match arraySchema.Items with
+            | PrimitiveType _ -> PrimitiveType "array"
+            | ComplexType -> ComplexType
+
+    /// Try to get shorthand notation for a CWL type (e.g., "File", "string[]", "int[][]")
+    /// Returns None for complex types that require full YAML serialization
+    let rec tryGetArrayShorthand (cwlType: CWLType) : string option =
+        match cwlType with
+        | PrimitiveType name when name <> "array" -> Some name
+        | Array arraySchema ->
+            // Recursively get shorthand for inner type and append []
+            tryGetArrayShorthand arraySchema.Items |> Option.map (fun s -> s + "[]")
+        | _ -> None
+
+    /// Determine if a type requires full YAML serialization (complex type)
+    let rec isComplexType (t: CWLType) : bool =
+        match t with
+        | Record _ | Enum _ -> true
+        | Array arraySchema ->
+            // Complex if array doesn't have shorthand (array of record/enum)
+            tryGetArrayShorthand arraySchema.Items |> Option.isNone
+        | Union types ->
+            // Complex if not a simple optional type
+            let typesList = types |> Seq.toList
+            match typesList with
+            | [Null; otherType] | [otherType; Null] ->
+                isComplexType otherType
+            | _ -> true // Multi-type union is complex
+        | _ -> false
+
+    // ------------------------------
     // Basic boolean encoder with lowercase letters
     // ------------------------------
     let yBool (b:bool) =
@@ -87,17 +138,10 @@ module Encode =
                 | Double -> Encode.string "double?"
                 | Boolean -> Encode.string "boolean?"
                 | Array arraySchema ->
-                    // Optional array - check if items are simple
-                    match arraySchema.Items with
-                    | File _ -> Encode.string "File[]?"
-                    | Directory _ -> Encode.string "Directory[]?"
-                    | String -> Encode.string "string[]?"
-                    | Int -> Encode.string "int[]?"
-                    | Long -> Encode.string "long[]?"
-                    | Float -> Encode.string "float[]?"
-                    | Double -> Encode.string "double[]?"
-                    | Boolean -> Encode.string "boolean[]?"
-                    | _ -> 
+                    // Optional array - use recursive shorthand detection
+                    match tryGetArrayShorthand arraySchema.Items with
+                    | Some shorthand -> Encode.string (shorthand + "[]?")
+                    | None ->
                         // Complex optional array - use full form
                         YAMLElement.Sequence [ Encode.string "null"; encodeInputArraySchema arraySchema ]
                 | _ ->
@@ -107,21 +151,9 @@ module Encode =
                 // General union - use array form
                 typesList |> List.map encodeCWLType |> YAMLElement.Sequence
         | Array arraySchema ->
-            // Try to use short form for simple arrays
-            let shortForm =
-                match arraySchema.Items with
-                | File _ -> Some "File[]"
-                | Directory _ -> Some "Directory[]"
-                | Dirent _ -> Some "Dirent[]"
-                | String -> Some "string[]"
-                | Int -> Some "int[]"
-                | Long -> Some "long[]"
-                | Float -> Some "float[]"
-                | Double -> Some "double[]"
-                | Boolean -> Some "boolean[]"
-                | _ -> None
-            match shortForm with
-            | Some s -> Encode.string s
+            // Try to use short form for arrays (handles arbitrary nesting depth recursively)
+            match tryGetArrayShorthand arraySchema.Items with
+            | Some shorthand -> Encode.string (shorthand + "[]")
             | None -> encodeInputArraySchema arraySchema
         | Record recordSchema -> encodeInputRecordSchema recordSchema
         | Enum enumSchema -> encodeInputEnumSchema enumSchema
@@ -505,3 +537,58 @@ module Encode =
         match pu with
         | CommandLineTool td -> encodeToolDescription td
         | Workflow wd -> encodeWorkflowDescription wd
+
+    /// Encode a CWLType to a single-line YAML string using flow/inline style
+    /// This produces YAML that doesn't contain newlines and can be embedded in JSON
+    let rec encodeCWLTypeYaml (t: CWLType) : string =
+        match t with
+        | Union types ->
+            // Union - use YAML flow array notation [type1, type2]
+            let encodedTypes = 
+                types 
+                |> Seq.map encodeCWLTypeYaml
+                |> String.concat ", "
+            "[" + encodedTypes + "]"
+        | Array arraySchema ->
+            encodeInputArraySchemaYaml arraySchema
+        | Record recordSchema -> encodeInputRecordSchemaYaml recordSchema
+        | Enum enumSchema -> encodeInputEnumSchemaYaml enumSchema
+        | Null ->
+            // Null needs to be quoted in YAML to distinguish from null value
+            "\"null\""
+        | _ -> 
+            // Simple type - just the type name
+            let yamlForm = encodeCWLType t |> writeYaml
+            yamlForm.Trim()
+
+    and encodeInputRecordFieldYaml (field: InputRecordField) : string =
+        let typeYaml = encodeCWLTypeYaml field.Type
+        $"{{name: {field.Name}, type: {typeYaml}}}"
+
+    and encodeInputRecordSchemaYaml (schema: InputRecordSchema) : string =
+        let fieldsYaml =
+            match schema.Fields with
+            | Some fs when fs.Count > 0 -> 
+                fs 
+                |> Seq.map encodeInputRecordFieldYaml
+                |> String.concat ", "
+            | _ -> ""
+        
+        if fieldsYaml = "" then
+            "{type: record, fields: []}"
+        else
+            $"{{type: record, fields: [{fieldsYaml}]}}"
+
+    and encodeInputEnumSchemaYaml (schema: InputEnumSchema) : string =
+        let symbolsYaml = 
+            schema.Symbols 
+            |> String.concat ", "
+        $"{{type: enum, symbols: [{symbolsYaml}]}}"
+
+    and encodeInputArraySchemaYaml (schema: InputArraySchema) : string =
+        let itemsYaml = encodeCWLTypeYaml schema.Items
+        $"{{type: array, items: {itemsYaml}}}"
+
+    /// Convert a CWLType to a YAML-formatted string for use in serialization
+    let cwlTypeToYamlString (t: CWLType) : string =
+        encodeCWLTypeYaml t

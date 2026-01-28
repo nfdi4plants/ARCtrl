@@ -18,5 +18,6 @@ from .py.Core.template import Template
 from .py.FileSystem.file_system import FileSystem
 from .py.FileSystem.file_system_tree import FileSystemTree
 from .py.json import JsonController
+from .py.yaml import YamlController
 from .py.xlsx import XlsxController
 from .py.arc import ARC
