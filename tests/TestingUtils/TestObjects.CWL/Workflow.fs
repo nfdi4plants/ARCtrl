@@ -59,3 +59,64 @@ outputs:
     type: Directory
     outputSource: PeptideSpectrumMatching/dir"""
 
+let workflowWithExtendedStepFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  input1: string
+outputs:
+  result:
+    type: string
+    outputSource: step1/out
+steps:
+  step1:
+    run: ./tool.cwl
+    label: Example step
+    doc: Step docs
+    scatter: input1
+    scatterMethod: dotproduct
+    in:
+      in1:
+        source: input1
+        loadContents: true
+        loadListing: deep_listing
+        label: Input label
+        linkMerge: merge_nested
+    out:
+      - id: out"""
+
+let workflowWithInlineRunCommandLineToolFile = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs:
+  result:
+    type: string
+    outputSource: inlineStep/out
+steps:
+  inlineStep:
+    run:
+      class: CommandLineTool
+      cwlVersion: v1.2
+      baseCommand: echo
+      inputs: {}
+      outputs:
+        out: string
+    in: {}
+    out: [out]"""
+
+let workflowWithInputArrayStepFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  input1: string
+outputs:
+  result:
+    type: string
+    outputSource: step1/out
+steps:
+  step1:
+    run: ./tool.cwl
+    in:
+      - id: in1
+        source: input1
+        label: Input in array syntax
+    out: [out]"""
+

@@ -9,6 +9,18 @@ let decodeCWLWorkflowDescription: CWLWorkflowDescription =
     TestObjects.CWL.Workflow.workflowFile
     |> Decode.decodeWorkflow
 
+let mkStepInput id source defaultValue valueFrom linkMerge =
+    {
+        Id = id
+        Source = source
+        DefaultValue = defaultValue
+        ValueFrom = valueFrom
+        LinkMerge = linkMerge
+        LoadContents = None
+        LoadListing = None
+        Label = None
+    }
+
 let testCWLWorkflowDescriptionDecode =
     testList "Decode" [
         testCase "CWLVersion" <| fun _ ->
@@ -22,14 +34,14 @@ let testCWLWorkflowDescriptionDecode =
             Expect.equal actual expected ""
         testCase "inputs" <| fun _ ->
             let expected = ResizeArray [|
-                CWLInput("cores", CWLType.Int);
-                CWLInput("db", CWLType.File (FileInstance()));
-                CWLInput ("stage", CWLType.Directory (DirectoryInstance()));
-                CWLInput ("outputMzML", CWLType.Directory (DirectoryInstance()));
-                CWLInput ("outputPSM", CWLType.Directory (DirectoryInstance()));
-                CWLInput ("inputMzML", CWLType.Directory (DirectoryInstance()));
-                CWLInput ("paramsMzML", CWLType.File (FileInstance()));
-                CWLInput ("paramsPSM", CWLType.File (FileInstance()));
+                CWLInput("cores", CWLType.Int)
+                CWLInput("db", CWLType.File (FileInstance()))
+                CWLInput ("stage", CWLType.Directory (DirectoryInstance()))
+                CWLInput ("outputMzML", CWLType.Directory (DirectoryInstance()))
+                CWLInput ("outputPSM", CWLType.Directory (DirectoryInstance()))
+                CWLInput ("inputMzML", CWLType.Directory (DirectoryInstance()))
+                CWLInput ("paramsMzML", CWLType.File (FileInstance()))
+                CWLInput ("paramsPSM", CWLType.File (FileInstance()))
                 // Note: sampleRecord has complex type and will be checked separately
             |]
             let actual = decodeCWLWorkflowDescription.Inputs
@@ -69,20 +81,24 @@ let testCWLWorkflowDescriptionDecode =
                 testCase "MzMLToMzlite" <| fun _ ->
                     let expected = "./runs/MzMLToMzlite/proteomiqon-mzmltomzlite.cwl"
                     let actual = workflowSteps.[0].Run
-                    Expect.equal actual expected ""
+                    match actual with
+                    | RunString runPath -> Expect.equal runPath expected ""
+                    | _ -> failwithf "Expected RunString but got %A" actual
                 testCase "PeptideSpectrumMatching" <| fun _ ->
                     let expected = "./runs/PeptideSpectrumMatching/proteomiqon-peptidespectrummatching.cwl"
                     let actual = workflowSteps.[1].Run
-                    Expect.equal actual expected ""
+                    match actual with
+                    | RunString runPath -> Expect.equal runPath expected ""
+                    | _ -> failwithf "Expected RunString but got %A" actual
             ]
             testList "In" [
                 testCase "MzMLToMzlite" <| fun _ ->
                     let expected = ResizeArray [|
-                        {Id = "stageDirectory"; Source = Some (ResizeArray [|"stage"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
-                        {Id = "inputDirectory"; Source = Some (ResizeArray [|"inputMzML"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
-                        {Id = "params"; Source = Some (ResizeArray [|"paramsMzML"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
-                        {Id = "outputDirectory"; Source = Some (ResizeArray [|"outputMzML"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
-                        {Id = "parallelismLevel"; Source = Some (ResizeArray [|"cores"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None}
+                        mkStepInput "stageDirectory" (Some (ResizeArray [|"stage"|])) None None None
+                        mkStepInput "inputDirectory" (Some (ResizeArray [|"inputMzML"|])) None None None
+                        mkStepInput "params" (Some (ResizeArray [|"paramsMzML"|])) None None None
+                        mkStepInput "outputDirectory" (Some (ResizeArray [|"outputMzML"|])) None None None
+                        mkStepInput "parallelismLevel" (Some (ResizeArray [|"cores"|])) None None None
                     |]
                     let actual = workflowSteps.[0].In
                     Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
@@ -91,15 +107,18 @@ let testCWLWorkflowDescriptionDecode =
                         Expect.equal actual.DefaultValue expected.DefaultValue ""
                         Expect.equal actual.ValueFrom expected.ValueFrom ""
                         Expect.equal actual.LinkMerge expected.LinkMerge ""
+                        Expect.equal actual.LoadContents expected.LoadContents ""
+                        Expect.equal actual.LoadListing expected.LoadListing ""
+                        Expect.equal actual.Label expected.Label ""
                     ) expected actual
                 testCase "PeptideSpectrumMatching" <| fun _ ->
                     let expected = ResizeArray [|
-                        {Id = "stageDirectory"; Source = Some (ResizeArray [|"stage"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
-                        {Id = "inputDirectory"; Source = Some (ResizeArray [|"MzMLToMzlite/dir1";"MzMLToMzlite/dir2"|]); DefaultValue = None; ValueFrom = None; LinkMerge = Some "merge_flattened"};
-                        {Id = "database"; Source = Some (ResizeArray [|"db"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
-                        {Id = "params"; Source = Some (ResizeArray [|"paramsPSM"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
-                        {Id = "outputDirectory"; Source = Some (ResizeArray [|"outputPSM"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None}
-                        {Id = "parallelismLevel"; Source = Some (ResizeArray [|"cores"|]); DefaultValue = None; ValueFrom = None; LinkMerge = None};
+                        mkStepInput "stageDirectory" (Some (ResizeArray [|"stage"|])) None None None
+                        mkStepInput "inputDirectory" (Some (ResizeArray [|"MzMLToMzlite/dir1"; "MzMLToMzlite/dir2"|])) None None (Some MergeFlattened)
+                        mkStepInput "database" (Some (ResizeArray [|"db"|])) None None None
+                        mkStepInput "params" (Some (ResizeArray [|"paramsPSM"|])) None None None
+                        mkStepInput "outputDirectory" (Some (ResizeArray [|"outputPSM"|])) None None None
+                        mkStepInput "parallelismLevel" (Some (ResizeArray [|"cores"|])) None None None
                     |]
                     let actual = workflowSteps.[1].In
                     Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
@@ -108,22 +127,25 @@ let testCWLWorkflowDescriptionDecode =
                         Expect.equal actual.DefaultValue expected.DefaultValue ""
                         Expect.equal actual.ValueFrom expected.ValueFrom ""
                         Expect.equal actual.LinkMerge expected.LinkMerge ""
+                        Expect.equal actual.LoadContents expected.LoadContents ""
+                        Expect.equal actual.LoadListing expected.LoadListing ""
+                        Expect.equal actual.Label expected.Label ""
                     ) expected actual
             ]
             testList "Out" [
                 testCase "MzMLToMzlite" <| fun _ ->
-                    let expected = {Id = ResizeArray [|"dir"|]}
+                    let expected = ResizeArray [| StepOutputString "dir" |]
                     let actual = workflowSteps.[0].Out
-                    Expect.sequenceEqual actual.Id expected.Id ""
+                    Expect.sequenceEqual actual expected ""
                 testCase "PeptideSpectrumMatching" <| fun _ ->
-                    let expected = {Id = ResizeArray [|"dir"|]}
+                    let expected = ResizeArray [| StepOutputString "dir" |]
                     let actual = workflowSteps.[1].Out
-                    Expect.sequenceEqual actual.Id expected.Id ""
+                    Expect.sequenceEqual actual expected ""
             ]
         ]
         testCase "outputs" <| fun _ ->
             let expected = ResizeArray [|
-                CWLOutput("mzlite", CWLType.Directory (DirectoryInstance()), outputSource = "MzMLToMzlite/dir");
+                CWLOutput("mzlite", CWLType.Directory (DirectoryInstance()), outputSource = "MzMLToMzlite/dir")
                 CWLOutput("psm", CWLType.Directory (DirectoryInstance()), outputSource = "PeptideSpectrumMatching/dir")
             |]
             let actual = decodeCWLWorkflowDescription.Outputs
@@ -132,6 +154,36 @@ let testCWLWorkflowDescriptionDecode =
                 Expect.equal actual.[i].OutputBinding expected.[i].OutputBinding ""
                 Expect.equal actual.[i].Type_ expected.[i].Type_ ""
                 Expect.equal actual.[i].OutputSource expected.[i].OutputSource ""
+        testCase "extended step fields decode" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithExtendedStepFile
+            let step = decoded.Steps.[0]
+            Expect.equal step.Label (Some "Example step") ""
+            Expect.equal step.Doc (Some "Step docs") ""
+            Expect.sequenceEqual step.Scatter.Value (ResizeArray [|"input1"|]) ""
+            Expect.equal step.ScatterMethod (Some "dotproduct") ""
+            Expect.equal step.In.[0].LoadContents (Some true) ""
+            Expect.equal step.In.[0].LoadListing (Some "deep_listing") ""
+            Expect.equal step.In.[0].Label (Some "Input label") ""
+            Expect.equal step.In.[0].LinkMerge (Some MergeNested) ""
+            let expectedOut = ResizeArray [| StepOutputRecord { Id = Some "out" } |]
+            Expect.sequenceEqual step.Out expectedOut ""
+        testCase "inline run commandline tool decode" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithInlineRunCommandLineToolFile
+            match decoded.Steps.[0].Run with
+            | RunCommandLineTool toolObj ->
+                match toolObj with
+                | :? CWLToolDescription as tool ->
+                    Expect.equal tool.CWLVersion "v1.2" ""
+                | _ ->
+                    failwithf "Expected CWLToolDescription payload but got %A" toolObj
+            | other ->
+                failwithf "Expected RunCommandLineTool but got %A" other
+        testCase "step input array form decode" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithInputArrayStepFile
+            let stepInput = decoded.Steps.[0].In.[0]
+            Expect.equal stepInput.Id "in1" ""
+            Expect.sequenceEqual stepInput.Source.Value (ResizeArray [|"input1"|]) ""
+            Expect.equal stepInput.Label (Some "Input in array syntax") ""
     ]
 
 let testCWLWorkflowDescriptionEncode =
@@ -159,6 +211,7 @@ let testCWLWorkflowDescriptionEncode =
                 assertAllOutputsHaveSource d2
         ]
     ]
+
 let main = 
     testList "CWLWorkflowDescription" [
         testCWLWorkflowDescriptionDecode
