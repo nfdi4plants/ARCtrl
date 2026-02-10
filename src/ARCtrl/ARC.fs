@@ -59,6 +59,26 @@ module ARCAux =
         contracts 
         |> Array.tryPick (ArcRun.tryYMLFromReadContract runIdentifier)
 
+    let private normalizePathKey (path: string) =
+        let normalized = ArcPathHelper.normalize path
+        if normalized = "" then path.Trim() else normalized
+
+    let getCWLByPathFromContracts (contracts: Contract []) : Map<string, CWL.CWLProcessingUnit> =
+        contracts
+        |> Array.choose (fun c ->
+            match c with
+            | {Operation = READ; DTOType = Some DTOType.CWL; DTO = Some (DTO.Text text)} ->
+                let cwl = CWL.Decode.decodeCWLProcessingUnit text
+                Some (normalizePathKey c.Path, cwl)
+            | _ ->
+                None
+        )
+        |> Map.ofArray
+
+    let tryGetCWLByPath (cwlByPath: Map<string, CWL.CWLProcessingUnit>) (path: string) =
+        cwlByPath
+        |> Map.tryFind (normalizePathKey path)
+
     let getArcInvestigationFromContracts (contracts: Contract []) =
         match contracts |> Array.choose ArcInvestigation.tryFromReadContract with
         | [|inv|] -> inv
@@ -614,6 +634,8 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         let runs = ARCAux.getArcRunsFromContracts contracts
 
         let license = ARCAux.getLicenseFromContracts contracts 
+        let cwlByPath = ARCAux.getCWLByPathFromContracts contracts
+        let tryGetCWLByPath = ARCAux.tryGetCWLByPath cwlByPath
 
         // Remove Assay metadata objects read from investigation file from investigation object, if no assosiated assay file exists
         this.AssayIdentifiers
@@ -664,9 +686,15 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         workflows |> Array.iter (fun workflow ->
             let datamap = ARCAux.getWorkflowDatamapFromContracts workflow.Identifier contracts
             let cwl = ARCAux.getWorkflowCWLFromContracts workflow.Identifier contracts
+            let cwlFilePath = Identifier.Workflow.cwlFileNameFromIdentifier workflow.Identifier
+            let resolvedCwl =
+                cwl
+                |> Option.map (fun processingUnit ->
+                    CWLRunResolver.resolveRunReferencesFromLookup cwlFilePath processingUnit tryGetCWLByPath
+                )
             if workflow.Datamap.IsNone then
                 workflow.Datamap <- datamap
-            workflow.CWLDescription <- cwl
+            workflow.CWLDescription <- resolvedCwl
             this.AddWorkflow(workflow)
             workflow.StaticHash <- workflow.GetLightHashCode()
         )
@@ -674,10 +702,16 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             let datamap = ARCAux.getRunDatamapFromContracts run.Identifier contracts
             let cwl = ARCAux.getRunCWLFromContracts run.Identifier contracts
             let yml = ARCAux.getRunYMLFromContracts run.Identifier contracts
+            let cwlFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
+            let resolvedCwl =
+                cwl
+                |> Option.map (fun processingUnit ->
+                    CWLRunResolver.resolveRunReferencesFromLookup cwlFilePath processingUnit tryGetCWLByPath
+                )
             if run.Datamap.IsNone then
                 run.Datamap <- datamap
             run.CWLInput <- yml |> Option.defaultValue (ResizeArray())
-            run.CWLDescription <- cwl
+            run.CWLDescription <- resolvedCwl
             this.AddRun(run)
             run.StaticHash <- run.GetLightHashCode()
         )

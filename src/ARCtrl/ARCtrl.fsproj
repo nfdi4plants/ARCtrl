@@ -55,6 +55,7 @@
     <Compile Include="JsonIO\Investigation.fs" />
     <Compile Include="JsonIO\Datamap.fs" />
     <Compile Include="JsonIO\LDObject.fs" />
+    <Compile Include="CWLRunResolver.fs" />
     <Compile Include="Conversion\ColumnIndex.fs" />
     <Compile Include="Conversion\DateTime.fs" />
     <Compile Include="Conversion\Basic.fs" />

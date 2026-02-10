@@ -59,6 +59,47 @@ let combineMany (paths : string []) : string =
     )
     |> String.concat(string PathSeperator)
 
+/// Normalize path segments by removing "." and resolving ".." where possible.
+let normalizeSegments (segments: string []) : string [] =
+    let resolved = ResizeArray<string>()
+    for rawSegment in segments do
+        let segment = rawSegment.Trim()
+        if segment = "" || segment = "." then
+            ()
+        elif segment = ".." then
+            if resolved.Count > 0 && resolved.[resolved.Count - 1] <> ".." then
+                resolved.RemoveAt(resolved.Count - 1)
+            else
+                resolved.Add(segment)
+        else
+            resolved.Add(segment)
+    resolved.ToArray()
+
+/// Normalize a path by resolving "." and ".." segments.
+let normalize (path: string) : string =
+    let normalizedSegments =
+        path
+        |> split
+        |> normalizeSegments
+    if normalizedSegments.Length = 0 then
+        path.Trim()
+    else
+        combineMany normalizedSegments
+
+/// Resolve a path (possibly relative) against the directory of a file path.
+let resolvePathFromFile (filePath: string) (path: string) : string =
+    let fileDirectorySegments =
+        let filePathSegments = split filePath
+        if filePathSegments.Length <= 1 then [||]
+        else filePathSegments[0..filePathSegments.Length - 2]
+    Array.append fileDirectorySegments (split path)
+    |> normalizeSegments
+    |> fun resolvedSegments ->
+        if resolvedSegments.Length = 0 then
+            path.Trim()
+        else
+            combineMany resolvedSegments
+
 let getFileName (path: string) : string =
     split path |> Array.last
 

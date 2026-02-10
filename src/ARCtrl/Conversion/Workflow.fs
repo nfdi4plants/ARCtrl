@@ -194,43 +194,6 @@ type WorkflowConversion =
         | CWL.RunCommandLineTool _ -> "inline:CommandLineTool"
         | CWL.RunWorkflow _ -> "inline:Workflow"
 
-    static member private pathKey (path: string) : string =
-        let normalized = path |> ArcPathHelper.split |> ArcPathHelper.combineMany
-        if normalized = "" then path.Trim() else normalized
-
-    static member private getRunNodeCandidates (workflowFilePath: string, runPath: string) : string [] =
-        if System.String.IsNullOrWhiteSpace runPath then
-            [||]
-        else
-            let trimmedRunPath = runPath.Trim()
-            if not (trimmedRunPath.EndsWith(".cwl", System.StringComparison.OrdinalIgnoreCase)) then
-                [||]
-            else
-                let runSegments = ArcPathHelper.split trimmedRunPath
-                if runSegments.Length = 0 then
-                    [||]
-                else
-                    let runRelativePath = ArcPathHelper.combineMany runSegments
-                    let workflowDirectorySegments =
-                        let workflowPathSegments = ArcPathHelper.split workflowFilePath
-                        if workflowPathSegments.Length <= 1 then [||]
-                        else workflowPathSegments[0..workflowPathSegments.Length - 2]
-                    let runPathInWorkflowDirectory =
-                        if workflowDirectorySegments.Length = 0 then
-                            runRelativePath
-                        else
-                            ArcPathHelper.combineMany (Array.append workflowDirectorySegments runSegments)
-
-                    [|
-                        trimmedRunPath
-                        runRelativePath
-                        $"./{runRelativePath}"
-                        runPathInWorkflowDirectory
-                        $"./{runPathInWorkflowDirectory}"
-                    |]
-                    |> Array.filter (fun p -> not (System.String.IsNullOrWhiteSpace p))
-                    |> Array.distinct
-
     static member private tryDecodeProcessingUnitFromGraph(resolvedRunPath: string, ?graph: LDGraph, ?context: LDContext) : CWL.CWLProcessingUnit option =
         let tryDecodeWorkflowProtocol (protocol: LDNode) =
             try
@@ -248,7 +211,7 @@ type WorkflowConversion =
         match graph with
         | None -> None
         | Some graph ->
-            let normalizedResolvedRunPath = resolvedRunPath |> ArcPathHelper.split |> ArcPathHelper.combineMany
+            let normalizedResolvedRunPath = ArcPathHelper.normalize resolvedRunPath
             let candidateIds =
                 ResizeArray [
                     resolvedRunPath
@@ -271,60 +234,6 @@ type WorkflowConversion =
                 |> Option.bind tryDecodeWorkflowProtocol
             | _ ->
                 None
-
-    static member private resolveWorkflowRunsRecursive (workflowFilePath: string, visited: Set<string>, workflow: CWL.CWLWorkflowDescription, ?graph: LDGraph, ?context: LDContext) : Set<string> =
-        let mutable visitedState = visited
-        for step in workflow.Steps do
-            let resolvedRun, nextVisited =
-                WorkflowConversion.resolveWorkflowStepRunRecursive(workflowFilePath, visitedState, step.Run, ?graph = graph, ?context = context)
-            step.Run <- resolvedRun
-            visitedState <- nextVisited
-        visitedState
-
-    static member private resolveWorkflowStepRunRecursive (workflowFilePath: string, visited: Set<string>, run: CWL.WorkflowStepRun, ?graph: LDGraph, ?context: LDContext) : CWL.WorkflowStepRun * Set<string> =
-        match run with
-        | CWL.RunString runPath ->
-            let candidates = WorkflowConversion.getRunNodeCandidates(workflowFilePath, runPath)
-            candidates
-            |> Array.tryPick (fun resolvedRunPath ->
-                let pathKey = WorkflowConversion.pathKey resolvedRunPath
-                if visited.Contains pathKey then
-                    None
-                else
-                    match WorkflowConversion.tryDecodeProcessingUnitFromGraph(resolvedRunPath, ?graph = graph, ?context = context) with
-                    | Some (CWL.CommandLineTool tool) ->
-                        Some (CWL.RunCommandLineTool tool, visited.Add pathKey)
-                    | Some (CWL.Workflow workflow) ->
-                        let visitedWithCurrent = visited.Add pathKey
-                        let nextVisited =
-                            WorkflowConversion.resolveWorkflowRunsRecursive(
-                                resolvedRunPath,
-                                visitedWithCurrent,
-                                workflow,
-                                ?graph = graph,
-                                ?context = context
-                            )
-                        Some (CWL.RunWorkflow workflow, nextVisited)
-                    | None ->
-                        None
-            )
-            |> Option.defaultValue (run, visited)
-        | CWL.RunWorkflow workflowObj ->
-            match workflowObj with
-            | :? CWL.CWLWorkflowDescription as workflow ->
-                let nextVisited =
-                    WorkflowConversion.resolveWorkflowRunsRecursive(
-                        workflowFilePath,
-                        visited,
-                        workflow,
-                        ?graph = graph,
-                        ?context = context
-                    )
-                CWL.RunWorkflow workflow, nextVisited
-            | _ ->
-                run, visited
-        | CWL.RunCommandLineTool _ ->
-            run, visited
 
     static member composeWorkflowProtocolFromToolDescription (filePath : string, workflow : CWL.CWLToolDescription, ?workflowName : string, ?runName : string) =
         let inputs =
@@ -391,8 +300,9 @@ type WorkflowConversion =
             else
                 match workflowFilePath with
                 | Some path ->
-                    WorkflowConversion.resolveWorkflowStepRunRecursive(path, Set.empty, initialRun, ?graph = graph, ?context = context)
-                    |> fst
+                    let tryResolveRunPath runPath =
+                        WorkflowConversion.tryDecodeProcessingUnitFromGraph(runPath, ?graph = graph, ?context = context)
+                    CWLRunResolver.resolveWorkflowStepRunFromLookup path initialRun tryResolveRunPath
                 | None ->
                     initialRun
         let inputs = ResizeArray()
