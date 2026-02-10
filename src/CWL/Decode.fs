@@ -450,7 +450,7 @@ module Decode =
         | "ScatterFeatureRequirement" -> ScatterFeatureRequirement
         | "MultipleInputFeatureRequirement" -> MultipleInputFeatureRequirement
         | "StepInputExpressionRequirement" -> StepInputExpressionRequirement
-        | _ -> failwith $"Invalid requirement: {cls}"
+        | _ -> raise (System.ArgumentException($"Invalid or unsupported requirement class: {cls}"))
 
     let requirementArrayDecoder : YAMLElement -> ResizeArray<Requirement> =
         fun yEle ->
@@ -482,8 +482,7 @@ module Decode =
                     |> ResizeArray
                 ) yEle
             // INVALID CWL REQUIREMENTS  
-            | other ->
-                failwithf "Invalid CWL requirements syntax: %A" other
+            | other -> raise (System.ArgumentException($"Invalid CWL requirements syntax: {other}"))
 
     /// Access the requirements field and decode the YAMLElements into a Requirement array
     let requirementsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<Requirement> option) =
