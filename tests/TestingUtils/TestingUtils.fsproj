@@ -8,6 +8,7 @@
     <Compile Include="TestObjects.CWL\Descriptions.fs" />
     <Compile Include="TestObjects.CWL\WorkflowSteps.fs" />
     <Compile Include="TestObjects.CWL\Workflow.fs" />
+    <Compile Include="TestObjects.CWL\RunWorkflowReference.fs" />
     <Compile Include="TestObjects.CWL\Requirements.fs" />
     <Compile Include="TestObjects.CWL\Inputs.fs" />
     <Compile Include="TestObjects.CWL\Outputs.fs" />
