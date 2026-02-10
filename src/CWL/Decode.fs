@@ -14,6 +14,63 @@ module ResizeArray =
 
 module Decode =
 
+    let private normalizeYamlInput (yaml: string) =
+        let normalized =
+            if isNull yaml then "" else yaml.Replace("\r\n", "\n")
+        let lines = normalized.Split('\n')
+        let withoutShebang =
+            if lines.Length > 0 && lines.[0].StartsWith("#!") then
+                lines.[1..]
+            else
+                lines
+        withoutShebang
+        |> String.concat "\n"
+        |> fun text -> text.TrimEnd()
+
+    let private removeFullLineComments (yaml: string) =
+        yaml.Split('\n')
+        |> Array.filter (fun line -> line.TrimStart().StartsWith("#") |> not)
+        |> String.concat "\n"
+
+    let rec private removeYamlComments (yamlElement: YAMLElement) : YAMLElement =
+        match yamlElement with
+        | YAMLElement.Object elements ->
+            elements
+            |> List.choose (fun element ->
+                match element with
+                | YAMLElement.Comment _ -> None
+                | other -> Some (removeYamlComments other)
+            )
+            |> YAMLElement.Object
+        | YAMLElement.Sequence elements ->
+            elements
+            |> List.choose (fun element ->
+                match removeYamlComments element with
+                | YAMLElement.Comment _ -> None
+                // YAML comments inside sequences can be represented as empty objects.
+                // Remove these placeholders to keep sequence decoders stable.
+                | YAMLElement.Object [] -> None
+                | other -> Some other
+            )
+            |> YAMLElement.Sequence
+        | YAMLElement.Mapping (key, value) ->
+            YAMLElement.Mapping (key, removeYamlComments value)
+        | other ->
+            other
+
+    let readSanitizedYaml (yaml: string) =
+        let normalized = normalizeYamlInput yaml
+        let tryRead text =
+            text
+            |> Decode.read
+            |> removeYamlComments
+        try
+            tryRead normalized
+        with _ ->
+            normalized
+            |> removeFullLineComments
+            |> tryRead
+
     /// Determines if an exception represents a recoverable decoding error.
     /// Returns true for schema mismatches; false for system errors that should propagate.
     let private isRecoverableDecodingError (ex: exn) : bool =
@@ -599,98 +656,203 @@ module Decode =
             fieldValue
         )
 
+    let boolOptionFieldDecoder field : (YAMLiciousTypes.YAMLElement -> bool option) =
+        Decode.object(fun get ->
+            let fieldValue = get.Optional.Field field Decode.bool
+            fieldValue
+        )
+
     let stringFieldDecoder field : (YAMLiciousTypes.YAMLElement -> string) =
         Decode.object(fun get ->
             let fieldValue = get.Required.Field field Decode.string
             fieldValue
         )
 
+    /// Decode a YAMLElement that may be a single string or an array of strings.
+    let stringOrStringArrayDecoder (value: YAMLElement) : ResizeArray<string> option =
+        match value with
+        | YAMLElement.Object [YAMLElement.Value v]
+        | YAMLElement.Value v ->
+            Some (ResizeArray [ v.Value ])
+        | YAMLElement.Object [YAMLElement.Sequence s]
+        | YAMLElement.Sequence s ->
+            Some (Decode.resizearray Decode.string (YAMLElement.Sequence s))
+        | _ -> None
+
     /// Decode a YAMLElement into a ResizeArray<string> option for the source field
     /// Handles both single string values and arrays of strings
     let sourceArrayFieldDecoder field : (YAMLiciousTypes.YAMLElement -> ResizeArray<string> option) =
         Decode.object(fun get ->
-            let sourceField = get.Optional.Field field id
-            match sourceField with
-            | Some sourceValue ->
-                match sourceValue with
-                | YAMLElement.Object [YAMLElement.Value v] -> 
-                    // Single string value
-                    Some (ResizeArray([v.Value]))
-                | YAMLElement.Value v ->
-                    // Single string value (unwrapped)
-                    Some (ResizeArray([v.Value]))
-                | YAMLElement.Object [YAMLElement.Sequence s] ->
-                    // Array of strings wrapped
-                    Some (Decode.resizearray Decode.string (YAMLElement.Sequence s))
-                | YAMLElement.Sequence s ->
-                    // Array of strings unwrapped
-                    Some (Decode.resizearray Decode.string (YAMLElement.Sequence s))
-                | _ -> None
+            get.Optional.Field field id
+            |> Option.bind stringOrStringArrayDecoder
+        )
+
+    let linkMergeFieldDecoder field : (YAMLiciousTypes.YAMLElement -> LinkMergeMethod option) =
+        Decode.object(fun get ->
+            let linkMergeField = get.Optional.Field field Decode.string
+            match linkMergeField with
+            | Some linkMergeString ->
+                match LinkMergeMethod.tryParse linkMergeString with
+                | Some linkMerge -> Some linkMerge
+                | None -> raise (System.ArgumentException($"Invalid linkMerge value: {linkMergeString}"))
             | None -> None
         )
 
-    let inputStepDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<StepInput>) =
-        Decode.object (fun get ->
-            let dict = get.Overflow.FieldList []
-            [|
-                for key in dict.Keys do
-                    let value = dict.[key]
-                    let source =
-                        let s1 =
-                            match value with
-                            | YAMLElement.Object [YAMLElement.Value v] -> Some (ResizeArray([v.Value]))
-                            | _ -> None
-                        let s2 = sourceArrayFieldDecoder "source" value
-                        match s1,s2 with
-                        | Some s1, _ -> Some s1
-                        | _, Some s2 -> Some s2
-                        | _ -> None
-                    let defaultValue = stringOptionFieldDecoder "default" value
-                    let valueFrom = stringOptionFieldDecoder "valueFrom" value
-                    let linkMerge = stringOptionFieldDecoder "linkMerge" value
-                    { Id = key; Source = source; DefaultValue = defaultValue; ValueFrom = valueFrom; LinkMerge = linkMerge }
-            |]
-            |> ResizeArray
+    let scatterFieldDecoder field : (YAMLiciousTypes.YAMLElement -> ResizeArray<string> option) =
+        Decode.object(fun get ->
+            get.Optional.Field field id
+            |> Option.bind stringOrStringArrayDecoder
         )
 
-    let outputStepsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<string>) =
+    let private decodeStepInputFromValue (id: string) (value: YAMLElement) (allowScalarSource: bool) : StepInput =
+        let scalarSource =
+            if allowScalarSource then
+                stringOrStringArrayDecoder value
+            else
+                None
+        let fieldSource = sourceArrayFieldDecoder "source" value
+        let source =
+            match scalarSource, fieldSource with
+            | Some s, _ -> Some s
+            | _, Some s -> Some s
+            | _ -> None
+        {
+            Id = id
+            Source = source
+            DefaultValue = stringOptionFieldDecoder "default" value
+            ValueFrom = stringOptionFieldDecoder "valueFrom" value
+            LinkMerge = linkMergeFieldDecoder "linkMerge" value
+            LoadContents = boolOptionFieldDecoder "loadContents" value
+            LoadListing = stringOptionFieldDecoder "loadListing" value
+            Label = stringOptionFieldDecoder "label" value
+        }
+
+    let private decodeStepInputsFromMap (value: YAMLElement) : ResizeArray<StepInput> =
+        let dict = Decode.object (fun get -> get.Overflow.FieldList []) value
+        [|
+            for key in dict.Keys do
+                decodeStepInputFromValue key dict.[key] true
+        |]
+        |> ResizeArray
+
+    let private decodeStepInputFromArrayItem (item: YAMLElement) : StepInput =
+        let id = stringFieldDecoder "id" item
+        decodeStepInputFromValue id item false
+
+    let private decodeStepInputsFromArray (items: YAMLElement list) : ResizeArray<StepInput> =
+        items
+        |> List.map decodeStepInputFromArrayItem
+        |> ResizeArray
+
+    let inputStepDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<StepInput>) =
+        fun value ->
+            match value with
+            | YAMLElement.Object [YAMLElement.Sequence items]
+            | YAMLElement.Sequence items ->
+                decodeStepInputsFromArray items
+            | _ ->
+                decodeStepInputsFromMap value
+
+    let private decodeStepOutputItem (value: YAMLElement) : StepOutput =
+        match value with
+        | YAMLElement.Object [YAMLElement.Value v]
+        | YAMLElement.Value v ->
+            StepOutputString v.Value
+        | _ ->
+            let id = stringOptionFieldDecoder "id" value
+            StepOutputRecord { Id = id }
+
+    let outputStepsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<StepOutput>) =
         Decode.object (fun get ->
             let outField = get.Optional.Field "out" id
             match outField with
             | Some (YAMLElement.Object []) ->
-                // Empty object representation of empty array
                 ResizeArray()
             | Some (YAMLElement.Object [YAMLElement.Value v]) when v.Value = "[]" ->
-                // Empty array represented as string "[]"
                 ResizeArray()
             | Some (YAMLElement.Object [YAMLElement.Sequence []]) | Some (YAMLElement.Sequence []) ->
-                // Empty sequence
                 ResizeArray()
+            | Some (YAMLElement.Object [YAMLElement.Sequence outputs])
+            | Some (YAMLElement.Sequence outputs) ->
+                outputs
+                |> List.map decodeStepOutputItem
+                |> ResizeArray
             | Some value ->
-                // Non-empty array - decode normally
-                Decode.resizearray Decode.string value
+                ResizeArray [ decodeStepOutputItem value ]
             | None ->
-                // Field not present
                 ResizeArray()
         )
 
-    let stepArrayDecoder =
+    let docDecoder =
+        Decode.object (fun get -> get.Optional.Field "doc" Decode.string)
+
+    let labelDecoder: (YAMLiciousTypes.YAMLElement -> string option) =
+        Decode.object (fun get -> get.Optional.Field "label" Decode.string)
+    
+    let private hasField (fieldName: string) (yamlElement: YAMLElement) : bool =
+        match yamlElement with
+        | YAMLElement.Object fields ->
+            fields
+            |> List.exists (function
+                | YAMLElement.Mapping (k, _) when k.Value = fieldName -> true
+                | _ -> false
+            )
+        | _ -> false
+
+    let private withDefaultCwlVersion (defaultCwlVersion: string) (yamlElement: YAMLElement) : YAMLElement =
+        match yamlElement with
+        | YAMLElement.Object fields when hasField "cwlVersion" yamlElement ->
+            yamlElement
+        | YAMLElement.Object fields ->
+            let key = { Value = "cwlVersion"; Comment = None }
+            let value = YAMLElement.Object [YAMLElement.Value { Value = defaultCwlVersion; Comment = None }]
+            YAMLElement.Object (YAMLElement.Mapping (key, value) :: fields)
+        | _ ->
+            yamlElement
+
+    let rec workflowStepRunDecoder (defaultCwlVersion: string) (runValue: YAMLElement) : WorkflowStepRun =
+        match runValue with
+        | YAMLElement.Object [YAMLElement.Value v]
+        | YAMLElement.Value v ->
+            RunString v.Value
+        | YAMLElement.Object _ ->
+            let normalizedRun = withDefaultCwlVersion defaultCwlVersion runValue
+            match decodeCWLProcessingUnitElement normalizedRun with
+            | CommandLineTool tool -> RunCommandLineTool tool
+            | Workflow workflow -> RunWorkflow workflow
+        | _ ->
+            raise (System.ArgumentException($"Unsupported run value for workflow step: %A{runValue}"))
+
+    and stepArrayDecoderWithVersion (defaultCwlVersion: string) : (YAMLiciousTypes.YAMLElement -> ResizeArray<WorkflowStep>) =
         Decode.object (fun get ->
             let dict = get.Overflow.FieldList []
             [|
                 for key in dict.Keys do
                     let value = dict.[key]
-                    let run = stringFieldDecoder "run" value
-                    let inputs = Decode.object (fun get -> get.Required.Field "in" inputStepDecoder) value
-                    let outputs = {Id = outputStepsDecoder value}
+                    let runValue = Decode.object (fun get' -> get'.Required.Field "run" id) value
+                    let run = workflowStepRunDecoder defaultCwlVersion runValue
+                    let inputs =
+                        Decode.object (fun get' ->
+                            get'.Optional.Field "in" inputStepDecoder
+                            |> Option.defaultValue (ResizeArray())
+                        ) value
+                    let outputs = outputStepsDecoder value
                     let requirements = requirementsDecoder value
                     let hints = hintsDecoder value
+                    let doc = docDecoder value
+                    let label = labelDecoder value
+                    let scatter = scatterFieldDecoder "scatter" value
+                    let scatterMethod = stringOptionFieldDecoder "scatterMethod" value
                     let wfStep =
                         WorkflowStep(
                             key,
                             inputs,
                             outputs,
-                            run
+                            run,
+                            ?label = label,
+                            ?doc = doc,
+                            ?scatter = scatter,
+                            ?scatterMethod = scatterMethod
                         )
                     if requirements.IsSome then
                         wfStep.Requirements <- requirements
@@ -701,19 +863,12 @@ module Decode =
             |> ResizeArray
         )
 
-    let docDecoder =
-        Decode.object (fun get -> get.Optional.Field "doc" Decode.string)
-
-    let labelDecoder: (YAMLiciousTypes.YAMLElement -> string option) =
-        Decode.object (fun get -> get.Optional.Field "label" Decode.string)
-    
-    let stepsDecoder =
+    and stepsDecoderWithVersion (defaultCwlVersion: string) : (YAMLiciousTypes.YAMLElement -> ResizeArray<WorkflowStep>) =
         Decode.object (fun get ->
-            let steps = get.Required.Field "steps" stepArrayDecoder
-            steps
+            get.Required.Field "steps" (stepArrayDecoderWithVersion defaultCwlVersion)
         )
 
-    let commandLineToolDecoder (yamlCWL : YAMLElement) =
+    and commandLineToolDecoder (yamlCWL : YAMLElement) =
         let cwlVersion = versionDecoder yamlCWL
         let outputs = outputsDecoder yamlCWL
         let inputs = inputsDecoder yamlCWL
@@ -789,13 +944,7 @@ module Decode =
             description.Metadata <- Some metadata
         description
 
-
-    /// Decode a CWL file string written in the YAML format into a CWLToolDescription
-    let decodeCommandLineTool (cwl: string) =
-        let yamlCWL = Decode.read cwl
-        commandLineToolDecoder yamlCWL
-
-    let workflowDecoder (yamlCWL: YAMLElement) =
+    and workflowDecoder (yamlCWL: YAMLElement) =
         let cwlVersion = versionDecoder yamlCWL
         let outputs = outputsDecoder yamlCWL
         let inputs =
@@ -804,7 +953,7 @@ module Decode =
             | None -> raise (System.InvalidOperationException("Inputs are required for a workflow"))
         let requirements = requirementsDecoder yamlCWL
         let hints = hintsDecoder yamlCWL
-        let steps = stepsDecoder yamlCWL
+        let steps = stepsDecoderWithVersion cwlVersion yamlCWL
         let doc = docDecoder yamlCWL
         let label = labelDecoder yamlCWL
         let description =
@@ -858,19 +1007,30 @@ module Decode =
             description.Metadata <- Some metadata
         description
 
-
-    /// Decode a CWL file string written in the YAML format into a CWLWorkflowDescription
-    let decodeWorkflow (cwl: string) =
-        let yamlCWL = Decode.read cwl
-        workflowDecoder yamlCWL
-
-    let decodeCWLProcessingUnit (cwl:string) =
-        let yamlCWL = Decode.read cwl
+    and decodeCWLProcessingUnitElement (yamlCWL: YAMLElement) =
         let cls = classDecoder yamlCWL
         match cls with
         | "CommandLineTool" -> CommandLineTool (commandLineToolDecoder yamlCWL)
         | "Workflow" -> Workflow (workflowDecoder yamlCWL)
         | _ -> raise (System.ArgumentException($"Invalid or unsupported CWL class: {cls}"))
+
+    let stepArrayDecoder = stepArrayDecoderWithVersion "v1.2"
+
+    let stepsDecoder = stepsDecoderWithVersion "v1.2"
+
+    /// Decode a CWL file string written in the YAML format into a CWLToolDescription
+    let decodeCommandLineTool (cwl: string) =
+        let yamlCWL = readSanitizedYaml cwl
+        commandLineToolDecoder yamlCWL
+
+    /// Decode a CWL file string written in the YAML format into a CWLWorkflowDescription
+    let decodeWorkflow (cwl: string) =
+        let yamlCWL = readSanitizedYaml cwl
+        workflowDecoder yamlCWL
+
+    let decodeCWLProcessingUnit (cwl:string) =
+        let yamlCWL = readSanitizedYaml cwl
+        decodeCWLProcessingUnitElement yamlCWL
 
 module DecodeParameters =
 
