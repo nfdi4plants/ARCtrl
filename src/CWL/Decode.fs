@@ -432,31 +432,58 @@ module Decode =
         get.Required.Field "timelimit" Decode.float
 
     /// Decode all YAMLElements matching the Requirement type into a ResizeArray of Requirement
-    let requirementArrayDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<Requirement>) =
-        Decode.resizearray 
-            (
+    let requirementFromTypeName cls get =
+        match cls with
+        | "InlineJavascriptRequirement" -> InlineJavascriptRequirement
+        | "SchemaDefRequirement" -> SchemaDefRequirement (schemaDefRequirementDecoder get)
+        | "DockerRequirement" -> DockerRequirement (dockerRequirementDecoder get)
+        | "SoftwareRequirement" -> SoftwareRequirement (softwareRequirementDecoder get)
+        | "InitialWorkDirRequirement" -> InitialWorkDirRequirement (initialWorkDirRequirementDecoder get)
+        | "EnvVarRequirement" -> EnvVarRequirement (envVarRequirementDecoder get)
+        | "ShellCommandRequirement" -> ShellCommandRequirement
+        | "ResourceRequirement" -> ResourceRequirement (resourceRequirementDecoder get)
+        | "WorkReuse" -> WorkReuseRequirement
+        | "NetworkAccess" -> NetworkAccessRequirement
+        | "InplaceUpdateRequirement" -> InplaceUpdateRequirement
+        | "ToolTimeLimit" -> ToolTimeLimitRequirement (toolTimeLimitRequirementDecoder get)
+        | "SubworkflowFeatureRequirement" -> SubworkflowFeatureRequirement
+        | "ScatterFeatureRequirement" -> ScatterFeatureRequirement
+        | "MultipleInputFeatureRequirement" -> MultipleInputFeatureRequirement
+        | "StepInputExpressionRequirement" -> StepInputExpressionRequirement
+        | _ -> failwith $"Invalid requirement: {cls}"
+
+    let requirementArrayDecoder : YAMLElement -> ResizeArray<Requirement> =
+        fun yEle ->
+            // helper: decode a single requirement object that contain 'class' field
+            let decodeSingleRequirementObject (ele: YAMLElement) : Requirement =
                 Decode.object (fun get ->
                     let cls = get.Required.Field "class" Decode.string
-                    match cls with
-                    | "InlineJavascriptRequirement" -> InlineJavascriptRequirement
-                    | "SchemaDefRequirement" -> SchemaDefRequirement (schemaDefRequirementDecoder get)
-                    | "DockerRequirement" -> DockerRequirement (dockerRequirementDecoder get)
-                    | "SoftwareRequirement" -> SoftwareRequirement (softwareRequirementDecoder get)
-                    | "InitialWorkDirRequirement" -> InitialWorkDirRequirement (initialWorkDirRequirementDecoder get)
-                    | "EnvVarRequirement" -> EnvVarRequirement (envVarRequirementDecoder get)
-                    | "ShellCommandRequirement" -> ShellCommandRequirement
-                    | "ResourceRequirement" -> ResourceRequirement (resourceRequirementDecoder get)
-                    | "WorkReuse" -> WorkReuseRequirement
-                    | "NetworkAccess" -> NetworkAccessRequirement
-                    | "InplaceUpdateRequirement" -> InplaceUpdateRequirement
-                    | "ToolTimeLimit" -> ToolTimeLimitRequirement (toolTimeLimitRequirementDecoder get)
-                    | "SubworkflowFeatureRequirement" -> SubworkflowFeatureRequirement
-                    | "ScatterFeatureRequirement" -> ScatterFeatureRequirement
-                    | "MultipleInputFeatureRequirement" -> MultipleInputFeatureRequirement
-                    | "StepInputExpressionRequirement" -> StepInputExpressionRequirement
-                    | _ -> raise (System.ArgumentException($"Invalid or unsupported requirement class: {cls}"))
-                )
-            )
+                    requirementFromTypeName cls get
+                ) ele
+
+            match yEle with
+            // I: ARRAY SYNTAX
+                // requirements:
+                //   - class: DockerRequirement
+            | YAMLElement.Object [YAMLElement.Sequence items] ->
+                items
+                |> List.map decodeSingleRequirementObject
+                |> ResizeArray
+
+            // II:  OBJECT/MAP SYNTAX (also covers flow/JSON-style mapping)
+                // requirements:
+                //   DockerRequirement: { ... }
+            | YAMLElement.Object _ ->
+                Decode.object (fun get ->
+                    get.Overflow.FieldList []
+                    |> Seq.map (fun kv ->
+                        Decode.object (requirementFromTypeName kv.Key) kv.Value
+                    )
+                    |> ResizeArray
+                ) yEle
+            // INVALID CWL REQUIREMENTS  
+            | other ->
+                failwithf "Invalid CWL requirements syntax: %A" other
 
     /// Access the requirements field and decode the YAMLElements into a Requirement array
     let requirementsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<Requirement> option) =

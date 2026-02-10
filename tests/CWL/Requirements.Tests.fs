@@ -5,65 +5,199 @@ open YAMLicious
 open TestingUtils
 open TestingUtils.CWL
 
-let decodeRequirement =
-    TestObjects.CWL.Requirements.requirementsFileContent
+open Fable.Pyxpecto
+open TestObjects.CWL
+
+let decodeRequirements (cwl: string) =
+    cwl
     |> Decode.read
     |> Decode.requirementsDecoder
     |> fun r -> r.Value
 
+let findRequirement reqs predicate =
+    reqs
+    |> Seq.tryFind predicate
+    |> Option.defaultWith (fun () -> failwith "Required requirement not found")
+
 let testRequirementDecode =
     testList "Decode" [
-        testCase "Length" <| fun _ -> Expect.equal 5  decodeRequirement.Count ""
+        testList "Length" [
+            testCase "Class Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsClassFileContent
+                Expect.hasLength reqs 5 "Test expect Requirements features Length is equal 5"
+            testCase "Mapping Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsMappingFileContent
+                Expect.hasLength reqs 5 "Test expect Requirements features Length is equal 5"
+            testCase "Json Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsJSONFileContent
+                Expect.hasLength reqs 5 "Test expect Requirements features Length is equal 5"
+        ]
         testList "DockerRequirement" [
-            let dockerItem = decodeRequirement.[0]
-            testCase "Class" <| fun _ ->
+            testCase "Class Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsClassFileContent
+                let dockerItem = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
                 let expected = DockerRequirement {DockerPull = None; DockerFile = Some (Map [("$include", "FSharpArcCapsule/Dockerfile")]); DockerImageId = Some "devcontainer"}
                 let actual = dockerItem
-                Expect.equal actual expected ""
+                Expect.equal actual expected "Mismatch or Wrong requirement type: Type get of Decode Class Syntax for DockerRequirement, can only be DockerRequirement"
+            testCase "Mapping Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsMappingFileContent
+                let dockerItem = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
+                let expected = DockerRequirement {DockerPull = None; DockerFile = Some (Map [("$include", "FSharpArcCapsule/Dockerfile")]); DockerImageId = Some "devcontainer"}
+                let actual = dockerItem
+                Expect.equal actual expected "Mismatch or Wrong requirement type: Type get of Decode Mapping Syntax for DockerRequirement, can only be DockerRequirement"
+            testCase "Json Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsJSONFileContent
+                let dockerItem = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
+                let expected = DockerRequirement {DockerPull = None; DockerFile = Some (Map [("$include", "FSharpArcCapsule/Dockerfile")]); DockerImageId = Some "devcontainer"}
+                let actual = dockerItem
+                Expect.equal actual expected "Mismatch or Wrong requirement type: Type get of Decode Json Syntax for DockerRequirement, can only be DockerRequirement"
         ]
         testList "InitialWorkDirRequirement" [
-            let initialWorkDirItem = decodeRequirement.[1]
-            testCase "Class" <| fun _ ->
+            testCase "Class Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsClassFileContent
+                let initialWorkDirItem = findRequirement reqs (function InitialWorkDirRequirement _ -> true | _ -> false)
                 let expected = InitialWorkDirRequirement (ResizeArray [|Dirent {Entryname = Some "arc"; Entry = "$(inputs.arcDirectory)"; Writable = Some true}; Dirent {Entryname = None; Entry = "$(inputs.outputDirectory)"; Writable = Some true}|])
                 let actual = initialWorkDirItem
                 match actual, expected with
-                | InitialWorkDirRequirement actualType, InitialWorkDirRequirement expectedType ->
-                    Expect.sequenceEqual actualType expectedType ""
-                | _ -> failwith "This test case can only be InitialWorkDirRequirement"
+                | InitialWorkDirRequirement a, InitialWorkDirRequirement e ->
+                    Expect.sequenceEqual a e "InitialWorkDirRequirement mismatch: Type get of Decode Class Syntax for InitialWorkDirRequirement"
+                | _ ->
+                    failwith "Wrong requirement type: Type of Decode Class Syntax for InitialWorkDirRequirement can only be InitialWorkDirRequirement"
+            testCase "Mapping Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsMappingFileContent
+                let initialWorkDirItem = findRequirement reqs (function InitialWorkDirRequirement _ -> true | _ -> false)
+                let expected = InitialWorkDirRequirement (ResizeArray [|Dirent {Entryname = Some "arc"; Entry = "$(inputs.arcDirectory)"; Writable = Some true}; Dirent {Entryname = None; Entry = "$(inputs.outputDirectory)"; Writable = Some true}|])
+                let actual = initialWorkDirItem
+                match actual, expected with
+                | InitialWorkDirRequirement a, InitialWorkDirRequirement e ->
+                    Expect.sequenceEqual a e "InitialWorkDirRequirement mismatch: Type of Decode Mapping Syntax for InitialWorkDirRequirement"
+                | _ ->
+                    failwith "Wrong requirement type: Type of Decode Mapping Syntax for InitialWorkDirRequirement can only be InitialWorkDirRequirement"
+            testCase "Json Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsJSONFileContent
+                let initialWorkDirItem = findRequirement reqs (function InitialWorkDirRequirement _ -> true | _ -> false)
+                let expected = InitialWorkDirRequirement (ResizeArray [|Dirent {Entryname = Some "arc"; Entry = "$(inputs.arcDirectory)"; Writable = Some true}; Dirent {Entryname = None; Entry = "$(inputs.outputDirectory)"; Writable = Some true}|])
+                let actual = initialWorkDirItem
+                match actual, expected with
+                | InitialWorkDirRequirement a, InitialWorkDirRequirement e ->
+                    Expect.sequenceEqual a e "InitialWorkDirRequirement mismatch: Type of Decode Json Syntax for InitialWorkDirRequirement"
+                | _ ->
+                    failwith "Wrong requirement type: Type of Decode Json Syntax for InitialWorkDirRequirement can only be InitialWorkDirRequirement"
         ]
         testList "EnvVarRequirement" [
-            let envVarItem = decodeRequirement.[2]
-            testCase "Class" <| fun _ ->
+            testCase "Class Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsClassFileContent
+                let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
                 let expected = EnvVarRequirement (ResizeArray [|{EnvName = "DOTNET_NOLOGO"; EnvValue = "true"}; {EnvName = "TEST"; EnvValue = "false"}|])
                 let actual = envVarItem
                 match actual, expected with
-                | EnvVarRequirement actualType, EnvVarRequirement expectedType ->
-                    Expect.sequenceEqual actualType expectedType ""
-                | _ -> failwith "This test case can only be EnvVarRequirement"
+                | EnvVarRequirement a, EnvVarRequirement e ->
+                    Expect.sequenceEqual a e "EnvVarRequirement mismatch: Type of Decode Class Syntax for EnvVarRequirement"
+                | _ ->
+                    failwith "Wrong requirement type: Type of Decode Class Syntax for EnvVarRequirement can only be EnvVarRequirement"
+            testCase "Mapping Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsMappingFileContent
+                let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
+                let expected = EnvVarRequirement (ResizeArray [|{EnvName = "DOTNET_NOLOGO"; EnvValue = "true"}; {EnvName = "TEST"; EnvValue = "false"}|])
+                let actual = envVarItem
+                match actual, expected with
+                | EnvVarRequirement a, EnvVarRequirement e ->
+                    Expect.sequenceEqual a e "EnvVarRequirement mismatch: Type of Decode Mapping Syntax for EnvVarRequirement"
+                | _ ->
+                    failwith "Wrong requirement type: Type of Decode Mapping Syntax for EnvVarRequirement can only be EnvVarRequirement"
+            testCase "Json Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsJSONFileContent
+                let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
+                let expected = EnvVarRequirement (ResizeArray [|{EnvName = "DOTNET_NOLOGO"; EnvValue = "true"}; {EnvName = "TEST"; EnvValue = "false"}|])
+                let actual = envVarItem
+                match actual, expected with
+                | EnvVarRequirement a, EnvVarRequirement e ->
+                    Expect.sequenceEqual a e "EnvVarRequirement mismatch: Type of Decode Json Syntax for EnvVarRequirement"
+                | _ ->
+                    failwith "Wrong requirement type: Type of Decode Json Syntax for EnvVarRequirement can only be EnvVarRequirement"
         ]
         testList "SoftwareRequirement" [
-            let softwareItem = decodeRequirement.[3]
-            testCase "Class" <| fun _ ->
+            testCase "Class Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsClassFileContent
+                let softwareItem = findRequirement reqs (function SoftwareRequirement _ -> true | _ -> false)
                 let expected = SoftwareRequirement (ResizeArray [|{Package = "interproscan"; Specs = Some (ResizeArray [| "https://identifiers.org/rrid/RRID:SCR_005829" |]); Version = Some (ResizeArray[| "5.21-60" |])}|])
                 let actual = softwareItem
                 match actual, expected with
                 | SoftwareRequirement actualType, SoftwareRequirement expectedType ->
-                    Expect.equal actualType.[0].Package expectedType.[0].Package ""
-                    Expect.sequenceEqual actualType.[0].Specs.Value expectedType.[0].Specs.Value ""
-                    Expect.sequenceEqual actualType.[0].Version.Value expectedType.[0].Version.Value ""
-                | _ -> failwith "This test case can only be SoftwareRequirement"
+                    let a = actualType.[0]
+                    let e = expectedType.[0]
+                    Expect.equal a.Package e.Package $"SoftwareRequirement.Package mismatch. expected = '{e.Package}', actual = '{a.Package}'"
+                    Expect.sequenceEqual a.Specs.Value e.Specs.Value $"SoftwareRequirement.Specs mismatch. expected = {e.Specs.Value}, actual = {a.Specs.Value}"
+                    Expect.sequenceEqual a.Version.Value e.Version.Value $"SoftwareRequirement.Version mismatch. expected = {e.Version.Value}, actual = {a.Version.Value}"
+                | _ ->
+                    failwith "Wrong requirement type: Type of Decode Class Syntax for SoftwareRequirement can only be SoftwareRequirement"
+            testCase "Mapping Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsMappingFileContent
+                let softwareItem = findRequirement reqs (function SoftwareRequirement _ -> true | _ -> false)
+                let expected = SoftwareRequirement (ResizeArray [|{Package = "interproscan"; Specs = Some (ResizeArray [| "https://identifiers.org/rrid/RRID:SCR_005829" |]); Version = Some (ResizeArray[| "5.21-60" |])}|])
+                let actual = softwareItem
+                match actual, expected with
+                | SoftwareRequirement actualType, SoftwareRequirement expectedType ->
+                    let a = actualType.[0]
+                    let e = expectedType.[0]
+                    Expect.equal a.Package e.Package $"SoftwareRequirement.Package mismatch. expected = '{e.Package}', actual = '{a.Package}'"
+                    Expect.sequenceEqual a.Specs.Value e.Specs.Value $"SoftwareRequirement.Specs mismatch. expected = {e.Specs.Value}, actual = {a.Specs.Value}"
+                    Expect.sequenceEqual a.Version.Value e.Version.Value $"SoftwareRequirement.Version mismatch. expected = {e.Version.Value}, actual = {a.Version.Value}"
+                | _ ->
+                    failwith "Wrong requirement type: Type of Decode Mapping Syntax for SoftwareRequirement can only be SoftwareRequirement"
+            testCase "Json Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsJSONFileContent
+                let softwareItem = findRequirement reqs (function SoftwareRequirement _ -> true | _ -> false)
+                let expected = SoftwareRequirement (ResizeArray [|{Package = "interproscan"; Specs = Some (ResizeArray [| "https://identifiers.org/rrid/RRID:SCR_005829" |]); Version = Some (ResizeArray[| "5.21-60" |])}|])
+                let actual = softwareItem
+                match actual, expected with
+                | SoftwareRequirement actualType, SoftwareRequirement expectedType ->
+                    let a = actualType.[0]
+                    let e = expectedType.[0]
+                    Expect.equal a.Package e.Package $"SoftwareRequirement.Package mismatch. expected = '{e.Package}', actual = '{a.Package}'"
+                    Expect.sequenceEqual a.Specs.Value e.Specs.Value $"SoftwareRequirement.Specs mismatch. expected = {e.Specs.Value}, actual = {a.Specs.Value}"
+                    Expect.sequenceEqual a.Version.Value e.Version.Value $"SoftwareRequirement.Version mismatch. expected = {e.Version.Value}, actual = {a.Version.Value}"
+                | _ ->
+                    failwith "Wrong requirement type: Type of Decode Json Syntax for SoftwareRequirement can only be SoftwareRequirement"
         ]
         testList "NetworkAccess" [
-            let networkAccessItem = decodeRequirement.[4]
-            testCase "Class" <| fun _ ->
+            testCase "Class Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsClassFileContent
+                let networkAccessItem = findRequirement reqs (function NetworkAccessRequirement -> true | _ -> false)
                 let expected = NetworkAccessRequirement
                 let actual = networkAccessItem
-                Expect.equal actual expected ""
+                Expect.equal actual expected "Type of Decode Classs Syntax for NetworkAccess, Requirement can only be NetworkAccess"
+            testCase "Mapping Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsMappingFileContent
+                let networkAccessItem = findRequirement reqs (function NetworkAccessRequirement -> true | _ -> false)
+                let expected = NetworkAccessRequirement
+                let actual = networkAccessItem
+                Expect.equal actual expected "Type of Decode Mapping Syntax for NetworkAccess, Requirement can only be NetworkAccess"
+            testCase "Json Syntax" <| fun _ ->
+                let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsJSONFileContent
+                let networkAccessItem = findRequirement reqs (function NetworkAccessRequirement -> true | _ -> false)
+                let expected = NetworkAccessRequirement
+                let actual = networkAccessItem
+                Expect.equal actual expected "Type of Decode Json Syntax for NetworkAccess, Requirement can only be NetworkAccess"
         ]
     ]
-open Fable.Pyxpecto
-open ARCtrl.CWL
-open TestObjects.CWL
+let testDecodeAllRequirementSyntaxes =
+    testList "Requirement Decode Syntax Coverage" [
+        testCase "Array Syntax" <| fun _ ->
+            let r = decodeRequirements TestObjects.CWL.Requirements.requirementsArraySyntax
+            Expect.hasLength r 1 "Decode Class Syntax for SubworkflowFeatureRequirement, can only be 'one' element of SubworkflowFeatureRequirement"
+            Expect.equal r.[0] SubworkflowFeatureRequirement "Decode Class Syntax for SubworkflowFeatureRequirement, can only be a element of SubworkflowFeatureRequirement"
+
+        testCase "Mapping Syntax" <| fun _ ->
+            let r = decodeRequirements TestObjects.CWL.Requirements.requirementsMappingSyntax
+            Expect.hasLength r 1 "Decode Mapping Syntax for SubworkflowFeatureRequirement, can only be 'one' element of SubworkflowFeatureRequirement"
+            Expect.equal r.[0] SubworkflowFeatureRequirement "Decode Mapping Syntax for SubworkflowFeatureRequirement, can only be a element of SubworkflowFeatureRequirement"
+
+        testCase "Json Syntax" <| fun _ ->
+            let r = decodeRequirements TestObjects.CWL.Requirements.requirementsJSONSyntax
+            Expect.hasLength r 1 "Decode Json Syntax for SubworkflowFeatureRequirement, can only be 'one' element of SubworkflowFeatureRequirement"
+            Expect.equal r.[0] SubworkflowFeatureRequirement "Decode Json Syntax for SubworkflowFeatureRequirement, can only be a element of SubworkflowFeatureRequirement"
+    ]
 
 let private extractRequirementsOrder (text:string) =
     text.Split('\n')
@@ -89,5 +223,6 @@ let testRequirementEncode =
 let main = 
     testList "Requirement" [
         testRequirementDecode
+        testDecodeAllRequirementSyntaxes
         testRequirementEncode
     ]
