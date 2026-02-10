@@ -7,6 +7,7 @@ open ARCtrl.Conversion
 open ARCtrl.Process
 open TestingUtils
 open ARCtrl.FileSystem
+open CrossAsync
 
 module Helper =
 
@@ -2388,6 +2389,228 @@ let tests_ArcWorkflow =
             let workflow' = WorkflowConversion.decomposeWorkflow(ro_Workflow, graph = graph)
             Expect.equal workflow' workflow "Workflow should match"
         )
+        testCaseCrossAsync "FullWorkflow_File_StepsParsedIntoDatamodel" (crossAsync {
+            let fullWorkflowDirectory =
+                ArcPathHelper.combineMany [|
+                    TestObjects.IO.testBaseFolder
+                    "TestObjects.CWL"
+                    "FullWorkflow"
+                |]
+            let fullWorkflowPath = ArcPathHelper.combine fullWorkflowDirectory "workflow.cwl"
+            let! workflowExists = FileSystemHelper.fileExistsAsync fullWorkflowPath
+            Expect.isTrue workflowExists $"Expected workflow fixture at {fullWorkflowPath}"
+            let! workflowText = FileSystemHelper.readFileTextAsync fullWorkflowPath
+            let processingUnit = CWL.Decode.decodeCWLProcessingUnit (workflowText.TrimEnd())
+            let sourceWorkflow =
+                let sourceWorkflowOpt =
+                    match processingUnit with
+                    | CWL.Workflow wf -> Some wf
+                    | _ -> None
+                Expect.wantSome sourceWorkflowOpt $"Expected full workflow fixture to decode as Workflow but got %A{processingUnit}"
+
+            let workflow =
+                ArcWorkflow(
+                    identifier = "FullWorkflow",
+                    title = "Full Workflow",
+                    description = "Full workflow conversion test",
+                    cwlDescription = processingUnit
+                )
+
+            let ro_Workflow = WorkflowConversion.composeWorkflow workflow
+            let workflow' = WorkflowConversion.decomposeWorkflow ro_Workflow
+
+            let parsedWorkflow =
+                let parsedWorkflowOpt =
+                    match workflow'.CWLDescription with
+                    | Some (CWL.Workflow wf) -> Some wf
+                    | _ -> None
+                Expect.wantSome parsedWorkflowOpt $"Parsed workflow should contain a CWL workflow description but got %A{workflow'.CWLDescription}"
+
+            let getRunId (step: CWL.WorkflowStep) =
+                match step.Run with
+                | CWL.RunString runPath -> runPath
+                | CWL.RunCommandLineTool _ -> "inline:CommandLineTool"
+                | CWL.RunWorkflow _ -> "inline:Workflow"
+
+            let sourceStepIds = sourceWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
+            let parsedStepIds = parsedWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
+            Expect.equal parsedStepIds sourceStepIds "Step identifiers should be preserved through workflow conversion"
+
+            let sourceRuns = sourceWorkflow.Steps |> Seq.map getRunId |> Seq.toList
+            let parsedRuns = parsedWorkflow.Steps |> Seq.map getRunId |> Seq.toList
+            Expect.equal parsedRuns sourceRuns "Step run references should be preserved through workflow conversion"
+
+            Expect.equal parsedWorkflow.Steps.Count 12 "Full workflow should contain all expected steps"
+        })
+        testCaseCrossAsync "FullWorkflow_File_StepsResolveToCommandLineTools_WithContent" (crossAsync {
+            let fullWorkflowDirectory =
+                ArcPathHelper.combineMany [|
+                    TestObjects.IO.testBaseFolder
+                    "TestObjects.CWL"
+                    "FullWorkflow"
+                |]
+            let fullWorkflowPath = ArcPathHelper.combine fullWorkflowDirectory "workflow.cwl"
+            let! workflowExists = FileSystemHelper.fileExistsAsync fullWorkflowPath
+            Expect.isTrue workflowExists $"Expected workflow fixture at {fullWorkflowPath}"
+
+            let! workflowText = FileSystemHelper.readFileTextAsync fullWorkflowPath
+            let processingUnit = CWL.Decode.decodeCWLProcessingUnit (workflowText.TrimEnd())
+            let sourceWorkflow =
+                let sourceWorkflowOpt =
+                    match processingUnit with
+                    | CWL.Workflow wf -> Some wf
+                    | _ -> None
+                Expect.wantSome sourceWorkflowOpt $"Expected full workflow fixture to decode as Workflow but got %A{processingUnit}"
+
+            let expectedRunPathByStepId =
+                sourceWorkflow.Steps
+                |> Seq.map (fun step ->
+                    let runPath =
+                        let runPathOpt =
+                            match step.Run with
+                            | CWL.RunString runPath -> Some runPath
+                            | _ -> None
+                        Expect.wantSome runPathOpt $"Expected source run of step {step.Id} to be a string path but got %A{step.Run}"
+                    step.Id, runPath
+                )
+                |> Map.ofSeq
+
+            let normalizeLocalRunPath (runPath: string) =
+                let normalizedPath = runPath |> FileSystemHelper.standardizeSlashes
+                if normalizedPath.StartsWith("./") then normalizedPath.Substring(2)
+                elif normalizedPath.StartsWith("/") then normalizedPath.Substring(1)
+                else normalizedPath
+
+            let loadCommandLineToolFromRunPath (runPath: string) =
+                crossAsync {
+                    let relativeRunPath = normalizeLocalRunPath runPath
+                    let fixtureRunPath = ArcPathHelper.combine fullWorkflowDirectory relativeRunPath
+                    let! fixtureExists = FileSystemHelper.fileExistsAsync fixtureRunPath
+                    Expect.isTrue fixtureExists $"Expected step run fixture at {fixtureRunPath}"
+                    let! runText = FileSystemHelper.readFileTextAsync fixtureRunPath
+                    let decodedRun =
+                        try
+                            CWL.Decode.decodeCWLProcessingUnit (runText.TrimEnd())
+                        with ex ->
+                            Expect.isTrue false $"Failed to decode run fixture {runPath} ({fixtureRunPath}): {ex.Message}"
+                            CWL.CommandLineTool (CWL.CWLToolDescription(outputs = ResizeArray()))
+                    let commandLineTool =
+                        let commandLineToolOpt =
+                            match decodedRun with
+                            | CWL.CommandLineTool tool -> Some tool
+                            | _ -> None
+                        let mismatchMessage =
+                            match decodedRun with
+                            | CWL.Workflow wf -> $"Expected run fixture {runPath} to decode as CommandLineTool but got Workflow with {wf.Steps.Count} steps"
+                            | other -> $"Expected run fixture {runPath} to decode as CommandLineTool but got %A{other}"
+                        Expect.wantSome commandLineToolOpt mismatchMessage
+                    return commandLineTool
+                }
+
+            let workflow =
+                ArcWorkflow(
+                    identifier = "FullWorkflow",
+                    title = "Full Workflow",
+                    description = "Full workflow conversion test",
+                    cwlDescription = processingUnit
+                )
+
+            let ro_Workflow = WorkflowConversion.composeWorkflow workflow
+            let graph = ro_Workflow.Flatten()
+
+            let uniqueRunPaths =
+                expectedRunPathByStepId
+                |> Map.toSeq
+                |> Seq.map snd
+                |> Seq.distinct
+                |> Seq.toList
+
+            let mutable expectedToolByRunPath : Map<string, CWL.CWLToolDescription> = Map.empty
+
+            for runPath in uniqueRunPaths do
+                let! expectedTool = loadCommandLineToolFromRunPath runPath
+                let relativeRunPath = normalizeLocalRunPath runPath
+                let runNodePathInGraph =
+                    ArcPathHelper.combineMany [|
+                        ArcPathHelper.WorkflowsFolderName
+                        workflow.Identifier
+                        relativeRunPath
+                    |]
+                let runNode =
+                    WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(
+                        runNodePathInGraph,
+                        CWL.CommandLineTool expectedTool,
+                        workflowName = workflow.Identifier
+                    )
+                graph.AddNode runNode
+                expectedToolByRunPath <- expectedToolByRunPath.Add(runPath, expectedTool)
+
+            let workflow' = WorkflowConversion.decomposeWorkflow(ro_Workflow, graph = graph)
+
+            let parsedWorkflow =
+                let parsedWorkflowOpt =
+                    match workflow'.CWLDescription with
+                    | Some (CWL.Workflow wf) -> Some wf
+                    | _ -> None
+                Expect.wantSome parsedWorkflowOpt $"Parsed workflow should contain a CWL workflow description but got %A{workflow'.CWLDescription}"
+
+            let inputSignature (input: CWL.CWLInput) =
+                input.Name,
+                (input.Type_ |> Option.map WorkflowConversion.composeAdditionalType),
+                (input.InputBinding |> Option.bind (fun binding -> binding.Prefix)),
+                (input.InputBinding |> Option.bind (fun binding -> binding.Position))
+
+            let outputSignature (output: CWL.CWLOutput) =
+                output.Name,
+                (output.Type_ |> Option.map WorkflowConversion.composeAdditionalType),
+                (output.OutputBinding |> Option.bind (fun binding -> binding.Glob))
+
+            let commandLineToolSignatures (tool: CWL.CWLToolDescription) =
+                let inputSignatures =
+                    tool.Inputs
+                    |> Option.defaultValue (ResizeArray())
+                    |> Seq.map inputSignature
+                    |> Seq.sortBy (fun (name, _, _, _) -> name)
+                    |> Seq.toList
+                let outputSignatures =
+                    tool.Outputs
+                    |> Seq.map outputSignature
+                    |> Seq.sortBy (fun (name, _, _) -> name)
+                    |> Seq.toList
+                inputSignatures, outputSignatures
+
+            Expect.equal parsedWorkflow.Steps.Count sourceWorkflow.Steps.Count "All workflow steps should be preserved"
+
+            for parsedStep in parsedWorkflow.Steps do
+                let runPath =
+                    let runPathOpt = expectedRunPathByStepId.TryFind parsedStep.Id
+                    Expect.wantSome runPathOpt $"Expected source run path for step {parsedStep.Id}"
+                let expectedTool =
+                    let expectedToolOpt = expectedToolByRunPath.TryFind runPath
+                    Expect.wantSome expectedToolOpt $"Expected decoded command line tool for run path {runPath}"
+
+                let parsedTool =
+                    let parsedToolOpt =
+                        match parsedStep.Run with
+                        | CWL.RunCommandLineTool toolObj ->
+                            match toolObj with
+                            | :? CWL.CWLToolDescription as parsedTool -> Some parsedTool
+                            | _ -> None
+                        | _ -> None
+                    let mismatchMessage =
+                        match parsedStep.Run with
+                        | CWL.RunCommandLineTool toolObj ->
+                            $"Expected resolved run of step {parsedStep.Id} to be CWLToolDescription object but got %A{toolObj}"
+                        | other ->
+                            $"Expected resolved run of step {parsedStep.Id} to be RunCommandLineTool but got %A{other}"
+                    Expect.wantSome parsedToolOpt mismatchMessage
+
+                let expectedInputs, expectedOutputs = commandLineToolSignatures expectedTool
+                let parsedInputs, parsedOutputs = commandLineToolSignatures parsedTool
+                Expect.equal parsedTool.CWLVersion expectedTool.CWLVersion $"CWLVersion should match for step {parsedStep.Id}"
+                Expect.equal parsedInputs expectedInputs $"Input signatures should match for step {parsedStep.Id}"
+                Expect.equal parsedOutputs expectedOutputs $"Output signatures should match for step {parsedStep.Id}"
+        })
     ]
 
 let tests_ArcRun =
