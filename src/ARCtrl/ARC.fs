@@ -59,17 +59,13 @@ module ARCAux =
         contracts 
         |> Array.tryPick (ArcRun.tryYMLFromReadContract runIdentifier)
 
-    let private normalizePathKey (path: string) =
-        let normalized = ArcPathHelper.normalize path
-        if normalized = "" then path.Trim() else normalized
-
     let getCWLByPathFromContracts (contracts: Contract []) : Map<string, CWL.CWLProcessingUnit> =
         contracts
         |> Array.choose (fun c ->
             match c with
             | {Operation = READ; DTOType = Some DTOType.CWL; DTO = Some (DTO.Text text)} ->
                 let cwl = CWL.Decode.decodeCWLProcessingUnit text
-                Some (normalizePathKey c.Path, cwl)
+                Some (ArcPathHelper.normalizePathKey c.Path, cwl)
             | _ ->
                 None
         )
@@ -77,7 +73,7 @@ module ARCAux =
 
     let tryGetCWLByPath (cwlByPath: Map<string, CWL.CWLProcessingUnit>) (path: string) =
         cwlByPath
-        |> Map.tryFind (normalizePathKey path)
+        |> Map.tryFind (ArcPathHelper.normalizePathKey path)
 
     let getArcInvestigationFromContracts (contracts: Contract []) =
         match contracts |> Array.choose ArcInvestigation.tryFromReadContract with
