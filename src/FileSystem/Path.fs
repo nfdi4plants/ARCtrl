@@ -43,6 +43,55 @@ let split(path: string) =
     path.Split(seperators, enum<StringSplitOptions>(3))
     |> Array.filter (fun p -> p <> "" && p <> ".")
 
+let private hasLeadingSeparator (path: string) =
+    path.Length > 0 && (path.[0] = PathSeperator || path.[0] = PathSeperatorWindows)
+
+let private isUncPath (path: string) =
+    path.StartsWith("//") || path.StartsWith(@"\\")
+
+let private tryGetDrivePrefix (path: string) =
+    if
+        path.Length > 2
+        && System.Char.IsLetter(path.[0])
+        && path.[1] = ':'
+        && (path.[2] = PathSeperator || path.[2] = PathSeperatorWindows)
+    then
+        Some (path.Substring(0, 2))
+    else
+        None
+
+let private splitWithPrefix (path: string) : string option * string [] =
+    let trimmed = path.Trim()
+    match tryGetDrivePrefix trimmed with
+    | Some drivePrefix ->
+        let remainder = trimmed.Substring(2)
+        Some drivePrefix, split remainder
+    | None when isUncPath trimmed ->
+        Some "//", split trimmed
+    | None when hasLeadingSeparator trimmed ->
+        Some "/", split trimmed
+    | None ->
+        None, split trimmed
+
+let private normalizeRootPrefix (prefix: string) =
+    if prefix = "//" then "//"
+    elif prefix.EndsWith(":") then $"{prefix}/"
+    else "/"
+
+let private buildPathFromPrefixAndSegments (prefixOpt: string option) (segments: string []) : string =
+    if segments.Length = 0 then
+        match prefixOpt with
+        | Some prefix -> normalizeRootPrefix prefix
+        | None -> ""
+    else
+        let combined = String.concat (string PathSeperator) segments
+        match prefixOpt with
+        | Some "//" -> $"//{combined}"
+        | Some prefix when prefix.EndsWith(":") -> $"{prefix}/{combined}"
+        | Some "/" -> $"/{combined}"
+        | Some prefix -> $"{prefix}/{combined}"
+        | None -> combined
+
 let combine (path1 : string) (path2 : string) : string =
     let path1_trimmed = path1.TrimEnd(seperators)
     let path2_trimmed = path2.TrimStart(seperators)
@@ -79,14 +128,17 @@ let normalizeSegments (segments: string []) : string [] =
 /// Note: If normalization yields no segments, the trimmed original path is returned
 /// to preserve relative markers used by existing callers (e.g. "." or "./").
 let normalize (path: string) : string =
+    let trimmedPath = path.Trim()
+    let prefixOpt, pathSegments = splitWithPrefix trimmedPath
     let normalizedSegments =
-        path
-        |> split
+        pathSegments
         |> normalizeSegments
     if normalizedSegments.Length = 0 then
-        path.Trim()
+        match prefixOpt with
+        | Some prefix -> normalizeRootPrefix prefix
+        | None -> trimmedPath
     else
-        combineMany normalizedSegments
+        buildPathFromPrefixAndSegments prefixOpt normalizedSegments
 
 let normalizePathKey (path: string) : string =
     let normalized = normalize path
@@ -94,17 +146,26 @@ let normalizePathKey (path: string) : string =
 
 /// Resolve a path (possibly relative) against the directory of a file path.
 let resolvePathFromFile (filePath: string) (path: string) : string =
-    let fileDirectorySegments =
-        let filePathSegments = split filePath
-        if filePathSegments.Length <= 1 then [||]
-        else filePathSegments[0..filePathSegments.Length - 2]
-    Array.append fileDirectorySegments (split path)
-    |> normalizeSegments
-    |> fun resolvedSegments ->
-        if resolvedSegments.Length = 0 then
-            path.Trim()
-        else
-            combineMany resolvedSegments
+    let trimmedPath = path.Trim()
+    let pathPrefixOpt, pathSegments = splitWithPrefix trimmedPath
+
+    if pathPrefixOpt.IsSome then
+        normalize trimmedPath
+    else
+        let filePrefixOpt, filePathSegments = splitWithPrefix filePath
+        let fileDirectorySegments =
+            if filePathSegments.Length <= 1 then [||]
+            else filePathSegments[0..filePathSegments.Length - 2]
+
+        Array.append fileDirectorySegments pathSegments
+        |> normalizeSegments
+        |> fun resolvedSegments ->
+            if resolvedSegments.Length = 0 then
+                match filePrefixOpt with
+                | Some prefix -> normalizeRootPrefix prefix
+                | None -> trimmedPath
+            else
+                buildPathFromPrefixAndSegments filePrefixOpt resolvedSegments
 
 let getFileName (path: string) : string =
     split path |> Array.last
