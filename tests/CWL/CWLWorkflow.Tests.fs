@@ -253,7 +253,7 @@ let testCWLWorkflowDescriptionDecode =
             let invalidScatter = TestObjects.CWL.Workflow.workflowWithInvalidScatterMethodFile
             Expect.throws (fun _ -> Decode.decodeWorkflow invalidScatter |> ignore) "Invalid scatterMethod should fail"
         testCase "inline ExpressionTool run decode succeeds" <| fun _ ->
-            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithUnsupportedInlineRunClassFile
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithInlineExpressionToolFile
             let runValue = decoded.Steps.[0].Run
             let isRunExpressionTool =
                 match runValue with

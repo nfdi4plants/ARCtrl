@@ -2392,9 +2392,7 @@ let tests_ArcWorkflow =
         testCaseCrossAsync "FullWorkflow_File_StepsParsedIntoDatamodel" (crossAsync {
             let fullWorkflowDirectory =
                 ArcPathHelper.combineMany [|
-                    TestObjects.IO.testBaseFolder
-                    "TestObjects.CWL"
-                    "SampleWfArc"
+                    TestObjects.IO.testSimpleARCWithWR
                     "workflows"
                     "ProteomIQon"
                 |]
@@ -2448,9 +2446,7 @@ let tests_ArcWorkflow =
         testCaseCrossAsync "FullWorkflow_File_StepsResolveToCommandLineTools_WithContent" (crossAsync {
             let fullWorkflowDirectory =
                 ArcPathHelper.combineMany [|
-                    TestObjects.IO.testBaseFolder
-                    "TestObjects.CWL"
-                    "SampleWfArc"
+                    TestObjects.IO.testSimpleARCWithWR
                     "workflows"
                     "ProteomIQon"
                 |]
@@ -2639,7 +2635,7 @@ let tests_ArcWorkflow =
         )
         testCase "Workflow_WithInlineExpressionToolStep_ROCrateRoundtrip_PreservesStep" (fun () ->
             let workflow =
-                CWL.Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithUnsupportedInlineRunClassFile
+                CWL.Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithInlineExpressionToolFile
             let protocol =
                 WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(
                     "workflows/InlineExpressionWorkflow/workflow.cwl",
@@ -2805,11 +2801,7 @@ let tests_ArcRun =
         )
         testCaseCrossAsync "RelativeWorkflowRunReference_ResolvesToWorkflow" (crossAsync {
             let sampleArcDirectory =
-                ArcPathHelper.combineMany [|
-                    TestObjects.IO.testBaseFolder
-                    "TestObjects.CWL"
-                    "SampleWfArc"
-                |]
+                TestObjects.IO.testSimpleARCWithWR
             let runFixturePath =
                 ArcPathHelper.combineMany [|
                     sampleArcDirectory
