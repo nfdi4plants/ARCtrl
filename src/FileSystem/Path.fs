@@ -76,6 +76,8 @@ let normalizeSegments (segments: string []) : string [] =
     resolved.ToArray()
 
 /// Normalize a path by resolving "." and ".." segments.
+/// Note: If normalization yields no segments, the trimmed original path is returned
+/// to preserve relative markers used by existing callers (e.g. "." or "./").
 let normalize (path: string) : string =
     let normalizedSegments =
         path
@@ -85,6 +87,10 @@ let normalize (path: string) : string =
         path.Trim()
     else
         combineMany normalizedSegments
+
+let normalizePathKey (path: string) : string =
+    let normalized = normalize path
+    if normalized = "" then path.Trim() else normalized
 
 /// Resolve a path (possibly relative) against the directory of a file path.
 let resolvePathFromFile (filePath: string) (path: string) : string =

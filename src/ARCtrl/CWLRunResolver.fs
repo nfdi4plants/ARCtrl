@@ -4,8 +4,7 @@ open ARCtrl
 open ARCtrl.FileSystem
 
 let private pathKey (path: string) : string =
-    let normalized = ArcPathHelper.normalize path
-    if normalized = "" then path.Trim() else normalized
+    ArcPathHelper.normalizePathKey path
 
 let private getRunNodeCandidates (workflowFilePath: string) (runPath: string) : string [] =
     if System.String.IsNullOrWhiteSpace runPath then
@@ -15,28 +14,18 @@ let private getRunNodeCandidates (workflowFilePath: string) (runPath: string) : 
         if not (trimmedRunPath.EndsWith(".cwl", System.StringComparison.OrdinalIgnoreCase)) then
             [||]
         else
-            let runSegments = ArcPathHelper.split trimmedRunPath
-            if runSegments.Length = 0 then
-                [||]
-            else
-                let runRelativePath = ArcPathHelper.combineMany runSegments
-                let normalizedRunRelativePath = ArcPathHelper.normalize runRelativePath
-                let runPathInWorkflowDirectory = ArcPathHelper.resolvePathFromFile workflowFilePath runRelativePath
-                let normalizedRunPathInWorkflowDirectory = ArcPathHelper.normalize runPathInWorkflowDirectory
+            let normalizedRunPath = ArcPathHelper.normalize trimmedRunPath
+            let runPathInWorkflowDirectory = ArcPathHelper.resolvePathFromFile workflowFilePath trimmedRunPath
+            let normalizedRunPathInWorkflowDirectory = ArcPathHelper.normalize runPathInWorkflowDirectory
 
-                [|
-                    trimmedRunPath
-                    runRelativePath
-                    normalizedRunRelativePath
-                    $"./{runRelativePath}"
-                    $"./{normalizedRunRelativePath}"
-                    runPathInWorkflowDirectory
-                    normalizedRunPathInWorkflowDirectory
-                    $"./{runPathInWorkflowDirectory}"
-                    $"./{normalizedRunPathInWorkflowDirectory}"
-                |]
-                |> Array.filter (fun p -> not (System.String.IsNullOrWhiteSpace p))
-                |> Array.distinct
+            [|
+                trimmedRunPath
+                normalizedRunPath
+                runPathInWorkflowDirectory
+                normalizedRunPathInWorkflowDirectory
+            |]
+            |> Array.filter (fun p -> not (System.String.IsNullOrWhiteSpace p))
+            |> Array.distinct
 
 let rec private resolveWorkflowRunsRecursiveWithResolver (workflowFilePath: string) (visited: Set<string>) (workflow: CWL.CWLWorkflowDescription) (tryResolveRunPath: string -> CWL.CWLProcessingUnit option) : Set<string> =
     let mutable visitedState = visited
@@ -59,23 +48,23 @@ and private resolveWorkflowStepRunRecursiveWithResolver (workflowFilePath: strin
             else
                 match tryResolveRunPath resolvedRunPath with
                 | Some (CWL.CommandLineTool tool) ->
-                    Some (CWL.RunCommandLineTool tool, visited.Add key)
+                    Some (CWL.WorkflowStepRunOps.fromTool tool, visited.Add key)
                 | Some (CWL.Workflow workflow) ->
                     let visitedWithCurrent = visited.Add key
                     let nextVisited =
                         resolveWorkflowRunsRecursiveWithResolver resolvedRunPath visitedWithCurrent workflow tryResolveRunPath
-                    Some (CWL.RunWorkflow workflow, nextVisited)
+                    Some (CWL.WorkflowStepRunOps.fromWorkflow workflow, nextVisited)
                 | None ->
                     None
         )
         |> Option.defaultValue (run, visited)
-    | CWL.RunWorkflow workflowObj ->
-        match workflowObj with
-        | :? CWL.CWLWorkflowDescription as workflow ->
+    | CWL.RunWorkflow _ ->
+        match CWL.WorkflowStepRunOps.tryGetWorkflow run with
+        | Some workflow ->
             let nextVisited =
                 resolveWorkflowRunsRecursiveWithResolver workflowFilePath visited workflow tryResolveRunPath
-            CWL.RunWorkflow workflow, nextVisited
-        | _ ->
+            CWL.WorkflowStepRunOps.fromWorkflow workflow, nextVisited
+        | None ->
             run, visited
     | CWL.RunCommandLineTool _ ->
         run, visited
@@ -94,3 +83,4 @@ let resolveRunReferencesFromLookup (workflowFilePath: string) (processingUnit: C
 let resolveWorkflowStepRunFromLookup (workflowFilePath: string) (run: CWL.WorkflowStepRun) (tryResolveRunPath: string -> CWL.CWLProcessingUnit option) : CWL.WorkflowStepRun =
     resolveWorkflowStepRunRecursiveWithResolver workflowFilePath Set.empty run tryResolveRunPath
     |> fst
+
