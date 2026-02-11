@@ -202,6 +202,18 @@ let rename =
         })
     ]
 
+let normalizePathKeyTests =
+    testList "NormalizePathKey" [
+        testCase "removes leading ./" <| fun _ ->
+            Expect.equal (ArcPathHelper.normalizePathKey "./foo/bar") "foo/bar" ""
+        testCase "collapses double slashes" <| fun _ ->
+            Expect.equal (ArcPathHelper.normalizePathKey "foo//bar") "foo/bar" ""
+        testCase "converts backslashes" <| fun _ ->
+            Expect.equal (ArcPathHelper.normalizePathKey @"foo\bar\baz") "foo/bar/baz" ""
+        testCase "empty string" <| fun _ ->
+            Expect.equal (ArcPathHelper.normalizePathKey "") "" ""
+    ]
+
 let main = 
     testList "PathTests" [
         fileExists
@@ -215,4 +227,5 @@ let main =
         getSubDirectories
         getAllFilePaths
         rename
+        normalizePathKeyTests
     ]

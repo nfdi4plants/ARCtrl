@@ -196,6 +196,20 @@ let testWorkflowStep =
                 |> Decode.stepsDecoder
                 |> ignore
             Expect.throws decodeInvalid "Step output record without id should fail decoding"
+        testCase "tryGetTool returns None for wrong obj type" <| fun _ ->
+            let run = RunCommandLineTool (box "not a tool")
+            let actual = WorkflowStepRunOps.tryGetTool run
+            Expect.isNone actual "RunCommandLineTool with non-tool payload should not decode as tool"
+        testCase "tryGetWorkflow returns None for wrong obj type" <| fun _ ->
+            let run = RunWorkflow (box 42)
+            let actual = WorkflowStepRunOps.tryGetWorkflow run
+            Expect.isNone actual "RunWorkflow with non-workflow payload should not decode as workflow"
+        testCase "encodeWorkflowStepRun raises for wrong obj in RunCommandLineTool" <| fun _ ->
+            let run = RunCommandLineTool (box "bad")
+            Expect.throws (fun _ -> Encode.encodeWorkflowStepRun run |> ignore) "Encoding invalid RunCommandLineTool payload should fail"
+        testCase "encodeWorkflowStepRun raises for wrong obj in RunWorkflow" <| fun _ ->
+            let run = RunWorkflow (box "bad")
+            Expect.throws (fun _ -> Encode.encodeWorkflowStepRun run |> ignore) "Encoding invalid RunWorkflow payload should fail"
     ]
 
 let main = 

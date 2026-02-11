@@ -25,6 +25,10 @@ let testCWLToolDescriptionDecode =
             let malformed = TestObjects.CWL.CommandLineTool.DecodeEdgeCases.malformedYaml
             let decodeMalformed () = Decode.decodeCWLProcessingUnit malformed |> ignore
             Expect.throws decodeMalformed "Malformed YAML should fail decoding"
+        testCase "sanitize propagates non-recoverable exception type" <| fun _ ->
+            let nonRecoverableInput = "cwlVersion:\u0000 v1.2"
+            let decodeInvalid () = Decode.decodeCWLProcessingUnit nonRecoverableInput |> ignore
+            Expect.throws decodeInvalid "Non-recoverable parse exceptions should not be swallowed"
         testCase "CWLVersion" <| fun _ ->
             let expected = "v1.2"
             let actual = decodeCWLToolDescription.CWLVersion
@@ -283,6 +287,14 @@ let testCWLToolDescriptionEncode =
                 Expect.isTrue (elementHintIndex > -1) "Element encoding should include hints"
                 Expect.isTrue (topHintIndex < topReqIndex) "Top-level encoding should place hints before requirements"
                 Expect.isTrue (elementHintIndex < elementReqIndex) "Element encoding should place hints before requirements"
+            testCase "tool with metadata preserves unknown keys in encoded output" <| fun _ ->
+                let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineToolMetadata.cwlFile
+                let encoded = Encode.encodeToolDescription decoded
+                let roundTripped = Decode.decodeCommandLineTool encoded
+                let metadata = Expect.wantSome roundTripped.Metadata "Metadata should survive roundtrip"
+                let metadataText = metadata |> DynObj.format
+                Expect.stringContains encoded "arc:technology platform" "Encoded tool should keep unknown metadata keys"
+                Expect.stringContains metadataText "arc:technology platform" "Decoded metadata should still include unknown keys"
         ]
     ]
 

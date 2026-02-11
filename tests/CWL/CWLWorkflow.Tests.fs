@@ -16,6 +16,21 @@ let tryYamlScalarString (y: YAMLElement) =
     | YAMLElement.Value v -> Some v.Value
     | _ -> None
 
+let tryYamlScalarSequence (y: YAMLElement) =
+    let tryScalarValue element =
+        match element with
+        | YAMLElement.Object [YAMLElement.Value v]
+        | YAMLElement.Value v -> Some v.Value
+        | _ -> None
+    match y with
+    | YAMLElement.Object [YAMLElement.Sequence values]
+    | YAMLElement.Sequence values ->
+        values
+        |> List.choose tryScalarValue
+        |> ResizeArray
+        |> Some
+    | _ -> None
+
 let mkStepInput id source defaultValue valueFrom linkMerge =
     {
         Id = id
@@ -203,6 +218,10 @@ let testCWLWorkflowDescriptionDecode =
             Expect.equal stepInput.Id "in1" ""
             Expect.sequenceEqual stepInput.Source.Value (ResizeArray [|"input1"|]) ""
             Expect.equal stepInput.Label (Some "Input in array syntax") ""
+        testCase "workflow with no steps decodes to empty" <| fun _ ->
+            let yaml = TestObjects.CWL.Workflow.workflowWithNoStepsFile
+            let decoded = Decode.decodeWorkflow yaml
+            Expect.equal decoded.Steps.Count 0 ""
         testCase "steps array form decode with when/pickValue/doc/default" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithStepsArrayFile
             let step = decoded.Steps.[0]
@@ -215,6 +234,21 @@ let testCWLWorkflowDescriptionDecode =
                 stepInput.DefaultValue
                 |> Option.bind tryYamlScalarString
             Expect.equal defaultValue None "Default is structured object and should not collapse to scalar"
+        testCase "inline run workflow decode" <| fun _ ->
+            let yaml = TestObjects.CWL.Workflow.workflowWithInlineRunWorkflowFile
+            let decoded = Decode.decodeWorkflow yaml
+            let runValue = decoded.Steps.[0].Run
+            let isRunWorkflow =
+                match runValue with
+                | RunWorkflow _ -> true
+                | _ -> false
+            Expect.isTrue isRunWorkflow $"Expected RunWorkflow but got %A{runValue}"
+            let workflow = Expect.wantSome (WorkflowStepRunOps.tryGetWorkflow runValue) "Expected inline workflow payload"
+            Expect.equal workflow.Steps.Count 1 ""
+            Expect.equal workflow.Steps.[0].Id "inner" ""
+        testCase "invalid pickValue fails decode" <| fun _ ->
+            let invalidPickValue = TestObjects.CWL.Workflow.workflowWithInvalidPickValueFile
+            Expect.throws (fun _ -> Decode.decodeWorkflow invalidPickValue |> ignore) "Invalid pickValue should fail"
         testCase "invalid scatterMethod fails decode" <| fun _ ->
             let invalidScatter = TestObjects.CWL.Workflow.workflowWithInvalidScatterMethodFile
             Expect.throws (fun _ -> Decode.decodeWorkflow invalidScatter |> ignore) "Invalid scatterMethod should fail"
@@ -271,6 +305,83 @@ let testCWLWorkflowDescriptionEncode =
                 Expect.stringContains encoded "hints:" "Workflow hints should be present in encoded output"
                 let hints = Expect.wantSome decoded.Hints "Workflow hints should survive roundtrip"
                 Expect.equal hints.[0] StepInputExpressionRequirement ""
+            testList "PickValueMethod roundtrip" [
+                for (pickValueMethod, cwlString) in [
+                    FirstNonNull, "first_non_null"
+                    TheOnlyNonNull, "the_only_non_null"
+                    AllNonNull, "all_non_null"
+                ] do
+                    testCase cwlString <| fun _ ->
+                        let yaml = TestObjects.CWL.Workflow.workflowWithPickValueMethodFile cwlString
+                        let decoded = Decode.decodeWorkflow yaml
+                        Expect.equal decoded.Steps.[0].In.[0].PickValue (Some pickValueMethod) ""
+                        let encoded = Encode.encodeWorkflowDescription decoded
+                        Expect.stringContains encoded $"pickValue: {cwlString}" ""
+                        let roundTripped = Decode.decodeWorkflow encoded
+                        Expect.equal roundTripped.Steps.[0].In.[0].PickValue (Some pickValueMethod) ""
+            ]
+            testList "ScatterMethod roundtrip" [
+                for (scatterMethod, cwlString) in [
+                    DotProduct, "dotproduct"
+                    NestedCrossProduct, "nested_crossproduct"
+                    FlatCrossProduct, "flat_crossproduct"
+                ] do
+                    testCase cwlString <| fun _ ->
+                        let yaml = TestObjects.CWL.Workflow.workflowWithScatterMethodFile cwlString
+                        let decoded = Decode.decodeWorkflow yaml
+                        Expect.equal decoded.Steps.[0].ScatterMethod (Some scatterMethod) ""
+                        let encoded = Encode.encodeWorkflowDescription decoded
+                        Expect.stringContains encoded $"scatterMethod: {cwlString}" ""
+                        let roundTripped = Decode.decodeWorkflow encoded
+                        Expect.equal roundTripped.Steps.[0].ScatterMethod (Some scatterMethod) ""
+            ]
+            testCase "structured default with array value roundtrips" <| fun _ ->
+                let yaml = TestObjects.CWL.Workflow.workflowWithStructuredArrayDefaultFile
+                let decoded = Decode.decodeWorkflow yaml
+                let decodedDefault =
+                    decoded.Steps.[0].In.[0].DefaultValue
+                    |> Option.bind tryYamlScalarSequence
+                    |> Option.defaultValue (ResizeArray())
+                Expect.sequenceEqual decodedDefault (ResizeArray [|"1"; "2"; "3"|]) ""
+                let encoded = Encode.encodeWorkflowDescription decoded
+                let roundTripped = Decode.decodeWorkflow encoded
+                let roundTrippedDefault =
+                    roundTripped.Steps.[0].In.[0].DefaultValue
+                    |> Option.bind tryYamlScalarSequence
+                    |> Option.defaultValue (ResizeArray())
+                Expect.sequenceEqual roundTrippedDefault (ResizeArray [|"1"; "2"; "3"|]) ""
+            testCase "when expression with embedded quotes roundtrips" <| fun _ ->
+                let expression = "$(inputs.name == 'test')"
+                let yaml = TestObjects.CWL.Workflow.workflowWithWhenExpressionFile expression
+                let decoded = Decode.decodeWorkflow yaml
+                Expect.equal decoded.Steps.[0].When_ (Some expression) ""
+                let encoded = Encode.encodeWorkflowDescription decoded
+                let roundTripped = Decode.decodeWorkflow encoded
+                Expect.equal roundTripped.Steps.[0].When_ (Some expression) ""
+            testCase "scatter + scatterMethod together roundtrip" <| fun _ ->
+                let yaml = TestObjects.CWL.Workflow.workflowWithScatterAndScatterMethodFile
+                let decoded = Decode.decodeWorkflow yaml
+                Expect.sequenceEqual decoded.Steps.[0].Scatter.Value (ResizeArray [|"in1"; "in2"|]) ""
+                Expect.equal decoded.Steps.[0].ScatterMethod (Some FlatCrossProduct) ""
+                let encoded = Encode.encodeWorkflowDescription decoded
+                let roundTripped = Decode.decodeWorkflow encoded
+                Expect.sequenceEqual roundTripped.Steps.[0].Scatter.Value (ResizeArray [|"in1"; "in2"|]) ""
+                Expect.equal roundTripped.Steps.[0].ScatterMethod (Some FlatCrossProduct) ""
+            testCase "step-level requirements and hints roundtrip" <| fun _ ->
+                let yaml = TestObjects.CWL.Workflow.workflowWithStepLevelRequirementsAndHintsFile
+                let decoded = Decode.decodeWorkflow yaml
+                let decodedStep = decoded.Steps.[0]
+                let decodedHints = Expect.wantSome decodedStep.Hints "Step hints should decode"
+                let decodedRequirements = Expect.wantSome decodedStep.Requirements "Step requirements should decode"
+                Expect.equal decodedHints.[0] StepInputExpressionRequirement ""
+                Expect.equal decodedRequirements.[0] NetworkAccessRequirement ""
+                let encoded = Encode.encodeWorkflowDescription decoded
+                let roundTripped = Decode.decodeWorkflow encoded
+                let roundTrippedStep = roundTripped.Steps.[0]
+                let roundTrippedHints = Expect.wantSome roundTrippedStep.Hints "Step hints should survive roundtrip"
+                let roundTrippedRequirements = Expect.wantSome roundTrippedStep.Requirements "Step requirements should survive roundtrip"
+                Expect.equal roundTrippedHints.[0] StepInputExpressionRequirement ""
+                Expect.equal roundTrippedRequirements.[0] NetworkAccessRequirement ""
         ]
     ]
 

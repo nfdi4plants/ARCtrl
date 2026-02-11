@@ -177,3 +177,158 @@ steps:
     in: {}
     out: [out]"""
 
+let workflowWithNoStepsFile = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs: {}
+steps: {}"""
+
+let workflowWithInlineRunWorkflowFile = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs:
+  result:
+    type: string
+    outputSource: outer/out
+steps:
+  outer:
+    run:
+      class: Workflow
+      cwlVersion: v1.2
+      inputs: {}
+      outputs:
+        out:
+          type: string
+          outputSource: inner/out
+      steps:
+        inner:
+          run: echo.cwl
+          in: {}
+          out: [out]
+    in: {}
+    out: [out]"""
+
+let workflowWithInvalidPickValueFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  input1: string
+outputs:
+  result:
+    type: string
+    outputSource: step1/out
+steps:
+  step1:
+    run: ./tool.cwl
+    in:
+      in1:
+        source: input1
+        pickValue: invalid_pick
+    out: [out]"""
+
+let workflowWithPickValueMethodFile (pickValue: string) = $"""cwlVersion: v1.2
+class: Workflow
+inputs:
+  input1: string
+outputs:
+  result:
+    type: string
+    outputSource: step1/out
+steps:
+  step1:
+    run: ./tool.cwl
+    in:
+      in1:
+        source: input1
+        pickValue: {pickValue}
+    out: [out]"""
+
+let workflowWithScatterMethodFile (scatterMethod: string) = $"""cwlVersion: v1.2
+class: Workflow
+inputs:
+  input1: string
+outputs:
+  result:
+    type: string
+    outputSource: step1/out
+steps:
+  step1:
+    run: ./tool.cwl
+    scatter: in1
+    scatterMethod: {scatterMethod}
+    in:
+      in1:
+        source: input1
+    out: [out]"""
+
+let workflowWithStructuredArrayDefaultFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  input1: string
+outputs:
+  result:
+    type: string
+    outputSource: step1/out
+steps:
+  step1:
+    run: ./tool.cwl
+    in:
+      in1:
+        source: input1
+        default: [1, 2, 3]
+    out: [out]"""
+
+let workflowWithWhenExpressionFile (whenExpression: string) = $"""cwlVersion: v1.2
+class: Workflow
+inputs:
+  name: string
+outputs:
+  result:
+    type: string
+    outputSource: step1/out
+steps:
+  step1:
+    run: ./tool.cwl
+    when: "{whenExpression}"
+    in:
+      in1: name
+    out: [out]"""
+
+let workflowWithScatterAndScatterMethodFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  input1: string
+  input2: int
+outputs:
+  result:
+    type: string
+    outputSource: step1/out
+steps:
+  step1:
+    run: ./tool.cwl
+    scatter: [in1, in2]
+    scatterMethod: flat_crossproduct
+    in:
+      in1: input1
+      in2: input2
+    out: [out]"""
+
+let workflowWithStepLevelRequirementsAndHintsFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  input1: string
+outputs:
+  result:
+    type: string
+    outputSource: step1/out
+steps:
+  step1:
+    run: ./tool.cwl
+    in:
+      in1: input1
+    out: [out]
+    hints:
+      - class: StepInputExpressionRequirement
+    requirements:
+      - class: NetworkAccess
+        networkAccess: true"""
+
