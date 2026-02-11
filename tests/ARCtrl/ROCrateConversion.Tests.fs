@@ -2392,7 +2392,7 @@ let tests_ArcWorkflow =
         testCaseCrossAsync "FullWorkflow_File_StepsParsedIntoDatamodel" (crossAsync {
             let fullWorkflowDirectory =
                 ArcPathHelper.combineMany [|
-                    TestObjects.IO.testSimpleARCWithWR
+                    TestObjects.IO.testSimpleARCWithCWL
                     "workflows"
                     "ProteomIQon"
                 |]
@@ -2446,7 +2446,7 @@ let tests_ArcWorkflow =
         testCaseCrossAsync "FullWorkflow_File_StepsResolveToCommandLineTools_WithContent" (crossAsync {
             let fullWorkflowDirectory =
                 ArcPathHelper.combineMany [|
-                    TestObjects.IO.testSimpleARCWithWR
+                    TestObjects.IO.testSimpleARCWithCWL
                     "workflows"
                     "ProteomIQon"
                 |]
@@ -2635,7 +2635,7 @@ let tests_ArcWorkflow =
         )
         testCase "Workflow_WithInlineExpressionToolStep_ROCrateRoundtrip_PreservesStep" (fun () ->
             let workflow =
-                CWL.Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithInlineExpressionToolFile
+                CWL.Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithUnsupportedInlineRunClassFile
             let protocol =
                 WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(
                     "workflows/InlineExpressionWorkflow/workflow.cwl",
@@ -2800,8 +2800,7 @@ let tests_ArcRun =
             Expect.equal run' run "Run should match after decomposition with graph"
         )
         testCaseCrossAsync "RelativeWorkflowRunReference_ResolvesToWorkflow" (crossAsync {
-            let sampleArcDirectory =
-                TestObjects.IO.testSimpleARCWithWR
+            let sampleArcDirectory = TestObjects.IO.testSimpleARCWithCWL
             let runFixturePath =
                 ArcPathHelper.combineMany [|
                     sampleArcDirectory

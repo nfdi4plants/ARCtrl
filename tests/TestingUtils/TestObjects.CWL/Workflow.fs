@@ -159,7 +159,7 @@ steps:
       in1: input1
     out: [out]"""
 
-let workflowWithInlineExpressionToolFile = """cwlVersion: v1.2
+let workflowWithUnsupportedInlineRunClassFile = """cwlVersion: v1.2
 class: Workflow
 inputs: {}
 outputs:
