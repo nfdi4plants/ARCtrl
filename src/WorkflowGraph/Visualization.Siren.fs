@@ -59,7 +59,23 @@ module WorkflowGraphSiren =
     let private nodeToElement (node: WorkflowGraphNode) =
         let nodeId = sanitizeMermaidId node.Id
         let label = quoteMermaidLabel node.Label
-        flowchart.node(nodeId, label)
+        match node.Kind with
+        | NodeKind.ProcessingUnitNode ProcessingUnitKind.Workflow ->
+            flowchart.nodeSubroutine(nodeId, label)
+        | NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool ->
+            flowchart.nodeHexagon(nodeId, label)
+        | NodeKind.ProcessingUnitNode ProcessingUnitKind.ExpressionTool ->
+            flowchart.nodeRhombus(nodeId, label)
+        | NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference ->
+            flowchart.node(nodeId, label)
+        | NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference ->
+            flowchart.node(nodeId, label)
+        | NodeKind.StepNode ->
+            flowchart.node(nodeId, label)
+        | NodeKind.PortNode PortDirection.Input ->
+            flowchart.nodeRound(nodeId, label)
+        | NodeKind.PortNode PortDirection.Output ->
+            flowchart.nodeStadium(nodeId, label)
 
     let private tryGetStepRunLookup (graph: WorkflowGraph) =
         graph.Edges
@@ -73,34 +89,46 @@ module WorkflowGraphSiren =
         (rootInputNodes: WorkflowGraphNode [])
         (rootOutputNodes: WorkflowGraphNode [])
         =
-        let nodeIdsBy (nodes: WorkflowGraphNode []) =
+        let nodeIdsByPredicate (predicate: WorkflowGraphNode -> bool) (nodes: WorkflowGraphNode []) =
             nodes
+            |> Array.filter predicate
             |> Array.map (fun n -> sanitizeMermaidId n.Id)
 
-        let processingIds = nodeIdsBy processingUnitNodes
-        let inputIds = nodeIdsBy rootInputNodes
-        let outputIds = nodeIdsBy rootOutputNodes
+        let workflowIds =
+            nodeIdsByPredicate (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.Workflow) processingUnitNodes
+        let toolIds =
+            nodeIdsByPredicate (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool) processingUnitNodes
+        let expressionIds =
+            nodeIdsByPredicate (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExpressionTool) processingUnitNodes
         let unresolvedIds =
-            processingUnitNodes
-            |> Array.filter (fun n ->
-                n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference
-                || n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference
-            )
-            |> nodeIdsBy
+            nodeIdsByPredicate
+                (fun n ->
+                    n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference
+                    || n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference
+                )
+                processingUnitNodes
+        let inputIds = rootInputNodes |> Array.map (fun n -> sanitizeMermaidId n.Id)
+        let outputIds = rootOutputNodes |> Array.map (fun n -> sanitizeMermaidId n.Id)
 
-        elements.Add(flowchart.classDef("wg_processing", [ "fill", "#eaf2ff"; "stroke", "#1f4b8f"; "stroke-width", "2px" ]))
-        elements.Add(flowchart.classDef("wg_initial_input", [ "fill", "#e9f7df"; "stroke", "#2f7d32"; "stroke-width", "2px" ]))
-        elements.Add(flowchart.classDef("wg_final_output", [ "fill", "#fff3d6"; "stroke", "#b06f00"; "stroke-width", "2px" ]))
-        elements.Add(flowchart.classDef("wg_unresolved", [ "fill", "#ffe3e3"; "stroke", "#b3261e"; "stroke-width", "2px" ]))
+        elements.Add(flowchart.classDef("wg_workflow", [ "fill", "#dff4ff"; "stroke", "#246fa8"; "stroke-width", "2px" ]))
+        elements.Add(flowchart.classDef("wg_tool", [ "fill", "#e8f5e9"; "stroke", "#2e7d32"; "stroke-width", "2px" ]))
+        elements.Add(flowchart.classDef("wg_expression", [ "fill", "#fff3e0"; "stroke", "#e65100"; "stroke-width", "2px" ]))
+        elements.Add(flowchart.classDef("wg_unresolved", [ "fill", "#ffebee"; "stroke", "#c62828"; "stroke-width", "2px"; "stroke-dasharray", "5 5" ]))
+        elements.Add(flowchart.classDef("wg_initial_input", [ "fill", "#e1f5fe"; "stroke", "#0288d1"; "stroke-width", "2px" ]))
+        elements.Add(flowchart.classDef("wg_final_output", [ "fill", "#f3e5f5"; "stroke", "#7b1fa2"; "stroke-width", "2px" ]))
 
-        if processingIds.Length > 0 then
-            elements.Add(flowchart.``class``(processingIds, "wg_processing"))
+        if workflowIds.Length > 0 then
+            elements.Add(flowchart.``class``(workflowIds, "wg_workflow"))
+        if toolIds.Length > 0 then
+            elements.Add(flowchart.``class``(toolIds, "wg_tool"))
+        if expressionIds.Length > 0 then
+            elements.Add(flowchart.``class``(expressionIds, "wg_expression"))
+        if unresolvedIds.Length > 0 then
+            elements.Add(flowchart.``class``(unresolvedIds, "wg_unresolved"))
         if inputIds.Length > 0 then
             elements.Add(flowchart.``class``(inputIds, "wg_initial_input"))
         if outputIds.Length > 0 then
             elements.Add(flowchart.``class``(outputIds, "wg_final_output"))
-        if unresolvedIds.Length > 0 then
-            elements.Add(flowchart.``class``(unresolvedIds, "wg_unresolved"))
 
     let fromGraphWithOptions (options: WorkflowGraphVisualizationOptions) (graph: WorkflowGraph) =
         let elements = ResizeArray<FlowchartElement>()
@@ -113,7 +141,7 @@ module WorkflowGraphSiren =
                 |> Array.iter (fun node -> grouped.Add(nodeToElement node))
                 elements.Add(flowchart.subgraphNamed(groupId, quoteMermaidLabel groupLabel, grouped))
 
-        let addRenderedEdge (sourceNodeId: WorkflowGraphNodeId) (targetNodeId: WorkflowGraphNodeId) (label: string option) =
+        let addRenderedEdge (kind: EdgeKind) (sourceNodeId: WorkflowGraphNodeId) (targetNodeId: WorkflowGraphNodeId) (label: string option) =
             let labelKey = defaultArg label ""
             let key = $"{sourceNodeId}::{targetNodeId}::{labelKey}"
             if edgeKeys.Contains key |> not then
@@ -121,9 +149,19 @@ module WorkflowGraphSiren =
                 let src = sanitizeMermaidId sourceNodeId
                 let tgt = sanitizeMermaidId targetNodeId
                 let link =
-                    match label with
-                    | Some l when System.String.IsNullOrWhiteSpace l |> not -> flowchart.linkArrow(src, tgt, quoteMermaidLabel l)
-                    | _ -> flowchart.linkArrow(src, tgt)
+                    match kind, label with
+                    | EdgeKind.DataFlow, Some l when System.String.IsNullOrWhiteSpace l |> not ->
+                        flowchart.linkThickArrow(src, tgt, quoteMermaidLabel l)
+                    | EdgeKind.DataFlow, _ ->
+                        flowchart.linkThickArrow(src, tgt)
+                    | EdgeKind.Contains, Some l when System.String.IsNullOrWhiteSpace l |> not ->
+                        flowchart.linkDottedArrow(src, tgt, quoteMermaidLabel l)
+                    | EdgeKind.Contains, _ ->
+                        flowchart.linkDottedArrow(src, tgt)
+                    | _, Some l when System.String.IsNullOrWhiteSpace l |> not ->
+                        flowchart.linkArrow(src, tgt, quoteMermaidLabel l)
+                    | _ ->
+                        flowchart.linkArrow(src, tgt)
                 elements.Add(link)
 
         let hasCalls =
@@ -197,13 +235,13 @@ module WorkflowGraphSiren =
 
         addGroupedNodes "wg_initial_inputs" "Initial Inputs" rootInputNodes
         processingUnitNodes |> Array.iter (nodeToElement >> elements.Add)
-        addGroupedNodes "wg_final_outputs" "Workflow Outputs" rootOutputNodes
+        addGroupedNodes "wg_final_outputs" "Final Outputs" rootOutputNodes
 
         if hasCalls |> not && processingUnitNodeIds.Contains graph.RootProcessingUnitNodeId then
             for inputNode in rootInputNodes do
-                addRenderedEdge inputNode.Id graph.RootProcessingUnitNodeId (Some inputNode.Label)
+                addRenderedEdge EdgeKind.BindsWorkflowInput inputNode.Id graph.RootProcessingUnitNodeId (Some inputNode.Label)
             for outputNode in rootOutputNodes do
-                addRenderedEdge graph.RootProcessingUnitNodeId outputNode.Id None
+                addRenderedEdge EdgeKind.BindsWorkflowOutput graph.RootProcessingUnitNodeId outputNode.Id None
 
         // Re-add workflow-to-step connectivity in PU-centric view:
         // workflow --contains/calls--> step run processing unit.
@@ -212,7 +250,7 @@ module WorkflowGraphSiren =
             if processingUnitNodeIds.Contains e.SourceNodeId then
                 match tryGetRunOfStep e.TargetNodeId with
                 | Some runNodeId ->
-                    addRenderedEdge e.SourceNodeId runNodeId None
+                    addRenderedEdge EdgeKind.Contains e.SourceNodeId runNodeId None
                 | None ->
                     ()
         )
@@ -226,7 +264,7 @@ module WorkflowGraphSiren =
                 | Some targetPort ->
                     match targetPort.OwnerNodeId |> Option.bind tryGetRunOfStep with
                     | Some consumerRunId ->
-                        addRenderedEdge edge.SourceNodeId consumerRunId (Some targetPort.Label)
+                        addRenderedEdge EdgeKind.BindsWorkflowInput edge.SourceNodeId consumerRunId (Some targetPort.Label)
                     | None ->
                         ()
                 | None ->
@@ -236,7 +274,7 @@ module WorkflowGraphSiren =
                 | Some sourcePort, Some targetPort ->
                     match sourcePort.OwnerNodeId |> Option.bind tryGetRunOfStep, targetPort.OwnerNodeId |> Option.bind tryGetRunOfStep with
                     | Some producerRunId, Some consumerRunId ->
-                        addRenderedEdge producerRunId consumerRunId (Some targetPort.Label)
+                        addRenderedEdge EdgeKind.DataFlow producerRunId consumerRunId (Some targetPort.Label)
                     | _ ->
                         ()
                 | _ ->
@@ -246,12 +284,12 @@ module WorkflowGraphSiren =
                 | Some sourcePort ->
                     match sourcePort.OwnerNodeId |> Option.bind tryGetRunOfStep with
                     | Some producerRunId ->
-                        addRenderedEdge producerRunId edge.TargetNodeId None
+                        addRenderedEdge EdgeKind.BindsWorkflowOutput producerRunId edge.TargetNodeId None
                     | None ->
                         ()
                 | None ->
                     if rootInputNodeIds.Contains edge.SourceNodeId then
-                        addRenderedEdge edge.SourceNodeId edge.TargetNodeId None
+                        addRenderedEdge EdgeKind.BindsWorkflowOutput edge.SourceNodeId edge.TargetNodeId None
             | _ ->
                 ()
         )

@@ -65,7 +65,7 @@ let tests_visualization =
             let graph = createGraphWithNodes toolNode.Id [ toolNode ]
             let mermaid = WorkflowGraphSiren.toMermaid graph
             Expect.isFalse (mermaid.Contains("\"#quot;")) "No double escaping expected"
-            Expect.stringContains mermaid "unit_tool1[\"/tools/my-tool\"]" ""
+            Expect.stringContains mermaid "unit_tool1{{\"/tools/my-tool\"}}" ""
 
         testCase "labels without special chars are not quoted" <| fun () ->
             let processingNode =
@@ -80,7 +80,7 @@ let tests_visualization =
             let graph = createGraphWithNodes processingNode.Id [ processingNode ]
             let mermaid = WorkflowGraphSiren.toMermaid graph
             Expect.isFalse (mermaid.Contains("\"My Step\"")) "Plain labels should not be quoted"
-            Expect.stringContains mermaid "[My Step]" ""
+            Expect.stringContains mermaid "{{My Step}}" ""
 
         testCase "labels containing double quotes are escaped" <| fun () ->
             let processingNode =
@@ -95,7 +95,7 @@ let tests_visualization =
             let graph = createGraphWithNodes processingNode.Id [ processingNode ]
             let mermaid = WorkflowGraphSiren.toMermaid graph
             Expect.stringContains mermaid "#quot;" ""
-            Expect.stringContains mermaid "[\"say #quot;hello#quot;\"]" ""
+            Expect.stringContains mermaid "{{\"say #quot;hello#quot;\"}}" ""
 
         testCase "root input nodes connect to processing units with labeled edges" <| fun () ->
             let parentNode =
@@ -118,15 +118,15 @@ let tests_visualization =
                 }
             let graph = createGraphWithNodes parentNode.Id [ parentNode; childNode ]
             let mermaid = WorkflowGraphSiren.toMermaid graph
-            Expect.stringContains mermaid "[\"/tools/parent-tool\"]" ""
-            Expect.stringContains mermaid "port_unit_parent__in__child[child-port]" ""
+            Expect.stringContains mermaid "{{\"/tools/parent-tool\"}}" ""
+            Expect.stringContains mermaid "port_unit_parent__in__child(child-port)" ""
             Expect.stringContains mermaid "port_unit_parent__in__child-->|child-port|unit_parent" ""
 
         testCase "initial inputs and final outputs are rendered as groups" <| fun () ->
             let graph = buildSimpleWorkflowGraph ()
             let mermaid = WorkflowGraphSiren.toMermaid graph
             Expect.stringContains mermaid "subgraph wg_initial_inputs[Initial Inputs]" ""
-            Expect.stringContains mermaid "subgraph wg_final_outputs[Workflow Outputs]" ""
+            Expect.stringContains mermaid "subgraph wg_final_outputs[Final Outputs]" ""
 
         testCase "group ordering keeps inputs above processing and outputs below" <| fun () ->
             let graph = buildSimpleWorkflowGraph ()
@@ -148,7 +148,7 @@ let tests_visualization =
             Expect.stringContains mermaid "PeptideSpectrumMatching" ""
             Expect.stringContains mermaid "MzMLToMzlite" ""
             Expect.stringContains mermaid "-->|inputDirectory|" ""
-            Expect.stringContains mermaid "-->|database|" ""
+            Expect.stringContains mermaid "==>|database|" ""
             Expect.isFalse (mermaid.Contains "contains|") ""
         })
 
@@ -178,8 +178,8 @@ let tests_visualization =
                 |> WorkflowGraphSiren.fromProcessingUnitResolved options
                 |> siren.write
             Expect.stringContains mermaid "unit_root__Workflow__run[" ""
-            Expect.stringContains mermaid "unit_root__Workflow__run__PeptideSpectrumMatching__run[proteomiqon-peptidespectrummatching]" ""
-            Expect.stringContains mermaid "unit_root__Workflow__run-->unit_root__Workflow__run__PeptideSpectrumMatching__run" ""
+            Expect.stringContains mermaid "unit_root__Workflow__run__PeptideSpectrumMatching__run{{proteomiqon-peptidespectrummatching}}" ""
+            Expect.stringContains mermaid "unit_root__Workflow__run-.->unit_root__Workflow__run__PeptideSpectrumMatching__run" ""
             Expect.isFalse (mermaid.Contains "/tools/proteomiqon-peptidespectrummatching") ""
         })
 
@@ -208,20 +208,21 @@ steps:
                 |> Decode.decodeCWLProcessingUnit
                 |> Builder.buildWith options
             let mermaid = WorkflowGraphSiren.toMermaid graph
-            Expect.stringContains mermaid "unit_root__s__run[dotnet]" ""
-            Expect.stringContains mermaid "port_unit_root__in__x[x]" ""
-            Expect.stringContains mermaid "port_unit_root__out__y[y]" ""
-            Expect.stringContains mermaid "classDef wg_processing" ""
+            Expect.stringContains mermaid "unit_root__s__run{{dotnet}}" ""
+            Expect.stringContains mermaid "port_unit_root__in__x(x)" ""
+            Expect.stringContains mermaid "port_unit_root__out__y([y])" ""
+            Expect.stringContains mermaid "classDef wg_tool" ""
+            Expect.stringContains mermaid "classDef wg_workflow" ""
             Expect.stringContains mermaid "classDef wg_initial_input" ""
             Expect.stringContains mermaid "classDef wg_final_output" ""
-            Expect.stringContains mermaid "class unit_root__s__run wg_processing;" ""
+            Expect.stringContains mermaid "class unit_root__s__run wg_tool;" ""
             Expect.stringContains mermaid "class port_unit_root__in__x wg_initial_input;" ""
             Expect.stringContains mermaid "class port_unit_root__out__y wg_final_output;" ""
 
         testCase "edge mapping uses labeled input edges and unlabeled final-output edges" <| fun () ->
             let graph = buildSimpleWorkflowGraph ()
             let mermaid = WorkflowGraphSiren.toMermaid graph
-            Expect.stringContains mermaid "unit_root__step1__run-->|in1|unit_root__step2__run" ""
+            Expect.stringContains mermaid "unit_root__step1__run==>|in1|unit_root__step2__run" ""
             Expect.stringContains mermaid "unit_root__step2__run-->port_unit_root__out__y" ""
             Expect.isFalse (mermaid.Contains "contains|") ""
             Expect.isFalse (mermaid.Contains "-->|calls|") ""
