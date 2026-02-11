@@ -142,7 +142,11 @@ let normalize (path: string) : string =
 
 let normalizePathKey (path: string) : string =
     let normalized = normalize path
-    if normalized = "" then path.Trim() else normalized
+    if normalized = "" then
+        path.Trim()
+    else
+        let trimmedLeadingSeparators = normalized.TrimStart(seperators)
+        if trimmedLeadingSeparators = "" then normalized else trimmedLeadingSeparators
 
 /// Resolve a path (possibly relative) against the directory of a file path.
 let resolvePathFromFile (filePath: string) (path: string) : string =
