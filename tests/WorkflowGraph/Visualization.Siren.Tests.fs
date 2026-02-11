@@ -177,8 +177,10 @@ let tests_visualization =
                 processingUnit
                 |> WorkflowGraphSiren.fromProcessingUnitResolved options
                 |> siren.write
-            Expect.stringContains mermaid "PeptideSpectrumMatching" ""
-            Expect.stringContains mermaid "Workflow" ""
+            Expect.stringContains mermaid "unit_root__Workflow__run[" ""
+            Expect.stringContains mermaid "unit_root__Workflow__run__PeptideSpectrumMatching__run[proteomiqon-peptidespectrummatching]" ""
+            Expect.stringContains mermaid "unit_root__Workflow__run-->unit_root__Workflow__run__PeptideSpectrumMatching__run" ""
+            Expect.isFalse (mermaid.Contains "/tools/proteomiqon-peptidespectrummatching") ""
         })
 
         testCase "node and style mapping renders processing units plus initial/final boxes" <| fun () ->

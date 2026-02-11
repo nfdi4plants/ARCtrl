@@ -184,6 +184,58 @@ module Builder =
     let private isCwlReference (runPath: string) =
         runPath.Trim().EndsWith(".cwl", System.StringComparison.OrdinalIgnoreCase)
 
+    let private trimToNameCandidate (value: string) =
+        if System.String.IsNullOrWhiteSpace value then
+            ""
+        else
+            let trimmed = value.Trim()
+            if trimmed.StartsWith("#") then
+                trimmed.Substring(1)
+            else
+                let hashIndex = trimmed.IndexOf('#')
+                let withoutHash =
+                    if hashIndex >= 0 then
+                        trimmed.Substring(0, hashIndex)
+                    else
+                        trimmed
+                let queryIndex = withoutHash.IndexOf('?')
+                if queryIndex >= 0 then
+                    withoutHash.Substring(0, queryIndex)
+                else
+                    withoutHash
+
+    let private tryBasenameNoCwlExtension (value: string) =
+        let candidate = trimToNameCandidate value
+        if System.String.IsNullOrWhiteSpace candidate then
+            None
+        else
+            let fileName =
+                if candidate.Contains("/") || candidate.Contains("\\") then
+                    ArcPathHelper.getFileName candidate
+                else
+                    candidate
+            let withoutCwlExtension =
+                if fileName.EndsWith(".cwl", System.StringComparison.OrdinalIgnoreCase) then
+                    fileName.Substring(0, fileName.Length - ".cwl".Length)
+                else
+                    fileName
+            if System.String.IsNullOrWhiteSpace withoutCwlExtension then
+                None
+            else
+                Some withoutCwlExtension
+
+    let private tryGetProcessingUnitName (processingUnit: #DynamicObj) =
+        [ "name"; "id" ]
+        |> List.tryPick (fun key ->
+            DynObj.tryGetTypedPropertyValue<string> key processingUnit
+            |> Option.bind tryBasenameNoCwlExtension
+        )
+
+    let private chooseLabel (fallback: string) (candidates: string option list) =
+        candidates
+        |> List.tryPick id
+        |> Option.defaultValue fallback
+
     let private getRunPathCandidates (workflowFilePath: string option) (runPath: string) : string [] =
         if System.String.IsNullOrWhiteSpace runPath then
             [||]
@@ -290,12 +342,14 @@ module Builder =
         match processingUnit with
         | CommandLineTool tool ->
             let label =
-                tool.Label
-                |> Option.defaultWith (fun () ->
-                    tool.BaseCommand
-                    |> Option.bind Seq.tryHead
-                    |> Option.defaultValue "CommandLineTool"
-                )
+                chooseLabel
+                    "CommandLineTool"
+                    [
+                        tryGetProcessingUnitName tool
+                        tool.Label |> Option.bind tryBasenameNoCwlExtension
+                        tool.BaseCommand |> Option.bind Seq.tryHead |> Option.bind tryBasenameNoCwlExtension
+                        workflowFilePath |> Option.bind tryBasenameNoCwlExtension
+                    ]
             let metadata = createMetadata [ "cwlVersion", Some (box tool.CWLVersion) ]
             let nodeId =
                 addProcessingUnitNode
@@ -310,8 +364,13 @@ module Builder =
             nodeId
         | ExpressionTool expressionTool ->
             let label =
-                expressionTool.Label
-                |> Option.defaultValue "ExpressionTool"
+                chooseLabel
+                    "ExpressionTool"
+                    [
+                        tryGetProcessingUnitName expressionTool
+                        expressionTool.Label |> Option.bind tryBasenameNoCwlExtension
+                        workflowFilePath |> Option.bind tryBasenameNoCwlExtension
+                    ]
             let metadata =
                 createMetadata [
                     "cwlVersion", Some (box expressionTool.CWLVersion)
@@ -330,8 +389,13 @@ module Builder =
             nodeId
         | Workflow workflow ->
             let label =
-                workflow.Label
-                |> Option.defaultValue "Workflow"
+                chooseLabel
+                    "Workflow"
+                    [
+                        tryGetProcessingUnitName workflow
+                        workflow.Label |> Option.bind tryBasenameNoCwlExtension
+                        workflowFilePath |> Option.bind tryBasenameNoCwlExtension
+                    ]
             let metadata = createMetadata [ "cwlVersion", Some (box workflow.CWLVersion) ]
             let nodeId =
                 addProcessingUnitNode
@@ -360,6 +424,15 @@ module Builder =
             let resolution = resolveRunString state workflowFilePath runPath
             match resolution.ResolvedRun with
             | RunString unresolvedPath ->
+                let unresolvedLabel =
+                    chooseLabel
+                        unresolvedPath
+                        [
+                            if isCwlReference unresolvedPath then
+                                unresolvedPath |> tryBasenameNoCwlExtension
+                            else
+                                None
+                        ]
                 let kind =
                     if resolution.AttemptedLookup && isCwlReference unresolvedPath then
                         ProcessingUnitKind.UnresolvedReference
@@ -370,7 +443,7 @@ module Builder =
                         state
                         runScope
                         kind
-                        unresolvedPath
+                        unresolvedLabel
                         (Some stepNodeId)
                         (Some unresolvedPath)
                         None
