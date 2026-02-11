@@ -409,13 +409,21 @@ module Encode =
     let encodeLinkMergeMethod (linkMerge: LinkMergeMethod) : YAMLElement =
         Encode.string linkMerge.AsCwlString
 
+    let encodePickValueMethod (pickValue: PickValueMethod) : YAMLElement =
+        Encode.string pickValue.AsCwlString
+
+    let encodeScatterMethod (scatterMethod: ScatterMethod) : YAMLElement =
+        Encode.string scatterMethod.AsCwlString
+
     let encodeStepInput (si:StepInput) : (string * YAMLElement) =
         let pairs =
             []
             |> appendOpt "source" encodeSourceArray si.Source
-            |> appendOpt "default" Encode.string si.DefaultValue
+            |> appendOpt "default" id si.DefaultValue
             |> appendOpt "valueFrom" Encode.string si.ValueFrom
             |> appendOpt "linkMerge" encodeLinkMergeMethod si.LinkMerge
+            |> appendOpt "pickValue" encodePickValueMethod si.PickValue
+            |> appendOpt "doc" Encode.string si.Doc
             |> appendOpt "loadContents" yBool si.LoadContents
             |> appendOpt "loadListing" Encode.string si.LoadListing
             |> appendOpt "label" Encode.string si.Label
@@ -425,6 +433,8 @@ module Encode =
                 si.DefaultValue.IsNone
                 && si.ValueFrom.IsNone
                 && si.LinkMerge.IsNone
+                && si.PickValue.IsNone
+                && si.Doc.IsNone
                 && si.LoadContents.IsNone
                 && si.LoadListing.IsNone
                 && si.Label.IsNone ->
@@ -438,9 +448,7 @@ module Encode =
         |> yMap
 
     let encodeStepOutputParameter (so: StepOutputParameter) : YAMLElement =
-        []
-        |> appendOpt "id" Encode.string so.Id
-        |> yMap
+        yMap [ "id", Encode.string so.Id ]
 
     let encodeStepOutputs (outputs: ResizeArray<StepOutput>) : YAMLElement =
         outputs
@@ -460,14 +468,20 @@ module Encode =
     let rec encodeWorkflowStepRun (run: WorkflowStepRun) : YAMLElement =
         match run with
         | RunString runPath -> Encode.string runPath
+        | _ when WorkflowStepRunOps.tryGetTool run |> Option.isSome ->
+            run
+            |> WorkflowStepRunOps.tryGetTool
+            |> Option.map encodeToolDescriptionElement
+            |> Option.defaultWith (fun () -> raise (System.ArgumentException($"RunCommandLineTool must contain CWLToolDescription but got %A{run}")))
+        | _ when WorkflowStepRunOps.tryGetWorkflow run |> Option.isSome ->
+            run
+            |> WorkflowStepRunOps.tryGetWorkflow
+            |> Option.map encodeWorkflowDescriptionElement
+            |> Option.defaultWith (fun () -> raise (System.ArgumentException($"RunWorkflow must contain CWLWorkflowDescription but got %A{run}")))
         | RunCommandLineTool toolObj ->
-            match toolObj with
-            | :? CWLToolDescription as tool -> encodeToolDescriptionElement tool
-            | _ -> raise (System.ArgumentException($"RunCommandLineTool must contain CWLToolDescription but got %A{toolObj}"))
+            raise (System.ArgumentException($"RunCommandLineTool must contain CWLToolDescription but got %A{toolObj}"))
         | RunWorkflow workflowObj ->
-            match workflowObj with
-            | :? CWLWorkflowDescription as workflow -> encodeWorkflowDescriptionElement workflow
-            | _ -> raise (System.ArgumentException($"RunWorkflow must contain CWLWorkflowDescription but got %A{workflowObj}"))
+            raise (System.ArgumentException($"RunWorkflow must contain CWLWorkflowDescription but got %A{workflowObj}"))
 
     and encodeToolDescriptionElement (td: CWLToolDescription) : YAMLElement =
         let basePairs =
@@ -475,21 +489,21 @@ module Encode =
               "class", Encode.string "CommandLineTool" ]
             |> appendOptPair (td.Label |> Option.map encodeLabel)
             |> appendOptPair (td.Doc |> Option.map encodeDoc)
-        let withRequirements =
-            match td.Requirements with
-            | Some r when r.Count > 0 ->
-                basePairs @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
-            | _ -> basePairs
         let withHints =
             match td.Hints with
             | Some h when h.Count > 0 ->
-                withRequirements @ [ "hints", (h |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
-            | _ -> withRequirements
+                basePairs @ [ "hints", (h |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
+            | _ -> basePairs
+        let withRequirements =
+            match td.Requirements with
+            | Some r when r.Count > 0 ->
+                withHints @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
+            | _ -> withHints
         let withBaseCommand =
             match td.BaseCommand with
             | Some bc when bc.Count > 0 ->
-                withHints @ [ "baseCommand", (bc |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence) ]
-            | _ -> withHints
+                withRequirements @ [ "baseCommand", (bc |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence) ]
+            | _ -> withRequirements
         let withInputs =
             match td.Inputs with
             | Some i when i.Count > 0 ->
@@ -521,11 +535,16 @@ module Encode =
               "class", Encode.string "Workflow" ]
             |> appendOptPair (wd.Label |> Option.map encodeLabel)
             |> appendOptPair (wd.Doc |> Option.map encodeDoc)
+        let withHints =
+            match wd.Hints with
+            | Some h when h.Count > 0 ->
+                basePairs @ [ "hints", (h |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
+            | _ -> basePairs
         let withRequirements =
             match wd.Requirements with
             | Some r when r.Count > 0 ->
-                basePairs @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
-            | _ -> basePairs
+                withHints @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
+            | _ -> withHints
         let withInputs = withRequirements @ [ "inputs", (wd.Inputs |> Seq.map encodeCWLInput |> Seq.toList |> yMap) ]
         let withSteps = withInputs @ [ "steps", (wd.Steps |> Seq.map encodeWorkflowStep |> Seq.toList |> yMap) ]
         let withOutputs = withSteps @ [ "outputs", (wd.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> yMap) ]
@@ -555,7 +574,8 @@ module Encode =
             |> appendOpt "label" Encode.string ws.Label
             |> appendOpt "doc" Encode.string ws.Doc
             |> appendOpt "scatter" encodeScatter ws.Scatter
-            |> appendOpt "scatterMethod" Encode.string ws.ScatterMethod
+            |> appendOpt "scatterMethod" encodeScatterMethod ws.ScatterMethod
+            |> appendOpt "when" Encode.string ws.When_
         let withReq =
             match ws.Requirements with
             | Some r when r.Count > 0 -> basePairs @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
@@ -574,88 +594,68 @@ module Encode =
         // Use whitespace=2 to match fixtures (assumed)
         YAMLicious.Writer.write element (Some (fun c -> { c with Whitespace = 2 }))
 
-    let encodeToolDescription (td:CWLToolDescription) : string =
-        // Build each top-level section separately to control blank line placement like fixtures
-        let section (pairs:(string*YAMLElement) list) =
-            pairs |> yMap |> writeYaml |> fun s -> s.Replace("\r\n","\n").TrimEnd('\n').Split('\n') |> Array.toList
-        let basePairs =
-            [ "cwlVersion", Encode.string td.CWLVersion; "class", Encode.string "CommandLineTool" ]
-            |> appendOptPair (td.Label |> Option.map encodeLabel)
-            |> appendOptPair (td.Doc |> Option.map encodeDoc)
-        let baseLines = section basePairs
-        let hintsLines = td.Hints |> Option.map (fun h -> section ["hints", (h |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence)])
-        let reqLines = td.Requirements |> Option.map (fun r -> section ["requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence)])
-        let baseCommandLines = td.BaseCommand |> Option.map (fun bc -> section ["baseCommand", (bc |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence)])
-        let inputsLines = td.Inputs |> Option.map (fun i -> section ["inputs", (i |> Seq.map encodeCWLInput |> Seq.toList |> yMap)])
-        let outputsLines = section ["outputs", (td.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> yMap)]
-        let metadataLines =
-            td.Metadata
-            |> Option.map (fun md ->
-                md.GetProperties(false)
-                |> Seq.map (fun kvp -> kvp.Key, match kvp.Value with | :? string as s -> Encode.string s | _ -> Encode.string (string kvp.Value))
-                |> Seq.toList |> yMap |> writeYaml |> fun s -> s.Replace("\r\n","\n").TrimEnd('\n').Split('\n') |> Array.toList)
+    let private getObjectPairs (element: YAMLElement) : (string * YAMLElement) list =
+        match element with
+        | YAMLElement.Object mappings ->
+            mappings
+            |> List.choose (function
+                | YAMLElement.Mapping (k, v) -> Some (k.Value, v)
+                | _ -> None
+            )
+        | _ -> []
 
-        let resultLines = [
-            yield! baseLines
-            yield ""
-            match hintsLines with | Some l -> yield! l; yield "" | None -> ()
-            match reqLines with | Some l -> yield! l; yield "" | None -> ()
-            match baseCommandLines with | Some l -> yield! l; yield "" | None -> ()
-            match inputsLines with | Some l -> yield! l; yield "" | None -> ()
-            yield! outputsLines
-            match metadataLines with | Some l when l.Length>0 -> yield ""; yield! l | _ -> ()
-        ]
-        let output = String.Join("\r\n", resultLines)
-        // Post-process to collapse sequence items that only contain mappings so that '- class:' appears on same line
+    let private renderTopLevelElement (baseKeys: string list) (orderedSectionKeys: string list) (element: YAMLElement) : string =
+        let section (pairs:(string*YAMLElement) list) =
+            pairs
+            |> yMap
+            |> writeYaml
+            |> fun s -> s.Replace("\r\n","\n").TrimEnd('\n')
+
+        let pairs = getObjectPairs element
+        let basePairs =
+            pairs
+            |> List.filter (fun (k, _) -> List.contains k baseKeys)
+
+        let knownSections =
+            orderedSectionKeys
+            |> List.choose (fun sectionKey ->
+                pairs
+                |> List.tryFind (fun (k, _) -> k = sectionKey)
+                |> Option.map List.singleton
+            )
+
+        let reservedKeys = Set.ofList (baseKeys @ orderedSectionKeys)
+        let metadataPairs =
+            pairs
+            |> List.filter (fun (k, _) -> reservedKeys.Contains k |> not)
+
+        let sections =
+            [
+                if basePairs.Length > 0 then
+                    section basePairs
+                yield! knownSections |> List.map section
+                if metadataPairs.Length > 0 then
+                    section metadataPairs
+            ]
+
+        let output = sections |> String.concat "\r\n\r\n"
         let lines = output.Split([|"\r\n"|], StringSplitOptions.None) |> Array.toList
         let rec merge (acc:string list) (remaining:string list) =
             match remaining with
             | a::b::rest when a.Trim() = "-" && b.TrimStart().Contains(":") ->
-                // Merge dash with first mapping key line
                 let merged = a + " " + b.Trim()
                 merge (merged::acc) rest
             | l::rest -> merge (l::acc) rest
             | [] -> List.rev acc
         merge [] lines |> String.concat "\r\n"
+
+    let encodeToolDescription (td:CWLToolDescription) : string =
+        encodeToolDescriptionElement td
+        |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"] ["hints"; "requirements"; "baseCommand"; "inputs"; "outputs"]
 
     let encodeWorkflowDescription (wd:CWLWorkflowDescription) : string =
-        let section (pairs:(string*YAMLElement) list) =
-            pairs |> yMap |> writeYaml |> fun s -> s.Replace("\r\n","\n").TrimEnd('\n').Split('\n') |> Array.toList
-        let basePairs =
-            [ "cwlVersion", Encode.string wd.CWLVersion; "class", Encode.string "Workflow" ]
-            |> appendOptPair (wd.Label |> Option.map encodeLabel)
-            |> appendOptPair (wd.Doc |> Option.map encodeDoc)
-        let baseLines = section basePairs
-        let reqLines = wd.Requirements |> Option.map (fun r -> section ["requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence)])
-        let inputsLines = section ["inputs", (wd.Inputs |> Seq.map encodeCWLInput |> Seq.toList |> yMap)]
-        let stepsLines = section ["steps", (wd.Steps |> Seq.map encodeWorkflowStep |> Seq.toList |> yMap)]
-        let outputsLines = section ["outputs", (wd.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> yMap)]
-        let metadataLines =
-            wd.Metadata
-            |> Option.map (fun md ->
-                md.GetProperties(false)
-                |> Seq.map (fun kvp -> kvp.Key, match kvp.Value with | :? string as s -> Encode.string s | _ -> Encode.string (string kvp.Value))
-                |> Seq.toList |> yMap |> writeYaml |> fun s -> s.Replace("\r\n","\n").TrimEnd('\n').Split('\n') |> Array.toList)
-
-        let resultLines = [
-            yield! baseLines
-            yield ""
-            match reqLines with | Some l -> yield! l; yield "" | None -> ()
-            yield! inputsLines; yield ""
-            yield! stepsLines; yield ""
-            yield! outputsLines
-            match metadataLines with | Some l when l.Length>0 -> yield ""; yield! l | _ -> ()
-        ]
-        let output = String.Join("\r\n", resultLines)
-        let lines = output.Split([|"\r\n"|], StringSplitOptions.None) |> Array.toList
-        let rec merge (acc:string list) (remaining:string list) =
-            match remaining with
-            | a::b::rest when a.Trim() = "-" && b.TrimStart().Contains(":") ->
-                let merged = a + " " + b.Trim()
-                merge (merged::acc) rest
-            | l::rest -> merge (l::acc) rest
-            | [] -> List.rev acc
-        merge [] lines |> String.concat "\r\n"
+        encodeWorkflowDescriptionElement wd
+        |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"] ["hints"; "requirements"; "inputs"; "steps"; "outputs"]
 
 
     let encodeProcessingUnit (pu : CWLProcessingUnit) :string =
@@ -717,3 +717,4 @@ module Encode =
     /// Convert a CWLType to a YAML-formatted string for use in serialization
     let cwlTypeToYamlString (t: CWLType) : string =
         encodeCWLTypeYaml t
+
