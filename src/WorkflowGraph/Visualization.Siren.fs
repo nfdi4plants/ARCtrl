@@ -106,6 +106,13 @@ module WorkflowGraphSiren =
         let elements = ResizeArray<FlowchartElement>()
         let edgeKeys = ResizeArray<string>()
 
+        let addGroupedNodes (groupId: string) (groupLabel: string) (nodes: WorkflowGraphNode []) =
+            if nodes.Length > 0 then
+                let grouped = ResizeArray<FlowchartElement>()
+                nodes
+                |> Array.iter (fun node -> grouped.Add(nodeToElement node))
+                elements.Add(flowchart.subgraphNamed(groupId, quoteMermaidLabel groupLabel, grouped))
+
         let addRenderedEdge (sourceNodeId: WorkflowGraphNodeId) (targetNodeId: WorkflowGraphNodeId) (label: string option) =
             let labelKey = defaultArg label ""
             let key = $"{sourceNodeId}::{targetNodeId}::{labelKey}"
@@ -184,9 +191,9 @@ module WorkflowGraphSiren =
             |> Map.tryFind stepNodeId
             |> Option.filter processingUnitNodeIds.Contains
 
-        rootInputNodes |> Array.iter (nodeToElement >> elements.Add)
+        addGroupedNodes "wg_initial_inputs" "Initial Inputs" rootInputNodes
         processingUnitNodes |> Array.iter (nodeToElement >> elements.Add)
-        rootOutputNodes |> Array.iter (nodeToElement >> elements.Add)
+        addGroupedNodes "wg_final_outputs" "Workflow Outputs" rootOutputNodes
 
         if hasCalls |> not && processingUnitNodeIds.Contains graph.RootProcessingUnitNodeId then
             for inputNode in rootInputNodes do

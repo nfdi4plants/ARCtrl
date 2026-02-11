@@ -122,6 +122,24 @@ let tests_visualization =
             Expect.stringContains mermaid "port_unit_parent__in__child[child-port]" ""
             Expect.stringContains mermaid "port_unit_parent__in__child-->|child-port|unit_parent" ""
 
+        testCase "initial inputs and final outputs are rendered as groups" <| fun () ->
+            let graph = buildSimpleWorkflowGraph ()
+            let mermaid = WorkflowGraphSiren.toMermaid graph
+            Expect.stringContains mermaid "subgraph wg_initial_inputs[Initial Inputs]" ""
+            Expect.stringContains mermaid "subgraph wg_final_outputs[Workflow Outputs]" ""
+
+        testCase "group ordering keeps inputs above processing and outputs below" <| fun () ->
+            let graph = buildSimpleWorkflowGraph ()
+            let mermaid = WorkflowGraphSiren.toMermaid graph
+            let inputGroupIndex = mermaid.IndexOf("subgraph wg_initial_inputs", System.StringComparison.Ordinal)
+            let processingIndex = mermaid.IndexOf("unit_root__step1__run", System.StringComparison.Ordinal)
+            let outputGroupIndex = mermaid.IndexOf("subgraph wg_final_outputs", System.StringComparison.Ordinal)
+            Expect.isTrue (inputGroupIndex >= 0) "Input group missing"
+            Expect.isTrue (processingIndex >= 0) "Processing node missing"
+            Expect.isTrue (outputGroupIndex >= 0) "Output group missing"
+            Expect.isTrue (inputGroupIndex < processingIndex) "Input group should be emitted before processing nodes"
+            Expect.isTrue (processingIndex < outputGroupIndex) "Output group should be emitted after processing nodes"
+
         testCaseCrossAsync "fromGraph workflow fixture contains processing units and labeled dependency edges" (crossAsync {
             let! content = FileSystemHelper.readFileTextAsync workflowFixturePath
             let graph = content |> Decode.decodeCWLProcessingUnit |> Builder.build
