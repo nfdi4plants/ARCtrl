@@ -107,6 +107,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "js", "js", "{02EA681E-C7D8-
 		vite.config.mts = vite.config.mts
 	EndProjectSection
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ARCtrl.WorkflowGraph", "src\WorkflowGraph\ARCtrl.WorkflowGraph.fsproj", "{37DE5AD3-B256-449B-8AFE-4FF6657579FE}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ARCtrl.WorkflowGraph.Tests", "tests\WorkflowGraph\ARCtrl.WorkflowGraph.Tests.fsproj", "{DCC5D2C2-F9A3-479D-9811-72FF14C126EA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -209,6 +213,14 @@ Global
 		{243ACD5F-10AD-4BE6-9932-829667BE2053}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{243ACD5F-10AD-4BE6-9932-829667BE2053}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{243ACD5F-10AD-4BE6-9932-829667BE2053}.Release|Any CPU.Build.0 = Release|Any CPU
+		{37DE5AD3-B256-449B-8AFE-4FF6657579FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{37DE5AD3-B256-449B-8AFE-4FF6657579FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{37DE5AD3-B256-449B-8AFE-4FF6657579FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{37DE5AD3-B256-449B-8AFE-4FF6657579FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCC5D2C2-F9A3-479D-9811-72FF14C126EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCC5D2C2-F9A3-479D-9811-72FF14C126EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCC5D2C2-F9A3-479D-9811-72FF14C126EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCC5D2C2-F9A3-479D-9811-72FF14C126EA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -240,6 +252,8 @@ Global
 		{212A1C64-02FC-465A-B0FA-F69735F37ACC} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
 		{243ACD5F-10AD-4BE6-9932-829667BE2053} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
 		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {326188FB-2CC0-4610-A082-708885BF47AA}
+		{37DE5AD3-B256-449B-8AFE-4FF6657579FE} = {6DA2330B-D407-4FB1-AF05-B0184034EC44}
+		{DCC5D2C2-F9A3-479D-9811-72FF14C126EA} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1E354DE6-99BA-421E-9EF8-E808B855A85F}
