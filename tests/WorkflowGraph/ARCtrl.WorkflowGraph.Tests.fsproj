@@ -6,12 +6,14 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="TestHelpers.fs" />
     <Compile Include="ReferenceParsing.Tests.fs" />
     <Compile Include="Builder.Tests.fs" />
     <Compile Include="Integration.Tests.fs" />
     <Compile Include="Adapters.Tests.fs" />
     <Compile Include="EdgeCases.Tests.fs" />
     <Compile Include="Visualization.Siren.Tests.fs" />
+    <Compile Include="WorkflowGraph.Extensions.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>

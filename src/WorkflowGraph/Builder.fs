@@ -571,8 +571,7 @@ module Builder =
             addStepPorts state stepNodeId step
 
             let runScope = GraphId.childScope scope $"{step.Id}/run"
-            let resolvedRun, runNodeId = buildRunNode state runScope stepNodeId workflowFilePath step.Run
-            step.Run <- resolvedRun
+            let _, runNodeId = buildRunNode state runScope stepNodeId workflowFilePath step.Run
             addEdgeByType state EdgeKind.Calls stepNodeId runNodeId (Some "calls")
 
         workflow.Steps

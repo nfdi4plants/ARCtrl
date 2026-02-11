@@ -82,6 +82,68 @@ steps:
             Expect.sequenceEqual nodeIds1 nodeIds2 ""
             Expect.sequenceEqual edgeIds1 edgeIds2 ""
 
+        testCase "building same processing unit instance twice is deterministic" <| fun () ->
+            let yaml = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs: {}
+steps:
+  step1:
+    run: ./tool.cwl
+    in: {}
+    out: [out]"""
+            let processingUnit = Decode.decodeCWLProcessingUnit yaml
+            let resolvedTool = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFile
+            let options =
+                WorkflowGraphBuildOptions.defaultOptions
+                |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "workflow.cwl")
+                |> WorkflowGraphBuildOptions.withTryResolveRunPath (Some (fun path ->
+                    if path.EndsWith("tool.cwl") then Some (CommandLineTool resolvedTool) else None
+                ))
+
+            let graph1 = Builder.buildWith options processingUnit
+            let graph2 = Builder.buildWith options processingUnit
+
+            let nodeIds1 = graph1.Nodes |> Seq.map (fun n -> n.Id) |> Seq.sort |> Seq.toArray
+            let nodeIds2 = graph2.Nodes |> Seq.map (fun n -> n.Id) |> Seq.sort |> Seq.toArray
+            let edgeIds1 = graph1.Edges |> Seq.map (fun e -> e.Id) |> Seq.sort |> Seq.toArray
+            let edgeIds2 = graph2.Edges |> Seq.map (fun e -> e.Id) |> Seq.sort |> Seq.toArray
+
+            Expect.sequenceEqual nodeIds1 nodeIds2 ""
+            Expect.sequenceEqual edgeIds1 edgeIds2 ""
+
+        testCase "buildWith does not mutate workflow step run payloads" <| fun () ->
+            let yaml = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs: {}
+steps:
+  step1:
+    run: ./tool.cwl
+    in: {}
+    out: [out]"""
+            let processingUnit = Decode.decodeCWLProcessingUnit yaml
+            let resolvedTool = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFile
+            let options =
+                WorkflowGraphBuildOptions.defaultOptions
+                |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "workflow.cwl")
+                |> WorkflowGraphBuildOptions.withTryResolveRunPath (Some (fun path ->
+                    if path.EndsWith("tool.cwl") then Some (CommandLineTool resolvedTool) else None
+                ))
+
+            let assertRunString () =
+                match processingUnit with
+                | Workflow wf ->
+                    match wf.Steps.[0].Run with
+                    | RunString runPath -> Expect.equal runPath "./tool.cwl" ""
+                    | other -> Expect.isTrue false $"Expected RunString but got %A{other}"
+                | _ ->
+                    Expect.isTrue false "Expected workflow processing unit"
+
+            assertRunString ()
+            let _graph = Builder.buildWith options processingUnit
+            assertRunString ()
+
         testCase "scatter fields do not break graph build and are preserved as metadata" <| fun () ->
             let graph = buildGraphFromYaml TestObjects.CWL.Workflow.workflowWithScatterAndScatterMethodFile
             let stepNodeOpt =

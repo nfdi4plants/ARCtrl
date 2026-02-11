@@ -2,26 +2,10 @@ module Tests.Integration
 
 open ARCtrl
 open ARCtrl.CWL
-open ARCtrl.FileSystem
 open ARCtrl.WorkflowGraph
-open TestingUtils
 open CrossAsync
-
-let private workflowFixturePath =
-    ArcPathHelper.combineMany [|
-        TestObjects.IO.testSimpleARCWithCWL
-        "workflows"
-        "ProteomIQon"
-        "workflow.cwl"
-    |]
-
-let private runFixturePath =
-    ArcPathHelper.combineMany [|
-        TestObjects.IO.testSimpleARCWithCWL
-        "runs"
-        "tests"
-        "run.cwl"
-    |]
+open TestingUtils
+open Tests.WorkflowGraphTestHelpers
 
 let private countEdges kind (graph: WorkflowGraph) =
     graph.Edges
@@ -32,33 +16,6 @@ let private countNodes predicate (graph: WorkflowGraph) =
     graph.Nodes
     |> Seq.filter predicate
     |> Seq.length
-
-let private loadProcessingUnitFromPath (path: string) =
-    crossAsync {
-        let! content = FileSystemHelper.readFileTextAsync path
-        return Decode.decodeCWLProcessingUnit content
-    }
-
-let private buildRunResolverFromFixtures () =
-    crossAsync {
-        let! relativePaths = FileSystemHelper.getAllFilePathsAsync TestObjects.IO.testSimpleARCWithCWL
-        let cwlRelativePaths =
-            relativePaths
-            |> Array.filter (fun p -> p.EndsWith(".cwl", System.StringComparison.OrdinalIgnoreCase))
-        let! resolvedEntries =
-            cwlRelativePaths
-            |> Array.map (fun relativePath ->
-                crossAsync {
-                    let absolutePath = ArcPathHelper.combine TestObjects.IO.testSimpleARCWithCWL relativePath
-                    let! content = FileSystemHelper.readFileTextAsync absolutePath
-                    let unit = Decode.decodeCWLProcessingUnit content
-                    return ArcPathHelper.normalizePathKey relativePath, unit
-                }
-            )
-            |> CrossAsync.all
-        let map = resolvedEntries |> Map.ofArray
-        return fun (path: string) -> map |> Map.tryFind (ArcPathHelper.normalizePathKey path)
-    }
 
 let tests_workflowFixture =
     testList "workflow.cwl fixture" [

@@ -27,13 +27,6 @@ module WorkflowGraphApi =
     let fromProcessingUnitToSiren = WorkflowGraphSiren.fromProcessingUnit
     let fromProcessingUnitToSirenResolved = WorkflowGraphSiren.fromProcessingUnitResolved
 
-#if !FABLE_COMPILER
-    let saveMermaid = WorkflowGraphSiren.saveMermaid
-    let saveMarkdown = WorkflowGraphSiren.saveMarkdown
-    let saveSvgWith = WorkflowGraphSiren.saveSvgWith
-    let savePngWith = WorkflowGraphSiren.savePngWith
-#endif
-
     let fromArcWorkflow = ofWorkflow
     let fromArcRun = ofRun
     let fromArcInvestigation = ofInvestigation

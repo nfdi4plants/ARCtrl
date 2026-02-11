@@ -2,32 +2,10 @@ module Tests.Adapters
 
 open ARCtrl
 open ARCtrl.CWL
-open ARCtrl.FileSystem
 open ARCtrl.WorkflowGraph
 open TestingUtils
 open CrossAsync
-
-let private workflowFixturePath =
-    ArcPathHelper.combineMany [|
-        TestObjects.IO.testSimpleARCWithCWL
-        "workflows"
-        "ProteomIQon"
-        "workflow.cwl"
-    |]
-
-let private runFixturePath =
-    ArcPathHelper.combineMany [|
-        TestObjects.IO.testSimpleARCWithCWL
-        "runs"
-        "tests"
-        "run.cwl"
-    |]
-
-let private loadProcessingUnitFromPath (path: string) =
-    crossAsync {
-        let! content = FileSystemHelper.readFileTextAsync path
-        return Decode.decodeCWLProcessingUnit content
-    }
+open Tests.WorkflowGraphTestHelpers
 
 let tests_adapters =
     testList "Adapters" [

@@ -37,22 +37,8 @@ let index = Adapters.ofInvestigation investigation
 ## Output formats
 
 ```fsharp
-// Native outputs
 let mermaidText = WorkflowGraphSiren.toMermaid graph
 let markdown = WorkflowGraphSiren.toMarkdown graph
-
-// Optional image conversion via external renderer callbacks
-// (for example Mermaid CLI or a rendering web service)
-let svgOpt = WorkflowGraphSiren.toSvgWith renderMermaidToSvg graph
-let pngBytesOpt = WorkflowGraphSiren.toPngBytesWith renderMermaidToPng graph
 ```
 
-Only Mermaid text and Markdown are produced directly by this library.
-SVG/PNG are callback-based extension points and require you to provide the renderer.
-
-For .NET targets, save helpers are available:
-
-- `WorkflowGraphSiren.saveMermaid`
-- `WorkflowGraphSiren.saveMarkdown`
-- `WorkflowGraphSiren.saveSvgWith`
-- `WorkflowGraphSiren.savePngWith`
+This library directly produces Mermaid text and Markdown-wrapped Mermaid output.

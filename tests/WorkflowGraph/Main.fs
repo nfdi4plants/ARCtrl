@@ -11,6 +11,7 @@ let all =
             Tests.Adapters.main
             Tests.EdgeCases.main
             Tests.VisualizationSiren.main
+            Tests.WorkflowGraphExtensions.main
         ]
 
 #if !TESTS_ALL
