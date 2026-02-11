@@ -330,10 +330,93 @@ let testNestedArrayDecoding =
             ) "sampleRecordFiles should be File[][]"
     ]
 
+let testExpressionTool =
+    testList "ExpressionTool" [
+        testCase "decode top-level ExpressionTool via decodeCWLProcessingUnit" <| fun _ ->
+            let result = Decode.decodeCWLProcessingUnit TestObjects.CWL.ExpressionTool.minimalExpressionToolFile
+            match result with
+            | ExpressionTool et ->
+                Expect.equal et.Expression "$(null)" "Expression should be parsed"
+                Expect.equal et.CWLVersion "v1.2" ""
+            | other ->
+                Expect.isTrue false $"Expected ExpressionTool but got %A{other}"
+        testCase "decodeExpressionTool with requirements/inputs/outputs" <| fun _ ->
+            let et = Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolWithRequirementsFile
+            Expect.equal et.CWLVersion "v1.2" ""
+            let requirements = Expect.wantSome et.Requirements "Requirements should be present"
+            Expect.equal requirements.[0] InlineJavascriptRequirement ""
+            let inputs = Expect.wantSome et.Inputs "Inputs should be present"
+            Expect.isTrue (inputs.Count > 0) "Should have at least one input"
+            Expect.isTrue (et.Outputs.Count > 0) "Should have at least one output"
+            Expect.isTrue (et.Expression.Length > 0) "Expression should be non-empty"
+        testCase "ExpressionTool encode/decode deterministic" <| fun _ ->
+            let original = TestObjects.CWL.ExpressionTool.expressionToolWithRequirementsFile
+            let (_, d1, d2) =
+                assertDeterministic
+                    Encode.encodeExpressionToolDescription
+                    Decode.decodeExpressionTool
+                    "ExpressionTool"
+                    original
+            Expect.equal d1.Expression d2.Expression "Expression must survive roundtrip"
+            Expect.equal d1.CWLVersion d2.CWLVersion ""
+            Expect.equal d1.Outputs.Count d2.Outputs.Count ""
+        testCase "ExpressionTool metadata survives roundtrip" <| fun _ ->
+            let decoded = Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolWithMetadataFile
+            let encoded = Encode.encodeExpressionToolDescription decoded
+            let roundTripped = Decode.decodeExpressionTool encoded
+            let metadata = Expect.wantSome roundTripped.Metadata "Metadata should survive roundtrip"
+            let metadataText = metadata |> DynObj.format
+            Expect.stringContains metadataText "customKey" "Unknown metadata key should be preserved"
+        testCase "ExpressionTool hints emitted before requirements" <| fun _ ->
+            let et = Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolWithRequirementsFile
+            et.Hints <- Some (ResizeArray [StepInputExpressionRequirement])
+            let encoded = Encode.encodeExpressionToolDescription et
+            let hintIdx = encoded.IndexOf("hints:")
+            let reqIdx = encoded.IndexOf("requirements:")
+            Expect.isTrue (hintIdx > -1) "Hints should be present"
+            Expect.isTrue (reqIdx > -1) "Requirements should be present"
+            Expect.isTrue (hintIdx < reqIdx) "Hints should appear before requirements"
+        testCase "missing expression field fails decode" <| fun _ ->
+            Expect.throws
+                (fun _ -> Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.missingExpressionFieldFile |> ignore)
+                "ExpressionTool without expression field should fail decoding"
+        testCase "invalid ExpressionTool class fails decodeCWLProcessingUnit" <| fun _ ->
+            Expect.throws
+                (fun _ -> Decode.decodeCWLProcessingUnit TestObjects.CWL.ExpressionTool.malformedExpressionToolClassFile |> ignore)
+                "Unknown CWL class should fail decoding"
+        testCase "array output ExpressionTool conformance pattern" <| fun _ ->
+            let et = Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolArrayOutputFile
+            let inputs = Expect.wantSome et.Inputs ""
+            let inp = inputs.[0]
+            Expect.equal inp.Type_ (Some CWLType.Int) "Input should be int"
+            let outp = et.Outputs.[0]
+            match outp.Type_ with
+            | Some (Array arraySchema) ->
+                Expect.equal arraySchema.Items CWLType.Int "Expected int[] output type"
+            | other ->
+                Expect.isTrue false $"Expected Array type but got %A{other}"
+            Expect.stringContains et.Expression "Array.apply" "Expression should use Array.apply"
+        testCase "default input ExpressionTool conformance pattern" <| fun _ ->
+            let et = Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolWithDefaultInputFile
+            let inputs = Expect.wantSome et.Inputs "Inputs should be present"
+            let inp = inputs.[0]
+            Expect.equal inp.Name "i1" ""
+            Expect.equal et.Outputs.[0].Type_ (Some CWLType.Int) "Output type should be int"
+        testCase "loadContents ExpressionTool input conformance pattern" <| fun _ ->
+            let et = Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolLoadContentsFile
+            let inputs = Expect.wantSome et.Inputs "Inputs should be present"
+            let inp = inputs.[0]
+            match inp.Type_ with
+            | Some (File _) -> ()
+            | other -> Expect.isTrue false $"Expected File type but got %A{other}"
+            Expect.stringContains et.Expression "parseInt" "Expression should use parseInt"
+    ]
+
 let main = 
     testList "CWLToolDescription" [
         testCWLToolDescriptionDecode
         testCWLToolDescriptionEncode
         testCWLToolDescriptionMetadata
         testNestedArrayDecoding
+        testExpressionTool
     ]

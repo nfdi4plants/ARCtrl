@@ -252,9 +252,81 @@ let testCWLWorkflowDescriptionDecode =
         testCase "invalid scatterMethod fails decode" <| fun _ ->
             let invalidScatter = TestObjects.CWL.Workflow.workflowWithInvalidScatterMethodFile
             Expect.throws (fun _ -> Decode.decodeWorkflow invalidScatter |> ignore) "Invalid scatterMethod should fail"
-        testCase "unsupported inline run class fails decode" <| fun _ ->
-            let invalidInlineRun = TestObjects.CWL.Workflow.workflowWithUnsupportedInlineRunClassFile
-            Expect.throws (fun _ -> Decode.decodeWorkflow invalidInlineRun |> ignore) "Inline ExpressionTool should fail until supported"
+        testCase "inline ExpressionTool run decode succeeds" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithUnsupportedInlineRunClassFile
+            let runValue = decoded.Steps.[0].Run
+            let isRunExpressionTool =
+                match runValue with
+                | RunExpressionTool _ -> true
+                | _ -> false
+            Expect.isTrue isRunExpressionTool $"Expected RunExpressionTool but got %A{runValue}"
+            let expressionTool =
+                Expect.wantSome
+                    (WorkflowStepRunOps.tryGetExpressionTool runValue)
+                    "Should extract ExpressionTool payload"
+            Expect.equal expressionTool.Expression "$(null)" ""
+        testCase "inline ExpressionTool chain decodes all steps" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithInlineExpressionToolChainFile
+            Expect.equal decoded.Steps.Count 3 "Should have 3 steps"
+            for i in 0..2 do
+                let step = decoded.Steps.[i]
+                let expressionTool =
+                    Expect.wantSome
+                        (WorkflowStepRunOps.tryGetExpressionTool step.Run)
+                        $"Step {i} should be ExpressionTool"
+                Expect.isTrue (expressionTool.Expression.Length > 0) $"Step {i} expression should be non-empty"
+        testCase "loadContents on inline ExpressionTool input decoded" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithLoadContentsExpressionToolFile
+            let step = decoded.Steps.[0]
+            let expressionTool =
+                Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool step.Run) "Step run should be inline ExpressionTool"
+            let hasLoadContentsOnStepInput =
+                step.In |> Seq.exists (fun si -> si.LoadContents = Some true)
+            let hasValueFromOnStepInput =
+                step.In |> Seq.exists (fun si -> si.ValueFrom.IsSome)
+            Expect.isTrue hasLoadContentsOnStepInput "Step input should have loadContents"
+            Expect.isTrue hasValueFromOnStepInput "Step input should have valueFrom"
+            let expressionToolInputs = expressionTool.Inputs |> Option.defaultValue (ResizeArray())
+            Expect.equal expressionToolInputs.Count 1 "Inline expression tool should have one input"
+        testCase "mixed workflow with CommandLineTool and ExpressionTool steps" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithMixedToolAndExpressionStepFile
+            Expect.equal decoded.Steps.Count 2 ""
+            match decoded.Steps.[0].Run with
+            | RunString _ -> ()
+            | other -> Expect.isTrue false $"Step 0 should be RunString but got %A{other}"
+            let isExpressionToolStep =
+                match decoded.Steps.[1].Run with
+                | RunExpressionTool _ -> true
+                | _ -> false
+            Expect.isTrue isExpressionToolStep "Step 1 should be RunExpressionTool"
+        testCase "chained ExpressionTool array pipeline type verification" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithInlineExpressionToolChainFile
+            let step1 = Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool decoded.Steps.[0].Run) "Step 1 should be ExpressionTool"
+            let step2 = Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool decoded.Steps.[1].Run) "Step 2 should be ExpressionTool"
+            let step3 = Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool decoded.Steps.[2].Run) "Step 3 should be ExpressionTool"
+
+            Expect.equal step1.Inputs.Value.[0].Type_ (Some CWLType.Int) "step1 input should be int"
+            match step1.Outputs.[0].Type_ with
+            | Some (Array arraySchema) ->
+                Expect.equal arraySchema.Items CWLType.Int "step1 output should be int[]"
+            | other ->
+                Expect.isTrue false $"Expected int[] but got %A{other}"
+
+            match step2.Inputs.Value.[0].Type_ with
+            | Some (Array _) -> ()
+            | other ->
+                Expect.isTrue false $"step2 input should be int[] but got %A{other}"
+
+            Expect.equal step3.Outputs.[0].Type_ (Some CWLType.Int) "step3 output should be int"
+        testCase "step-level loadContents with valueFrom on ExpressionTool" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithLoadContentsExpressionToolFile
+            let step = decoded.Steps.[0]
+            let stepInputHasLoadContents =
+                step.In |> Seq.exists (fun si -> si.LoadContents = Some true)
+            let stepInputHasValueFrom =
+                step.In |> Seq.exists (fun si -> si.ValueFrom.IsSome)
+            Expect.isTrue stepInputHasLoadContents "Step input should have loadContents"
+            Expect.isTrue stepInputHasValueFrom "Step input should have valueFrom"
     ]
 
 let testCWLWorkflowDescriptionEncode =
@@ -382,6 +454,34 @@ let testCWLWorkflowDescriptionEncode =
                 let roundTrippedRequirements = Expect.wantSome roundTrippedStep.Requirements "Step requirements should survive roundtrip"
                 Expect.equal roundTrippedHints.[0] StepInputExpressionRequirement ""
                 Expect.equal roundTrippedRequirements.[0] NetworkAccessRequirement ""
+            testCase "inline ExpressionTool roundtrip preserves expression" <| fun _ ->
+                let original = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithMixedToolAndExpressionStepFile
+                let encoded = Encode.encodeWorkflowDescription original
+                let roundTripped = Decode.decodeWorkflow encoded
+                let expressionTool =
+                    Expect.wantSome
+                        (WorkflowStepRunOps.tryGetExpressionTool roundTripped.Steps.[1].Run)
+                        "Should roundtrip ExpressionTool run"
+                Expect.equal expressionTool.Expression "$({'out': inputs.y})" "Expression preserved"
+            testCase "inline ExpressionTool chain roundtrip" <| fun _ ->
+                let original = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithInlineExpressionToolChainFile
+                let encoded = Encode.encodeWorkflowDescription original
+                let roundTripped = Decode.decodeWorkflow encoded
+                Expect.equal roundTripped.Steps.Count 3 ""
+                for i in 0..2 do
+                    let originalTool =
+                        Expect.wantSome
+                            (WorkflowStepRunOps.tryGetExpressionTool original.Steps.[i].Run)
+                            $"Original step {i} should be ExpressionTool"
+                    let roundTrippedTool =
+                        Expect.wantSome
+                            (WorkflowStepRunOps.tryGetExpressionTool roundTripped.Steps.[i].Run)
+                            $"Roundtripped step {i} should be ExpressionTool"
+                    Expect.equal roundTrippedTool.Expression originalTool.Expression $"Step {i} expression should be preserved"
+                    let originalInputs = originalTool.Inputs |> Option.defaultValue (ResizeArray())
+                    let roundTrippedInputs = roundTrippedTool.Inputs |> Option.defaultValue (ResizeArray())
+                    Expect.equal roundTrippedInputs.Count originalInputs.Count $"Step {i} input count should match"
+                    Expect.equal roundTrippedTool.Outputs.Count originalTool.Outputs.Count $"Step {i} output count should match"
         ]
     ]
 

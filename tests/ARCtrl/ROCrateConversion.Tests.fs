@@ -2433,6 +2433,7 @@ let tests_ArcWorkflow =
                 | CWL.RunString runPath -> runPath
                 | CWL.RunCommandLineTool _ -> "inline:CommandLineTool"
                 | CWL.RunWorkflow _ -> "inline:Workflow"
+                | CWL.RunExpressionTool _ -> "inline:ExpressionTool"
 
             let sourceStepIds = sourceWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
             let parsedStepIds = parsedWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
@@ -2615,6 +2616,49 @@ let tests_ArcWorkflow =
                 Expect.equal parsedInputs expectedInputs $"Input signatures should match for step {parsedStep.Id}"
                 Expect.equal parsedOutputs expectedOutputs $"Output signatures should match for step {parsedStep.Id}"
         })
+        testCase "ExpressionTool_ROCrateComposeDecompose_Roundtrip" (fun () ->
+            let expressionTool =
+                CWL.Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolWithRequirementsFile
+            let processingUnit = CWL.ExpressionTool expressionTool
+            let protocol =
+                WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(
+                    "workflows/ExpressionToolWorkflow/expression.cwl",
+                    processingUnit
+                )
+            let roundTripped =
+                WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(protocol)
+            match roundTripped with
+            | CWL.ExpressionTool rt ->
+                Expect.equal rt.Expression expressionTool.Expression "Expression should survive RO-Crate roundtrip"
+                let expectedInputs = expressionTool.Inputs |> Option.defaultValue (ResizeArray())
+                let actualInputs = rt.Inputs |> Option.defaultValue (ResizeArray())
+                Expect.equal actualInputs.Count expectedInputs.Count "Input count should match after roundtrip"
+                Expect.equal rt.Outputs.Count expressionTool.Outputs.Count "Output count should match after roundtrip"
+            | other ->
+                Expect.isTrue false $"Expected ExpressionTool but got %A{other}"
+        )
+        testCase "Workflow_WithInlineExpressionToolStep_ROCrateRoundtrip_PreservesStep" (fun () ->
+            let workflow =
+                CWL.Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithUnsupportedInlineRunClassFile
+            let protocol =
+                WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(
+                    "workflows/InlineExpressionWorkflow/workflow.cwl",
+                    CWL.Workflow workflow
+                )
+            let roundTripped =
+                WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(protocol)
+            match roundTripped with
+            | CWL.Workflow rtWorkflow ->
+                Expect.equal rtWorkflow.Steps.Count workflow.Steps.Count "Step count should be preserved through RO-Crate roundtrip"
+                let runValue = rtWorkflow.Steps.[0].Run
+                match runValue with
+                | CWL.RunString runIdentifier ->
+                    Expect.equal runIdentifier "inline:ExpressionTool" "Inline ExpressionTool marker should be preserved as run string"
+                | other ->
+                    Expect.isTrue false $"Expected RunString marker but got %A{other}"
+            | other ->
+                Expect.isTrue false $"Expected Workflow but got %A{other}"
+        )
     ]
 
 let tests_ArcRun =
