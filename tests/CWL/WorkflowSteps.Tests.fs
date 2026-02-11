@@ -2,12 +2,19 @@ module Tests.WorkflowSteps
 
 open ARCtrl.CWL
 open YAMLicious
+open YAMLicious.YAMLiciousTypes
 open TestingUtils
 
 let decodeWorkflowStep =
     TestObjects.CWL.WorkflowSteps.workflowStepsFileContent
     |> Decode.read
     |> Decode.stepsDecoder
+
+let tryYamlScalarString (y: YAMLElement) =
+    match y with
+    | YAMLElement.Object [YAMLElement.Value v]
+    | YAMLElement.Value v -> Some v.Value
+    | _ -> None
 
 let testWorkflowStep =
     testList "Decode" [
@@ -46,6 +53,8 @@ let testWorkflowStep =
                             DefaultValue = None
                             ValueFrom = None
                             LinkMerge = None
+                            PickValue = None
+                            Doc = None
                             LoadContents = None
                             LoadListing = None
                             Label = None
@@ -56,6 +65,8 @@ let testWorkflowStep =
                             DefaultValue = None
                             ValueFrom = None
                             LinkMerge = None
+                            PickValue = None
+                            Doc = None
                             LoadContents = None
                             LoadListing = None
                             Label = None
@@ -65,9 +76,14 @@ let testWorkflowStep =
                 Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
                     Expect.equal actual.Id expected.Id ""
                     Expect.sequenceEqual actual.Source.Value expected.Source.Value ""
-                    Expect.equal actual.DefaultValue expected.DefaultValue ""
+                    Expect.equal
+                        (actual.DefaultValue |> Option.bind tryYamlScalarString)
+                        (expected.DefaultValue |> Option.bind tryYamlScalarString)
+                        ""
                     Expect.equal actual.ValueFrom expected.ValueFrom ""
                     Expect.equal actual.LinkMerge expected.LinkMerge ""
+                    Expect.equal actual.PickValue expected.PickValue ""
+                    Expect.equal actual.Doc expected.Doc ""
                     Expect.equal actual.LoadContents expected.LoadContents ""
                     Expect.equal actual.LoadListing expected.LoadListing ""
                     Expect.equal actual.Label expected.Label ""
@@ -81,6 +97,8 @@ let testWorkflowStep =
                             DefaultValue = None
                             ValueFrom = None
                             LinkMerge = None
+                            PickValue = None
+                            Doc = None
                             LoadContents = None
                             LoadListing = None
                             Label = None
@@ -91,6 +109,8 @@ let testWorkflowStep =
                             DefaultValue = None
                             ValueFrom = None
                             LinkMerge = Some MergeFlattened
+                            PickValue = None
+                            Doc = None
                             LoadContents = None
                             LoadListing = None
                             Label = None
@@ -98,9 +118,11 @@ let testWorkflowStep =
                         {
                             Id = "parallelismLevel"
                             Source = None
-                            DefaultValue = Some "8"
+                            DefaultValue = Some (YAMLElement.Object [YAMLElement.Value {Value = "8"; Comment = None}])
                             ValueFrom = None
                             LinkMerge = None
+                            PickValue = None
+                            Doc = None
                             LoadContents = None
                             LoadListing = None
                             Label = None
@@ -111,6 +133,8 @@ let testWorkflowStep =
                             DefaultValue = None
                             ValueFrom = Some "output"
                             LinkMerge = None
+                            PickValue = None
+                            Doc = None
                             LoadContents = None
                             LoadListing = None
                             Label = None
@@ -121,9 +145,14 @@ let testWorkflowStep =
                     Expect.equal actual.Id expected.Id ""
                     if expected.Source.IsSome then
                         Expect.sequenceEqual actual.Source.Value expected.Source.Value ""
-                    Expect.equal actual.DefaultValue expected.DefaultValue ""
+                    Expect.equal
+                        (actual.DefaultValue |> Option.bind tryYamlScalarString)
+                        (expected.DefaultValue |> Option.bind tryYamlScalarString)
+                        ""
                     Expect.equal actual.ValueFrom expected.ValueFrom ""
                     Expect.equal actual.LinkMerge expected.LinkMerge ""
+                    Expect.equal actual.PickValue expected.PickValue ""
+                    Expect.equal actual.Doc expected.Doc ""
                     Expect.equal actual.LoadContents expected.LoadContents ""
                     Expect.equal actual.LoadListing expected.LoadListing ""
                     Expect.equal actual.Label expected.Label ""
@@ -139,6 +168,34 @@ let testWorkflowStep =
                 let actual = decodeWorkflowStep.[1].Out
                 Expect.sequenceEqual actual expected ""
         ]
+        testCase "invalid linkMerge fails decode" <| fun _ ->
+            let invalidSteps = """steps:
+  step1:
+    run: ./tool.cwl
+    in:
+      input1:
+        source: in1
+        linkMerge: invalid_merge
+    out: [out]"""
+            let decodeInvalid () =
+                invalidSteps
+                |> Decode.read
+                |> Decode.stepsDecoder
+                |> ignore
+            Expect.throws decodeInvalid "Invalid linkMerge should fail decoding"
+        testCase "step output record requires id" <| fun _ ->
+            let invalidSteps = """steps:
+  step1:
+    run: ./tool.cwl
+    in: {}
+    out:
+      - type: string"""
+            let decodeInvalid () =
+                invalidSteps
+                |> Decode.read
+                |> Decode.stepsDecoder
+                |> ignore
+            Expect.throws decodeInvalid "Step output record without id should fail decoding"
     ]
 
 let main = 

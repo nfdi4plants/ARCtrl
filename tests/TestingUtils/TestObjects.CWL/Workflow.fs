@@ -120,3 +120,60 @@ steps:
         label: Input in array syntax
     out: [out]"""
 
+let workflowWithStepsArrayFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  input1: string
+outputs:
+  result:
+    type: string
+    outputSource: step1/out
+steps:
+  - id: step1
+    run: ./tool.cwl
+    when: $(inputs.input1 != null)
+    in:
+      - id: in1
+        source: input1
+        pickValue: first_non_null
+        doc: Input docs
+        default:
+          type: string
+          value: fallback
+    out:
+      - id: out"""
+
+let workflowWithInvalidScatterMethodFile = """cwlVersion: v1.2
+class: Workflow
+inputs: { input1: string }
+outputs:
+  result:
+    type: string
+    outputSource: step1/out
+steps:
+  step1:
+    run: ./tool.cwl
+    scatter: input1
+    scatterMethod: invalid_scatter
+    in:
+      in1: input1
+    out: [out]"""
+
+let workflowWithUnsupportedInlineRunClassFile = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs:
+  result:
+    type: string
+    outputSource: step1/out
+steps:
+  step1:
+    run:
+      class: ExpressionTool
+      cwlVersion: v1.2
+      inputs: {}
+      outputs: {}
+      expression: $(null)
+    in: {}
+    out: [out]"""
+

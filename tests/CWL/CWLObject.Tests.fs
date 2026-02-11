@@ -16,6 +16,15 @@ let decodeCWLToolDescriptionMetadata: CWLToolDescription =
 
 let testCWLToolDescriptionDecode =
     testList "Decode" [
+        testCase "sanitize allows shebang and full-line comments" <| fun _ ->
+            let withShebangAndComments = TestObjects.CWL.CommandLineTool.DecodeEdgeCases.withShebangAndComments
+            let decoded = Decode.decodeCommandLineTool withShebangAndComments
+            Expect.equal decoded.CWLVersion "v1.2" ""
+            Expect.equal decoded.Outputs.Count 0 ""
+        testCase "sanitize does not hide malformed yaml errors" <| fun _ ->
+            let malformed = TestObjects.CWL.CommandLineTool.DecodeEdgeCases.malformedYaml
+            let decodeMalformed () = Decode.decodeCWLProcessingUnit malformed |> ignore
+            Expect.throws decodeMalformed "Malformed YAML should fail decoding"
         testCase "CWLVersion" <| fun _ ->
             let expected = "v1.2"
             let actual = decodeCWLToolDescription.CWLVersion
@@ -258,6 +267,22 @@ let testCWLToolDescriptionEncode =
                 let original = TestObjects.CWL.CommandLineTool.cwlFile
                 let (encoded1, _, _) = TestingUtils.CWL.assertDeterministic Encode.encodeToolDescription Decode.decodeCommandLineTool "CommandLineTool" original
                 TestingUtils.CWL.assertRequirementsExtended encoded1
+            testCase "hints emitted before requirements for both encoder variants" <| fun _ ->
+                let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFile
+                let topLevelEncoded = Encode.encodeToolDescription decoded
+                let elementEncoded = decoded |> Encode.encodeToolDescriptionElement |> Encode.writeYaml
+
+                let topReqIndex = topLevelEncoded.IndexOf("requirements:")
+                let topHintIndex = topLevelEncoded.IndexOf("hints:")
+                let elementReqIndex = elementEncoded.IndexOf("requirements:")
+                let elementHintIndex = elementEncoded.IndexOf("hints:")
+
+                Expect.isTrue (topReqIndex > -1) "Top-level encoding should include requirements"
+                Expect.isTrue (topHintIndex > -1) "Top-level encoding should include hints"
+                Expect.isTrue (elementReqIndex > -1) "Element encoding should include requirements"
+                Expect.isTrue (elementHintIndex > -1) "Element encoding should include hints"
+                Expect.isTrue (topHintIndex < topReqIndex) "Top-level encoding should place hints before requirements"
+                Expect.isTrue (elementHintIndex < elementReqIndex) "Element encoding should place hints before requirements"
         ]
     ]
 

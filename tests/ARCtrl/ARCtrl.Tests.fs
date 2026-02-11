@@ -361,6 +361,89 @@ let private tests_SetISAFromContracts = testList "SetISAFromContracts" [
         let tool = toolObj :?> ARCtrl.CWL.CWLToolDescription
         Expect.equal tool.BaseCommand.Value.[0] "echo" "Referenced workflow step should resolve to command line tool"
     )
+    testCase "simpleISAWithWR_WithCWL_ResolvesRunWorkflowReference_CycleSafe" (fun () ->
+        let runIdentifier = Run.Proteomics.runIdentifier
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier runIdentifier
+        let workflowACwlPath = ArcPathHelper.combineMany [|ArcPathHelper.RunsFolderName; runIdentifier; "a.cwl"|]
+        let workflowBCwlPath = ArcPathHelper.combineMany [|ArcPathHelper.RunsFolderName; runIdentifier; "b.cwl"|]
+
+        let workflowACwlText = TestObjects.CWL.RunWorkflowReference.CycleSafe.workflowACwlText
+        let workflowBCwlText = TestObjects.CWL.RunWorkflowReference.CycleSafe.workflowBCwlText
+        let runCwlText = TestObjects.CWL.RunWorkflowReference.CycleSafe.runCwlText
+
+        let contracts = [|
+            SimpleISA.Investigation.investigationReadContract
+            SimpleISA.Study.bII_S_1ReadContract
+            SimpleISA.Assay.proteomeReadContract
+            SimpleISA.Workflow.proteomicsReadContract
+            SimpleISA.Run.proteomicsReadContract
+            Contract.create(Operation.READ, path = runCwlPath, dtoType = DTOType.CWL, dto = DTO.Text runCwlText)
+            Contract.create(Operation.READ, path = workflowACwlPath, dtoType = DTOType.CWL, dto = DTO.Text workflowACwlText)
+            Contract.create(Operation.READ, path = workflowBCwlPath, dtoType = DTOType.CWL, dto = DTO.Text workflowBCwlText)
+        |]
+
+        let arc = ARC("MyIdentifier")
+        arc.SetISAFromContracts contracts
+
+        let run = arc.Runs.[0]
+        let runWorkflow =
+            match Expect.wantSome run.CWLDescription "Run CWL description should be present" with
+            | ARCtrl.CWL.Workflow workflow -> workflow
+            | other ->
+                Expect.isTrue false (sprintf "Expected run CWL to be workflow but got %A" other)
+                Unchecked.defaultof<ARCtrl.CWL.CWLWorkflowDescription>
+
+        let stepA =
+            match runWorkflow.Steps.[0].Run with
+            | ARCtrl.CWL.RunWorkflow workflowObj -> workflowObj :?> ARCtrl.CWL.CWLWorkflowDescription
+            | other ->
+                Expect.isTrue false (sprintf "Expected first run step to resolve to workflow but got %A" other)
+                Unchecked.defaultof<ARCtrl.CWL.CWLWorkflowDescription>
+
+        let stepB =
+            match stepA.Steps.[0].Run with
+            | ARCtrl.CWL.RunWorkflow workflowObj -> workflowObj :?> ARCtrl.CWL.CWLWorkflowDescription
+            | other ->
+                Expect.isTrue false (sprintf "Expected nested step to resolve to workflow but got %A" other)
+                Unchecked.defaultof<ARCtrl.CWL.CWLWorkflowDescription>
+
+        match stepB.Steps.[0].Run with
+        | ARCtrl.CWL.RunString unresolved ->
+            Expect.equal unresolved "./a.cwl" "Cycle should stop and keep unresolved string reference"
+        | other ->
+            Expect.isTrue false (sprintf "Expected cycle edge to remain RunString but got %A" other)
+    )
+    testCase "simpleISAWithWR_WithCWL_ResolvesRunWorkflowReference_PartialResolutionKeepsString" (fun () ->
+        let runIdentifier = Run.Proteomics.runIdentifier
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier runIdentifier
+        let runCwlText = TestObjects.CWL.RunWorkflowReference.PartialResolution.runCwlText
+
+        let contracts = [|
+            SimpleISA.Investigation.investigationReadContract
+            SimpleISA.Study.bII_S_1ReadContract
+            SimpleISA.Assay.proteomeReadContract
+            SimpleISA.Workflow.proteomicsReadContract
+            SimpleISA.Run.proteomicsReadContract
+            Contract.create(Operation.READ, path = runCwlPath, dtoType = DTOType.CWL, dto = DTO.Text runCwlText)
+        |]
+
+        let arc = ARC("MyIdentifier")
+        arc.SetISAFromContracts contracts
+
+        let run = arc.Runs.[0]
+        let runWorkflow =
+            match Expect.wantSome run.CWLDescription "Run CWL description should be present" with
+            | ARCtrl.CWL.Workflow workflow -> workflow
+            | other ->
+                Expect.isTrue false (sprintf "Expected run CWL to be workflow but got %A" other)
+                Unchecked.defaultof<ARCtrl.CWL.CWLWorkflowDescription>
+
+        match runWorkflow.Steps.[0].Run with
+        | ARCtrl.CWL.RunString unresolved ->
+            Expect.equal unresolved "./missing.cwl" "Missing referenced workflow should remain unresolved string"
+        | other ->
+            Expect.isTrue false (sprintf "Expected missing reference to remain RunString but got %A" other)
+    )
     testCase "GetStudyRemoveContractsOnlyRegistered" (fun () -> // set to pending, until performance issues in Study.fromFsWorkbook is resolved.
         let arc = ARC("MyIdentifier")
         arc.SetISAFromContracts([|

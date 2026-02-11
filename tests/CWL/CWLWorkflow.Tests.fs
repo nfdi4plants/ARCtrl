@@ -4,10 +4,17 @@ open ARCtrl.CWL
 open DynamicObj
 open TestingUtils
 open TestingUtils.CWL
+open YAMLicious.YAMLiciousTypes
 
 let decodeCWLWorkflowDescription: CWLWorkflowDescription =
     TestObjects.CWL.Workflow.workflowFile
     |> Decode.decodeWorkflow
+
+let tryYamlScalarString (y: YAMLElement) =
+    match y with
+    | YAMLElement.Object [YAMLElement.Value v]
+    | YAMLElement.Value v -> Some v.Value
+    | _ -> None
 
 let mkStepInput id source defaultValue valueFrom linkMerge =
     {
@@ -16,6 +23,8 @@ let mkStepInput id source defaultValue valueFrom linkMerge =
         DefaultValue = defaultValue
         ValueFrom = valueFrom
         LinkMerge = linkMerge
+        PickValue = None
+        Doc = None
         LoadContents = None
         LoadListing = None
         Label = None
@@ -104,9 +113,14 @@ let testCWLWorkflowDescriptionDecode =
                     Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
                         Expect.equal actual.Id expected.Id ""
                         Expect.sequenceEqual actual.Source.Value expected.Source.Value ""
-                        Expect.equal actual.DefaultValue expected.DefaultValue ""
+                        Expect.equal
+                            (actual.DefaultValue |> Option.bind tryYamlScalarString)
+                            (expected.DefaultValue |> Option.bind tryYamlScalarString)
+                            ""
                         Expect.equal actual.ValueFrom expected.ValueFrom ""
                         Expect.equal actual.LinkMerge expected.LinkMerge ""
+                        Expect.equal actual.PickValue expected.PickValue ""
+                        Expect.equal actual.Doc expected.Doc ""
                         Expect.equal actual.LoadContents expected.LoadContents ""
                         Expect.equal actual.LoadListing expected.LoadListing ""
                         Expect.equal actual.Label expected.Label ""
@@ -124,9 +138,14 @@ let testCWLWorkflowDescriptionDecode =
                     Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
                         Expect.equal actual.Id expected.Id ""
                         Expect.sequenceEqual actual.Source.Value expected.Source.Value ""
-                        Expect.equal actual.DefaultValue expected.DefaultValue ""
+                        Expect.equal
+                            (actual.DefaultValue |> Option.bind tryYamlScalarString)
+                            (expected.DefaultValue |> Option.bind tryYamlScalarString)
+                            ""
                         Expect.equal actual.ValueFrom expected.ValueFrom ""
                         Expect.equal actual.LinkMerge expected.LinkMerge ""
+                        Expect.equal actual.PickValue expected.PickValue ""
+                        Expect.equal actual.Doc expected.Doc ""
                         Expect.equal actual.LoadContents expected.LoadContents ""
                         Expect.equal actual.LoadListing expected.LoadListing ""
                         Expect.equal actual.Label expected.Label ""
@@ -160,12 +179,12 @@ let testCWLWorkflowDescriptionDecode =
             Expect.equal step.Label (Some "Example step") ""
             Expect.equal step.Doc (Some "Step docs") ""
             Expect.sequenceEqual step.Scatter.Value (ResizeArray [|"input1"|]) ""
-            Expect.equal step.ScatterMethod (Some "dotproduct") ""
+            Expect.equal step.ScatterMethod (Some DotProduct) ""
             Expect.equal step.In.[0].LoadContents (Some true) ""
             Expect.equal step.In.[0].LoadListing (Some "deep_listing") ""
             Expect.equal step.In.[0].Label (Some "Input label") ""
             Expect.equal step.In.[0].LinkMerge (Some MergeNested) ""
-            let expectedOut = ResizeArray [| StepOutputRecord { Id = Some "out" } |]
+            let expectedOut = ResizeArray [| StepOutputRecord { Id = "out" } |]
             Expect.sequenceEqual step.Out expectedOut ""
         testCase "inline run commandline tool decode" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithInlineRunCommandLineToolFile
@@ -184,6 +203,24 @@ let testCWLWorkflowDescriptionDecode =
             Expect.equal stepInput.Id "in1" ""
             Expect.sequenceEqual stepInput.Source.Value (ResizeArray [|"input1"|]) ""
             Expect.equal stepInput.Label (Some "Input in array syntax") ""
+        testCase "steps array form decode with when/pickValue/doc/default" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithStepsArrayFile
+            let step = decoded.Steps.[0]
+            let stepInput = step.In.[0]
+            Expect.equal step.Id "step1" ""
+            Expect.equal step.When_ (Some "$(inputs.input1 != null)") ""
+            Expect.equal stepInput.PickValue (Some FirstNonNull) ""
+            Expect.equal stepInput.Doc (Some "Input docs") ""
+            let defaultValue =
+                stepInput.DefaultValue
+                |> Option.bind tryYamlScalarString
+            Expect.equal defaultValue None "Default is structured object and should not collapse to scalar"
+        testCase "invalid scatterMethod fails decode" <| fun _ ->
+            let invalidScatter = TestObjects.CWL.Workflow.workflowWithInvalidScatterMethodFile
+            Expect.throws (fun _ -> Decode.decodeWorkflow invalidScatter |> ignore) "Invalid scatterMethod should fail"
+        testCase "unsupported inline run class fails decode" <| fun _ ->
+            let invalidInlineRun = TestObjects.CWL.Workflow.workflowWithUnsupportedInlineRunClassFile
+            Expect.throws (fun _ -> Decode.decodeWorkflow invalidInlineRun |> ignore) "Inline ExpressionTool should fail until supported"
     ]
 
 let testCWLWorkflowDescriptionEncode =
@@ -209,6 +246,31 @@ let testCWLWorkflowDescriptionEncode =
                 // Verify outputs have outputSource in both decoded versions
                 assertAllOutputsHaveSource d1
                 assertAllOutputsHaveSource d2
+            testCase "workflow encode/decode preserves step array extended fields" <| fun _ ->
+                let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithStepsArrayFile
+                let encoded = Encode.encodeWorkflowDescription decoded
+                let roundTripped = Decode.decodeWorkflow encoded
+                let step = roundTripped.Steps.[0]
+                let stepInput = step.In.[0]
+                Expect.equal step.When_ (Some "$(inputs.input1 != null)") ""
+                Expect.equal stepInput.PickValue (Some FirstNonNull) ""
+                Expect.equal stepInput.Doc (Some "Input docs") ""
+                let defaultEntry =
+                    Expect.wantSome stepInput.DefaultValue "Step input default should remain present as structured YAML"
+                match defaultEntry with
+                | YAMLElement.Object _
+                | YAMLElement.Sequence _ ->
+                    Expect.isTrue true ""
+                | _ ->
+                    Expect.isTrue false (sprintf "Expected structured default, got %A" defaultEntry)
+            testCase "workflow hints are encoded and preserved" <| fun _ ->
+                let original = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowFile
+                original.Hints <- Some (ResizeArray [StepInputExpressionRequirement])
+                let encoded = Encode.encodeWorkflowDescription original
+                let decoded = Decode.decodeWorkflow encoded
+                Expect.stringContains encoded "hints:" "Workflow hints should be present in encoded output"
+                let hints = Expect.wantSome decoded.Hints "Workflow hints should survive roundtrip"
+                Expect.equal hints.[0] StepInputExpressionRequirement ""
         ]
     ]
 
