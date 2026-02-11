@@ -22,6 +22,8 @@ module WorkflowGraphVisualizationOptions =
 [<RequireQualifiedAccess>]
 module WorkflowGraphSiren =
 
+    let private mermaidSpecials = [| '/'; '\\'; '['; ']'; '{'; '}'; '('; ')'; '>'; '<'; '|' |]
+
     let sanitizeMermaidId (id: string) =
         if System.String.IsNullOrWhiteSpace id then
             "node"
@@ -47,7 +49,6 @@ module WorkflowGraphSiren =
     /// Wraps labels in Mermaid double quotes when they contain characters that
     /// can be interpreted as Mermaid shape/link syntax. Double quotes are escaped as #quot;.
     let private quoteMermaidLabel (label: string) =
-        let mermaidSpecials = [| '/'; '\\'; '['; ']'; '{'; '}'; '('; ')'; '>'; '<'; '|' |]
         if System.String.IsNullOrWhiteSpace label then
             label
         elif label.IndexOfAny(mermaidSpecials) >= 0 || label.Contains("\"") then
@@ -132,7 +133,7 @@ module WorkflowGraphSiren =
 
     let fromGraphWithOptions (options: WorkflowGraphVisualizationOptions) (graph: WorkflowGraph) =
         let elements = ResizeArray<FlowchartElement>()
-        let edgeKeys = ResizeArray<string>()
+        let mutable edgeKeys = Set.empty<string>
 
         let addGroupedNodes (groupId: string) (groupLabel: string) (nodes: WorkflowGraphNode []) =
             if nodes.Length > 0 then
@@ -143,9 +144,9 @@ module WorkflowGraphSiren =
 
         let addRenderedEdge (kind: EdgeKind) (sourceNodeId: WorkflowGraphNodeId) (targetNodeId: WorkflowGraphNodeId) (label: string option) =
             let labelKey = defaultArg label ""
-            let key = $"{sourceNodeId}::{targetNodeId}::{labelKey}"
+            let key = $"{EdgeKind.asKey kind}::{sourceNodeId}::{targetNodeId}::{labelKey}"
             if edgeKeys.Contains key |> not then
-                edgeKeys.Add key
+                edgeKeys <- edgeKeys.Add key
                 let src = sanitizeMermaidId sourceNodeId
                 let tgt = sanitizeMermaidId targetNodeId
                 let link =
@@ -201,13 +202,18 @@ module WorkflowGraphSiren =
         let rootInputNodeIds = rootInputNodes |> Array.map (fun n -> n.Id) |> Set.ofArray
         let rootOutputNodeIds = rootOutputNodes |> Array.map (fun n -> n.Id) |> Set.ofArray
 
+        let stepNodeIds =
+            graph.Nodes
+            |> Seq.choose (fun n ->
+                if n.Kind = NodeKind.StepNode then Some n.Id else None
+            )
+            |> Set.ofSeq
+
         let stepInputPorts =
             graph.Nodes
             |> Seq.filter (fun n ->
                 n.Kind = NodeKind.PortNode PortDirection.Input
-                && (n.OwnerNodeId |> Option.exists (fun ownerStepId ->
-                    graph.Nodes |> Seq.exists (fun x -> x.Id = ownerStepId && x.Kind = NodeKind.StepNode)
-                ))
+                && (n.OwnerNodeId |> Option.exists stepNodeIds.Contains)
             )
             |> Seq.map (fun n -> n.Id, n)
             |> Map.ofSeq
@@ -216,9 +222,7 @@ module WorkflowGraphSiren =
             graph.Nodes
             |> Seq.filter (fun n ->
                 n.Kind = NodeKind.PortNode PortDirection.Output
-                && (n.OwnerNodeId |> Option.exists (fun ownerStepId ->
-                    graph.Nodes |> Seq.exists (fun x -> x.Id = ownerStepId && x.Kind = NodeKind.StepNode)
-                ))
+                && (n.OwnerNodeId |> Option.exists stepNodeIds.Contains)
             )
             |> Seq.map (fun n -> n.Id, n)
             |> Map.ofSeq

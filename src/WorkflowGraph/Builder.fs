@@ -181,9 +181,6 @@ module Builder =
             addPortNode state stepNodeId PortDirection.Output outputId outputId |> ignore
         )
 
-    let private isCwlReference (runPath: string) =
-        runPath.Trim().EndsWith(".cwl", System.StringComparison.OrdinalIgnoreCase)
-
     let private trimToNameCandidate (value: string) =
         if System.String.IsNullOrWhiteSpace value then
             ""
@@ -203,6 +200,11 @@ module Builder =
                     withoutHash.Substring(0, queryIndex)
                 else
                     withoutHash
+
+    let private isCwlReference (runPath: string) =
+        let candidate = trimToNameCandidate runPath
+        System.String.IsNullOrWhiteSpace candidate |> not
+        && candidate.EndsWith(".cwl", System.StringComparison.OrdinalIgnoreCase)
 
     let private tryBasenameNoCwlExtension (value: string) =
         let candidate = trimToNameCandidate value
@@ -224,6 +226,8 @@ module Builder =
             else
                 Some withoutCwlExtension
 
+    /// Selects the first available processing unit display name from dynamic metadata:
+    /// `name` first, then `id`; each value is normalized to a CWL basename.
     let private tryGetProcessingUnitName (processingUnit: #DynamicObj) =
         [ "name"; "id" ]
         |> List.tryPick (fun key ->
@@ -277,10 +281,17 @@ module Builder =
         else
             match state.Options.TryResolveRunPath with
             | None ->
+                if state.Options.StrictUnresolvedRunReferences then
+                    addDiagnostic
+                        state
+                        GraphIssueKind.ResolutionFailed
+                        $"Unable to resolve CWL run reference '{runPath}' because no run resolver is configured."
+                        workflowFilePath
+                        (Some runPath)
                 {
                     ResolvedRun = RunString runPath
                     ResolvedFromPath = None
-                    AttemptedLookup = false
+                    AttemptedLookup = state.Options.StrictUnresolvedRunReferences
                 }
             | Some tryResolveRunPath ->
                 let candidates = getRunPathCandidates workflowFilePath runPath
