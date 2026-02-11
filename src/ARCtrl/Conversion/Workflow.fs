@@ -286,6 +286,8 @@ type WorkflowConversion =
                 outputs = outputs,
                 additionalType = ResizeArray [WorkflowConversion.expressionToolDescriptionTypeName]
             )
+        // Persist expression on schema:description to keep roundtrip fidelity without introducing
+        // a custom LD predicate in the current RO-Crate projection.
         LDLabProtocol.setDescriptionAsString(protocol, expressionTool.Expression)
         protocol
 
@@ -298,6 +300,7 @@ type WorkflowConversion =
             |> ResizeArray.map (fun o -> WorkflowConversion.decomposeOutputFromFormalParameter(o, ?context = context, ?graph = graph))
         let expression =
             LDLabProtocol.tryGetDescriptionAsString(protocol, ?context = context)
+            // Keep deserialization resilient for externally produced or incomplete crates.
             |> Option.defaultValue "$(null)"
         CWL.CWLExpressionToolDescription(
             outputs = outputs,
