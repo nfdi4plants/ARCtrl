@@ -102,6 +102,27 @@ steps:
             let graph = yaml |> decodeProcessingUnit |> Builder.build
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference) graph) 1 ""
 
+        testCase "strict unresolved run references without lookup become unresolved reference nodes" <| fun () ->
+            let yaml = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs: {}
+steps:
+  step1:
+    run: ./tool.cwl
+    in: {}
+    out: [out]"""
+            let options =
+                WorkflowGraphBuildOptions.defaultOptions
+                |> WorkflowGraphBuildOptions.withStrictUnresolvedRunReferences true
+            let graph = yaml |> decodeProcessingUnit |> Builder.buildWith options
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference) graph) 1 ""
+            let resolutionFailures =
+                graph.Diagnostics
+                |> Seq.filter (fun d -> d.Kind = GraphIssueKind.ResolutionFailed)
+                |> Seq.length
+            Expect.isTrue (resolutionFailures >= 1) ""
+
         testCase "RunString unresolved with lookup becomes unresolved reference node" <| fun () ->
             let yaml = """cwlVersion: v1.2
 class: Workflow
@@ -119,6 +140,48 @@ steps:
             let graph = yaml |> decodeProcessingUnit |> Builder.buildWith options
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference) graph) 1 ""
             Expect.isTrue (graph.Diagnostics.Count > 0) ""
+
+        testCase "RunString with cwl fragment keeps basename label for unresolved references" <| fun () ->
+            let yaml = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs: {}
+steps:
+  step1:
+    run: ./tools/my-tool.cwl#main
+    in: {}
+    out: [out]"""
+            let options =
+                WorkflowGraphBuildOptions.defaultOptions
+                |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "workflow.cwl")
+                |> WorkflowGraphBuildOptions.withTryResolveRunPath (Some (fun _ -> None))
+            let graph = yaml |> decodeProcessingUnit |> Builder.buildWith options
+            let unresolvedNode =
+                graph.Nodes
+                |> Seq.tryFind (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference)
+                |> fun nodeOpt -> Expect.wantSome nodeOpt "Expected unresolved reference node"
+            Expect.equal unresolvedNode.Label "my-tool" ""
+
+        testCase "RunString with cwl query keeps basename label for unresolved references" <| fun () ->
+            let yaml = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs: {}
+steps:
+  step1:
+    run: ./tools/my-tool.cwl?version=1
+    in: {}
+    out: [out]"""
+            let options =
+                WorkflowGraphBuildOptions.defaultOptions
+                |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "workflow.cwl")
+                |> WorkflowGraphBuildOptions.withTryResolveRunPath (Some (fun _ -> None))
+            let graph = yaml |> decodeProcessingUnit |> Builder.buildWith options
+            let unresolvedNode =
+                graph.Nodes
+                |> Seq.tryFind (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference)
+                |> fun nodeOpt -> Expect.wantSome nodeOpt "Expected unresolved reference node"
+            Expect.equal unresolvedNode.Label "my-tool" ""
 
         testCase "RunString resolved to commandlinetool node" <| fun () ->
             let yaml = """cwlVersion: v1.2

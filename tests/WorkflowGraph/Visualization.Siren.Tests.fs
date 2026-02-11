@@ -131,9 +131,9 @@ let tests_visualization =
         testCase "group ordering keeps inputs above processing and outputs below" <| fun () ->
             let graph = buildSimpleWorkflowGraph ()
             let mermaid = WorkflowGraphSiren.toMermaid graph
-            let inputGroupIndex = mermaid.IndexOf("subgraph wg_initial_inputs", System.StringComparison.Ordinal)
-            let processingIndex = mermaid.IndexOf("unit_root__step1__run", System.StringComparison.Ordinal)
-            let outputGroupIndex = mermaid.IndexOf("subgraph wg_final_outputs", System.StringComparison.Ordinal)
+            let inputGroupIndex = mermaid.IndexOf("subgraph wg_initial_inputs")
+            let processingIndex = mermaid.IndexOf("unit_root__step1__run")
+            let outputGroupIndex = mermaid.IndexOf("subgraph wg_final_outputs")
             Expect.isTrue (inputGroupIndex >= 0) "Input group missing"
             Expect.isTrue (processingIndex >= 0) "Processing node missing"
             Expect.isTrue (outputGroupIndex >= 0) "Output group missing"
@@ -226,6 +226,30 @@ steps:
             Expect.stringContains mermaid "unit_root__step2__run-->port_unit_root__out__y" ""
             Expect.isFalse (mermaid.Contains "contains|") ""
             Expect.isFalse (mermaid.Contains "-->|calls|") ""
+
+        testCase "commandlinetool root renders direct input and output bindings when no calls edges exist" <| fun () ->
+            let graph =
+                TestObjects.CWL.CommandLineTool.cwlFile
+                |> Decode.decodeCWLProcessingUnit
+                |> Builder.build
+            let mermaid = WorkflowGraphSiren.toMermaid graph
+            Expect.stringContains mermaid "port_unit_root__in__firstArg-->|firstArg|unit_root" ""
+            Expect.stringContains mermaid "unit_root-->port_unit_root__out__output" ""
+
+        testCase "pass-through workflow output binds root input directly to final output" <| fun () ->
+            let yaml = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  x: string
+outputs:
+  y:
+    type: string
+    outputSource: x
+steps: {}"""
+            let graph = yaml |> Decode.decodeCWLProcessingUnit |> Builder.build
+            let mermaid = WorkflowGraphSiren.toMermaid graph
+            Expect.stringContains mermaid "port_unit_root__in__x-->port_unit_root__out__y" ""
+            Expect.isFalse (mermaid.Contains "-->|x|port_unit_root__out__y") ""
 
         testCase "toMermaid output has flowchart directive and links" <| fun () ->
             let graph = buildSimpleWorkflowGraph ()
