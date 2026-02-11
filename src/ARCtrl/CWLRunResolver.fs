@@ -54,6 +54,8 @@ and private resolveWorkflowStepRunRecursiveWithResolver (workflowFilePath: strin
                     let nextVisited =
                         resolveWorkflowRunsRecursiveWithResolver resolvedRunPath visitedWithCurrent workflow tryResolveRunPath
                     Some (CWL.WorkflowStepRunOps.fromWorkflow workflow, nextVisited)
+                | Some (CWL.ExpressionTool expressionTool) ->
+                    Some (CWL.WorkflowStepRunOps.fromExpressionTool expressionTool, visited.Add key)
                 | None ->
                     None
         )
@@ -68,6 +70,8 @@ and private resolveWorkflowStepRunRecursiveWithResolver (workflowFilePath: strin
             run, visited
     | CWL.RunCommandLineTool _ ->
         run, visited
+    | CWL.RunExpressionTool _ ->
+        run, visited
 
 /// Resolve CWL WorkflowStep `run` references for a processing unit via path lookup.
 let resolveRunReferencesFromLookup (workflowFilePath: string) (processingUnit: CWL.CWLProcessingUnit) (tryResolveRunPath: string -> CWL.CWLProcessingUnit option) : CWL.CWLProcessingUnit =
@@ -77,6 +81,8 @@ let resolveRunReferencesFromLookup (workflowFilePath: string) (processingUnit: C
         |> ignore
         CWL.Workflow workflow
     | CWL.CommandLineTool _ ->
+        processingUnit
+    | CWL.ExpressionTool _ ->
         processingUnit
 
 /// Resolve a single workflow step run value via path lookup.

@@ -182,17 +182,24 @@ type WorkflowConversion =
             | None -> ResizeArray []
         | CWL.Workflow wf -> 
             wf.Inputs |> ResizeArray.map (fun i -> i)
+        | CWL.ExpressionTool et ->
+            match et.Inputs with
+            | Some inputs -> inputs |> ResizeArray.map (fun i -> i)
+            | None -> ResizeArray []
 
     
     static member toolDescriptionTypeName = "ToolDescription"
 
     static member workflowDescriptionTypeName = "WorkflowDescription"
 
+    static member expressionToolDescriptionTypeName = "ExpressionToolDescription"
+
     static member private runToIdentifier (run : CWL.WorkflowStepRun) : string =
         match run with
         | CWL.RunString runPath -> runPath
         | CWL.RunCommandLineTool _ -> "inline:CommandLineTool"
         | CWL.RunWorkflow _ -> "inline:Workflow"
+        | CWL.RunExpressionTool _ -> "inline:ExpressionTool"
 
     static member private tryDecodeProcessingUnitFromGraph(resolvedRunPath: string, ?graph: LDGraph, ?context: LDContext) : CWL.CWLProcessingUnit option =
         let tryDecodeWorkflowProtocol (protocol: LDNode) =
@@ -260,6 +267,41 @@ type WorkflowConversion =
             |> ResizeArray.map (fun o -> WorkflowConversion.decomposeOutputFromFormalParameter(o, ?context = context, ?graph = graph))
         CWL.CWLToolDescription(
             outputs = outputs,
+            inputs = inputs
+        )
+
+    static member composeWorkflowProtocolFromExpressionToolDescription (filePath : string, expressionTool : CWL.CWLExpressionToolDescription, ?workflowName : string, ?runName : string) =
+        let inputs =
+            expressionTool.Inputs
+            |> Option.map (ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName)))
+        let outputs =
+            expressionTool.Outputs
+            |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
+        let protocol =
+            LDWorkflowProtocol.create(
+                id = filePath,
+                name = filePath,
+                ?inputs = inputs,
+                programmingLanguages = ResizeArray.singleton (LDComputerLanguage.createCWL()),
+                outputs = outputs,
+                additionalType = ResizeArray [WorkflowConversion.expressionToolDescriptionTypeName]
+            )
+        LDLabProtocol.setDescriptionAsString(protocol, expressionTool.Expression)
+        protocol
+
+    static member decomposeWorkflowProtocolToExpressionToolDescription (protocol : LDNode, ?context : LDContext, ?graph : LDGraph) =
+        let inputs =
+            LDComputationalWorkflow.getInputsAsFormalParameters(protocol, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun i -> WorkflowConversion.decomposeInputFromFormalParameter(i, ?context = context, ?graph = graph))
+        let outputs =
+            LDComputationalWorkflow.getOutputsAsFormalParameter(protocol, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun o -> WorkflowConversion.decomposeOutputFromFormalParameter(o, ?context = context, ?graph = graph))
+        let expression =
+            LDLabProtocol.tryGetDescriptionAsString(protocol, ?context = context)
+            |> Option.defaultValue "$(null)"
+        CWL.CWLExpressionToolDescription(
+            outputs = outputs,
+            expression = expression,
             inputs = inputs
         )
 
@@ -344,6 +386,8 @@ type WorkflowConversion =
             WorkflowConversion.composeWorkflowProtocolFromToolDescription(filePath, tool, ?workflowName = workflowName, ?runName = runName)
         | CWL.Workflow wf -> 
             WorkflowConversion.composeWorkflowProtocolFromWorkflow(filePath, wf, ?workflowName = workflowName, ?runName = runName)
+        | CWL.ExpressionTool et ->
+            WorkflowConversion.composeWorkflowProtocolFromExpressionToolDescription(filePath, et, ?workflowName = workflowName, ?runName = runName)
 
     static member decomposeWorkflowProtocolToProcessingUnit (protocol : LDNode, ?resolveRunReferences: bool, ?context : LDContext, ?graph : LDGraph) =
         let shouldResolveRunReferences = defaultArg resolveRunReferences true
@@ -351,6 +395,9 @@ type WorkflowConversion =
         | s when s = WorkflowConversion.workflowDescriptionTypeName ->
             WorkflowConversion.decomposeWorkflowProtocolToWorkflow(protocol, resolveRunReferences = shouldResolveRunReferences, ?context = context, ?graph = graph)
             |> CWL.Workflow
+        | s when s = WorkflowConversion.expressionToolDescriptionTypeName ->
+            WorkflowConversion.decomposeWorkflowProtocolToExpressionToolDescription(protocol, ?context = context, ?graph = graph)
+            |> CWL.ExpressionTool
         | s ->
             WorkflowConversion.decomposeWorkflowProtocolToToolDescription(protocol, ?context = context, ?graph = graph)
             |> CWL.CommandLineTool              
