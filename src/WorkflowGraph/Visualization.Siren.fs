@@ -186,6 +186,10 @@ module WorkflowGraphSiren =
             |> Map.ofSeq
 
         let stepToRun = tryGetStepRunLookup graph
+        let containsStepEdges =
+            graph.Edges
+            |> Seq.filter (fun e -> e.Kind = EdgeKind.Contains)
+            |> Seq.toArray
         let tryGetRunOfStep (stepNodeId: WorkflowGraphNodeId) =
             stepToRun
             |> Map.tryFind stepNodeId
@@ -200,6 +204,18 @@ module WorkflowGraphSiren =
                 addRenderedEdge inputNode.Id graph.RootProcessingUnitNodeId (Some inputNode.Label)
             for outputNode in rootOutputNodes do
                 addRenderedEdge graph.RootProcessingUnitNodeId outputNode.Id None
+
+        // Re-add workflow-to-step connectivity in PU-centric view:
+        // workflow --contains/calls--> step run processing unit.
+        containsStepEdges
+        |> Array.iter (fun e ->
+            if processingUnitNodeIds.Contains e.SourceNodeId then
+                match tryGetRunOfStep e.TargetNodeId with
+                | Some runNodeId ->
+                    addRenderedEdge e.SourceNodeId runNodeId None
+                | None ->
+                    ()
+        )
 
         graph.Edges
         |> Seq.sortBy (fun e -> e.Id)
