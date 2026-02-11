@@ -478,6 +478,11 @@ module Encode =
             | Some workflow -> encodeWorkflowDescriptionElement workflow
             | None ->
                 raise (System.ArgumentException($"RunWorkflow must contain CWLWorkflowDescription but got %A{workflowObj}"))
+        | RunExpressionTool expressionToolObj ->
+            match WorkflowStepRunOps.tryGetExpressionTool run with
+            | Some expressionTool -> encodeExpressionToolDescriptionElement expressionTool
+            | None ->
+                raise (System.ArgumentException($"RunExpressionTool must contain CWLExpressionToolDescription but got %A{expressionToolObj}"))
 
     and encodeToolDescriptionElement (td: CWLToolDescription) : YAMLElement =
         let basePairs =
@@ -523,6 +528,49 @@ module Encode =
                     acc @ [ kvp.Key, encodedValue ]
                 ) withOutputs
             | None -> withOutputs
+        yMap withMetadata
+
+    and encodeExpressionToolDescriptionElement (et: CWLExpressionToolDescription) : YAMLElement =
+        let basePairs =
+            [ "cwlVersion", Encode.string et.CWLVersion
+              "class", Encode.string "ExpressionTool" ]
+            |> appendOptPair (et.Label |> Option.map encodeLabel)
+            |> appendOptPair (et.Doc |> Option.map encodeDoc)
+        let withHints =
+            match et.Hints with
+            | Some h when h.Count > 0 ->
+                basePairs @ [ "hints", (h |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
+            | _ -> basePairs
+        let withRequirements =
+            match et.Requirements with
+            | Some r when r.Count > 0 ->
+                withHints @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
+            | _ -> withHints
+        let withInputs =
+            match et.Inputs with
+            | Some i when i.Count > 0 ->
+                withRequirements @ [ "inputs", (i |> Seq.map encodeCWLInput |> Seq.toList |> yMap) ]
+            | _ -> withRequirements
+        let withOutputs =
+            withInputs @ [ "outputs", (et.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> yMap) ]
+        let withExpression =
+            withOutputs @ [ "expression", Encode.string et.Expression ]
+        let withMetadata =
+            match et.Metadata with
+            | Some md ->
+                md.GetProperties(false)
+                |> Seq.fold (fun acc kvp ->
+                    let encodedValue =
+                        match kvp.Value with
+                        | :? string as s -> Encode.string s
+                        | :? bool as b -> yBool b
+                        | :? int as i -> Encode.int i
+                        | :? float as f -> Encode.float f
+                        | :? YAMLElement as y -> y
+                        | _ -> Encode.string (string kvp.Value)
+                    acc @ [ kvp.Key, encodedValue ]
+                ) withExpression
+            | None -> withExpression
         yMap withMetadata
 
     and encodeWorkflowDescriptionElement (wd: CWLWorkflowDescription) : YAMLElement =
@@ -653,11 +701,16 @@ module Encode =
         encodeWorkflowDescriptionElement wd
         |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"] ["hints"; "requirements"; "inputs"; "steps"; "outputs"]
 
+    let encodeExpressionToolDescription (et:CWLExpressionToolDescription) : string =
+        encodeExpressionToolDescriptionElement et
+        |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"] ["hints"; "requirements"; "inputs"; "outputs"; "expression"]
+
 
     let encodeProcessingUnit (pu : CWLProcessingUnit) :string =
         match pu with
         | CommandLineTool td -> encodeToolDescription td
         | Workflow wd -> encodeWorkflowDescription wd
+        | ExpressionTool et -> encodeExpressionToolDescription et
 
     /// Encode a CWLType to a single-line YAML string using flow/inline style
     /// This produces YAML that doesn't contain newlines and can be embedded in JSON

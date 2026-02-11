@@ -115,6 +115,7 @@ type WorkflowStepRun =
     | RunString of string
     | RunCommandLineTool of obj
     | RunWorkflow of obj
+    | RunExpressionTool of obj
 
 [<AttachMembers>]
 type WorkflowStep (

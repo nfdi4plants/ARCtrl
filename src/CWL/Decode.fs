@@ -856,6 +856,7 @@ module Decode =
             match decodeCWLProcessingUnitElement normalizedRun with
             | CommandLineTool tool -> WorkflowStepRunOps.fromTool tool
             | Workflow workflow -> WorkflowStepRunOps.fromWorkflow workflow
+            | ExpressionTool expressionTool -> WorkflowStepRunOps.fromExpressionTool expressionTool
         | _ ->
             raise (System.ArgumentException($"Unsupported run value for workflow step: %A{runValue}"))
 
@@ -994,6 +995,68 @@ module Decode =
             description.Metadata <- Some metadata
         description
 
+    and expressionToolDecoder (yamlCWL: YAMLElement) =
+        let cwlVersion = versionDecoder yamlCWL
+        let outputs = outputsDecoder yamlCWL
+        let inputs = inputsDecoder yamlCWL
+        let requirements = requirementsDecoder yamlCWL
+        let hints = hintsDecoder yamlCWL
+        let doc = docDecoder yamlCWL
+        let label = labelDecoder yamlCWL
+        let expression =
+            Decode.object (fun get -> get.Required.Field "expression" decodeStringOrExpression) yamlCWL
+        let description =
+            CWLExpressionToolDescription(
+                outputs,
+                expression,
+                cwlVersion
+            )
+        let metadata =
+            let md = new DynamicObj ()
+            yamlCWL
+            |> Decode.object (fun get ->
+                overflowDecoder
+                    md
+                    (
+                        get.Overflow.FieldList [
+                            "inputs";
+                            "outputs";
+                            "class";
+                            "id";
+                            "label";
+                            "doc";
+                            "requirements";
+                            "hints";
+                            "cwlVersion";
+                            "expression";
+                        ]
+                    )
+            ) |> ignore
+            md
+        yamlCWL
+        |> Decode.object (fun get ->
+            overflowDecoder
+                description
+                (
+                    get.MultipleOptional.FieldList [
+                        "id";
+                    ]
+                )
+        ) |> ignore
+        if inputs.IsSome then
+            description.Inputs <- inputs
+        if requirements.IsSome then
+            description.Requirements <- requirements
+        if hints.IsSome then
+            description.Hints <- hints
+        if doc.IsSome then
+            description.Doc <- doc
+        if label.IsSome then
+            description.Label <- label
+        if metadata.GetProperties(false) |> Seq.length > 0 then
+            description.Metadata <- Some metadata
+        description
+
     and workflowDecoder (yamlCWL: YAMLElement) =
         let cwlVersion = versionDecoder yamlCWL
         let outputs = outputsDecoder yamlCWL
@@ -1062,6 +1125,7 @@ module Decode =
         match cls with
         | "CommandLineTool" -> CommandLineTool (commandLineToolDecoder yamlCWL)
         | "Workflow" -> Workflow (workflowDecoder yamlCWL)
+        | "ExpressionTool" -> ExpressionTool (expressionToolDecoder yamlCWL)
         | _ -> raise (System.ArgumentException($"Invalid or unsupported CWL class: {cls}"))
 
     let stepArrayDecoder = stepArrayDecoderWithVersion "v1.2"
@@ -1077,6 +1141,11 @@ module Decode =
     let decodeWorkflow (cwl: string) =
         let yamlCWL = readSanitizedYaml cwl
         workflowDecoder yamlCWL
+
+    /// Decode a CWL file string written in the YAML format into a CWLExpressionToolDescription
+    let decodeExpressionTool (cwl: string) =
+        let yamlCWL = readSanitizedYaml cwl
+        expressionToolDecoder yamlCWL
 
     let decodeCWLProcessingUnit (cwl:string) =
         let yamlCWL = readSanitizedYaml cwl
