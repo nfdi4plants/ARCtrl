@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <PackageTags>ARC;F#;FSharp;dotnet;.Net;bioinformatics;biology;fable-library;datascience;dataplant;nfdi;metadata;fable-javascript</PackageTags>
@@ -79,6 +79,7 @@
     <Compile Include="WebRequest\WebRequest.fs" />
     <Compile Include="Template.Web.fs" />
     <Compile Include="ARC.fs" />
+    <Compile Include="WorkflowGraph.Extensions.fs" />
     <Compile Include="Json.fs" />
     <Compile Include="Yaml.fs" />
     <Compile Include="Xlsx.fs" />
