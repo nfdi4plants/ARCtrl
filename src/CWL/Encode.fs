@@ -468,20 +468,16 @@ module Encode =
     let rec encodeWorkflowStepRun (run: WorkflowStepRun) : YAMLElement =
         match run with
         | RunString runPath -> Encode.string runPath
-        | _ when WorkflowStepRunOps.tryGetTool run |> Option.isSome ->
-            run
-            |> WorkflowStepRunOps.tryGetTool
-            |> Option.map encodeToolDescriptionElement
-            |> Option.defaultWith (fun () -> raise (System.ArgumentException($"RunCommandLineTool must contain CWLToolDescription but got %A{run}")))
-        | _ when WorkflowStepRunOps.tryGetWorkflow run |> Option.isSome ->
-            run
-            |> WorkflowStepRunOps.tryGetWorkflow
-            |> Option.map encodeWorkflowDescriptionElement
-            |> Option.defaultWith (fun () -> raise (System.ArgumentException($"RunWorkflow must contain CWLWorkflowDescription but got %A{run}")))
         | RunCommandLineTool toolObj ->
-            raise (System.ArgumentException($"RunCommandLineTool must contain CWLToolDescription but got %A{toolObj}"))
+            match WorkflowStepRunOps.tryGetTool run with
+            | Some tool -> encodeToolDescriptionElement tool
+            | None ->
+                raise (System.ArgumentException($"RunCommandLineTool must contain CWLToolDescription but got %A{toolObj}"))
         | RunWorkflow workflowObj ->
-            raise (System.ArgumentException($"RunWorkflow must contain CWLWorkflowDescription but got %A{workflowObj}"))
+            match WorkflowStepRunOps.tryGetWorkflow run with
+            | Some workflow -> encodeWorkflowDescriptionElement workflow
+            | None ->
+                raise (System.ArgumentException($"RunWorkflow must contain CWLWorkflowDescription but got %A{workflowObj}"))
 
     and encodeToolDescriptionElement (td: CWLToolDescription) : YAMLElement =
         let basePairs =
@@ -576,15 +572,15 @@ module Encode =
             |> appendOpt "scatter" encodeScatter ws.Scatter
             |> appendOpt "scatterMethod" encodeScatterMethod ws.ScatterMethod
             |> appendOpt "when" Encode.string ws.When_
-        let withReq =
-            match ws.Requirements with
-            | Some r when r.Count > 0 -> basePairs @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
-            | _ -> basePairs
         let withHints =
             match ws.Hints with
-            | Some h when h.Count > 0 -> withReq @ [ "hints", (h |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
-            | _ -> withReq
-        ws.Id, yMap withHints
+            | Some h when h.Count > 0 -> basePairs @ [ "hints", (h |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
+            | _ -> basePairs
+        let withReq =
+            match ws.Requirements with
+            | Some r when r.Count > 0 -> withHints @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
+            | _ -> withHints
+        ws.Id, yMap withReq
 
     // ------------------------------
     // Top-level encoders
