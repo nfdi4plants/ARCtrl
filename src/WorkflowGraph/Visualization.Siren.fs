@@ -27,139 +27,214 @@ module WorkflowGraphSiren =
             "node"
         else
             let normalized =
+                let chars = ResizeArray<char>()
                 id.ToCharArray()
-                |> Array.map (fun c ->
-                    if System.Char.IsLetterOrDigit c || c = '_' then c else '_'
+                |> Array.iter (fun c ->
+                    if System.Char.IsLetterOrDigit c || c = '_' then
+                        chars.Add c
+                    elif c = '/' || c = '\\' then
+                        chars.Add '_'
+                        chars.Add '_'
+                    else
+                        chars.Add '_'
                 )
-                |> System.String
+                chars.ToArray() |> System.String
             if normalized.Length > 0 && System.Char.IsDigit normalized.[0] then
                 "_" + normalized
             else
                 normalized
 
+    /// Wraps labels in Mermaid double quotes when they contain characters that
+    /// can be interpreted as Mermaid shape/link syntax. Double quotes are escaped as #quot;.
+    let private quoteMermaidLabel (label: string) =
+        let mermaidSpecials = [| '/'; '\\'; '['; ']'; '{'; '}'; '('; ')'; '>'; '<'; '|' |]
+        if System.String.IsNullOrWhiteSpace label then
+            label
+        elif label.IndexOfAny(mermaidSpecials) >= 0 || label.Contains("\"") then
+            let escaped = label.Replace("\"", "#quot;")
+            $"\"{escaped}\""
+        else
+            label
+
     let private nodeToElement (node: WorkflowGraphNode) =
         let nodeId = sanitizeMermaidId node.Id
-        match node.Kind with
-        | NodeKind.ProcessingUnitNode ProcessingUnitKind.Workflow ->
-            flowchart.nodeSubroutine(nodeId, node.Label)
-        | NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool ->
-            flowchart.nodeHexagon(nodeId, node.Label)
-        | NodeKind.ProcessingUnitNode ProcessingUnitKind.ExpressionTool ->
-            flowchart.nodeRhombus(nodeId, node.Label)
-        | NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference ->
-            flowchart.node(nodeId, node.Label)
-        | NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference ->
-            flowchart.node(nodeId, node.Label)
-        | NodeKind.StepNode ->
-            flowchart.node(nodeId, node.Label)
-        | NodeKind.PortNode PortDirection.Input ->
-            flowchart.nodeRound(nodeId, node.Label)
-        | NodeKind.PortNode PortDirection.Output ->
-            flowchart.nodeStadium(nodeId, node.Label)
+        let label = quoteMermaidLabel node.Label
+        flowchart.node(nodeId, label)
 
-    let private edgeToElement (options: WorkflowGraphVisualizationOptions) (edge: WorkflowGraphEdge) =
-        let sourceId = sanitizeMermaidId edge.SourceNodeId
-        let targetId = sanitizeMermaidId edge.TargetNodeId
-        match edge.Kind with
-        | EdgeKind.DataFlow ->
-            Some (flowchart.linkThickArrow(sourceId, targetId))
-        | EdgeKind.Calls ->
-            Some (flowchart.linkArrow(sourceId, targetId, defaultArg edge.Label "calls"))
-        | EdgeKind.BindsWorkflowInput
-        | EdgeKind.BindsWorkflowOutput ->
-            Some (flowchart.linkArrow(sourceId, targetId))
-        | EdgeKind.Contains ->
-            if options.RenderContainsLinks then
-                Some (flowchart.linkArrow(sourceId, targetId, "contains"))
-            else
-                None
+    let private tryGetStepRunLookup (graph: WorkflowGraph) =
+        graph.Edges
+        |> Seq.filter (fun e -> e.Kind = EdgeKind.Calls)
+        |> Seq.map (fun e -> e.SourceNodeId, e.TargetNodeId)
+        |> Map.ofSeq
 
-    let private sortedChildren (graph: WorkflowGraph) (ownerNodeId: WorkflowGraphNodeId) =
-        graph.Nodes
-        |> Seq.filter (fun n -> n.OwnerNodeId = Some ownerNodeId)
-        |> Seq.sortBy (fun n -> n.Id)
-        |> List.ofSeq
+    let private addStyles
+        (elements: ResizeArray<FlowchartElement>)
+        (processingUnitNodes: WorkflowGraphNode [])
+        (rootInputNodes: WorkflowGraphNode [])
+        (rootOutputNodes: WorkflowGraphNode [])
+        =
+        let nodeIdsBy (nodes: WorkflowGraphNode []) =
+            nodes
+            |> Array.map (fun n -> sanitizeMermaidId n.Id)
 
-    let rec private nodeTreeToElement (graph: WorkflowGraph) (node: WorkflowGraphNode) =
-        let children = sortedChildren graph node.Id
-        if List.isEmpty children then
-            nodeToElement node
-        else
-            let childElements = ResizeArray<FlowchartElement>()
-            childElements.Add(nodeToElement node)
-            children
-            |> List.iter (fun child ->
-                childElements.Add(nodeTreeToElement graph child)
-            )
-            let subgraphId = sanitizeMermaidId $"{node.Id}_subgraph"
-            flowchart.subgraphNamed(subgraphId, node.Label, childElements)
-
-    let private addStyles (elements: ResizeArray<FlowchartElement>) (graph: WorkflowGraph) =
-        let idsBy predicate =
-            graph.Nodes
-            |> Seq.filter predicate
-            |> Seq.map (fun n -> sanitizeMermaidId n.Id)
-            |> Seq.toArray
-
-        let workflowIds =
-            idsBy (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.Workflow)
-        let toolIds =
-            idsBy (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool)
-        let expressionIds =
-            idsBy (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExpressionTool)
+        let processingIds = nodeIdsBy processingUnitNodes
+        let inputIds = nodeIdsBy rootInputNodes
+        let outputIds = nodeIdsBy rootOutputNodes
         let unresolvedIds =
-            idsBy (fun n ->
+            processingUnitNodes
+            |> Array.filter (fun n ->
                 n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference
                 || n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference
             )
-        let stepIds = idsBy (fun n -> n.Kind = NodeKind.StepNode)
-        let inPortIds = idsBy (fun n -> n.Kind = NodeKind.PortNode PortDirection.Input)
-        let outPortIds = idsBy (fun n -> n.Kind = NodeKind.PortNode PortDirection.Output)
+            |> nodeIdsBy
 
-        elements.Add(flowchart.classDef("wg_workflow", [ "fill", "#dff4ff"; "stroke", "#246fa8"; "stroke-width", "2px" ]))
-        elements.Add(flowchart.classDef("wg_tool", [ "fill", "#e9f7df"; "stroke", "#2f7d32"; "stroke-width", "2px" ]))
-        elements.Add(flowchart.classDef("wg_expression", [ "fill", "#fff3d6"; "stroke", "#b06f00"; "stroke-width", "2px" ]))
+        elements.Add(flowchart.classDef("wg_processing", [ "fill", "#eaf2ff"; "stroke", "#1f4b8f"; "stroke-width", "2px" ]))
+        elements.Add(flowchart.classDef("wg_initial_input", [ "fill", "#e9f7df"; "stroke", "#2f7d32"; "stroke-width", "2px" ]))
+        elements.Add(flowchart.classDef("wg_final_output", [ "fill", "#fff3d6"; "stroke", "#b06f00"; "stroke-width", "2px" ]))
         elements.Add(flowchart.classDef("wg_unresolved", [ "fill", "#ffe3e3"; "stroke", "#b3261e"; "stroke-width", "2px" ]))
-        elements.Add(flowchart.classDef("wg_step", [ "fill", "#f0ecff"; "stroke", "#5b4aa3"; "stroke-width", "1px" ]))
-        elements.Add(flowchart.classDef("wg_port_in", [ "fill", "#f5f9ff"; "stroke", "#6d7f95"; "stroke-width", "1px" ]))
-        elements.Add(flowchart.classDef("wg_port_out", [ "fill", "#f4fff4"; "stroke", "#4b8352"; "stroke-width", "1px" ]))
 
-        if workflowIds.Length > 0 then
-            elements.Add(flowchart.``class``(workflowIds, "wg_workflow"))
-        if toolIds.Length > 0 then
-            elements.Add(flowchart.``class``(toolIds, "wg_tool"))
-        if expressionIds.Length > 0 then
-            elements.Add(flowchart.``class``(expressionIds, "wg_expression"))
+        if processingIds.Length > 0 then
+            elements.Add(flowchart.``class``(processingIds, "wg_processing"))
+        if inputIds.Length > 0 then
+            elements.Add(flowchart.``class``(inputIds, "wg_initial_input"))
+        if outputIds.Length > 0 then
+            elements.Add(flowchart.``class``(outputIds, "wg_final_output"))
         if unresolvedIds.Length > 0 then
             elements.Add(flowchart.``class``(unresolvedIds, "wg_unresolved"))
-        if stepIds.Length > 0 then
-            elements.Add(flowchart.``class``(stepIds, "wg_step"))
-        if inPortIds.Length > 0 then
-            elements.Add(flowchart.``class``(inPortIds, "wg_port_in"))
-        if outPortIds.Length > 0 then
-            elements.Add(flowchart.``class``(outPortIds, "wg_port_out"))
 
     let fromGraphWithOptions (options: WorkflowGraphVisualizationOptions) (graph: WorkflowGraph) =
         let elements = ResizeArray<FlowchartElement>()
+        let edgeKeys = ResizeArray<string>()
 
-        let roots =
+        let addRenderedEdge (sourceNodeId: WorkflowGraphNodeId) (targetNodeId: WorkflowGraphNodeId) (label: string option) =
+            let labelKey = defaultArg label ""
+            let key = $"{sourceNodeId}::{targetNodeId}::{labelKey}"
+            if edgeKeys.Contains key |> not then
+                edgeKeys.Add key
+                let src = sanitizeMermaidId sourceNodeId
+                let tgt = sanitizeMermaidId targetNodeId
+                let link =
+                    match label with
+                    | Some l when System.String.IsNullOrWhiteSpace l |> not -> flowchart.linkArrow(src, tgt, quoteMermaidLabel l)
+                    | _ -> flowchart.linkArrow(src, tgt)
+                elements.Add(link)
+
+        let hasCalls =
+            graph.Edges
+            |> Seq.exists (fun e -> e.Kind = EdgeKind.Calls)
+
+        let processingUnitNodes =
             graph.Nodes
-            |> Seq.filter (fun n -> n.OwnerNodeId.IsNone)
+            |> Seq.filter (fun n -> match n.Kind with | NodeKind.ProcessingUnitNode _ -> true | _ -> false)
+            |> Seq.filter (fun n -> if hasCalls then n.Id <> graph.RootProcessingUnitNodeId else true)
             |> Seq.sortBy (fun n -> n.Id)
             |> Seq.toArray
 
-        roots
-        |> Array.iter (fun root ->
-            elements.Add(nodeTreeToElement graph root)
-        )
+        let rootInputNodes =
+            graph.Nodes
+            |> Seq.filter (fun n ->
+                n.Kind = NodeKind.PortNode PortDirection.Input
+                && n.OwnerNodeId = Some graph.RootProcessingUnitNodeId
+            )
+            |> Seq.sortBy (fun n -> n.Id)
+            |> Seq.toArray
+
+        let rootOutputNodes =
+            graph.Nodes
+            |> Seq.filter (fun n ->
+                n.Kind = NodeKind.PortNode PortDirection.Output
+                && n.OwnerNodeId = Some graph.RootProcessingUnitNodeId
+            )
+            |> Seq.sortBy (fun n -> n.Id)
+            |> Seq.toArray
+
+        let processingUnitNodeIds =
+            processingUnitNodes
+            |> Array.map (fun n -> n.Id)
+            |> Set.ofArray
+
+        let rootInputNodeIds = rootInputNodes |> Array.map (fun n -> n.Id) |> Set.ofArray
+        let rootOutputNodeIds = rootOutputNodes |> Array.map (fun n -> n.Id) |> Set.ofArray
+
+        let stepInputPorts =
+            graph.Nodes
+            |> Seq.filter (fun n ->
+                n.Kind = NodeKind.PortNode PortDirection.Input
+                && (n.OwnerNodeId |> Option.exists (fun ownerStepId ->
+                    graph.Nodes |> Seq.exists (fun x -> x.Id = ownerStepId && x.Kind = NodeKind.StepNode)
+                ))
+            )
+            |> Seq.map (fun n -> n.Id, n)
+            |> Map.ofSeq
+
+        let stepOutputPorts =
+            graph.Nodes
+            |> Seq.filter (fun n ->
+                n.Kind = NodeKind.PortNode PortDirection.Output
+                && (n.OwnerNodeId |> Option.exists (fun ownerStepId ->
+                    graph.Nodes |> Seq.exists (fun x -> x.Id = ownerStepId && x.Kind = NodeKind.StepNode)
+                ))
+            )
+            |> Seq.map (fun n -> n.Id, n)
+            |> Map.ofSeq
+
+        let stepToRun = tryGetStepRunLookup graph
+        let tryGetRunOfStep (stepNodeId: WorkflowGraphNodeId) =
+            stepToRun
+            |> Map.tryFind stepNodeId
+            |> Option.filter processingUnitNodeIds.Contains
+
+        rootInputNodes |> Array.iter (nodeToElement >> elements.Add)
+        processingUnitNodes |> Array.iter (nodeToElement >> elements.Add)
+        rootOutputNodes |> Array.iter (nodeToElement >> elements.Add)
+
+        if hasCalls |> not && processingUnitNodeIds.Contains graph.RootProcessingUnitNodeId then
+            for inputNode in rootInputNodes do
+                addRenderedEdge inputNode.Id graph.RootProcessingUnitNodeId (Some inputNode.Label)
+            for outputNode in rootOutputNodes do
+                addRenderedEdge graph.RootProcessingUnitNodeId outputNode.Id None
 
         graph.Edges
         |> Seq.sortBy (fun e -> e.Id)
-        |> Seq.choose (edgeToElement options)
-        |> Seq.iter elements.Add
+        |> Seq.iter (fun edge ->
+            match edge.Kind with
+            | EdgeKind.BindsWorkflowInput when rootInputNodeIds.Contains edge.SourceNodeId ->
+                match stepInputPorts |> Map.tryFind edge.TargetNodeId with
+                | Some targetPort ->
+                    match targetPort.OwnerNodeId |> Option.bind tryGetRunOfStep with
+                    | Some consumerRunId ->
+                        addRenderedEdge edge.SourceNodeId consumerRunId (Some targetPort.Label)
+                    | None ->
+                        ()
+                | None ->
+                    ()
+            | EdgeKind.DataFlow ->
+                match stepOutputPorts |> Map.tryFind edge.SourceNodeId, stepInputPorts |> Map.tryFind edge.TargetNodeId with
+                | Some sourcePort, Some targetPort ->
+                    match sourcePort.OwnerNodeId |> Option.bind tryGetRunOfStep, targetPort.OwnerNodeId |> Option.bind tryGetRunOfStep with
+                    | Some producerRunId, Some consumerRunId ->
+                        addRenderedEdge producerRunId consumerRunId (Some targetPort.Label)
+                    | _ ->
+                        ()
+                | _ ->
+                    ()
+            | EdgeKind.BindsWorkflowOutput when rootOutputNodeIds.Contains edge.TargetNodeId ->
+                match stepOutputPorts |> Map.tryFind edge.SourceNodeId with
+                | Some sourcePort ->
+                    match sourcePort.OwnerNodeId |> Option.bind tryGetRunOfStep with
+                    | Some producerRunId ->
+                        addRenderedEdge producerRunId edge.TargetNodeId None
+                    | None ->
+                        ()
+                | None ->
+                    if rootInputNodeIds.Contains edge.SourceNodeId then
+                        addRenderedEdge edge.SourceNodeId edge.TargetNodeId None
+            | _ ->
+                ()
+        )
 
         if options.EnableStyling then
-            addStyles elements graph
+            addStyles elements processingUnitNodes rootInputNodes rootOutputNodes
 
         siren.flowchart(options.Direction, elements)
 
@@ -190,35 +265,3 @@ module WorkflowGraphSiren =
 
     let toMarkdown (graph: WorkflowGraph) =
         toMarkdownWithOptions WorkflowGraphVisualizationOptions.defaultOptions graph
-
-    let toSvgWith (renderMermaidToSvg: string -> string option) (graph: WorkflowGraph) =
-        graph |> toMermaid |> renderMermaidToSvg
-
-    let toPngBytesWith (renderMermaidToPng: string -> byte[] option) (graph: WorkflowGraph) =
-        graph |> toMermaid |> renderMermaidToPng
-
-#if !FABLE_COMPILER
-    open System.IO
-
-    let saveMermaid (filePath: string) (graph: WorkflowGraph) =
-        File.WriteAllText(filePath, toMermaid graph)
-
-    let saveMarkdown (filePath: string) (graph: WorkflowGraph) =
-        File.WriteAllText(filePath, toMarkdown graph)
-
-    let saveSvgWith (renderMermaidToSvg: string -> string option) (filePath: string) (graph: WorkflowGraph) =
-        match toSvgWith renderMermaidToSvg graph with
-        | Some svg ->
-            File.WriteAllText(filePath, svg)
-            Ok ()
-        | None ->
-            Error "Failed to render Mermaid to SVG."
-
-    let savePngWith (renderMermaidToPng: string -> byte[] option) (filePath: string) (graph: WorkflowGraph) =
-        match toPngBytesWith renderMermaidToPng graph with
-        | Some png ->
-            File.WriteAllBytes(filePath, png)
-            Ok ()
-        | None ->
-            Error "Failed to render Mermaid to PNG."
-#endif
