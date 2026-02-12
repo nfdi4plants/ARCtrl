@@ -3,7 +3,7 @@
   <PropertyGroup>
     <Description>Graph extraction and visualization helpers for CWL processing units used in ARCtrl.</Description>
     <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/WorkflowGraph</PackageProjectUrl>
-    <PackageTags>ARC;F#;FSharp;dotnet;fable-library;workflow;graph;cwl;mermaid</PackageTags>
+    <PackageTags>ARC;F#;FSharp;dotnet;fable-library;workflow;graph;cwl;mermaid;fable-dotnet;fable-javascript;fable-python</PackageTags>
   </PropertyGroup>
   <Import Project="../Package.Metadata.props" />
 
