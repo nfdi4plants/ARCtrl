@@ -346,23 +346,28 @@ module Encode =
             [ "class", Encode.string "SoftwareRequirement";
               "packages", (pkgs |> Seq.map encodePkg |> List.ofSeq |> YAMLElement.Sequence) ] |> yMap
         | InitialWorkDirRequirement listing ->
-            let encodeDirent = function
-                | Dirent d ->
-                    let entryElement =
-                        if d.Entry.Contains(": ") then
-                            let parts = d.Entry.Split([|": "|], 2, StringSplitOptions.None)
-                            if parts.Length = 2 then
-                                yMap [ parts.[0], Encode.string parts.[1] ]
-                            else Encode.string d.Entry
-                        else Encode.string d.Entry
+            let encodeStringOrExpression (entry: string) =
+                if entry.Contains(": ") then
+                    let parts = entry.Split([|": "|], 2, StringSplitOptions.None)
+                    if parts.Length = 2 then
+                        yMap [ parts.[0], Encode.string parts.[1] ]
+                    else
+                        Encode.string entry
+                else
+                    Encode.string entry
+
+            let encodeInitialWorkDirEntry = function
+                | DirentEntry d ->
                     [ ]
                     |> appendOpt "entryname" Encode.string d.Entryname
-                    |> fun acc -> acc @ [ "entry", entryElement ]
+                    |> fun acc -> acc @ [ "entry", encodeStringOrExpression d.Entry ]
                     |> appendOpt "writable" yBool d.Writable
                     |> yMap
-                | other -> encodeCWLType other // fallback
+                | StringEntry s ->
+                    encodeStringOrExpression s
+
             [ "class", Encode.string "InitialWorkDirRequirement";
-              "listing", (listing |> Seq.map encodeDirent |> List.ofSeq |> YAMLElement.Sequence) ] |> yMap
+              "listing", (listing |> Seq.map encodeInitialWorkDirEntry |> List.ofSeq |> YAMLElement.Sequence) ] |> yMap
         | EnvVarRequirement envs ->
             let encodeEnv (e:EnvironmentDef) =
                 let v = if e.EnvValue = "true" || e.EnvValue = "false" then "\"" + e.EnvValue + "\"" else e.EnvValue

@@ -144,6 +144,31 @@ module Decode =
                 }
         )
 
+    /// Decode a listing entry of InitialWorkDirRequirement.
+    /// Supports both Dirent object form and string/expression form.
+    let initialWorkDirEntryDecoder: (YAMLiciousTypes.YAMLElement -> InitialWorkDirEntry) =
+        fun value ->
+            match value with
+            | YAMLElement.Object mappings ->
+                let hasEntryField =
+                    mappings
+                    |> List.exists (function
+                        | YAMLElement.Mapping (k, _) when k.Value = "entry" -> true
+                        | _ -> false
+                    )
+
+                if hasEntryField then
+                    match direntDecoder value with
+                    | Dirent dirent -> DirentEntry dirent
+                    | _ -> raise (System.ArgumentException("Unexpected InitialWorkDir Dirent decoding result."))
+                else
+                    StringEntry (decodeStringOrExpression value)
+            | YAMLElement.Value _
+            | YAMLElement.Object [YAMLElement.Value _] ->
+                StringEntry (decodeStringOrExpression value)
+            | _ ->
+                raise (System.ArgumentException($"Invalid InitialWorkDir listing entry: %A{value}"))
+
     /// Decode the contained type of a CWL Array
     let rec cwlSimpleTypeFromString (s: string) =
         match s with
@@ -448,13 +473,13 @@ module Decode =
                 )
         envDef
 
-    /// Decode a YAMLElement into a InitialWorkDirRequirement array
-    let initialWorkDirRequirementDecoder (get: Decode.IGetters): ResizeArray<CWLType> =
+    /// Decode a YAMLElement into an InitialWorkDirRequirement array.
+    /// Supports both string/expression and Dirent listing items.
+    let initialWorkDirRequirementDecoder (get: Decode.IGetters): ResizeArray<InitialWorkDirEntry> =
         let initialWorkDir =
-            //TODO: Support more than dirent
             get.Required.Field
                 "listing"
-                (Decode.resizearray direntDecoder)
+                (Decode.resizearray initialWorkDirEntryDecoder)
         initialWorkDir
 
     /// Decode a YAMLElement into a ResourceRequirementInstance
