@@ -49,6 +49,12 @@ type ResourceRequirementInstance (
         DynObj.setOptionalProperty (nameof outdirMin) outdirMin this
         DynObj.setOptionalProperty (nameof outdirMax) outdirMax this
 
+/// Entry in InitialWorkDirRequirement listing.
+/// CWL allows either a Dirent object or a string/expression entry.
+type InitialWorkDirEntry =
+    | DirentEntry of DirentInstance
+    | StringEntry of string
+
 type Requirement =
     /// Indicates that the workflow platform must support inline Javascript expressions.
     | InlineJavascriptRequirement
@@ -59,7 +65,8 @@ type Requirement =
     /// A list of software packages that should be configured in the environment of the defined process.
     | SoftwareRequirement of ResizeArray<SoftwarePackage>
     /// Define a list of files and subdirectories that must be created by the workflow platform in the designated output directory prior to executing the command line tool.
-    | InitialWorkDirRequirement of ResizeArray<CWLType>
+    /// CWL supports string/expression entries and Dirent objects.
+    | InitialWorkDirRequirement of ResizeArray<InitialWorkDirEntry>
     /// Define a list of environment variables which will be set in the execution environment of the tool. See EnvironmentDef for details.
     | EnvVarRequirement of ResizeArray<EnvironmentDef>
     /// Modify the behavior of CommandLineTool to generate a single string containing a shell command line.
