@@ -54,7 +54,55 @@ let testInput =
         ]
     ]
 
+let testInputMutationApi =
+    testList "Mutation API" [
+        testCase "typed setters roundtrip values" <| fun _ ->
+            let input = CWLInput("arg")
+            input.Type_ <- Some CWLType.String
+            input.InputBinding <- Some { Prefix = Some "--arg"; Position = Some 1; ItemSeparator = None; Separate = Some true }
+            input.Optional <- Some true
+
+            Expect.equal input.Type_ (Some CWLType.String) "Type_ setter should write DynamicObj-backed value."
+            Expect.equal input.InputBinding (Some { Prefix = Some "--arg"; Position = Some 1; ItemSeparator = None; Separate = Some true }) "InputBinding setter should write value."
+            Expect.equal input.Optional (Some true) "Optional setter should write value."
+
+        testCase "typed setters can clear optional values" <| fun _ ->
+            let input = CWLInput("arg", type_ = CWLType.Int, optional = true)
+            input.Type_ <- None
+            input.Optional <- None
+            input.InputBinding <- None
+
+            Expect.isNone input.Type_ "Type_ should be removable."
+            Expect.isNone input.Optional "Optional should be removable."
+            Expect.isNone input.InputBinding "InputBinding should be removable."
+    ]
+
+let testProcessingUnitInputOps =
+    testList "ProcessingUnitOps Inputs" [
+        testCase "getOrCreateToolInputs creates missing collection" <| fun _ ->
+            let tool = CWLToolDescription(outputs = ResizeArray())
+            let created = ProcessingUnitOps.getOrCreateToolInputs tool
+            created.Add(CWLInput("x"))
+            Expect.isSome tool.Inputs "Inputs should be initialized."
+            Expect.equal tool.Inputs.Value.Count 1 "Created collection should be stored on tool."
+
+        testCase "getInputs normalizes CommandLineTool option to empty list" <| fun _ ->
+            let tool = CWLToolDescription(outputs = ResizeArray())
+            let pu = CWLProcessingUnit.CommandLineTool tool
+            let inputs = ProcessingUnitOps.getInputs pu
+            Expect.equal inputs.Count 0 "Missing inputs should normalize to empty ResizeArray."
+
+        testCase "getOrCreateExpressionToolInputs creates missing collection" <| fun _ ->
+            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)")
+            let created = ProcessingUnitOps.getOrCreateExpressionToolInputs expressionTool
+            created.Add(CWLInput("arg"))
+            Expect.isSome expressionTool.Inputs "Inputs should be initialized."
+            Expect.equal expressionTool.Inputs.Value.Count 1 "Created collection should be stored on expression tool."
+    ]
+
 let main = 
     testList "Input" [
         testInput
+        testInputMutationApi
+        testProcessingUnitInputOps
     ]

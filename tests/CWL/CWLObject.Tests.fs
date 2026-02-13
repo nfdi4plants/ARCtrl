@@ -47,7 +47,10 @@ let testCWLToolDescriptionDecode =
         testList "Requirements" [
             let requirementsItem = decodeCWLToolDescription.Requirements
             testCase "InitialWorkDirRequirement" <| fun _ ->
-                let expected = InitialWorkDirRequirement (ResizeArray [|Dirent {Entry = "$include: script.fsx"; Entryname = Some "script.fsx"; Writable = None }|])
+                let expected =
+                    InitialWorkDirRequirement (
+                        ResizeArray [| DirentEntry { Entry = "$include: script.fsx"; Entryname = Some "script.fsx"; Writable = None } |]
+                    )
                 let actual = requirementsItem.Value.[0]
                 match actual, expected with
                 | InitialWorkDirRequirement actualType, InitialWorkDirRequirement expectedType ->
@@ -165,7 +168,10 @@ let testCWLToolDescriptionMetadata =
         testList "Requirements" [
             let requirementsItem = decodeCWLToolDescriptionMetadata.Requirements
             testCase "InitialWorkDirRequirement" <| fun _ ->
-                let expected = InitialWorkDirRequirement (ResizeArray [|Dirent {Entry = "$include: script.fsx"; Entryname = Some "script.fsx"; Writable = None }|])
+                let expected =
+                    InitialWorkDirRequirement (
+                        ResizeArray [| DirentEntry { Entry = "$include: script.fsx"; Entryname = Some "script.fsx"; Writable = None } |]
+                    )
                 let actual = requirementsItem.Value.[0]
                 match actual, expected with
                 | InitialWorkDirRequirement actualType, InitialWorkDirRequirement expectedType ->

@@ -56,7 +56,13 @@ let testRequirementDecode =
             testCase "Class Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsClassFileContent
                 let initialWorkDirItem = findRequirement reqs (function InitialWorkDirRequirement _ -> true | _ -> false)
-                let expected = InitialWorkDirRequirement (ResizeArray [|Dirent {Entryname = Some "arc"; Entry = "$(inputs.arcDirectory)"; Writable = Some true}; Dirent {Entryname = None; Entry = "$(inputs.outputDirectory)"; Writable = Some true}|])
+                let expected =
+                    InitialWorkDirRequirement (
+                        ResizeArray [|
+                            DirentEntry { Entryname = Some "arc"; Entry = "$(inputs.arcDirectory)"; Writable = Some true }
+                            DirentEntry { Entryname = None; Entry = "$(inputs.outputDirectory)"; Writable = Some true }
+                        |]
+                    )
                 let actual = initialWorkDirItem
                 match actual, expected with
                 | InitialWorkDirRequirement a, InitialWorkDirRequirement e ->
@@ -66,7 +72,13 @@ let testRequirementDecode =
             testCase "Mapping Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsMappingFileContent
                 let initialWorkDirItem = findRequirement reqs (function InitialWorkDirRequirement _ -> true | _ -> false)
-                let expected = InitialWorkDirRequirement (ResizeArray [|Dirent {Entryname = Some "arc"; Entry = "$(inputs.arcDirectory)"; Writable = Some true}; Dirent {Entryname = None; Entry = "$(inputs.outputDirectory)"; Writable = Some true}|])
+                let expected =
+                    InitialWorkDirRequirement (
+                        ResizeArray [|
+                            DirentEntry { Entryname = Some "arc"; Entry = "$(inputs.arcDirectory)"; Writable = Some true }
+                            DirentEntry { Entryname = None; Entry = "$(inputs.outputDirectory)"; Writable = Some true }
+                        |]
+                    )
                 let actual = initialWorkDirItem
                 match actual, expected with
                 | InitialWorkDirRequirement a, InitialWorkDirRequirement e ->
@@ -76,13 +88,37 @@ let testRequirementDecode =
             testCase "Json Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsJSONFileContent
                 let initialWorkDirItem = findRequirement reqs (function InitialWorkDirRequirement _ -> true | _ -> false)
-                let expected = InitialWorkDirRequirement (ResizeArray [|Dirent {Entryname = Some "arc"; Entry = "$(inputs.arcDirectory)"; Writable = Some true}; Dirent {Entryname = None; Entry = "$(inputs.outputDirectory)"; Writable = Some true}|])
+                let expected =
+                    InitialWorkDirRequirement (
+                        ResizeArray [|
+                            DirentEntry { Entryname = Some "arc"; Entry = "$(inputs.arcDirectory)"; Writable = Some true }
+                            DirentEntry { Entryname = None; Entry = "$(inputs.outputDirectory)"; Writable = Some true }
+                        |]
+                    )
                 let actual = initialWorkDirItem
                 match actual, expected with
                 | InitialWorkDirRequirement a, InitialWorkDirRequirement e ->
                     Expect.sequenceEqual a e "InitialWorkDirRequirement mismatch: Type of Decode Json Syntax for InitialWorkDirRequirement"
                 | _ ->
                     failwith "Wrong requirement type: Type of Decode Json Syntax for InitialWorkDirRequirement can only be InitialWorkDirRequirement"
+            testCase "String listing entries decode" <| fun _ ->
+                let yaml = """requirements:
+  - class: InitialWorkDirRequirement
+    listing:
+      - $(inputs.stageDirectory)
+      - $(inputs.outputDirectory)"""
+                let reqs = decodeRequirements yaml
+                let initialWorkDirItem = findRequirement reqs (function InitialWorkDirRequirement _ -> true | _ -> false)
+                match initialWorkDirItem with
+                | InitialWorkDirRequirement listing ->
+                    let expected =
+                        ResizeArray [|
+                            StringEntry "$(inputs.stageDirectory)"
+                            StringEntry "$(inputs.outputDirectory)"
+                        |]
+                    Expect.sequenceEqual listing expected "String listing entries should decode into StringEntry values."
+                | _ ->
+                    failwith "Wrong requirement type: expected InitialWorkDirRequirement"
         ]
         testList "EnvVarRequirement" [
             testCase "Class Syntax" <| fun _ ->
@@ -216,6 +252,27 @@ let testRequirementEncode =
                 let encoded2 = Encode.encodeToolDescription decoded2
                 let order2 = extractRequirementsOrder encoded2
                 Expect.equal order2 order1 "Requirement entries order must remain stable across encode cycles"
+        ]
+        testList "InitialWorkDirRequirement listing" [
+            testCase "string listing entries roundtrip through encode/decode" <| fun _ ->
+                let listing =
+                    ResizeArray [|
+                        StringEntry "$(inputs.stageDirectory)"
+                        DirentEntry { Entry = "$(inputs.outputDirectory)"; Entryname = Some "outdir"; Writable = Some true }
+                    |]
+                let req = InitialWorkDirRequirement listing
+                let yaml = Encode.encodeRequirement req |> Encode.writeYaml
+                let indented = yaml.Replace("\n", "\n    ")
+                let document = "requirements:\n  - " + indented
+                let decoded =
+                    Decode.read document
+                    |> Decode.requirementsDecoder
+                    |> Option.get
+                match decoded.[0] with
+                | InitialWorkDirRequirement roundtripped ->
+                    Expect.sequenceEqual roundtripped listing "InitialWorkDirRequirement listing entries should roundtrip."
+                | _ ->
+                    failwith "Expected InitialWorkDirRequirement"
         ]
     ]
 

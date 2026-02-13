@@ -230,7 +230,61 @@ let testWorkflowStep =
             Expect.throws (fun _ -> Encode.encodeWorkflowStepRun run |> ignore) "Encoding invalid RunExpressionTool payload should fail"
     ]
 
+let testWorkflowStepOps =
+    testList "WorkflowStepOps" [
+        testCase "updateInputAt updates immutable StepInput in-place collection" <| fun _ ->
+            let step =
+                WorkflowStep(
+                    id = "step1",
+                    in_ = ResizeArray [| StepInput.create("input1", source = ResizeArray [| "old" |]) |],
+                    out_ = ResizeArray [| StepOutputString "out" |],
+                    run = "./tool.cwl"
+                )
+
+            WorkflowStepOps.updateInputAt 0 (fun i -> { i with Source = Some (ResizeArray [| "new" |]) }) step
+
+            Expect.sequenceEqual step.In.[0].Source.Value (ResizeArray [| "new" |]) "Input source should be updated."
+
+        testCase "updateInputById updates only matching input" <| fun _ ->
+            let step =
+                WorkflowStep(
+                    id = "step1",
+                    in_ =
+                        ResizeArray [|
+                            StepInput.create("first", source = ResizeArray [| "a" |])
+                            StepInput.create("second", source = ResizeArray [| "b" |])
+                        |],
+                    out_ = ResizeArray [| StepOutputString "out" |],
+                    run = "./tool.cwl"
+                )
+
+            WorkflowStepOps.updateInputById "second" (fun i -> { i with ValueFrom = Some "$(self)" }) step
+
+            Expect.isNone step.In.[0].ValueFrom "First input should remain unchanged."
+            Expect.equal step.In.[1].ValueFrom (Some "$(self)") "Second input should be updated."
+
+        testCase "removeInputsById removes matching entries" <| fun _ ->
+            let step =
+                WorkflowStep(
+                    id = "step1",
+                    in_ =
+                        ResizeArray [|
+                            StepInput.create("dup")
+                            StepInput.create("keep")
+                            StepInput.create("dup")
+                        |],
+                    out_ = ResizeArray [| StepOutputString "out" |],
+                    run = "./tool.cwl"
+                )
+
+            WorkflowStepOps.removeInputsById "dup" step
+
+            Expect.equal step.In.Count 1 "Only one input should remain."
+            Expect.equal step.In.[0].Id "keep" "Non-matching input should remain."
+    ]
+
 let main = 
     testList "WorkflowStep" [
         testWorkflowStep
+        testWorkflowStepOps
     ]
