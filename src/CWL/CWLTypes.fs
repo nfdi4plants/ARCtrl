@@ -2,6 +2,35 @@ namespace ARCtrl.CWL
 
 open DynamicObj
 
+type SchemaSaladString =
+    | Literal of string
+    | Include of string
+    | Import of string
+    with
+    member this.Value =
+        match this with
+        | Literal value
+        | Include value
+        | Import value -> value
+
+    member this.AsDirectiveString =
+        match this with
+        | Literal value -> value
+        | Include value -> sprintf "$include: %s" value
+        | Import value -> sprintf "$import: %s" value
+
+module SchemaSaladString =
+
+    let literal value = Literal value
+
+    let includePath value = Include value
+
+    let importPath value = Import value
+
+    let value (saladString: SchemaSaladString) = saladString.Value
+
+    let toDirectiveString (saladString: SchemaSaladString) = saladString.AsDirectiveString
+
 type FileInstance () =
     inherit DynamicObj ()
 
@@ -28,8 +57,8 @@ type DirectoryInstance () =
 
 type DirentInstance = {
     // can be string or expression, but expression is string as well
-    Entry: string
-    Entryname: string option
+    Entry: SchemaSaladString
+    Entryname: SchemaSaladString option
     Writable: bool option
 }
 
@@ -194,10 +223,10 @@ and [<CustomEquality; NoComparison>] CWLType =
 
     static member directory() = Directory(DirectoryInstance())
 
-type SchemaDefRequirementType (types, definitions) as this =
-    inherit DynamicObj ()
-    do
-        DynObj.setProperty (nameof types) definitions this
+type SchemaDefRequirementType = {
+    Name: string
+    Type_: CWLType
+}
 
 type SoftwarePackage = {
     Package: string
