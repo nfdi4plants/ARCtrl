@@ -174,7 +174,7 @@ let testProcessingUnitRequirementOps =
             Expect.equal expressionReqs.Count 0 "ExpressionTool requirements should normalize to empty collection."
 
         testCase "getRequirements returns existing collection for all variants" <| fun _ ->
-            let toolReqs = ResizeArray [| NetworkAccessRequirement |]
+            let toolReqs = ResizeArray [| NetworkAccessRequirement { NetworkAccess = true } |]
             let workflowReqs = ResizeArray [| SubworkflowFeatureRequirement |]
             let expressionReqs = ResizeArray [| InlineJavascriptRequirement |]
 

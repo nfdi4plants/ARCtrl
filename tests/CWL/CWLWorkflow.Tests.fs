@@ -446,14 +446,14 @@ let testCWLWorkflowDescriptionEncode =
                 let decodedHints = Expect.wantSome decodedStep.Hints "Step hints should decode"
                 let decodedRequirements = Expect.wantSome decodedStep.Requirements "Step requirements should decode"
                 Expect.equal decodedHints.[0] StepInputExpressionRequirement ""
-                Expect.equal decodedRequirements.[0] NetworkAccessRequirement ""
+                Expect.equal decodedRequirements.[0] (NetworkAccessRequirement { NetworkAccess = true }) ""
                 let encoded = Encode.encodeWorkflowDescription decoded
                 let roundTripped = Decode.decodeWorkflow encoded
                 let roundTrippedStep = roundTripped.Steps.[0]
                 let roundTrippedHints = Expect.wantSome roundTrippedStep.Hints "Step hints should survive roundtrip"
                 let roundTrippedRequirements = Expect.wantSome roundTrippedStep.Requirements "Step requirements should survive roundtrip"
                 Expect.equal roundTrippedHints.[0] StepInputExpressionRequirement ""
-                Expect.equal roundTrippedRequirements.[0] NetworkAccessRequirement ""
+                Expect.equal roundTrippedRequirements.[0] (NetworkAccessRequirement { NetworkAccess = true }) ""
             testCase "inline ExpressionTool roundtrip preserves expression" <| fun _ ->
                 let original = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithMixedToolAndExpressionStepFile
                 let encoded = Encode.encodeWorkflowDescription original

@@ -40,7 +40,15 @@ let testCWLToolDescriptionDecode =
         testList "Hints" [
             let hintsItem = decodeCWLToolDescription.Hints
             testCase "DockerRequirement" <| fun _ ->
-                let expected = DockerRequirement {DockerPull = Some "mcr.microsoft.com/dotnet/sdk:6.0"; DockerFile = None; DockerImageId = None}
+                let expected =
+                    DockerRequirement {
+                        DockerPull = Some "mcr.microsoft.com/dotnet/sdk:6.0"
+                        DockerFile = None
+                        DockerImageId = None
+                        DockerLoad = None
+                        DockerImport = None
+                        DockerOutputDirectory = None
+                    }
                 let actual = hintsItem.Value.[0]
                 Expect.equal actual expected ""
         ]
@@ -49,7 +57,7 @@ let testCWLToolDescriptionDecode =
             testCase "InitialWorkDirRequirement" <| fun _ ->
                 let expected =
                     InitialWorkDirRequirement (
-                        ResizeArray [| DirentEntry { Entry = "$include: script.fsx"; Entryname = Some "script.fsx"; Writable = None } |]
+                        ResizeArray [| DirentEntry { Entry = Include "script.fsx"; Entryname = Some (Literal "script.fsx"); Writable = None } |]
                     )
                 let actual = requirementsItem.Value.[0]
                 match actual, expected with
@@ -64,7 +72,7 @@ let testCWLToolDescriptionDecode =
                     Expect.sequenceEqual actualType expectedType ""
                 | _ -> failwith "This test case can only be EnvVarRequirement"
             testCase "NetworkAccessRequirement" <| fun _ ->
-                let expected = NetworkAccessRequirement
+                let expected = NetworkAccessRequirement { NetworkAccess = true }
                 let actual = requirementsItem.Value.[2]
                 Expect.equal actual expected ""
         ]
@@ -161,7 +169,15 @@ let testCWLToolDescriptionMetadata =
         testList "Hints" [
             let hintsItem = decodeCWLToolDescriptionMetadata.Hints
             testCase "DockerRequirement" <| fun _ ->
-                let expected = DockerRequirement {DockerPull = Some "mcr.microsoft.com/dotnet/sdk:6.0"; DockerFile = None; DockerImageId = None}
+                let expected =
+                    DockerRequirement {
+                        DockerPull = Some "mcr.microsoft.com/dotnet/sdk:6.0"
+                        DockerFile = None
+                        DockerImageId = None
+                        DockerLoad = None
+                        DockerImport = None
+                        DockerOutputDirectory = None
+                    }
                 let actual = hintsItem.Value.[0]
                 Expect.equal actual expected ""
         ]
@@ -170,7 +186,7 @@ let testCWLToolDescriptionMetadata =
             testCase "InitialWorkDirRequirement" <| fun _ ->
                 let expected =
                     InitialWorkDirRequirement (
-                        ResizeArray [| DirentEntry { Entry = "$include: script.fsx"; Entryname = Some "script.fsx"; Writable = None } |]
+                        ResizeArray [| DirentEntry { Entry = Include "script.fsx"; Entryname = Some (Literal "script.fsx"); Writable = None } |]
                     )
                 let actual = requirementsItem.Value.[0]
                 match actual, expected with
@@ -185,7 +201,7 @@ let testCWLToolDescriptionMetadata =
                     Expect.sequenceEqual actualType expectedType ""
                 | _ -> failwith "This test case can only be EnvVarRequirement"
             testCase "NetworkAccessRequirement" <| fun _ ->
-                let expected = NetworkAccessRequirement
+                let expected = NetworkAccessRequirement { NetworkAccess = true }
                 let actual = requirementsItem.Value.[2]
                 Expect.equal actual expected ""
         ]
