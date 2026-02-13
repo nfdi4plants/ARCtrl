@@ -105,12 +105,27 @@ module Decode =
             | _ -> DynObj.setProperty e.Key e.Value dynObj
         dynObj
 
-    /// Decode a YAMLElement which is either a string or expression into a string
-    let decodeStringOrExpression (yEle:YAMLElement) =
+    /// Decode scalar schema-salad string fields.
+    /// Recognized directive wrappers are `$include` and `$import`.
+    /// Unknown single-key mappings are intentionally coerced to a legacy literal `key: value` string.
+    let decodeSchemaSaladString (yEle:YAMLElement) : SchemaSaladString =
         match yEle with
-        | YAMLElement.Value v | YAMLElement.Object [YAMLElement.Value v] -> v.Value
-        | YAMLElement.Object [YAMLElement.Mapping (c,YAMLElement.Object [YAMLElement.Value v])] -> sprintf "%s: %s" c.Value v.Value
-        | _ -> raise (System.ArgumentException($"Unexpected YAMLElement format in decodeStringOrExpression: %A{yEle}"))
+        | YAMLElement.Value v
+        | YAMLElement.Object [YAMLElement.Value v] ->
+            Literal v.Value
+        | YAMLElement.Object [YAMLElement.Mapping (c, YAMLElement.Value v)]
+        | YAMLElement.Object [YAMLElement.Mapping (c, YAMLElement.Object [YAMLElement.Value v])] ->
+            match c.Value with
+            | "$include" -> Include v.Value
+            | "$import" -> Import v.Value
+            | _ -> Literal (sprintf "%s: %s" c.Value v.Value)
+        | _ -> raise (System.ArgumentException($"Unexpected YAMLElement format in decodeSchemaSaladString: %A{yEle}"))
+
+    /// Decode a YAMLElement which is either a string or expression into a string.
+    /// Directive objects such as {$include: path} are represented using legacy string form.
+    let decodeStringOrExpression (yEle:YAMLElement) =
+        decodeSchemaSaladString yEle
+        |> SchemaSaladString.toDirectiveString
 
     /// Decode a YAMLElement into a glob search pattern for output binding
     let outputBindingGlobDecoder: (YAMLiciousTypes.YAMLElement -> OutputBinding) =
@@ -137,9 +152,8 @@ module Decode =
         Decode.object (fun get ->
             Dirent
                 {
-                    // BUG: Entry Requires an Entryname to be present when it's an expression
-                    Entry = get.Required.Field "entry" decodeStringOrExpression
-                    Entryname = get.Optional.Field "entryname" decodeStringOrExpression
+                    Entry = get.Required.Field "entry" decodeSchemaSaladString
+                    Entryname = get.Optional.Field "entryname" decodeSchemaSaladString
                     Writable = get.Optional.Field "writable" Decode.bool
                 }
         )
@@ -162,10 +176,10 @@ module Decode =
                     | Dirent dirent -> DirentEntry dirent
                     | _ -> raise (System.ArgumentException("Unexpected InitialWorkDir Dirent decoding result."))
                 else
-                    StringEntry (decodeStringOrExpression value)
+                    StringEntry (decodeSchemaSaladString value)
             | YAMLElement.Value _
             | YAMLElement.Object [YAMLElement.Value _] ->
-                StringEntry (decodeStringOrExpression value)
+                StringEntry (decodeSchemaSaladString value)
             | _ ->
                 raise (System.ArgumentException($"Invalid InitialWorkDir listing entry: %A{value}"))
 
@@ -427,12 +441,41 @@ module Decode =
         )
 
 
+    let private tryDecodeLegacyDockerFileMap (value: YAMLElement) : SchemaSaladString option =
+        try
+            let dict = Decode.object (fun get -> get.Overflow.FieldList []) value
+            if dict.Count = 0 then
+                None
+            elif dict.ContainsKey "$include" then
+                // `$include` and `$import` are mutually exclusive; prefer `$include` when both are present.
+                Some (Include (Decode.string dict.["$include"]))
+            elif dict.ContainsKey "$import" then
+                Some (Import (Decode.string dict.["$import"]))
+            else
+                // Legacy fallback: keep only the first map value and drop extra keys.
+                dict.Values
+                |> Seq.tryHead
+                |> Option.map (fun v -> Literal (Decode.string v))
+        with ex when isRecoverableDecodingError ex ->
+            None
+
     /// Decode a YAMLElement into a DockerRequirement
     let dockerRequirementDecoder (get: Decode.IGetters): DockerRequirement =
+        let dockerFile =
+            get.Optional.Field "dockerFile" id
+            |> Option.map (fun value ->
+                match tryDecodeLegacyDockerFileMap value with
+                | Some legacyValue -> legacyValue
+                | None -> decodeSchemaSaladString value
+            )
+
         let dockerReq = {
             DockerPull = get.Optional.Field "dockerPull" Decode.string
-            DockerFile = get.Optional.Field "dockerFile" (Decode.map id Decode.string )
+            DockerFile = dockerFile
             DockerImageId = get.Optional.Field "dockerImageId" Decode.string
+            DockerLoad = get.Optional.Field "dockerLoad" Decode.string
+            DockerImport = get.Optional.Field "dockerImport" Decode.string
+            DockerOutputDirectory = get.Optional.Field "dockerOutputDirectory" Decode.string
         }
         dockerReq
 
@@ -482,6 +525,12 @@ module Decode =
                 (Decode.resizearray initialWorkDirEntryDecoder)
         initialWorkDir
 
+    let loadListingRequirementDecoder (get: Decode.IGetters): LoadListingRequirementValue =
+        let loadListing =
+            get.Optional.Field "loadListing" Decode.string
+            |> Option.defaultValue "no_listing"
+        { LoadListing = loadListing }
+
     /// Decode a YAMLElement into a ResourceRequirementInstance
     let resourceRequirementDecoder (get: Decode.IGetters): ResourceRequirementInstance =
         ResourceRequirementInstance(
@@ -495,23 +544,60 @@ module Decode =
             get.Optional.Field "outdirMax" id
         )
         
+    let private schemaDefRequirementTypeDecoder (value: YAMLElement) : SchemaDefRequirementType =
+        let dict = Decode.object (fun get -> get.Overflow.FieldList []) value
+        if dict.ContainsKey "name" then
+            {
+                Name = decodeStringOrExpression dict.["name"]
+                Type_ = cwlTypeDecoder' value
+            }
+        else
+            if dict.Count = 0 then
+                raise (System.ArgumentException("SchemaDefRequirement entry cannot be empty."))
+            let kv = dict |> Seq.head
+            {
+                Name = kv.Key
+                Type_ = cwlTypeDecoder' kv.Value
+            }
+
     /// Decode a YAMLElement into a SchemaDefRequirementType array
     let schemaDefRequirementDecoder (get: Decode.IGetters): ResizeArray<SchemaDefRequirementType> =
-        let schemaDef =
-            get.Required.Field 
-                "types" 
-                (
-                    Decode.resizearray
-                        (
-                            Decode.map id Decode.string
-                        )
-                )
-                |> ResizeArray.map (fun m -> SchemaDefRequirementType(m.Keys |> Seq.item 0, m.Values |> Seq.item 0))
-        schemaDef
+        get.Required.Field "types" (Decode.resizearray schemaDefRequirementTypeDecoder)
 
-    /// Decode a YAMLElement into a ToolTimeLimitRequirement
-    let toolTimeLimitRequirementDecoder (get: Decode.IGetters): float =
-        get.Required.Field "timelimit" Decode.float
+    let workReuseRequirementDecoder (get: Decode.IGetters): WorkReuseRequirementValue =
+        {
+            EnableReuse =
+                get.Optional.Field "enableReuse" Decode.bool
+                |> Option.defaultValue true
+        }
+
+    let networkAccessRequirementDecoder (get: Decode.IGetters): NetworkAccessRequirementValue =
+        {
+            NetworkAccess =
+                get.Optional.Field "networkAccess" Decode.bool
+                |> Option.defaultValue true
+        }
+
+    let inplaceUpdateRequirementDecoder (get: Decode.IGetters): InplaceUpdateRequirementValue =
+        {
+            InplaceUpdate =
+                get.Optional.Field "inplaceUpdate" Decode.bool
+                |> Option.defaultValue true
+        }
+
+    /// Decode a YAMLElement into a ToolTimeLimitRequirement value
+    let toolTimeLimitRequirementDecoder (get: Decode.IGetters): ToolTimeLimitValue =
+        let timeLimitElement = get.Required.Field "timelimit" id
+        let tryParseNumber () =
+            try
+                // Numeric scalars should decode to the numeric form.
+                // Non-numeric scalars (including expressions) fall back to expression form.
+                Some (Decode.float timeLimitElement)
+            with _ ->
+                None
+        match tryParseNumber () with
+        | Some value -> ToolTimeLimitSeconds value
+        | None -> ToolTimeLimitExpression (decodeStringOrExpression timeLimitElement)
 
     /// Decode all YAMLElements matching the Requirement type into a ResizeArray of Requirement
     let requirementFromTypeName cls get =
@@ -520,14 +606,19 @@ module Decode =
         | "SchemaDefRequirement" -> SchemaDefRequirement (schemaDefRequirementDecoder get)
         | "DockerRequirement" -> DockerRequirement (dockerRequirementDecoder get)
         | "SoftwareRequirement" -> SoftwareRequirement (softwareRequirementDecoder get)
+        | "LoadListingRequirement" -> LoadListingRequirement (loadListingRequirementDecoder get)
         | "InitialWorkDirRequirement" -> InitialWorkDirRequirement (initialWorkDirRequirementDecoder get)
         | "EnvVarRequirement" -> EnvVarRequirement (envVarRequirementDecoder get)
         | "ShellCommandRequirement" -> ShellCommandRequirement
         | "ResourceRequirement" -> ResourceRequirement (resourceRequirementDecoder get)
-        | "WorkReuse" -> WorkReuseRequirement
-        | "NetworkAccess" -> NetworkAccessRequirement
-        | "InplaceUpdateRequirement" -> InplaceUpdateRequirement
-        | "ToolTimeLimit" -> ToolTimeLimitRequirement (toolTimeLimitRequirementDecoder get)
+        | "WorkReuse"
+        | "WorkReuseRequirement" -> WorkReuseRequirement (workReuseRequirementDecoder get)
+        | "NetworkAccess"
+        | "NetworkAccessRequirement" -> NetworkAccessRequirement (networkAccessRequirementDecoder get)
+        | "InplaceUpdateRequirement"
+        | "InplaceUpdate" -> InplaceUpdateRequirement (inplaceUpdateRequirementDecoder get)
+        | "ToolTimeLimit"
+        | "ToolTimeLimitRequirement" -> ToolTimeLimitRequirement (toolTimeLimitRequirementDecoder get)
         | "SubworkflowFeatureRequirement" -> SubworkflowFeatureRequirement
         | "ScatterFeatureRequirement" -> ScatterFeatureRequirement
         | "MultipleInputFeatureRequirement" -> MultipleInputFeatureRequirement
