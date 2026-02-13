@@ -91,6 +91,12 @@ module Encode =
     let normalizeDocString (doc:string) =
         doc.Replace("\r\n","\n").TrimEnd('\n').TrimEnd('\r')
 
+    let encodeSchemaSaladString (value: SchemaSaladString) : YAMLElement =
+        match value with
+        | Literal text -> Encode.string text
+        | Include path -> yMap [ "$include", Encode.string path ]
+        | Import path -> yMap [ "$import", Encode.string path ]
+
     let encodeLabel (label:string) : (string * YAMLElement) =
         "label", Encode.string label
 
@@ -110,8 +116,8 @@ module Encode =
         | File _ -> Encode.string "File"
         | Directory _ -> Encode.string "Directory"
         | Dirent d ->
-            [ "entry", Encode.string d.Entry ]
-            |> appendOpt "entryname" Encode.string d.Entryname
+            [ "entry", encodeSchemaSaladString d.Entry ]
+            |> appendOpt "entryname" encodeSchemaSaladString d.Entryname
             |> appendOpt "writable" (fun b -> yBool b) d.Writable
             |> yMap
         | String -> Encode.string "string"
@@ -315,13 +321,10 @@ module Encode =
     // ------------------------------
 
     let encodeSchemaDefRequirementType (s:SchemaDefRequirementType) : YAMLElement =
-        s.GetProperties(false)
-        |> Seq.choose (fun kvp ->
-            match kvp.Value with
-            | :? string as str -> Some (kvp.Key, Encode.string str)
-            | _ -> None)
-        |> Seq.toList
-        |> yMap
+        yMap [
+            "name", Encode.string s.Name
+            "type", encodeCWLType s.Type_
+        ]
 
     let encodeRequirement (r:Requirement) : YAMLElement =
         match r with
@@ -332,9 +335,11 @@ module Encode =
         | DockerRequirement dr ->
             [ "class", Encode.string "DockerRequirement" ]
             |> appendOpt "dockerPull" Encode.string dr.DockerPull
-            |> appendOpt "dockerFile" (fun m ->
-                m |> Map.toList |> List.map (fun (k,v) -> k, Encode.string v) |> yMap) dr.DockerFile
+            |> appendOpt "dockerFile" encodeSchemaSaladString dr.DockerFile
             |> appendOpt "dockerImageId" Encode.string dr.DockerImageId
+            |> appendOpt "dockerLoad" Encode.string dr.DockerLoad
+            |> appendOpt "dockerImport" Encode.string dr.DockerImport
+            |> appendOpt "dockerOutputDirectory" Encode.string dr.DockerOutputDirectory
             |> yMap
         | SoftwareRequirement pkgs ->
             let encodePkg (p:SoftwarePackage) =
@@ -345,26 +350,20 @@ module Encode =
                 |> yMap
             [ "class", Encode.string "SoftwareRequirement";
               "packages", (pkgs |> Seq.map encodePkg |> List.ofSeq |> YAMLElement.Sequence) ] |> yMap
+        | LoadListingRequirement loadListing ->
+            [ "class", Encode.string "LoadListingRequirement"
+              "loadListing", Encode.string loadListing.LoadListing ]
+            |> yMap
         | InitialWorkDirRequirement listing ->
-            let encodeStringOrExpression (entry: string) =
-                if entry.Contains(": ") then
-                    let parts = entry.Split([|": "|], 2, StringSplitOptions.None)
-                    if parts.Length = 2 then
-                        yMap [ parts.[0], Encode.string parts.[1] ]
-                    else
-                        Encode.string entry
-                else
-                    Encode.string entry
-
             let encodeInitialWorkDirEntry = function
                 | DirentEntry d ->
                     [ ]
-                    |> appendOpt "entryname" Encode.string d.Entryname
-                    |> fun acc -> acc @ [ "entry", encodeStringOrExpression d.Entry ]
+                    |> appendOpt "entryname" encodeSchemaSaladString d.Entryname
+                    |> fun acc -> acc @ [ "entry", encodeSchemaSaladString d.Entry ]
                     |> appendOpt "writable" yBool d.Writable
                     |> yMap
                 | StringEntry s ->
-                    encodeStringOrExpression s
+                    encodeSchemaSaladString s
 
             [ "class", Encode.string "InitialWorkDirRequirement";
               "listing", (listing |> Seq.map encodeInitialWorkDirEntry |> List.ofSeq |> YAMLElement.Sequence) ] |> yMap
@@ -387,10 +386,25 @@ module Encode =
                     | _ -> None)
                 |> Seq.toList
             [ "class", Encode.string "ResourceRequirement" ] @ dynamicPairs |> yMap
-        | WorkReuseRequirement -> [ "class", Encode.string "WorkReuse" ] |> yMap
-        | NetworkAccessRequirement -> [ "class", Encode.string "NetworkAccess"; "networkAccess", yBool true ] |> yMap
-        | InplaceUpdateRequirement -> [ "class", Encode.string "InplaceUpdateRequirement" ] |> yMap
-        | ToolTimeLimitRequirement tl -> [ "class", Encode.string "ToolTimeLimit"; "timelimit", Encode.float tl ] |> yMap
+        // Canonicalize class names to short CWL forms where applicable.
+        | WorkReuseRequirement workReuse ->
+            [ "class", Encode.string "WorkReuse"
+              "enableReuse", yBool workReuse.EnableReuse ]
+            |> yMap
+        | NetworkAccessRequirement networkAccess ->
+            [ "class", Encode.string "NetworkAccess"
+              "networkAccess", yBool networkAccess.NetworkAccess ]
+            |> yMap
+        | InplaceUpdateRequirement inplaceUpdate ->
+            [ "class", Encode.string "InplaceUpdateRequirement"
+              "inplaceUpdate", yBool inplaceUpdate.InplaceUpdate ]
+            |> yMap
+        | ToolTimeLimitRequirement tl ->
+            let timelimit =
+                match tl with
+                | ToolTimeLimitSeconds seconds -> Encode.float seconds
+                | ToolTimeLimitExpression expression -> Encode.string expression
+            [ "class", Encode.string "ToolTimeLimit"; "timelimit", timelimit ] |> yMap
         | SubworkflowFeatureRequirement -> [ "class", Encode.string "SubworkflowFeatureRequirement" ] |> yMap
         | ScatterFeatureRequirement -> [ "class", Encode.string "ScatterFeatureRequirement" ] |> yMap
         | MultipleInputFeatureRequirement -> [ "class", Encode.string "MultipleInputFeatureRequirement" ] |> yMap
