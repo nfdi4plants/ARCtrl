@@ -100,6 +100,6 @@ module Docker =
 
     let dockerFileMap = Map.ofList ["$include","FSharpArcCapsule/Dockerfile"]
 
-    let dockerRequirement = DockerRequirement.create (dockerImageId = "devcontainer", dockerFile = dockerFileMap)
+    let dockerRequirement = DockerRequirement.createFromLegacyMap (dockerImageId = "devcontainer", dockerFileMap = dockerFileMap)
 
     let requirement = Requirement.DockerRequirement dockerRequirement
