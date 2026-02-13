@@ -40,6 +40,21 @@ type CWLInput (
         DynObj.setOptionalProperty ("inputBinding") inputBinding this
         DynObj.setOptionalProperty ("optional") optional this
     member this.Name = name
-    member this.Type_ = DynObj.tryGetTypedPropertyValue<CWLType> ("type") this
-    member this.InputBinding = DynObj.tryGetTypedPropertyValue<InputBinding> ("inputBinding") this
-    member this.Optional = DynObj.tryGetTypedPropertyValue<bool> ("optional") this
+    member this.Type_
+        with get() = DynObj.tryGetTypedPropertyValue<CWLType> ("type") this
+        and set(value: CWLType option) =
+            match value with
+            | Some v -> DynObj.setProperty "type" v this
+            | None -> DynObj.removeProperty "type" this
+    member this.InputBinding
+        with get() = DynObj.tryGetTypedPropertyValue<InputBinding> ("inputBinding") this
+        and set(value: InputBinding option) =
+            match value with
+            | Some v -> DynObj.setProperty "inputBinding" v this
+            | None -> DynObj.removeProperty "inputBinding" this
+    member this.Optional
+        with get() = DynObj.tryGetTypedPropertyValue<bool> ("optional") this
+        and set(value: bool option) =
+            match value with
+            | Some v -> DynObj.setProperty "optional" v this
+            | None -> DynObj.removeProperty "optional" this
