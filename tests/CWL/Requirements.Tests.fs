@@ -119,6 +119,19 @@ let testRequirementDecode =
                     Expect.sequenceEqual listing expected "String listing entries should decode into StringEntry values."
                 | _ ->
                     failwith "Wrong requirement type: expected InitialWorkDirRequirement"
+            testCase "Object listing entry without entry field decodes as StringEntry" <| fun _ ->
+                let yaml = """requirements:
+  - class: InitialWorkDirRequirement
+    listing:
+      - $include: scripts/dirent.js"""
+                let reqs = decodeRequirements yaml
+                let initialWorkDirItem = findRequirement reqs (function InitialWorkDirRequirement _ -> true | _ -> false)
+                match initialWorkDirItem with
+                | InitialWorkDirRequirement listing ->
+                    let expected = ResizeArray [| StringEntry "$include: scripts/dirent.js" |]
+                    Expect.sequenceEqual listing expected "Object entries without an `entry` field should decode as StringEntry."
+                | _ ->
+                    failwith "Wrong requirement type: expected InitialWorkDirRequirement"
         ]
         testList "EnvVarRequirement" [
             testCase "Class Syntax" <| fun _ ->

@@ -98,6 +98,104 @@ let testProcessingUnitInputOps =
             created.Add(CWLInput("arg"))
             Expect.isSome expressionTool.Inputs "Inputs should be initialized."
             Expect.equal expressionTool.Inputs.Value.Count 1 "Created collection should be stored on expression tool."
+
+        testCase "getToolInputsOrEmpty returns existing collection when inputs are present" <| fun _ ->
+            let existing = ResizeArray [| CWLInput("existing") |]
+            let tool = CWLToolDescription(outputs = ResizeArray(), inputs = existing)
+            let actual = ProcessingUnitOps.getToolInputsOrEmpty tool
+            Expect.isTrue (obj.ReferenceEquals(actual, existing)) "Existing tool input collection should be returned unchanged."
+
+        testCase "getExpressionToolInputsOrEmpty returns existing collection when inputs are present" <| fun _ ->
+            let existing = ResizeArray [| CWLInput("existing") |]
+            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)", inputs = existing)
+            let actual = ProcessingUnitOps.getExpressionToolInputsOrEmpty expressionTool
+            Expect.isTrue (obj.ReferenceEquals(actual, existing)) "Existing expression tool input collection should be returned unchanged."
+
+        testCase "getOrCreateToolInputs returns existing collection when already initialized" <| fun _ ->
+            let existing = ResizeArray [| CWLInput("existing") |]
+            let tool = CWLToolDescription(outputs = ResizeArray(), inputs = existing)
+            let actual = ProcessingUnitOps.getOrCreateToolInputs tool
+            Expect.isTrue (obj.ReferenceEquals(actual, existing)) "Existing collection should be reused."
+
+        testCase "getOrCreateExpressionToolInputs returns existing collection when already initialized" <| fun _ ->
+            let existing = ResizeArray [| CWLInput("existing") |]
+            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)", inputs = existing)
+            let actual = ProcessingUnitOps.getOrCreateExpressionToolInputs expressionTool
+            Expect.isTrue (obj.ReferenceEquals(actual, existing)) "Existing collection should be reused."
+    ]
+
+let testProcessingUnitOutputOps =
+    testList "ProcessingUnitOps Outputs" [
+        testCase "getOutputs returns CommandLineTool outputs" <| fun _ ->
+            let outputs = ResizeArray [| CWLOutput("toolOut") |]
+            let pu = CWLProcessingUnit.CommandLineTool (CWLToolDescription(outputs = outputs))
+            let actual = ProcessingUnitOps.getOutputs pu
+            Expect.isTrue (obj.ReferenceEquals(actual, outputs)) "CommandLineTool outputs should be returned unchanged."
+
+        testCase "getOutputs returns Workflow outputs" <| fun _ ->
+            let outputs = ResizeArray [| CWLOutput("wfOut") |]
+            let workflow =
+                CWLWorkflowDescription(
+                    steps = ResizeArray(),
+                    inputs = ResizeArray(),
+                    outputs = outputs
+                )
+            let pu = CWLProcessingUnit.Workflow workflow
+            let actual = ProcessingUnitOps.getOutputs pu
+            Expect.isTrue (obj.ReferenceEquals(actual, outputs)) "Workflow outputs should be returned unchanged."
+
+        testCase "getOutputs returns ExpressionTool outputs" <| fun _ ->
+            let outputs = ResizeArray [| CWLOutput("expOut") |]
+            let pu = CWLProcessingUnit.ExpressionTool (CWLExpressionToolDescription(outputs = outputs, expression = "$(null)"))
+            let actual = ProcessingUnitOps.getOutputs pu
+            Expect.isTrue (obj.ReferenceEquals(actual, outputs)) "ExpressionTool outputs should be returned unchanged."
+    ]
+
+let testProcessingUnitRequirementOps =
+    testList "ProcessingUnitOps Requirements" [
+        testCase "getRequirements normalizes missing requirements to empty for all variants" <| fun _ ->
+            let toolReqs =
+                CWLToolDescription(outputs = ResizeArray())
+                |> CWLProcessingUnit.CommandLineTool
+                |> ProcessingUnitOps.getRequirements
+
+            let workflowReqs =
+                CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray())
+                |> CWLProcessingUnit.Workflow
+                |> ProcessingUnitOps.getRequirements
+
+            let expressionReqs =
+                CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)")
+                |> CWLProcessingUnit.ExpressionTool
+                |> ProcessingUnitOps.getRequirements
+
+            Expect.equal toolReqs.Count 0 "Tool requirements should normalize to empty collection."
+            Expect.equal workflowReqs.Count 0 "Workflow requirements should normalize to empty collection."
+            Expect.equal expressionReqs.Count 0 "ExpressionTool requirements should normalize to empty collection."
+
+        testCase "getRequirements returns existing collection for all variants" <| fun _ ->
+            let toolReqs = ResizeArray [| NetworkAccessRequirement |]
+            let workflowReqs = ResizeArray [| SubworkflowFeatureRequirement |]
+            let expressionReqs = ResizeArray [| InlineJavascriptRequirement |]
+
+            let toolActual =
+                CWLToolDescription(outputs = ResizeArray(), requirements = toolReqs)
+                |> CWLProcessingUnit.CommandLineTool
+                |> ProcessingUnitOps.getRequirements
+
+            let workflowActual =
+                CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray(), requirements = workflowReqs)
+                |> CWLProcessingUnit.Workflow
+                |> ProcessingUnitOps.getRequirements
+
+            let expressionActual =
+                CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)", requirements = expressionReqs)
+                |> CWLProcessingUnit.ExpressionTool
+                |> ProcessingUnitOps.getRequirements
+
+            Expect.isTrue (obj.ReferenceEquals(toolActual, toolReqs)) "Tool requirements should reuse existing collection."
+            Expect.isTrue (obj.ReferenceEquals(workflowActual, workflowReqs)) "Workflow requirements should reuse existing collection."
+            Expect.isTrue (obj.ReferenceEquals(expressionActual, expressionReqs)) "ExpressionTool requirements should reuse existing collection."
     ]
 
 let main = 
@@ -105,4 +203,6 @@ let main =
         testInput
         testInputMutationApi
         testProcessingUnitInputOps
+        testProcessingUnitOutputOps
+        testProcessingUnitRequirementOps
     ]

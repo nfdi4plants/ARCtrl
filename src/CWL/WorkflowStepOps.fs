@@ -21,6 +21,7 @@ module WorkflowStepOps =
         step.In.Add input
 
     /// Removes all StepInputs matching the provided id.
+    /// Reassigns step.In to a new filtered ResizeArray.
     let removeInputsById (id: string) (step: WorkflowStep) =
         step.In
         |> Seq.filter (fun i -> i.Id <> id)
