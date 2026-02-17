@@ -151,33 +151,6 @@ type WorkflowStep (
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<HintEntry> option = hints
 
-    new(
-        id: string,
-        in_: ResizeArray<StepInput>,
-        out_: ResizeArray<StepOutput>,
-        run: string,
-        ?label: string,
-        ?doc: string,
-        ?scatter: ResizeArray<string>,
-        ?scatterMethod: ScatterMethod,
-        ?when_: string,
-        ?requirements: ResizeArray<Requirement>,
-        ?hints: ResizeArray<HintEntry>
-    ) =
-        WorkflowStep(
-            id,
-            in_,
-            out_,
-            RunString run,
-            ?label = label,
-            ?doc = doc,
-            ?scatter = scatter,
-            ?scatterMethod = scatterMethod,
-            ?when_ = when_,
-            ?requirements = requirements,
-            ?hints = hints
-        )
-
     member this.Id
         with get() = _id
         and set(id) = _id <- id
@@ -221,6 +194,33 @@ type WorkflowStep (
     member this.Hints
         with get() = _hints
         and set(hints) = _hints <- hints
+
+    static member fromRunPath(
+        id: string,
+        in_: ResizeArray<StepInput>,
+        out_: ResizeArray<StepOutput>,
+        runPath: string,
+        ?label: string,
+        ?doc: string,
+        ?scatter: ResizeArray<string>,
+        ?scatterMethod: ScatterMethod,
+        ?when_: string,
+        ?requirements: ResizeArray<Requirement>,
+        ?hints: ResizeArray<HintEntry>
+    ) =
+        WorkflowStep(
+            id,
+            in_,
+            out_,
+            RunString runPath,
+            ?label = label,
+            ?doc = doc,
+            ?scatter = scatter,
+            ?scatterMethod = scatterMethod,
+            ?when_ = when_,
+            ?requirements = requirements,
+            ?hints = hints
+        )
 
     /// Updates a workflow step input by index.
     static member updateInputAt (index: int) (f: StepInput -> StepInput) (step: WorkflowStep) =

@@ -239,11 +239,11 @@ let testWorkflowStepOps =
 
         testCase "updateInputAt updates immutable StepInput in-place collection" <| fun _ ->
             let step =
-                WorkflowStep(
+                WorkflowStep.fromRunPath(
                     id = "step1",
                     in_ = ResizeArray [| StepInput.create("input1", source = ResizeArray [| "old" |]) |],
                     out_ = ResizeArray [| StepOutputString "out" |],
-                    run = "./tool.cwl"
+                    runPath = "./tool.cwl"
                 )
 
             WorkflowStep.updateInputAt 0 (fun i -> { i with Source = Some (ResizeArray [| "new" |]) }) step
@@ -251,7 +251,7 @@ let testWorkflowStepOps =
 
         testCase "updateInputById updates only matching input" <| fun _ ->
             let step =
-                WorkflowStep(
+                WorkflowStep.fromRunPath(
                     id = "step1",
                     in_ =
                         ResizeArray [|
@@ -259,7 +259,7 @@ let testWorkflowStepOps =
                             StepInput.create("second", source = ResizeArray [| "b" |])
                         |],
                     out_ = ResizeArray [| StepOutputString "out" |],
-                    run = "./tool.cwl"
+                    runPath = "./tool.cwl"
                 )
 
             WorkflowStep.updateInputById "second" (fun i -> { i with ValueFrom = Some "$(self)" }) step
@@ -268,11 +268,11 @@ let testWorkflowStepOps =
 
         testCase "updateInputById with missing id is a no-op" <| fun _ ->
             let step =
-                WorkflowStep(
+                WorkflowStep.fromRunPath(
                     id = "step1",
                     in_ = ResizeArray [| StepInput.create("first"); StepInput.create("second") |],
                     out_ = ResizeArray [| StepOutputString "out" |],
-                    run = "./tool.cwl"
+                    runPath = "./tool.cwl"
                 )
 
             WorkflowStep.updateInputById "missing" (fun i -> { i with ValueFrom = Some "$(self)" }) step
@@ -281,11 +281,11 @@ let testWorkflowStepOps =
 
         testCase "addInput appends new input" <| fun _ ->
             let step =
-                WorkflowStep(
+                WorkflowStep.fromRunPath(
                     id = "step1",
                     in_ = ResizeArray [| StepInput.create("first") |],
                     out_ = ResizeArray [| StepOutputString "out" |],
-                    run = "./tool.cwl"
+                    runPath = "./tool.cwl"
                 )
 
             WorkflowStep.addInput (StepInput.create("second", valueFrom = "$(self)")) step
@@ -295,7 +295,7 @@ let testWorkflowStepOps =
 
         testCase "removeInputsById removes matching entries" <| fun _ ->
             let step =
-                WorkflowStep(
+                WorkflowStep.fromRunPath(
                     id = "step1",
                     in_ =
                         ResizeArray [|
@@ -304,7 +304,7 @@ let testWorkflowStepOps =
                             StepInput.create("dup")
                         |],
                     out_ = ResizeArray [| StepOutputString "out" |],
-                    run = "./tool.cwl"
+                    runPath = "./tool.cwl"
                 )
 
             WorkflowStep.removeInputsById "dup" step
