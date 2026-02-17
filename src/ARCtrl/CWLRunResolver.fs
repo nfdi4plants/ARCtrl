@@ -3,10 +3,12 @@ module ARCtrl.CWLRunResolver
 open ARCtrl
 open ARCtrl.FileSystem
 
-let private pathKey (path: string) : string =
+/// Normalizes a file path for use as a lookup key.
+let pathKey (path: string) : string =
     ArcPathHelper.normalizePathKey path
 
-let private getRunNodeCandidates (workflowFilePath: string) (runPath: string) : string [] =
+/// Generates candidate lookup paths for a .cwl run reference relative to a workflow file.
+let getRunNodeCandidates (workflowFilePath: string) (runPath: string) : string [] =
     if System.String.IsNullOrWhiteSpace runPath then
         [||]
     else
@@ -27,7 +29,8 @@ let private getRunNodeCandidates (workflowFilePath: string) (runPath: string) : 
             |> Array.filter (fun p -> not (System.String.IsNullOrWhiteSpace p))
             |> Array.distinct
 
-let rec private resolveWorkflowRunsRecursiveWithResolver (workflowFilePath: string) (visited: Set<string>) (workflow: CWL.CWLWorkflowDescription) (tryResolveRunPath: string -> CWL.CWLProcessingUnit option) : Set<string> =
+/// Iterates all steps in a workflow and resolves each step's run field recursively, tracking visited paths to prevent cycles.
+let rec resolveWorkflowRunsRecursiveWithResolver (workflowFilePath: string) (visited: Set<string>) (workflow: CWL.CWLWorkflowDescription) (tryResolveRunPath: string -> CWL.CWLProcessingUnit option) : Set<string> =
     let mutable visitedState = visited
     for step in workflow.Steps do
         let resolvedRun, nextVisited =
@@ -36,7 +39,8 @@ let rec private resolveWorkflowRunsRecursiveWithResolver (workflowFilePath: stri
         visitedState <- nextVisited
     visitedState
 
-and private resolveWorkflowStepRunRecursiveWithResolver (workflowFilePath: string) (visited: Set<string>) (run: CWL.WorkflowStepRun) (tryResolveRunPath: string -> CWL.CWLProcessingUnit option) : CWL.WorkflowStepRun * Set<string> =
+/// Resolves a single WorkflowStepRun, trying each candidate path against the resolver for RunString values.
+and resolveWorkflowStepRunRecursiveWithResolver (workflowFilePath: string) (visited: Set<string>) (run: CWL.WorkflowStepRun) (tryResolveRunPath: string -> CWL.CWLProcessingUnit option) : CWL.WorkflowStepRun * Set<string> =
     match run with
     | CWL.RunString runPath ->
         let candidates = getRunNodeCandidates workflowFilePath runPath
@@ -73,7 +77,15 @@ and private resolveWorkflowStepRunRecursiveWithResolver (workflowFilePath: strin
     | CWL.RunExpressionTool _ ->
         run, visited
 
-/// Resolve CWL WorkflowStep `run` references for a processing unit via path lookup.
+/// <summary>
+/// Resolves all CWL WorkflowStep run references for a processing unit by looking up
+/// run path strings in the provided resolver function. For Workflow processing units,
+/// this recursively resolves all nested step run references in-place.
+/// CommandLineTool and ExpressionTool processing units are returned unchanged.
+/// </summary>
+/// <param name="workflowFilePath">The file path of the workflow CWL file, used for resolving relative paths.</param>
+/// <param name="processingUnit">The CWL processing unit whose run references to resolve.</param>
+/// <param name="tryResolveRunPath">A function that maps a path string to an optional CWLProcessingUnit.</param>
 let resolveRunReferencesFromLookup (workflowFilePath: string) (processingUnit: CWL.CWLProcessingUnit) (tryResolveRunPath: string -> CWL.CWLProcessingUnit option) : CWL.CWLProcessingUnit =
     match processingUnit with
     | CWL.Workflow workflow ->
@@ -85,7 +97,13 @@ let resolveRunReferencesFromLookup (workflowFilePath: string) (processingUnit: C
     | CWL.ExpressionTool _ ->
         processingUnit
 
-/// Resolve a single workflow step run value via path lookup.
+/// <summary>
+/// Resolves a single workflow step run value by looking up the run path string
+/// in the provided resolver function. Returns the resolved run value.
+/// </summary>
+/// <param name="workflowFilePath">The file path of the parent workflow CWL file, used for resolving relative paths.</param>
+/// <param name="run">The WorkflowStepRun value to resolve.</param>
+/// <param name="tryResolveRunPath">A function that maps a path string to an optional CWLProcessingUnit.</param>
 let resolveWorkflowStepRunFromLookup (workflowFilePath: string) (run: CWL.WorkflowStepRun) (tryResolveRunPath: string -> CWL.CWLProcessingUnit option) : CWL.WorkflowStepRun =
     resolveWorkflowStepRunRecursiveWithResolver workflowFilePath Set.empty run tryResolveRunPath
     |> fst

@@ -7,7 +7,8 @@ open ARCtrl.CWL
 [<RequireQualifiedAccess>]
 module Adapters =
 
-    let private createCwlLookupFromInvestigation (investigation: ArcInvestigation option) =
+    /// Builds a lookup map of normalized CWL file paths to processing units from all workflows and runs in an investigation.
+    let createCwlLookupFromInvestigation (investigation: ArcInvestigation option) =
         match investigation with
         | None ->
             Map.empty
@@ -29,13 +30,15 @@ module Adapters =
             |> Seq.map (fun (path, cwl) -> ArcPathHelper.normalizePathKey path, cwl)
             |> Map.ofSeq
 
-    let private createResolver (lookup: Map<string, CWLProcessingUnit>) =
+    /// Wraps a CWL lookup map into a resolver function suitable for WorkflowGraphBuildOptions.TryResolveRunPath.
+    let createResolver (lookup: Map<string, CWLProcessingUnit>) =
         if Map.isEmpty lookup then
             None
         else
             Some (fun (path: string) -> lookup |> Map.tryFind (ArcPathHelper.normalizePathKey path))
 
-    let private createMissingDescriptionError identifier scopeType =
+    /// Creates a GraphBuildIssue for a workflow or run that has no CWL description.
+    let createMissingDescriptionError identifier scopeType =
         {
             Kind = GraphIssueKind.MissingCwlDescription
             Message = $"No CWLDescription available for {scopeType} '{identifier}'."
@@ -43,6 +46,12 @@ module Adapters =
             Reference = None
         }
 
+    /// <summary>
+    /// Converts an ArcWorkflow into a WorkflowGraph.
+    /// Returns Error with a GraphBuildIssue if the workflow has no CWL description.
+    /// Automatically creates a resolver from the parent investigation's CWL descriptions.
+    /// </summary>
+    /// <param name="workflow">The ArcWorkflow to build a graph from.</param>
     let ofWorkflow (workflow: ArcWorkflow) : Result<WorkflowGraph, GraphBuildIssue> =
         match workflow.CWLDescription with
         | None ->
@@ -57,6 +66,12 @@ module Adapters =
             Builder.buildWith options processingUnit
             |> Ok
 
+    /// <summary>
+    /// Converts an ArcRun into a WorkflowGraph.
+    /// Returns Error with a GraphBuildIssue if the run has no CWL description.
+    /// Automatically creates a resolver from the parent investigation's CWL descriptions.
+    /// </summary>
+    /// <param name="run">The ArcRun to build a graph from.</param>
     let ofRun (run: ArcRun) : Result<WorkflowGraph, GraphBuildIssue> =
         match run.CWLDescription with
         | None ->
@@ -71,6 +86,11 @@ module Adapters =
             Builder.buildWith options processingUnit
             |> Ok
 
+    /// <summary>
+    /// Builds workflow graphs for all workflows and runs in an ArcInvestigation.
+    /// Returns a WorkflowGraphIndex containing named results for each workflow and run.
+    /// </summary>
+    /// <param name="investigation">The ArcInvestigation containing the workflows and runs to graph.</param>
     let ofInvestigation (investigation: ArcInvestigation) : WorkflowGraphIndex =
         let workflowGraphs = ResizeArray()
         let runGraphs = ResizeArray()

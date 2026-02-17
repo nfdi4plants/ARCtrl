@@ -7,7 +7,8 @@ open DynamicObj
 [<RequireQualifiedAccess>]
 module Builder =
 
-    type private BuildState = {
+    /// Internal mutable state tracking nodes and edges during graph building.
+    type BuildState = {
         Graph: WorkflowGraph
         mutable NodeIds: Set<WorkflowGraphNodeId>
         mutable EdgeIds: Set<WorkflowGraphEdgeId>
@@ -15,13 +16,15 @@ module Builder =
         Options: WorkflowGraphBuildOptions
     }
 
-    type private RunResolutionResult = {
+    /// Result of resolving a CWL run reference string.
+    type RunResolutionResult = {
         ResolvedRun: WorkflowStepRun
         ResolvedFromPath: string option
         AttemptedLookup: bool
     }
 
-    let private createGraph (rootNodeId: WorkflowGraphNodeId) =
+    /// Creates an empty WorkflowGraph with the given root node ID.
+    let createGraph (rootNodeId: WorkflowGraphNodeId) =
         {
             RootProcessingUnitNodeId = rootNodeId
             Nodes = ResizeArray()
@@ -29,7 +32,8 @@ module Builder =
             Diagnostics = ResizeArray()
         }
 
-    let private createState (options: WorkflowGraphBuildOptions) (rootNodeId: WorkflowGraphNodeId) =
+    /// Creates initial build state from options and root node ID.
+    let createState (options: WorkflowGraphBuildOptions) (rootNodeId: WorkflowGraphNodeId) =
         {
             Graph = createGraph rootNodeId
             NodeIds = Set.empty
@@ -38,7 +42,8 @@ module Builder =
             Options = options
         }
 
-    let private addDiagnostic (state: BuildState) (kind: GraphIssueKind) (message: string) (scope: string option) (reference: string option) =
+    /// Appends a diagnostic issue to the graph's diagnostics list.
+    let addDiagnostic (state: BuildState) (kind: GraphIssueKind) (message: string) (scope: string option) (reference: string option) =
         state.Graph.Diagnostics.Add(
             {
                 Kind = kind
@@ -48,20 +53,24 @@ module Builder =
             }
         )
 
-    let private hasNode (state: BuildState) (nodeId: WorkflowGraphNodeId) =
+    /// Checks if a node ID is already registered in the build state.
+    let hasNode (state: BuildState) (nodeId: WorkflowGraphNodeId) =
         state.NodeIds.Contains nodeId
 
-    let private addNode (state: BuildState) (node: WorkflowGraphNode) =
+    /// Adds a node to the graph if not already present.
+    let addNode (state: BuildState) (node: WorkflowGraphNode) =
         if state.NodeIds.Contains node.Id |> not then
             state.NodeIds <- state.NodeIds.Add node.Id
             state.Graph.Nodes.Add node
 
-    let private addEdge (state: BuildState) (edge: WorkflowGraphEdge) =
+    /// Adds an edge to the graph if not already present.
+    let addEdge (state: BuildState) (edge: WorkflowGraphEdge) =
         if state.EdgeIds.Contains edge.Id |> not then
             state.EdgeIds <- state.EdgeIds.Add edge.Id
             state.Graph.Edges.Add edge
 
-    let private addEdgeByType (state: BuildState) (kind: EdgeKind) (sourceNodeId: WorkflowGraphNodeId) (targetNodeId: WorkflowGraphNodeId) (label: string option) =
+    /// Creates and adds an edge with a given kind, source, target, and optional label.
+    let addEdgeByType (state: BuildState) (kind: EdgeKind) (sourceNodeId: WorkflowGraphNodeId) (targetNodeId: WorkflowGraphNodeId) (label: string option) =
         let edge =
             {
                 Id = GraphId.edgeId kind sourceNodeId targetNodeId
@@ -72,7 +81,8 @@ module Builder =
             }
         addEdge state edge
 
-    let private createMetadata (pairs: (string * obj option) list) : DynamicObj option =
+    /// Builds a DynamicObj metadata instance from key-value pairs where values are present.
+    let createMetadata (pairs: (string * obj option) list) : DynamicObj option =
         let metadata = DynamicObj()
         let mutable hasMetadata = false
         for key, valueOpt in pairs do
@@ -84,7 +94,8 @@ module Builder =
                 ()
         if hasMetadata then Some metadata else None
 
-    let private addProcessingUnitNode
+    /// Creates and adds a processing unit node to the graph. Returns the node ID.
+    let addProcessingUnitNode
         (state: BuildState)
         (scope: string)
         (kind: ProcessingUnitKind)
@@ -106,7 +117,8 @@ module Builder =
         addNode state node
         nodeId
 
-    let private addPortNode
+    /// Creates and adds a port node (input or output) owned by a given node. Returns the node ID.
+    let addPortNode
         (state: BuildState)
         (ownerNodeId: WorkflowGraphNodeId)
         (direction: PortDirection)
@@ -126,7 +138,8 @@ module Builder =
         addNode state node
         nodeId
 
-    let private addStepNode
+    /// Creates a step node for a CWL workflow step, adds a Contains edge from the workflow. Returns the step node ID.
+    let addStepNode
         (state: BuildState)
         (scope: string)
         (workflowNodeId: WorkflowGraphNodeId)
@@ -152,27 +165,31 @@ module Builder =
         addEdgeByType state EdgeKind.Contains workflowNodeId stepNodeId None
         stepNodeId
 
-    let private addWorkflowPorts (state: BuildState) (workflowNodeId: WorkflowGraphNodeId) (workflow: CWLWorkflowDescription) =
+    /// Adds all input and output port nodes for a CWL workflow.
+    let addWorkflowPorts (state: BuildState) (workflowNodeId: WorkflowGraphNodeId) (workflow: CWLWorkflowDescription) =
         workflow.Inputs
         |> Seq.iter (fun input -> addPortNode state workflowNodeId PortDirection.Input input.Name input.Name |> ignore)
         workflow.Outputs
         |> Seq.iter (fun output -> addPortNode state workflowNodeId PortDirection.Output output.Name output.Name |> ignore)
 
-    let private addToolPorts (state: BuildState) (toolNodeId: WorkflowGraphNodeId) (tool: CWLToolDescription) =
+    /// Adds all input and output port nodes for a CWL CommandLineTool.
+    let addToolPorts (state: BuildState) (toolNodeId: WorkflowGraphNodeId) (tool: CWLToolDescription) =
         tool.Inputs
         |> Option.defaultValue (ResizeArray())
         |> Seq.iter (fun input -> addPortNode state toolNodeId PortDirection.Input input.Name input.Name |> ignore)
         tool.Outputs
         |> Seq.iter (fun output -> addPortNode state toolNodeId PortDirection.Output output.Name output.Name |> ignore)
 
-    let private addExpressionToolPorts (state: BuildState) (toolNodeId: WorkflowGraphNodeId) (tool: CWLExpressionToolDescription) =
+    /// Adds all input and output port nodes for a CWL ExpressionTool.
+    let addExpressionToolPorts (state: BuildState) (toolNodeId: WorkflowGraphNodeId) (tool: CWLExpressionToolDescription) =
         tool.Inputs
         |> Option.defaultValue (ResizeArray())
         |> Seq.iter (fun input -> addPortNode state toolNodeId PortDirection.Input input.Name input.Name |> ignore)
         tool.Outputs
         |> Seq.iter (fun output -> addPortNode state toolNodeId PortDirection.Output output.Name output.Name |> ignore)
 
-    let private addStepPorts (state: BuildState) (stepNodeId: WorkflowGraphNodeId) (step: WorkflowStep) =
+    /// Adds all input and output port nodes for a workflow step.
+    let addStepPorts (state: BuildState) (stepNodeId: WorkflowGraphNodeId) (step: WorkflowStep) =
         step.In
         |> Seq.iter (fun input -> addPortNode state stepNodeId PortDirection.Input input.Id input.Id |> ignore)
         step.Out
@@ -181,7 +198,8 @@ module Builder =
             addPortNode state stepNodeId PortDirection.Output outputId outputId |> ignore
         )
 
-    let private trimToNameCandidate (value: string) =
+    /// Strips '#' prefixes, query strings, and fragment identifiers from a reference string.
+    let trimToNameCandidate (value: string) =
         if System.String.IsNullOrWhiteSpace value then
             ""
         else
@@ -201,12 +219,14 @@ module Builder =
                 else
                     withoutHash
 
-    let private isCwlReference (runPath: string) =
+    /// Returns true if a run path ends in '.cwl'.
+    let isCwlReference (runPath: string) =
         let candidate = trimToNameCandidate runPath
         System.String.IsNullOrWhiteSpace candidate |> not
         && candidate.EndsWith(".cwl", System.StringComparison.OrdinalIgnoreCase)
 
-    let private tryBasenameNoCwlExtension (value: string) =
+    /// Extracts the basename of a path and strips the '.cwl' extension.
+    let tryBasenameNoCwlExtension (value: string) =
         let candidate = trimToNameCandidate value
         if System.String.IsNullOrWhiteSpace candidate then
             None
@@ -228,19 +248,21 @@ module Builder =
 
     /// Selects the first available processing unit display name from dynamic metadata:
     /// `name` first, then `id`; each value is normalized to a CWL basename.
-    let private tryGetProcessingUnitName (processingUnit: #DynamicObj) =
+    let tryGetProcessingUnitName (processingUnit: #DynamicObj) =
         [ "name"; "id" ]
         |> List.tryPick (fun key ->
             DynObj.tryGetTypedPropertyValue<string> key processingUnit
             |> Option.bind tryBasenameNoCwlExtension
         )
 
-    let private chooseLabel (fallback: string) (candidates: string option list) =
+    /// Picks the first non-None candidate label, or falls back to a default.
+    let chooseLabel (fallback: string) (candidates: string option list) =
         candidates
         |> List.tryPick id
         |> Option.defaultValue fallback
 
-    let private getRunPathCandidates (workflowFilePath: string option) (runPath: string) : string [] =
+    /// Generates multiple path candidates to try when resolving a run reference.
+    let getRunPathCandidates (workflowFilePath: string option) (runPath: string) : string [] =
         if System.String.IsNullOrWhiteSpace runPath then
             [||]
         else
@@ -266,7 +288,8 @@ module Builder =
                 |> Array.filter (System.String.IsNullOrWhiteSpace >> not)
                 |> Array.distinct
 
-    let private resolveRunString
+    /// Attempts to resolve a CWL run string reference to an actual CWLProcessingUnit via the configured resolver.
+    let resolveRunString
         (state: BuildState)
         (workflowFilePath: string option)
         (runPath: string)
@@ -341,7 +364,8 @@ module Builder =
                         AttemptedLookup = true
                     }
 
-    let rec private buildProcessingUnit
+    /// Recursively builds graph nodes and edges for a CWLProcessingUnit (CommandLineTool, ExpressionTool, or Workflow).
+    let rec buildProcessingUnit
         (state: BuildState)
         (scope: string)
         (workflowFilePath: string option)
@@ -422,7 +446,8 @@ module Builder =
                 buildWorkflowSteps state scope workflowFilePath nodeId workflow
             nodeId
 
-    and private buildRunNode
+    /// Resolves and builds the graph representation of a workflow step's run field.
+    and buildRunNode
         (state: BuildState)
         (runScope: string)
         (stepNodeId: WorkflowGraphNodeId)
@@ -554,7 +579,8 @@ module Builder =
                     None
                 run, badNodeId
 
-    and private wireStepInputs
+    /// Connects step input ports to their sources (workflow inputs or other step outputs).
+    and wireStepInputs
         (state: BuildState)
         (scope: string)
         (workflowNodeId: WorkflowGraphNodeId)
@@ -602,7 +628,8 @@ module Builder =
                                 (Some scope)
                                 (Some source)
 
-    and private wireWorkflowOutputs
+    /// Connects workflow output ports to their sources (step outputs or workflow inputs).
+    and wireWorkflowOutputs
         (state: BuildState)
         (scope: string)
         (workflowNodeId: WorkflowGraphNodeId)
@@ -643,7 +670,8 @@ module Builder =
                             (Some scope)
                             (Some outputSource)
 
-    and private buildWorkflowSteps
+    /// Iterates over all workflow steps, creating nodes, resolving run targets, and wiring data flows.
+    and buildWorkflowSteps
         (state: BuildState)
         (scope: string)
         (workflowFilePath: string option)
@@ -663,6 +691,13 @@ module Builder =
 
         wireWorkflowOutputs state scope workflowNodeId workflow
 
+    /// <summary>
+    /// Builds a WorkflowGraph from a CWLProcessingUnit using the specified build options.
+    /// This is the primary entry point for graph construction with full control over scope,
+    /// run resolution, nested workflow expansion, and strictness.
+    /// </summary>
+    /// <param name="options">Configuration controlling root scope, run resolution, nested workflow expansion, and strictness.</param>
+    /// <param name="processingUnit">The CWL processing unit (Workflow, CommandLineTool, or ExpressionTool) to build the graph from.</param>
     let buildWith (options: WorkflowGraphBuildOptions) (processingUnit: CWLProcessingUnit) : WorkflowGraph =
         let rootScope = GraphId.normalizeSegment options.RootScope
         let rootScope = if System.String.IsNullOrWhiteSpace rootScope then "root" else rootScope
@@ -671,5 +706,10 @@ module Builder =
         buildProcessingUnit state rootScope options.RootWorkflowFilePath None true processingUnit |> ignore
         state.Graph
 
+    /// <summary>
+    /// Builds a WorkflowGraph from a CWLProcessingUnit using default build options.
+    /// Convenience wrapper around buildWith with WorkflowGraphBuildOptions.defaultOptions.
+    /// </summary>
+    /// <param name="processingUnit">The CWL processing unit to build the graph from.</param>
     let build (processingUnit: CWLProcessingUnit) : WorkflowGraph =
         buildWith WorkflowGraphBuildOptions.defaultOptions processingUnit

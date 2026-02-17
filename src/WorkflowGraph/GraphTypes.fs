@@ -84,6 +84,13 @@ type WorkflowGraphIndex = {
 [<RequireQualifiedAccess>]
 module GraphBuildIssue =
 
+/// <summary>
+/// Creates a GraphBuildIssue record.
+/// </summary>
+/// <param name="kind">The category of the issue.</param>
+/// <param name="message">A human-readable description of the issue.</param>
+/// <param name="scope">The optional scope (e.g., workflow or step identifier) where the issue occurred.</param>
+/// <param name="reference">The optional reference string that caused the issue.</param>
     let create (kind: GraphIssueKind) (message: string) (scope: string option) (reference: string option) =
         {
             Kind = kind
@@ -95,6 +102,7 @@ module GraphBuildIssue =
 [<RequireQualifiedAccess>]
 module EdgeKind =
 
+    /// Returns a string key representation for an EdgeKind.
     let asKey kind =
         match kind with
         | EdgeKind.Contains -> "contains"
@@ -106,6 +114,7 @@ module EdgeKind =
 [<RequireQualifiedAccess>]
 module PortDirection =
 
+    /// Returns "in" for Input and "out" for Output.
     let asKey direction =
         match direction with
         | PortDirection.Input -> "in"
@@ -114,6 +123,7 @@ module PortDirection =
 [<RequireQualifiedAccess>]
 module GraphId =
 
+    /// Trims and normalizes a path segment for use in graph IDs.
     let normalizeSegment (value: string) =
         if System.String.IsNullOrWhiteSpace value then
             ""
@@ -121,6 +131,7 @@ module GraphId =
             value.Trim()
             |> ArcPathHelper.normalizePathKey
 
+    /// Combines a parent scope and child into a normalized hierarchical path.
     let childScope (scope: string) (child: string) =
         let normalizedScope = normalizeSegment scope
         let normalizedChild = normalizeSegment child
@@ -132,16 +143,20 @@ module GraphId =
             ArcPathHelper.combine normalizedScope normalizedChild
             |> ArcPathHelper.normalizePathKey
 
+    /// Creates a processing unit node ID with the format "unit:{scope}".
     let unitNodeId (scope: string) : WorkflowGraphNodeId =
         $"unit:{normalizeSegment scope}"
 
+    /// Creates a step node ID with the format "step:{scope}/{stepId}".
     let stepNodeId (scope: string) (stepId: string) : WorkflowGraphNodeId =
         let normalizedStepId = normalizeSegment stepId
         $"step:{normalizeSegment scope}/{normalizedStepId}"
 
+    /// Creates a port node ID with the format "port:{ownerNodeId}/{in|out}/{portId}".
     let portNodeId (ownerNodeId: WorkflowGraphNodeId) (direction: PortDirection) (portId: string) : WorkflowGraphNodeId =
         let normalizedPortId = normalizeSegment portId
         $"port:{ownerNodeId}/{PortDirection.asKey direction}/{normalizedPortId}"
 
+    /// Creates an edge ID with the format "edge:{kind}:{source}->{target}".
     let edgeId (kind: EdgeKind) (sourceNodeId: WorkflowGraphNodeId) (targetNodeId: WorkflowGraphNodeId) : WorkflowGraphEdgeId =
         $"edge:{EdgeKind.asKey kind}:{sourceNodeId}->{targetNodeId}"

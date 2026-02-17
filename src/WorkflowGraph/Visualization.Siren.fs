@@ -22,8 +22,14 @@ module WorkflowGraphVisualizationOptions =
 [<RequireQualifiedAccess>]
 module WorkflowGraphSiren =
 
-    let private mermaidSpecials = [| '/'; '\\'; '['; ']'; '{'; '}'; '('; ')'; '>'; '<'; '|' |]
+    /// Characters that have special meaning in Mermaid syntax and require quoting.
+    let mermaidSpecials = [| '/'; '\\'; '['; ']'; '{'; '}'; '('; ')'; '>'; '<'; '|' |]
 
+    /// <summary>
+    /// Replaces special characters in node IDs with underscores for valid Mermaid syntax.
+    /// Prepends '_' if the ID starts with a digit.
+    /// </summary>
+    /// <param name="id">The raw node ID to sanitize.</param>
     let sanitizeMermaidId (id: string) =
         if System.String.IsNullOrWhiteSpace id then
             "node"
@@ -48,7 +54,7 @@ module WorkflowGraphSiren =
 
     /// Wraps labels in Mermaid double quotes when they contain characters that
     /// can be interpreted as Mermaid shape/link syntax. Double quotes are escaped as #quot;.
-    let private quoteMermaidLabel (label: string) =
+    let quoteMermaidLabel (label: string) =
         if System.String.IsNullOrWhiteSpace label then
             label
         elif label.IndexOfAny(mermaidSpecials) >= 0 || label.Contains("\"") then
@@ -57,7 +63,8 @@ module WorkflowGraphSiren =
         else
             label
 
-    let private nodeToElement (node: WorkflowGraphNode) =
+    /// Maps a WorkflowGraphNode to a Mermaid flowchart element with shape based on NodeKind.
+    let nodeToElement (node: WorkflowGraphNode) =
         let nodeId = sanitizeMermaidId node.Id
         let label = quoteMermaidLabel node.Label
         match node.Kind with
@@ -78,13 +85,15 @@ module WorkflowGraphSiren =
         | NodeKind.PortNode PortDirection.Output ->
             flowchart.nodeStadium(nodeId, label)
 
-    let private tryGetStepRunLookup (graph: WorkflowGraph) =
+    /// Builds a Map from step node IDs to their run target node IDs using Calls edges.
+    let tryGetStepRunLookup (graph: WorkflowGraph) =
         graph.Edges
         |> Seq.filter (fun e -> e.Kind = EdgeKind.Calls)
         |> Seq.map (fun e -> e.SourceNodeId, e.TargetNodeId)
         |> Map.ofSeq
 
-    let private addStyles
+    /// Adds Mermaid CSS class definitions and applies styling to node groups by kind.
+    let addStyles
         (elements: ResizeArray<FlowchartElement>)
         (processingUnitNodes: WorkflowGraphNode [])
         (rootInputNodes: WorkflowGraphNode [])
@@ -131,6 +140,13 @@ module WorkflowGraphSiren =
         if outputIds.Length > 0 then
             elements.Add(flowchart.``class``(outputIds, "wg_final_output"))
 
+    /// <summary>
+    /// Transforms a WorkflowGraph into a Siren flowchart representation.
+    /// Groups root inputs and outputs into subgraphs, renders processing unit nodes,
+    /// and remaps edges from step/port level to processing-unit level for a cleaner view.
+    /// </summary>
+    /// <param name="options">Visualization options controlling direction, styling, and Contains link rendering.</param>
+    /// <param name="graph">The workflow graph to visualize.</param>
     let fromGraphWithOptions (options: WorkflowGraphVisualizationOptions) (graph: WorkflowGraph) =
         let elements = ResizeArray<FlowchartElement>()
         let mutable edgeKeys = Set.empty<string>
@@ -303,30 +319,61 @@ module WorkflowGraphSiren =
 
         siren.flowchart(options.Direction, elements)
 
+    /// <summary>
+    /// Transforms a WorkflowGraph into a Siren flowchart using default visualization options.
+    /// </summary>
+    /// <param name="graph">The workflow graph to visualize.</param>
     let fromGraph (graph: WorkflowGraph) =
         fromGraphWithOptions WorkflowGraphVisualizationOptions.defaultOptions graph
 
+    /// <summary>
+    /// Builds a graph from a raw CWLProcessingUnit with default options and converts it directly to a Siren flowchart.
+    /// </summary>
+    /// <param name="processingUnit">The CWL processing unit to visualize.</param>
     let fromProcessingUnit (processingUnit: CWLProcessingUnit) =
         processingUnit
         |> Builder.build
         |> fromGraph
 
+    /// <summary>
+    /// Builds a graph from a CWLProcessingUnit with custom build options and converts it to a Siren flowchart.
+    /// </summary>
+    /// <param name="buildOptions">The build options controlling graph construction and run resolution.</param>
+    /// <param name="processingUnit">The CWL processing unit to visualize.</param>
     let fromProcessingUnitResolved (buildOptions: WorkflowGraphBuildOptions) (processingUnit: CWLProcessingUnit) =
         processingUnit
         |> Builder.buildWith buildOptions
         |> fromGraph
 
+    /// <summary>
+    /// Converts a WorkflowGraph to a Mermaid text string using the specified visualization options.
+    /// </summary>
+    /// <param name="options">Visualization options controlling direction, styling, and Contains link rendering.</param>
+    /// <param name="graph">The workflow graph to render.</param>
     let toMermaidWithOptions (options: WorkflowGraphVisualizationOptions) (graph: WorkflowGraph) =
         graph
         |> fromGraphWithOptions options
         |> siren.write
 
+    /// <summary>
+    /// Converts a WorkflowGraph to a Mermaid text string using default visualization options.
+    /// </summary>
+    /// <param name="graph">The workflow graph to render.</param>
     let toMermaid (graph: WorkflowGraph) =
         toMermaidWithOptions WorkflowGraphVisualizationOptions.defaultOptions graph
 
+    /// <summary>
+    /// Converts a WorkflowGraph to a Markdown-fenced Mermaid code block using the specified visualization options.
+    /// </summary>
+    /// <param name="options">Visualization options controlling direction, styling, and Contains link rendering.</param>
+    /// <param name="graph">The workflow graph to render.</param>
     let toMarkdownWithOptions (options: WorkflowGraphVisualizationOptions) (graph: WorkflowGraph) =
         let mermaid = toMermaidWithOptions options graph
         $"```mermaid\n{mermaid}\n```"
 
+    /// <summary>
+    /// Converts a WorkflowGraph to a Markdown-fenced Mermaid code block using default visualization options.
+    /// </summary>
+    /// <param name="graph">The workflow graph to render.</param>
     let toMarkdown (graph: WorkflowGraph) =
         toMarkdownWithOptions WorkflowGraphVisualizationOptions.defaultOptions graph

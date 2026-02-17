@@ -11,10 +11,17 @@ type ParsedSourceReference = {
 [<RequireQualifiedAccess>]
 module ReferenceParsing =
 
-    let private trimHashPrefix (value: string) =
+    /// Strips a leading '#' prefix from a CWL reference string.
+    let trimHashPrefix (value: string) =
         let trimmed = value.Trim()
         if trimmed.StartsWith "#" then trimmed.Substring(1) else trimmed
 
+    /// <summary>
+    /// Parses a CWL source reference string into its step and port components.
+    /// A reference like "step1/output_file" is parsed into StepId=Some "step1", PortId="output_file".
+    /// A simple reference like "input_file" is parsed into StepId=None, PortId="input_file".
+    /// </summary>
+    /// <param name="source">The CWL source reference string to parse.</param>
     let parseSourceReference (source: string) : ParsedSourceReference =
         if System.String.IsNullOrWhiteSpace source then
             {
@@ -44,6 +51,10 @@ module ReferenceParsing =
                     Raw = source
                 }
 
+    /// <summary>
+    /// Extracts the output ID string from a StepOutput discriminated union value.
+    /// </summary>
+    /// <param name="output">The StepOutput to extract the ID from.</param>
     let extractStepOutputId (output: StepOutput) : string =
         match output with
         | StepOutputString id -> id

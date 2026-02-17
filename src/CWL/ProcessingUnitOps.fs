@@ -3,12 +3,15 @@ namespace ARCtrl.CWL
 [<RequireQualifiedAccess>]
 module ProcessingUnitOps =
 
+    /// Returns the tool's inputs or an empty ResizeArray if None.
     let getToolInputsOrEmpty (tool: CWLToolDescription) =
         tool.Inputs |> Option.defaultValue (ResizeArray())
 
+    /// Returns the expression tool's inputs or an empty ResizeArray if None.
     let getExpressionToolInputsOrEmpty (tool: CWLExpressionToolDescription) =
         tool.Inputs |> Option.defaultValue (ResizeArray())
 
+    /// Returns the tool's inputs, creating and assigning a new empty ResizeArray if None.
     let getOrCreateToolInputs (tool: CWLToolDescription) =
         match tool.Inputs with
         | Some inputs -> inputs
@@ -17,6 +20,7 @@ module ProcessingUnitOps =
             tool.Inputs <- Some inputs
             inputs
 
+    /// Returns the expression tool's inputs, creating and assigning a new empty ResizeArray if None.
     let getOrCreateExpressionToolInputs (tool: CWLExpressionToolDescription) =
         match tool.Inputs with
         | Some inputs -> inputs
