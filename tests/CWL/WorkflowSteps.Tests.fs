@@ -232,9 +232,9 @@ let testWorkflowStep =
 
 let testWorkflowStepOps =
     testList "WorkflowStepOps" [
-        testCase "StepInputOps.updateAt throws for out-of-range index" <| fun _ ->
+        testCase "StepInput.updateAt throws for out-of-range index" <| fun _ ->
             let inputs = ResizeArray [| StepInput.create("input1") |]
-            let act () = StepInputOps.updateAt 5 id inputs
+            let act () = StepInput.updateAt 5 id inputs
             Expect.throws act "Out-of-range StepInput index should raise invalidArg."
 
         testCase "updateInputAt updates immutable StepInput in-place collection" <| fun _ ->
@@ -246,8 +246,7 @@ let testWorkflowStepOps =
                     run = "./tool.cwl"
                 )
 
-            WorkflowStepOps.updateInputAt 0 (fun i -> { i with Source = Some (ResizeArray [| "new" |]) }) step
-
+            WorkflowStep.updateInputAt 0 (fun i -> { i with Source = Some (ResizeArray [| "new" |]) }) step
             Expect.sequenceEqual step.In.[0].Source.Value (ResizeArray [| "new" |]) "Input source should be updated."
 
         testCase "updateInputById updates only matching input" <| fun _ ->
@@ -263,8 +262,7 @@ let testWorkflowStepOps =
                     run = "./tool.cwl"
                 )
 
-            WorkflowStepOps.updateInputById "second" (fun i -> { i with ValueFrom = Some "$(self)" }) step
-
+            WorkflowStep.updateInputById "second" (fun i -> { i with ValueFrom = Some "$(self)" }) step
             Expect.isNone step.In.[0].ValueFrom "First input should remain unchanged."
             Expect.equal step.In.[1].ValueFrom (Some "$(self)") "Second input should be updated."
 
@@ -277,8 +275,7 @@ let testWorkflowStepOps =
                     run = "./tool.cwl"
                 )
 
-            WorkflowStepOps.updateInputById "missing" (fun i -> { i with ValueFrom = Some "$(self)" }) step
-
+            WorkflowStep.updateInputById "missing" (fun i -> { i with ValueFrom = Some "$(self)" }) step
             Expect.isNone step.In.[0].ValueFrom "First input should remain unchanged."
             Expect.isNone step.In.[1].ValueFrom "Second input should remain unchanged."
 
@@ -291,8 +288,7 @@ let testWorkflowStepOps =
                     run = "./tool.cwl"
                 )
 
-            WorkflowStepOps.addInput (StepInput.create("second", valueFrom = "$(self)")) step
-
+            WorkflowStep.addInput (StepInput.create("second", valueFrom = "$(self)")) step
             Expect.equal step.In.Count 2 "A new input should be appended."
             Expect.equal step.In.[1].Id "second" "Appended input should be the second entry."
             Expect.equal step.In.[1].ValueFrom (Some "$(self)") "Appended input content should be preserved."
@@ -311,8 +307,7 @@ let testWorkflowStepOps =
                     run = "./tool.cwl"
                 )
 
-            WorkflowStepOps.removeInputsById "dup" step
-
+            WorkflowStep.removeInputsById "dup" step
             Expect.equal step.In.Count 1 "Only one input should remain."
             Expect.equal step.In.[0].Id "keep" "Non-matching input should remain."
     ]

@@ -96,6 +96,12 @@ type StepInput = {
           LoadListing = loadListing
           Label = label }
 
+    /// Updates a StepInput at the given index.
+    static member updateAt (index: int) (f: StepInput -> StepInput) (inputs: ResizeArray<StepInput>) =
+        if index < 0 || index >= inputs.Count then
+            invalidArg (nameof index) $"StepInput index {index} is out of range."
+        inputs.[index] <- f inputs.[index]
+
 [<AttachMembers>]
 type StepOutputParameter = {
     Id: string
@@ -215,5 +221,27 @@ type WorkflowStep (
     member this.Hints
         with get() = _hints
         and set(hints) = _hints <- hints
+
+    /// Updates a workflow step input by index.
+    static member updateInputAt (index: int) (f: StepInput -> StepInput) (step: WorkflowStep) =
+        StepInput.updateAt index f step.In
+
+    /// Adds a new StepInput to a workflow step.
+    static member addInput (input: StepInput) (step: WorkflowStep) =
+        step.In.Add input
+
+    /// Removes all StepInputs matching the provided id.
+    /// Reassigns step.In to a new filtered ResizeArray.
+    static member removeInputsById (id: string) (step: WorkflowStep) =
+        step.In
+        |> Seq.filter (fun i -> i.Id <> id)
+        |> ResizeArray
+        |> fun remaining -> step.In <- remaining
+
+    /// Updates the first StepInput matching the provided id.
+    static member updateInputById (id: string) (f: StepInput -> StepInput) (step: WorkflowStep) =
+        step.In
+        |> Seq.tryFindIndex (fun i -> i.Id = id)
+        |> Option.iter (fun i -> StepInput.updateAt i f step.In)
 
 
