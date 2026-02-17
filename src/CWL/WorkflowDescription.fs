@@ -11,7 +11,7 @@ type CWLWorkflowDescription(
     outputs: ResizeArray<CWLOutput>,
     ?cwlVersion: string,
     ?requirements: ResizeArray<Requirement>,
-    ?hints: ResizeArray<Requirement>,
+    ?hints: ResizeArray<HintEntry>,
     ?metadata: DynamicObj,
     ?label: string,
     ?doc: string
@@ -23,7 +23,7 @@ type CWLWorkflowDescription(
     let mutable _inputs: ResizeArray<CWLInput> = inputs
     let mutable _outputs: ResizeArray<CWLOutput> = outputs
     let mutable _requirements: ResizeArray<Requirement> option = requirements
-    let mutable _hints: ResizeArray<Requirement> option = hints
+    let mutable _hints: ResizeArray<HintEntry> option = hints
     let mutable _metadata: DynamicObj option = metadata
     let mutable _label: string option = label
     let mutable _doc: string option = doc

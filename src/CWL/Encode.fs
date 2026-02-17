@@ -97,6 +97,42 @@ module Encode =
         | Include path -> yMap [ "$include", Encode.string path ]
         | Import path -> yMap [ "$import", Encode.string path ]
 
+    let private normalizeEnvValueForEncode (envValue: string) =
+        if envValue = "true" || envValue = "false" then "\"" + envValue + "\"" else envValue
+
+    /// Encode EnvVarRequirement using compact map shorthand (envName -> envValue).
+    let encodeEnvVarRequirementCompactMap (envs: ResizeArray<EnvironmentDef>) : YAMLElement =
+        let envDefMap =
+            envs
+            |> Seq.map (fun env -> env.EnvName, Encode.string (normalizeEnvValueForEncode env.EnvValue))
+            |> Seq.toList
+            |> yMap
+        [ "class", Encode.string "EnvVarRequirement"
+          "envDef", envDefMap ]
+        |> yMap
+
+    /// Encode SoftwareRequirement using compact map shorthand.
+    let encodeSoftwareRequirementCompactMap (packages: ResizeArray<SoftwarePackage>) : YAMLElement =
+        let encodePackageValue (package: SoftwarePackage) =
+            match package.Version, package.Specs with
+            | None, None -> yMap []
+            | None, Some specs -> specs |> Seq.map Encode.string |> Seq.toList |> YAMLElement.Sequence
+            | _ ->
+                []
+                |> appendOpt "version" (fun values -> values |> Seq.map Encode.string |> Seq.toList |> YAMLElement.Sequence) package.Version
+                |> appendOpt "specs" (fun values -> values |> Seq.map Encode.string |> Seq.toList |> YAMLElement.Sequence) package.Specs
+                |> yMap
+
+        let packagesMap =
+            packages
+            |> Seq.map (fun package -> package.Package, encodePackageValue package)
+            |> Seq.toList
+            |> yMap
+
+        [ "class", Encode.string "SoftwareRequirement"
+          "packages", packagesMap ]
+        |> yMap
+
     let encodeLabel (label:string) : (string * YAMLElement) =
         "label", Encode.string label
 
@@ -328,7 +364,10 @@ module Encode =
 
     let encodeRequirement (r:Requirement) : YAMLElement =
         match r with
-        | InlineJavascriptRequirement -> [ "class", Encode.string "InlineJavascriptRequirement" ] |> yMap
+        | InlineJavascriptRequirement value ->
+            [ "class", Encode.string "InlineJavascriptRequirement" ]
+            |> appendOpt "expressionLib" (fun expressionLib -> expressionLib |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence) value.ExpressionLib
+            |> yMap
         | SchemaDefRequirement types ->
             [ "class", Encode.string "SchemaDefRequirement";
               "types", (types |> Seq.map encodeSchemaDefRequirementType |> List.ofSeq |> YAMLElement.Sequence) ] |> yMap
@@ -352,9 +391,30 @@ module Encode =
               "packages", (pkgs |> Seq.map encodePkg |> List.ofSeq |> YAMLElement.Sequence) ] |> yMap
         | LoadListingRequirement loadListing ->
             [ "class", Encode.string "LoadListingRequirement"
-              "loadListing", Encode.string loadListing.LoadListing ]
+              "loadListing", Encode.string (LoadListingEnum.toCwlString loadListing.LoadListing) ]
             |> yMap
         | InitialWorkDirRequirement listing ->
+            let encodeDynamicObjWithClass (className: string) (dynObj: DynamicObj) =
+                let dynamicPairs =
+                    dynObj.GetProperties(false)
+                    |> Seq.choose (fun kvp ->
+                        match kvp.Value with
+                        | :? string as s -> Some (kvp.Key, Encode.string s)
+                        | :? bool as b -> Some (kvp.Key, yBool b)
+                        | :? int as i -> Some (kvp.Key, Encode.int i)
+                        | :? int64 as i -> Some (kvp.Key, Encode.string (string i))
+                        | :? float as f -> Some (kvp.Key, Encode.float f)
+                        | :? YAMLElement as y -> Some (kvp.Key, y)
+                        | _ -> None
+                    )
+                    |> Seq.toList
+
+                let hasClass = dynamicPairs |> List.exists (fun (k, _) -> k = "class")
+                if hasClass then
+                    yMap dynamicPairs
+                else
+                    yMap (("class", Encode.string className) :: dynamicPairs)
+
             let encodeInitialWorkDirEntry = function
                 | DirentEntry d ->
                     [ ]
@@ -364,12 +424,16 @@ module Encode =
                     |> yMap
                 | StringEntry s ->
                     encodeSchemaSaladString s
+                | FileEntry file ->
+                    encodeDynamicObjWithClass "File" file
+                | DirectoryEntry directory ->
+                    encodeDynamicObjWithClass "Directory" directory
 
             [ "class", Encode.string "InitialWorkDirRequirement";
               "listing", (listing |> Seq.map encodeInitialWorkDirEntry |> List.ofSeq |> YAMLElement.Sequence) ] |> yMap
         | EnvVarRequirement envs ->
             let encodeEnv (e:EnvironmentDef) =
-                let v = if e.EnvValue = "true" || e.EnvValue = "false" then "\"" + e.EnvValue + "\"" else e.EnvValue
+                let v = normalizeEnvValueForEncode e.EnvValue
                 [ "envName", Encode.string e.EnvName; "envValue", Encode.string v ] |> yMap
             [ "class", Encode.string "EnvVarRequirement";
               "envDef", (envs |> Seq.map encodeEnv |> List.ofSeq |> YAMLElement.Sequence) ] |> yMap
@@ -380,6 +444,7 @@ module Encode =
                 |> Seq.choose (fun kvp ->
                     match kvp.Value with
                     | :? int as i -> Some (kvp.Key, Encode.int i)
+                    | :? int64 as i -> Some (kvp.Key, YAMLElement.Value { Value = string i; Comment = None })
                     | :? float as f -> Some (kvp.Key, Encode.float f)
                     | :? string as s -> Some (kvp.Key, Encode.string s)
                     | :? bool as b -> Some (kvp.Key, yBool b)
@@ -402,13 +467,18 @@ module Encode =
         | ToolTimeLimitRequirement tl ->
             let timelimit =
                 match tl with
-                | ToolTimeLimitSeconds seconds -> Encode.float seconds
+                | ToolTimeLimitSeconds seconds -> YAMLElement.Value { Value = string seconds; Comment = None }
                 | ToolTimeLimitExpression expression -> Encode.string expression
             [ "class", Encode.string "ToolTimeLimit"; "timelimit", timelimit ] |> yMap
         | SubworkflowFeatureRequirement -> [ "class", Encode.string "SubworkflowFeatureRequirement" ] |> yMap
         | ScatterFeatureRequirement -> [ "class", Encode.string "ScatterFeatureRequirement" ] |> yMap
         | MultipleInputFeatureRequirement -> [ "class", Encode.string "MultipleInputFeatureRequirement" ] |> yMap
         | StepInputExpressionRequirement -> [ "class", Encode.string "StepInputExpressionRequirement" ] |> yMap
+
+    let encodeHintEntry (hint: HintEntry) : YAMLElement =
+        match hint with
+        | KnownHint requirement -> encodeRequirement requirement
+        | UnknownHint unknownHint -> unknownHint.Raw
 
     // ------------------------------
     // Workflow step encoders
@@ -512,7 +582,7 @@ module Encode =
         let withHints =
             match td.Hints with
             | Some h when h.Count > 0 ->
-                basePairs @ [ "hints", (h |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
+                basePairs @ [ "hints", (h |> Seq.map encodeHintEntry |> List.ofSeq |> YAMLElement.Sequence) ]
             | _ -> basePairs
         let withRequirements =
             match td.Requirements with
@@ -558,7 +628,7 @@ module Encode =
         let withHints =
             match et.Hints with
             | Some h when h.Count > 0 ->
-                basePairs @ [ "hints", (h |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
+                basePairs @ [ "hints", (h |> Seq.map encodeHintEntry |> List.ofSeq |> YAMLElement.Sequence) ]
             | _ -> basePairs
         let withRequirements =
             match et.Requirements with
@@ -601,7 +671,7 @@ module Encode =
         let withHints =
             match wd.Hints with
             | Some h when h.Count > 0 ->
-                basePairs @ [ "hints", (h |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
+                basePairs @ [ "hints", (h |> Seq.map encodeHintEntry |> List.ofSeq |> YAMLElement.Sequence) ]
             | _ -> basePairs
         let withRequirements =
             match wd.Requirements with
@@ -641,7 +711,7 @@ module Encode =
             |> appendOpt "when" Encode.string ws.When_
         let withHints =
             match ws.Hints with
-            | Some h when h.Count > 0 -> basePairs @ [ "hints", (h |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
+            | Some h when h.Count > 0 -> basePairs @ [ "hints", (h |> Seq.map encodeHintEntry |> List.ofSeq |> YAMLElement.Sequence) ]
             | _ -> basePairs
         let withReq =
             match ws.Requirements with

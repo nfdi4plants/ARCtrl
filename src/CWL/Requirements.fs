@@ -1,6 +1,7 @@
 namespace ARCtrl.CWL
 
 open DynamicObj
+open YAMLicious.YAMLiciousTypes
 
 type DockerRequirement = {
         DockerPull: string option
@@ -60,8 +61,28 @@ type EnvironmentDef = {
     EnvValue: string
 }
 
+type LoadListingEnum =
+    | NoListing
+    | ShallowListing
+    | DeepListing
+
+[<RequireQualifiedAccess>]
+module LoadListingEnum =
+
+    let toCwlString = function
+        | NoListing -> "no_listing"
+        | ShallowListing -> "shallow_listing"
+        | DeepListing -> "deep_listing"
+
+    let tryParse (value: string) =
+        match value with
+        | "no_listing" -> Some NoListing
+        | "shallow_listing" -> Some ShallowListing
+        | "deep_listing" -> Some DeepListing
+        | _ -> None
+
 type LoadListingRequirementValue = {
-    LoadListing: string
+    LoadListing: LoadListingEnum
 }
 
 type WorkReuseRequirementValue = {
@@ -77,7 +98,7 @@ type InplaceUpdateRequirementValue = {
 }
 
 type ToolTimeLimitValue =
-    | ToolTimeLimitSeconds of float
+    | ToolTimeLimitSeconds of int64
     | ToolTimeLimitExpression of string
 
 /// "min" is the minimum amount of a resource that must be reserved to schedule a job. If "min" cannot be satisfied, the job should not be run.
@@ -113,10 +134,21 @@ type ResourceRequirementInstance (
 type InitialWorkDirEntry =
     | DirentEntry of DirentInstance
     | StringEntry of SchemaSaladString
+    | FileEntry of FileInstance
+    | DirectoryEntry of DirectoryInstance
+
+type InlineJavascriptRequirementValue = {
+    ExpressionLib: ResizeArray<string> option
+}
+
+type HintUnknownValue = {
+    Class: string option
+    Raw: YAMLElement
+}
 
 type Requirement =
     /// Indicates that the workflow platform must support inline Javascript expressions.
-    | InlineJavascriptRequirement
+    | InlineJavascriptRequirement of InlineJavascriptRequirementValue
     /// This field consists of an array of type definitions which must be used when interpreting the inputs and outputs fields.
     | SchemaDefRequirement of ResizeArray<SchemaDefRequirementType>
     /// Indicates that a workflow component should be run in a Docker or Docker-compatible (such as Singularity and udocker) container environment and specifies how to fetch or build the image.
@@ -151,9 +183,33 @@ type Requirement =
     /// Indicate that the workflow platform must support the valueFrom field of WorkflowStepInput.
     | StepInputExpressionRequirement
 
+type HintEntry =
+    | KnownHint of Requirement
+    | UnknownHint of HintUnknownValue
+
+[<RequireQualifiedAccess>]
+module HintEntry =
+
+    /// Wraps a known requirement as a known hint entry.
+    let ofRequirement (requirement: Requirement) =
+        KnownHint requirement
+
+    /// Wraps all requirements as known hint entries.
+    let ofRequirements (requirements: ResizeArray<Requirement>) =
+        requirements
+        |> Seq.map KnownHint
+        |> ResizeArray
+
+    /// Returns the underlying requirement for KnownHint values.
+    let tryAsRequirement = function
+        | KnownHint requirement -> Some requirement
+        | UnknownHint _ -> None
+
 module RequirementDefaults =
 
-    let loadListingNoListing = LoadListingRequirement { LoadListing = "no_listing" }
+    let inlineJavascriptRequirement = InlineJavascriptRequirement { ExpressionLib = None }
+
+    let loadListingNoListing = LoadListingRequirement { LoadListing = NoListing }
 
     let workReuseEnabled = WorkReuseRequirement { EnableReuse = true }
 

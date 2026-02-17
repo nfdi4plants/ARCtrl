@@ -129,7 +129,7 @@ type WorkflowStep (
     ?scatterMethod: ScatterMethod,
     ?when_: string,
     ?requirements: ResizeArray<Requirement>,
-    ?hints: ResizeArray<Requirement>
+    ?hints: ResizeArray<HintEntry>
 ) =
     inherit DynamicObj ()
 
@@ -143,7 +143,7 @@ type WorkflowStep (
     let mutable _scatterMethod: ScatterMethod option = scatterMethod
     let mutable _when: string option = when_
     let mutable _requirements: ResizeArray<Requirement> option = requirements
-    let mutable _hints: ResizeArray<Requirement> option = hints
+    let mutable _hints: ResizeArray<HintEntry> option = hints
 
     new(
         id: string,
@@ -156,7 +156,7 @@ type WorkflowStep (
         ?scatterMethod: ScatterMethod,
         ?when_: string,
         ?requirements: ResizeArray<Requirement>,
-        ?hints: ResizeArray<Requirement>
+        ?hints: ResizeArray<HintEntry>
     ) =
         WorkflowStep(
             id,
