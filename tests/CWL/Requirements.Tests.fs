@@ -1,4 +1,4 @@
-module Tests.Requirements
+﻿module Tests.Requirements
 
 open ARCtrl.CWL
 open YAMLicious
@@ -124,7 +124,7 @@ outputs: {}"""
   - class: InlineJavascriptRequirement"""
                 let reqs = decodeRequirements yaml
                 let requirement = findRequirement reqs (function InlineJavascriptRequirement _ -> true | _ -> false)
-                Expect.equal requirement RequirementDefaults.inlineJavascriptRequirement "Class-only form should decode to empty payload"
+                Expect.equal requirement Requirement.defaultInlineJavascriptRequirement "Class-only form should decode to empty payload"
 
             testCase "Decode expressionLib form" <| fun _ ->
                 let yaml = """requirements:
@@ -152,7 +152,7 @@ outputs: {}"""
                 Expect.stringContains encoded "expressionLib" "Encoded output should include expressionLib"
 
             testCase "Encode omits expressionLib when absent" <| fun _ ->
-                let encoded = Encode.encodeRequirement RequirementDefaults.inlineJavascriptRequirement |> Encode.writeYaml
+                let encoded = Encode.encodeRequirement Requirement.defaultInlineJavascriptRequirement |> Encode.writeYaml
                 Expect.stringContains encoded "class: InlineJavascriptRequirement" "Encoded output should include class"
                 Expect.isFalse (encoded.Contains("expressionLib")) "Encoded output should omit expressionLib when absent"
 
@@ -1101,3 +1101,4 @@ let main =
         testRequirementEncode
         testInitialWorkDirFileDirectoryEntries
     ]
+

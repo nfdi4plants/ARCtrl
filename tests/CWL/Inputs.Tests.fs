@@ -176,7 +176,7 @@ let testProcessingUnitRequirementOps =
         testCase "getRequirements returns existing collection for all variants" <| fun _ ->
             let toolReqs = ResizeArray [| NetworkAccessRequirement { NetworkAccess = true } |]
             let workflowReqs = ResizeArray [| SubworkflowFeatureRequirement |]
-            let expressionReqs = ResizeArray [| RequirementDefaults.inlineJavascriptRequirement |]
+            let expressionReqs = ResizeArray [| Requirement.defaultInlineJavascriptRequirement |]
 
             let toolActual =
                 CWLToolDescription(outputs = ResizeArray(), requirements = toolReqs)
@@ -229,7 +229,7 @@ let testProcessingUnitHintOps =
             let workflowHints = CWLWorkflowDescription.getOrCreateHints workflow
             let expressionHints = CWLExpressionToolDescription.getOrCreateHints expressionTool
 
-            toolHints.Add(KnownHint RequirementDefaults.inlineJavascriptRequirement)
+            toolHints.Add(KnownHint Requirement.defaultInlineJavascriptRequirement)
             workflowHints.Add(UnknownHint { Class = Some "acme:Hint"; Raw = Decode.read "class: acme:Hint" })
             expressionHints.Add(KnownHint (NetworkAccessRequirement { NetworkAccess = true }))
 
@@ -240,7 +240,7 @@ let testProcessingUnitHintOps =
         testCase "getKnownHints drops unknown hints" <| fun _ ->
             let hints =
                 ResizeArray [|
-                    KnownHint RequirementDefaults.inlineJavascriptRequirement
+                    KnownHint Requirement.defaultInlineJavascriptRequirement
                     UnknownHint { Class = Some "acme:Hint"; Raw = Decode.read "class: acme:Hint" }
                     KnownHint (WorkReuseRequirement { EnableReuse = true })
                 |]

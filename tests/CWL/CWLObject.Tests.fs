@@ -366,7 +366,7 @@ let testExpressionTool =
             let et = Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolWithRequirementsFile
             Expect.equal et.CWLVersion "v1.2" ""
             let requirements = Expect.wantSome et.Requirements "Requirements should be present"
-            Expect.equal requirements.[0] RequirementDefaults.inlineJavascriptRequirement ""
+            Expect.equal requirements.[0] Requirement.defaultInlineJavascriptRequirement ""
             let inputs = Expect.wantSome et.Inputs "Inputs should be present"
             Expect.isTrue (inputs.Count > 0) "Should have at least one input"
             Expect.isTrue (et.Outputs.Count > 0) "Should have at least one output"

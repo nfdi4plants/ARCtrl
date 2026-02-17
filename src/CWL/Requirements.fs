@@ -82,17 +82,33 @@ type LoadListingRequirementValue = {
     LoadListing: LoadListingEnum
 }
 
+    with
+    static member defaultNoListing =
+        { LoadListing = NoListing }
+
 type WorkReuseRequirementValue = {
     EnableReuse: bool
 }
+
+    with
+    static member defaultEnabled =
+        { EnableReuse = true }
 
 type NetworkAccessRequirementValue = {
     NetworkAccess: bool
 }
 
+    with
+    static member defaultEnabled =
+        { NetworkAccess = true }
+
 type InplaceUpdateRequirementValue = {
     InplaceUpdate: bool
 }
+
+    with
+    static member defaultEnabled =
+        { InplaceUpdate = true }
 
 type ToolTimeLimitValue =
     | ToolTimeLimitSeconds of int64
@@ -170,6 +186,10 @@ type InlineJavascriptRequirementValue = {
     ExpressionLib: ResizeArray<string> option
 }
 
+    with
+    static member defaultEmpty =
+        { ExpressionLib = None }
+
 type HintUnknownValue = {
     Class: string option
     Raw: YAMLElement
@@ -212,6 +232,25 @@ type Requirement =
     /// Indicate that the workflow platform must support the valueFrom field of WorkflowStepInput.
     | StepInputExpressionRequirement
 
+    with
+    static member defaultInlineJavascriptRequirement =
+        InlineJavascriptRequirement InlineJavascriptRequirementValue.defaultEmpty
+
+    static member defaultLoadListingNoListing =
+        LoadListingRequirement LoadListingRequirementValue.defaultNoListing
+
+    static member defaultWorkReuseEnabled =
+        WorkReuseRequirement WorkReuseRequirementValue.defaultEnabled
+
+    static member defaultNetworkAccessEnabled =
+        NetworkAccessRequirement NetworkAccessRequirementValue.defaultEnabled
+
+    static member defaultInplaceUpdateEnabled =
+        InplaceUpdateRequirement InplaceUpdateRequirementValue.defaultEnabled
+
+    static member defaultToolTimeLimitSeconds(seconds: int64) =
+        ToolTimeLimitRequirement (ToolTimeLimitSeconds seconds)
+
 type HintEntry =
     | KnownHint of Requirement
     | UnknownHint of HintUnknownValue
@@ -231,17 +270,4 @@ type HintEntry =
         | KnownHint requirement -> Some requirement
         | UnknownHint _ -> None
 
-module RequirementDefaults =
-
-    let inlineJavascriptRequirement = InlineJavascriptRequirement { ExpressionLib = None }
-
-    let loadListingNoListing = LoadListingRequirement { LoadListing = NoListing }
-
-    let workReuseEnabled = WorkReuseRequirement { EnableReuse = true }
-
-    let networkAccessEnabled = NetworkAccessRequirement { NetworkAccess = true }
-
-    let inplaceUpdateEnabled = InplaceUpdateRequirement { InplaceUpdate = true }
-
-    let toolTimeLimitSeconds seconds = ToolTimeLimitRequirement (ToolTimeLimitSeconds seconds)
 
