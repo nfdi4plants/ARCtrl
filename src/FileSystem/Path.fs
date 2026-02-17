@@ -43,13 +43,13 @@ let split(path: string) =
     path.Split(seperators, enum<StringSplitOptions>(3))
     |> Array.filter (fun p -> p <> "" && p <> ".")
 
-let private hasLeadingSeparator (path: string) =
+let hasLeadingSeparator (path: string) =
     path.Length > 0 && (path.[0] = PathSeperator || path.[0] = PathSeperatorWindows)
 
-let private isUncPath (path: string) =
+let isUncPath (path: string) =
     path.StartsWith("//") || path.StartsWith(@"\\")
 
-let private tryGetDrivePrefix (path: string) =
+let tryGetDrivePrefix (path: string) =
     if
         path.Length > 2
         && System.Char.IsLetter(path.[0])
@@ -60,7 +60,7 @@ let private tryGetDrivePrefix (path: string) =
     else
         None
 
-let private splitWithPrefix (path: string) : string option * string [] =
+let splitWithPrefix (path: string) : string option * string [] =
     let trimmed = path.Trim()
     match tryGetDrivePrefix trimmed with
     | Some drivePrefix ->
@@ -73,12 +73,12 @@ let private splitWithPrefix (path: string) : string option * string [] =
     | None ->
         None, split trimmed
 
-let private normalizeRootPrefix (prefix: string) =
+let normalizeRootPrefix (prefix: string) =
     if prefix = "//" then "//"
     elif prefix.EndsWith(":") then $"{prefix}/"
     else "/"
 
-let private buildPathFromPrefixAndSegments (prefixOpt: string option) (segments: string []) : string =
+let buildPathFromPrefixAndSegments (prefixOpt: string option) (segments: string []) : string =
     if segments.Length = 0 then
         match prefixOpt with
         | Some prefix -> normalizeRootPrefix prefix

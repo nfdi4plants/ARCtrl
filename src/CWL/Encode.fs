@@ -83,7 +83,7 @@ module Encode =
     // ------------------------------
     // Helper append functions for ordered construction
     // ------------------------------
-    let inline private appendOpt name (encoder:'a -> YAMLElement) (value:'a option) acc =
+    let inline appendOpt name (encoder:'a -> YAMLElement) (value:'a option) acc =
         match value with
         | Some v -> acc @ [name, encoder v]
         | None -> acc
@@ -97,7 +97,7 @@ module Encode =
         | Include path -> yMap [ "$include", Encode.string path ]
         | Import path -> yMap [ "$import", Encode.string path ]
 
-    let private normalizeEnvValueForEncode (envValue: string) =
+    let normalizeEnvValueForEncode (envValue: string) =
         if envValue = "true" || envValue = "false" then "\"" + envValue + "\"" else envValue
 
     /// Encode EnvVarRequirement using compact map shorthand (envName -> envValue).
@@ -139,7 +139,7 @@ module Encode =
     let encodeDoc (doc:string) : (string * YAMLElement) =
         "doc", Encode.string (normalizeDocString doc)
 
-    let inline private appendOptPair pairOpt acc =
+    let inline appendOptPair pairOpt acc =
         match pairOpt with
         | Some pair -> acc @ [pair]
         | None -> acc
@@ -738,7 +738,7 @@ module Encode =
         // Use whitespace=2 to match fixtures (assumed)
         YAMLicious.Writer.write element (Some (fun c -> { c with Whitespace = 2 }))
 
-    let private getObjectPairs (element: YAMLElement) : (string * YAMLElement) list =
+    let getObjectPairs (element: YAMLElement) : (string * YAMLElement) list =
         match element with
         | YAMLElement.Object mappings ->
             mappings
@@ -748,7 +748,7 @@ module Encode =
             )
         | _ -> []
 
-    let private renderTopLevelElement (baseKeys: string list) (orderedSectionKeys: string list) (element: YAMLElement) : string =
+    let renderTopLevelElement (baseKeys: string list) (orderedSectionKeys: string list) (element: YAMLElement) : string =
         let section (pairs:(string*YAMLElement) list) =
             pairs
             |> yMap

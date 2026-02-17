@@ -14,7 +14,7 @@ module ResizeArray =
 
 module Decode =
 
-    let private normalizeYamlInput (yaml: string) =
+    let normalizeYamlInput (yaml: string) =
         let normalized =
             if isNull yaml then "" else yaml.Replace("\r\n", "\n")
         let lines = normalized.Split('\n')
@@ -27,12 +27,12 @@ module Decode =
         |> String.concat "\n"
         |> fun text -> text.TrimEnd()
 
-    let private removeFullLineComments (yaml: string) =
+    let removeFullLineComments (yaml: string) =
         yaml.Split('\n')
         |> Array.filter (fun line -> line.TrimStart().StartsWith("#") |> not)
         |> String.concat "\n"
 
-    let rec private removeYamlComments (yamlElement: YAMLElement) : YAMLElement =
+    let rec removeYamlComments (yamlElement: YAMLElement) : YAMLElement =
         match yamlElement with
         | YAMLElement.Object elements ->
             elements
@@ -60,7 +60,7 @@ module Decode =
 
     /// Determines if an exception represents a recoverable decoding error.
     /// Returns true for schema mismatches; false for system errors that should propagate.
-    let private isRecoverableDecodingError (ex: exn) : bool =
+    let isRecoverableDecodingError (ex: exn) : bool =
         match ex with
         // Type-based matching for known exception types
         | :? System.Collections.Generic.KeyNotFoundException -> true
@@ -472,7 +472,7 @@ module Decode =
         )
 
 
-    let private tryDecodeLegacyDockerFileMap (value: YAMLElement) : SchemaSaladString option =
+    let tryDecodeLegacyDockerFileMap (value: YAMLElement) : SchemaSaladString option =
         try
             let dict = Decode.object (fun get -> get.Overflow.FieldList []) value
             if dict.Count = 0 then
@@ -641,7 +641,7 @@ module Decode =
             | None -> raise (System.ArgumentException($"Invalid loadListing value '{loadListingValue}'. Expected one of: no_listing, shallow_listing, deep_listing."))
         { LoadListing = loadListing }
 
-    let private decodeResourceScalar (element: YAMLElement) : obj =
+    let decodeResourceScalar (element: YAMLElement) : obj =
         let tryGetScalarString = function
             | YAMLElement.Value value
             | YAMLElement.Object [YAMLElement.Value value] ->
@@ -660,7 +660,7 @@ module Decode =
         | None ->
             box (decodeStringOrExpression element)
 
-    let private optionalResourceField (get: Decode.IGetters) (fieldName: string) : obj option =
+    let optionalResourceField (get: Decode.IGetters) (fieldName: string) : obj option =
         get.Optional.Field fieldName id
         |> Option.map decodeResourceScalar
 
@@ -677,7 +677,7 @@ module Decode =
             optionalResourceField get "outdirMax"
         )
         
-    let private schemaDefRequirementTypeDecoder (value: YAMLElement) : SchemaDefRequirementType =
+    let schemaDefRequirementTypeDecoder (value: YAMLElement) : SchemaDefRequirementType =
         let dict = Decode.object (fun get -> get.Overflow.FieldList []) value
         if dict.ContainsKey "name" then
             {
@@ -800,7 +800,7 @@ module Decode =
             // INVALID CWL REQUIREMENTS  
             | other -> raise (System.ArgumentException($"Invalid CWL requirements syntax: {other}"))
 
-    let private tryDecodeKnownRequirementFromElement (element: YAMLElement) : Requirement option =
+    let tryDecodeKnownRequirementFromElement (element: YAMLElement) : Requirement option =
         try
             Some (Decode.object (fun get ->
                 let cls = get.Required.Field "class" Decode.string
@@ -819,7 +819,7 @@ module Decode =
                 ()
             None
 
-    let private decodeHintElement (element: YAMLElement) : HintEntry =
+    let decodeHintElement (element: YAMLElement) : HintEntry =
         match tryDecodeKnownRequirementFromElement element with
         | Some requirement -> KnownHint requirement
         | None ->
@@ -1068,7 +1068,7 @@ module Decode =
             |> Option.map decodeStringOrExpression
         )
 
-    let private decodeStepInputFromValue (id: string) (value: YAMLElement) (allowScalarSource: bool) : StepInput =
+    let decodeStepInputFromValue (id: string) (value: YAMLElement) (allowScalarSource: bool) : StepInput =
         let scalarSource =
             if allowScalarSource then
                 stringOrStringArrayDecoder value
@@ -1093,7 +1093,7 @@ module Decode =
             Label = stringOptionFieldDecoder "label" value
         }
 
-    let private decodeStepInputsFromMap (value: YAMLElement) : ResizeArray<StepInput> =
+    let decodeStepInputsFromMap (value: YAMLElement) : ResizeArray<StepInput> =
         let dict = Decode.object (fun get -> get.Overflow.FieldList []) value
         [|
             for key in dict.Keys do
@@ -1101,11 +1101,11 @@ module Decode =
         |]
         |> ResizeArray
 
-    let private decodeStepInputFromArrayItem (item: YAMLElement) : StepInput =
+    let decodeStepInputFromArrayItem (item: YAMLElement) : StepInput =
         let id = stringFieldDecoder "id" item
         decodeStepInputFromValue id item false
 
-    let private decodeStepInputsFromArray (items: YAMLElement list) : ResizeArray<StepInput> =
+    let decodeStepInputsFromArray (items: YAMLElement list) : ResizeArray<StepInput> =
         items
         |> List.map decodeStepInputFromArrayItem
         |> ResizeArray
@@ -1119,7 +1119,7 @@ module Decode =
             | _ ->
                 decodeStepInputsFromMap value
 
-    let private decodeStepOutputItem (value: YAMLElement) : StepOutput =
+    let decodeStepOutputItem (value: YAMLElement) : StepOutput =
         match value with
         | YAMLElement.Object [YAMLElement.Value v]
         | YAMLElement.Value v ->
@@ -1155,7 +1155,7 @@ module Decode =
     let labelDecoder: (YAMLiciousTypes.YAMLElement -> string option) =
         Decode.object (fun get -> get.Optional.Field "label" Decode.string)
     
-    let private hasField (fieldName: string) (yamlElement: YAMLElement) : bool =
+    let hasField (fieldName: string) (yamlElement: YAMLElement) : bool =
         match yamlElement with
         | YAMLElement.Object fields ->
             fields
@@ -1165,7 +1165,7 @@ module Decode =
             )
         | _ -> false
 
-    let private withDefaultCwlVersion (defaultCwlVersion: string) (yamlElement: YAMLElement) : YAMLElement =
+    let withDefaultCwlVersion (defaultCwlVersion: string) (yamlElement: YAMLElement) : YAMLElement =
         match yamlElement with
         | YAMLElement.Object fields when hasField "cwlVersion" yamlElement ->
             yamlElement
@@ -1190,7 +1190,7 @@ module Decode =
         | _ ->
             raise (System.ArgumentException($"Unsupported run value for workflow step: %A{runValue}"))
 
-    and private decodeWorkflowStepFromValueWithId (defaultCwlVersion: string) (stepId: string) (value: YAMLElement) : WorkflowStep =
+    and decodeWorkflowStepFromValueWithId (defaultCwlVersion: string) (stepId: string) (value: YAMLElement) : WorkflowStep =
         let runValue = Decode.object (fun get' -> get'.Required.Field "run" id) value
         let run = workflowStepRunDecoder defaultCwlVersion runValue
         let inputs =
@@ -1224,7 +1224,7 @@ module Decode =
             wfStep.Hints <- hints
         wfStep
 
-    and private decodeWorkflowStepFromArrayItem (defaultCwlVersion: string) (item: YAMLElement) : WorkflowStep =
+    and decodeWorkflowStepFromArrayItem (defaultCwlVersion: string) (item: YAMLElement) : WorkflowStep =
         let stepId = stringFieldDecoder "id" item
         decodeWorkflowStepFromValueWithId defaultCwlVersion stepId item
 

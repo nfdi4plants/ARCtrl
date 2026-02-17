@@ -194,14 +194,14 @@ type WorkflowConversion =
 
     static member expressionToolDescriptionTypeName = "ExpressionToolDescription"
 
-    static member private runToIdentifier (run : CWL.WorkflowStepRun) : string =
+    static member runToIdentifier (run : CWL.WorkflowStepRun) : string =
         match run with
         | CWL.RunString runPath -> runPath
         | CWL.RunCommandLineTool _ -> "inline:CommandLineTool"
         | CWL.RunWorkflow _ -> "inline:Workflow"
         | CWL.RunExpressionTool _ -> "inline:ExpressionTool"
 
-    static member private tryDecodeProcessingUnitFromGraph(resolvedRunPath: string, ?graph: LDGraph, ?context: LDContext) : CWL.CWLProcessingUnit option =
+    static member tryDecodeProcessingUnitFromGraph(resolvedRunPath: string, ?graph: LDGraph, ?context: LDContext) : CWL.CWLProcessingUnit option =
         let tryDecodeWorkflowProtocol (protocol: LDNode) =
             try
                 Some (

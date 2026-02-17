@@ -15,13 +15,13 @@ open ARCtrl.Helper.Regex.ActivePatterns
 type RunConversion = 
 
     /// Helper function to format CWLType for display in error messages
-    static member private formatCWLType (type_ : CWL.CWLType) =
+    static member formatCWLType (type_ : CWL.CWLType) =
         CWL.Encode.encodeCWLType type_
         |> CWL.Encode.writeYaml
         |> fun s -> s.Trim()
 
     /// Helper function to check if a CWLType is or contains an Array type
-    static member private isArrayType (type_ : CWL.CWLType) =
+    static member isArrayType (type_ : CWL.CWLType) =
         match type_ with
         | CWL.CWLType.Array _ -> true
         | CWL.CWLType.Union types -> types |> Seq.exists (function CWL.CWLType.Array _ -> true | _ -> false)
