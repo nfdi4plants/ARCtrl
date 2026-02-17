@@ -78,7 +78,7 @@ let testInputMutationApi =
     ]
 
 let testProcessingUnitInputOps =
-    testList "ProcessingUnitOps Inputs" [
+    testList "CWLProcessingUnit Inputs" [
         testCase "getOrCreateToolInputs creates missing collection" <| fun _ ->
             let tool = CWLToolDescription(outputs = ResizeArray())
             let created = CWLToolDescription.getOrCreateInputs tool
@@ -125,7 +125,7 @@ let testProcessingUnitInputOps =
     ]
 
 let testProcessingUnitOutputOps =
-    testList "ProcessingUnitOps Outputs" [
+    testList "CWLProcessingUnit Outputs" [
         testCase "getOutputs returns CommandLineTool outputs" <| fun _ ->
             let outputs = ResizeArray [| CWLOutput("toolOut") |]
             let pu = CWLProcessingUnit.CommandLineTool (CWLToolDescription(outputs = outputs))
@@ -152,7 +152,7 @@ let testProcessingUnitOutputOps =
     ]
 
 let testProcessingUnitRequirementOps =
-    testList "ProcessingUnitOps Requirements" [
+    testList "CWLProcessingUnit Requirements" [
         testCase "getRequirements normalizes missing requirements to empty for all variants" <| fun _ ->
             let toolReqs =
                 CWLToolDescription(outputs = ResizeArray())
@@ -199,7 +199,7 @@ let testProcessingUnitRequirementOps =
     ]
 
 let testProcessingUnitHintOps =
-    testList "ProcessingUnitOps Hints" [
+    testList "CWLProcessingUnit Hints" [
         testCase "getHints normalizes missing hints to empty for all variants" <| fun _ ->
             let toolHints =
                 CWLToolDescription(outputs = ResizeArray())

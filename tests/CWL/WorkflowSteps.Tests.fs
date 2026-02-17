@@ -179,7 +179,7 @@ let testWorkflowStep =
     ]
 
 let testWorkflowStepOps =
-    testList "WorkflowStepOps" [
+    testList "WorkflowStep Operations" [
         testCase "StepInput.updateAt throws for out-of-range index" <| fun _ ->
             let inputs = ResizeArray [| StepInput.create("input1") |]
             let act () = StepInput.updateAt 5 id inputs

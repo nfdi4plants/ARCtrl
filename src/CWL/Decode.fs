@@ -857,8 +857,8 @@ module Decode =
     /// Access the hints field and decode the YAMLElements into a HintEntry array
     let hintsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<HintEntry> option) =
         Decode.object (fun get ->
-            let requirements = get.Optional.Field "hints" hintArrayDecoder
-            requirements
+            let hints = get.Optional.Field "hints" hintArrayDecoder
+            hints
         )
 
     /// Decode a YAMLElement into an InputBinding

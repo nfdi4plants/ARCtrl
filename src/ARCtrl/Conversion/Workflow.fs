@@ -141,11 +141,11 @@ type WorkflowConversion =
             ?glob = Seq.tryPick (fun n -> LDPropertyValue.tryGetAsGlob(n, ?context = context)) identifiers
         )
 
-    static member decomposeOutputFromFormalParameter(inp : LDNode, ?context : LDContext, ?graph : LDGraph) =
-        let t = inp.AdditionalType |> Seq.exactlyOne |> WorkflowConversion.decomposeAdditionalType
-        let binding = WorkflowConversion.decomposeOutputBindings(LDFormalParameter.getIdentifiers(inp, ?context = context, ?graph = graph), ?context = context)
-        let optional = LDFormalParameter.tryGetValueRequiredAsBoolean(inp, ?context = context) |> Option.map (not)
-        let name = LDFormalParameter.getNameAsString(inp, ?context = context)
+    static member decomposeOutputFromFormalParameter(outp : LDNode, ?context : LDContext, ?graph : LDGraph) =
+        let t = outp.AdditionalType |> Seq.exactlyOne |> WorkflowConversion.decomposeAdditionalType
+        let binding = WorkflowConversion.decomposeOutputBindings(LDFormalParameter.getIdentifiers(outp, ?context = context, ?graph = graph), ?context = context)
+        let optional = LDFormalParameter.tryGetValueRequiredAsBoolean(outp, ?context = context) |> Option.map (not)
+        let name = LDFormalParameter.getNameAsString(outp, ?context = context)
         CWL.CWLOutput(name, t, binding)
 
     static member composeComputationalTool (tool : Process.Component) =
@@ -180,18 +180,7 @@ type WorkflowConversion =
     /// </summary>
     /// <param name="pu">The processing unit to inspect.</param>
     static member getInputParametersFromProcessingUnit (pu : CWL.CWLProcessingUnit) =
-        match pu with
-        | CWL.CommandLineTool tool ->
-            match tool.Inputs with
-            | Some inputs -> inputs |> ResizeArray.map (fun i -> i)
-            | None -> ResizeArray []
-        | CWL.Workflow wf -> 
-            wf.Inputs |> ResizeArray.map (fun i -> i)
-        | CWL.ExpressionTool et ->
-            // ExpressionTool inputs are optional in the CWL model; normalize to an empty list.
-            match et.Inputs with
-            | Some inputs -> inputs |> ResizeArray.map (fun i -> i)
-            | None -> ResizeArray []
+        CWL.CWLProcessingUnit.getInputs pu
 
     
     static member toolDescriptionTypeName = "ToolDescription"
