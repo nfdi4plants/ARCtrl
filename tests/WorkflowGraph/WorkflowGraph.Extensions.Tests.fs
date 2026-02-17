@@ -2,7 +2,6 @@ module Tests.WorkflowGraphExtensions
 
 open ARCtrl
 open ARCtrl.WorkflowGraph
-open ARCtrl.WorkflowGraphExtensions
 open TestingUtils
 open CrossAsync
 open Tests.WorkflowGraphTestHelpers
