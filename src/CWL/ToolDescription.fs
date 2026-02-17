@@ -62,3 +62,37 @@ type CWLToolDescription (
     member this.Doc
         with get() = _doc
         and set(doc) = _doc <- doc
+
+    /// Returns the tool's inputs or an empty ResizeArray if None.
+    static member getInputsOrEmpty (tool: CWLToolDescription) =
+        tool.Inputs |> Option.defaultValue (ResizeArray())
+
+    /// Returns the tool's outputs.
+    static member getOutputs (tool: CWLToolDescription) =
+        tool.Outputs
+
+    /// Returns the tool's inputs, creating and assigning a new empty ResizeArray if None.
+    static member getOrCreateInputs (tool: CWLToolDescription) =
+        match tool.Inputs with
+        | Some inputs -> inputs
+        | None ->
+            let inputs = ResizeArray()
+            tool.Inputs <- Some inputs
+            inputs
+
+    /// Returns the tool's requirements or an empty ResizeArray if None.
+    static member getRequirementsOrEmpty (tool: CWLToolDescription) =
+        tool.Requirements |> Option.defaultValue (ResizeArray())
+
+    /// Returns the tool's hints or an empty ResizeArray if None.
+    static member getHintsOrEmpty (tool: CWLToolDescription) =
+        tool.Hints |> Option.defaultValue (ResizeArray())
+
+    /// Returns the tool's hints, creating and assigning a new empty ResizeArray if None.
+    static member getOrCreateHints (tool: CWLToolDescription) =
+        match tool.Hints with
+        | Some hints -> hints
+        | None ->
+            let hints = ResizeArray()
+            tool.Hints <- Some hints
+            hints

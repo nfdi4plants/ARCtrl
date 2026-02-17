@@ -5,6 +5,40 @@ type CWLProcessingUnit =
     | Workflow of CWLWorkflowDescription
     | ExpressionTool of CWLExpressionToolDescription
 
+    /// Returns normalized inputs for all CWL processing unit variants.
+    static member getInputs (processingUnit: CWLProcessingUnit) : ResizeArray<CWLInput> =
+        match processingUnit with
+        | CommandLineTool tool -> CWLToolDescription.getInputsOrEmpty tool
+        | Workflow workflow -> CWLWorkflowDescription.getInputs workflow
+        | ExpressionTool tool -> CWLExpressionToolDescription.getInputsOrEmpty tool
+
+    /// Returns outputs for all CWL processing unit variants.
+    static member getOutputs (processingUnit: CWLProcessingUnit) : ResizeArray<CWLOutput> =
+        match processingUnit with
+        | CommandLineTool tool -> CWLToolDescription.getOutputs tool
+        | Workflow workflow -> CWLWorkflowDescription.getOutputs workflow
+        | ExpressionTool tool -> CWLExpressionToolDescription.getOutputs tool
+
+    /// Returns requirements for all CWL processing unit variants.
+    static member getRequirements (processingUnit: CWLProcessingUnit) : ResizeArray<Requirement> =
+        match processingUnit with
+        | CommandLineTool tool -> CWLToolDescription.getRequirementsOrEmpty tool
+        | Workflow workflow -> CWLWorkflowDescription.getRequirementsOrEmpty workflow
+        | ExpressionTool tool -> CWLExpressionToolDescription.getRequirementsOrEmpty tool
+
+    /// Returns hints for all CWL processing unit variants.
+    static member getHints (processingUnit: CWLProcessingUnit) : ResizeArray<HintEntry> =
+        match processingUnit with
+        | CommandLineTool tool -> CWLToolDescription.getHintsOrEmpty tool
+        | Workflow workflow -> CWLWorkflowDescription.getHintsOrEmpty workflow
+        | ExpressionTool tool -> CWLExpressionToolDescription.getHintsOrEmpty tool
+
+    /// Returns known requirement hints only, dropping unknown extension hints.
+    static member getKnownHints (processingUnit: CWLProcessingUnit) : ResizeArray<Requirement> =
+        CWLProcessingUnit.getHints processingUnit
+        |> Seq.choose HintEntry.tryAsRequirement
+        |> ResizeArray
+
 [<RequireQualifiedAccess>]
 module WorkflowStepRunOps =
 

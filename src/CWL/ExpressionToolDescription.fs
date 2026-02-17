@@ -62,3 +62,37 @@ type CWLExpressionToolDescription (
     member this.Doc
         with get() = _doc
         and set(doc) = _doc <- doc
+
+    /// Returns the expression tool's inputs or an empty ResizeArray if None.
+    static member getInputsOrEmpty (tool: CWLExpressionToolDescription) =
+        tool.Inputs |> Option.defaultValue (ResizeArray())
+
+    /// Returns expression tool outputs.
+    static member getOutputs (tool: CWLExpressionToolDescription) =
+        tool.Outputs
+
+    /// Returns the expression tool's inputs, creating and assigning a new empty ResizeArray if None.
+    static member getOrCreateInputs (tool: CWLExpressionToolDescription) =
+        match tool.Inputs with
+        | Some inputs -> inputs
+        | None ->
+            let inputs = ResizeArray()
+            tool.Inputs <- Some inputs
+            inputs
+
+    /// Returns the expression tool's requirements or an empty ResizeArray if None.
+    static member getRequirementsOrEmpty (tool: CWLExpressionToolDescription) =
+        tool.Requirements |> Option.defaultValue (ResizeArray())
+
+    /// Returns the expression tool's hints or an empty ResizeArray if None.
+    static member getHintsOrEmpty (tool: CWLExpressionToolDescription) =
+        tool.Hints |> Option.defaultValue (ResizeArray())
+
+    /// Returns the expression tool's hints, creating and assigning a new empty ResizeArray if None.
+    static member getOrCreateHints (tool: CWLExpressionToolDescription) =
+        match tool.Hints with
+        | Some hints -> hints
+        | None ->
+            let hints = ResizeArray()
+            tool.Hints <- Some hints
+            hints

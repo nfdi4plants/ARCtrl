@@ -81,7 +81,7 @@ let testProcessingUnitInputOps =
     testList "ProcessingUnitOps Inputs" [
         testCase "getOrCreateToolInputs creates missing collection" <| fun _ ->
             let tool = CWLToolDescription(outputs = ResizeArray())
-            let created = ProcessingUnitOps.getOrCreateToolInputs tool
+            let created = CWLToolDescription.getOrCreateInputs tool
             created.Add(CWLInput("x"))
             Expect.isSome tool.Inputs "Inputs should be initialized."
             Expect.equal tool.Inputs.Value.Count 1 "Created collection should be stored on tool."
@@ -89,12 +89,12 @@ let testProcessingUnitInputOps =
         testCase "getInputs normalizes CommandLineTool option to empty list" <| fun _ ->
             let tool = CWLToolDescription(outputs = ResizeArray())
             let pu = CWLProcessingUnit.CommandLineTool tool
-            let inputs = ProcessingUnitOps.getInputs pu
+            let inputs = CWLProcessingUnit.getInputs pu
             Expect.equal inputs.Count 0 "Missing inputs should normalize to empty ResizeArray."
 
         testCase "getOrCreateExpressionToolInputs creates missing collection" <| fun _ ->
             let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)")
-            let created = ProcessingUnitOps.getOrCreateExpressionToolInputs expressionTool
+            let created = CWLExpressionToolDescription.getOrCreateInputs expressionTool
             created.Add(CWLInput("arg"))
             Expect.isSome expressionTool.Inputs "Inputs should be initialized."
             Expect.equal expressionTool.Inputs.Value.Count 1 "Created collection should be stored on expression tool."
@@ -102,25 +102,25 @@ let testProcessingUnitInputOps =
         testCase "getToolInputsOrEmpty returns existing collection when inputs are present" <| fun _ ->
             let existing = ResizeArray [| CWLInput("existing") |]
             let tool = CWLToolDescription(outputs = ResizeArray(), inputs = existing)
-            let actual = ProcessingUnitOps.getToolInputsOrEmpty tool
+            let actual = CWLToolDescription.getInputsOrEmpty tool
             Expect.isTrue (obj.ReferenceEquals(actual, existing)) "Existing tool input collection should be returned unchanged."
 
         testCase "getExpressionToolInputsOrEmpty returns existing collection when inputs are present" <| fun _ ->
             let existing = ResizeArray [| CWLInput("existing") |]
             let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)", inputs = existing)
-            let actual = ProcessingUnitOps.getExpressionToolInputsOrEmpty expressionTool
+            let actual = CWLExpressionToolDescription.getInputsOrEmpty expressionTool
             Expect.isTrue (obj.ReferenceEquals(actual, existing)) "Existing expression tool input collection should be returned unchanged."
 
         testCase "getOrCreateToolInputs returns existing collection when already initialized" <| fun _ ->
             let existing = ResizeArray [| CWLInput("existing") |]
             let tool = CWLToolDescription(outputs = ResizeArray(), inputs = existing)
-            let actual = ProcessingUnitOps.getOrCreateToolInputs tool
+            let actual = CWLToolDescription.getOrCreateInputs tool
             Expect.isTrue (obj.ReferenceEquals(actual, existing)) "Existing collection should be reused."
 
         testCase "getOrCreateExpressionToolInputs returns existing collection when already initialized" <| fun _ ->
             let existing = ResizeArray [| CWLInput("existing") |]
             let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)", inputs = existing)
-            let actual = ProcessingUnitOps.getOrCreateExpressionToolInputs expressionTool
+            let actual = CWLExpressionToolDescription.getOrCreateInputs expressionTool
             Expect.isTrue (obj.ReferenceEquals(actual, existing)) "Existing collection should be reused."
     ]
 
@@ -129,7 +129,7 @@ let testProcessingUnitOutputOps =
         testCase "getOutputs returns CommandLineTool outputs" <| fun _ ->
             let outputs = ResizeArray [| CWLOutput("toolOut") |]
             let pu = CWLProcessingUnit.CommandLineTool (CWLToolDescription(outputs = outputs))
-            let actual = ProcessingUnitOps.getOutputs pu
+            let actual = CWLProcessingUnit.getOutputs pu
             Expect.isTrue (obj.ReferenceEquals(actual, outputs)) "CommandLineTool outputs should be returned unchanged."
 
         testCase "getOutputs returns Workflow outputs" <| fun _ ->
@@ -141,13 +141,13 @@ let testProcessingUnitOutputOps =
                     outputs = outputs
                 )
             let pu = CWLProcessingUnit.Workflow workflow
-            let actual = ProcessingUnitOps.getOutputs pu
+            let actual = CWLProcessingUnit.getOutputs pu
             Expect.isTrue (obj.ReferenceEquals(actual, outputs)) "Workflow outputs should be returned unchanged."
 
         testCase "getOutputs returns ExpressionTool outputs" <| fun _ ->
             let outputs = ResizeArray [| CWLOutput("expOut") |]
             let pu = CWLProcessingUnit.ExpressionTool (CWLExpressionToolDescription(outputs = outputs, expression = "$(null)"))
-            let actual = ProcessingUnitOps.getOutputs pu
+            let actual = CWLProcessingUnit.getOutputs pu
             Expect.isTrue (obj.ReferenceEquals(actual, outputs)) "ExpressionTool outputs should be returned unchanged."
     ]
 
@@ -157,17 +157,17 @@ let testProcessingUnitRequirementOps =
             let toolReqs =
                 CWLToolDescription(outputs = ResizeArray())
                 |> CWLProcessingUnit.CommandLineTool
-                |> ProcessingUnitOps.getRequirements
+                |> CWLProcessingUnit.getRequirements
 
             let workflowReqs =
                 CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray())
                 |> CWLProcessingUnit.Workflow
-                |> ProcessingUnitOps.getRequirements
+                |> CWLProcessingUnit.getRequirements
 
             let expressionReqs =
                 CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)")
                 |> CWLProcessingUnit.ExpressionTool
-                |> ProcessingUnitOps.getRequirements
+                |> CWLProcessingUnit.getRequirements
 
             Expect.equal toolReqs.Count 0 "Tool requirements should normalize to empty collection."
             Expect.equal workflowReqs.Count 0 "Workflow requirements should normalize to empty collection."
@@ -181,17 +181,17 @@ let testProcessingUnitRequirementOps =
             let toolActual =
                 CWLToolDescription(outputs = ResizeArray(), requirements = toolReqs)
                 |> CWLProcessingUnit.CommandLineTool
-                |> ProcessingUnitOps.getRequirements
+                |> CWLProcessingUnit.getRequirements
 
             let workflowActual =
                 CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray(), requirements = workflowReqs)
                 |> CWLProcessingUnit.Workflow
-                |> ProcessingUnitOps.getRequirements
+                |> CWLProcessingUnit.getRequirements
 
             let expressionActual =
                 CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)", requirements = expressionReqs)
                 |> CWLProcessingUnit.ExpressionTool
-                |> ProcessingUnitOps.getRequirements
+                |> CWLProcessingUnit.getRequirements
 
             Expect.isTrue (obj.ReferenceEquals(toolActual, toolReqs)) "Tool requirements should reuse existing collection."
             Expect.isTrue (obj.ReferenceEquals(workflowActual, workflowReqs)) "Workflow requirements should reuse existing collection."
@@ -204,17 +204,17 @@ let testProcessingUnitHintOps =
             let toolHints =
                 CWLToolDescription(outputs = ResizeArray())
                 |> CWLProcessingUnit.CommandLineTool
-                |> ProcessingUnitOps.getHints
+                |> CWLProcessingUnit.getHints
 
             let workflowHints =
                 CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray())
                 |> CWLProcessingUnit.Workflow
-                |> ProcessingUnitOps.getHints
+                |> CWLProcessingUnit.getHints
 
             let expressionHints =
                 CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)")
                 |> CWLProcessingUnit.ExpressionTool
-                |> ProcessingUnitOps.getHints
+                |> CWLProcessingUnit.getHints
 
             Expect.equal toolHints.Count 0 "Tool hints should normalize to empty collection."
             Expect.equal workflowHints.Count 0 "Workflow hints should normalize to empty collection."
@@ -225,9 +225,9 @@ let testProcessingUnitHintOps =
             let workflow = CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray())
             let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)")
 
-            let toolHints = ProcessingUnitOps.getOrCreateToolHints tool
-            let workflowHints = ProcessingUnitOps.getOrCreateWorkflowHints workflow
-            let expressionHints = ProcessingUnitOps.getOrCreateExpressionToolHints expressionTool
+            let toolHints = CWLToolDescription.getOrCreateHints tool
+            let workflowHints = CWLWorkflowDescription.getOrCreateHints workflow
+            let expressionHints = CWLExpressionToolDescription.getOrCreateHints expressionTool
 
             toolHints.Add(KnownHint RequirementDefaults.inlineJavascriptRequirement)
             workflowHints.Add(UnknownHint { Class = Some "acme:Hint"; Raw = Decode.read "class: acme:Hint" })
@@ -246,7 +246,7 @@ let testProcessingUnitHintOps =
                 |]
 
             let tool = CWLToolDescription(outputs = ResizeArray(), hints = hints)
-            let actual = tool |> CWLProcessingUnit.CommandLineTool |> ProcessingUnitOps.getKnownHints
+            let actual = tool |> CWLProcessingUnit.CommandLineTool |> CWLProcessingUnit.getKnownHints
 
             Expect.equal actual.Count 2 "Only known hints should be returned."
     ]

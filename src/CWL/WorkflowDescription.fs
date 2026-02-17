@@ -63,3 +63,28 @@ type CWLWorkflowDescription(
     member this.Doc
         with get() = _doc
         and set(doc) = _doc <- doc
+
+    /// Returns workflow inputs.
+    static member getInputs (workflow: CWLWorkflowDescription) =
+        workflow.Inputs
+
+    /// Returns workflow outputs.
+    static member getOutputs (workflow: CWLWorkflowDescription) =
+        workflow.Outputs
+
+    /// Returns workflow requirements or an empty ResizeArray if None.
+    static member getRequirementsOrEmpty (workflow: CWLWorkflowDescription) =
+        workflow.Requirements |> Option.defaultValue (ResizeArray())
+
+    /// Returns workflow hints or an empty ResizeArray if None.
+    static member getHintsOrEmpty (workflow: CWLWorkflowDescription) =
+        workflow.Hints |> Option.defaultValue (ResizeArray())
+
+    /// Returns the workflow's hints, creating and assigning a new empty ResizeArray if None.
+    static member getOrCreateHints (workflow: CWLWorkflowDescription) =
+        match workflow.Hints with
+        | Some hints -> hints
+        | None ->
+            let hints = ResizeArray()
+            workflow.Hints <- Some hints
+            hints
