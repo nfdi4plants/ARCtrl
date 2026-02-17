@@ -16,6 +16,20 @@ let tryYamlScalarString (y: YAMLElement) =
     | YAMLElement.Value v -> Some v.Value
     | _ -> None
 
+let mkStepInput id source defaultValue valueFrom linkMerge =
+    {
+        Id = id
+        Source = source
+        DefaultValue = defaultValue
+        ValueFrom = valueFrom
+        LinkMerge = linkMerge
+        PickValue = None
+        Doc = None
+        LoadContents = None
+        LoadListing = None
+        Label = None
+    }
+
 let testWorkflowStep =
     testList "Decode" [
         testCase "Length" <| fun _ -> Expect.equal 2 decodeWorkflowStep.Count ""
@@ -47,30 +61,8 @@ let testWorkflowStep =
             testCase "MzMLToMzlite" <| fun _ ->
                 let expected =
                     ResizeArray [|
-                        {
-                            Id = "stageDirectory"
-                            Source = Some (ResizeArray [|"stage"|])
-                            DefaultValue = None
-                            ValueFrom = None
-                            LinkMerge = None
-                            PickValue = None
-                            Doc = None
-                            LoadContents = None
-                            LoadListing = None
-                            Label = None
-                        }
-                        {
-                            Id = "inputDirectory"
-                            Source = Some (ResizeArray [|"inputMzML"|])
-                            DefaultValue = None
-                            ValueFrom = None
-                            LinkMerge = None
-                            PickValue = None
-                            Doc = None
-                            LoadContents = None
-                            LoadListing = None
-                            Label = None
-                        }
+                        mkStepInput "stageDirectory" (Some (ResizeArray [|"stage"|])) None None None
+                        mkStepInput "inputDirectory" (Some (ResizeArray [|"inputMzML"|])) None None None 
                     |]
                 let actual = decodeWorkflowStep.[0].In
                 Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
@@ -91,54 +83,10 @@ let testWorkflowStep =
             testCase "PeptideSpectrumMatching" <| fun _ ->
                 let expected =
                     ResizeArray [|
-                        {
-                            Id = "stageDirectory"
-                            Source = Some (ResizeArray [|"stage"|])
-                            DefaultValue = None
-                            ValueFrom = None
-                            LinkMerge = None
-                            PickValue = None
-                            Doc = None
-                            LoadContents = None
-                            LoadListing = None
-                            Label = None
-                        }
-                        {
-                            Id = "inputDirectory"
-                            Source = Some (ResizeArray [|"MzMLToMzlite/dir1"; "MzMLToMzlite/dir2"|])
-                            DefaultValue = None
-                            ValueFrom = None
-                            LinkMerge = Some MergeFlattened
-                            PickValue = None
-                            Doc = None
-                            LoadContents = None
-                            LoadListing = None
-                            Label = None
-                        }
-                        {
-                            Id = "parallelismLevel"
-                            Source = None
-                            DefaultValue = Some (YAMLElement.Object [YAMLElement.Value {Value = "8"; Comment = None}])
-                            ValueFrom = None
-                            LinkMerge = None
-                            PickValue = None
-                            Doc = None
-                            LoadContents = None
-                            LoadListing = None
-                            Label = None
-                        }
-                        {
-                            Id = "outputDirectory"
-                            Source = None
-                            DefaultValue = None
-                            ValueFrom = Some "output"
-                            LinkMerge = None
-                            PickValue = None
-                            Doc = None
-                            LoadContents = None
-                            LoadListing = None
-                            Label = None
-                        }
+                        mkStepInput "stageDirectory" (Some (ResizeArray [|"stage"|])) None None None
+                        mkStepInput "inputDirectory" (Some (ResizeArray [|"MzMLToMzlite/dir1"; "MzMLToMzlite/dir2"|])) None None (Some MergeFlattened)
+                        mkStepInput "parallelismLevel" None (Some (YAMLElement.Object [YAMLElement.Value {Value = "8"; Comment = None}])) None None
+                        mkStepInput "outputDirectory" None None (Some "output") None
                     |]
                 let actual = decodeWorkflowStep.[1].In
                 Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
