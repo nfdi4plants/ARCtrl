@@ -25,12 +25,7 @@ module Builder =
 
     /// Creates an empty WorkflowGraph with the given root node ID.
     let createGraph (rootNodeId: WorkflowGraphNodeId) =
-        {
-            RootProcessingUnitNodeId = rootNodeId
-            Nodes = ResizeArray()
-            Edges = ResizeArray()
-            Diagnostics = ResizeArray()
-        }
+        WorkflowGraph.create(rootNodeId)
 
     /// Creates initial build state from options and root node ID.
     let createState (options: WorkflowGraphBuildOptions) (rootNodeId: WorkflowGraphNodeId) =
@@ -44,14 +39,7 @@ module Builder =
 
     /// Appends a diagnostic issue to the graph's diagnostics list.
     let addDiagnostic (state: BuildState) (kind: GraphIssueKind) (message: string) (scope: string option) (reference: string option) =
-        state.Graph.Diagnostics.Add(
-            {
-                Kind = kind
-                Message = message
-                Scope = scope
-                Reference = reference
-            }
-        )
+        state.Graph.Diagnostics.Add(GraphBuildIssue.create(kind, message, ?scope = scope, ?reference = reference))
 
     /// Checks if a node ID is already registered in the build state.
     let hasNode (state: BuildState) (nodeId: WorkflowGraphNodeId) =
@@ -72,13 +60,8 @@ module Builder =
     /// Creates and adds an edge with a given kind, source, target, and optional label.
     let addEdgeByType (state: BuildState) (kind: EdgeKind) (sourceNodeId: WorkflowGraphNodeId) (targetNodeId: WorkflowGraphNodeId) (label: string option) =
         let edge =
-            {
-                Id = GraphId.edgeId kind sourceNodeId targetNodeId
-                SourceNodeId = sourceNodeId
-                TargetNodeId = targetNodeId
-                Kind = kind
-                Label = label
-            }
+            WorkflowGraphEdge.create
+                (GraphId.edgeId kind sourceNodeId targetNodeId, sourceNodeId, targetNodeId, kind, ?label = label)
         addEdge state edge
 
     /// Builds a DynamicObj metadata instance from key-value pairs where values are present.
@@ -106,14 +89,8 @@ module Builder =
         =
         let nodeId = GraphId.unitNodeId scope
         let node =
-            {
-                Id = nodeId
-                Kind = NodeKind.ProcessingUnitNode kind
-                Label = label
-                OwnerNodeId = ownerNodeId
-                Reference = reference
-                Metadata = metadata
-            }
+            WorkflowGraphNode.create
+                (nodeId, NodeKind.ProcessingUnitNode kind, label, ?ownerNodeId = ownerNodeId, ?reference = reference, ?metadata = metadata)
         addNode state node
         nodeId
 
@@ -127,14 +104,8 @@ module Builder =
         =
         let nodeId = GraphId.portNodeId ownerNodeId direction portId
         let node =
-            {
-                Id = nodeId
-                Kind = NodeKind.PortNode direction
-                Label = label
-                OwnerNodeId = Some ownerNodeId
-                Reference = None
-                Metadata = None
-            }
+            WorkflowGraphNode.create
+                (nodeId, NodeKind.PortNode direction, label, ownerNodeId = ownerNodeId)
         addNode state node
         nodeId
 
@@ -153,14 +124,8 @@ module Builder =
                 "scatter", step.Scatter |> Option.map (fun values -> values |> Seq.toArray |> box)
             ]
         let node =
-            {
-                Id = stepNodeId
-                Kind = NodeKind.StepNode
-                Label = defaultArg step.Label step.Id
-                OwnerNodeId = Some workflowNodeId
-                Reference = None
-                Metadata = metadata
-            }
+            WorkflowGraphNode.create
+                (stepNodeId, NodeKind.StepNode, defaultArg step.Label step.Id, ownerNodeId = workflowNodeId, ?metadata = metadata)
         addNode state node
         addEdgeByType state EdgeKind.Contains workflowNodeId stepNodeId None
         stepNodeId

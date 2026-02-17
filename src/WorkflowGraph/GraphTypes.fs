@@ -48,6 +48,14 @@ type GraphBuildIssue = {
     Scope: string option
     Reference: string option
 }
+with
+    static member create (kind: GraphIssueKind, message: string, ?scope: string, ?reference: string) =
+        {
+            Kind = kind
+            Message = message
+            Scope = scope
+            Reference = reference
+        }
 
 type WorkflowGraphNode = {
     Id: WorkflowGraphNodeId
@@ -57,6 +65,18 @@ type WorkflowGraphNode = {
     Reference: string option
     Metadata: DynamicObj option
 }
+with
+    static member create
+        (id: WorkflowGraphNodeId, kind: NodeKind, label: string, ?ownerNodeId: WorkflowGraphNodeId, ?reference: string, ?metadata: DynamicObj)
+        =
+        {
+            Id = id
+            Kind = kind
+            Label = label
+            OwnerNodeId = ownerNodeId
+            Reference = reference
+            Metadata = metadata
+        }
 
 type WorkflowGraphEdge = {
     Id: WorkflowGraphEdgeId
@@ -65,6 +85,17 @@ type WorkflowGraphEdge = {
     Kind: EdgeKind
     Label: string option
 }
+with
+    static member create
+        (id: WorkflowGraphEdgeId, sourceNodeId: WorkflowGraphNodeId, targetNodeId: WorkflowGraphNodeId, kind: EdgeKind, ?label: string)
+        =
+        {
+            Id = id
+            SourceNodeId = sourceNodeId
+            TargetNodeId = targetNodeId
+            Kind = kind
+            Label = label
+        }
 
 type WorkflowGraph = {
     RootProcessingUnitNodeId: WorkflowGraphNodeId
@@ -73,30 +104,32 @@ type WorkflowGraph = {
     Diagnostics: ResizeArray<GraphBuildIssue>
 }
 with
+    static member create
+        (rootProcessingUnitNodeId: WorkflowGraphNodeId, ?nodes: ResizeArray<WorkflowGraphNode>, ?edges: ResizeArray<WorkflowGraphEdge>, ?diagnostics: ResizeArray<GraphBuildIssue>)
+        =
+        {
+            RootProcessingUnitNodeId = rootProcessingUnitNodeId
+            Nodes = defaultArg nodes (ResizeArray())
+            Edges = defaultArg edges (ResizeArray())
+            Diagnostics = defaultArg diagnostics (ResizeArray())
+        }
+
     member this.NodeCount = this.Nodes.Count
     member this.EdgeCount = this.Edges.Count
 
+type WorkflowGraphIndexEntry = string * Result<WorkflowGraph, GraphBuildIssue>
+
 type WorkflowGraphIndex = {
-    WorkflowGraphs: ResizeArray<string * Result<WorkflowGraph, GraphBuildIssue>>
-    RunGraphs: ResizeArray<string * Result<WorkflowGraph, GraphBuildIssue>>
+    WorkflowGraphs: ResizeArray<WorkflowGraphIndexEntry>
+    RunGraphs: ResizeArray<WorkflowGraphIndexEntry>
 }
-
-[<RequireQualifiedAccess>]
-module GraphBuildIssue =
-
-/// <summary>
-/// Creates a GraphBuildIssue record.
-/// </summary>
-/// <param name="kind">The category of the issue.</param>
-/// <param name="message">A human-readable description of the issue.</param>
-/// <param name="scope">The optional scope (e.g., workflow or step identifier) where the issue occurred.</param>
-/// <param name="reference">The optional reference string that caused the issue.</param>
-    let create (kind: GraphIssueKind) (message: string) (scope: string option) (reference: string option) =
+with
+    static member create
+        (?workflowGraphs: ResizeArray<WorkflowGraphIndexEntry>, ?runGraphs: ResizeArray<WorkflowGraphIndexEntry>)
+        =
         {
-            Kind = kind
-            Message = message
-            Scope = scope
-            Reference = reference
+            WorkflowGraphs = defaultArg workflowGraphs (ResizeArray())
+            RunGraphs = defaultArg runGraphs (ResizeArray())
         }
 
 [<RequireQualifiedAccess>]

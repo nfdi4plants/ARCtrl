@@ -39,12 +39,11 @@ module Adapters =
 
     /// Creates a GraphBuildIssue for a workflow or run that has no CWL description.
     let createMissingDescriptionError identifier scopeType =
-        {
-            Kind = GraphIssueKind.MissingCwlDescription
-            Message = $"No CWLDescription available for {scopeType} '{identifier}'."
-            Scope = Some identifier
-            Reference = None
-        }
+        GraphBuildIssue.create(
+            GraphIssueKind.MissingCwlDescription,
+            $"No CWLDescription available for {scopeType} '{identifier}'.",
+            scope = identifier
+        )
 
     /// <summary>
     /// Converts an ArcWorkflow into a WorkflowGraph.
@@ -100,7 +99,4 @@ module Adapters =
         for run in investigation.Runs do
             runGraphs.Add(run.Identifier, ofRun run)
 
-        {
-            WorkflowGraphs = workflowGraphs
-            RunGraphs = runGraphs
-        }
+        WorkflowGraphIndex.create(workflowGraphs = workflowGraphs, runGraphs = runGraphs)

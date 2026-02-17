@@ -33,12 +33,7 @@ steps:
     |> Builder.build
 
 let private createGraphWithNodes (rootId: string) (nodes: WorkflowGraphNode list) =
-    {
-        RootProcessingUnitNodeId = rootId
-        Nodes = ResizeArray(nodes)
-        Edges = ResizeArray()
-        Diagnostics = ResizeArray()
-    }
+    WorkflowGraph.create(rootId, nodes = ResizeArray(nodes))
 
 let tests_visualization =
     testList "Visualization.Siren" [
@@ -54,14 +49,8 @@ let tests_visualization =
 
         testCase "labels with leading slash are quoted in Mermaid output" <| fun () ->
             let toolNode =
-                {
-                    Id = "unit:tool1"
-                    Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool
-                    Label = "/tools/my-tool"
-                    OwnerNodeId = None
-                    Reference = None
-                    Metadata = None
-                }
+                WorkflowGraphNode.create
+                    ("unit:tool1", NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool, "/tools/my-tool")
             let graph = createGraphWithNodes toolNode.Id [ toolNode ]
             let mermaid = WorkflowGraphSiren.toMermaid graph
             Expect.isFalse (mermaid.Contains("\"#quot;")) "No double escaping expected"
@@ -69,14 +58,8 @@ let tests_visualization =
 
         testCase "labels without special chars are not quoted" <| fun () ->
             let processingNode =
-                {
-                    Id = "unit:step1"
-                    Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool
-                    Label = "My Step"
-                    OwnerNodeId = None
-                    Reference = None
-                    Metadata = None
-                }
+                WorkflowGraphNode.create
+                    ("unit:step1", NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool, "My Step")
             let graph = createGraphWithNodes processingNode.Id [ processingNode ]
             let mermaid = WorkflowGraphSiren.toMermaid graph
             Expect.isFalse (mermaid.Contains("\"My Step\"")) "Plain labels should not be quoted"
@@ -84,14 +67,8 @@ let tests_visualization =
 
         testCase "labels containing double quotes are escaped" <| fun () ->
             let processingNode =
-                {
-                    Id = "unit:node1"
-                    Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool
-                    Label = "say \"hello\""
-                    OwnerNodeId = None
-                    Reference = None
-                    Metadata = None
-                }
+                WorkflowGraphNode.create
+                    ("unit:node1", NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool, "say \"hello\"")
             let graph = createGraphWithNodes processingNode.Id [ processingNode ]
             let mermaid = WorkflowGraphSiren.toMermaid graph
             Expect.stringContains mermaid "#quot;" ""
@@ -99,23 +76,11 @@ let tests_visualization =
 
         testCase "root input nodes connect to processing units with labeled edges" <| fun () ->
             let parentNode =
-                {
-                    Id = "unit:parent"
-                    Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool
-                    Label = "/tools/parent-tool"
-                    OwnerNodeId = None
-                    Reference = None
-                    Metadata = None
-                }
+                WorkflowGraphNode.create
+                    ("unit:parent", NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool, "/tools/parent-tool")
             let childNode =
-                {
-                    Id = "port:unit:parent/in/child"
-                    Kind = NodeKind.PortNode PortDirection.Input
-                    Label = "child-port"
-                    OwnerNodeId = Some parentNode.Id
-                    Reference = None
-                    Metadata = None
-                }
+                WorkflowGraphNode.create
+                    ("port:unit:parent/in/child", NodeKind.PortNode PortDirection.Input, "child-port", ownerNodeId = parentNode.Id)
             let graph = createGraphWithNodes parentNode.Id [ parentNode; childNode ]
             let mermaid = WorkflowGraphSiren.toMermaid graph
             Expect.stringContains mermaid "{{\"/tools/parent-tool\"}}" ""
