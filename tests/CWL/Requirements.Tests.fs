@@ -166,42 +166,27 @@ outputs: {}"""
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsClassFileContent
                 let dockerItem = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
                 let expected =
-                    DockerRequirement {
-                        DockerPull = None
-                        DockerFile = Some (Include "FSharpArcCapsule/Dockerfile")
-                        DockerImageId = Some "devcontainer"
-                        DockerLoad = None
-                        DockerImport = None
-                        DockerOutputDirectory = None
-                    }
+                    Requirement.DockerRequirement (
+                        DockerRequirement.create(dockerImageId = "devcontainer", dockerFileReference = Include "FSharpArcCapsule/Dockerfile")
+                    )
                 let actual = dockerItem
                 Expect.equal actual expected "Mismatch or Wrong requirement type: Type get of Decode Class Syntax for DockerRequirement, can only be DockerRequirement"
             testCase "Mapping Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsMappingFileContent
                 let dockerItem = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
                 let expected =
-                    DockerRequirement {
-                        DockerPull = None
-                        DockerFile = Some (Include "FSharpArcCapsule/Dockerfile")
-                        DockerImageId = Some "devcontainer"
-                        DockerLoad = None
-                        DockerImport = None
-                        DockerOutputDirectory = None
-                    }
+                    Requirement.DockerRequirement (
+                        DockerRequirement.create(dockerImageId = "devcontainer", dockerFileReference = Include "FSharpArcCapsule/Dockerfile")
+                    )
                 let actual = dockerItem
                 Expect.equal actual expected "Mismatch or Wrong requirement type: Type get of Decode Mapping Syntax for DockerRequirement, can only be DockerRequirement"
             testCase "Json Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsJSONFileContent
                 let dockerItem = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
                 let expected =
-                    DockerRequirement {
-                        DockerPull = None
-                        DockerFile = Some (Include "FSharpArcCapsule/Dockerfile")
-                        DockerImageId = Some "devcontainer"
-                        DockerLoad = None
-                        DockerImport = None
-                        DockerOutputDirectory = None
-                    }
+                    Requirement.DockerRequirement (
+                        DockerRequirement.create(dockerImageId = "devcontainer", dockerFileReference = Include "FSharpArcCapsule/Dockerfile")
+                    )
                 let actual = dockerItem
                 Expect.equal actual expected "Mismatch or Wrong requirement type: Type get of Decode Json Syntax for DockerRequirement, can only be DockerRequirement"
         ]
@@ -583,14 +568,16 @@ outputs: {}"""
                 let reqs = decodeRequirements yaml
                 let dockerItem = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
                 let expected =
-                    DockerRequirement {
-                        DockerPull = Some "ghcr.io/example/tool:1.0.0"
-                        DockerFile = Some (Literal "./Dockerfile")
-                        DockerImageId = Some "tool-image"
-                        DockerLoad = Some "docker-archive:///tmp/tool.tar"
-                        DockerImport = Some "https://example.org/images/tool.sif"
-                        DockerOutputDirectory = Some "/work/out"
-                    }
+                    Requirement.DockerRequirement (
+                        DockerRequirement.create(
+                            dockerPull = "ghcr.io/example/tool:1.0.0",
+                            dockerFileReference = Literal "./Dockerfile",
+                            dockerImageId = "tool-image",
+                            dockerLoad = "docker-archive:///tmp/tool.tar",
+                            dockerImport = "https://example.org/images/tool.sif",
+                            dockerOutputDirectory = "/work/out"
+                        )
+                    )
                 Expect.equal dockerItem expected "Canonical docker fields should decode into the typed DockerRequirement model."
             testCase "Decode dockerFile $import wrapper and preserve directive kind" <| fun _ ->
                 let yaml = """requirements:
@@ -599,34 +586,18 @@ outputs: {}"""
       $import: ./Dockerfile"""
                 let reqs = decodeRequirements yaml
                 let dockerItem = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
-                let expected =
-                    DockerRequirement {
-                        DockerPull = None
-                        DockerFile = Some (Import "./Dockerfile")
-                        DockerImageId = None
-                        DockerLoad = None
-                        DockerImport = None
-                        DockerOutputDirectory = None
-                    }
+                let expected = Requirement.DockerRequirement (DockerRequirement.create(dockerFileReference = Import "./Dockerfile"))
                 Expect.equal dockerItem expected "dockerFile $import wrapper should decode into Import and survive type mapping."
-            testCase "Decode dockerFile map with both $include and $import prefers $include" <| fun _ ->
+            testCase "Decode dockerFile map with both $include and $import fails" <| fun _ ->
                 let yaml = """requirements:
   - class: DockerRequirement
     dockerFile:
       $include: ./Dockerfile.include
       $import: ./Dockerfile.import"""
-                let reqs = decodeRequirements yaml
-                let dockerItem = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
-                let expected =
-                    DockerRequirement {
-                        DockerPull = None
-                        DockerFile = Some (Include "./Dockerfile.include")
-                        DockerImageId = None
-                        DockerLoad = None
-                        DockerImport = None
-                        DockerOutputDirectory = None
-                    }
-                Expect.equal dockerItem expected "Malformed dockerFile maps with both directives should deterministically prefer $include."
+                let decodeInvalid () =
+                    decodeRequirements yaml
+                    |> ignore
+                Expect.throws decodeInvalid "dockerFile maps that specify both $include and $import should fail decoding."
         ]
         testList "LoadListingRequirement" [
             testCase "Class Syntax" <| fun _ ->
@@ -949,14 +920,16 @@ let testRequirementEncode =
                 Expect.equal created.DockerFile (Some (Include "./Dockerfile.include")) "dockerFileReference should take precedence when both inputs are provided."
             testCase "DockerRequirement encodes dockerFile as canonical string and includes extended fields" <| fun _ ->
                 let requirement =
-                    DockerRequirement {
-                        DockerPull = Some "ghcr.io/example/tool:1.0.0"
-                        DockerFile = Some (Literal "./Dockerfile")
-                        DockerImageId = Some "tool-image"
-                        DockerLoad = Some "docker-archive:///tmp/tool.tar"
-                        DockerImport = Some "https://example.org/images/tool.sif"
-                        DockerOutputDirectory = Some "/work/out"
-                    }
+                    Requirement.DockerRequirement (
+                        DockerRequirement.create(
+                            dockerPull = "ghcr.io/example/tool:1.0.0",
+                            dockerFileReference = Literal "./Dockerfile",
+                            dockerImageId = "tool-image",
+                            dockerLoad = "docker-archive:///tmp/tool.tar",
+                            dockerImport = "https://example.org/images/tool.sif",
+                            dockerOutputDirectory = "/work/out"
+                        )
+                    )
                 let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
                 Expect.stringContains encoded "dockerFile: ./Dockerfile" "dockerFile should be emitted as canonical string."
                 Expect.stringContains encoded "dockerLoad: docker-archive:///tmp/tool.tar" "dockerLoad should be encoded when present."
@@ -968,25 +941,8 @@ let testRequirementEncode =
                 let docker = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
                 let encoded = Encode.encodeRequirement docker |> Encode.writeYaml
                 Expect.stringContains encoded "$include: FSharpArcCapsule/Dockerfile" "Legacy include syntax should be preserved when originally provided."
-            testCase "createFromLegacyMap keeps first recognized directive and drops extra keys" <| fun _ ->
-                let legacy =
-                    DockerRequirement.createFromLegacyMap(
-                        dockerImageId = "tool-image",
-                        dockerFileMap = Map [ "$include", "./Dockerfile"; "version", "latest" ]
-                    )
-                let encoded = Encode.encodeRequirement (DockerRequirement legacy) |> Encode.writeYaml
-                Expect.stringContains encoded "$include: ./Dockerfile" "Legacy map should preserve include syntax during re-encode."
-                Expect.isFalse (encoded.Contains("version: latest")) "Non-canonical legacy keys should be dropped during normalization."
             testCase "DockerRequirement $import syntax roundtrips" <| fun _ ->
-                let requirement =
-                    DockerRequirement {
-                        DockerPull = None
-                        DockerFile = Some (Import "./Dockerfile")
-                        DockerImageId = None
-                        DockerLoad = None
-                        DockerImport = None
-                        DockerOutputDirectory = None
-                    }
+                let requirement = Requirement.DockerRequirement (DockerRequirement.create(dockerFileReference = Import "./Dockerfile"))
                 let yaml = Encode.encodeRequirement requirement |> Encode.writeYaml
                 Expect.stringContains yaml "$import: ./Dockerfile" "dockerFile should preserve $import directive during encode."
                 let document = "requirements:\n  - " + yaml.Replace("\n", "\n    ")

@@ -30,31 +30,6 @@ type DockerRequirement = {
             DockerOutputDirectory = dockerOutputDirectory
         }
 
-    static member createFromLegacyMap(?dockerPull, ?dockerFileMap: Map<string,string>, ?dockerImageId, ?dockerLoad, ?dockerImport, ?dockerOutputDirectory) =
-        // Legacy normalization keeps the first recognized schema-salad directive.
-        // If "$include"/"$import" exists, use it; otherwise fall back to the first map value.
-        // Any additional legacy keys are dropped during normalization.
-        let dockerFile =
-            match dockerFileMap with
-            | Some fileMap when fileMap.ContainsKey "$include" ->
-                Some (Include fileMap["$include"])
-            | Some fileMap when fileMap.ContainsKey "$import" ->
-                Some (Import fileMap["$import"])
-            | Some fileMap ->
-                fileMap
-                |> Seq.tryHead
-                |> Option.map (fun kv -> Literal kv.Value)
-            | None -> None
-
-        {
-            DockerPull = dockerPull
-            DockerFile = dockerFile
-            DockerImageId = dockerImageId
-            DockerLoad = dockerLoad
-            DockerImport = dockerImport
-            DockerOutputDirectory = dockerOutputDirectory
-        }
-
 /// Define an environment variable that will be set in the runtime environment by the workflow platform when executing the command line tool.
 type EnvironmentDef = {
     EnvName: string

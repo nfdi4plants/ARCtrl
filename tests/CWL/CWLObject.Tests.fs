@@ -41,14 +41,7 @@ let testCWLToolDescriptionDecode =
             let hintsItem = decodeCWLToolDescription.Hints
             testCase "DockerRequirement" <| fun _ ->
                 let expected =
-                    KnownHint (DockerRequirement {
-                        DockerPull = Some "mcr.microsoft.com/dotnet/sdk:6.0"
-                        DockerFile = None
-                        DockerImageId = None
-                        DockerLoad = None
-                        DockerImport = None
-                        DockerOutputDirectory = None
-                    })
+                    KnownHint (Requirement.DockerRequirement (DockerRequirement.create(dockerPull = "mcr.microsoft.com/dotnet/sdk:6.0")))
                 let actual = hintsItem.Value.[0]
                 Expect.equal actual expected ""
         ]
@@ -170,14 +163,7 @@ let testCWLToolDescriptionMetadata =
             let hintsItem = decodeCWLToolDescriptionMetadata.Hints
             testCase "DockerRequirement" <| fun _ ->
                 let expected =
-                    KnownHint (DockerRequirement {
-                        DockerPull = Some "mcr.microsoft.com/dotnet/sdk:6.0"
-                        DockerFile = None
-                        DockerImageId = None
-                        DockerLoad = None
-                        DockerImport = None
-                        DockerOutputDirectory = None
-                    })
+                    KnownHint (Requirement.DockerRequirement (DockerRequirement.create(dockerPull = "mcr.microsoft.com/dotnet/sdk:6.0")))
                 let actual = hintsItem.Value.[0]
                 Expect.equal actual expected ""
         ]

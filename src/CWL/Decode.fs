@@ -471,44 +471,20 @@ module Decode =
             outputs
         )
 
-
-    let tryDecodeLegacyDockerFileMap (value: YAMLElement) : SchemaSaladString option =
-        try
-            let dict = Decode.object (fun get -> get.Overflow.FieldList []) value
-            if dict.Count = 0 then
-                None
-            elif dict.ContainsKey "$include" then
-                // `$include` and `$import` are mutually exclusive; prefer `$include` when both are present.
-                Some (Include (Decode.string dict.["$include"]))
-            elif dict.ContainsKey "$import" then
-                Some (Import (Decode.string dict.["$import"]))
-            else
-                // Legacy fallback: keep only the first map value and drop extra keys.
-                dict.Values
-                |> Seq.tryHead
-                |> Option.map (fun v -> Literal (Decode.string v))
-        with ex when isRecoverableDecodingError ex ->
-            None
-
     /// Decode a YAMLElement into a DockerRequirement
     let dockerRequirementDecoder (get: Decode.IGetters): DockerRequirement =
         let dockerFile =
             get.Optional.Field "dockerFile" id
-            |> Option.map (fun value ->
-                match tryDecodeLegacyDockerFileMap value with
-                | Some legacyValue -> legacyValue
-                | None -> decodeSchemaSaladString value
-            )
+            |> Option.map decodeSchemaSaladString
 
-        let dockerReq = {
-            DockerPull = get.Optional.Field "dockerPull" Decode.string
-            DockerFile = dockerFile
-            DockerImageId = get.Optional.Field "dockerImageId" Decode.string
-            DockerLoad = get.Optional.Field "dockerLoad" Decode.string
-            DockerImport = get.Optional.Field "dockerImport" Decode.string
-            DockerOutputDirectory = get.Optional.Field "dockerOutputDirectory" Decode.string
-        }
-        dockerReq
+        DockerRequirement.create(
+            ?dockerPull = get.Optional.Field "dockerPull" Decode.string,
+            ?dockerFileReference = dockerFile,
+            ?dockerImageId = get.Optional.Field "dockerImageId" Decode.string,
+            ?dockerLoad = get.Optional.Field "dockerLoad" Decode.string,
+            ?dockerImport = get.Optional.Field "dockerImport" Decode.string,
+            ?dockerOutputDirectory = get.Optional.Field "dockerOutputDirectory" Decode.string
+        )
 
     /// Decode a YAMLElement into an EnvVarRequirement array.
     /// Supports both array form and map shorthand form (envName -> envValue).
