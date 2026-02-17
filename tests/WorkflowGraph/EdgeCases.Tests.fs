@@ -157,4 +157,7 @@ steps:
             Expect.equal scatter (Some [|"in1"; "in2"|]) ""
     ]
 
-let main = testList "EdgeCases" [ tests_edgeCases ]
+let main = 
+    testList "EdgeCases" [
+        tests_edgeCases
+    ]

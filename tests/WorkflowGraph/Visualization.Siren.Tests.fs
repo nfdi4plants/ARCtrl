@@ -276,4 +276,7 @@ steps: {}"""
             Expect.stringContains mermaid "class " ""
     ]
 
-let main = testList "Visualization.Siren" [ tests_visualization ]
+let main = 
+    testList "Visualization.Siren" [
+        tests_visualization 
+    ]

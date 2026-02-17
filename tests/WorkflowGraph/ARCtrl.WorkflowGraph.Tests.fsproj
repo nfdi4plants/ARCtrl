@@ -13,7 +13,7 @@
     <Compile Include="Adapters.Tests.fs" />
     <Compile Include="EdgeCases.Tests.fs" />
     <Compile Include="Visualization.Siren.Tests.fs" />
-    <Compile Include="WorkflowGraph.Extensions.Tests.fs" />
+    <Compile Include="WorkflowGraph.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>

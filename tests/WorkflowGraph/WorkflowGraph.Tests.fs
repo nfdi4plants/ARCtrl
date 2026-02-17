@@ -1,4 +1,4 @@
-module Tests.WorkflowGraphExtensions
+module Tests.WorkflowGraph
 
 open ARCtrl
 open ARCtrl.WorkflowGraph
@@ -7,7 +7,7 @@ open CrossAsync
 open Tests.WorkflowGraphTestHelpers
 
 let tests_extensions =
-    testList "WorkflowGraph.Extensions" [
+    testList "WorkflowGraph" [
         testCaseCrossAsync "BuildWorkflowGraphs returns workflow graph results" (crossAsync {
             let! workflowCwl = loadProcessingUnitFromPath workflowFixturePath
             let arc = ARC("ExtGraphArc1")
@@ -71,4 +71,7 @@ let tests_extensions =
         })
     ]
 
-let main = testList "WorkflowGraph.Extensions" [ tests_extensions ]
+let main = 
+    testList "WorkflowGraph" [ 
+        tests_extensions 
+    ]

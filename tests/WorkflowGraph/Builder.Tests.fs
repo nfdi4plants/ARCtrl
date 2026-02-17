@@ -266,4 +266,7 @@ steps:
             Expect.isTrue ((countEdges EdgeKind.Contains graph) >= 2) ""
     ]
 
-let main = testList "Builder" [ tests_builderCore ]
+let main = 
+    testList "Builder" [
+        tests_builderCore
+    ]
