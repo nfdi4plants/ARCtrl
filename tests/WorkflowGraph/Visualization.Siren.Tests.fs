@@ -9,26 +9,7 @@ open TestingUtils
 open Tests.WorkflowGraphTestHelpers
 
 let private buildSimpleWorkflowGraph () =
-    let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs:
-  x: string
-outputs:
-  y:
-    type: string
-    outputSource: step2/out
-steps:
-  step1:
-    run: ./tool1.cwl
-    in:
-      in1: x
-    out: [out]
-  step2:
-    run: ./tool2.cwl
-    in:
-      in1: step1/out
-    out: [out]"""
-    yaml
+    TestObjects.CWL.WorkflowGraph.visualizationSimpleWorkflowFile
     |> Decode.decodeCWLProcessingUnit
     |> Builder.build
 
@@ -154,22 +135,8 @@ let tests_visualization =
                 WorkflowGraphBuildOptions.defaultOptions
                 |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "workflow.cwl")
                 |> WorkflowGraphBuildOptions.withTryResolveRunPath (Some (fun _ -> Some (CommandLineTool tool)))
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs:
-  x: string
-outputs:
-  y:
-    type: string
-    outputSource: s/out
-steps:
-  s:
-    run: ./tool.cwl
-    in:
-      in1: x
-    out: [out]"""
             let graph =
-                yaml
+                TestObjects.CWL.WorkflowGraph.visualizationSingleStepResolvedWorkflowFile
                 |> Decode.decodeCWLProcessingUnit
                 |> Builder.buildWith options
             let mermaid = WorkflowGraphSiren.toMermaid graph
@@ -202,16 +169,10 @@ steps:
             Expect.stringContains mermaid "unit_root-->port_unit_root__out__output" ""
 
         testCase "pass-through workflow output binds root input directly to final output" <| fun () ->
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs:
-  x: string
-outputs:
-  y:
-    type: string
-    outputSource: x
-steps: {}"""
-            let graph = yaml |> Decode.decodeCWLProcessingUnit |> Builder.build
+            let graph =
+                TestObjects.CWL.WorkflowGraph.passThroughOutputWorkflowFile
+                |> Decode.decodeCWLProcessingUnit
+                |> Builder.build
             let mermaid = WorkflowGraphSiren.toMermaid graph
             Expect.stringContains mermaid "port_unit_root__in__x-->port_unit_root__out__y" ""
             Expect.isFalse (mermaid.Contains "-->|x|port_unit_root__out__y") ""

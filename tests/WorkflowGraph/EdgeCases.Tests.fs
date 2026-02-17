@@ -13,30 +13,12 @@ let private buildGraphFromYaml (yaml: string) =
 let tests_edgeCases =
     testList "EdgeCases" [
         testCase "malformed source // creates diagnostic" <| fun () ->
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs: {}
-outputs: {}
-steps:
-  step1:
-    run: ./tool.cwl
-    in:
-      in1: //
-    out: [out]"""
+            let yaml = TestObjects.CWL.WorkflowGraph.malformedSourceWorkflowFile
             let graph = buildGraphFromYaml yaml
             Expect.isTrue (graph.Diagnostics.Count >= 1) ""
 
         testCase "reference to non-existent step output creates diagnostic and no dataflow edge" <| fun () ->
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs: {}
-outputs: {}
-steps:
-  step1:
-    run: ./tool.cwl
-    in:
-      in1: NonExistentStep/out
-    out: [out]"""
+            let yaml = TestObjects.CWL.WorkflowGraph.missingStepOutputReferenceWorkflowFile
             let graph = buildGraphFromYaml yaml
             let missingRefDiagnostics =
                 graph.Diagnostics
@@ -50,18 +32,7 @@ steps:
             Expect.equal dataFlowEdges 0 ""
 
         testCase "workflow output with invalid source creates diagnostic" <| fun () ->
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs: {}
-outputs:
-  out:
-    type: string
-    outputSource: BadStep/badPort
-steps:
-  step1:
-    run: ./tool.cwl
-    in: {}
-    out: [out]"""
+            let yaml = TestObjects.CWL.WorkflowGraph.invalidWorkflowOutputSourceWorkflowFile
             let graph = buildGraphFromYaml yaml
             let missingRefDiagnostics =
                 graph.Diagnostics
@@ -83,15 +54,7 @@ steps:
             Expect.sequenceEqual edgeIds1 edgeIds2 ""
 
         testCase "building same processing unit instance twice is deterministic" <| fun () ->
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs: {}
-outputs: {}
-steps:
-  step1:
-    run: ./tool.cwl
-    in: {}
-    out: [out]"""
+            let yaml = TestObjects.CWL.WorkflowGraph.singleStepToolRunWorkflowFile
             let processingUnit = Decode.decodeCWLProcessingUnit yaml
             let resolvedTool = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFile
             let options =
@@ -113,15 +76,7 @@ steps:
             Expect.sequenceEqual edgeIds1 edgeIds2 ""
 
         testCase "buildWith does not mutate workflow step run payloads" <| fun () ->
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs: {}
-outputs: {}
-steps:
-  step1:
-    run: ./tool.cwl
-    in: {}
-    out: [out]"""
+            let yaml = TestObjects.CWL.WorkflowGraph.singleStepToolRunWorkflowFile
             let processingUnit = Decode.decodeCWLProcessingUnit yaml
             let resolvedTool = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFile
             let options =

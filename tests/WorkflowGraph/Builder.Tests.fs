@@ -42,76 +42,24 @@ let tests_builderCore =
             Expect.equal (countEdges EdgeKind.DataFlow graph) 0 ""
 
         testCase "two-step workflow creates contains and dataflow edges" <| fun () ->
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs:
-  x: string
-outputs:
-  y:
-    type: string
-    outputSource: stepB/out
-steps:
-  stepA:
-    run: ./a.cwl
-    in:
-      in1: x
-    out: [out]
-  stepB:
-    run: ./b.cwl
-    in:
-      in1: stepA/out
-    out: [out]"""
+            let yaml = TestObjects.CWL.WorkflowGraph.twoStepWorkflowFile
             let graph = yaml |> decodeProcessingUnit |> Builder.build
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.StepNode) graph) 2 ""
             Expect.equal (countEdges EdgeKind.Contains graph) 2 ""
             Expect.equal (countEdges EdgeKind.DataFlow graph) 1 ""
 
         testCase "multiple source values create fan-in edges" <| fun () ->
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs: {}
-outputs: {}
-steps:
-  stepA:
-    run: ./a.cwl
-    in: {}
-    out: [out1]
-  stepB:
-    run: ./b.cwl
-    in: {}
-    out: [out2]
-  stepC:
-    run: ./c.cwl
-    in:
-      in1:
-        source: [stepA/out1, stepB/out2]
-    out: [out]"""
+            let yaml = TestObjects.CWL.WorkflowGraph.fanInWorkflowFile
             let graph = yaml |> decodeProcessingUnit |> Builder.build
             Expect.equal (countEdges EdgeKind.DataFlow graph) 2 ""
 
         testCase "RunString unresolved without lookup becomes external reference node" <| fun () ->
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs: {}
-outputs: {}
-steps:
-  step1:
-    run: ./tool.cwl
-    in: {}
-    out: [out]"""
+            let yaml = TestObjects.CWL.WorkflowGraph.singleStepToolRunWorkflowFile
             let graph = yaml |> decodeProcessingUnit |> Builder.build
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference) graph) 1 ""
 
         testCase "strict unresolved run references without lookup become unresolved reference nodes" <| fun () ->
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs: {}
-outputs: {}
-steps:
-  step1:
-    run: ./tool.cwl
-    in: {}
-    out: [out]"""
+            let yaml = TestObjects.CWL.WorkflowGraph.singleStepToolRunWorkflowFile
             let options =
                 WorkflowGraphBuildOptions.defaultOptions
                 |> WorkflowGraphBuildOptions.withStrictUnresolvedRunReferences true
@@ -124,15 +72,7 @@ steps:
             Expect.isTrue (resolutionFailures >= 1) ""
 
         testCase "RunString unresolved with lookup becomes unresolved reference node" <| fun () ->
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs: {}
-outputs: {}
-steps:
-  step1:
-    run: ./missing.cwl
-    in: {}
-    out: [out]"""
+            let yaml = TestObjects.CWL.WorkflowGraph.singleStepMissingRunWorkflowFile
             let options =
                 WorkflowGraphBuildOptions.defaultOptions
                 |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "workflow.cwl")
@@ -142,15 +82,7 @@ steps:
             Expect.isTrue (graph.Diagnostics.Count > 0) ""
 
         testCase "RunString with cwl fragment keeps basename label for unresolved references" <| fun () ->
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs: {}
-outputs: {}
-steps:
-  step1:
-    run: ./tools/my-tool.cwl#main
-    in: {}
-    out: [out]"""
+            let yaml = TestObjects.CWL.WorkflowGraph.singleStepFragmentRunWorkflowFile
             let options =
                 WorkflowGraphBuildOptions.defaultOptions
                 |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "workflow.cwl")
@@ -163,15 +95,7 @@ steps:
             Expect.equal unresolvedNode.Label "my-tool" ""
 
         testCase "RunString with cwl query keeps basename label for unresolved references" <| fun () ->
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs: {}
-outputs: {}
-steps:
-  step1:
-    run: ./tools/my-tool.cwl?version=1
-    in: {}
-    out: [out]"""
+            let yaml = TestObjects.CWL.WorkflowGraph.singleStepQueryRunWorkflowFile
             let options =
                 WorkflowGraphBuildOptions.defaultOptions
                 |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "workflow.cwl")
@@ -184,15 +108,7 @@ steps:
             Expect.equal unresolvedNode.Label "my-tool" ""
 
         testCase "RunString resolved to commandlinetool node" <| fun () ->
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs: {}
-outputs: {}
-steps:
-  step1:
-    run: ./tool.cwl
-    in: {}
-    out: [out]"""
+            let yaml = TestObjects.CWL.WorkflowGraph.singleStepToolRunWorkflowFile
             let resolvedTool = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFile
             let options =
                 WorkflowGraphBuildOptions.defaultOptions
@@ -206,17 +122,7 @@ steps:
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference) graph) 0 ""
 
         testCase "StepOutput string and record produce output ports" <| fun () ->
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs: {}
-outputs: {}
-steps:
-  step1:
-    run: ./tool.cwl
-    in: {}
-    out:
-      - out1
-      - id: out2"""
+            let yaml = TestObjects.CWL.WorkflowGraph.stepOutputMixedWorkflowFile
             let graph = yaml |> decodeProcessingUnit |> Builder.build
             let stepNodeId = GraphId.stepNodeId "root" "step1"
             let out1 = GraphId.portNodeId stepNodeId PortDirection.Output "out1"
