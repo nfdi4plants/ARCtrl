@@ -371,12 +371,12 @@ let testCWLWorkflowDescriptionEncode =
                     Expect.isTrue false (sprintf "Expected structured default, got %A" defaultEntry)
             testCase "workflow hints are encoded and preserved" <| fun _ ->
                 let original = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowFile
-                original.Hints <- Some (ResizeArray [StepInputExpressionRequirement])
+                original.Hints <- Some (ResizeArray [KnownHint StepInputExpressionRequirement])
                 let encoded = Encode.encodeWorkflowDescription original
                 let decoded = Decode.decodeWorkflow encoded
                 Expect.stringContains encoded "hints:" "Workflow hints should be present in encoded output"
                 let hints = Expect.wantSome decoded.Hints "Workflow hints should survive roundtrip"
-                Expect.equal hints.[0] StepInputExpressionRequirement ""
+                Expect.equal hints.[0] (KnownHint StepInputExpressionRequirement) ""
             testList "PickValueMethod roundtrip" [
                 for (pickValueMethod, cwlString) in [
                     FirstNonNull, "first_non_null"
@@ -445,14 +445,14 @@ let testCWLWorkflowDescriptionEncode =
                 let decodedStep = decoded.Steps.[0]
                 let decodedHints = Expect.wantSome decodedStep.Hints "Step hints should decode"
                 let decodedRequirements = Expect.wantSome decodedStep.Requirements "Step requirements should decode"
-                Expect.equal decodedHints.[0] StepInputExpressionRequirement ""
+                Expect.equal decodedHints.[0] (KnownHint StepInputExpressionRequirement) ""
                 Expect.equal decodedRequirements.[0] (NetworkAccessRequirement { NetworkAccess = true }) ""
                 let encoded = Encode.encodeWorkflowDescription decoded
                 let roundTripped = Decode.decodeWorkflow encoded
                 let roundTrippedStep = roundTripped.Steps.[0]
                 let roundTrippedHints = Expect.wantSome roundTrippedStep.Hints "Step hints should survive roundtrip"
                 let roundTrippedRequirements = Expect.wantSome roundTrippedStep.Requirements "Step requirements should survive roundtrip"
-                Expect.equal roundTrippedHints.[0] StepInputExpressionRequirement ""
+                Expect.equal roundTrippedHints.[0] (KnownHint StepInputExpressionRequirement) ""
                 Expect.equal roundTrippedRequirements.[0] (NetworkAccessRequirement { NetworkAccess = true }) ""
             testCase "inline ExpressionTool roundtrip preserves expression" <| fun _ ->
                 let original = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithMixedToolAndExpressionStepFile

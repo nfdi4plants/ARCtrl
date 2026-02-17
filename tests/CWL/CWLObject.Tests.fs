@@ -41,14 +41,14 @@ let testCWLToolDescriptionDecode =
             let hintsItem = decodeCWLToolDescription.Hints
             testCase "DockerRequirement" <| fun _ ->
                 let expected =
-                    DockerRequirement {
+                    KnownHint (DockerRequirement {
                         DockerPull = Some "mcr.microsoft.com/dotnet/sdk:6.0"
                         DockerFile = None
                         DockerImageId = None
                         DockerLoad = None
                         DockerImport = None
                         DockerOutputDirectory = None
-                    }
+                    })
                 let actual = hintsItem.Value.[0]
                 Expect.equal actual expected ""
         ]
@@ -170,14 +170,14 @@ let testCWLToolDescriptionMetadata =
             let hintsItem = decodeCWLToolDescriptionMetadata.Hints
             testCase "DockerRequirement" <| fun _ ->
                 let expected =
-                    DockerRequirement {
+                    KnownHint (DockerRequirement {
                         DockerPull = Some "mcr.microsoft.com/dotnet/sdk:6.0"
                         DockerFile = None
                         DockerImageId = None
                         DockerLoad = None
                         DockerImport = None
                         DockerOutputDirectory = None
-                    }
+                    })
                 let actual = hintsItem.Value.[0]
                 Expect.equal actual expected ""
         ]
@@ -366,7 +366,7 @@ let testExpressionTool =
             let et = Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolWithRequirementsFile
             Expect.equal et.CWLVersion "v1.2" ""
             let requirements = Expect.wantSome et.Requirements "Requirements should be present"
-            Expect.equal requirements.[0] InlineJavascriptRequirement ""
+            Expect.equal requirements.[0] RequirementDefaults.inlineJavascriptRequirement ""
             let inputs = Expect.wantSome et.Inputs "Inputs should be present"
             Expect.isTrue (inputs.Count > 0) "Should have at least one input"
             Expect.isTrue (et.Outputs.Count > 0) "Should have at least one output"
@@ -391,7 +391,7 @@ let testExpressionTool =
             Expect.stringContains metadataText "customKey" "Unknown metadata key should be preserved"
         testCase "ExpressionTool hints emitted before requirements" <| fun _ ->
             let et = Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolWithRequirementsFile
-            et.Hints <- Some (ResizeArray [StepInputExpressionRequirement])
+            et.Hints <- Some (ResizeArray [KnownHint StepInputExpressionRequirement])
             let encoded = Encode.encodeExpressionToolDescription et
             let hintIdx = encoded.IndexOf("hints:")
             let reqIdx = encoded.IndexOf("requirements:")

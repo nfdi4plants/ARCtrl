@@ -176,7 +176,7 @@ let testProcessingUnitRequirementOps =
         testCase "getRequirements returns existing collection for all variants" <| fun _ ->
             let toolReqs = ResizeArray [| NetworkAccessRequirement { NetworkAccess = true } |]
             let workflowReqs = ResizeArray [| SubworkflowFeatureRequirement |]
-            let expressionReqs = ResizeArray [| InlineJavascriptRequirement |]
+            let expressionReqs = ResizeArray [| RequirementDefaults.inlineJavascriptRequirement |]
 
             let toolActual =
                 CWLToolDescription(outputs = ResizeArray(), requirements = toolReqs)
@@ -198,6 +198,59 @@ let testProcessingUnitRequirementOps =
             Expect.isTrue (obj.ReferenceEquals(expressionActual, expressionReqs)) "ExpressionTool requirements should reuse existing collection."
     ]
 
+let testProcessingUnitHintOps =
+    testList "ProcessingUnitOps Hints" [
+        testCase "getHints normalizes missing hints to empty for all variants" <| fun _ ->
+            let toolHints =
+                CWLToolDescription(outputs = ResizeArray())
+                |> CWLProcessingUnit.CommandLineTool
+                |> ProcessingUnitOps.getHints
+
+            let workflowHints =
+                CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray())
+                |> CWLProcessingUnit.Workflow
+                |> ProcessingUnitOps.getHints
+
+            let expressionHints =
+                CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)")
+                |> CWLProcessingUnit.ExpressionTool
+                |> ProcessingUnitOps.getHints
+
+            Expect.equal toolHints.Count 0 "Tool hints should normalize to empty collection."
+            Expect.equal workflowHints.Count 0 "Workflow hints should normalize to empty collection."
+            Expect.equal expressionHints.Count 0 "ExpressionTool hints should normalize to empty collection."
+
+        testCase "getOrCreate hint helpers initialize missing collections" <| fun _ ->
+            let tool = CWLToolDescription(outputs = ResizeArray())
+            let workflow = CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray())
+            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)")
+
+            let toolHints = ProcessingUnitOps.getOrCreateToolHints tool
+            let workflowHints = ProcessingUnitOps.getOrCreateWorkflowHints workflow
+            let expressionHints = ProcessingUnitOps.getOrCreateExpressionToolHints expressionTool
+
+            toolHints.Add(KnownHint RequirementDefaults.inlineJavascriptRequirement)
+            workflowHints.Add(UnknownHint { Class = Some "acme:Hint"; Raw = Decode.read "class: acme:Hint" })
+            expressionHints.Add(KnownHint (NetworkAccessRequirement { NetworkAccess = true }))
+
+            Expect.equal tool.Hints.Value.Count 1 "Tool hints should be initialized and retained."
+            Expect.equal workflow.Hints.Value.Count 1 "Workflow hints should be initialized and retained."
+            Expect.equal expressionTool.Hints.Value.Count 1 "ExpressionTool hints should be initialized and retained."
+
+        testCase "getKnownHints drops unknown hints" <| fun _ ->
+            let hints =
+                ResizeArray [|
+                    KnownHint RequirementDefaults.inlineJavascriptRequirement
+                    UnknownHint { Class = Some "acme:Hint"; Raw = Decode.read "class: acme:Hint" }
+                    KnownHint (WorkReuseRequirement { EnableReuse = true })
+                |]
+
+            let tool = CWLToolDescription(outputs = ResizeArray(), hints = hints)
+            let actual = tool |> CWLProcessingUnit.CommandLineTool |> ProcessingUnitOps.getKnownHints
+
+            Expect.equal actual.Count 2 "Only known hints should be returned."
+    ]
+
 let main = 
     testList "Input" [
         testInput
@@ -205,4 +258,5 @@ let main =
         testProcessingUnitInputOps
         testProcessingUnitOutputOps
         testProcessingUnitRequirementOps
+        testProcessingUnitHintOps
     ]

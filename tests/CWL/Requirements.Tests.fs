@@ -2,6 +2,7 @@ module Tests.Requirements
 
 open ARCtrl.CWL
 open YAMLicious
+open DynamicObj
 open TestingUtils
 open TestingUtils.CWL
 
@@ -13,6 +14,12 @@ let decodeRequirements (cwl: string) =
     |> Decode.read
     |> Decode.requirementsDecoder
     |> fun r -> r.Value
+
+let decodeHints (cwl: string) =
+    cwl
+    |> Decode.read
+    |> Decode.hintsDecoder
+    |> fun h -> h.Value
 
 let findRequirement reqs predicate =
     reqs
@@ -31,6 +38,90 @@ let testRequirementDecode =
             testCase "Json Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsJSONFileContent
                 Expect.hasLength reqs 5 "Test expect Requirements features Length is equal 5"
+        ]
+        testList "Hints Unknown Passthrough" [
+            testCase "Unknown hint class is preserved as UnknownHint" <| fun _ ->
+                let yaml = """hints:
+  - class: CustomVendorHint
+    vendorFlag: true
+    nested:
+      key: value"""
+                let hints = decodeHints yaml
+                Expect.equal hints.Count 1 "Expected one hint entry"
+                match hints.[0] with
+                | UnknownHint unknownHint ->
+                    Expect.equal unknownHint.Class (Some "CustomVendorHint") "Unknown hint class should be captured"
+                | _ ->
+                    failwith "Expected UnknownHint"
+
+            testCase "Known hint still decodes as KnownHint" <| fun _ ->
+                let yaml = """hints:
+  - class: StepInputExpressionRequirement"""
+                let hints = decodeHints yaml
+                Expect.equal hints.Count 1 "Expected one hint entry"
+                Expect.equal hints.[0] (KnownHint StepInputExpressionRequirement) "Known hint should decode as KnownHint"
+
+            testCase "Unknown requirement class still fails for requirements" <| fun _ ->
+                let yaml = """requirements:
+  - class: CustomVendorRequirement
+    something: 1"""
+                let act () = decodeRequirements yaml |> ignore
+                Expect.throws act "Unknown requirement class should fail strict requirements decoding"
+
+            testCase "Unknown hint shape survives decode and encode" <| fun _ ->
+                let yaml = """cwlVersion: v1.2
+class: CommandLineTool
+hints:
+  - class: CustomVendorHint
+    vendorFlag: true
+    nested:
+      key: value
+baseCommand: echo
+inputs: {}
+outputs: {}"""
+                let decoded = Decode.decodeCommandLineTool yaml
+                let encoded = Encode.encodeToolDescription decoded
+                Expect.stringContains encoded "CustomVendorHint" "Encoded output should keep unknown hint class"
+                Expect.stringContains encoded "vendorFlag" "Encoded output should keep unknown hint payload key"
+                Expect.stringContains encoded "nested:" "Encoded output should keep unknown hint nested object"
+        ]
+        testList "InlineJavascriptRequirement" [
+            testCase "Decode class-only form" <| fun _ ->
+                let yaml = """requirements:
+  - class: InlineJavascriptRequirement"""
+                let reqs = decodeRequirements yaml
+                let requirement = findRequirement reqs (function InlineJavascriptRequirement _ -> true | _ -> false)
+                Expect.equal requirement RequirementDefaults.inlineJavascriptRequirement "Class-only form should decode to empty payload"
+
+            testCase "Decode expressionLib form" <| fun _ ->
+                let yaml = """requirements:
+  - class: InlineJavascriptRequirement
+    expressionLib:
+      - $(function() { return 1; })
+      - $(function() { return 2; })"""
+                let reqs = decodeRequirements yaml
+                let requirement = findRequirement reqs (function InlineJavascriptRequirement _ -> true | _ -> false)
+                match requirement with
+                | InlineJavascriptRequirement inlineJavascriptRequirement ->
+                    let actualExpressionLib = Expect.wantSome inlineJavascriptRequirement.ExpressionLib "expressionLib should be present"
+                    let expectedExpressionLib = ResizeArray [| "$(function() { return 1; })"; "$(function() { return 2; })" |]
+                    Expect.sequenceEqual actualExpressionLib expectedExpressionLib "expressionLib entries should decode"
+                | _ ->
+                    failwith "Expected InlineJavascriptRequirement"
+
+            testCase "Encode emits expressionLib when present" <| fun _ ->
+                let requirement =
+                    InlineJavascriptRequirement {
+                        ExpressionLib = Some (ResizeArray [| "$(function() { return 1; })" |])
+                    }
+                let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
+                Expect.stringContains encoded "class: InlineJavascriptRequirement" "Encoded output should include class"
+                Expect.stringContains encoded "expressionLib" "Encoded output should include expressionLib"
+
+            testCase "Encode omits expressionLib when absent" <| fun _ ->
+                let encoded = Encode.encodeRequirement RequirementDefaults.inlineJavascriptRequirement |> Encode.writeYaml
+                Expect.stringContains encoded "class: InlineJavascriptRequirement" "Encoded output should include class"
+                Expect.isFalse (encoded.Contains("expressionLib")) "Encoded output should omit expressionLib when absent"
         ]
         testList "DockerRequirement" [
             testCase "Class Syntax" <| fun _ ->
@@ -223,6 +314,26 @@ let testRequirementDecode =
                     Expect.sequenceEqual a e "EnvVarRequirement mismatch: Type of Decode Json Syntax for EnvVarRequirement"
                 | _ ->
                     failwith "Wrong requirement type: Type of Decode Json Syntax for EnvVarRequirement can only be EnvVarRequirement"
+            testCase "Map shorthand decodes to EnvironmentDef list" <| fun _ ->
+                let yaml = """requirements:
+  - class: EnvVarRequirement
+    envDef:
+      DOTNET_NOLOGO: "true"
+      TEST: "false"""
+                let reqs = decodeRequirements yaml
+                let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
+                match envVarItem with
+                | EnvVarRequirement envs ->
+                    let expected = ResizeArray [|{EnvName = "DOTNET_NOLOGO"; EnvValue = "true"}; {EnvName = "TEST"; EnvValue = "false"}|]
+                    Expect.sequenceEqual envs expected "EnvVar map shorthand should decode to normalized EnvironmentDef list."
+                | _ ->
+                    failwith "Wrong requirement type: expected EnvVarRequirement"
+            testCase "Compact map encode helper emits envDef map" <| fun _ ->
+                let envs = ResizeArray [|{ EnvName = "DOTNET_NOLOGO"; EnvValue = "true" }; { EnvName = "TEST"; EnvValue = "false" }|]
+                let encoded = Encode.encodeEnvVarRequirementCompactMap envs |> Encode.writeYaml
+                Expect.stringContains encoded "class: EnvVarRequirement" "EnvVar compact helper should emit class"
+                Expect.stringContains encoded "envDef:" "EnvVar compact helper should emit envDef map"
+                Expect.stringContains encoded "DOTNET_NOLOGO" "EnvVar compact helper should emit map keys"
         ]
         testList "SoftwareRequirement" [
             testCase "Class Syntax" <| fun _ ->
@@ -267,6 +378,56 @@ let testRequirementDecode =
                     Expect.sequenceEqual a.Version.Value e.Version.Value $"SoftwareRequirement.Version mismatch. expected = {e.Version.Value}, actual = {a.Version.Value}"
                 | _ ->
                     failwith "Wrong requirement type: Type of Decode Json Syntax for SoftwareRequirement can only be SoftwareRequirement"
+            testCase "Map shorthand decodes package specs list" <| fun _ ->
+                let yaml = """requirements:
+  - class: SoftwareRequirement
+    packages:
+      blast:
+        - https://example.org/blast-spec-1
+        - https://example.org/blast-spec-2"""
+                let reqs = decodeRequirements yaml
+                let softwareItem = findRequirement reqs (function SoftwareRequirement _ -> true | _ -> false)
+                match softwareItem with
+                | SoftwareRequirement packages ->
+                    Expect.equal packages.Count 1 "One package should decode from shorthand map"
+                    Expect.equal packages.[0].Package "blast" "Package name should decode from map key"
+                    Expect.isSome packages.[0].Specs "Specs should decode from map sequence"
+                    Expect.equal packages.[0].Specs.Value.Count 2 "Specs shorthand sequence should be preserved"
+                | _ ->
+                    failwith "Wrong requirement type: expected SoftwareRequirement"
+            testCase "Map shorthand decodes package object form" <| fun _ ->
+                let yaml = """requirements:
+  - class: SoftwareRequirement
+    packages:
+      interproscan:
+        specs:
+          - https://identifiers.org/rrid/RRID:SCR_005829
+        version:
+          - 5.21-60"""
+                let reqs = decodeRequirements yaml
+                let softwareItem = findRequirement reqs (function SoftwareRequirement _ -> true | _ -> false)
+                match softwareItem with
+                | SoftwareRequirement packages ->
+                    Expect.equal packages.Count 1 "One package should decode from object map form"
+                    let package = packages.[0]
+                    Expect.equal package.Package "interproscan" "Package should decode from map key"
+                    Expect.equal package.Specs.Value.Count 1 "Specs should decode from object map"
+                    Expect.equal package.Version.Value.Count 1 "Version should decode from object map"
+                | _ ->
+                    failwith "Wrong requirement type: expected SoftwareRequirement"
+            testCase "Compact map encode helper emits packages map" <| fun _ ->
+                let packages =
+                    ResizeArray [|
+                        {
+                            Package = "interproscan"
+                            Specs = Some (ResizeArray [| "https://identifiers.org/rrid/RRID:SCR_005829" |])
+                            Version = Some (ResizeArray [| "5.21-60" |])
+                        }
+                    |]
+                let encoded = Encode.encodeSoftwareRequirementCompactMap packages |> Encode.writeYaml
+                Expect.stringContains encoded "class: SoftwareRequirement" "Software compact helper should emit class"
+                Expect.stringContains encoded "packages:" "Software compact helper should emit packages map"
+                Expect.stringContains encoded "interproscan" "Software compact helper should emit package key"
         ]
         testList "NetworkAccess" [
             testCase "Class Syntax" <| fun _ ->
@@ -353,7 +514,7 @@ let testRequirementDecode =
     loadListing: deep_listing"""
                 let reqs = decodeRequirements yaml
                 let requirement = findRequirement reqs (function LoadListingRequirement _ -> true | _ -> false)
-                let expected = LoadListingRequirement { LoadListing = "deep_listing" }
+                let expected = LoadListingRequirement { LoadListing = DeepListing }
                 Expect.equal requirement expected "Class-array syntax should decode LoadListingRequirement payload."
             testCase "Mapping Syntax" <| fun _ ->
                 let yaml = """requirements:
@@ -361,21 +522,32 @@ let testRequirementDecode =
     loadListing: shallow_listing"""
                 let reqs = decodeRequirements yaml
                 let requirement = findRequirement reqs (function LoadListingRequirement _ -> true | _ -> false)
-                let expected = LoadListingRequirement { LoadListing = "shallow_listing" }
+                let expected = LoadListingRequirement { LoadListing = ShallowListing }
                 Expect.equal requirement expected "Mapping syntax should decode LoadListingRequirement payload."
             testCase "Json Syntax" <| fun _ ->
                 let yaml = """requirements: { LoadListingRequirement: { loadListing: "no_listing" } }"""
                 let reqs = decodeRequirements yaml
                 let requirement = findRequirement reqs (function LoadListingRequirement _ -> true | _ -> false)
-                let expected = LoadListingRequirement { LoadListing = "no_listing" }
+                let expected = LoadListingRequirement { LoadListing = NoListing }
                 Expect.equal requirement expected "JSON object syntax should decode LoadListingRequirement payload."
             testCase "Default value when field omitted" <| fun _ ->
                 let yaml = """requirements:
   - class: LoadListingRequirement"""
                 let reqs = decodeRequirements yaml
                 let requirement = findRequirement reqs (function LoadListingRequirement _ -> true | _ -> false)
-                let expected = LoadListingRequirement { LoadListing = "no_listing" }
+                let expected = LoadListingRequirement { LoadListing = NoListing }
                 Expect.equal requirement expected "Missing loadListing should default to no_listing."
+            testCase "Invalid value fails clearly" <| fun _ ->
+                let yaml = """requirements:
+  - class: LoadListingRequirement
+    loadListing: invalid_listing"""
+                Expect.throws
+                    (fun _ -> decodeRequirements yaml |> ignore)
+                    "Invalid loadListing symbols should fail during decode."
+            testCase "Encode canonical loadListing symbol" <| fun _ ->
+                let requirement = LoadListingRequirement { LoadListing = ShallowListing }
+                let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
+                Expect.stringContains encoded "loadListing: shallow_listing" "Enum should encode to canonical CWL symbol."
         ]
         testList "Payloaded requirement defaults and custom values" [
             testCase "WorkReuse and InplaceUpdate default to true when payload omitted" <| fun _ ->
@@ -410,8 +582,16 @@ let testRequirementDecode =
     timelimit: 120"""
                 let reqs = decodeRequirements yaml
                 let requirement = findRequirement reqs (function ToolTimeLimitRequirement _ -> true | _ -> false)
-                let expected = ToolTimeLimitRequirement (ToolTimeLimitSeconds 120.0)
+                let expected = ToolTimeLimitRequirement (ToolTimeLimitSeconds 120L)
                 Expect.equal requirement expected "Numeric timelimit should decode to ToolTimeLimitSeconds."
+            testCase "Decode long timelimit" <| fun _ ->
+                let yaml = """requirements:
+  - class: ToolTimeLimit
+    timelimit: 922337203685477580"""
+                let reqs = decodeRequirements yaml
+                let requirement = findRequirement reqs (function ToolTimeLimitRequirement _ -> true | _ -> false)
+                let expected = ToolTimeLimitRequirement (ToolTimeLimitSeconds 922337203685477580L)
+                Expect.equal requirement expected "Long timelimit should decode to ToolTimeLimitSeconds int64."
             testCase "Decode expression timelimit" <| fun _ ->
                 let yaml = """requirements:
   - class: ToolTimeLimit
@@ -420,6 +600,34 @@ let testRequirementDecode =
                 let requirement = findRequirement reqs (function ToolTimeLimitRequirement _ -> true | _ -> false)
                 let expected = ToolTimeLimitRequirement (ToolTimeLimitExpression "$(inputs.max_runtime_seconds)")
                 Expect.equal requirement expected "Expression timelimit should decode to ToolTimeLimitExpression."
+            testCase "Encode numeric timelimit as integer scalar" <| fun _ ->
+                let requirement = ToolTimeLimitRequirement (ToolTimeLimitSeconds 300L)
+                let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
+                Expect.stringContains encoded "timelimit: 300" "Numeric timelimit should encode as integer scalar"
+        ]
+        testList "ResourceRequirement" [
+            testCase "Decode int long float and expression resource scalars" <| fun _ ->
+                let yaml = """requirements:
+  - class: ResourceRequirement
+    coresMin: 2
+    coresMax: 922337203685477580
+    ramMin: 4.5
+    outdirMin: $(inputs.outdir_min)"""
+                let reqs = decodeRequirements yaml
+                let requirement = findRequirement reqs (function ResourceRequirement _ -> true | _ -> false)
+                match requirement with
+                | ResourceRequirement resourceRequirement ->
+                    let coresMin = resourceRequirement.GetPropertyValue("coresMin") |> unbox<obj option> |> Option.get |> unbox<int64>
+                    let coresMax = resourceRequirement.GetPropertyValue("coresMax") |> unbox<obj option> |> Option.get |> unbox<int64>
+                    let ramMin = resourceRequirement.GetPropertyValue("ramMin") |> unbox<obj option> |> Option.get |> unbox<float>
+                    let outdirMin = resourceRequirement.GetPropertyValue("outdirMin") |> unbox<obj option> |> Option.get |> unbox<string>
+                    Expect.equal coresMin 2L "coresMin should decode to int64"
+                    Expect.equal coresMax 922337203685477580L "coresMax should decode to int64"
+                    Expect.equal ramMin 4.5 "ramMin should decode to float"
+                    Expect.equal outdirMin "$(inputs.outdir_min)" "Expression strings should be preserved"
+                | _ ->
+                    failwith "Expected ResourceRequirement"
+
         ]
         testList "SchemaDefRequirement" [
             testCase "Decode legacy map style schema definition entries" <| fun _ ->
@@ -599,7 +807,7 @@ let testRequirementEncode =
                     |> Option.get
                 Expect.equal decoded.[0] requirement "dockerFile $import directive should roundtrip."
             testCase "LoadListingRequirement roundtrips" <| fun _ ->
-                let requirement = LoadListingRequirement { LoadListing = "deep_listing" }
+                let requirement = LoadListingRequirement { LoadListing = DeepListing }
                 let yaml = Encode.encodeRequirement requirement |> Encode.writeYaml
                 let document = "requirements:\n  - " + yaml.Replace("\n", "\n    ")
                 let decoded =
@@ -653,11 +861,54 @@ let testRequirementEncode =
                     failwith "Expected SchemaDefRequirement"
         ]
     ]
+let testInitialWorkDirFileDirectoryEntries =
+    testList "InitialWorkDirRequirement File/Directory entries" [
+        testCase "Decode mixed listing with Dirent String File Directory" <| fun _ ->
+            let yaml = """requirements:
+  - class: InitialWorkDirRequirement
+    listing:
+      - entry: $(inputs.arcDirectory)
+        writable: true
+      - $(inputs.outputDirectory)
+      - class: File
+        path: /tmp/in.txt
+      - class: Directory
+        path: /tmp/outdir"""
+            let reqs = decodeRequirements yaml
+            let initialWorkDirItem = findRequirement reqs (function InitialWorkDirRequirement _ -> true | _ -> false)
+            match initialWorkDirItem with
+            | InitialWorkDirRequirement listing ->
+                Expect.equal listing.Count 4 "Expected four listing entries"
+                Expect.isTrue (match listing.[0] with | DirentEntry _ -> true | _ -> false) "First entry should be DirentEntry"
+                Expect.isTrue (match listing.[1] with | StringEntry _ -> true | _ -> false) "Second entry should be StringEntry"
+                Expect.isTrue (match listing.[2] with | FileEntry _ -> true | _ -> false) "Third entry should be FileEntry"
+                Expect.isTrue (match listing.[3] with | DirectoryEntry _ -> true | _ -> false) "Fourth entry should be DirectoryEntry"
+            | _ ->
+                failwith "Wrong requirement type: expected InitialWorkDirRequirement"
 
+        testCase "Encode mixed listing with File and Directory entries" <| fun _ ->
+            let file = FileInstance()
+            DynObj.setProperty "path" "/tmp/input.txt" file
+            let directory = DirectoryInstance()
+            DynObj.setProperty "path" "/tmp/output" directory
+            let requirement =
+                InitialWorkDirRequirement (
+                    ResizeArray [|
+                        StringEntry (Literal "$(inputs.outputDirectory)")
+                        FileEntry file
+                        DirectoryEntry directory
+                    |]
+                )
+            let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
+            Expect.stringContains encoded "class: InitialWorkDirRequirement" "Encoded output should include requirement class"
+            Expect.stringContains encoded "class: File" "Encoded output should include File listing entry"
+            Expect.stringContains encoded "class: Directory" "Encoded output should include Directory listing entry"
+    ]
 
 let main = 
     testList "Requirement" [
         testRequirementDecode
         testDecodeAllRequirementSyntaxes
         testRequirementEncode
+        testInitialWorkDirFileDirectoryEntries
     ]
