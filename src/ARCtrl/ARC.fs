@@ -10,6 +10,7 @@ open FsSpreadsheet
 open Fable.Core
 open ARCtrl.ArcPathHelper
 open CrossAsync
+open ARCtrl.WorkflowGraph
 
 module ARCAux =
 
@@ -59,6 +60,7 @@ module ARCAux =
         contracts 
         |> Array.tryPick (ArcRun.tryYMLFromReadContract runIdentifier)
 
+    /// Builds a lookup map of normalized CWL file paths to decoded CWLProcessingUnit instances from CWL-typed contracts.
     let getCWLByPathFromContracts (contracts: Contract []) : Map<string, CWL.CWLProcessingUnit> =
         contracts
         |> Array.choose (fun c ->
@@ -71,6 +73,7 @@ module ARCAux =
         )
         |> Map.ofArray
 
+    /// Looks up a CWLProcessingUnit by normalized path in the given lookup map.
     let tryGetCWLByPath (cwlByPath: Map<string, CWL.CWLProcessingUnit>) (path: string) =
         cwlByPath
         |> Map.tryFind (ArcPathHelper.normalizePathKey path)
@@ -1165,3 +1168,28 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         if not (defaultArg skipUpdateFS false) then
             this.UpdateFileSystem()
         this.FileSystem.Tree.ToFilePaths(?removeRoot = removeRoot)
+
+    /// <summary>
+    /// Builds workflow graphs for all workflows in this ARC.
+    /// Returns a list of workflow identifier and Result pairs, where each Result contains
+    /// either a successfully built WorkflowGraph or a GraphBuildIssue describing the failure.
+    /// </summary>
+    member this.BuildWorkflowGraphs() =
+        let graphIndex = Adapters.ofInvestigation this
+        graphIndex.WorkflowGraphs
+
+    /// <summary>
+    /// Builds workflow graphs for all runs in this ARC.
+    /// Returns a list of run identifier and Result pairs, where each Result contains
+    /// either a successfully built WorkflowGraph or a GraphBuildIssue describing the failure.
+    /// </summary>
+    member this.BuildRunGraphs() =
+        let graphIndex = Adapters.ofInvestigation this
+        graphIndex.RunGraphs
+
+    /// <summary>
+    /// Builds and returns the complete WorkflowGraphIndex containing workflow graphs
+    /// for both workflows and runs in this ARC.
+    /// </summary>
+    member this.BuildAllProcessingUnitGraphs() =
+        Adapters.ofInvestigation this
