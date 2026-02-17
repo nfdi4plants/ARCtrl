@@ -31,12 +31,12 @@ let tryYamlScalarSequence (y: YAMLElement) =
         |> Some
     | _ -> None
 
-let mkStepInput id source defaultValue valueFrom linkMerge =
+let mkStepInput id source linkMerge =
     {
         Id = id
         Source = source
-        DefaultValue = defaultValue
-        ValueFrom = valueFrom
+        DefaultValue = None
+        ValueFrom = None
         LinkMerge = linkMerge
         PickValue = None
         Doc = None
@@ -118,11 +118,11 @@ let testCWLWorkflowDescriptionDecode =
             testList "In" [
                 testCase "MzMLToMzlite" <| fun _ ->
                     let expected = ResizeArray [|
-                        mkStepInput "stageDirectory" (Some (ResizeArray [|"stage"|])) None None None
-                        mkStepInput "inputDirectory" (Some (ResizeArray [|"inputMzML"|])) None None None
-                        mkStepInput "params" (Some (ResizeArray [|"paramsMzML"|])) None None None
-                        mkStepInput "outputDirectory" (Some (ResizeArray [|"outputMzML"|])) None None None
-                        mkStepInput "parallelismLevel" (Some (ResizeArray [|"cores"|])) None None None
+                        mkStepInput "stageDirectory" (Some (ResizeArray [|"stage"|])) None
+                        mkStepInput "inputDirectory" (Some (ResizeArray [|"inputMzML"|])) None
+                        mkStepInput "params" (Some (ResizeArray [|"paramsMzML"|])) None
+                        mkStepInput "outputDirectory" (Some (ResizeArray [|"outputMzML"|])) None
+                        mkStepInput "parallelismLevel" (Some (ResizeArray [|"cores"|])) None
                     |]
                     let actual = workflowSteps.[0].In
                     Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
@@ -142,12 +142,12 @@ let testCWLWorkflowDescriptionDecode =
                     ) expected actual
                 testCase "PeptideSpectrumMatching" <| fun _ ->
                     let expected = ResizeArray [|
-                        mkStepInput "stageDirectory" (Some (ResizeArray [|"stage"|])) None None None
-                        mkStepInput "inputDirectory" (Some (ResizeArray [|"MzMLToMzlite/dir1"; "MzMLToMzlite/dir2"|])) None None (Some MergeFlattened)
-                        mkStepInput "database" (Some (ResizeArray [|"db"|])) None None None
-                        mkStepInput "params" (Some (ResizeArray [|"paramsPSM"|])) None None None
-                        mkStepInput "outputDirectory" (Some (ResizeArray [|"outputPSM"|])) None None None
-                        mkStepInput "parallelismLevel" (Some (ResizeArray [|"cores"|])) None None None
+                        mkStepInput "stageDirectory" (Some (ResizeArray [|"stage"|])) None
+                        mkStepInput "inputDirectory" (Some (ResizeArray [|"MzMLToMzlite/dir1"; "MzMLToMzlite/dir2"|])) (Some MergeFlattened)
+                        mkStepInput "database" (Some (ResizeArray [|"db"|])) None
+                        mkStepInput "params" (Some (ResizeArray [|"paramsPSM"|])) None
+                        mkStepInput "outputDirectory" (Some (ResizeArray [|"outputPSM"|])) None
+                        mkStepInput "parallelismLevel" (Some (ResizeArray [|"cores"|])) None
                     |]
                     let actual = workflowSteps.[1].In
                     Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
