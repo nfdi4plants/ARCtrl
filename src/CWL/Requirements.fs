@@ -66,15 +66,12 @@ type LoadListingEnum =
     | ShallowListing
     | DeepListing
 
-[<RequireQualifiedAccess>]
-module LoadListingEnum =
-
-    let toCwlString = function
+    static member toCwlString = function
         | NoListing -> "no_listing"
         | ShallowListing -> "shallow_listing"
         | DeepListing -> "deep_listing"
 
-    let tryParse (value: string) =
+    static member tryParse (value: string) =
         match value with
         | "no_listing" -> Some NoListing
         | "shallow_listing" -> Some ShallowListing
@@ -128,6 +125,38 @@ type ResourceRequirementInstance (
         DynObj.setOptionalProperty (nameof tmpdirMax) tmpdirMax this
         DynObj.setOptionalProperty (nameof outdirMin) outdirMin this
         DynObj.setOptionalProperty (nameof outdirMax) outdirMax this
+
+    member this.TryGetInt64(name: string) =
+        this.TryGetPropertyValue(name)
+        |> Option.bind (function
+            | :? Option<obj> as optionValue -> optionValue
+            | :? int64 as value -> Some (box value)
+            | :? int as value -> Some (box (int64 value))
+            | _ -> None)
+        |> Option.bind (function
+            | :? int64 as value -> Some value
+            | :? int as value -> Some (int64 value)
+            | _ -> None)
+
+    member this.TryGetFloat(name: string) =
+        this.TryGetPropertyValue(name)
+        |> Option.bind (function
+            | :? Option<obj> as optionValue -> optionValue
+            | :? float as value -> Some (box value)
+            | _ -> None)
+        |> Option.bind (function
+            | :? float as value -> Some value
+            | _ -> None)
+
+    member this.TryGetExpression(name: string) =
+        this.TryGetPropertyValue(name)
+        |> Option.bind (function
+            | :? Option<obj> as optionValue -> optionValue
+            | :? string as value -> Some (box value)
+            | _ -> None)
+        |> Option.bind (function
+            | :? string as value -> Some value
+            | _ -> None)
 
 /// Entry in InitialWorkDirRequirement listing.
 /// CWL allows either a Dirent object or a string/expression entry.
@@ -187,21 +216,18 @@ type HintEntry =
     | KnownHint of Requirement
     | UnknownHint of HintUnknownValue
 
-[<RequireQualifiedAccess>]
-module HintEntry =
-
     /// Wraps a known requirement as a known hint entry.
-    let ofRequirement (requirement: Requirement) =
+    static member ofRequirement (requirement: Requirement) =
         KnownHint requirement
 
     /// Wraps all requirements as known hint entries.
-    let ofRequirements (requirements: ResizeArray<Requirement>) =
+    static member ofRequirements (requirements: ResizeArray<Requirement>) =
         requirements
         |> Seq.map KnownHint
         |> ResizeArray
 
     /// Returns the underlying requirement for KnownHint values.
-    let tryAsRequirement = function
+    static member tryAsRequirement = function
         | KnownHint requirement -> Some requirement
         | UnknownHint _ -> None
 

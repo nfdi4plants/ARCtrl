@@ -365,8 +365,11 @@ module Encode =
     let encodeRequirement (r:Requirement) : YAMLElement =
         match r with
         | InlineJavascriptRequirement value ->
+            let expressionLib =
+                value.ExpressionLib
+                |> Option.bind (fun entries -> if entries.Count > 0 then Some entries else None)
             [ "class", Encode.string "InlineJavascriptRequirement" ]
-            |> appendOpt "expressionLib" (fun expressionLib -> expressionLib |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence) value.ExpressionLib
+            |> appendOpt "expressionLib" (fun entries -> entries |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence) expressionLib
             |> yMap
         | SchemaDefRequirement types ->
             [ "class", Encode.string "SchemaDefRequirement";
@@ -439,16 +442,24 @@ module Encode =
               "envDef", (envs |> Seq.map encodeEnv |> List.ofSeq |> YAMLElement.Sequence) ] |> yMap
         | ShellCommandRequirement -> [ "class", Encode.string "ShellCommandRequirement" ] |> yMap
         | ResourceRequirement rr ->
+            let tryEncodeScalar (key: string) (value: obj) =
+                match value with
+                | :? int as i -> Some (key, Encode.int i)
+                | :? int64 as i -> Some (key, YAMLElement.Value { Value = string i; Comment = None })
+                | :? float as f -> Some (key, Encode.float f)
+                | :? string as s -> Some (key, Encode.string s)
+                | :? bool as b -> Some (key, yBool b)
+                | _ -> None
+
             let dynamicPairs =
                 rr.GetProperties(false)
                 |> Seq.choose (fun kvp ->
                     match kvp.Value with
-                    | :? int as i -> Some (kvp.Key, Encode.int i)
-                    | :? int64 as i -> Some (kvp.Key, YAMLElement.Value { Value = string i; Comment = None })
-                    | :? float as f -> Some (kvp.Key, Encode.float f)
-                    | :? string as s -> Some (kvp.Key, Encode.string s)
-                    | :? bool as b -> Some (kvp.Key, yBool b)
-                    | _ -> None)
+                    | :? Option<obj> as optionalValue ->
+                        optionalValue
+                        |> Option.bind (tryEncodeScalar kvp.Key)
+                    | directValue ->
+                        tryEncodeScalar kvp.Key directValue)
                 |> Seq.toList
             [ "class", Encode.string "ResourceRequirement" ] @ dynamicPairs |> yMap
         // Canonicalize class names to short CWL forms where applicable.

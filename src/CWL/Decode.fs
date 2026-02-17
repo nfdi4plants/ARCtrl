@@ -806,7 +806,17 @@ module Decode =
                 let cls = get.Required.Field "class" Decode.string
                 requirementFromTypeName cls get
             ) element)
-        with _ ->
+        with ex ->
+            let hintClass =
+                try
+                    Decode.object (fun get -> get.Optional.Field "class" Decode.string) element
+                with _ ->
+                    None
+            match hintClass with
+            | Some knownClass ->
+                System.Diagnostics.Debug.WriteLine($"Hint decode fallback to UnknownHint for class '{knownClass}': {ex.Message}")
+            | None ->
+                ()
             None
 
     let private decodeHintElement (element: YAMLElement) : HintEntry =
