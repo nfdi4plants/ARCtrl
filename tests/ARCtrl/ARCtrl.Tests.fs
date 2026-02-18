@@ -298,6 +298,36 @@ let private tests_SetISAFromContracts = testList "SetISAFromContracts" [
         Expect.equal arc.Runs.[0].Identifier Run.Proteomics.runIdentifier "Run Identifier"
         Expect.isSome arc.Runs.[0].CWLDescription "Run CWL should be present"
     )
+    testCase "simpleISAWithWR_WithOperationCWL_LoadsOperationDescriptions" (fun () ->
+        let workflowIdentifier = Workflow.Proteomics.workflowIdentifier
+        let runIdentifier = Run.Proteomics.runIdentifier
+        let workflowCwlPath = Identifier.Workflow.cwlFileNameFromIdentifier workflowIdentifier
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier runIdentifier
+        let operationCwlText = TestObjects.CWL.Operation.minimalOperationFile
+
+        let contracts = [|
+            SimpleISA.Investigation.investigationReadContract
+            SimpleISA.Study.bII_S_1ReadContract
+            SimpleISA.Assay.proteomeReadContract
+            SimpleISA.Workflow.proteomicsReadContract
+            Contract.create(Operation.READ, path = workflowCwlPath, dtoType = DTOType.CWL, dto = DTO.Text operationCwlText)
+            SimpleISA.Run.proteomicsReadContract
+            Contract.create(Operation.READ, path = runCwlPath, dtoType = DTOType.CWL, dto = DTO.Text operationCwlText)
+        |]
+
+        let arc = ARC("MyIdentifier")
+        arc.SetISAFromContracts contracts
+
+        let workflowDescription = Expect.wantSome arc.Workflows.[0].CWLDescription "Workflow CWL should be present"
+        let runDescription = Expect.wantSome arc.Runs.[0].CWLDescription "Run CWL should be present"
+
+        Expect.isTrue
+            (match workflowDescription with | ARCtrl.CWL.Operation _ -> true | _ -> false)
+            (sprintf "Expected workflow CWL description to be Operation but got %A" workflowDescription)
+        Expect.isTrue
+            (match runDescription with | ARCtrl.CWL.Operation _ -> true | _ -> false)
+            (sprintf "Expected run CWL description to be Operation but got %A" runDescription)
+    )
     testCase "simpleISAWithWR_WithCWL_ResolvesRunWorkflowReference" (fun () ->
         let workflowIdentifier = Workflow.Proteomics.workflowIdentifier
         let runIdentifier = Run.Proteomics.runIdentifier

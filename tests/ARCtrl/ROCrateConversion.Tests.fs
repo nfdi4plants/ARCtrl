@@ -2320,6 +2320,70 @@ let tests_ToolDescription =
         )
     ]
 
+let tests_OperationDescription =
+    testList "OperationDescription" [
+        testCase "ComposeDecompose_Roundtrip_ProcessingUnit" (fun () ->
+            let operation = CWL.Decode.decodeOperation TestObjects.CWL.Operation.minimalOperationFile
+            let processingUnit = CWL.Operation operation
+            let protocol =
+                WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(
+                    "workflows/OperationWorkflow/operation.cwl",
+                    processingUnit
+                )
+            let additionalType = LDComputationalWorkflow.getAdditionalTypeAsString protocol
+            Expect.equal additionalType WorkflowConversion.operationDescriptionTypeName "Operation additionalType should be set"
+
+            let roundTripped = WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(protocol)
+            match roundTripped with
+            | CWL.Operation rt ->
+                Expect.equal rt.Inputs.Count operation.Inputs.Count "Input count should survive roundtrip"
+                Expect.equal rt.Outputs.Count operation.Outputs.Count "Output count should survive roundtrip"
+                Expect.equal rt.Inputs.[0].Name operation.Inputs.[0].Name "Input name should survive roundtrip"
+                Expect.equal rt.Outputs.[0].Name operation.Outputs.[0].Name "Output name should survive roundtrip"
+            | other ->
+                Expect.isTrue false $"Expected Operation but got %A{other}"
+        )
+        testCase "ArcWorkflow_Roundtrip_PreservesOperationVariant" (fun () ->
+            let operation = CWL.Decode.decodeOperation TestObjects.CWL.Operation.minimalOperationFile
+            let workflow =
+                ArcWorkflow(
+                    identifier = "OperationWorkflow",
+                    cwlDescription = CWL.Operation operation
+                )
+            let roWorkflow = WorkflowConversion.composeWorkflow workflow
+            let roundTripped = WorkflowConversion.decomposeWorkflow roWorkflow
+            match roundTripped.CWLDescription with
+            | Some (CWL.Operation rt) ->
+                Expect.equal rt.Inputs.Count operation.Inputs.Count "Operation inputs should survive ArcWorkflow roundtrip"
+                Expect.equal rt.Outputs.Count operation.Outputs.Count "Operation outputs should survive ArcWorkflow roundtrip"
+            | other ->
+                Expect.isTrue false $"Expected Operation CWL description but got %A{other}"
+        )
+        testCase "ArcRun_Roundtrip_PreservesOperationVariant" (fun () ->
+            let operation = CWL.Decode.decodeOperation TestObjects.CWL.Operation.minimalOperationFile
+            let runInput =
+                CWL.CWLParameterReference(
+                    key = "input",
+                    values = ResizeArray [ "value" ],
+                    type_ = CWL.CWLType.String
+                )
+            let run =
+                ArcRun(
+                    identifier = "OperationRun",
+                    cwlDescription = CWL.Operation operation,
+                    cwlInput = ResizeArray [ runInput ]
+                )
+            let roRun = RunConversion.composeRun run
+            let roundTripped = RunConversion.decomposeRun roRun
+            match roundTripped.CWLDescription with
+            | Some (CWL.Operation rt) ->
+                Expect.equal rt.Inputs.Count operation.Inputs.Count "Operation inputs should survive ArcRun roundtrip"
+                Expect.equal rt.Outputs.Count operation.Outputs.Count "Operation outputs should survive ArcRun roundtrip"
+            | other ->
+                Expect.isTrue false $"Expected Operation CWL description but got %A{other}"
+        )
+    ]
+
 let tests_WorkflowInvocation =
     testList "WorkflowInvocation" [
         testCase "OnlyCWL_BasicToolDescription" (fun () ->
@@ -2432,6 +2496,7 @@ let tests_ArcWorkflow =
                 | CWL.RunCommandLineTool _ -> "inline:CommandLineTool"
                 | CWL.RunWorkflow _ -> "inline:Workflow"
                 | CWL.RunExpressionTool _ -> "inline:ExpressionTool"
+                | CWL.RunOperation _ -> "inline:Operation"
 
             let sourceStepIds = sourceWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
             let parsedStepIds = parsedWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
@@ -3476,6 +3541,7 @@ let main =
         tests_AdditionalTypeErrorHandling
         tests_YAMLInputValue
         tests_ToolDescription
+        tests_OperationDescription
         tests_WorkflowInvocation
         tests_ArcWorkflow
         tests_ArcRun

@@ -158,6 +158,13 @@ module Builder =
         tool.Outputs
         |> Seq.iter (fun output -> addPortNode state toolNodeId PortDirection.Output output.Name output.Name |> ignore)
 
+    /// Adds all input and output port nodes for a CWL Operation.
+    let addOperationPorts (state: BuildState) (operationNodeId: WorkflowGraphNodeId) (operation: CWLOperationDescription) =
+        operation.Inputs
+        |> Seq.iter (fun input -> addPortNode state operationNodeId PortDirection.Input input.Name input.Name |> ignore)
+        operation.Outputs
+        |> Seq.iter (fun output -> addPortNode state operationNodeId PortDirection.Output output.Name output.Name |> ignore)
+
     /// Adds all input and output port nodes for a workflow step.
     let addStepPorts (state: BuildState) (stepNodeId: WorkflowGraphNodeId) (step: WorkflowStep) =
         step.In
@@ -325,6 +332,11 @@ module Builder =
                                 for key in candidateKeys do
                                     state.RunResolutionCache <- state.RunResolutionCache.Add(key, run)
                                 resolvedRun <- Some (run, candidate)
+                            | Some (Operation operation) ->
+                                let run = WorkflowStepRunOps.fromOperation operation
+                                for key in candidateKeys do
+                                    state.RunResolutionCache <- state.RunResolutionCache.Add(key, run)
+                                resolvedRun <- Some (run, candidate)
                             | None ->
                                 ()
 
@@ -350,7 +362,7 @@ module Builder =
                         ResolutionPathKeys = candidateKeys
                     }
 
-    /// Recursively builds graph nodes and edges for a CWLProcessingUnit (CommandLineTool, ExpressionTool, or Workflow).
+    /// Recursively builds graph nodes and edges for a CWLProcessingUnit (CommandLineTool, ExpressionTool, Operation, or Workflow).
     let rec buildProcessingUnit
         (state: BuildState)
         (scope: string)
@@ -407,6 +419,30 @@ module Builder =
                     None
                     metadata
             addExpressionToolPorts state nodeId expressionTool
+            nodeId
+        | Operation operation ->
+            let label =
+                chooseLabel
+                    "Operation"
+                    [
+                        tryGetProcessingUnitName operation
+                        operation.Label |> Option.bind tryBasenameNoCwlExtension
+                        workflowFilePath |> Option.bind tryBasenameNoCwlExtension
+                    ]
+            let metadata =
+                createMetadata [
+                    "cwlVersion", Some (box operation.CWLVersion)
+                ]
+            let nodeId =
+                addProcessingUnitNode
+                    state
+                    scope
+                    ProcessingUnitKind.Operation
+                    label
+                    ownerNodeId
+                    None
+                    metadata
+            addOperationPorts state nodeId operation
             nodeId
         | Workflow workflow ->
             let label =
@@ -588,30 +624,14 @@ module Builder =
         | RunOperation _ ->
             match WorkflowStepRunOps.tryGetOperation run with
             | Some operation ->
-                let label =
-                    chooseLabel
-                        "Operation"
-                        [
-                            operation.Label |> Option.bind tryBasenameNoCwlExtension
-                            workflowFilePath |> Option.bind tryBasenameNoCwlExtension
-                        ]
-                let metadata =
-                    createMetadata [
-                        "cwlVersion", Some (box operation.CWLVersion)
-                    ]
                 let nodeId =
-                    addProcessingUnitNode
+                    buildProcessingUnit
                         state
                         runScope
-                        ProcessingUnitKind.Workflow
-                        label
+                        workflowFilePath
                         (Some stepNodeId)
-                        None
-                        metadata
-                operation.Inputs
-                |> Seq.iter (fun input -> addPortNode state nodeId PortDirection.Input input.Name input.Name |> ignore)
-                operation.Outputs
-                |> Seq.iter (fun output -> addPortNode state nodeId PortDirection.Output output.Name output.Name |> ignore)
+                        false
+                        (Operation operation)
                 run, nodeId
             | None ->
                 let badNodeId =

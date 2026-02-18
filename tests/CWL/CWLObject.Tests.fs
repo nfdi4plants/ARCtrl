@@ -420,6 +420,40 @@ let testExpressionTool =
             Expect.stringContains et.Expression "parseInt" "Expression should use parseInt"
     ]
 
+let testOperation =
+    testList "Operation" [
+        testCase "decode top-level Operation via decodeCWLProcessingUnit" <| fun _ ->
+            let result = Decode.decodeCWLProcessingUnit TestObjects.CWL.Operation.minimalOperationFile
+            match result with
+            | Operation op ->
+                Expect.equal op.CWLVersion "v1.2" ""
+                Expect.equal op.Inputs.Count 1 "Operation should have one input"
+                Expect.equal op.Outputs.Count 1 "Operation should have one output"
+            | other ->
+                Expect.isTrue false $"Expected Operation but got %A{other}"
+        testCase "decodeOperation with requirements/hints/metadata" <| fun _ ->
+            let op = Decode.decodeOperation TestObjects.CWL.Operation.operationWithRequirementsAndMetadataFile
+            Expect.equal op.CWLVersion "v1.2" ""
+            let requirements = Expect.wantSome op.Requirements "Requirements should be present"
+            let hints = Expect.wantSome op.Hints "Hints should be present"
+            Expect.equal requirements.[0] Requirement.defaultInlineJavascriptRequirement ""
+            Expect.equal hints.[0] (KnownHint StepInputExpressionRequirement) ""
+            let metadata = Expect.wantSome op.Metadata "Metadata should be present"
+            let metadataText = metadata |> DynObj.format
+            Expect.stringContains metadataText "customKey" "Metadata should preserve unknown keys"
+        testCase "Operation encode/decode deterministic" <| fun _ ->
+            let original = TestObjects.CWL.Operation.minimalOperationFile
+            let (_, d1, d2) =
+                assertDeterministic
+                    Encode.encodeOperationDescription
+                    Decode.decodeOperation
+                    "Operation"
+                    original
+            Expect.equal d1.CWLVersion d2.CWLVersion ""
+            Expect.equal d1.Inputs.Count d2.Inputs.Count ""
+            Expect.equal d1.Outputs.Count d2.Outputs.Count ""
+    ]
+
 let main = 
     testList "CWLToolDescription" [
         testCWLToolDescriptionDecode
@@ -427,4 +461,5 @@ let main =
         testCWLToolDescriptionMetadata
         testNestedArrayDecoding
         testExpressionTool
+        testOperation
     ]

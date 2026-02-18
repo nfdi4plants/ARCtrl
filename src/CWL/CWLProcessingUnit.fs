@@ -4,6 +4,7 @@ type CWLProcessingUnit =
     | CommandLineTool of CWLToolDescription
     | Workflow of CWLWorkflowDescription
     | ExpressionTool of CWLExpressionToolDescription
+    | Operation of CWLOperationDescription
 
     /// Returns normalized inputs for all CWL processing unit variants.
     static member getInputs (processingUnit: CWLProcessingUnit) : ResizeArray<CWLInput> =
@@ -11,6 +12,7 @@ type CWLProcessingUnit =
         | CommandLineTool tool -> CWLToolDescription.getInputsOrEmpty tool
         | Workflow workflow -> CWLWorkflowDescription.getInputs workflow
         | ExpressionTool tool -> CWLExpressionToolDescription.getInputsOrEmpty tool
+        | Operation operation -> CWLOperationDescription.getInputs operation
 
     /// Returns outputs for all CWL processing unit variants.
     static member getOutputs (processingUnit: CWLProcessingUnit) : ResizeArray<CWLOutput> =
@@ -18,6 +20,7 @@ type CWLProcessingUnit =
         | CommandLineTool tool -> CWLToolDescription.getOutputs tool
         | Workflow workflow -> CWLWorkflowDescription.getOutputs workflow
         | ExpressionTool tool -> CWLExpressionToolDescription.getOutputs tool
+        | Operation operation -> CWLOperationDescription.getOutputs operation
 
     /// Returns requirements for all CWL processing unit variants.
     static member getRequirements (processingUnit: CWLProcessingUnit) : ResizeArray<Requirement> =
@@ -25,6 +28,7 @@ type CWLProcessingUnit =
         | CommandLineTool tool -> CWLToolDescription.getRequirementsOrEmpty tool
         | Workflow workflow -> CWLWorkflowDescription.getRequirementsOrEmpty workflow
         | ExpressionTool tool -> CWLExpressionToolDescription.getRequirementsOrEmpty tool
+        | Operation operation -> CWLOperationDescription.getRequirementsOrEmpty operation
 
     /// Returns hints for all CWL processing unit variants.
     static member getHints (processingUnit: CWLProcessingUnit) : ResizeArray<HintEntry> =
@@ -32,6 +36,7 @@ type CWLProcessingUnit =
         | CommandLineTool tool -> CWLToolDescription.getHintsOrEmpty tool
         | Workflow workflow -> CWLWorkflowDescription.getHintsOrEmpty workflow
         | ExpressionTool tool -> CWLExpressionToolDescription.getHintsOrEmpty tool
+        | Operation operation -> CWLOperationDescription.getHintsOrEmpty operation
 
     /// Returns known requirement hints only, dropping unknown extension hints.
     static member getKnownHints (processingUnit: CWLProcessingUnit) : ResizeArray<Requirement> =

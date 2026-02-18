@@ -151,6 +151,15 @@ let tests_visualization =
             Expect.stringContains mermaid "class port_unit_root__in__x wg_initial_input;" ""
             Expect.stringContains mermaid "class port_unit_root__out__y wg_final_output;" ""
 
+        testCase "operation nodes get dedicated operation styling class" <| fun () ->
+            let graph =
+                TestObjects.CWL.Workflow.workflowWithInlineRunOperationFile
+                |> Decode.decodeCWLProcessingUnit
+                |> Builder.build
+            let mermaid = WorkflowGraphSiren.toMermaid graph
+            Expect.stringContains mermaid "classDef wg_operation" ""
+            Expect.stringContains mermaid "class unit_root__op__run wg_operation;" ""
+
         testCase "edge mapping uses labeled input edges and unlabeled final-output edges" <| fun () ->
             let graph = buildSimpleWorkflowGraph ()
             let mermaid = WorkflowGraphSiren.toMermaid graph

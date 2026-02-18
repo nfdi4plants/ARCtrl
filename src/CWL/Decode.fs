@@ -1204,6 +1204,7 @@ module Decode =
                 | CommandLineTool tool -> WorkflowStepRunOps.fromTool tool
                 | Workflow workflow -> WorkflowStepRunOps.fromWorkflow workflow
                 | ExpressionTool expressionTool -> WorkflowStepRunOps.fromExpressionTool expressionTool
+                | Operation operation -> WorkflowStepRunOps.fromOperation operation
         | _ ->
             raise (System.ArgumentException($"Unsupported run value for workflow step: %A{runValue}"))
 
@@ -1532,6 +1533,7 @@ module Decode =
         | "CommandLineTool" -> CommandLineTool (commandLineToolDecoder yamlCWL)
         | "Workflow" -> Workflow (workflowDecoder yamlCWL)
         | "ExpressionTool" -> ExpressionTool (expressionToolDecoder yamlCWL)
+        | "Operation" -> Operation (operationDecoder yamlCWL)
         | _ -> raise (System.ArgumentException($"Invalid or unsupported CWL class: {cls}"))
 
     let stepArrayDecoder = stepArrayDecoderWithVersion "v1.2"
@@ -1552,6 +1554,11 @@ module Decode =
     let decodeExpressionTool (cwl: string) =
         let yamlCWL = readSanitizedYaml cwl
         expressionToolDecoder yamlCWL
+
+    /// Decode a CWL file string written in the YAML format into a CWLOperationDescription
+    let decodeOperation (cwl: string) =
+        let yamlCWL = readSanitizedYaml cwl
+        operationDecoder yamlCWL
 
     let decodeCWLProcessingUnit (cwl:string) =
         let yamlCWL = readSanitizedYaml cwl

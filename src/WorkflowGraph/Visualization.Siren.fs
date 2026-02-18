@@ -74,6 +74,8 @@ module WorkflowGraphSiren =
             flowchart.nodeHexagon(nodeId, label)
         | NodeKind.ProcessingUnitNode ProcessingUnitKind.ExpressionTool ->
             flowchart.nodeRhombus(nodeId, label)
+        | NodeKind.ProcessingUnitNode ProcessingUnitKind.Operation ->
+            flowchart.node(nodeId, label)
         | NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference ->
             flowchart.node(nodeId, label)
         | NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference ->
@@ -110,6 +112,8 @@ module WorkflowGraphSiren =
             nodeIdsByPredicate (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool) processingUnitNodes
         let expressionIds =
             nodeIdsByPredicate (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExpressionTool) processingUnitNodes
+        let operationIds =
+            nodeIdsByPredicate (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.Operation) processingUnitNodes
         let unresolvedIds =
             nodeIdsByPredicate
                 (fun n ->
@@ -123,6 +127,8 @@ module WorkflowGraphSiren =
         elements.Add(flowchart.classDef("wg_workflow", [ "fill", "#dff4ff"; "stroke", "#246fa8"; "stroke-width", "2px" ]))
         elements.Add(flowchart.classDef("wg_tool", [ "fill", "#e8f5e9"; "stroke", "#2e7d32"; "stroke-width", "2px" ]))
         elements.Add(flowchart.classDef("wg_expression", [ "fill", "#fff3e0"; "stroke", "#e65100"; "stroke-width", "2px" ]))
+        if operationIds.Length > 0 then
+            elements.Add(flowchart.classDef("wg_operation", [ "fill", "#ede7f6"; "stroke", "#5e35b1"; "stroke-width", "2px" ]))
         elements.Add(flowchart.classDef("wg_unresolved", [ "fill", "#ffebee"; "stroke", "#c62828"; "stroke-width", "2px"; "stroke-dasharray", "5 5" ]))
         elements.Add(flowchart.classDef("wg_initial_input", [ "fill", "#e1f5fe"; "stroke", "#0288d1"; "stroke-width", "2px" ]))
         elements.Add(flowchart.classDef("wg_final_output", [ "fill", "#f3e5f5"; "stroke", "#7b1fa2"; "stroke-width", "2px" ]))
@@ -133,6 +139,8 @@ module WorkflowGraphSiren =
             elements.Add(flowchart.``class``(toolIds, "wg_tool"))
         if expressionIds.Length > 0 then
             elements.Add(flowchart.``class``(expressionIds, "wg_expression"))
+        if operationIds.Length > 0 then
+            elements.Add(flowchart.``class``(operationIds, "wg_operation"))
         if unresolvedIds.Length > 0 then
             elements.Add(flowchart.``class``(unresolvedIds, "wg_unresolved"))
         if inputIds.Length > 0 then

@@ -69,3 +69,10 @@ type CWLOperationDescription(
     static member getHintsOrEmpty (operation: CWLOperationDescription) =
         operation.Hints |> Option.defaultValue (ResizeArray())
 
+    static member getOrCreateHints (operation: CWLOperationDescription) =
+        match operation.Hints with
+        | Some hints -> hints
+        | None ->
+            let hints = ResizeArray()
+            operation.Hints <- Some hints
+            hints

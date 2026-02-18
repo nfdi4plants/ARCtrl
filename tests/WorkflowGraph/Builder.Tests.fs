@@ -34,6 +34,12 @@ let tests_builderCore =
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExpressionTool) graph) 1 ""
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.StepNode) graph) 0 ""
 
+        testCase "Operation root graph" <| fun () ->
+            let processingUnit = decodeProcessingUnit TestObjects.CWL.Operation.minimalOperationFile
+            let graph = Builder.build processingUnit
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.Operation) graph) 1 ""
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.StepNode) graph) 0 ""
+
         testCase "empty workflow has no step nodes" <| fun () ->
             let processingUnit = decodeProcessingUnit TestObjects.CWL.Workflow.workflowWithNoStepsFile
             let graph = Builder.build processingUnit
@@ -121,6 +127,20 @@ let tests_builderCore =
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference) graph) 0 ""
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference) graph) 0 ""
 
+        testCase "RunString resolved to operation node" <| fun () ->
+            let yaml = TestObjects.CWL.WorkflowGraph.singleStepToolRunWorkflowFile
+            let resolvedOperation = Decode.decodeOperation TestObjects.CWL.Operation.minimalOperationFile
+            let options =
+                WorkflowGraphBuildOptions.defaultOptions
+                |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "workflow.cwl")
+                |> WorkflowGraphBuildOptions.withTryResolveRunPath (Some (fun path ->
+                    if path.EndsWith("tool.cwl") then Some (Operation resolvedOperation) else None
+                ))
+            let graph = yaml |> decodeProcessingUnit |> Builder.buildWith options
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.Operation) graph) 1 ""
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference) graph) 0 ""
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference) graph) 0 ""
+
         testCase "shared run path across sibling steps resolves as cache-hit (no false cycle)" <| fun () ->
             let yaml = TestObjects.CWL.WorkflowGraph.sharedRunPathWorkflowFile
             let resolvedTool = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFile
@@ -194,6 +214,15 @@ let tests_builderCore =
                 |> Seq.exists (fun n -> n.Kind = NodeKind.StepNode && n.Label = "inner")
             Expect.isTrue innerStepExists ""
             Expect.isTrue ((countEdges EdgeKind.Contains graph) >= 2) ""
+
+        testCase "inline operation run creates Operation processing unit node" <| fun () ->
+            let graph =
+                TestObjects.CWL.Workflow.workflowWithInlineRunOperationFile
+                |> decodeProcessingUnit
+                |> Builder.build
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.Operation) graph) 1 ""
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.Workflow) graph) 1 ""
+            Expect.equal (countEdges EdgeKind.Calls graph) 1 ""
     ]
 
 let main = 

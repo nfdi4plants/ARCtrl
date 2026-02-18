@@ -17,6 +17,7 @@
     <Compile Include="TestObjects.CWL\CommandLineTool.fs" />
     <Compile Include="TestObjects.CWL\CommandLineToolMetadata.fs" />
     <Compile Include="TestObjects.CWL\ExpressionTool.fs" />
+    <Compile Include="TestObjects.CWL\Operation.fs" />
     <Compile Include="TestObjects.CWL\Metadata.fs" />
     <Compile Include="TestObjects.ROCrate\ArcPrototype_ed123499.fs" />
     <Compile Include="TestObjects.ROCrate\ArcPrototype_ed123499_deprecated.fs" />

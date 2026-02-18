@@ -873,12 +873,16 @@ module Encode =
         encodeExpressionToolDescriptionElement et
         |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"] ["hints"; "requirements"; "inputs"; "outputs"; "expression"]
 
+    let encodeOperationDescription (op: CWLOperationDescription) : string =
+        encodeOperationDescriptionElement op
+        |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"] ["hints"; "requirements"; "inputs"; "outputs"]
 
     let encodeProcessingUnit (pu : CWLProcessingUnit) :string =
         match pu with
         | CommandLineTool td -> encodeToolDescription td
         | Workflow wd -> encodeWorkflowDescription wd
         | ExpressionTool et -> encodeExpressionToolDescription et
+        | Operation op -> encodeOperationDescription op
 
     /// Encode a CWLType to a single-line YAML string using flow/inline style
     /// This produces YAML that doesn't contain newlines and can be embedded in JSON

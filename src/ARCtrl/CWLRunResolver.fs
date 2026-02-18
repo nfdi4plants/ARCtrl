@@ -42,6 +42,7 @@ let runFromProcessingUnit (processingUnit: CWL.CWLProcessingUnit) =
     | CWL.CommandLineTool tool -> CWL.WorkflowStepRunOps.fromTool tool
     | CWL.Workflow workflow -> CWL.WorkflowStepRunOps.fromWorkflow workflow
     | CWL.ExpressionTool expressionTool -> CWL.WorkflowStepRunOps.fromExpressionTool expressionTool
+    | CWL.Operation operation -> CWL.WorkflowStepRunOps.fromOperation operation
 
 /// Iterates all steps in a workflow and resolves each step's run field recursively.
 let rec resolveWorkflowRunsRecursiveWithResolver
@@ -126,6 +127,8 @@ let resolveRunReferencesFromLookup (workflowFilePath: string) (processingUnit: C
         processingUnit
     | CWL.ExpressionTool _ ->
         processingUnit
+    | CWL.Operation _ ->
+        processingUnit
 
 /// <summary>
 /// Resolves a single workflow step run value by looking up the run path string
@@ -137,4 +140,3 @@ let resolveRunReferencesFromLookup (workflowFilePath: string) (processingUnit: C
 let resolveWorkflowStepRunFromLookup (workflowFilePath: string) (run: CWL.WorkflowStepRun) (tryResolveRunPath: string -> CWL.CWLProcessingUnit option) : CWL.WorkflowStepRun =
     let state = { Cache = Map.empty }
     resolveWorkflowStepRunRecursiveWithResolver workflowFilePath Set.empty state run tryResolveRunPath
-

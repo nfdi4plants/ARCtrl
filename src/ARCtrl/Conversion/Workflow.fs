@@ -189,6 +189,8 @@ type WorkflowConversion =
 
     static member expressionToolDescriptionTypeName = "ExpressionToolDescription"
 
+    static member operationDescriptionTypeName = "OperationDescription"
+
     /// <summary>
     /// Converts a workflow step run payload to a storable dataset identifier.
     /// String runs preserve the path, while inline runs are mapped to stable inline markers.
@@ -333,6 +335,34 @@ type WorkflowConversion =
             inputs = inputs
         )
 
+    static member composeWorkflowProtocolFromOperationDescription (filePath : string, operation : CWL.CWLOperationDescription, ?workflowName : string, ?runName : string) =
+        let inputs =
+            operation.Inputs
+            |> ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName))
+        let outputs =
+            operation.Outputs
+            |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
+        LDWorkflowProtocol.create(
+            id = filePath,
+            name = filePath,
+            inputs = inputs,
+            programmingLanguages = ResizeArray.singleton (LDComputerLanguage.createCWL()),
+            outputs = outputs,
+            additionalType = ResizeArray [WorkflowConversion.operationDescriptionTypeName]
+        )
+
+    static member decomposeWorkflowProtocolToOperationDescription (protocol : LDNode, ?context : LDContext, ?graph : LDGraph) =
+        let inputs =
+            LDComputationalWorkflow.getInputsAsFormalParameters(protocol, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun i -> WorkflowConversion.decomposeInputFromFormalParameter(i, ?context = context, ?graph = graph))
+        let outputs =
+            LDComputationalWorkflow.getOutputsAsFormalParameter(protocol, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun o -> WorkflowConversion.decomposeOutputFromFormalParameter(o, ?context = context, ?graph = graph))
+        CWL.CWLOperationDescription(
+            inputs = inputs,
+            outputs = outputs
+        )
+
     static member composeWorkflowStep (step : CWL.WorkflowStep, workflowID) =
         let id = $"WorkflowStep_{workflowID}_{step.Id}"
         let cw = LDComputationalWorkflow.create(id = id, name = step.Id)
@@ -445,10 +475,12 @@ type WorkflowConversion =
             WorkflowConversion.composeWorkflowProtocolFromWorkflow(filePath, wf, ?workflowName = workflowName, ?runName = runName)
         | CWL.ExpressionTool et ->
             WorkflowConversion.composeWorkflowProtocolFromExpressionToolDescription(filePath, et, ?workflowName = workflowName, ?runName = runName)
+        | CWL.Operation op ->
+            WorkflowConversion.composeWorkflowProtocolFromOperationDescription(filePath, op, ?workflowName = workflowName, ?runName = runName)
 
     /// <summary>
     /// Converts a workflow protocol node back into the appropriate CWL processing unit variant.
-    /// Uses <c>additionalType</c> to discriminate Workflow and ExpressionTool descriptions.
+    /// Uses <c>additionalType</c> to discriminate Workflow, ExpressionTool, and Operation descriptions.
     /// </summary>
     /// <param name="protocol">Workflow protocol node to decompose.</param>
     /// <param name="resolveRunReferences">If true, run references inside workflows are resolved through graph lookup.</param>
@@ -464,6 +496,9 @@ type WorkflowConversion =
         | s when s = WorkflowConversion.expressionToolDescriptionTypeName ->
             WorkflowConversion.decomposeWorkflowProtocolToExpressionToolDescription(protocol, ?context = context, ?graph = graph)
             |> CWL.ExpressionTool
+        | s when s = WorkflowConversion.operationDescriptionTypeName ->
+            WorkflowConversion.decomposeWorkflowProtocolToOperationDescription(protocol, ?context = context, ?graph = graph)
+            |> CWL.Operation
         | s ->
             WorkflowConversion.decomposeWorkflowProtocolToToolDescription(protocol, ?context = context, ?graph = graph)
             |> CWL.CommandLineTool              

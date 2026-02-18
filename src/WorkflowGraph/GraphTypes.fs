@@ -11,6 +11,7 @@ type ProcessingUnitKind =
     | Workflow
     | CommandLineTool
     | ExpressionTool
+    | Operation
     | ExternalReference
     | UnresolvedReference
 
