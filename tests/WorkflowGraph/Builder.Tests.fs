@@ -121,7 +121,7 @@ let tests_builderCore =
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference) graph) 0 ""
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference) graph) 0 ""
 
-        ptestCase "shared run path across sibling steps resolves as cache-hit (no false cycle)" <| fun () ->
+        testCase "shared run path across sibling steps resolves as cache-hit (no false cycle)" <| fun () ->
             let yaml = TestObjects.CWL.WorkflowGraph.sharedRunPathWorkflowFile
             let resolvedTool = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFile
             let mutable resolveCalls = 0

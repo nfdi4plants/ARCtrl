@@ -12,7 +12,9 @@ module Builder =
         Graph: WorkflowGraph
         mutable NodeIds: Set<WorkflowGraphNodeId>
         mutable EdgeIds: Set<WorkflowGraphEdgeId>
-        mutable VisitedRunPathKeys: Set<string>
+        mutable RunResolutionStack: Set<string>
+        mutable RunResolutionCache: Map<string, WorkflowStepRun>
+        mutable RunNodeCache: Map<string, WorkflowGraphNodeId>
         Options: WorkflowGraphBuildOptions
     }
 
@@ -21,6 +23,7 @@ module Builder =
         ResolvedRun: WorkflowStepRun
         ResolvedFromPath: string option
         AttemptedLookup: bool
+        ResolutionPathKeys: string []
     }
 
     /// Creates an empty WorkflowGraph with the given root node ID.
@@ -33,7 +36,9 @@ module Builder =
             Graph = createGraph rootNodeId
             NodeIds = Set.empty
             EdgeIds = Set.empty
-            VisitedRunPathKeys = Set.empty
+            RunResolutionStack = Set.empty
+            RunResolutionCache = Map.empty
+            RunNodeCache = Map.empty
             Options = options
         }
 
@@ -265,6 +270,7 @@ module Builder =
                 ResolvedRun = RunString runPath
                 ResolvedFromPath = None
                 AttemptedLookup = false
+                ResolutionPathKeys = [||]
             }
         else
             match state.Options.TryResolveRunPath with
@@ -280,32 +286,45 @@ module Builder =
                     ResolvedRun = RunString runPath
                     ResolvedFromPath = None
                     AttemptedLookup = state.Options.StrictUnresolvedRunReferences
+                    ResolutionPathKeys = [||]
                 }
             | Some tryResolveRunPath ->
                 let candidates = getRunPathCandidates workflowFilePath runPath
+                let candidateKeys =
+                    candidates
+                    |> Array.map ArcPathHelper.normalizePathKey
+                    |> Array.distinct
                 let mutable resolvedRun: (WorkflowStepRun * string) option = None
 
                 for candidate in candidates do
                     if resolvedRun.IsNone then
                         let pathKey = ArcPathHelper.normalizePathKey candidate
-                        if state.VisitedRunPathKeys.Contains pathKey then
+                        if state.RunResolutionStack.Contains pathKey then
                             addDiagnostic
                                 state
                                 GraphIssueKind.CycleDetected
                                 $"Cycle detected while resolving run reference '{candidate}'."
                                 workflowFilePath
                                 (Some candidate)
+                        elif state.RunResolutionCache.ContainsKey pathKey then
+                            resolvedRun <- Some (state.RunResolutionCache.[pathKey], candidate)
                         else
                             match tryResolveRunPath candidate with
                             | Some (CommandLineTool tool) ->
-                                state.VisitedRunPathKeys <- state.VisitedRunPathKeys.Add pathKey
-                                resolvedRun <- Some (WorkflowStepRunOps.fromTool tool, candidate)
+                                let run = WorkflowStepRunOps.fromTool tool
+                                for key in candidateKeys do
+                                    state.RunResolutionCache <- state.RunResolutionCache.Add(key, run)
+                                resolvedRun <- Some (run, candidate)
                             | Some (Workflow workflow) ->
-                                state.VisitedRunPathKeys <- state.VisitedRunPathKeys.Add pathKey
-                                resolvedRun <- Some (WorkflowStepRunOps.fromWorkflow workflow, candidate)
+                                let run = WorkflowStepRunOps.fromWorkflow workflow
+                                for key in candidateKeys do
+                                    state.RunResolutionCache <- state.RunResolutionCache.Add(key, run)
+                                resolvedRun <- Some (run, candidate)
                             | Some (ExpressionTool expressionTool) ->
-                                state.VisitedRunPathKeys <- state.VisitedRunPathKeys.Add pathKey
-                                resolvedRun <- Some (WorkflowStepRunOps.fromExpressionTool expressionTool, candidate)
+                                let run = WorkflowStepRunOps.fromExpressionTool expressionTool
+                                for key in candidateKeys do
+                                    state.RunResolutionCache <- state.RunResolutionCache.Add(key, run)
+                                resolvedRun <- Some (run, candidate)
                             | None ->
                                 ()
 
@@ -315,6 +334,7 @@ module Builder =
                         ResolvedRun = run
                         ResolvedFromPath = Some resolvedPath
                         AttemptedLookup = true
+                        ResolutionPathKeys = candidateKeys
                     }
                 | None ->
                     addDiagnostic
@@ -327,6 +347,7 @@ module Builder =
                         ResolvedRun = RunString runPath
                         ResolvedFromPath = None
                         AttemptedLookup = true
+                        ResolutionPathKeys = candidateKeys
                     }
 
     /// Recursively builds graph nodes and edges for a CWLProcessingUnit (CommandLineTool, ExpressionTool, or Workflow).
@@ -450,7 +471,28 @@ module Builder =
                         None
                 resolution.ResolvedRun, nodeId
             | resolvedRun ->
-                buildRunNode state runScope stepNodeId resolution.ResolvedFromPath resolvedRun
+                let cachedRunNodeId =
+                    resolution.ResolutionPathKeys
+                    |> Array.tryPick (fun key -> state.RunNodeCache |> Map.tryFind key)
+                match cachedRunNodeId with
+                | Some nodeId ->
+                    resolvedRun, nodeId
+                | None ->
+                    let builtRun, builtNodeId =
+                        match resolution.ResolvedFromPath with
+                        | Some resolvedPath ->
+                            let resolvedPathKey = ArcPathHelper.normalizePathKey resolvedPath
+                            let previousStack = state.RunResolutionStack
+                            state.RunResolutionStack <- previousStack.Add resolvedPathKey
+                            try
+                                buildRunNode state runScope stepNodeId resolution.ResolvedFromPath resolvedRun
+                            finally
+                                state.RunResolutionStack <- previousStack
+                        | None ->
+                            buildRunNode state runScope stepNodeId resolution.ResolvedFromPath resolvedRun
+                    for key in resolution.ResolutionPathKeys do
+                        state.RunNodeCache <- state.RunNodeCache.Add(key, builtNodeId)
+                    builtRun, builtNodeId
         | RunCommandLineTool _ ->
             match WorkflowStepRunOps.tryGetTool run with
             | Some tool ->
@@ -543,6 +585,51 @@ module Builder =
                     workflowFilePath
                     None
                 run, badNodeId
+        | RunOperation _ ->
+            match WorkflowStepRunOps.tryGetOperation run with
+            | Some operation ->
+                let label =
+                    chooseLabel
+                        "Operation"
+                        [
+                            operation.Label |> Option.bind tryBasenameNoCwlExtension
+                            workflowFilePath |> Option.bind tryBasenameNoCwlExtension
+                        ]
+                let metadata =
+                    createMetadata [
+                        "cwlVersion", Some (box operation.CWLVersion)
+                    ]
+                let nodeId =
+                    addProcessingUnitNode
+                        state
+                        runScope
+                        ProcessingUnitKind.Workflow
+                        label
+                        (Some stepNodeId)
+                        None
+                        metadata
+                operation.Inputs
+                |> Seq.iter (fun input -> addPortNode state nodeId PortDirection.Input input.Name input.Name |> ignore)
+                operation.Outputs
+                |> Seq.iter (fun output -> addPortNode state nodeId PortDirection.Output output.Name output.Name |> ignore)
+                run, nodeId
+            | None ->
+                let badNodeId =
+                    addProcessingUnitNode
+                        state
+                        runScope
+                        ProcessingUnitKind.UnresolvedReference
+                        "Invalid Operation payload"
+                        (Some stepNodeId)
+                        None
+                        None
+                addDiagnostic
+                    state
+                    GraphIssueKind.UnexpectedRuntimeType
+                    "WorkflowStepRun.RunOperation had an unexpected payload type."
+                    workflowFilePath
+                    None
+                run, badNodeId
 
     /// Connects step input ports to their sources (workflow inputs or other step outputs).
     and wireStepInputs
@@ -601,10 +688,8 @@ module Builder =
         (workflow: CWLWorkflowDescription)
         =
         for output in workflow.Outputs do
-            match output.OutputSource with
-            | None ->
-                ()
-            | Some outputSource ->
+            let outputSources = output.GetOutputSources()
+            for outputSource in outputSources do
                 let parsedSource = ReferenceParsing.parseSourceReference outputSource
                 if System.String.IsNullOrWhiteSpace parsedSource.PortId then
                     addDiagnostic
