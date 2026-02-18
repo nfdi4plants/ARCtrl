@@ -88,3 +88,35 @@ steps:
     run: ./missing.cwl
     in: {}
     out: [out]"""
+
+module SharedToolPath =
+
+    let workflowCwlText = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs:
+  combined:
+    type: string
+    outputSource: StepA/out
+steps:
+  StepA:
+    run: ./tool.cwl
+    in: {}
+    out: [out]
+  StepB:
+    run: ./tool.cwl
+    in: {}
+    out: [out]"""
+
+    let runCwlText = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs:
+  result:
+    type: string
+    outputSource: Workflow/combined
+steps:
+  Workflow:
+    run: ../../workflows/Proteomics/workflow.cwl
+    in: {}
+    out: [combined]"""

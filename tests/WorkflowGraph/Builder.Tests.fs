@@ -121,6 +121,30 @@ let tests_builderCore =
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference) graph) 0 ""
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference) graph) 0 ""
 
+        ptestCase "shared run path across sibling steps resolves as cache-hit (no false cycle)" <| fun () ->
+            let yaml = TestObjects.CWL.WorkflowGraph.sharedRunPathWorkflowFile
+            let resolvedTool = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFile
+            let mutable resolveCalls = 0
+            let options =
+                WorkflowGraphBuildOptions.defaultOptions
+                |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "workflow.cwl")
+                |> WorkflowGraphBuildOptions.withTryResolveRunPath (Some (fun path ->
+                    if path.EndsWith("tool.cwl") then
+                        resolveCalls <- resolveCalls + 1
+                        Some (CommandLineTool resolvedTool)
+                    else
+                        None
+                ))
+            let graph = yaml |> decodeProcessingUnit |> Builder.buildWith options
+            let cycleIssues =
+                graph.Diagnostics
+                |> Seq.filter (fun d -> d.Kind = GraphIssueKind.CycleDetected)
+                |> Seq.length
+            Expect.equal cycleIssues 0 "Sibling reuse of the same run path should not be treated as a cycle."
+            Expect.equal resolveCalls 1 "Shared run path should be resolved once and reused via cache."
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool) graph) 1 "Shared run path should yield one cached tool node."
+            Expect.equal (countEdges EdgeKind.Calls graph) 2 "Both workflow steps should still call the resolved tool."
+
         testCase "StepOutput string and record produce output ports" <| fun () ->
             let yaml = TestObjects.CWL.WorkflowGraph.stepOutputMixedWorkflowFile
             let graph = yaml |> decodeProcessingUnit |> Builder.build

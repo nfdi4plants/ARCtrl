@@ -50,6 +50,26 @@ steps:
     in: {}
     out: [out]"""
 
+let sharedRunPathWorkflowFile = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs:
+  outA:
+    type: string
+    outputSource: stepA/out
+  outB:
+    type: string
+    outputSource: stepB/out
+steps:
+  stepA:
+    run: ./tool.cwl
+    in: {}
+    out: [out]
+  stepB:
+    run: ./tool.cwl
+    in: {}
+    out: [out]"""
+
 let singleStepMissingRunWorkflowFile = """cwlVersion: v1.2
 class: Workflow
 inputs: {}
