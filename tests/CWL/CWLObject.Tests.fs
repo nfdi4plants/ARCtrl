@@ -4,6 +4,7 @@ open ARCtrl.CWL
 open TestingUtils
 open DynamicObj
 open TestingUtils.CWL
+open YAMLicious.YAMLiciousTypes
 
 let decodeCWLToolDescription: CWLToolDescription =
     TestObjects.CWL.CommandLineTool.cwlFile
@@ -420,6 +421,48 @@ let testExpressionTool =
             Expect.stringContains et.Expression "parseInt" "Expression should use parseInt"
     ]
 
+let testEncodeNormalizeEdgeCases =
+    testList "Encode Normalize Edge Cases" [
+        testCase "empty object value roundtrips as mapping, not string" <| fun _ ->
+            let encodedYaml =
+                Encode.yMap [ "root", YAMLElement.Object [] ]
+                |> Encode.writeYaml
+
+            let parsedRoot =
+                encodedYaml
+                |> YAMLicious.Decode.read
+                |> YAMLicious.Decode.object (fun get -> get.Required.Field "root" id)
+
+            match parsedRoot with
+            | YAMLElement.Object [] -> ()
+            | YAMLElement.Object [YAMLElement.Value v] when v.Value = "{}" ->
+                failwith "Expected empty mapping for `{}`, but got scalar \"{}\"."
+            | YAMLElement.Value v when v.Value = "{}" ->
+                failwith "Expected empty mapping for `{}`, but got scalar \"{}\"."
+            | other ->
+                failwith $"Expected empty mapping for `{{}}`, got %A{other}"
+
+        testCase "workflow step empty in re-decodes to empty input collection" <| fun _ ->
+            let step =
+                WorkflowStep.fromRunPath(
+                    id = "s1",
+                    in_ = ResizeArray(),
+                    out_ = ResizeArray [| StepOutputString "out" |],
+                    runPath = "./tool.cwl"
+                )
+
+            let encodedYaml =
+                Encode.yMap [ "steps", Encode.yMap [ Encode.encodeWorkflowStep step ] ]
+                |> Encode.writeYaml
+
+            let decodedSteps =
+                encodedYaml
+                |> YAMLicious.Decode.read
+                |> Decode.stepsDecoder
+
+            Expect.equal decodedSteps.[0].In.Count 0 "Empty `in` should survive encode/decode as an empty mapping."
+    ]
+
 let testOperation =
     testList "Operation" [
         testCase "decode top-level Operation via decodeCWLProcessingUnit" <| fun _ ->
@@ -458,6 +501,7 @@ let main =
     testList "CWLToolDescription" [
         testCWLToolDescriptionDecode
         testCWLToolDescriptionEncode
+        testEncodeNormalizeEdgeCases
         testCWLToolDescriptionMetadata
         testNestedArrayDecoding
         testExpressionTool
