@@ -141,6 +141,18 @@ outputs: {}"""
                     Expect.sequenceEqual actualExpressionLib expectedExpressionLib "expressionLib entries should decode"
                 | _ ->
                     failwith "Expected InlineJavascriptRequirement"
+            ptestCase "Decode scalar expressionLib form" <| fun _ ->
+                let yaml = """requirements:
+  - class: InlineJavascriptRequirement
+    expressionLib: $(function() { return 42; })"""
+                let reqs = decodeRequirements yaml
+                let requirement = findRequirement reqs (function InlineJavascriptRequirement _ -> true | _ -> false)
+                match requirement with
+                | InlineJavascriptRequirement inlineJavascriptRequirement ->
+                    let expressionLib = Expect.wantSome inlineJavascriptRequirement.ExpressionLib "Scalar expressionLib should normalize to a single entry array."
+                    Expect.sequenceEqual expressionLib (ResizeArray [| "$(function() { return 42; })" |]) "Scalar expressionLib should be preserved."
+                | _ ->
+                    failwith "Expected InlineJavascriptRequirement"
 
             testCase "Encode emits expressionLib when present" <| fun _ ->
                 let requirement =
@@ -255,6 +267,18 @@ outputs: {}"""
                             StringEntry (Literal "$(inputs.outputDirectory)")
                         |]
                     Expect.sequenceEqual listing expected "String listing entries should decode into StringEntry values."
+                | _ ->
+                    failwith "Wrong requirement type: expected InitialWorkDirRequirement"
+            ptestCase "Scalar listing form decodes as single listing entry" <| fun _ ->
+                let yaml = """requirements:
+  - class: InitialWorkDirRequirement
+    listing: $(inputs.stageDirectory)"""
+                let reqs = decodeRequirements yaml
+                let initialWorkDirItem = findRequirement reqs (function InitialWorkDirRequirement _ -> true | _ -> false)
+                match initialWorkDirItem with
+                | InitialWorkDirRequirement listing ->
+                    let expected = ResizeArray [| StringEntry (Literal "$(inputs.stageDirectory)") |]
+                    Expect.sequenceEqual listing expected "Scalar listing form should decode to a single StringEntry."
                 | _ ->
                     failwith "Wrong requirement type: expected InitialWorkDirRequirement"
             testCase "Object listing entry without entry field decodes as StringEntry" <| fun _ ->
@@ -675,6 +699,19 @@ outputs: {}"""
                 Expect.equal workReuse (WorkReuseRequirement { EnableReuse = false }) "WorkReuse enableReuse=false should decode."
                 Expect.equal network (NetworkAccessRequirement { NetworkAccess = false }) "NetworkAccess networkAccess=false should decode."
                 Expect.equal inplace (InplaceUpdateRequirement { InplaceUpdate = false }) "InplaceUpdateRequirement inplaceUpdate=false should decode."
+            ptestCase "WorkReuse and NetworkAccess accept expression payloads" <| fun _ ->
+                let yaml = """requirements:
+  - class: WorkReuse
+    enableReuse: $(inputs.enable_reuse)
+  - class: NetworkAccess
+    networkAccess: $(inputs.enable_network)"""
+                let reqs = decodeRequirements yaml
+                let encoded =
+                    reqs
+                    |> Seq.map (fun requirement -> Encode.encodeRequirement requirement |> Encode.writeYaml)
+                    |> String.concat "\n"
+                Expect.stringContains encoded "$(inputs.enable_reuse)" "WorkReuse expression payload should survive decode/encode."
+                Expect.stringContains encoded "$(inputs.enable_network)" "NetworkAccess expression payload should survive decode/encode."
         ]
         testList "ToolTimeLimitRequirement" [
             testCase "Decode numeric timelimit" <| fun _ ->
@@ -714,6 +751,13 @@ outputs: {}"""
                 let requirement = findRequirement reqs (function ToolTimeLimitRequirement _ -> true | _ -> false)
                 let expected = ToolTimeLimitRequirement (ToolTimeLimitExpression "3.5")
                 Expect.equal requirement expected "Float timelimit should decode via expression fallback."
+            ptestCase "Decode negative numeric timelimit fails" <| fun _ ->
+                let yaml = """requirements:
+  - class: ToolTimeLimit
+    timelimit: -1"""
+                Expect.throws
+                    (fun _ -> decodeRequirements yaml |> ignore)
+                    "Negative ToolTimeLimit value should fail decoding."
         ]
         testList "ResourceRequirement" [
             testCase "Decode int long float and expression resource scalars" <| fun _ ->

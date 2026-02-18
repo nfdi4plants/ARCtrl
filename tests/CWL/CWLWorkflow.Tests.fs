@@ -246,6 +246,20 @@ let testCWLWorkflowDescriptionDecode =
             let workflow = Expect.wantSome (WorkflowStepRunOps.tryGetWorkflow runValue) "Expected inline workflow payload"
             Expect.equal workflow.Steps.Count 1 ""
             Expect.equal workflow.Steps.[0].Id "inner" ""
+        ptestCase "workflow outputSource array form decodes and roundtrips" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithOutputSourceArrayFile
+            let encoded = Encode.encodeWorkflowDescription decoded
+            let roundTripped = Decode.decodeWorkflow encoded
+            Expect.stringContains encoded "outputSource:" "Array-form outputSource should be emitted."
+            Expect.stringContains encoded "- step1/out" "First outputSource entry should be preserved."
+            Expect.stringContains encoded "- step2/out" "Second outputSource entry should be preserved."
+            Expect.equal roundTripped.Outputs.[0].Name "merged" "Output should survive decode/encode/decode."
+        ptestCase "workflow step run Operation class decodes and roundtrips" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithInlineRunOperationFile
+            let encoded = Encode.encodeWorkflowDescription decoded
+            let roundTripped = Decode.decodeWorkflow encoded
+            Expect.stringContains encoded "class: Operation" "Operation run should roundtrip with class marker."
+            Expect.equal roundTripped.Steps.[0].Id "op" "Operation-backed step should survive roundtrip."
         testCase "invalid pickValue fails decode" <| fun _ ->
             let invalidPickValue = TestObjects.CWL.Workflow.workflowWithInvalidPickValueFile
             Expect.throws (fun _ -> Decode.decodeWorkflow invalidPickValue |> ignore) "Invalid pickValue should fail"

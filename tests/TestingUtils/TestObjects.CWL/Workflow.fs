@@ -332,3 +332,47 @@ steps:
       - class: NetworkAccess
         networkAccess: true"""
 
+let workflowWithOutputSourceArrayFile = """cwlVersion: v1.2
+class: Workflow
+requirements:
+  - class: MultipleInputFeatureRequirement
+inputs: {}
+outputs:
+  merged:
+    type: string
+    outputSource:
+      - step1/out
+      - step2/out
+steps:
+  step1:
+    run: ./tool-a.cwl
+    in: {}
+    out: [out]
+  step2:
+    run: ./tool-b.cwl
+    in: {}
+    out: [out]"""
+
+let workflowWithInlineRunOperationFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  msg: string
+outputs:
+  echoed:
+    type: string
+    outputSource: op/out
+steps:
+  op:
+    run:
+      class: Operation
+      cwlVersion: v1.2
+      inputs:
+        in:
+          type: string
+      outputs:
+        out:
+          type: string
+    in:
+      in: msg
+    out: [out]"""
+
