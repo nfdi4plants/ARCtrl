@@ -17,6 +17,63 @@ let private countNodes predicate (graph: WorkflowGraph) =
     |> Seq.filter predicate
     |> Seq.length
 
+let private toFixtureFullPath (fixtureRoot: string) (path: string) =
+    let normalizedRelative = ArcPathHelper.normalizePathKey path
+    ArcPathHelper.combine fixtureRoot normalizedRelative
+
+let private getFileNameWithoutExtension (path: string) =
+    let fileName = ArcPathHelper.getFileName path
+    let extensionIndex = fileName.LastIndexOf('.')
+    if extensionIndex <= 0 then
+        fileName
+    else
+        fileName.Substring(0, extensionIndex)
+
+let private getDirectoryPath (path: string) =
+    let segments = ArcPathHelper.split path
+    if segments.Length <= 1 then
+        ""
+    else
+        segments.[0 .. segments.Length - 2]
+        |> ArcPathHelper.combineMany
+
+let private buildFixtureResolver (fixtureRoot: string) =
+    crossAsync {
+        let! relativePaths = FileSystemHelper.getAllFilePathsAsync fixtureRoot
+        let cwlRelativePaths =
+            relativePaths
+            |> Array.filter (fun p -> p.EndsWith(".cwl"))
+
+        let! lookupEntries =
+            cwlRelativePaths
+            |> Array.map (fun relativePath ->
+                crossAsync {
+                    let fullPath = ArcPathHelper.combine fixtureRoot relativePath
+                    let! content = FileSystemHelper.readFileTextAsync fullPath
+                    let processingUnit = Decode.decodeCWLProcessingUnit content
+                    let normalizedRelativePath = ArcPathHelper.normalizePathKey relativePath
+                    let normalizedFullPath = ArcPathHelper.normalizePathKey fullPath
+                    let fileNameOnly = ArcPathHelper.normalizePathKey (ArcPathHelper.getFileName relativePath)
+                    return [
+                        normalizedRelativePath, processingUnit
+                        normalizedFullPath, processingUnit
+                        fileNameOnly, processingUnit
+                    ]
+                }
+            )
+            |> CrossAsync.all
+
+        let lookupMap =
+            lookupEntries
+            |> Seq.collect id
+            |> Seq.distinctBy fst
+            |> Map.ofSeq
+
+        return fun (path: string) ->
+            lookupMap
+            |> Map.tryFind (ArcPathHelper.normalizePathKey path)
+    }
+
 let tests_workflowFixture =
     testList "workflow.cwl fixture" [
         testCaseCrossAsync "builds without diagnostics" (crossAsync {
@@ -204,8 +261,53 @@ let tests_runFixture =
         })
     ]
 
+let tests_expectedChartFixtures =
+    testList "expected graph fixtures" [
+        testCaseCrossAsync "regenerated markdown matches reviewed expected files" (crossAsync {
+            let fixtureRoot = TestObjects.IO.testSimpleARCWithCWL
+            let requestedCwlPaths = [
+                "workflows/ProteomIQon/workflow.cwl"
+                "runs/tests/run.cwl"
+                "workflows/ProteomIQon/proteomiqon-peptidespectrummatching.cwl"
+            ]
+            let! tryResolveRunPath = buildFixtureResolver fixtureRoot
+
+            let renderMarkdown (requestedPath: string) =
+                crossAsync {
+                    let fullCwlPath = toFixtureFullPath fixtureRoot requestedPath
+                    let rootWorkflowPath = ArcPathHelper.normalizePathKey requestedPath
+                    let! content = FileSystemHelper.readFileTextAsync fullCwlPath
+                    let processingUnit = Decode.decodeCWLProcessingUnit content
+                    let options =
+                        WorkflowGraphBuildOptions.defaultOptions
+                        |> WorkflowGraphBuildOptions.withRootScope (getFileNameWithoutExtension fullCwlPath)
+                        |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some rootWorkflowPath)
+                        |> WorkflowGraphBuildOptions.withTryResolveRunPath (Some tryResolveRunPath)
+                    return
+                        processingUnit
+                        |> Builder.buildWith options
+                        |> WorkflowGraphSiren.toMarkdown
+                }
+
+            let expectedPathForRequested (requestedPath: string) =
+                let fullCwlPath = toFixtureFullPath fixtureRoot requestedPath
+                let directoryPath = getDirectoryPath fullCwlPath
+                let fileStem = getFileNameWithoutExtension fullCwlPath
+                ArcPathHelper.combine directoryPath $"{fileStem}_expected.graph.md"
+
+            for requestedPath in requestedCwlPaths do
+                let! actual = renderMarkdown requestedPath
+                let expectedPath = expectedPathForRequested requestedPath
+                let! expectedExists = FileSystemHelper.fileExistsAsync expectedPath
+                Expect.isTrue expectedExists $"Expected graph fixture missing: {expectedPath}"
+                let! expected = FileSystemHelper.readFileTextAsync expectedPath
+                Expect.trimEqual actual expected $"Generated chart for '{requestedPath}' should match reviewed fixture '{expectedPath}'."
+        })
+    ]
+
 let main =
     testList "Integration" [
         tests_workflowFixture
         tests_runFixture
+        tests_expectedChartFixtures
     ]
