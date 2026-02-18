@@ -441,6 +441,83 @@ let private tests_SetISAFromContracts = testList "SetISAFromContracts" [
             | other ->
                 Expect.isTrue false (sprintf "Expected referenced step %d to resolve to RunCommandLineTool but got %A" i other)
     )
+    testCase "simpleISAWithWR_WithCWL_ResolvesRunWorkflowReference_CacheHitAcrossDeepNesting" (fun () ->
+        let runIdentifier = Run.Proteomics.runIdentifier
+        let workflowIdentifier = Workflow.Proteomics.workflowIdentifier
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier runIdentifier
+
+        let workflowAPath = ArcPathHelper.combineMany [|ArcPathHelper.WorkflowsFolderName; workflowIdentifier; "workflow-a.cwl"|]
+        let workflowBPath = ArcPathHelper.combineMany [|ArcPathHelper.WorkflowsFolderName; workflowIdentifier; "workflow-b.cwl"|]
+        let workflowCPath = ArcPathHelper.combineMany [|ArcPathHelper.WorkflowsFolderName; workflowIdentifier; "workflow-c.cwl"|]
+        let workflowToolPath = ArcPathHelper.combineMany [|ArcPathHelper.WorkflowsFolderName; workflowIdentifier; "tool.cwl"|]
+
+        let runProcessingUnit = ARCtrl.CWL.Decode.decodeCWLProcessingUnit TestObjects.CWL.RunWorkflowReference.DeepSharedToolPath.runCwlText
+        let workflowAProcessingUnit = ARCtrl.CWL.Decode.decodeCWLProcessingUnit TestObjects.CWL.RunWorkflowReference.DeepSharedToolPath.workflowACwlText
+        let workflowBProcessingUnit = ARCtrl.CWL.Decode.decodeCWLProcessingUnit TestObjects.CWL.RunWorkflowReference.DeepSharedToolPath.workflowBCwlText
+        let workflowCProcessingUnit = ARCtrl.CWL.Decode.decodeCWLProcessingUnit TestObjects.CWL.RunWorkflowReference.DeepSharedToolPath.workflowCCwlText
+        let toolProcessingUnit = ARCtrl.CWL.Decode.decodeCWLProcessingUnit TestObjects.CWL.RunWorkflowReference.workflowToolText
+
+        let mutable toolResolveCalls = 0
+
+        let tryResolveRunPath (path: string) =
+            let key = ArcPathHelper.normalizePathKey path
+            if key = ArcPathHelper.normalizePathKey workflowAPath then
+                Some workflowAProcessingUnit
+            elif key = ArcPathHelper.normalizePathKey workflowBPath then
+                Some workflowBProcessingUnit
+            elif key = ArcPathHelper.normalizePathKey workflowCPath then
+                Some workflowCProcessingUnit
+            elif key = ArcPathHelper.normalizePathKey workflowToolPath then
+                toolResolveCalls <- toolResolveCalls + 1
+                Some toolProcessingUnit
+            else
+                None
+
+        let resolvedRun =
+            ARCtrl.CWLRunResolver.resolveRunReferencesFromLookup runCwlPath runProcessingUnit tryResolveRunPath
+
+        let getStepById (id: string) (workflow: ARCtrl.CWL.CWLWorkflowDescription) =
+            let stepOpt =
+                workflow.Steps
+                |> Seq.tryFind (fun s -> s.Id = id)
+            Expect.wantSome stepOpt (sprintf "Expected step '%s' to exist." id)
+
+        let requireWorkflowRun (label: string) (run: ARCtrl.CWL.WorkflowStepRun) : ARCtrl.CWL.CWLWorkflowDescription =
+            match run with
+            | ARCtrl.CWL.RunWorkflow workflowObj -> workflowObj :?> ARCtrl.CWL.CWLWorkflowDescription
+            | other ->
+                Expect.isTrue false (sprintf "Expected %s to resolve to RunWorkflow but got %A" label other)
+                Unchecked.defaultof<ARCtrl.CWL.CWLWorkflowDescription>
+
+        let requireToolRun (label: string) (run: ARCtrl.CWL.WorkflowStepRun) : ARCtrl.CWL.CWLToolDescription =
+            match run with
+            | ARCtrl.CWL.RunCommandLineTool toolObj -> toolObj :?> ARCtrl.CWL.CWLToolDescription
+            | other ->
+                Expect.isTrue false (sprintf "Expected %s to resolve to RunCommandLineTool but got %A" label other)
+                Unchecked.defaultof<ARCtrl.CWL.CWLToolDescription>
+
+        let runWorkflow =
+            match resolvedRun with
+            | ARCtrl.CWL.Workflow workflow -> workflow
+            | other ->
+                Expect.isTrue false (sprintf "Expected resolved run to be Workflow but got %A" other)
+                Unchecked.defaultof<ARCtrl.CWL.CWLWorkflowDescription>
+
+        let workflowA = getStepById "Nested" runWorkflow |> fun step -> requireWorkflowRun "Nested" step.Run
+        let workflowB = getStepById "NestedB" workflowA |> fun step -> requireWorkflowRun "NestedB" step.Run
+        let workflowC = getStepById "NestedC" workflowB |> fun step -> requireWorkflowRun "NestedC" step.Run
+
+        let deepTool : ARCtrl.CWL.CWLToolDescription =
+            getStepById "SharedTool" workflowC
+            |> fun step -> requireToolRun "SharedTool" step.Run
+        let directTool : ARCtrl.CWL.CWLToolDescription =
+            getStepById "DirectTool" runWorkflow
+            |> fun step -> requireToolRun "DirectTool" step.Run
+
+        Expect.equal deepTool.BaseCommand.Value.[0] "echo" "Deeply nested shared tool should resolve correctly."
+        Expect.equal directTool.BaseCommand.Value.[0] "echo" "Top-level shared tool should resolve correctly."
+        Expect.equal toolResolveCalls 1 "Shared tool should be resolved exactly once and reused via cache across nesting depths."
+    )
     testCase "simpleISAWithWR_WithCWL_ResolvesRunWorkflowReference_CycleSafe" (fun () ->
         let runIdentifier = Run.Proteomics.runIdentifier
         let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier runIdentifier
