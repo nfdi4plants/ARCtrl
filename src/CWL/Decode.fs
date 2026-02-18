@@ -1194,17 +1194,11 @@ module Decode =
             RunString v.Value
         | YAMLElement.Object _ ->
             let normalizedRun = withDefaultCwlVersion defaultCwlVersion runValue
-            let cls = classDecoder normalizedRun
-            match cls with
-            | "Operation" ->
-                operationDecoder normalizedRun
-                |> WorkflowStepRunOps.fromOperation
-            | _ ->
-                match decodeCWLProcessingUnitElement normalizedRun with
-                | CommandLineTool tool -> WorkflowStepRunOps.fromTool tool
-                | Workflow workflow -> WorkflowStepRunOps.fromWorkflow workflow
-                | ExpressionTool expressionTool -> WorkflowStepRunOps.fromExpressionTool expressionTool
-                | Operation operation -> WorkflowStepRunOps.fromOperation operation
+            match decodeCWLProcessingUnitElement normalizedRun with
+            | CommandLineTool tool -> WorkflowStepRunOps.fromTool tool
+            | Workflow workflow -> WorkflowStepRunOps.fromWorkflow workflow
+            | ExpressionTool expressionTool -> WorkflowStepRunOps.fromExpressionTool expressionTool
+            | Operation operation -> WorkflowStepRunOps.fromOperation operation
         | _ ->
             raise (System.ArgumentException($"Unsupported run value for workflow step: %A{runValue}"))
 
