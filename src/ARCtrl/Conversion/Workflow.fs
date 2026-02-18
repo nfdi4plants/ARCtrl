@@ -4,7 +4,6 @@ open ARCtrl.ROCrate
 open ARCtrl
 open ARCtrl.Helper
 open ARCtrl.FileSystem
-open System.Collections.Generic
 //open ColumnIndex
 
 open ColumnIndex
@@ -142,11 +141,11 @@ type WorkflowConversion =
             ?glob = Seq.tryPick (fun n -> LDPropertyValue.tryGetAsGlob(n, ?context = context)) identifiers
         )
 
-    static member decomposeOutputFromFormalParameter(inp : LDNode, ?context : LDContext, ?graph : LDGraph) =
-        let t = inp.AdditionalType |> Seq.exactlyOne |> WorkflowConversion.decomposeAdditionalType
-        let binding = WorkflowConversion.decomposeOutputBindings(LDFormalParameter.getIdentifiers(inp, ?context = context, ?graph = graph), ?context = context)
-        let optional = LDFormalParameter.tryGetValueRequiredAsBoolean(inp, ?context = context) |> Option.map (not)
-        let name = LDFormalParameter.getNameAsString(inp, ?context = context)
+    static member decomposeOutputFromFormalParameter(outp : LDNode, ?context : LDContext, ?graph : LDGraph) =
+        let t = outp.AdditionalType |> Seq.exactlyOne |> WorkflowConversion.decomposeAdditionalType
+        let binding = WorkflowConversion.decomposeOutputBindings(LDFormalParameter.getIdentifiers(outp, ?context = context, ?graph = graph), ?context = context)
+        let optional = LDFormalParameter.tryGetValueRequiredAsBoolean(outp, ?context = context) |> Option.map (not)
+        let name = LDFormalParameter.getNameAsString(outp, ?context = context)
         CWL.CWLOutput(name, t, binding)
 
     static member composeComputationalTool (tool : Process.Component) =
@@ -175,20 +174,85 @@ type WorkflowConversion =
             componentType = h
         )
 
+    /// <summary>
+    /// Returns the normalized input parameters for a CWL processing unit.
+    /// Supports CommandLineTool, Workflow, and ExpressionTool variants.
+    /// </summary>
+    /// <param name="pu">The processing unit to inspect.</param>
     static member getInputParametersFromProcessingUnit (pu : CWL.CWLProcessingUnit) =
-        match pu with
-        | CWL.CommandLineTool tool ->
-            match tool.Inputs with
-            | Some inputs -> inputs |> ResizeArray.map (fun i -> i)
-            | None -> ResizeArray []
-        | CWL.Workflow wf -> 
-            wf.Inputs |> ResizeArray.map (fun i -> i)
+        CWL.CWLProcessingUnit.getInputs pu
 
     
     static member toolDescriptionTypeName = "ToolDescription"
 
     static member workflowDescriptionTypeName = "WorkflowDescription"
 
+    static member expressionToolDescriptionTypeName = "ExpressionToolDescription"
+
+    static member operationDescriptionTypeName = "OperationDescription"
+
+    /// <summary>
+    /// Converts a workflow step run payload to a storable dataset identifier.
+    /// String runs preserve the path, while inline runs are mapped to stable inline markers.
+    /// </summary>
+    /// <param name="run">Workflow step run payload.</param>
+    static member runToIdentifier (run : CWL.WorkflowStepRun) : string =
+        match run with
+        | CWL.RunString runPath -> runPath
+        | CWL.RunCommandLineTool _ -> "inline:CommandLineTool"
+        | CWL.RunWorkflow _ -> "inline:Workflow"
+        | CWL.RunExpressionTool _ -> "inline:ExpressionTool"
+        | CWL.RunOperation _ -> "inline:Operation"
+
+    /// <summary>
+    /// Attempts to decode a CWL processing unit from an LDGraph node addressed by a resolved run path.
+    /// Supports direct WorkflowProtocol nodes and ARC Workflow/Run datasets that reference a main workflow protocol.
+    /// </summary>
+    /// <param name="resolvedRunPath">Resolved run reference to look up in the graph.</param>
+    /// <param name="graph">Optional LDGraph containing workflow protocol nodes.</param>
+    /// <param name="context">Optional LDContext used for node validation and property access.</param>
+    static member tryDecodeProcessingUnitFromGraph(resolvedRunPath: string, ?graph: LDGraph, ?context: LDContext) : CWL.CWLProcessingUnit option =
+        let tryDecodeWorkflowProtocol (protocol: LDNode) =
+            try
+                Some (
+                    WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(
+                        protocol,
+                        ?context = context,
+                        ?graph = graph,
+                        resolveRunReferences = false
+                    )
+                )
+            with _ ->
+                None
+
+        match graph with
+        | None -> None
+        | Some graph ->
+            // Normalize via FileSystem path helpers so lookup works with mixed "./" and normalized identifiers.
+            let normalizedResolvedRunPath = ArcPathHelper.normalize resolvedRunPath
+            let candidateIds =
+                ResizeArray [
+                    resolvedRunPath
+                    normalizedResolvedRunPath
+                    $"./{normalizedResolvedRunPath}"
+                ]
+                |> Seq.distinct
+                |> Seq.toArray
+            let candidateNode =
+                candidateIds
+                |> Array.tryPick graph.TryGetNode
+            // Accept either direct workflow protocol nodes or datasets that contain one as main entity.
+            match candidateNode with
+            | Some node when LDWorkflowProtocol.validate(node, ?context = context) ->
+                tryDecodeWorkflowProtocol node
+            | Some node when LDDataset.validateARCWorkflow(node, graph = graph, ?context = context) ->
+                LDDataset.tryGetMainEntityAsWorkflowProtocol(node, graph = graph, ?context = context)
+                |> Option.bind tryDecodeWorkflowProtocol
+            | Some node when LDDataset.validateARCRun(node, ?context = context) ->
+                LDDataset.tryGetMainEntityAsWorkflowProtocol(node, graph = graph, ?context = context)
+                |> Option.bind tryDecodeWorkflowProtocol
+            | _ ->
+                None
 
     static member composeWorkflowProtocolFromToolDescription (filePath : string, workflow : CWL.CWLToolDescription, ?workflowName : string, ?runName : string) =
         let inputs =
@@ -218,10 +282,92 @@ type WorkflowConversion =
             inputs = inputs
         )
 
+    /// <summary>
+    /// Converts an ExpressionTool CWL description into an LD workflow protocol node.
+    /// Persists the expression text in schema:description to keep roundtrip fidelity in the current RO-Crate projection.
+    /// </summary>
+    /// <param name="filePath">Identifier/path used as protocol id and name.</param>
+    /// <param name="expressionTool">ExpressionTool description to compose.</param>
+    /// <param name="workflowName">Optional workflow name used for generated formal parameter IDs.</param>
+    /// <param name="runName">Optional run name used for generated formal parameter IDs.</param>
+    static member composeWorkflowProtocolFromExpressionToolDescription (filePath : string, expressionTool : CWL.CWLExpressionToolDescription, ?workflowName : string, ?runName : string) =
+        let inputs =
+            expressionTool.Inputs
+            |> Option.map (ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName)))
+        let outputs =
+            expressionTool.Outputs
+            |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
+        let protocol =
+            LDWorkflowProtocol.create(
+                id = filePath,
+                name = filePath,
+                ?inputs = inputs,
+                programmingLanguages = ResizeArray.singleton (LDComputerLanguage.createCWL()),
+                outputs = outputs,
+                additionalType = ResizeArray [WorkflowConversion.expressionToolDescriptionTypeName]
+            )
+        // Persist expression on schema:description to keep roundtrip fidelity without introducing
+        // a custom LD predicate in the current RO-Crate projection.
+        LDLabProtocol.setDescriptionAsString(protocol, expressionTool.Expression)
+        protocol
+
+    /// <summary>
+    /// Converts an LD workflow protocol node into an ExpressionTool CWL description.
+    /// Falls back to <c>$(null)</c> if no expression text is stored.
+    /// </summary>
+    /// <param name="protocol">Workflow protocol node to decompose.</param>
+    /// <param name="context">Optional LDContext used for property reads.</param>
+    /// <param name="graph">Optional LDGraph used to resolve linked nodes.</param>
+    static member decomposeWorkflowProtocolToExpressionToolDescription (protocol : LDNode, ?context : LDContext, ?graph : LDGraph) =
+        let inputs =
+            LDComputationalWorkflow.getInputsAsFormalParameters(protocol, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun i -> WorkflowConversion.decomposeInputFromFormalParameter(i, ?context = context, ?graph = graph))
+        let outputs =
+            LDComputationalWorkflow.getOutputsAsFormalParameter(protocol, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun o -> WorkflowConversion.decomposeOutputFromFormalParameter(o, ?context = context, ?graph = graph))
+        let expression =
+            LDLabProtocol.tryGetDescriptionAsString(protocol, ?context = context)
+            // Keep deserialization resilient for externally produced or incomplete crates.
+            |> Option.defaultValue "$(null)"
+        CWL.CWLExpressionToolDescription(
+            outputs = outputs,
+            expression = expression,
+            inputs = inputs
+        )
+
+    static member composeWorkflowProtocolFromOperationDescription (filePath : string, operation : CWL.CWLOperationDescription, ?workflowName : string, ?runName : string) =
+        let inputs =
+            operation.Inputs
+            |> ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName))
+        let outputs =
+            operation.Outputs
+            |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
+        LDWorkflowProtocol.create(
+            id = filePath,
+            name = filePath,
+            inputs = inputs,
+            programmingLanguages = ResizeArray.singleton (LDComputerLanguage.createCWL()),
+            outputs = outputs,
+            additionalType = ResizeArray [WorkflowConversion.operationDescriptionTypeName]
+        )
+
+    static member decomposeWorkflowProtocolToOperationDescription (protocol : LDNode, ?context : LDContext, ?graph : LDGraph) =
+        let inputs =
+            LDComputationalWorkflow.getInputsAsFormalParameters(protocol, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun i -> WorkflowConversion.decomposeInputFromFormalParameter(i, ?context = context, ?graph = graph))
+        let outputs =
+            LDComputationalWorkflow.getOutputsAsFormalParameter(protocol, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun o -> WorkflowConversion.decomposeOutputFromFormalParameter(o, ?context = context, ?graph = graph))
+        CWL.CWLOperationDescription(
+            inputs = inputs,
+            outputs = outputs
+        )
+
     static member composeWorkflowStep (step : CWL.WorkflowStep, workflowID) =
         let id = $"WorkflowStep_{workflowID}_{step.Id}"
         let cw = LDComputationalWorkflow.create(id = id, name = step.Id)
-        LDDataset.setIdentifierAsString(cw, step.Run)
+        // Persist run info as identifier so decompose can reconstruct RunString or inline markers.
+        LDDataset.setIdentifierAsString(cw, WorkflowConversion.runToIdentifier step.Run)
         cw
 
     static member composeWorkflowProtocolFromWorkflow (filePath : string, workflow : CWL.CWLWorkflowDescription, ?workflowName : string, ?runName : string) =
@@ -244,15 +390,51 @@ type WorkflowConversion =
             additionalType = ResizeArray [WorkflowConversion.workflowDescriptionTypeName]
         )
 
-    static member decomposeWorkflowStep (step : LDNode, ?context : LDContext, ?graph : LDGraph) =
+    /// <summary>
+    /// Converts a workflow-step LD node into a CWL WorkflowStep.
+    /// Can optionally resolve run string references into inline CWL processing units via the graph.
+    /// </summary>
+    /// <param name="step">Workflow step LD node.</param>
+    /// <param name="workflowFilePath">Optional workflow file path used for resolving relative run references.</param>
+    /// <param name="resolveRunReferences">If true, attempts graph-backed run resolution; otherwise keeps raw RunString.</param>
+    /// <param name="context">Optional LDContext for node property access.</param>
+    /// <param name="graph">Optional LDGraph used for run reference resolution.</param>
+    static member decomposeWorkflowStep (step : LDNode, ?workflowFilePath: string, ?resolveRunReferences: bool, ?context : LDContext, ?graph : LDGraph) =
         let name = LDComputationalWorkflow.getNameAsString(step, ?context = context)
-        let run = LDDataset.getIdentifierAsString(step, ?context = context)
+        let runString = LDDataset.getIdentifierAsString(step, ?context = context)
+        let shouldResolveRunReferences = defaultArg resolveRunReferences true
+        let run =
+            let initialRun = CWL.RunString runString
+            if not shouldResolveRunReferences then
+                initialRun
+            else
+                match workflowFilePath with
+                | Some path ->
+                    // Use graph-backed lookup so run paths can be materialized to inline CWL objects.
+                    let tryResolveRunPath runPath =
+                        WorkflowConversion.tryDecodeProcessingUnitFromGraph(runPath, ?graph = graph, ?context = context)
+                    CWLRunResolver.resolveWorkflowStepRunFromLookup path initialRun tryResolveRunPath
+                | None ->
+                    // Without a workflow path we cannot resolve relative references safely.
+                    initialRun
         let inputs = ResizeArray()
-        let output = CWL.StepOutput.create(id = ResizeArray())
+        let output = ResizeArray<CWL.StepOutput>()
         CWL.WorkflowStep(id = name, in_ = inputs, out_ = output, run = run)
 
 
-    static member decomposeWorkflowProtocolToWorkflow (protocol : LDNode, ?context : LDContext, ?graph : LDGraph) =
+    /// <summary>
+    /// Converts an LD workflow protocol node to a CWL workflow description.
+    /// Optionally resolves step run references using the containing graph.
+    /// </summary>
+    /// <param name="protocol">Workflow protocol node to convert.</param>
+    /// <param name="resolveRunReferences">If true, attempts to resolve run strings to inline processing units.</param>
+    /// <param name="context">Optional LDContext for property access.</param>
+    /// <param name="graph">Optional LDGraph used for linked node and run-resolution lookups.</param>
+    static member decomposeWorkflowProtocolToWorkflow (protocol : LDNode, ?resolveRunReferences: bool, ?context : LDContext, ?graph : LDGraph) =
+        let workflowFilePath =
+            LDDataset.tryGetIdentifierAsString(protocol, ?context = context)
+            |> Option.defaultValue protocol.Id
+        let shouldResolveRunReferences = defaultArg resolveRunReferences true
         let inputs =
             LDComputationalWorkflow.getInputsAsFormalParameters(protocol, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun i -> WorkflowConversion.decomposeInputFromFormalParameter(i, ?context = context, ?graph = graph))
@@ -261,25 +443,62 @@ type WorkflowConversion =
             |> ResizeArray.map (fun o -> WorkflowConversion.decomposeOutputFromFormalParameter(o, ?context = context, ?graph = graph))
         let steps =
             LDComputationalWorkflow.getHasPart(protocol, ?graph = graph, ?context = context)
-            |> ResizeArray.map (fun s -> WorkflowConversion.decomposeWorkflowStep(s, ?context = context, ?graph = graph))
+            |> ResizeArray.map (fun s ->
+                // Forward workflow path and options to keep step-level run resolution consistent.
+                WorkflowConversion.decomposeWorkflowStep(
+                    s,
+                    workflowFilePath = workflowFilePath,
+                    resolveRunReferences = shouldResolveRunReferences,
+                    ?context = context,
+                    ?graph = graph
+                )
+            )
         CWL.CWLWorkflowDescription(
             steps = steps,
             inputs = inputs,
             outputs = outputs
         )
 
+    /// <summary>
+    /// Converts a generic CWL processing unit into a workflow protocol representation.
+    /// Dispatches by processing-unit variant.
+    /// </summary>
+    /// <param name="filePath">Identifier/path used as protocol id and name.</param>
+    /// <param name="pu">Processing unit to compose.</param>
+    /// <param name="workflowName">Optional workflow name used for generated formal parameter IDs.</param>
+    /// <param name="runName">Optional run name used for generated formal parameter IDs.</param>
     static member composeWorkflowProtocolFromProcessingUnit (filePath, pu : CWL.CWLProcessingUnit, ?workflowName : string, ?runName : string) =
         match pu with
         | CWL.CommandLineTool tool ->
             WorkflowConversion.composeWorkflowProtocolFromToolDescription(filePath, tool, ?workflowName = workflowName, ?runName = runName)
         | CWL.Workflow wf -> 
             WorkflowConversion.composeWorkflowProtocolFromWorkflow(filePath, wf, ?workflowName = workflowName, ?runName = runName)
+        | CWL.ExpressionTool et ->
+            WorkflowConversion.composeWorkflowProtocolFromExpressionToolDescription(filePath, et, ?workflowName = workflowName, ?runName = runName)
+        | CWL.Operation op ->
+            WorkflowConversion.composeWorkflowProtocolFromOperationDescription(filePath, op, ?workflowName = workflowName, ?runName = runName)
 
-    static member decomposeWorkflowProtocolToProcessingUnit (protocol : LDNode, ?context : LDContext, ?graph : LDGraph) =
+    /// <summary>
+    /// Converts a workflow protocol node back into the appropriate CWL processing unit variant.
+    /// Uses <c>additionalType</c> to discriminate Workflow, ExpressionTool, and Operation descriptions.
+    /// </summary>
+    /// <param name="protocol">Workflow protocol node to decompose.</param>
+    /// <param name="resolveRunReferences">If true, run references inside workflows are resolved through graph lookup.</param>
+    /// <param name="context">Optional LDContext for property access.</param>
+    /// <param name="graph">Optional LDGraph for linked node lookup and run resolution.</param>
+    static member decomposeWorkflowProtocolToProcessingUnit (protocol : LDNode, ?resolveRunReferences: bool, ?context : LDContext, ?graph : LDGraph) =
+        let shouldResolveRunReferences = defaultArg resolveRunReferences true
+        // Keep default branch as CommandLineTool for backward compatibility with legacy crates.
         match LDComputationalWorkflow.getAdditionalTypeAsString(protocol, ?context = context) with
         | s when s = WorkflowConversion.workflowDescriptionTypeName ->
-            WorkflowConversion.decomposeWorkflowProtocolToWorkflow(protocol, ?context = context, ?graph = graph)
+            WorkflowConversion.decomposeWorkflowProtocolToWorkflow(protocol, resolveRunReferences = shouldResolveRunReferences, ?context = context, ?graph = graph)
             |> CWL.Workflow
+        | s when s = WorkflowConversion.expressionToolDescriptionTypeName ->
+            WorkflowConversion.decomposeWorkflowProtocolToExpressionToolDescription(protocol, ?context = context, ?graph = graph)
+            |> CWL.ExpressionTool
+        | s when s = WorkflowConversion.operationDescriptionTypeName ->
+            WorkflowConversion.decomposeWorkflowProtocolToOperationDescription(protocol, ?context = context, ?graph = graph)
+            |> CWL.Operation
         | s ->
             WorkflowConversion.decomposeWorkflowProtocolToToolDescription(protocol, ?context = context, ?graph = graph)
             |> CWL.CommandLineTool              

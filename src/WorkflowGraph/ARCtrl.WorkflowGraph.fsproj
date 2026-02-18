@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Description>Graph extraction and visualization helpers for CWL processing units used in ARCtrl.</Description>
+    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/WorkflowGraph</PackageProjectUrl>
+    <PackageTags>ARC;F#;FSharp;dotnet;fable-library;workflow;graph;cwl;mermaid;fable-dotnet;fable-javascript;fable-python</PackageTags>
+  </PropertyGroup>
+  <Import Project="../Package.Metadata.props" />
+
+  <ItemGroup>
+    <Compile Include="GraphTypes.fs" />
+    <Compile Include="ReferenceParsing.fs" />
+    <Compile Include="BuildOptions.fs" />
+    <Compile Include="QueryHelpers.fs" />
+    <Compile Include="Builder.fs" />
+    <Compile Include="Adapters.fs" />
+    <Compile Include="Visualization.Siren.fs" />
+    <Compile Include="WorkflowGraph.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DynamicObj" />
+    <PackageReference Include="Siren" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CWL\ARCtrl.CWL.fsproj" />
+    <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
+    <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
+  </ItemGroup>
+</Project>

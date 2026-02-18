@@ -5,6 +5,7 @@ open TestingUtils
 open ARCtrl
 open ARCtrl
 open ARCtrl.Contract
+open ARCtrl.Helper
 open FsSpreadsheet
 
 let tests_tryFromContract = testList "tryFromContract" [
@@ -150,6 +151,66 @@ let tests_tryFromContract = testList "tryFromContract" [
             |]
         let run = ARCAux.getRunCWLFromContracts "wrongRun" contracts
         Expect.isNone run "Run should not have been parsed"
+    testCase "WorkflowCWL_OperationContractRoundtrip" <| fun _ ->
+        let workflowIdentifier = "operationWorkflow"
+        let operationText = TestObjects.CWL.Operation.operationWithRequirementsAndMetadataFile
+        let operationProcessingUnit = CWL.Decode.decodeCWLProcessingUnit operationText
+        let workflow = ArcWorkflow(identifier = workflowIdentifier, cwlDescription = operationProcessingUnit)
+
+        let cwlPath = Identifier.Workflow.cwlFileNameFromIdentifier workflowIdentifier
+        let createContract =
+            workflow.ToCreateContract()
+            |> Array.tryFind (fun c -> c.Path = cwlPath)
+            |> fun c -> Expect.wantSome c "Workflow should create a CWL contract"
+
+        Expect.equal createContract.Operation Operation.CREATE "Contract should be a create contract"
+        Expect.equal createContract.DTOType (Some DTOType.CWL) "Contract should be typed as CWL"
+        let createdCwlText =
+            let dto = Expect.wantSome createContract.DTO "CWL contract should include text payload"
+            dto.AsText()
+
+        let readContract = { createContract with Operation = Operation.READ }
+        let decoded =
+            ArcWorkflow.tryCWLFromReadContract workflowIdentifier readContract
+            |> fun cwl -> Expect.wantSome cwl "Workflow operation CWL should decode from read contract"
+
+        Expect.isTrue
+            (match decoded with | CWL.Operation _ -> true | _ -> false)
+            (sprintf "Expected decoded processing unit to be Operation but got %A" decoded)
+        Expect.equal
+            (CWL.Encode.encodeProcessingUnit decoded)
+            createdCwlText
+            "Decoded processing unit should encode to the created CWL payload"
+    testCase "RunCWL_OperationContractRoundtrip" <| fun _ ->
+        let runIdentifier = "operationRun"
+        let operationText = TestObjects.CWL.Operation.operationWithRequirementsAndMetadataFile
+        let operationProcessingUnit = CWL.Decode.decodeCWLProcessingUnit operationText
+        let run = ArcRun(identifier = runIdentifier, cwlDescription = operationProcessingUnit)
+
+        let cwlPath = Identifier.Run.cwlFileNameFromIdentifier runIdentifier
+        let createContract =
+            run.ToCreateContract()
+            |> Array.tryFind (fun c -> c.Path = cwlPath)
+            |> fun c -> Expect.wantSome c "Run should create a CWL contract"
+
+        Expect.equal createContract.Operation Operation.CREATE "Contract should be a create contract"
+        Expect.equal createContract.DTOType (Some DTOType.CWL) "Contract should be typed as CWL"
+        let createdCwlText =
+            let dto = Expect.wantSome createContract.DTO "CWL contract should include text payload"
+            dto.AsText()
+
+        let readContract = { createContract with Operation = Operation.READ }
+        let decoded =
+            ArcRun.tryCWLFromReadContract runIdentifier readContract
+            |> fun cwl -> Expect.wantSome cwl "Run operation CWL should decode from read contract"
+
+        Expect.isTrue
+            (match decoded with | CWL.Operation _ -> true | _ -> false)
+            (sprintf "Expected decoded processing unit to be Operation but got %A" decoded)
+        Expect.equal
+            (CWL.Encode.encodeProcessingUnit decoded)
+            createdCwlText
+            "Decoded processing unit should encode to the created CWL payload"
 ]
 
 let tests_gitContracts = testList "gitContracts" [

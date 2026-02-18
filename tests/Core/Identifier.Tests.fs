@@ -29,8 +29,29 @@ let private tests_checkValidCharacters = testList "checkValidCharacters" [
     testCheckInvalidCharacter "oh\no\a\windows\path"
 ]
 
+let private tests_cwlFileNameFromIdentifier = testList "cwlFileNameFromIdentifier" [
+    testCase "Workflow_Valid" <| fun _ ->
+        let actual = Workflow.cwlFileNameFromIdentifier "MyWorkflow"
+        let expected = "workflows/MyWorkflow/workflow.cwl"
+        Expect.equal actual expected "Workflow cwl file path should be normalized"
+
+    testCase "Run_Valid" <| fun _ ->
+        let actual = Run.cwlFileNameFromIdentifier "MyRun"
+        let expected = "runs/MyRun/run.cwl"
+        Expect.equal actual expected "Run cwl file path should be normalized"
+
+    testCase "Workflow_InvalidIdentifier_Throws" <| fun _ ->
+        let eval () = Workflow.cwlFileNameFromIdentifier "workflow/invalid" |> ignore
+        Expect.throws eval "Workflow cwl path generation should reject invalid identifiers"
+
+    testCase "Run_InvalidIdentifier_Throws" <| fun _ ->
+        let eval () = Run.cwlFileNameFromIdentifier "run\\invalid" |> ignore
+        Expect.throws eval "Run cwl path generation should reject invalid identifiers"
+]
+
 
 let main = 
     testList "Identifier" [
         tests_checkValidCharacters
+        tests_cwlFileNameFromIdentifier
     ]

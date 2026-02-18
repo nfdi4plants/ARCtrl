@@ -202,6 +202,32 @@ let rename =
         })
     ]
 
+let normalizePathKeyTests =
+    testList "NormalizePathKey" [
+        testCase "removes leading ./" <| fun _ ->
+            Expect.equal (ArcPathHelper.normalizePathKey "./foo/bar") "foo/bar" ""
+        testCase "collapses double slashes" <| fun _ ->
+            Expect.equal (ArcPathHelper.normalizePathKey "foo//bar") "foo/bar" ""
+        testCase "converts backslashes" <| fun _ ->
+            Expect.equal (ArcPathHelper.normalizePathKey @"foo\bar\baz") "foo/bar/baz" ""
+        testCase "strips leading separators for key matching" <| fun _ ->
+            Expect.equal (ArcPathHelper.normalizePathKey "/home/runner/work") "home/runner/work" ""
+        testCase "empty string" <| fun _ ->
+            Expect.equal (ArcPathHelper.normalizePathKey "") "" ""
+    ]
+
+let resolvePathFromFileTests =
+    testList "ResolvePathFromFile" [
+        testCase "resolves relative linux path from absolute workflow file path" <| fun _ ->
+            let resolved = ArcPathHelper.resolvePathFromFile "/home/runner/work/workflow.cwl" "./tool.cwl"
+            Expect.equal resolved "/home/runner/work/tool.cwl" ""
+        testCase "keeps linux absolute run path absolute" <| fun _ ->
+            let resolved = ArcPathHelper.resolvePathFromFile "/home/runner/work/workflow.cwl" "/tmp/tool.cwl"
+            Expect.equal resolved "/tmp/tool.cwl" ""
+        testCase "normalize preserves linux absolute root" <| fun _ ->
+            Expect.equal (ArcPathHelper.normalize "/home/runner/work") "/home/runner/work" ""
+    ]
+
 let main = 
     testList "PathTests" [
         fileExists
@@ -215,4 +241,6 @@ let main =
         getSubDirectories
         getAllFilePaths
         rename
+        normalizePathKeyTests
+        resolvePathFromFileTests
     ]

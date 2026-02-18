@@ -1,0 +1,217 @@
+module Tests.VisualizationSiren
+
+open ARCtrl
+open ARCtrl.CWL
+open ARCtrl.WorkflowGraph
+open Siren
+open CrossAsync
+open TestingUtils
+open Tests.WorkflowGraphTestHelpers
+
+let private buildSimpleWorkflowGraph () =
+    TestObjects.CWL.WorkflowGraph.visualizationSimpleWorkflowFile
+    |> Decode.decodeCWLProcessingUnit
+    |> Builder.build
+
+let private createGraphWithNodes (rootId: string) (nodes: WorkflowGraphNode list) =
+    WorkflowGraph.create(rootId, nodes = ResizeArray(nodes))
+
+let tests_visualization =
+    testList "Visualization.Siren" [
+        testCase "sanitizeMermaidId removes unsupported characters deterministically" <| fun () ->
+            let input = "port:step:root/MzMLToMzlite/out/dir"
+            let expected = "port_step_root__MzMLToMzlite__out__dir"
+            let once = WorkflowGraphSiren.sanitizeMermaidId input
+            let twice = WorkflowGraphSiren.sanitizeMermaidId input
+            Expect.equal once expected ""
+            Expect.equal twice expected ""
+            Expect.isFalse (once.Contains ":") ""
+            Expect.isFalse (once.Contains "/") ""
+
+        testCase "labels with leading slash are quoted in Mermaid output" <| fun () ->
+            let toolNode =
+                WorkflowGraphNode.create
+                    ("unit:tool1", NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool, "/tools/my-tool")
+            let graph = createGraphWithNodes toolNode.Id [ toolNode ]
+            let mermaid = WorkflowGraphSiren.toMermaid graph
+            Expect.isFalse (mermaid.Contains("\"#quot;")) "No double escaping expected"
+            Expect.stringContains mermaid "unit_tool1{{\"/tools/my-tool\"}}" ""
+
+        testCase "labels without special chars are not quoted" <| fun () ->
+            let processingNode =
+                WorkflowGraphNode.create
+                    ("unit:step1", NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool, "My Step")
+            let graph = createGraphWithNodes processingNode.Id [ processingNode ]
+            let mermaid = WorkflowGraphSiren.toMermaid graph
+            Expect.isFalse (mermaid.Contains("\"My Step\"")) "Plain labels should not be quoted"
+            Expect.stringContains mermaid "{{My Step}}" ""
+
+        testCase "labels containing double quotes are escaped" <| fun () ->
+            let processingNode =
+                WorkflowGraphNode.create
+                    ("unit:node1", NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool, "say \"hello\"")
+            let graph = createGraphWithNodes processingNode.Id [ processingNode ]
+            let mermaid = WorkflowGraphSiren.toMermaid graph
+            Expect.stringContains mermaid "#quot;" ""
+            Expect.stringContains mermaid "{{\"say #quot;hello#quot;\"}}" ""
+
+        testCase "root input nodes connect to processing units with labeled edges" <| fun () ->
+            let parentNode =
+                WorkflowGraphNode.create
+                    ("unit:parent", NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool, "/tools/parent-tool")
+            let childNode =
+                WorkflowGraphNode.create
+                    ("port:unit:parent/in/child", NodeKind.PortNode PortDirection.Input, "child-port", ownerNodeId = parentNode.Id)
+            let graph = createGraphWithNodes parentNode.Id [ parentNode; childNode ]
+            let mermaid = WorkflowGraphSiren.toMermaid graph
+            Expect.stringContains mermaid "{{\"/tools/parent-tool\"}}" ""
+            Expect.stringContains mermaid "port_unit_parent__in__child(child-port)" ""
+            Expect.stringContains mermaid "port_unit_parent__in__child-->|child-port|unit_parent" ""
+
+        testCase "initial inputs and final outputs are rendered as groups" <| fun () ->
+            let graph = buildSimpleWorkflowGraph ()
+            let mermaid = WorkflowGraphSiren.toMermaid graph
+            Expect.stringContains mermaid "subgraph wg_initial_inputs[Initial Inputs]" ""
+            Expect.stringContains mermaid "subgraph wg_final_outputs[Final Outputs]" ""
+
+        testCase "group ordering keeps inputs above processing and outputs below" <| fun () ->
+            let graph = buildSimpleWorkflowGraph ()
+            let mermaid = WorkflowGraphSiren.toMermaid graph
+            let inputGroupIndex = mermaid.IndexOf("subgraph wg_initial_inputs")
+            let processingIndex = mermaid.IndexOf("unit_root__step1__run")
+            let outputGroupIndex = mermaid.IndexOf("subgraph wg_final_outputs")
+            Expect.isTrue (inputGroupIndex >= 0) "Input group missing"
+            Expect.isTrue (processingIndex >= 0) "Processing node missing"
+            Expect.isTrue (outputGroupIndex >= 0) "Output group missing"
+            Expect.isTrue (inputGroupIndex < processingIndex) "Input group should be emitted before processing nodes"
+            Expect.isTrue (processingIndex < outputGroupIndex) "Output group should be emitted after processing nodes"
+
+        testCaseCrossAsync "fromGraph workflow fixture contains processing units and labeled dependency edges" (crossAsync {
+            let! content = FileSystemHelper.readFileTextAsync workflowFixturePath
+            let graph = content |> Decode.decodeCWLProcessingUnit |> Builder.build
+            let mermaid = graph |> WorkflowGraphSiren.toMermaid
+            Expect.stringContains mermaid "flowchart TD" ""
+            Expect.stringContains mermaid "PeptideSpectrumMatching" ""
+            Expect.stringContains mermaid "MzMLToMzlite" ""
+            Expect.stringContains mermaid "-->|inputDirectory|" ""
+            Expect.stringContains mermaid "==>|database|" ""
+            Expect.isFalse (mermaid.Contains "contains|") ""
+        })
+
+        testCase "fromProcessingUnit mermaid output is deterministic" <| fun () ->
+            let processingUnit = Decode.decodeCWLProcessingUnit TestObjects.CWL.Workflow.workflowFile
+            let mermaid1 =
+                processingUnit
+                |> WorkflowGraphSiren.fromProcessingUnit
+                |> siren.write
+            let mermaid2 =
+                processingUnit
+                |> WorkflowGraphSiren.fromProcessingUnit
+                |> siren.write
+            Expect.equal mermaid1 mermaid2 ""
+            Expect.isTrue (mermaid1.Length > 0) ""
+
+        testCaseCrossAsync "fromProcessingUnitResolved expands nested run workflow" (crossAsync {
+            let! content = FileSystemHelper.readFileTextAsync runFixturePath
+            let processingUnit = Decode.decodeCWLProcessingUnit content
+            let! resolver = buildRunResolverFromFixtures ()
+            let options =
+                WorkflowGraphBuildOptions.defaultOptions
+                |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "runs/tests/run.cwl")
+                |> WorkflowGraphBuildOptions.withTryResolveRunPath (Some resolver)
+            let mermaid =
+                processingUnit
+                |> WorkflowGraphSiren.fromProcessingUnitResolved options
+                |> siren.write
+            Expect.stringContains mermaid "unit_root__Workflow__run[" ""
+            Expect.stringContains mermaid "unit_root__Workflow__run__PeptideSpectrumMatching__run{{proteomiqon-peptidespectrummatching}}" ""
+            Expect.stringContains mermaid "unit_root__Workflow__run-.->unit_root__Workflow__run__PeptideSpectrumMatching__run" ""
+            Expect.isFalse (mermaid.Contains "/tools/proteomiqon-peptidespectrummatching") ""
+        })
+
+        testCase "node and style mapping renders processing units plus initial/final boxes" <| fun () ->
+            let tool = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFile
+            let options =
+                WorkflowGraphBuildOptions.defaultOptions
+                |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "workflow.cwl")
+                |> WorkflowGraphBuildOptions.withTryResolveRunPath (Some (fun _ -> Some (CommandLineTool tool)))
+            let graph =
+                TestObjects.CWL.WorkflowGraph.visualizationSingleStepResolvedWorkflowFile
+                |> Decode.decodeCWLProcessingUnit
+                |> Builder.buildWith options
+            let mermaid = WorkflowGraphSiren.toMermaid graph
+            Expect.stringContains mermaid "unit_root__s__run{{dotnet}}" ""
+            Expect.stringContains mermaid "port_unit_root__in__x(x)" ""
+            Expect.stringContains mermaid "port_unit_root__out__y([y])" ""
+            Expect.stringContains mermaid "classDef wg_tool" ""
+            Expect.stringContains mermaid "classDef wg_workflow" ""
+            Expect.stringContains mermaid "classDef wg_initial_input" ""
+            Expect.stringContains mermaid "classDef wg_final_output" ""
+            Expect.stringContains mermaid "class unit_root__s__run wg_tool;" ""
+            Expect.stringContains mermaid "class port_unit_root__in__x wg_initial_input;" ""
+            Expect.stringContains mermaid "class port_unit_root__out__y wg_final_output;" ""
+
+        testCase "operation nodes get dedicated operation styling class" <| fun () ->
+            let graph =
+                TestObjects.CWL.Workflow.workflowWithInlineRunOperationFile
+                |> Decode.decodeCWLProcessingUnit
+                |> Builder.build
+            let mermaid = WorkflowGraphSiren.toMermaid graph
+            Expect.stringContains mermaid "classDef wg_operation" ""
+            Expect.stringContains mermaid "class unit_root__op__run wg_operation;" ""
+
+        testCase "edge mapping uses labeled input edges and unlabeled final-output edges" <| fun () ->
+            let graph = buildSimpleWorkflowGraph ()
+            let mermaid = WorkflowGraphSiren.toMermaid graph
+            Expect.stringContains mermaid "unit_root__step1__run==>|in1|unit_root__step2__run" ""
+            Expect.stringContains mermaid "unit_root__step2__run-->port_unit_root__out__y" ""
+            Expect.isFalse (mermaid.Contains "contains|") ""
+            Expect.isFalse (mermaid.Contains "-->|calls|") ""
+
+        testCase "commandlinetool root renders direct input and output bindings when no calls edges exist" <| fun () ->
+            let graph =
+                TestObjects.CWL.CommandLineTool.cwlFile
+                |> Decode.decodeCWLProcessingUnit
+                |> Builder.build
+            let mermaid = WorkflowGraphSiren.toMermaid graph
+            Expect.stringContains mermaid "port_unit_root__in__firstArg-->|firstArg|unit_root" ""
+            Expect.stringContains mermaid "unit_root-->port_unit_root__out__output" ""
+
+        testCase "pass-through workflow output binds root input directly to final output" <| fun () ->
+            let graph =
+                TestObjects.CWL.WorkflowGraph.passThroughOutputWorkflowFile
+                |> Decode.decodeCWLProcessingUnit
+                |> Builder.build
+            let mermaid = WorkflowGraphSiren.toMermaid graph
+            Expect.stringContains mermaid "port_unit_root__in__x-->port_unit_root__out__y" ""
+            Expect.isFalse (mermaid.Contains "-->|x|port_unit_root__out__y") ""
+
+        testCase "toMermaid output has flowchart directive and links" <| fun () ->
+            let graph = buildSimpleWorkflowGraph ()
+            let mermaid = WorkflowGraphSiren.toMermaid graph
+            Expect.stringContains mermaid "flowchart TD" ""
+            Expect.stringContains mermaid "-->" ""
+
+        testCase "toMarkdown wraps output in mermaid fenced block" <| fun () ->
+            let graph = buildSimpleWorkflowGraph ()
+            let markdown = WorkflowGraphSiren.toMarkdown graph
+            Expect.isTrue (markdown.StartsWith("```mermaid")) ""
+            Expect.stringContains markdown "flowchart TD" ""
+            Expect.isTrue (markdown.EndsWith("```")) ""
+
+        testCase "styling enabled emits classDef and class assignments" <| fun () ->
+            let graph = buildSimpleWorkflowGraph ()
+            let options =
+                {
+                    WorkflowGraphVisualizationOptions.defaultOptions with
+                        EnableStyling = true
+                }
+            let mermaid = WorkflowGraphSiren.toMermaidWithOptions options graph
+            Expect.stringContains mermaid "classDef" ""
+            Expect.stringContains mermaid "class " ""
+    ]
+
+let main = 
+    testList "Visualization.Siren" [
+        tests_visualization 
+    ]

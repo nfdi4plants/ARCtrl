@@ -1,0 +1,70 @@
+cores: 4
+outputMzML:
+  class: Directory
+  path: ./mzlite
+outputDB:
+  class: Directory
+  path: ./db
+outputPSM:
+  class: Directory
+  path: ./psm
+outputPSMStats:
+  class: Directory
+  path: ./psmstats
+outputQuant:
+  class: Directory
+  path: ./quant
+outputProt:
+  class: Directory
+  path: ./prot
+outputAlignment:
+  class: Directory
+  path: ./quantalign
+outputAlignmentQuant:
+  class: Directory
+  path: ./quantalignresult
+outputAlignmentStats:
+  class: Directory
+  path: ./quantalignresultstats
+outputProtDeduced:
+  class: Directory
+  path: ./protdeduced
+outputQuantAndProt:
+  class: Directory
+  path: ./quantAndProt
+outputLabeledProt:
+  class: Directory
+  path: ./labeledQuant
+inputMzML:
+  class: Directory
+  path: ./mzml
+inputPeptideDB:
+  class: File
+  path: ../../studies/DilutionSeries/resources/Chlamy_JGI5_5Cp_Mp_gen.fasta
+paramsMzML:
+  class: File
+  path: ./mzlite/mzMLToMzLiteParams.json
+paramsDB:
+  class: File
+  path: ./db/peptideDBParams.json
+paramsPSM:
+  class: File
+  path: ./psm/peptideSpectrumMatchingParams.json
+paramsPSMStats:
+  class: File
+  path: ./psmstats/pSMStatisticsParams.json
+paramsPSMBasedQuant:
+  class: File
+  path: ./quant/QuantificationParams.json
+paramsAlignmentBasedQuant:
+  class: File
+  path: ./quantalignresult/AlignmentBasedQuantificationParams.json
+paramsAlignmentBasedQuantStats:
+  class: File
+  path: ./quantalignresultstats/AlignmentBasedQuantStatisticsParams.json
+paramsProt:
+  class: File
+  path: ./prot/ProteinInferenceParams.json
+paramsLabeledProteinQuant:
+  class: File
+  path: ./labeledQuant/LabeledQuantificationParams_CorrFilter_ChargeAgg_ModAgg.json

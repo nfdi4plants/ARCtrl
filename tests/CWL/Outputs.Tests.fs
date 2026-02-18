@@ -92,7 +92,37 @@ let testOutput =
         ]
     ]
 
+let testOutputMutationApi =
+    testList "Mutation API" [
+        testCase "typed setters roundtrip values" <| fun _ ->
+            let output = CWLOutput("result")
+            output.Type_ <- Some (File (FileInstance()))
+            output.OutputBinding <- Some { Glob = Some "results/*.txt" }
+            output.OutputSource <- Some (OutputSource.Single "step/out")
+
+            Expect.equal output.Type_ (Some (File (FileInstance()))) "Type_ setter should write DynamicObj-backed value."
+            Expect.equal output.OutputBinding (Some { Glob = Some "results/*.txt" }) "OutputBinding setter should write value."
+            Expect.equal output.OutputSource (Some (OutputSource.Single "step/out")) "OutputSource setter should write value."
+
+        testCase "typed setters can clear optional values" <| fun _ ->
+            let output =
+                CWLOutput(
+                    "result",
+                    type_ = CWLType.String,
+                    outputBinding = { Glob = Some "*.txt" },
+                    outputSource = OutputSource.Single "step/out"
+                )
+            output.Type_ <- None
+            output.OutputBinding <- None
+            output.OutputSource <- None
+
+            Expect.isNone output.Type_ "Type_ should be removable."
+            Expect.isNone output.OutputBinding "OutputBinding should be removable."
+            Expect.isNone output.OutputSource "OutputSource should be removable."
+    ]
+
 let main = 
     testList "Output" [
         testOutput
+        testOutputMutationApi
     ]

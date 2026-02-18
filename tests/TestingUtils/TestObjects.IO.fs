@@ -33,5 +33,8 @@ let testSimpleARC_Output = combine testResultsFolder "TestResults/SimpleARC"
 let testSimpleARCWithWR = combine testObjectsBaseFolder "SimpleARCWithWR"
 let testSimpleARCWithWR_Output = combine testResultsFolder "TestResults/SimpleARCWithWR"
 
+let testSimpleARCWithCWL = combine testObjectsBaseFolder "SimpleARCWithCWL"
+let testSimpleARCWithCWL_Output = combine testResultsFolder "TestResults/SimpleARCWithCWL"
+
 let simpleTextFilePath = combine testObjectsBaseFolder "SimpleText.txt"
 let simpleWorkbookPath = combine testObjectsBaseFolder "TestWorkbook.xlsx"

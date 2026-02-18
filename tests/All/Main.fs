@@ -13,6 +13,7 @@ let all = testList "All" [
     ARCtrl.Contract.Tests.all
     ARCtrl.ROCrate.Tests.all
     ARCtrl.CWL.Tests.all
+    ARCtrl.WorkflowGraph.Tests.all
     ARCtrl.ARC.Tests.all
 ]
 

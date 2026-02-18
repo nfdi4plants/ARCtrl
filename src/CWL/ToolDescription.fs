@@ -9,7 +9,8 @@ type CWLToolDescription (
         ?cwlVersion: string,
         ?baseCommand: ResizeArray<string>,
         ?requirements: ResizeArray<Requirement>,
-        ?hints: ResizeArray<Requirement>,
+        ?hints: ResizeArray<HintEntry>,
+        ?intent: ResizeArray<string>,
         ?inputs: ResizeArray<CWLInput>,
         ?metadata: DynamicObj,
         ?label: string,
@@ -21,7 +22,8 @@ type CWLToolDescription (
     let mutable _outputs: ResizeArray<CWLOutput> = outputs
     let mutable _baseCommand: ResizeArray<string> option = baseCommand
     let mutable _requirements: ResizeArray<Requirement> option = requirements
-    let mutable _hints: ResizeArray<Requirement> option = hints
+    let mutable _hints: ResizeArray<HintEntry> option = hints
+    let mutable _intent: ResizeArray<string> option = intent
     let mutable _inputs: ResizeArray<CWLInput> option = inputs
     let mutable _metadata: DynamicObj option = metadata
     let mutable _label: string option = label
@@ -47,6 +49,10 @@ type CWLToolDescription (
         with get() = _hints
         and set(hints) = _hints <- hints
 
+    member this.Intent
+        with get() = _intent
+        and set(intent) = _intent <- intent
+
     member this.Inputs
         with get() = _inputs
         and set(inputs) = _inputs <- inputs
@@ -62,3 +68,50 @@ type CWLToolDescription (
     member this.Doc
         with get() = _doc
         and set(doc) = _doc <- doc
+
+    /// Returns the tool's inputs or an empty ResizeArray if None.
+    static member getInputsOrEmpty (tool: CWLToolDescription) =
+        tool.Inputs |> Option.defaultValue (ResizeArray())
+
+    /// Returns the tool's outputs.
+    static member getOutputs (tool: CWLToolDescription) =
+        tool.Outputs
+
+    /// Returns the tool's inputs, creating and assigning a new empty ResizeArray if None.
+    static member getOrCreateInputs (tool: CWLToolDescription) =
+        match tool.Inputs with
+        | Some inputs -> inputs
+        | None ->
+            let inputs = ResizeArray()
+            tool.Inputs <- Some inputs
+            inputs
+
+    /// Returns the tool's requirements or an empty ResizeArray if None.
+    static member getRequirementsOrEmpty (tool: CWLToolDescription) =
+        tool.Requirements |> Option.defaultValue (ResizeArray())
+
+    /// Returns the tool's hints or an empty ResizeArray if None.
+    static member getHintsOrEmpty (tool: CWLToolDescription) =
+        tool.Hints |> Option.defaultValue (ResizeArray())
+
+    /// Returns the tool's intent or an empty ResizeArray if None.
+    static member getIntentOrEmpty (tool: CWLToolDescription) =
+        tool.Intent |> Option.defaultValue (ResizeArray())
+
+    /// Returns the tool's hints, creating and assigning a new empty ResizeArray if None.
+    static member getOrCreateHints (tool: CWLToolDescription) =
+        match tool.Hints with
+        | Some hints -> hints
+        | None ->
+            let hints = ResizeArray()
+            tool.Hints <- Some hints
+            hints
+
+    /// Returns the tool's intent, creating and assigning a new empty ResizeArray if None.
+    static member getOrCreateIntent (tool: CWLToolDescription) =
+        match tool.Intent with
+        | Some intent -> intent
+        | None ->
+            let intent = ResizeArray()
+            tool.Intent <- Some intent
+            intent

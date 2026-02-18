@@ -10,6 +10,7 @@ open FsSpreadsheet
 open Fable.Core
 open ARCtrl.ArcPathHelper
 open CrossAsync
+open ARCtrl.WorkflowGraph
 
 module ARCAux =
 
@@ -58,6 +59,24 @@ module ARCAux =
     let getRunYMLFromContracts (runIdentifier) (contracts: Contract []) = 
         contracts 
         |> Array.tryPick (ArcRun.tryYMLFromReadContract runIdentifier)
+
+    /// Builds a lookup map of normalized CWL file paths to decoded CWLProcessingUnit instances from CWL-typed contracts.
+    let getCWLByPathFromContracts (contracts: Contract []) : Map<string, CWL.CWLProcessingUnit> =
+        contracts
+        |> Array.choose (fun c ->
+            match c with
+            | {Operation = READ; DTOType = Some DTOType.CWL; DTO = Some (DTO.Text text)} ->
+                let cwl = CWL.Decode.decodeCWLProcessingUnit text
+                Some (ArcPathHelper.normalizePathKey c.Path, cwl)
+            | _ ->
+                None
+        )
+        |> Map.ofArray
+
+    /// Looks up a CWLProcessingUnit by normalized path in the given lookup map.
+    let tryGetCWLByPath (cwlByPath: Map<string, CWL.CWLProcessingUnit>) (path: string) =
+        cwlByPath
+        |> Map.tryFind (ArcPathHelper.normalizePathKey path)
 
     let getArcInvestigationFromContracts (contracts: Contract []) =
         match contracts |> Array.choose ArcInvestigation.tryFromReadContract with
@@ -614,6 +633,8 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         let runs = ARCAux.getArcRunsFromContracts contracts
 
         let license = ARCAux.getLicenseFromContracts contracts 
+        let cwlByPath = ARCAux.getCWLByPathFromContracts contracts
+        let tryGetCWLByPath = ARCAux.tryGetCWLByPath cwlByPath
 
         // Remove Assay metadata objects read from investigation file from investigation object, if no assosiated assay file exists
         this.AssayIdentifiers
@@ -664,9 +685,15 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         workflows |> Array.iter (fun workflow ->
             let datamap = ARCAux.getWorkflowDatamapFromContracts workflow.Identifier contracts
             let cwl = ARCAux.getWorkflowCWLFromContracts workflow.Identifier contracts
+            let cwlFilePath = Identifier.Workflow.cwlFileNameFromIdentifier workflow.Identifier
+            let resolvedCwl =
+                cwl
+                |> Option.map (fun processingUnit ->
+                    CWLRunResolver.resolveRunReferencesFromLookup cwlFilePath processingUnit tryGetCWLByPath
+                )
             if workflow.Datamap.IsNone then
                 workflow.Datamap <- datamap
-            workflow.CWLDescription <- cwl
+            workflow.CWLDescription <- resolvedCwl
             this.AddWorkflow(workflow)
             workflow.StaticHash <- workflow.GetLightHashCode()
         )
@@ -674,10 +701,16 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             let datamap = ARCAux.getRunDatamapFromContracts run.Identifier contracts
             let cwl = ARCAux.getRunCWLFromContracts run.Identifier contracts
             let yml = ARCAux.getRunYMLFromContracts run.Identifier contracts
+            let cwlFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
+            let resolvedCwl =
+                cwl
+                |> Option.map (fun processingUnit ->
+                    CWLRunResolver.resolveRunReferencesFromLookup cwlFilePath processingUnit tryGetCWLByPath
+                )
             if run.Datamap.IsNone then
                 run.Datamap <- datamap
             run.CWLInput <- yml |> Option.defaultValue (ResizeArray())
-            run.CWLDescription <- cwl
+            run.CWLDescription <- resolvedCwl
             this.AddRun(run)
             run.StaticHash <- run.GetLightHashCode()
         )
@@ -1135,3 +1168,28 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         if not (defaultArg skipUpdateFS false) then
             this.UpdateFileSystem()
         this.FileSystem.Tree.ToFilePaths(?removeRoot = removeRoot)
+
+    /// <summary>
+    /// Builds workflow graphs for all workflows in this ARC.
+    /// Returns a list of workflow identifier and Result pairs, where each Result contains
+    /// either a successfully built WorkflowGraph or a GraphBuildIssue describing the failure.
+    /// </summary>
+    member this.BuildWorkflowGraphs() =
+        let graphIndex = Adapters.ofInvestigation this
+        graphIndex.WorkflowGraphs
+
+    /// <summary>
+    /// Builds workflow graphs for all runs in this ARC.
+    /// Returns a list of run identifier and Result pairs, where each Result contains
+    /// either a successfully built WorkflowGraph or a GraphBuildIssue describing the failure.
+    /// </summary>
+    member this.BuildRunGraphs() =
+        let graphIndex = Adapters.ofInvestigation this
+        graphIndex.RunGraphs
+
+    /// <summary>
+    /// Builds and returns the complete WorkflowGraphIndex containing workflow graphs
+    /// for both workflows and runs in this ARC.
+    /// </summary>
+    member this.BuildAllProcessingUnitGraphs() =
+        Adapters.ofInvestigation this

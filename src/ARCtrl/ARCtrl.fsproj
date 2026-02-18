@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <PackageTags>ARC;F#;FSharp;dotnet;.Net;bioinformatics;biology;fable-library;datascience;dataplant;nfdi;metadata;fable-dotnet</PackageTags>
@@ -55,6 +55,7 @@
     <Compile Include="JsonIO\Investigation.fs" />
     <Compile Include="JsonIO\Datamap.fs" />
     <Compile Include="JsonIO\LDObject.fs" />
+    <Compile Include="CWLRunResolver.fs" />
     <Compile Include="Conversion\ColumnIndex.fs" />
     <Compile Include="Conversion\DateTime.fs" />
     <Compile Include="Conversion\Basic.fs" />

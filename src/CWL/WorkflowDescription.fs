@@ -11,7 +11,8 @@ type CWLWorkflowDescription(
     outputs: ResizeArray<CWLOutput>,
     ?cwlVersion: string,
     ?requirements: ResizeArray<Requirement>,
-    ?hints: ResizeArray<Requirement>,
+    ?hints: ResizeArray<HintEntry>,
+    ?intent: ResizeArray<string>,
     ?metadata: DynamicObj,
     ?label: string,
     ?doc: string
@@ -23,7 +24,8 @@ type CWLWorkflowDescription(
     let mutable _inputs: ResizeArray<CWLInput> = inputs
     let mutable _outputs: ResizeArray<CWLOutput> = outputs
     let mutable _requirements: ResizeArray<Requirement> option = requirements
-    let mutable _hints: ResizeArray<Requirement> option = hints
+    let mutable _hints: ResizeArray<HintEntry> option = hints
+    let mutable _intent: ResizeArray<string> option = intent
     let mutable _metadata: DynamicObj option = metadata
     let mutable _label: string option = label
     let mutable _doc: string option = doc
@@ -52,6 +54,10 @@ type CWLWorkflowDescription(
         with get() = _hints
         and set(hints) = _hints <- hints
 
+    member this.Intent
+        with get() = _intent
+        and set(intent) = _intent <- intent
+
     member this.Metadata
         with get() = _metadata
         and set(metadata) = _metadata <- metadata
@@ -63,3 +69,41 @@ type CWLWorkflowDescription(
     member this.Doc
         with get() = _doc
         and set(doc) = _doc <- doc
+
+    /// Returns workflow inputs.
+    static member getInputs (workflow: CWLWorkflowDescription) =
+        workflow.Inputs
+
+    /// Returns workflow outputs.
+    static member getOutputs (workflow: CWLWorkflowDescription) =
+        workflow.Outputs
+
+    /// Returns workflow requirements or an empty ResizeArray if None.
+    static member getRequirementsOrEmpty (workflow: CWLWorkflowDescription) =
+        workflow.Requirements |> Option.defaultValue (ResizeArray())
+
+    /// Returns workflow hints or an empty ResizeArray if None.
+    static member getHintsOrEmpty (workflow: CWLWorkflowDescription) =
+        workflow.Hints |> Option.defaultValue (ResizeArray())
+
+    /// Returns workflow intent or an empty ResizeArray if None.
+    static member getIntentOrEmpty (workflow: CWLWorkflowDescription) =
+        workflow.Intent |> Option.defaultValue (ResizeArray())
+
+    /// Returns the workflow's hints, creating and assigning a new empty ResizeArray if None.
+    static member getOrCreateHints (workflow: CWLWorkflowDescription) =
+        match workflow.Hints with
+        | Some hints -> hints
+        | None ->
+            let hints = ResizeArray()
+            workflow.Hints <- Some hints
+            hints
+
+    /// Returns the workflow's intent, creating and assigning a new empty ResizeArray if None.
+    static member getOrCreateIntent (workflow: CWLWorkflowDescription) =
+        match workflow.Intent with
+        | Some intent -> intent
+        | None ->
+            let intent = ResizeArray()
+            workflow.Intent <- Some intent
+            intent
