@@ -30,12 +30,14 @@ let private getFileNameWithoutExtension (path: string) =
         fileName.Substring(0, extensionIndex)
 
 let private getDirectoryPath (path: string) =
-    let segments = ArcPathHelper.split path
+    let prefixOpt, segments = ArcPathHelper.splitWithPrefix path
     if segments.Length <= 1 then
-        ""
+        match prefixOpt with
+        | Some _ -> ArcPathHelper.buildPathFromPrefixAndSegments prefixOpt [||]
+        | None -> ""
     else
         segments.[0 .. segments.Length - 2]
-        |> ArcPathHelper.combineMany
+        |> ArcPathHelper.buildPathFromPrefixAndSegments prefixOpt
 
 let private buildFixtureResolver (fixtureRoot: string) =
     crossAsync {
