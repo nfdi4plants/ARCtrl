@@ -47,6 +47,14 @@ let decodeTests =
                 TestObjects.CWL.Descriptions.descriptionFileContentComplexDecoded
                 |> normalizeNewLines
             Expect.equal actual (Some expected) ""
+        testCase "intent" <| fun _ ->
+            let actual =
+                TestObjects.CWL.Descriptions.intent
+                |> Decode.read
+                |> Decode.intentDecoder
+            let expected = ResizeArray [|"classification"; "quality-control"|]
+            let parsed = Expect.wantSome actual "Intent should decode as string array."
+            Expect.sequenceEqual parsed expected ""
     ]
 
 let encodeToString pair =
@@ -70,6 +78,17 @@ let encodeTests =
             let complexDoc = stripDocContent TestObjects.CWL.Descriptions.descriptionFileContentComplex
             let actual = Encode.encodeDoc complexDoc |> encodeToString
             Expect.equal actual expected ""
+        testCase "intent roundtrip" <| fun _ ->
+            let encoded =
+                ResizeArray [|"classification"; "quality-control"|]
+                |> Encode.encodeIntent
+                |> encodeToString
+            let decoded =
+                encoded
+                |> Decode.read
+                |> Decode.intentDecoder
+            let parsed = Expect.wantSome decoded "Intent should decode after encode."
+            Expect.sequenceEqual parsed (ResizeArray [|"classification"; "quality-control"|]) ""
     ]
 
 let main =

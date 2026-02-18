@@ -10,6 +10,7 @@ type CWLExpressionToolDescription (
         ?cwlVersion: string,
         ?requirements: ResizeArray<Requirement>,
         ?hints: ResizeArray<HintEntry>,
+        ?intent: ResizeArray<string>,
         ?inputs: ResizeArray<CWLInput>,
         ?metadata: DynamicObj,
         ?label: string,
@@ -22,6 +23,7 @@ type CWLExpressionToolDescription (
     let mutable _expression: string = expression
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<HintEntry> option = hints
+    let mutable _intent: ResizeArray<string> option = intent
     let mutable _inputs: ResizeArray<CWLInput> option = inputs
     let mutable _metadata: DynamicObj option = metadata
     let mutable _label: string option = label
@@ -46,6 +48,10 @@ type CWLExpressionToolDescription (
     member this.Hints
         with get() = _hints
         and set(hints) = _hints <- hints
+
+    member this.Intent
+        with get() = _intent
+        and set(intent) = _intent <- intent
 
     member this.Inputs
         with get() = _inputs
@@ -88,6 +94,10 @@ type CWLExpressionToolDescription (
     static member getHintsOrEmpty (tool: CWLExpressionToolDescription) =
         tool.Hints |> Option.defaultValue (ResizeArray())
 
+    /// Returns the expression tool's intent or an empty ResizeArray if None.
+    static member getIntentOrEmpty (tool: CWLExpressionToolDescription) =
+        tool.Intent |> Option.defaultValue (ResizeArray())
+
     /// Returns the expression tool's hints, creating and assigning a new empty ResizeArray if None.
     static member getOrCreateHints (tool: CWLExpressionToolDescription) =
         match tool.Hints with
@@ -96,3 +106,12 @@ type CWLExpressionToolDescription (
             let hints = ResizeArray()
             tool.Hints <- Some hints
             hints
+
+    /// Returns the expression tool's intent, creating and assigning a new empty ResizeArray if None.
+    static member getOrCreateIntent (tool: CWLExpressionToolDescription) =
+        match tool.Intent with
+        | Some intent -> intent
+        | None ->
+            let intent = ResizeArray()
+            tool.Intent <- Some intent
+            intent

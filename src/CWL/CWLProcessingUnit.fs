@@ -38,6 +38,14 @@ type CWLProcessingUnit =
         | ExpressionTool tool -> CWLExpressionToolDescription.getHintsOrEmpty tool
         | Operation operation -> CWLOperationDescription.getHintsOrEmpty operation
 
+    /// Returns intent for all CWL processing unit variants.
+    static member getIntent (processingUnit: CWLProcessingUnit) : ResizeArray<string> =
+        match processingUnit with
+        | CommandLineTool tool -> CWLToolDescription.getIntentOrEmpty tool
+        | Workflow workflow -> CWLWorkflowDescription.getIntentOrEmpty workflow
+        | ExpressionTool tool -> CWLExpressionToolDescription.getIntentOrEmpty tool
+        | Operation operation -> CWLOperationDescription.getIntentOrEmpty operation
+
     /// Returns known requirement hints only, dropping unknown extension hints.
     static member getKnownHints (processingUnit: CWLProcessingUnit) : ResizeArray<Requirement> =
         CWLProcessingUnit.getHints processingUnit

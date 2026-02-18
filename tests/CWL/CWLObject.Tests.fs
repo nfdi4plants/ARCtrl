@@ -38,6 +38,11 @@ let testCWLToolDescriptionDecode =
             let expected = Some (ResizeArray [|"dotnet"; "fsi"; "script.fsx"|])
             let actual = decodeCWLToolDescription.BaseCommand
             Expect.sequenceEqual actual.Value expected.Value ""
+        testCase "intent decodes as typed field, not metadata overflow" <| fun _ ->
+            let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFileWithIntent
+            let intent = Expect.wantSome decoded.Intent "Intent should decode on CommandLineTool."
+            Expect.sequenceEqual intent (ResizeArray [|"classification"; "quality-control"|]) ""
+            Expect.isNone decoded.Metadata "Intent should not be captured as overflow metadata."
         testList "Hints" [
             let hintsItem = decodeCWLToolDescription.Hints
             testCase "DockerRequirement" <| fun _ ->
@@ -280,6 +285,13 @@ let testCWLToolDescriptionEncode =
                 let original = TestObjects.CWL.CommandLineTool.cwlFile
                 let (encoded1, _, _) = TestingUtils.CWL.assertDeterministic Encode.encodeToolDescription Decode.decodeCommandLineTool "CommandLineTool" original
                 TestingUtils.CWL.assertRequirementsExtended encoded1
+            testCase "intent is encoded and preserved for command line tools" <| fun _ ->
+                let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFileWithIntent
+                let encoded = Encode.encodeToolDescription decoded
+                let roundTripped = Decode.decodeCommandLineTool encoded
+                Expect.stringContains encoded "intent:" "Encoded tool should contain intent."
+                let intent = Expect.wantSome roundTripped.Intent "Intent should survive roundtrip."
+                Expect.sequenceEqual intent (ResizeArray [|"classification"; "quality-control"|]) ""
             testCase "hints emitted before requirements for both encoder variants" <| fun _ ->
                 let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFile
                 let topLevelEncoded = Encode.encodeToolDescription decoded
@@ -358,6 +370,15 @@ let testExpressionTool =
             Expect.isTrue (inputs.Count > 0) "Should have at least one input"
             Expect.isTrue (et.Outputs.Count > 0) "Should have at least one output"
             Expect.isTrue (et.Expression.Length > 0) "Expression should be non-empty"
+        testCase "ExpressionTool intent decodes as typed field and roundtrips" <| fun _ ->
+            let et = Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolWithIntentFile
+            let intent = Expect.wantSome et.Intent "Intent should decode on ExpressionTool."
+            Expect.sequenceEqual intent (ResizeArray [|"feature-generation"; "post-processing"|]) ""
+            Expect.isNone et.Metadata "Intent should not be captured as overflow metadata."
+            let encoded = Encode.encodeExpressionToolDescription et
+            let roundTripped = Decode.decodeExpressionTool encoded
+            let roundTrippedIntent = Expect.wantSome roundTripped.Intent "Intent should survive ExpressionTool roundtrip."
+            Expect.sequenceEqual roundTrippedIntent intent ""
         testCase "ExpressionTool encode/decode deterministic" <| fun _ ->
             let original = TestObjects.CWL.ExpressionTool.expressionToolWithRequirementsFile
             let (_, d1, d2) =
@@ -484,6 +505,15 @@ let testOperation =
             let metadata = Expect.wantSome op.Metadata "Metadata should be present"
             let metadataText = metadata |> DynObj.format
             Expect.stringContains metadataText "customKey" "Metadata should preserve unknown keys"
+        testCase "Operation intent decodes as typed field and roundtrips" <| fun _ ->
+            let op = Decode.decodeOperation TestObjects.CWL.Operation.operationWithIntentFile
+            let intent = Expect.wantSome op.Intent "Intent should decode on Operation."
+            Expect.sequenceEqual intent (ResizeArray [|"orchestration"; "wiring"|]) ""
+            Expect.isNone op.Metadata "Intent should not be captured as overflow metadata."
+            let encoded = Encode.encodeOperationDescription op
+            let roundTripped = Decode.decodeOperation encoded
+            let roundTrippedIntent = Expect.wantSome roundTripped.Intent "Intent should survive Operation roundtrip."
+            Expect.sequenceEqual roundTrippedIntent intent ""
         testCase "Operation encode/decode deterministic" <| fun _ ->
             let original = TestObjects.CWL.Operation.minimalOperationFile
             let (_, d1, d2) =

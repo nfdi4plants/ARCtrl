@@ -6,6 +6,16 @@ inputs: {}
 outputs: {}
 expression: $(null)"""
 
+let expressionToolWithIntentFile = """cwlVersion: v1.2
+class: ExpressionTool
+intent:
+  - feature-generation
+  - post-processing
+inputs: {}
+outputs:
+  out: string
+expression: $(null)"""
+
 let expressionToolWithRequirementsFile = """cwlVersion: v1.2
 class: ExpressionTool
 requirements:

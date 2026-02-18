@@ -188,6 +188,11 @@ let testCWLWorkflowDescriptionDecode =
                 Expect.equal actual.[i].OutputBinding expected.[i].OutputBinding ""
                 Expect.equal actual.[i].Type_ expected.[i].Type_ ""
                 Expect.equal actual.[i].OutputSource expected.[i].OutputSource ""
+        testCase "workflow intent decodes as typed field, not metadata overflow" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithIntentFile
+            let intent = Expect.wantSome decoded.Intent "Intent should decode on Workflow."
+            Expect.sequenceEqual intent (ResizeArray [|"primary-analysis"; "quality-control"|]) ""
+            Expect.isNone decoded.Metadata "Intent should not be captured as overflow metadata."
         testCase "extended step fields decode" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithExtendedStepFile
             let step = decoded.Steps.[0]
@@ -393,6 +398,13 @@ let testCWLWorkflowDescriptionEncode =
                 Expect.stringContains encoded "hints:" "Workflow hints should be present in encoded output"
                 let hints = Expect.wantSome decoded.Hints "Workflow hints should survive roundtrip"
                 Expect.equal hints.[0] (KnownHint StepInputExpressionRequirement) ""
+            testCase "workflow intent is encoded and preserved" <| fun _ ->
+                let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithIntentFile
+                let encoded = Encode.encodeWorkflowDescription decoded
+                let roundTripped = Decode.decodeWorkflow encoded
+                Expect.stringContains encoded "intent:" "Workflow intent should be present in encoded output"
+                let intent = Expect.wantSome roundTripped.Intent "Workflow intent should survive roundtrip"
+                Expect.sequenceEqual intent (ResizeArray [|"primary-analysis"; "quality-control"|]) ""
             testList "PickValueMethod roundtrip" [
                 for (pickValueMethod, cwlString) in [
                     FirstNonNull, "first_non_null"

@@ -10,6 +10,7 @@ type CWLOperationDescription(
     ?cwlVersion: string,
     ?requirements: ResizeArray<Requirement>,
     ?hints: ResizeArray<HintEntry>,
+    ?intent: ResizeArray<string>,
     ?metadata: DynamicObj,
     ?label: string,
     ?doc: string
@@ -21,6 +22,7 @@ type CWLOperationDescription(
     let mutable _outputs: ResizeArray<CWLOutput> = outputs
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<HintEntry> option = hints
+    let mutable _intent: ResizeArray<string> option = intent
     let mutable _metadata: DynamicObj option = metadata
     let mutable _label: string option = label
     let mutable _doc: string option = doc
@@ -44,6 +46,10 @@ type CWLOperationDescription(
     member this.Hints
         with get() = _hints
         and set(value) = _hints <- value
+
+    member this.Intent
+        with get() = _intent
+        and set(value) = _intent <- value
 
     member this.Metadata
         with get() = _metadata
@@ -69,6 +75,9 @@ type CWLOperationDescription(
     static member getHintsOrEmpty (operation: CWLOperationDescription) =
         operation.Hints |> Option.defaultValue (ResizeArray())
 
+    static member getIntentOrEmpty (operation: CWLOperationDescription) =
+        operation.Intent |> Option.defaultValue (ResizeArray())
+
     static member getOrCreateHints (operation: CWLOperationDescription) =
         match operation.Hints with
         | Some hints -> hints
@@ -76,3 +85,11 @@ type CWLOperationDescription(
             let hints = ResizeArray()
             operation.Hints <- Some hints
             hints
+
+    static member getOrCreateIntent (operation: CWLOperationDescription) =
+        match operation.Intent with
+        | Some intent -> intent
+        | None ->
+            let intent = ResizeArray()
+            operation.Intent <- Some intent
+            intent

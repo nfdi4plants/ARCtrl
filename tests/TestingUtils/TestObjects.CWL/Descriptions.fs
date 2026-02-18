@@ -2,6 +2,7 @@ module TestObjects.CWL.Descriptions
 
 let label = """label: An example tool demonstrating metadata."""
 let docSimple = """doc: Note that this is an example and the metadata is not necessarily consistent."""
+let intent = """intent: [classification, quality-control]"""
 
 let descriptionFileContentComplex = """doc: |
   DESeq2 example workflow for **differential gene expression analysis**

@@ -40,6 +40,14 @@ outputs:
     outputBinding:
       glob: $(runtime.outdir)/*.csv"""
 
+let cwlFileWithIntent = """cwlVersion: v1.2
+class: CommandLineTool
+intent: [classification, quality-control]
+baseCommand: [echo]
+inputs: {}
+outputs:
+  out: string"""
+
 
 module Basic =
 

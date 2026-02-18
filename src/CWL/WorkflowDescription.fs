@@ -12,6 +12,7 @@ type CWLWorkflowDescription(
     ?cwlVersion: string,
     ?requirements: ResizeArray<Requirement>,
     ?hints: ResizeArray<HintEntry>,
+    ?intent: ResizeArray<string>,
     ?metadata: DynamicObj,
     ?label: string,
     ?doc: string
@@ -24,6 +25,7 @@ type CWLWorkflowDescription(
     let mutable _outputs: ResizeArray<CWLOutput> = outputs
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<HintEntry> option = hints
+    let mutable _intent: ResizeArray<string> option = intent
     let mutable _metadata: DynamicObj option = metadata
     let mutable _label: string option = label
     let mutable _doc: string option = doc
@@ -51,6 +53,10 @@ type CWLWorkflowDescription(
     member this.Hints
         with get() = _hints
         and set(hints) = _hints <- hints
+
+    member this.Intent
+        with get() = _intent
+        and set(intent) = _intent <- intent
 
     member this.Metadata
         with get() = _metadata
@@ -80,6 +86,10 @@ type CWLWorkflowDescription(
     static member getHintsOrEmpty (workflow: CWLWorkflowDescription) =
         workflow.Hints |> Option.defaultValue (ResizeArray())
 
+    /// Returns workflow intent or an empty ResizeArray if None.
+    static member getIntentOrEmpty (workflow: CWLWorkflowDescription) =
+        workflow.Intent |> Option.defaultValue (ResizeArray())
+
     /// Returns the workflow's hints, creating and assigning a new empty ResizeArray if None.
     static member getOrCreateHints (workflow: CWLWorkflowDescription) =
         match workflow.Hints with
@@ -88,3 +98,12 @@ type CWLWorkflowDescription(
             let hints = ResizeArray()
             workflow.Hints <- Some hints
             hints
+
+    /// Returns the workflow's intent, creating and assigning a new empty ResizeArray if None.
+    static member getOrCreateIntent (workflow: CWLWorkflowDescription) =
+        match workflow.Intent with
+        | Some intent -> intent
+        | None ->
+            let intent = ResizeArray()
+            workflow.Intent <- Some intent
+            intent

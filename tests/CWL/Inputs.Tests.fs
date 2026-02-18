@@ -288,6 +288,87 @@ let testProcessingUnitHintOps =
             Expect.equal actual.Count 2 "Only known hints should be returned."
     ]
 
+let testProcessingUnitIntentOps =
+    testList "CWLProcessingUnit Intent" [
+        testCase "getIntent normalizes missing intent to empty for all variants" <| fun _ ->
+            let toolIntent =
+                CWLToolDescription(outputs = ResizeArray())
+                |> CWLProcessingUnit.CommandLineTool
+                |> CWLProcessingUnit.getIntent
+
+            let workflowIntent =
+                CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray())
+                |> CWLProcessingUnit.Workflow
+                |> CWLProcessingUnit.getIntent
+
+            let expressionIntent =
+                CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)")
+                |> CWLProcessingUnit.ExpressionTool
+                |> CWLProcessingUnit.getIntent
+
+            let operationIntent =
+                CWLOperationDescription(inputs = ResizeArray(), outputs = ResizeArray())
+                |> CWLProcessingUnit.Operation
+                |> CWLProcessingUnit.getIntent
+
+            Expect.equal toolIntent.Count 0 "Tool intent should normalize to empty collection."
+            Expect.equal workflowIntent.Count 0 "Workflow intent should normalize to empty collection."
+            Expect.equal expressionIntent.Count 0 "ExpressionTool intent should normalize to empty collection."
+            Expect.equal operationIntent.Count 0 "Operation intent should normalize to empty collection."
+
+        testCase "getIntent returns existing collection for all variants" <| fun _ ->
+            let toolIntentValues = ResizeArray [|"classification"|]
+            let workflowIntentValues = ResizeArray [|"analysis"|]
+            let expressionIntentValues = ResizeArray [|"post-processing"|]
+            let operationIntentValues = ResizeArray [|"orchestration"|]
+
+            let toolActual =
+                CWLToolDescription(outputs = ResizeArray(), intent = toolIntentValues)
+                |> CWLProcessingUnit.CommandLineTool
+                |> CWLProcessingUnit.getIntent
+
+            let workflowActual =
+                CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray(), intent = workflowIntentValues)
+                |> CWLProcessingUnit.Workflow
+                |> CWLProcessingUnit.getIntent
+
+            let expressionActual =
+                CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)", intent = expressionIntentValues)
+                |> CWLProcessingUnit.ExpressionTool
+                |> CWLProcessingUnit.getIntent
+
+            let operationActual =
+                CWLOperationDescription(inputs = ResizeArray(), outputs = ResizeArray(), intent = operationIntentValues)
+                |> CWLProcessingUnit.Operation
+                |> CWLProcessingUnit.getIntent
+
+            Expect.isTrue (obj.ReferenceEquals(toolActual, toolIntentValues)) "Tool intent should reuse existing collection."
+            Expect.isTrue (obj.ReferenceEquals(workflowActual, workflowIntentValues)) "Workflow intent should reuse existing collection."
+            Expect.isTrue (obj.ReferenceEquals(expressionActual, expressionIntentValues)) "ExpressionTool intent should reuse existing collection."
+            Expect.isTrue (obj.ReferenceEquals(operationActual, operationIntentValues)) "Operation intent should reuse existing collection."
+
+        testCase "getOrCreate intent helpers initialize missing collections" <| fun _ ->
+            let tool = CWLToolDescription(outputs = ResizeArray())
+            let workflow = CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray())
+            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)")
+            let operation = CWLOperationDescription(inputs = ResizeArray(), outputs = ResizeArray())
+
+            let toolIntent = CWLToolDescription.getOrCreateIntent tool
+            let workflowIntent = CWLWorkflowDescription.getOrCreateIntent workflow
+            let expressionIntent = CWLExpressionToolDescription.getOrCreateIntent expressionTool
+            let operationIntent = CWLOperationDescription.getOrCreateIntent operation
+
+            toolIntent.Add("classification")
+            workflowIntent.Add("analysis")
+            expressionIntent.Add("post-processing")
+            operationIntent.Add("orchestration")
+
+            Expect.equal tool.Intent.Value.Count 1 "Tool intent should be initialized and retained."
+            Expect.equal workflow.Intent.Value.Count 1 "Workflow intent should be initialized and retained."
+            Expect.equal expressionTool.Intent.Value.Count 1 "ExpressionTool intent should be initialized and retained."
+            Expect.equal operation.Intent.Value.Count 1 "Operation intent should be initialized and retained."
+    ]
+
 let main = 
     testList "Input" [
         testInput
@@ -296,4 +377,5 @@ let main =
         testProcessingUnitOutputOps
         testProcessingUnitRequirementOps
         testProcessingUnitHintOps
+        testProcessingUnitIntentOps
     ]

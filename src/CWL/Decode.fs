@@ -1165,6 +1165,12 @@ module Decode =
 
     let labelDecoder: (YAMLiciousTypes.YAMLElement -> string option) =
         Decode.object (fun get -> get.Optional.Field "label" Decode.string)
+
+    let intentDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<string> option) =
+        Decode.object (fun get ->
+            get.Optional.Field "intent" id
+            |> Option.bind stringOrStringArrayDecoder
+        )
     
     let hasField (fieldName: string) (yamlElement: YAMLElement) : bool =
         match yamlElement with
@@ -1266,6 +1272,7 @@ module Decode =
         let inputs = inputsDecoder yamlCWL
         let requirements = requirementsDecoder yamlCWL
         let hints = hintsDecoder yamlCWL
+        let intent = intentDecoder yamlCWL
         let baseCommand = baseCommandDecoder yamlCWL
         let doc = docDecoder yamlCWL
         let label = labelDecoder yamlCWL
@@ -1288,6 +1295,7 @@ module Decode =
                             "id";
                             "label";
                             "doc";
+                            "intent";
                             "requirements";
                             "hints";
                             "cwlVersion";
@@ -1326,6 +1334,8 @@ module Decode =
             description.Requirements <- requirements
         if hints.IsSome then
             description.Hints <- hints
+        if intent.IsSome then
+            description.Intent <- intent
         if baseCommand.IsSome then
             description.BaseCommand <- baseCommand
         if doc.IsSome then
@@ -1342,6 +1352,7 @@ module Decode =
         let inputs = inputsDecoder yamlCWL
         let requirements = requirementsDecoder yamlCWL
         let hints = hintsDecoder yamlCWL
+        let intent = intentDecoder yamlCWL
         let doc = docDecoder yamlCWL
         let label = labelDecoder yamlCWL
         let expression =
@@ -1366,6 +1377,7 @@ module Decode =
                             "id";
                             "label";
                             "doc";
+                            "intent";
                             "requirements";
                             "hints";
                             "cwlVersion";
@@ -1390,6 +1402,8 @@ module Decode =
             description.Requirements <- requirements
         if hints.IsSome then
             description.Hints <- hints
+        if intent.IsSome then
+            description.Intent <- intent
         if doc.IsSome then
             description.Doc <- doc
         if label.IsSome then
@@ -1407,6 +1421,7 @@ module Decode =
             | None -> raise (System.InvalidOperationException("Inputs are required for an operation"))
         let requirements = requirementsDecoder yamlCWL
         let hints = hintsDecoder yamlCWL
+        let intent = intentDecoder yamlCWL
         let doc = docDecoder yamlCWL
         let label = labelDecoder yamlCWL
         let description =
@@ -1427,6 +1442,7 @@ module Decode =
                             "outputs";
                             "label";
                             "doc";
+                            "intent";
                             "class";
                             "id";
                             "requirements";
@@ -1450,6 +1466,8 @@ module Decode =
             description.Requirements <- requirements
         if hints.IsSome then
             description.Hints <- hints
+        if intent.IsSome then
+            description.Intent <- intent
         if doc.IsSome then
             description.Doc <- doc
         if label.IsSome then
@@ -1467,6 +1485,7 @@ module Decode =
             | None -> raise (System.InvalidOperationException("Inputs are required for a workflow"))
         let requirements = requirementsDecoder yamlCWL
         let hints = hintsDecoder yamlCWL
+        let intent = intentDecoder yamlCWL
         let steps = stepsDecoderWithVersion cwlVersion yamlCWL
         let doc = docDecoder yamlCWL
         let label = labelDecoder yamlCWL
@@ -1489,6 +1508,7 @@ module Decode =
                             "outputs";
                             "label";
                             "doc";
+                            "intent";
                             "class";
                             "steps";
                             "id";
@@ -1513,6 +1533,8 @@ module Decode =
             description.Requirements <- requirements
         if hints.IsSome then
             description.Hints <- hints
+        if intent.IsSome then
+            description.Intent <- intent
         if doc.IsSome then
             description.Doc <- doc
         if label.IsSome then

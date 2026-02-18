@@ -376,3 +376,21 @@ steps:
       in: msg
     out: [out]"""
 
+let workflowWithIntentFile = """cwlVersion: v1.2
+class: Workflow
+intent:
+  - primary-analysis
+  - quality-control
+inputs:
+  input1: string
+outputs:
+  result:
+    type: string
+    outputSource: step1/out
+steps:
+  step1:
+    run: ./tool.cwl
+    in:
+      in1: input1
+    out: [out]"""
+

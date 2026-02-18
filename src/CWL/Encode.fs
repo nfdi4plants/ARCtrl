@@ -141,6 +141,9 @@ module Encode =
     let encodeDoc (doc:string) : (string * YAMLElement) =
         "doc", Encode.string (normalizeDocString doc)
 
+    let encodeIntent (intent: ResizeArray<string>) : (string * YAMLElement) =
+        "intent", (intent |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence)
+
     let inline appendOptPair pairOpt acc =
         match pairOpt with
         | Some pair -> acc @ [pair]
@@ -620,6 +623,7 @@ module Encode =
               "class", Encode.string "CommandLineTool" ]
             |> appendOptPair (td.Label |> Option.map encodeLabel)
             |> appendOptPair (td.Doc |> Option.map encodeDoc)
+            |> appendOptPair (td.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
         let withHints =
             match td.Hints with
             | Some h when h.Count > 0 ->
@@ -666,6 +670,7 @@ module Encode =
               "class", Encode.string "ExpressionTool" ]
             |> appendOptPair (et.Label |> Option.map encodeLabel)
             |> appendOptPair (et.Doc |> Option.map encodeDoc)
+            |> appendOptPair (et.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
         let withHints =
             match et.Hints with
             | Some h when h.Count > 0 ->
@@ -709,6 +714,7 @@ module Encode =
               "class", Encode.string "Operation" ]
             |> appendOptPair (op.Label |> Option.map encodeLabel)
             |> appendOptPair (op.Doc |> Option.map encodeDoc)
+            |> appendOptPair (op.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
         let withHints =
             match op.Hints with
             | Some h when h.Count > 0 ->
@@ -747,6 +753,7 @@ module Encode =
               "class", Encode.string "Workflow" ]
             |> appendOptPair (wd.Label |> Option.map encodeLabel)
             |> appendOptPair (wd.Doc |> Option.map encodeDoc)
+            |> appendOptPair (wd.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
         let withHints =
             match wd.Hints with
             | Some h when h.Count > 0 ->
@@ -863,19 +870,19 @@ module Encode =
 
     let encodeToolDescription (td:CWLToolDescription) : string =
         encodeToolDescriptionElement td
-        |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"] ["hints"; "requirements"; "baseCommand"; "inputs"; "outputs"]
+        |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"; "intent"] ["hints"; "requirements"; "baseCommand"; "inputs"; "outputs"]
 
     let encodeWorkflowDescription (wd:CWLWorkflowDescription) : string =
         encodeWorkflowDescriptionElement wd
-        |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"] ["hints"; "requirements"; "inputs"; "steps"; "outputs"]
+        |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"; "intent"] ["hints"; "requirements"; "inputs"; "steps"; "outputs"]
 
     let encodeExpressionToolDescription (et:CWLExpressionToolDescription) : string =
         encodeExpressionToolDescriptionElement et
-        |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"] ["hints"; "requirements"; "inputs"; "outputs"; "expression"]
+        |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"; "intent"] ["hints"; "requirements"; "inputs"; "outputs"; "expression"]
 
     let encodeOperationDescription (op: CWLOperationDescription) : string =
         encodeOperationDescriptionElement op
-        |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"] ["hints"; "requirements"; "inputs"; "outputs"]
+        |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"; "intent"] ["hints"; "requirements"; "inputs"; "outputs"]
 
     let encodeProcessingUnit (pu : CWLProcessingUnit) :string =
         match pu with
