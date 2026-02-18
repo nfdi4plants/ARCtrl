@@ -361,7 +361,7 @@ let private tests_SetISAFromContracts = testList "SetISAFromContracts" [
         let tool = toolObj :?> ARCtrl.CWL.CWLToolDescription
         Expect.equal tool.BaseCommand.Value.[0] "echo" "Referenced workflow step should resolve to command line tool"
     )
-    ptestCase "simpleISAWithWR_WithCWL_ResolvesRunWorkflowReference_CacheHitForSharedToolPath" (fun () ->
+    testCase "simpleISAWithWR_WithCWL_ResolvesRunWorkflowReference_CacheHitForSharedToolPath" (fun () ->
         let workflowIdentifier = Workflow.Proteomics.workflowIdentifier
         let runIdentifier = Run.Proteomics.runIdentifier
         let workflowCwlPath = Identifier.Workflow.cwlFileNameFromIdentifier workflowIdentifier

@@ -141,7 +141,7 @@ outputs: {}"""
                     Expect.sequenceEqual actualExpressionLib expectedExpressionLib "expressionLib entries should decode"
                 | _ ->
                     failwith "Expected InlineJavascriptRequirement"
-            ptestCase "Decode scalar expressionLib form" <| fun _ ->
+            testCase "Decode scalar expressionLib form" <| fun _ ->
                 let yaml = """requirements:
   - class: InlineJavascriptRequirement
     expressionLib: $(function() { return 42; })"""
@@ -269,7 +269,7 @@ outputs: {}"""
                     Expect.sequenceEqual listing expected "String listing entries should decode into StringEntry values."
                 | _ ->
                     failwith "Wrong requirement type: expected InitialWorkDirRequirement"
-            ptestCase "Scalar listing form decodes as single listing entry" <| fun _ ->
+            testCase "Scalar listing form decodes as single listing entry" <| fun _ ->
                 let yaml = """requirements:
   - class: InitialWorkDirRequirement
     listing: $(inputs.stageDirectory)"""
@@ -699,7 +699,7 @@ outputs: {}"""
                 Expect.equal workReuse (WorkReuseRequirement { EnableReuse = false }) "WorkReuse enableReuse=false should decode."
                 Expect.equal network (NetworkAccessRequirement { NetworkAccess = false }) "NetworkAccess networkAccess=false should decode."
                 Expect.equal inplace (InplaceUpdateRequirement { InplaceUpdate = false }) "InplaceUpdateRequirement inplaceUpdate=false should decode."
-            ptestCase "WorkReuse and NetworkAccess accept expression payloads" <| fun _ ->
+            testCase "WorkReuse and NetworkAccess accept expression payloads" <| fun _ ->
                 let yaml = """requirements:
   - class: WorkReuse
     enableReuse: $(inputs.enable_reuse)
@@ -751,7 +751,7 @@ outputs: {}"""
                 let requirement = findRequirement reqs (function ToolTimeLimitRequirement _ -> true | _ -> false)
                 let expected = ToolTimeLimitRequirement (ToolTimeLimitExpression "3.5")
                 Expect.equal requirement expected "Float timelimit should decode via expression fallback."
-            ptestCase "Decode negative numeric timelimit fails" <| fun _ ->
+            testCase "Decode negative numeric timelimit fails" <| fun _ ->
                 let yaml = """requirements:
   - class: ToolTimeLimit
     timelimit: -1"""

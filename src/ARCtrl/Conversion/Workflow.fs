@@ -200,6 +200,7 @@ type WorkflowConversion =
         | CWL.RunCommandLineTool _ -> "inline:CommandLineTool"
         | CWL.RunWorkflow _ -> "inline:Workflow"
         | CWL.RunExpressionTool _ -> "inline:ExpressionTool"
+        | CWL.RunOperation _ -> "inline:Operation"
 
     /// <summary>
     /// Attempts to decode a CWL processing unit from an LDGraph node addressed by a resolved run path.

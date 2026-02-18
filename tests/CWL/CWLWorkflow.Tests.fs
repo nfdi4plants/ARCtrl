@@ -179,8 +179,8 @@ let testCWLWorkflowDescriptionDecode =
         ]
         testCase "outputs" <| fun _ ->
             let expected = ResizeArray [|
-                CWLOutput("mzlite", CWLType.Directory (DirectoryInstance()), outputSource = "MzMLToMzlite/dir")
-                CWLOutput("psm", CWLType.Directory (DirectoryInstance()), outputSource = "PeptideSpectrumMatching/dir")
+                CWLOutput("mzlite", CWLType.Directory (DirectoryInstance()), outputSource = OutputSource.Single "MzMLToMzlite/dir")
+                CWLOutput("psm", CWLType.Directory (DirectoryInstance()), outputSource = OutputSource.Single "PeptideSpectrumMatching/dir")
             |]
             let actual = decodeCWLWorkflowDescription.Outputs
             for i = 0 to actual.Count - 1 do
@@ -246,15 +246,17 @@ let testCWLWorkflowDescriptionDecode =
             let workflow = Expect.wantSome (WorkflowStepRunOps.tryGetWorkflow runValue) "Expected inline workflow payload"
             Expect.equal workflow.Steps.Count 1 ""
             Expect.equal workflow.Steps.[0].Id "inner" ""
-        ptestCase "workflow outputSource array form decodes and roundtrips" <| fun _ ->
+        testCase "workflow outputSource array form decodes and roundtrips" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithOutputSourceArrayFile
             let encoded = Encode.encodeWorkflowDescription decoded
             let roundTripped = Decode.decodeWorkflow encoded
             Expect.stringContains encoded "outputSource:" "Array-form outputSource should be emitted."
-            Expect.stringContains encoded "- step1/out" "First outputSource entry should be preserved."
-            Expect.stringContains encoded "- step2/out" "Second outputSource entry should be preserved."
-            Expect.equal roundTripped.Outputs.[0].Name "merged" "Output should survive decode/encode/decode."
-        ptestCase "workflow step run Operation class decodes and roundtrips" <| fun _ ->
+            let mergedOutput =
+                roundTripped.Outputs
+                |> Seq.find (fun output -> output.Name = "merged")
+            let outputSources = mergedOutput.GetOutputSources()
+            Expect.sequenceEqual outputSources (ResizeArray [| "step1/out"; "step2/out" |]) "outputSource entries should survive decode/encode/decode."
+        testCase "workflow step run Operation class decodes and roundtrips" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithInlineRunOperationFile
             let encoded = Encode.encodeWorkflowDescription decoded
             let roundTripped = Decode.decodeWorkflow encoded

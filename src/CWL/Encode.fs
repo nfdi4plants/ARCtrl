@@ -74,6 +74,8 @@ module Encode =
         // Represent a mapping as an Object containing Mapping nodes preserving order.
         // Avoid wrapping scalar/sequence values inside an extra Object layer so YAMLicious prints 'key: value'.
         let normalize = function
+            // YAMLicious emits `key:` (null) for empty object values unless we force inline `{}`.
+            | YAMLElement.Object [] -> YAMLElement.Value { Value = "{}"; Comment = None }
             | YAMLElement.Object [single] -> single // unwrap single wrapped value (legacy helper usage)
             | other -> other
         pairs
@@ -236,6 +238,15 @@ module Encode =
         |> List.choose id
         |> yMap
 
+    let encodeStringArrayOrScalar (values: ResizeArray<string>) : YAMLElement =
+        if values.Count = 1 then
+            Encode.string values.[0]
+        else
+            values
+            |> Seq.map Encode.string
+            |> List.ofSeq
+            |> YAMLElement.Sequence
+
     let encodeCWLOutput (o:CWLOutput) : (string * YAMLElement) =
         let typeElement = o.Type_ |> Option.map (fun t ->
             match t with
@@ -279,12 +290,18 @@ module Encode =
                 // Simple types
                 encodeCWLType t
         )
+
+        let outputSourceElement =
+            match o.OutputSource with
+            | Some (OutputSource.Single value) -> Some (Encode.string value)
+            | Some (OutputSource.Multiple values) when values.Count > 0 -> Some (encodeStringArrayOrScalar values)
+            | _ -> None
         
         let pairs =
             []
             |> appendOpt "type" id typeElement
             |> appendOpt "outputBinding" encodeOutputBinding o.OutputBinding
-            |> appendOpt "outputSource" Encode.string o.OutputSource
+            |> appendOpt "outputSource" id outputSourceElement
         match pairs with
         | [ ("type", t) ] -> o.Name, t // only type specified
         | _ ->
@@ -467,9 +484,17 @@ module Encode =
             [ "class", Encode.string "WorkReuse"
               "enableReuse", yBool workReuse.EnableReuse ]
             |> yMap
+        | WorkReuseExpressionRequirement expression ->
+            [ "class", Encode.string "WorkReuse"
+              "enableReuse", Encode.string expression ]
+            |> yMap
         | NetworkAccessRequirement networkAccess ->
             [ "class", Encode.string "NetworkAccess"
               "networkAccess", yBool networkAccess.NetworkAccess ]
+            |> yMap
+        | NetworkAccessExpressionRequirement expression ->
+            [ "class", Encode.string "NetworkAccess"
+              "networkAccess", Encode.string expression ]
             |> yMap
         | InplaceUpdateRequirement inplaceUpdate ->
             [ "class", Encode.string "InplaceUpdateRequirement"
@@ -583,6 +608,11 @@ module Encode =
             | Some expressionTool -> encodeExpressionToolDescriptionElement expressionTool
             | None ->
                 raise (System.ArgumentException($"RunExpressionTool must contain CWLExpressionToolDescription but got %A{expressionToolObj}"))
+        | RunOperation operationObj ->
+            match WorkflowStepRunOps.tryGetOperation run with
+            | Some operation -> encodeOperationDescriptionElement operation
+            | None ->
+                raise (System.ArgumentException($"RunOperation must contain CWLOperationDescription but got %A{operationObj}"))
 
     and encodeToolDescriptionElement (td: CWLToolDescription) : YAMLElement =
         let basePairs =
@@ -671,6 +701,44 @@ module Encode =
                     acc @ [ kvp.Key, encodedValue ]
                 ) withExpression
             | None -> withExpression
+        yMap withMetadata
+
+    and encodeOperationDescriptionElement (op: CWLOperationDescription) : YAMLElement =
+        let basePairs =
+            [ "cwlVersion", Encode.string op.CWLVersion
+              "class", Encode.string "Operation" ]
+            |> appendOptPair (op.Label |> Option.map encodeLabel)
+            |> appendOptPair (op.Doc |> Option.map encodeDoc)
+        let withHints =
+            match op.Hints with
+            | Some h when h.Count > 0 ->
+                basePairs @ [ "hints", (h |> Seq.map encodeHintEntry |> List.ofSeq |> YAMLElement.Sequence) ]
+            | _ -> basePairs
+        let withRequirements =
+            match op.Requirements with
+            | Some r when r.Count > 0 ->
+                withHints @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> YAMLElement.Sequence) ]
+            | _ -> withHints
+        let withInputs =
+            withRequirements @ [ "inputs", (op.Inputs |> Seq.map encodeCWLInput |> Seq.toList |> yMap) ]
+        let withOutputs =
+            withInputs @ [ "outputs", (op.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> yMap) ]
+        let withMetadata =
+            match op.Metadata with
+            | Some md ->
+                md.GetProperties(false)
+                |> Seq.fold (fun acc kvp ->
+                    let encodedValue =
+                        match kvp.Value with
+                        | :? string as s -> Encode.string s
+                        | :? bool as b -> yBool b
+                        | :? int as i -> Encode.int i
+                        | :? float as f -> Encode.float f
+                        | :? YAMLElement as y -> y
+                        | _ -> Encode.string (string kvp.Value)
+                    acc @ [ kvp.Key, encodedValue ]
+                ) withOutputs
+            | None -> withOutputs
         yMap withMetadata
 
     and encodeWorkflowDescriptionElement (wd: CWLWorkflowDescription) : YAMLElement =

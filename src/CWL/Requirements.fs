@@ -192,8 +192,12 @@ type Requirement =
     | ResourceRequirement of ResourceRequirementInstance
     /// For implementations that support reusing output from past work (on the assumption that same code and same input produce same results), control whether to enable or disable the reuse behavior for a particular tool or step.
     | WorkReuseRequirement of WorkReuseRequirementValue
+    /// Expression payload form of WorkReuse enableReuse.
+    | WorkReuseExpressionRequirement of string
     /// Indicate whether a process requires outgoing IPv4/IPv6 network access. Choice of IPv4 or IPv6 is implementation and site specific, correct tools must support both.
     | NetworkAccessRequirement of NetworkAccessRequirementValue
+    /// Expression payload form of NetworkAccess networkAccess.
+    | NetworkAccessExpressionRequirement of string
     /// If inplaceUpdate is true, then an implementation supporting this feature may permit tools to directly update files with writable: true in InitialWorkDirRequirement. 
     | InplaceUpdateRequirement of InplaceUpdateRequirementValue
     /// Set an upper limit on the execution time of a CommandLineTool.
@@ -244,5 +248,4 @@ type HintEntry =
     static member tryAsRequirement = function
         | KnownHint requirement -> Some requirement
         | UnknownHint _ -> None
-
 

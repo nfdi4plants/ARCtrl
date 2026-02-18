@@ -309,7 +309,7 @@ module CWL =
 
     /// Assert all outputs have outputSource present.
     let assertAllOutputsHaveSource (wf: CWLWorkflowDescription) =
-        wf.Outputs |> Seq.iter (fun o -> Expect.isSome o.OutputSource ($"{o.OutputSource.Value}"))
+        wf.Outputs |> Seq.iter (fun o -> Expect.isSome o.OutputSource $"Output '{o.Name}' should have outputSource")
 
     /// Quick utility to verify requirements rendered in extended form (heuristic search for 'class:').
     let assertRequirementsExtended (text:string) =

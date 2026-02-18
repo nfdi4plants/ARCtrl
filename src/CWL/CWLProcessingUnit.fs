@@ -51,6 +51,9 @@ module WorkflowStepRunOps =
     let fromExpressionTool (expressionTool: CWLExpressionToolDescription) : WorkflowStepRun =
         RunExpressionTool expressionTool
 
+    let fromOperation (operation: CWLOperationDescription) : WorkflowStepRun =
+        RunOperation operation
+
     let tryGetTool (run: WorkflowStepRun) : CWLToolDescription option =
         match run with
         | RunCommandLineTool (:? CWLToolDescription as tool) -> Some tool
@@ -64,4 +67,9 @@ module WorkflowStepRunOps =
     let tryGetExpressionTool (run: WorkflowStepRun) : CWLExpressionToolDescription option =
         match run with
         | RunExpressionTool (:? CWLExpressionToolDescription as expressionTool) -> Some expressionTool
+        | _ -> None
+
+    let tryGetOperation (run: WorkflowStepRun) : CWLOperationDescription option =
+        match run with
+        | RunOperation (:? CWLOperationDescription as operation) -> Some operation
         | _ -> None

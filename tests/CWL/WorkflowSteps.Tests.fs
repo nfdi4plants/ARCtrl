@@ -129,7 +129,7 @@ let testWorkflowStep =
             let step = decoded.[0]
             Expect.equal step.In.Count 0 "Explicit empty object for `in` should decode to an empty input collection."
             Expect.equal step.Out.Count 0 "Explicit empty list for `out` should decode to an empty output collection."
-        ptestCase "missing in field fails decode" <| fun _ ->
+        testCase "missing in field fails decode" <| fun _ ->
             let invalidSteps = """steps:
   step1:
     run: ./tool.cwl
@@ -140,7 +140,7 @@ let testWorkflowStep =
                 |> Decode.stepsDecoder
                 |> ignore
             Expect.throws decodeInvalid "Missing required `in` field should fail decoding."
-        ptestCase "missing out field fails decode" <| fun _ ->
+        testCase "missing out field fails decode" <| fun _ ->
             let invalidSteps = """steps:
   step1:
     run: ./tool.cwl

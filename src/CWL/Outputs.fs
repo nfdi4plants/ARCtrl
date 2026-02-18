@@ -10,11 +10,21 @@ type OutputBinding = {
     with static member create(?glob) = {Glob = glob}
 
 [<AttachMembers>]
+type OutputSource =
+    | Single of string
+    | Multiple of ResizeArray<string>
+    with
+    member this.AsValues() =
+        match this with
+        | Single value -> ResizeArray [| value |]
+        | Multiple values -> values
+
+[<AttachMembers>]
 type CWLOutput (
     name: string,
     ?type_: CWLType,
     ?outputBinding: OutputBinding,
-    ?outputSource: string
+    ?outputSource: OutputSource
 ) as this =
     inherit DynamicObj ()
     do
@@ -35,8 +45,15 @@ type CWLOutput (
             | Some v -> DynObj.setProperty "outputBinding" v this
             | None -> DynObj.removeProperty "outputBinding" this
     member this.OutputSource
-        with get() = DynObj.tryGetTypedPropertyValue<string> ("outputSource") this
-        and set(value: string option) =
+        with get() = DynObj.tryGetTypedPropertyValue<OutputSource> ("outputSource") this
+        and set(value: OutputSource option) =
             match value with
+            | Some (Multiple values) when values.Count = 0 -> DynObj.removeProperty "outputSource" this
             | Some v -> DynObj.setProperty "outputSource" v this
             | None -> DynObj.removeProperty "outputSource" this
+
+    member this.GetOutputSources() =
+        match this.OutputSource with
+        | Some outputSource -> outputSource.AsValues()
+        | _ ->
+            ResizeArray()

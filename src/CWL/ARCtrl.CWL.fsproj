@@ -18,6 +18,7 @@
     <Compile Include="ToolDescription.fs" /> 
     <Compile Include="WorkflowDescription.fs" /> 
     <Compile Include="ExpressionToolDescription.fs" />
+    <Compile Include="OperationDescription.fs" />
     <Compile Include="CWLProcessingUnit.fs" /> 
     <Compile Include="Decode.fs" />
     <Compile Include="Encode.fs" />

@@ -122,6 +122,7 @@ type WorkflowStepRun =
     | RunCommandLineTool of obj
     | RunWorkflow of obj
     | RunExpressionTool of obj
+    | RunOperation of obj
 
 [<AttachMembers>]
 type WorkflowStep (
