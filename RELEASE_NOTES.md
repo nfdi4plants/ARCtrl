@@ -1,3 +1,119 @@
+### 3.0.0+3de66bcb (Released 2026-2-19)
+* Additions:
+    * [[#c2d0f529](https://github.com/nfdi4plants/ARCtrl/commit/c2d0f5292e34440d9dd09a54f93c319888362e59)] add intent field to all processing units
+    * [[#3c4bd8c5](https://github.com/nfdi4plants/ARCtrl/commit/3c4bd8c5c96d7167f1c89ac925a556818415012c)] add deeply nested step dependency tests
+    * [[#dea546f5](https://github.com/nfdi4plants/ARCtrl/commit/dea546f5570d20abfc4dbbe157e525ece74acd9f)] add empty input edge case tests
+    * [[#27d623dc](https://github.com/nfdi4plants/ARCtrl/commit/27d623dcc3f458a767b40d14674c0c593a3e1010)] include operations in related files
+    * [[#09f7bec7](https://github.com/nfdi4plants/ARCtrl/commit/09f7bec79838ef4798ad8ea55b031063af867eaf)] add handling of step reuse
+    * [[#e8e9e974](https://github.com/nfdi4plants/ARCtrl/commit/e8e9e974c05fbdb53ffb831157628e2aeb0668a0)] add pending tests for minor missing spec cases
+    * [[#43ee136b](https://github.com/nfdi4plants/ARCtrl/commit/43ee136be0d40180d61881940b13eadf338818ff)] add pending tests for reuse of the same unit in steps across wfs
+    * [[#9d166c02](https://github.com/nfdi4plants/ARCtrl/commit/9d166c0244c1b7177c9ad7f42d3b87a90cc6efc3)] compare example generated graphs to expected graphs
+    * [[#7fd7ab10](https://github.com/nfdi4plants/ARCtrl/commit/7fd7ab1075993dd9e27f4e1161098229d9f6cd14)] update graph readme
+    * [[#0d650158](https://github.com/nfdi4plants/ARCtrl/commit/0d6501584023dcfd77ade68b0eea95e4dba0437b)] add comments
+    * [[#6a181b3e](https://github.com/nfdi4plants/ARCtrl/commit/6a181b3e69acfec934458235b68177f92faf77d8)] move yamlobjects to utils
+    * [[#4f30855c](https://github.com/nfdi4plants/ARCtrl/commit/4f30855cf36a4037296cf88e05c2c089f9f6f8ef)] create mkstep helper
+    * [[#55c1c698](https://github.com/nfdi4plants/ARCtrl/commit/55c1c6980b235c97bcc311322617e2f9a0a41e91)] replace alternate constructor with static member
+    * [[#3768e21f](https://github.com/nfdi4plants/ARCtrl/commit/3768e21f4b99f48abf77fbf7238b59e7de34dd8f)] add create functions for graph types
+    * [[#92bf4274](https://github.com/nfdi4plants/ARCtrl/commit/92bf42743aa0ea4a5b6771fc7face2c935a605a9)] move requirement defaults
+    * [[#c2ea2f3b](https://github.com/nfdi4plants/ARCtrl/commit/c2ea2f3b51ed7b10a3b77a8db36bed83a3042536)] rename and reformat testlist
+    * [[#6bca58c5](https://github.com/nfdi4plants/ARCtrl/commit/6bca58c5f66680d2b425511f6db0e69e353ade57)] add workflowgraph to py and js solution
+    * [[#6d6510fa](https://github.com/nfdi4plants/ARCtrl/commit/6d6510fa2fe6c8d87b199a132948cf38fe1327f7)] add edge-case coverage for cwl requirements
+    * [[#3b5ac1a0](https://github.com/nfdi4plants/ARCtrl/commit/3b5ac1a0c86bbd3702aa5b8000ba733a46d399f1)] harden cwl requirement edge-case handling
+    * [[#f0189b71](https://github.com/nfdi4plants/ARCtrl/commit/f0189b714fb98f80a6a96d9233e15dca61e0b3a4)] add/update tests for req/hint extensions
+    * [[#6404ea26](https://github.com/nfdi4plants/ARCtrl/commit/6404ea262a68349afb738a66afa44a4e2e288ef1)] extend cwl requirement and hint models
+    * [[#23cf7c46](https://github.com/nfdi4plants/ARCtrl/commit/23cf7c464dd7b9593f5c440f896880804261de99)] add comments to graph functions
+    * [[#9ab37570](https://github.com/nfdi4plants/ARCtrl/commit/9ab37570448b13ccfba38a90a25e39f9a1f1d030)] move extension to main type
+    * [[#644659d3](https://github.com/nfdi4plants/ARCtrl/commit/644659d3b8d039c9125a67c8d2bd1d8d2c8cf3e9)] update cwl tests for payload requirements
+    * [[#9a981e17](https://github.com/nfdi4plants/ARCtrl/commit/9a981e17b1074441a07a1e53c8ee7a02a3b94acb)] add directive and payload requirement tests
+    * [[#dc0d1e36](https://github.com/nfdi4plants/ARCtrl/commit/dc0d1e3647a574119b1558235925ad974e58c0eb)] encode canonical requirement directive forms
+    * [[#e454e00a](https://github.com/nfdi4plants/ARCtrl/commit/e454e00a93f78cf0a7c9dc008994f422dcc2a675)] decode schemasalad directives in requirements
+    * [[#7968774b](https://github.com/nfdi4plants/ARCtrl/commit/7968774b5ddab01d03a5851973997245ad8300d6)] add schemasalad requirement models
+    * [[#fca5d589](https://github.com/nfdi4plants/ARCtrl/commit/fca5d589b5e5b3862074f5b22e02eccb2a07136f)] add secondary path/missing branch tests
+    * [[#44dac4a8](https://github.com/nfdi4plants/ARCtrl/commit/44dac4a819fc04add40d39a4cbf4244dfc8570ae)] add mutation and initialworkdir tests
+    * [[#e98235b6](https://github.com/nfdi4plants/ARCtrl/commit/e98235b656ff402c1fc8267026f3363cd248d60b)] add helpers to update processingunits/wfsteps
+    * [[#835a1209](https://github.com/nfdi4plants/ARCtrl/commit/835a1209c1d2dc92c14421897a5ac4bc8520e356)] enable more options for initialworkdir
+    * [[#74232cf3](https://github.com/nfdi4plants/ARCtrl/commit/74232cf39519666a8d2a8d65d5779c3bdb8ed103)] add set to inputs/outputs
+    * [[#3914b3be](https://github.com/nfdi4plants/ARCtrl/commit/3914b3be971a54cfbdf50a87a766bb7ee13a3721)] add fable packaging tags
+    * [[#0479ac89](https://github.com/nfdi4plants/ARCtrl/commit/0479ac89765ff201e94c6e582ea08738e4b075a6)] update path handling for linux
+    * [[#ed65dddb](https://github.com/nfdi4plants/ARCtrl/commit/ed65dddbd7c599a7f4ce1f666e08f20fb0ad7091)] extend workflowgraph tests
+    * [[#515fcb1d](https://github.com/nfdi4plants/ARCtrl/commit/515fcb1dbc589853583bb4d1c179019ddd96fc9b)] tighten graph rendering
+    * [[#be8bd3b6](https://github.com/nfdi4plants/ARCtrl/commit/be8bd3b649e945ac7283f0d18c4145035abe0f89)] restore node shapes
+    * [[#0f89c1fc](https://github.com/nfdi4plants/ARCtrl/commit/0f89c1fccc124c33f19ea078bc215aab994b7a86)] normalize pu labels
+    * [[#db89c010](https://github.com/nfdi4plants/ARCtrl/commit/db89c010da607b87ca1e066c6081130920b3656c)] reconnect workflow links
+    * [[#7a272cf9](https://github.com/nfdi4plants/ARCtrl/commit/7a272cf9f450b81cc11551b6cd1fdc9c71a202b7)] group io in mermaid
+    * [[#d65bd658](https://github.com/nfdi4plants/ARCtrl/commit/d65bd6580cbfd75adff16522f0a5aaaf6cb2c2d3)] simplify mermaid rendering
+    * [[#08926004](https://github.com/nfdi4plants/ARCtrl/commit/08926004b847405665daf53185efe9ad8b3994b7)] refine workflowgraph core
+    * [[#09204928](https://github.com/nfdi4plants/ARCtrl/commit/09204928d86f060416682a58caf519209e8d72cb)] document workflowgraph outputs
+    * [[#ee3734d8](https://github.com/nfdi4plants/ARCtrl/commit/ee3734d84292ab963cf2bb87fdba2f7ee16361a1)] add workflowgraph tests
+    * [[#0eff24b1](https://github.com/nfdi4plants/ARCtrl/commit/0eff24b130048c6f34a19a32b387655e73abf1b1)] wire workflowgraph in arctrl
+    * [[#23ffa64a](https://github.com/nfdi4plants/ARCtrl/commit/23ffa64abf50e0a663a2d47d2b37da89e0da66aa)] add workflowgraph core
+    * [[#6f9a2a96](https://github.com/nfdi4plants/ARCtrl/commit/6f9a2a966e9dbc7cb35f22a497bdd6133a15bff5)] document expressiontool mapping
+    * [[#ea8567aa](https://github.com/nfdi4plants/ARCtrl/commit/ea8567aa60318fa11dc42720544b9fc7c88b4f80)] add expressiontool decode encode tests
+    * [[#c33df386](https://github.com/nfdi4plants/ARCtrl/commit/c33df386369ebc628ebf75782153260765c9769f)] wire expressiontool in workflow conversion
+    * [[#8a410554](https://github.com/nfdi4plants/ARCtrl/commit/8a4105547262c292289638e9ac919a03c6c3755a)] add expressiontool processing unit support
+    * [[#d0dc323f](https://github.com/nfdi4plants/ARCtrl/commit/d0dc323f1afc1526ad6da708bad2740ad2020cb3)] add more tests for implemented functions and roundtrips
+    * [[#54eeff18](https://github.com/nfdi4plants/ARCtrl/commit/54eeff1830a28440eaf1739ece6c16e81fb20d20)] add tests for new fields and decode/encode logic
+    * [[#5a58d4f2](https://github.com/nfdi4plants/ARCtrl/commit/5a58d4f22384d5128af87c2e111b03a2e9a3507d)] simplify run resolver
+    * [[#c95ff9fc](https://github.com/nfdi4plants/ARCtrl/commit/c95ff9fcf9c65bf7241610619b88029799672900)] encode/decode added fields, unify hint/requirement order
+    * [[#ece2aa99](https://github.com/nfdi4plants/ARCtrl/commit/ece2aa99fc67203cd173f2220651582f9e8fc2ab)] add wfsteps outside for safer type implementation
+    * [[#08d877e1](https://github.com/nfdi4plants/ARCtrl/commit/08d877e1a795c87d8a8b8da118704fe22ee7c30c)] add missing fields
+    * [[#08fbadf2](https://github.com/nfdi4plants/ARCtrl/commit/08fbadf254ff471463ae3e50a12e0044c97b9a1d)] add CWLRunResolver to py and js projects
+    * [[#9993bc0f](https://github.com/nfdi4plants/ARCtrl/commit/9993bc0fe98e14352867a61467ed45530f4c215d)] add tests for full run parsing and update wf parsing tests
+    * [[#819f6e0d](https://github.com/nfdi4plants/ARCtrl/commit/819f6e0d31990323f2b06b03a1cb6dd084f6d5f8)] add wf/run tests for data model
+    * [[#8bde74ec](https://github.com/nfdi4plants/ARCtrl/commit/8bde74ecff536a35cf0b6606e453de0baf3bd1c1)] move real wf test files and add contract samples
+    * [[#7fe00866](https://github.com/nfdi4plants/ARCtrl/commit/7fe008668d0beede53eeba2ed010d4e602c95ee7)] move step resolver to separate file to us it uniformly, add relative path handling
+    * [[#07deade2](https://github.com/nfdi4plants/ARCtrl/commit/07deade2e7b6d5801cb9cc83fe9b4bec8de5cf7e)] test parsing of workflowsteps from files during conversion
+    * [[#3aeb9b90](https://github.com/nfdi4plants/ARCtrl/commit/3aeb9b90f7523ed0bf0700f22585c8e445f6911e)] update wf tests for wfsteps
+    * [[#cbad414f](https://github.com/nfdi4plants/ARCtrl/commit/cbad414f73a1c40ab2f5e77083dc2bc1375e3536)] add recursive workflow step parsing to conversion
+    * [[#20a71add](https://github.com/nfdi4plants/ARCtrl/commit/20a71add0728d9dd39ea43bfce4f1c60bed4c8fe)] sanitize yaml, decode/encode for updated wfsteps
+    * [[#fd9f115c](https://github.com/nfdi4plants/ARCtrl/commit/fd9f115c5d0b192cdae2518ccd81259c3e944b07)] complete workflowsteps fields and types
+    * [[#dbb170cf](https://github.com/nfdi4plants/ARCtrl/commit/dbb170cffa12d0716edaffc0a300a0669cc134cd)] add filebased test workflow
+    * [[#65691231](https://github.com/nfdi4plants/ARCtrl/commit/656912317ef3f557d76cc0fe2aeac5db78e9383a)] Add support for CWL requirements mapping and JSON syntax
+    * [[#28c7a2c0](https://github.com/nfdi4plants/ARCtrl/commit/28c7a2c0513b7752baf56bcd85ed6bcfd05c66de)] add new empty array option after yamlicious changes
+    * [[#d9d1180d](https://github.com/nfdi4plants/ARCtrl/commit/d9d1180d9d2bd37681c3aabbd4feaa6fa10471c6)] apply helper functions in all relevant tests
+    * [[#bb511441](https://github.com/nfdi4plants/ARCtrl/commit/bb5114410c16e2aeb1678f91620bfcecbd59f792)] further improve error handling
+    * [[#8b0b9f52](https://github.com/nfdi4plants/ARCtrl/commit/8b0b9f528683063395b5a2dcf5739693e509ac83)] explain workaround and enum order
+    * [[#c07fcadc](https://github.com/nfdi4plants/ARCtrl/commit/c07fcadc9c9890c247a1d83dbbb5361ffb704da9)] add helper functions for cwl test type creation
+    * [[#a6c3fde5](https://github.com/nfdi4plants/ARCtrl/commit/a6c3fde5c6180c91ad21be51f1e944a5ce3dcd63)] change to string interpolation
+    * [[#92811b18](https://github.com/nfdi4plants/ARCtrl/commit/92811b18b57b82b273222afad8d27b9dcc43235b)] add tests for edge cases
+    * [[#9c5de864](https://github.com/nfdi4plants/ARCtrl/commit/9c5de8642865d0d7e3db1e66d4c7ee8d2957ca79)] move typechecks to encode
+    * [[#14c614b4](https://github.com/nfdi4plants/ARCtrl/commit/14c614b4f648a8c9b6a74c60269b1a8bb0693a3d)] improve error handling
+    * [[#77e7a7d5](https://github.com/nfdi4plants/ARCtrl/commit/77e7a7d51c7d21921493a925cd6406195fda1e51)] encode function for yaml flowstyle, which yamlicious can now read
+    * [[#47cd6a79](https://github.com/nfdi4plants/ARCtrl/commit/47cd6a79e728f0fea53220173d34d8547bd434fb)] decompose to yaml flowstyle, which yamlicious can now read
+    * [[#7b4266bc](https://github.com/nfdi4plants/ARCtrl/commit/7b4266bc1e559108f9d73751a4dea6de80a85d85)] update yamlicious
+    * [[#8145af40](https://github.com/nfdi4plants/ARCtrl/commit/8145af4031f4b3e87784a5123311f271a1224e89)] add cwl to json encode/decode roundtrip tests
+    * [[#70065e24](https://github.com/nfdi4plants/ARCtrl/commit/70065e2441d432dae4a9d2c197dc4d27c2c459e0)] add missing custom equality
+    * [[#fd6a12ee](https://github.com/nfdi4plants/ARCtrl/commit/fd6a12eedb94a31f1a33d52f2341cfa0c4f2b658)] include yamlControler in .fsproj
+    * [[#0ac443e5](https://github.com/nfdi4plants/ARCtrl/commit/0ac443e5d80a376505ab5ab50c5f294c3acab5e9)] add cwl type ro-crate conversion tests
+    * [[#59be9947](https://github.com/nfdi4plants/ARCtrl/commit/59be99471b7249d192b8fb99ba1b0cf3af8b0229)] simplify array handling and add json converter for complex types
+    * [[#2ff2d825](https://github.com/nfdi4plants/ARCtrl/commit/2ff2d825854e699b86c5103644b18b94b762761f)] add cwl types to json and py
+    * [[#c90a701b](https://github.com/nfdi4plants/ARCtrl/commit/c90a701b55898b3c03e82780bfd3245857bdde7c)] add yamlcontroler
+* Deletions:
+    * [[#84b040dc](https://github.com/nfdi4plants/ARCtrl/commit/84b040dc984c2e090f8db3d63c301fd854392739)] remove unused matchcase
+    * [[#f4c37415](https://github.com/nfdi4plants/ARCtrl/commit/f4c37415e5801d4306308e048729868882e0232f)] remove unused options from step creat function
+    * [[#e7d9eb76](https://github.com/nfdi4plants/ARCtrl/commit/e7d9eb760c204188bbdc550d491fcd10e0f031ed)] remove legacy dockerreq decode and apply create function everywhere
+    * [[#fac25294](https://github.com/nfdi4plants/ARCtrl/commit/fac25294b6899ffcb7806fe07f4864e9beca3d09)] merge and then remove workflowstepops
+    * [[#f093535a](https://github.com/nfdi4plants/ARCtrl/commit/f093535ad5fa680fb16a638cac6aa2510b08cb90)] remove private
+    * [[#ed415edc](https://github.com/nfdi4plants/ARCtrl/commit/ed415edc0308555b9f1a14b6fc793d8badb79570)] remove namespace from test
+    * [[#948ee96c](https://github.com/nfdi4plants/ARCtrl/commit/948ee96cee94611173b61d5ec7fcb9d045681789)] Delete tests/TestingUtils/TestObjects.IO/SimpleARCWithCWL/.gitignore
+    * [[#e5ee5ab5](https://github.com/nfdi4plants/ARCtrl/commit/e5ee5ab525bcabbdb96a26f55d73fe3a0f12e0dc)] remove duplicate normalizePath
+* Bugfixes:
+    * [[#466aa14d](https://github.com/nfdi4plants/ARCtrl/commit/466aa14d270a47841d4f2935054e6f96e6861c8b)] fix spec cases and add abstract cwl (operation)
+    * [[#349378a4](https://github.com/nfdi4plants/ARCtrl/commit/349378a4ce8103121d67c8032459a03e1329c398)] try fix path error for linux
+    * [[#01e45dd0](https://github.com/nfdi4plants/ARCtrl/commit/01e45dd0dde3c182db74562e7756195760050732)] fix naming consitency and redundant function duplication
+    * [[#c2835779](https://github.com/nfdi4plants/ARCtrl/commit/c28357791bb3b22f7d34e3830e706c7ad37ee6fa)] refresh cwl requirement test fixtures
+    * [[#4a777659](https://github.com/nfdi4plants/ARCtrl/commit/4a777659cd39ca98bdd82b0898c6fe27b943a6b4)] fix path for wf resolver handling
+    * [[#96f47ee1](https://github.com/nfdi4plants/ARCtrl/commit/96f47ee1904e4ddc9fc7fec44286fb8ae1c32d71)] fix cwl file location
+    * [[#3774becb](https://github.com/nfdi4plants/ARCtrl/commit/3774becbc9188450feec349bd9f5d32e086dee1c)] update cwl fixture paths
+    * [[#ccdd4915](https://github.com/nfdi4plants/ARCtrl/commit/ccdd4915c7e1d3cd3f7b50fc5ea17f3617e22d07)] add simplearcwithcwl fixture
+    * [[#2ca57bde](https://github.com/nfdi4plants/ARCtrl/commit/2ca57bdeea21ecf86e3e787884c90e2206f32ea3)] move cwl sample fixtures
+    * [[#1a58f0eb](https://github.com/nfdi4plants/ARCtrl/commit/1a58f0ebe93783b7e8a0c1416b871e0bd1550bb5)] add expressiontool test fixtures
+    * [[#25864586](https://github.com/nfdi4plants/ARCtrl/commit/25864586e924fa93d954a2990add0de6a107cde4)] fix match guards and req/hint ordering in steps
+    * [[#e04f2da8](https://github.com/nfdi4plants/ARCtrl/commit/e04f2da842f480e27ccf3102d0d123f5f0751d54)] fix error handling
+    * [[#27cf55cc](https://github.com/nfdi4plants/ARCtrl/commit/27cf55cc34d38ccba1e9fb9a480c43963df82765)] fix record schema reading
+    * [[#2bd868a2](https://github.com/nfdi4plants/ARCtrl/commit/2bd868a2f7703c7c75e9a96586870b63b93781f9)] fix handling of simple types within complex types
+    * [[#445dd29a](https://github.com/nfdi4plants/ARCtrl/commit/445dd29a6e7d91cf0f97a4384a068d846ef502b9)] fix transpilation issues
+
 ### 3.0.0-beta.16+3d215088 (Released 2026-1-15)
 * Additions:
     * [[#841914d0](https://github.com/nfdi4plants/ARCtrl/commit/841914d07b3aea768d73396f930077c008832f18)] add custom equaltiy to cwltype and mutually recursive types
@@ -39,8 +155,7 @@
     * [[#f3677f5b](https://github.com/nfdi4plants/ARCtrl/commit/f3677f5b40518dfce9d82cdd242f394fa70d3bd7)] test and fix LDNode parsing of bool properties
 
 ### 3.0.0-beta.14+b22a48f6 (Released 2025-12-3)
-- Rename DataMap to Datamap!
-
+    * Rename DataMap to Datamap!
 * Additions:
     * [[#5b41cc0b](https://github.com/nfdi4plants/ARCtrl/commit/5b41cc0b5ee196d3229ecdaf314bba22250c84e1)] bump to 3.0.0-beta.13
     * [[#10a9e512](https://github.com/nfdi4plants/ARCtrl/commit/10a9e5121e9277eef408ecb8d524223d5062fb4a)] make columnIndex point to newly created term #507
@@ -52,8 +167,7 @@
     * [[#f3677f5b](https://github.com/nfdi4plants/ARCtrl/commit/f3677f5b40518dfce9d82cdd242f394fa70d3bd7)] test and fix LDNode parsing of bool properties
 
 ### 3.0.0-beta.13+46b2f157 (Released 2025-11-25)
-Implement ARC WR RO-Crate profile
-
+    * Implement ARC WR RO-Crate profile
 * Additions:
     * [[#1ead1b1b](https://github.com/nfdi4plants/ARCtrl/commit/1ead1b1bb7896dda5a4b4313e58d532d0606cefb)] add ARC wr ro crate model (WIP)
     * [[#745b237d](https://github.com/nfdi4plants/ARCtrl/commit/745b237d892f80fd4b93676b007d31bbd0e658f7)] add formal parameter
