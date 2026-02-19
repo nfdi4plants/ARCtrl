@@ -93,6 +93,24 @@ module Encode =
     let normalizeDocString (doc:string) =
         doc.Replace("\r\n","\n").TrimEnd('\n').TrimEnd('\r')
 
+    /// Encode expression payloads as a single double-quoted scalar.
+    /// YAMLicious currently emits multiline plain scalars without indentation,
+    /// which breaks nested mappings (e.g. inline ExpressionTool `run` in workflows).
+    let encodeExpressionScalar (expression: string) : YAMLElement =
+        let normalized =
+            if isNull expression then "" else expression.Replace("\r\n", "\n").Replace("\r", "\n")
+
+        if normalized.Contains("\n") then
+            let escaped =
+                normalized
+                    .Replace("\\", "\\\\")
+                    .Replace("\"", "\\\"")
+                    .Replace("\n", "\\n")
+
+            Encode.string ("\"" + escaped + "\"")
+        else
+            Encode.string normalized
+
     let encodeSchemaSaladString (value: SchemaSaladString) : YAMLElement =
         match value with
         | Literal text -> Encode.string text
@@ -689,7 +707,7 @@ module Encode =
         let withOutputs =
             withInputs @ [ "outputs", (et.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> yMap) ]
         let withExpression =
-            withOutputs @ [ "expression", Encode.string et.Expression ]
+            withOutputs @ [ "expression", encodeExpressionScalar et.Expression ]
         let withMetadata =
             match et.Metadata with
             | Some md ->
