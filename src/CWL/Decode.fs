@@ -24,6 +24,7 @@ module Decode =
             else
                 lines
         withoutShebang
+        |> Array.filter (fun line -> line = "" || line.Trim().Length > 0)
         |> String.concat "\n"
         |> fun text -> text.TrimEnd()
 

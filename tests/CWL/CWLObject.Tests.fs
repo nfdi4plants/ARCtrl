@@ -22,6 +22,12 @@ let testCWLToolDescriptionDecode =
             let decoded = Decode.decodeCommandLineTool withShebangAndComments
             Expect.equal decoded.CWLVersion "v1.2" ""
             Expect.equal decoded.Outputs.Count 0 ""
+        testCase "sanitize removes whitespace-only lines" <| fun _ ->
+            let withWhitespaceOnlyLine = TestObjects.CWL.CommandLineTool.DecodeEdgeCases.withWhitespaceOnlyLine
+            let decoded = Decode.decodeCommandLineTool withWhitespaceOnlyLine
+            let inputs = Expect.wantSome decoded.Inputs "Inputs should decode when whitespace-only separator lines are present."
+            Expect.equal inputs.Count 1 ""
+            Expect.equal inputs.[0].Name "sample" ""
         testCase "sanitize does not hide malformed yaml errors" <| fun _ ->
             let malformed = TestObjects.CWL.CommandLineTool.DecodeEdgeCases.malformedYaml
             let decodeMalformed () = Decode.decodeCWLProcessingUnit malformed |> ignore
