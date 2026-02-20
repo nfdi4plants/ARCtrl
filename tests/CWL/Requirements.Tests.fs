@@ -1,4 +1,4 @@
-﻿module Tests.Requirements
+module Tests.Requirements
 
 open ARCtrl.CWL
 open YAMLicious
@@ -179,7 +179,7 @@ outputs: {}"""
                 let dockerItem = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
                 let expected =
                     Requirement.DockerRequirement (
-                        DockerRequirement.create(dockerImageId = "devcontainer", dockerFileReference = Include "FSharpArcCapsule/Dockerfile")
+                        DockerRequirement.create(dockerImageId = "devcontainer", dockerFileReference = SchemaSaladString.Include "FSharpArcCapsule/Dockerfile")
                     )
                 let actual = dockerItem
                 Expect.equal actual expected "Mismatch or Wrong requirement type: Type get of Decode Class Syntax for DockerRequirement, can only be DockerRequirement"
@@ -188,7 +188,7 @@ outputs: {}"""
                 let dockerItem = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
                 let expected =
                     Requirement.DockerRequirement (
-                        DockerRequirement.create(dockerImageId = "devcontainer", dockerFileReference = Include "FSharpArcCapsule/Dockerfile")
+                        DockerRequirement.create(dockerImageId = "devcontainer", dockerFileReference = SchemaSaladString.Include "FSharpArcCapsule/Dockerfile")
                     )
                 let actual = dockerItem
                 Expect.equal actual expected "Mismatch or Wrong requirement type: Type get of Decode Mapping Syntax for DockerRequirement, can only be DockerRequirement"
@@ -197,7 +197,7 @@ outputs: {}"""
                 let dockerItem = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
                 let expected =
                     Requirement.DockerRequirement (
-                        DockerRequirement.create(dockerImageId = "devcontainer", dockerFileReference = Include "FSharpArcCapsule/Dockerfile")
+                        DockerRequirement.create(dockerImageId = "devcontainer", dockerFileReference = SchemaSaladString.Include "FSharpArcCapsule/Dockerfile")
                     )
                 let actual = dockerItem
                 Expect.equal actual expected "Mismatch or Wrong requirement type: Type get of Decode Json Syntax for DockerRequirement, can only be DockerRequirement"
@@ -209,8 +209,8 @@ outputs: {}"""
                 let expected =
                     InitialWorkDirRequirement (
                         ResizeArray [|
-                            DirentEntry { Entryname = Some (Literal "arc"); Entry = Literal "$(inputs.arcDirectory)"; Writable = Some true }
-                            DirentEntry { Entryname = None; Entry = Literal "$(inputs.outputDirectory)"; Writable = Some true }
+                            DirentEntry { Entryname = Some (SchemaSaladString.Literal "arc"); Entry = SchemaSaladString.Literal "$(inputs.arcDirectory)"; Writable = Some true }
+                            DirentEntry { Entryname = None; Entry = SchemaSaladString.Literal "$(inputs.outputDirectory)"; Writable = Some true }
                         |]
                     )
                 let actual = initialWorkDirItem
@@ -225,8 +225,8 @@ outputs: {}"""
                 let expected =
                     InitialWorkDirRequirement (
                         ResizeArray [|
-                            DirentEntry { Entryname = Some (Literal "arc"); Entry = Literal "$(inputs.arcDirectory)"; Writable = Some true }
-                            DirentEntry { Entryname = None; Entry = Literal "$(inputs.outputDirectory)"; Writable = Some true }
+                            DirentEntry { Entryname = Some (SchemaSaladString.Literal "arc"); Entry = SchemaSaladString.Literal "$(inputs.arcDirectory)"; Writable = Some true }
+                            DirentEntry { Entryname = None; Entry = SchemaSaladString.Literal "$(inputs.outputDirectory)"; Writable = Some true }
                         |]
                     )
                 let actual = initialWorkDirItem
@@ -241,8 +241,8 @@ outputs: {}"""
                 let expected =
                     InitialWorkDirRequirement (
                         ResizeArray [|
-                            DirentEntry { Entryname = Some (Literal "arc"); Entry = Literal "$(inputs.arcDirectory)"; Writable = Some true }
-                            DirentEntry { Entryname = None; Entry = Literal "$(inputs.outputDirectory)"; Writable = Some true }
+                            DirentEntry { Entryname = Some (SchemaSaladString.Literal "arc"); Entry = SchemaSaladString.Literal "$(inputs.arcDirectory)"; Writable = Some true }
+                            DirentEntry { Entryname = None; Entry = SchemaSaladString.Literal "$(inputs.outputDirectory)"; Writable = Some true }
                         |]
                     )
                 let actual = initialWorkDirItem
@@ -263,8 +263,8 @@ outputs: {}"""
                 | InitialWorkDirRequirement listing ->
                     let expected =
                         ResizeArray [|
-                            StringEntry (Literal "$(inputs.stageDirectory)")
-                            StringEntry (Literal "$(inputs.outputDirectory)")
+                            StringEntry (SchemaSaladString.Literal "$(inputs.stageDirectory)")
+                            StringEntry (SchemaSaladString.Literal "$(inputs.outputDirectory)")
                         |]
                     Expect.sequenceEqual listing expected "String listing entries should decode into StringEntry values."
                 | _ ->
@@ -277,7 +277,7 @@ outputs: {}"""
                 let initialWorkDirItem = findRequirement reqs (function InitialWorkDirRequirement _ -> true | _ -> false)
                 match initialWorkDirItem with
                 | InitialWorkDirRequirement listing ->
-                    let expected = ResizeArray [| StringEntry (Literal "$(inputs.stageDirectory)") |]
+                    let expected = ResizeArray [| StringEntry (SchemaSaladString.Literal "$(inputs.stageDirectory)") |]
                     Expect.sequenceEqual listing expected "Scalar listing form should decode to a single StringEntry."
                 | _ ->
                     failwith "Wrong requirement type: expected InitialWorkDirRequirement"
@@ -290,7 +290,7 @@ outputs: {}"""
                 let initialWorkDirItem = findRequirement reqs (function InitialWorkDirRequirement _ -> true | _ -> false)
                 match initialWorkDirItem with
                 | InitialWorkDirRequirement listing ->
-                    let expected = ResizeArray [| StringEntry (Include "scripts/dirent.js") |]
+                    let expected = ResizeArray [| StringEntry (SchemaSaladString.Include "scripts/dirent.js") |]
                     Expect.sequenceEqual listing expected "Object entries without an `entry` field should decode as StringEntry."
                 | _ ->
                     failwith "Wrong requirement type: expected InitialWorkDirRequirement"
@@ -303,7 +303,7 @@ outputs: {}"""
                 let initialWorkDirItem = findRequirement reqs (function InitialWorkDirRequirement _ -> true | _ -> false)
                 match initialWorkDirItem with
                 | InitialWorkDirRequirement listing ->
-                    let expected = ResizeArray [| StringEntry (Import "scripts/dirent.js") |]
+                    let expected = ResizeArray [| StringEntry (SchemaSaladString.Import "scripts/dirent.js") |]
                     Expect.sequenceEqual listing expected "Object entries with $import should decode as StringEntry Import."
                 | _ ->
                     failwith "Wrong requirement type: expected InitialWorkDirRequirement"
@@ -321,8 +321,8 @@ outputs: {}"""
                     let expected =
                         ResizeArray [|
                             DirentEntry {
-                                Entry = Include "scripts/bootstrap.sh"
-                                Entryname = Some (Literal "script-name.txt")
+                                Entry = SchemaSaladString.Include "scripts/bootstrap.sh"
+                                Entryname = Some (SchemaSaladString.Literal "script-name.txt")
                                 Writable = None
                             }
                         |]
@@ -344,7 +344,7 @@ outputs: {}"""
                     Expect.equal listing.Count 1 "Expected one listing entry"
                     match listing.[0] with
                     | DirentEntry dirent ->
-                        Expect.equal dirent.Entry (Literal "$(inputs.arcDirectory)") "entry should decode as Dirent entry"
+                        Expect.equal dirent.Entry (SchemaSaladString.Literal "$(inputs.arcDirectory)") "entry should decode as Dirent entry"
                     | _ ->
                         failwith "Expected DirentEntry when both entry and class are present"
                 | _ ->
@@ -595,7 +595,7 @@ outputs: {}"""
                     Requirement.DockerRequirement (
                         DockerRequirement.create(
                             dockerPull = "ghcr.io/example/tool:1.0.0",
-                            dockerFileReference = Literal "./Dockerfile",
+                            dockerFileReference = SchemaSaladString.Literal "./Dockerfile",
                             dockerImageId = "tool-image",
                             dockerLoad = "docker-archive:///tmp/tool.tar",
                             dockerImport = "https://example.org/images/tool.sif",
@@ -610,7 +610,7 @@ outputs: {}"""
       $import: ./Dockerfile"""
                 let reqs = decodeRequirements yaml
                 let dockerItem = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
-                let expected = Requirement.DockerRequirement (DockerRequirement.create(dockerFileReference = Import "./Dockerfile"))
+                let expected = Requirement.DockerRequirement (DockerRequirement.create(dockerFileReference = SchemaSaladString.Import "./Dockerfile"))
                 Expect.equal dockerItem expected "dockerFile $import wrapper should decode into Import and survive type mapping."
             testCase "Decode dockerFile map with both $include and $import fails" <| fun _ ->
                 let yaml = """requirements:
@@ -885,8 +885,8 @@ let testRequirementEncode =
             testCase "string listing entries roundtrip through encode/decode" <| fun _ ->
                 let listing =
                     ResizeArray [|
-                        StringEntry (Literal "$(inputs.stageDirectory)")
-                        DirentEntry { Entry = Literal "$(inputs.outputDirectory)"; Entryname = Some (Literal "outdir"); Writable = Some true }
+                        StringEntry (SchemaSaladString.Literal "$(inputs.stageDirectory)")
+                        DirentEntry { Entry = SchemaSaladString.Literal "$(inputs.outputDirectory)"; Entryname = Some (SchemaSaladString.Literal "outdir"); Writable = Some true }
                     |]
                 let req = InitialWorkDirRequirement listing
                 let yaml = Encode.encodeRequirement req |> Encode.writeYaml
@@ -904,9 +904,9 @@ let testRequirementEncode =
             testCase "include/import listing entries and dirent wrappers roundtrip through encode/decode" <| fun _ ->
                 let listing =
                     ResizeArray [|
-                        StringEntry (Include "scripts/load.js")
-                        StringEntry (Import "scripts/manifest.yml")
-                        DirentEntry { Entry = Include "scripts/bootstrap.sh"; Entryname = Some (Import "scripts/name.txt"); Writable = Some false }
+                        StringEntry (SchemaSaladString.Include "scripts/load.js")
+                        StringEntry (SchemaSaladString.Import "scripts/manifest.yml")
+                        DirentEntry { Entry = SchemaSaladString.Include "scripts/bootstrap.sh"; Entryname = Some (SchemaSaladString.Import "scripts/name.txt"); Writable = Some false }
                     |]
                 let req = InitialWorkDirRequirement listing
                 let yaml = Encode.encodeRequirement req |> Encode.writeYaml
@@ -959,15 +959,15 @@ let testRequirementEncode =
                 let created =
                     DockerRequirement.create(
                         dockerFile = "./Dockerfile.literal",
-                        dockerFileReference = Include "./Dockerfile.include"
+                        dockerFileReference = SchemaSaladString.Include "./Dockerfile.include"
                     )
-                Expect.equal created.DockerFile (Some (Include "./Dockerfile.include")) "dockerFileReference should take precedence when both inputs are provided."
+                Expect.equal created.DockerFile (Some (SchemaSaladString.Include "./Dockerfile.include")) "dockerFileReference should take precedence when both inputs are provided."
             testCase "DockerRequirement encodes dockerFile as canonical string and includes extended fields" <| fun _ ->
                 let requirement =
                     Requirement.DockerRequirement (
                         DockerRequirement.create(
                             dockerPull = "ghcr.io/example/tool:1.0.0",
-                            dockerFileReference = Literal "./Dockerfile",
+                            dockerFileReference = SchemaSaladString.Literal "./Dockerfile",
                             dockerImageId = "tool-image",
                             dockerLoad = "docker-archive:///tmp/tool.tar",
                             dockerImport = "https://example.org/images/tool.sif",
@@ -986,7 +986,7 @@ let testRequirementEncode =
                 let encoded = Encode.encodeRequirement docker |> Encode.writeYaml
                 Expect.stringContains encoded "$include: FSharpArcCapsule/Dockerfile" "Legacy include syntax should be preserved when originally provided."
             testCase "DockerRequirement $import syntax roundtrips" <| fun _ ->
-                let requirement = Requirement.DockerRequirement (DockerRequirement.create(dockerFileReference = Import "./Dockerfile"))
+                let requirement = Requirement.DockerRequirement (DockerRequirement.create(dockerFileReference = SchemaSaladString.Import "./Dockerfile"))
                 let yaml = Encode.encodeRequirement requirement |> Encode.writeYaml
                 Expect.stringContains yaml "$import: ./Dockerfile" "dockerFile should preserve $import directive during encode."
                 let document = "requirements:\n  - " + yaml.Replace("\n", "\n    ")
@@ -1083,7 +1083,7 @@ let testInitialWorkDirFileDirectoryEntries =
             let requirement =
                 InitialWorkDirRequirement (
                     ResizeArray [|
-                        StringEntry (Literal "$(inputs.outputDirectory)")
+                        StringEntry (SchemaSaladString.Literal "$(inputs.outputDirectory)")
                         FileEntry file
                         DirectoryEntry directory
                     |]
@@ -1101,4 +1101,5 @@ let main =
         testRequirementEncode
         testInitialWorkDirFileDirectoryEntries
     ]
+
 

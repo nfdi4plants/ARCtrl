@@ -85,7 +85,7 @@ let testWorkflowStep =
                     ResizeArray [|
                         mkStepInput "stageDirectory" (Some (ResizeArray [|"stage"|])) None None None
                         mkStepInput "inputDirectory" (Some (ResizeArray [|"MzMLToMzlite/dir1"; "MzMLToMzlite/dir2"|])) None None (Some MergeFlattened)
-                        mkStepInput "parallelismLevel" None (Some (YAMLElement.Object [YAMLElement.Value {Value = "8"; Comment = None}])) None None
+                        mkStepInput "parallelismLevel" None (Some (YAMLElement.Object [YAMLElement.Value (YAMLContent.create "8")])) None None
                         mkStepInput "outputDirectory" None None (Some "output") None
                     |]
                 let actual = decodeWorkflowStep.[1].In

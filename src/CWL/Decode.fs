@@ -14,6 +14,30 @@ module ResizeArray =
 
 module Decode =
 
+    let countLeadingSpaces (line: string) =
+        line |> Seq.takeWhile (fun c -> c = ' ') |> Seq.length
+
+    let isBlankLine (line: string) =
+        line.Trim().Length = 0
+
+    let tryParseBlockScalarHeader (line: string) : int option =
+        if isBlankLine line then
+            None
+        else
+            let trimmed = line.TrimEnd()
+            // Match common block scalar headers:
+            //   key: |
+            //   key: >-
+            //   - |
+            //   - >+
+            // and preserve surrounding comments.
+            let isBlockScalarHeader =
+                System.Text.RegularExpressions.Regex.IsMatch(
+                    trimmed,
+                    @"^(?:.+:\s*[|>][1-9]?[+-]?\s*(?:#.*)?|-\s*[|>][1-9]?[+-]?\s*(?:#.*)?)$"
+                )
+            if isBlockScalarHeader then Some (countLeadingSpaces line) else None
+
     let normalizeYamlInput (yaml: string) =
         let normalized =
             if isNull yaml then "" else yaml.Replace("\r\n", "\n")
@@ -23,8 +47,37 @@ module Decode =
                 lines.[1..]
             else
                 lines
-        withoutShebang
-        |> Array.filter (fun line -> line = "" || line.Trim().Length > 0)
+
+        let filtered = ResizeArray<string>()
+        let mutable blockScalarIndent : int option = None
+
+        let rec processLine (line: string) =
+            match blockScalarIndent with
+            | Some indent ->
+                if isBlankLine line then
+                    // Preserve whitespace-only blank content lines in block scalars.
+                    filtered.Add line
+                else
+                    let currentIndent = countLeadingSpaces line
+                    if currentIndent > indent then
+                        filtered.Add line
+                    else
+                        // End of block scalar; re-process this line in normal mode.
+                        blockScalarIndent <- None
+                        processLine line
+            | None ->
+                match tryParseBlockScalarHeader line with
+                | Some indent ->
+                    blockScalarIndent <- Some indent
+                    filtered.Add line
+                | None ->
+                    if line = "" || line.Trim().Length > 0 then
+                        filtered.Add line
+
+        withoutShebang |> Array.iter processLine
+
+        filtered
+        |> Seq.toArray
         |> String.concat "\n"
         |> fun text -> text.TrimEnd()
 
@@ -113,13 +166,13 @@ module Decode =
         match yEle with
         | YAMLElement.Value v
         | YAMLElement.Object [YAMLElement.Value v] ->
-            Literal v.Value
+            SchemaSaladString.Literal v.Value
         | YAMLElement.Object [YAMLElement.Mapping (c, YAMLElement.Value v)]
         | YAMLElement.Object [YAMLElement.Mapping (c, YAMLElement.Object [YAMLElement.Value v])] ->
             match c.Value with
-            | "$include" -> Include v.Value
-            | "$import" -> Import v.Value
-            | _ -> Literal (sprintf "%s: %s" c.Value v.Value)
+            | "$include" -> SchemaSaladString.Include v.Value
+            | "$import" -> SchemaSaladString.Import v.Value
+            | _ -> SchemaSaladString.Literal (sprintf "%s: %s" c.Value v.Value)
         | _ -> raise (System.ArgumentException($"Unexpected YAMLElement format in decodeSchemaSaladString: %A{yEle}"))
 
     /// Decode a YAMLElement which is either a string or expression into a string.
@@ -867,13 +920,13 @@ module Decode =
                                     )
                                 if hasClass then kv.Value
                                 else
-                                    let clsKey = { Value = "class"; Comment = None }
-                                    let clsValue = YAMLElement.Object [YAMLElement.Value { Value = kv.Key; Comment = None }]
+                                    let clsKey = YAMLContent.create "class"
+                                    let clsValue = YAMLElement.Object [YAMLElement.Value (YAMLContent.create kv.Key)]
                                     YAMLElement.Object (YAMLElement.Mapping (clsKey, clsValue) :: mappings)
                             | other ->
-                                let clsKey = { Value = "class"; Comment = None }
-                                let clsValue = YAMLElement.Object [YAMLElement.Value { Value = kv.Key; Comment = None }]
-                                let valueKey = { Value = "value"; Comment = None }
+                                let clsKey = YAMLContent.create "class"
+                                let clsValue = YAMLElement.Object [YAMLElement.Value (YAMLContent.create kv.Key)]
+                                let valueKey = YAMLContent.create "value"
                                 YAMLElement.Object [
                                     YAMLElement.Mapping (clsKey, clsValue)
                                     YAMLElement.Mapping (valueKey, other)
@@ -1188,8 +1241,8 @@ module Decode =
         | YAMLElement.Object fields when hasField "cwlVersion" yamlElement ->
             yamlElement
         | YAMLElement.Object fields ->
-            let key = { Value = "cwlVersion"; Comment = None }
-            let value = YAMLElement.Object [YAMLElement.Value { Value = defaultCwlVersion; Comment = None }]
+            let key = YAMLContent.create "cwlVersion"
+            let value = YAMLElement.Object [YAMLElement.Value (YAMLContent.create defaultCwlVersion)]
             YAMLElement.Object (YAMLElement.Mapping (key, value) :: fields)
         | _ ->
             yamlElement

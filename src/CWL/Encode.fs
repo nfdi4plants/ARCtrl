@@ -65,7 +65,7 @@ module Encode =
     // Basic boolean encoder with lowercase letters
     // ------------------------------
     let yBool (b:bool) =
-        YAMLElement.Value { Value = (if b then "true" else "false"); Comment = None }
+        YAMLElement.Value (YAMLContent.create (if b then "true" else "false"))
 
     // ------------------------------
     // Helper to build YAML mappings preserving order
@@ -75,11 +75,11 @@ module Encode =
         // Avoid wrapping scalar/sequence values inside an extra Object layer so YAMLicious prints 'key: value'.
         let normalize = function
             // YAMLicious emits `key:` (null) for empty object values unless we force inline `{}`.
-            | YAMLElement.Object [] -> YAMLElement.Value { Value = "{}"; Comment = None }
+            | YAMLElement.Object [] -> YAMLElement.Value (YAMLContent.create "{}")
             | YAMLElement.Object [single] -> single // unwrap single wrapped value (legacy helper usage)
             | other -> other
         pairs
-        |> List.map (fun (k,v) -> YAMLElement.Mapping ({ Value = k; Comment = None }, normalize v))
+        |> List.map (fun (k,v) -> YAMLElement.Mapping (YAMLContent.create k, normalize v))
         |> YAMLElement.Object
 
     // ------------------------------
@@ -93,29 +93,27 @@ module Encode =
     let normalizeDocString (doc:string) =
         doc.Replace("\r\n","\n").TrimEnd('\n').TrimEnd('\r')
 
-    /// Encode expression payloads as a single double-quoted scalar.
-    /// YAMLicious currently emits multiline plain scalars without indentation,
-    /// which breaks nested mappings (e.g. inline ExpressionTool `run` in workflows).
+    /// Encode expression payloads with style-aware scalars.
+    /// Single-line expressions are double-quoted to protect JS token syntax.
+    /// Multi-line expressions are emitted as literal block scalars with clip chomping
+    /// so trailing newlines and blank lines survive decode/encode roundtrips.
     let encodeExpressionScalar (expression: string) : YAMLElement =
         let normalized =
             if isNull expression then "" else expression.Replace("\r\n", "\n").Replace("\r", "\n")
 
-        if normalized.Contains("\n") then
-            let escaped =
-                normalized
-                    .Replace("\\", "\\\\")
-                    .Replace("\"", "\\\"")
-                    .Replace("\n", "\\n")
+        let style =
+            if normalized.Contains("\n") then
+                ScalarStyle.Block(BlockScalarStyle.Literal, ChompingMode.Clip, None)
+            else
+                ScalarStyle.DoubleQuoted
 
-            Encode.string ("\"" + escaped + "\"")
-        else
-            Encode.string normalized
+        YAMLElement.Value (YAMLContent.create(normalized, style = style))
 
     let encodeSchemaSaladString (value: SchemaSaladString) : YAMLElement =
         match value with
-        | Literal text -> Encode.string text
-        | Include path -> yMap [ "$include", Encode.string path ]
-        | Import path -> yMap [ "$import", Encode.string path ]
+        | SchemaSaladString.Literal text -> Encode.string text
+        | SchemaSaladString.Include path -> yMap [ "$include", Encode.string path ]
+        | SchemaSaladString.Import path -> yMap [ "$import", Encode.string path ]
 
     let normalizeEnvValueForEncode (envValue: string) =
         if envValue = "true" || envValue = "false" then "\"" + envValue + "\"" else envValue
@@ -483,7 +481,7 @@ module Encode =
             let tryEncodeScalar (key: string) (value: obj) =
                 match value with
                 | :? int as i -> Some (key, Encode.int i)
-                | :? int64 as i -> Some (key, YAMLElement.Value { Value = string i; Comment = None })
+                | :? int64 as i -> Some (key, YAMLElement.Value (YAMLContent.create (string i)))
                 | :? float as f -> Some (key, Encode.float f)
                 | :? string as s -> Some (key, Encode.string s)
                 | :? bool as b -> Some (key, yBool b)
@@ -524,7 +522,7 @@ module Encode =
         | ToolTimeLimitRequirement tl ->
             let timelimit =
                 match tl with
-                | ToolTimeLimitSeconds seconds -> YAMLElement.Value { Value = string seconds; Comment = None }
+                | ToolTimeLimitSeconds seconds -> YAMLElement.Value (YAMLContent.create (string seconds))
                 | ToolTimeLimitExpression expression -> Encode.string expression
             [ "class", Encode.string "ToolTimeLimit"; "timelimit", timelimit ] |> yMap
         | SubworkflowFeatureRequirement -> [ "class", Encode.string "SubworkflowFeatureRequirement" ] |> yMap
@@ -548,8 +546,8 @@ module Encode =
         | _ -> 
             // Create sequence with each item as an Object[Value] to force block-style rendering
             sources 
-            |> Seq.map (fun s -> YAMLElement.Object [YAMLElement.Value { Value = s; Comment = None }])
-            |> List.ofSeq 
+            |> Seq.map (fun s -> YAMLElement.Object [YAMLElement.Value (YAMLContent.create s)])
+            |> List.ofSeq
             |> YAMLElement.Sequence
 
     let encodeLinkMergeMethod (linkMerge: LinkMergeMethod) : YAMLElement =

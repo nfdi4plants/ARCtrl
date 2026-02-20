@@ -540,7 +540,7 @@ steps:
                 let encoded = Encode.encodeWorkflowDescription decoded
                 let roundTripped = Decode.decodeWorkflow encoded
 
-                Expect.stringContains encoded "expression: \"" "Expression should encode as quoted scalar in nested workflow runs."
+                Expect.stringContains encoded "expression: |" "Expression should encode as block scalar in nested workflow runs."
 
                 let expressionTool =
                     Expect.wantSome

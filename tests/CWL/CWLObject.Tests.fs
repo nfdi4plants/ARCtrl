@@ -62,7 +62,7 @@ let testCWLToolDescriptionDecode =
             testCase "InitialWorkDirRequirement" <| fun _ ->
                 let expected =
                     InitialWorkDirRequirement (
-                        ResizeArray [| DirentEntry { Entry = Include "script.fsx"; Entryname = Some (Literal "script.fsx"); Writable = None } |]
+                        ResizeArray [| DirentEntry { Entry = SchemaSaladString.Include "script.fsx"; Entryname = Some (SchemaSaladString.Literal "script.fsx"); Writable = None } |]
                     )
                 let actual = requirementsItem.Value.[0]
                 match actual, expected with
@@ -184,7 +184,7 @@ let testCWLToolDescriptionMetadata =
             testCase "InitialWorkDirRequirement" <| fun _ ->
                 let expected =
                     InitialWorkDirRequirement (
-                        ResizeArray [| DirentEntry { Entry = Include "script.fsx"; Entryname = Some (Literal "script.fsx"); Writable = None } |]
+                        ResizeArray [| DirentEntry { Entry = SchemaSaladString.Include "script.fsx"; Entryname = Some (SchemaSaladString.Literal "script.fsx"); Writable = None } |]
                     )
                 let actual = requirementsItem.Value.[0]
                 match actual, expected with
@@ -446,6 +446,14 @@ let testExpressionTool =
             | Some (File _) -> ()
             | other -> Expect.isTrue false $"Expected File type but got %A{other}"
             Expect.stringContains et.Expression "parseInt" "Expression should use parseInt"
+        testCase "pool output ExpressionTool expression roundtrips" <| fun _ ->
+            let decoded = Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolPoolOutRoundtripFile
+            let encoded = Encode.encodeExpressionToolDescription decoded
+            let roundTripped = Decode.decodeExpressionTool encoded
+            let output = roundTripped.Outputs |> Seq.find (fun o -> o.Name = "pool_DIR")
+            Expect.equal output.Type_ (Some (Directory (DirectoryInstance()))) "pool_DIR output type should remain Directory."
+            Expect.equal roundTripped.Expression decoded.Expression "Expression payload should roundtrip without semantic changes."
+            Expect.stringContains roundTripped.Expression "sanitize(entry)" "Sanitize helper should survive roundtrip."
     ]
 
 let testEncodeNormalizeEdgeCases =
@@ -543,3 +551,4 @@ let main =
         testExpressionTool
         testOperation
     ]
+

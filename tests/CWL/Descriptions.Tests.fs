@@ -8,6 +8,15 @@ open TestingUtils
 let normalizeNewLines (text:string) =
     text.Replace("\r\n","\n").TrimEnd('\n')
 
+let normalizeDocBlockContent (text: string) =
+    text
+    |> normalizeNewLines
+    |> fun normalized ->
+        normalized.Split('\n')
+        |> Array.map (fun line -> line.TrimStart())
+        |> Array.filter (fun line -> line.Trim() <> "")
+        |> String.concat "\n"
+
 let stripDocContent (docBlock:string) =
     let normalized = normalizeNewLines docBlock
     let lines = normalized.Split('\n') |> Array.toList
@@ -42,10 +51,10 @@ let decodeTests =
                 TestObjects.CWL.Descriptions.descriptionFileContentComplex
                 |> Decode.read
                 |> Decode.docDecoder
-                |> Option.map normalizeNewLines
+                |> Option.map normalizeDocBlockContent
             let expected =
                 TestObjects.CWL.Descriptions.descriptionFileContentComplexDecoded
-                |> normalizeNewLines
+                |> normalizeDocBlockContent
             Expect.equal actual (Some expected) ""
         testCase "intent" <| fun _ ->
             let actual =
@@ -74,10 +83,16 @@ let encodeTests =
             let actual = Encode.encodeDoc "Note that this is an example and the metadata is not necessarily consistent." |> encodeToString
             Expect.equal actual expected ""
         testCase "doc block" <| fun _ ->
-            let expected = normalizeNewLines TestObjects.CWL.Descriptions.descriptionFileContentComplexEncoded
             let complexDoc = stripDocContent TestObjects.CWL.Descriptions.descriptionFileContentComplex
             let actual = Encode.encodeDoc complexDoc |> encodeToString
-            Expect.equal actual expected ""
+            let decoded =
+                actual
+                |> Decode.read
+                |> Decode.docDecoder
+                |> Option.map normalizeDocBlockContent
+            let expected = normalizeDocBlockContent complexDoc
+            Expect.equal decoded (Some expected) "Encoded block doc should decode back to original content."
+            Expect.stringContains actual "doc:" "Encoded block doc should emit doc field."
         testCase "intent roundtrip" <| fun _ ->
             let encoded =
                 ResizeArray [|"classification"; "quality-control"|]

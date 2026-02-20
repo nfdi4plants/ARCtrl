@@ -16,7 +16,7 @@ outputs:
   out: string
 expression: $(null)"""
 
-let expressionToolWithRequirementsFile = """cwlVersion: v1.2
+let expressionToolWithRequirementsFile ="""cwlVersion: v1.2
 class: ExpressionTool
 requirements:
   - class: InlineJavascriptRequirement
@@ -24,7 +24,8 @@ inputs:
   i: string
 outputs:
   output: int
-expression: "$({'output': (inputs.i == 'the-default' ? 1 : 2)})"""
+expression: "$({'output': (inputs.i == 'the-default' ? 1 : 2)})"
+"""
 
 let expressionToolWithMetadataFile = """cwlVersion: v1.2
 class: ExpressionTool
@@ -37,7 +38,7 @@ outputs:
 expression: "$({'out': inputs.i})"
 customKey: custom-value"""
 
-let expressionToolWithDefaultInputFile = """cwlVersion: v1.2
+let expressionToolWithDefaultInputFile ="""cwlVersion: v1.2
 class: ExpressionTool
 requirements:
   - class: InlineJavascriptRequirement
@@ -47,7 +48,8 @@ inputs:
     default: "the-default"
 outputs:
   output: int
-expression: "$({'output': (inputs.i1 == 'the-default' ? 1 : 2)})"""
+expression: "$({'output': (inputs.i1 == 'the-default' ? 1 : 2)})"
+"""
 
 let expressionToolArrayOutputFile = """cwlVersion: v1.2
 class: ExpressionTool
@@ -75,6 +77,52 @@ outputs:
 expression: |
   ${ return { "my_int": parseInt(inputs.my_number.contents) }; }"""
 
+let expressionToolPoolOutRoundtripFile = """#!/usr/bin/env cwl-runner
+
+cwlVersion: v1.2
+class: ExpressionTool
+id: "V_pool_out"
+label: Returns the output directory named after "analysis", containing all input files and directories.
+requirements:
+  InlineJavascriptRequirement: {}
+inputs:
+  mount_dir:
+    type: Directory
+  file_single:
+    type: File?
+  file_array:
+    type: File[]?
+  directory_single:
+    type: Directory?
+  directory_array:
+    type: Directory[]?
+  newname:
+    type: string?
+outputs:
+  pool_DIR:
+    type: Directory
+    doc: "Final analysis output folder"
+expression: >
+  ${ return (function() {
+    function sanitize(entry) {
+      var allowedFields = ['class', 'basename', 'location', 'listing'];
+      var sanitized = {};
+      for (var i = 0; i < allowedFields.length; i++) {
+        var key = allowedFields[i];
+        if (entry[key] !== undefined) sanitized[key] = entry[key];
+      }
+      return sanitized.class && sanitized.basename ? sanitized : null;
+      return name.replace(/\.tiff$/, "").replace(/\.tif$/, "");
+    }
+
+    var outputList = [];
+    if (inputs.directory_single) outputList.push(sanitize(inputs.directory_single));
+    if (inputs.file_single) outputList.push(sanitize(inputs.file_single));
+
+    return {
+      pool_DIR: { class: "Directory", basename: inputs.newname || "analysis", listing: outputList }
+    };
+  })(); }"""
 let workflowWithInlineExpressionToolChainFile = """cwlVersion: v1.2
 class: Workflow
 requirements:
