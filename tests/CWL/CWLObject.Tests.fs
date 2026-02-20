@@ -454,6 +454,13 @@ let testExpressionTool =
             Expect.equal output.Type_ (Some (Directory (DirectoryInstance()))) "pool_DIR output type should remain Directory."
             Expect.equal roundTripped.Expression decoded.Expression "Expression payload should roundtrip without semantic changes."
             Expect.stringContains roundTripped.Expression "sanitize(entry)" "Sanitize helper should survive roundtrip."
+            Expect.stringContains roundTripped.Expression "allowedFields" "allowedFields array should survive roundtrip."
+            Expect.stringContains roundTripped.Expression "var outputList = []" "outputList initialization should survive roundtrip."
+            Expect.stringContains roundTripped.Expression "inputs.directory_single" "directory_single input reference should survive roundtrip."
+            Expect.stringContains roundTripped.Expression "inputs.file_single" "file_single input reference should survive roundtrip."
+            Expect.stringContains roundTripped.Expression "inputs.newname" "newname input reference should survive roundtrip."
+            Expect.stringContains roundTripped.Expression "class: Directory" "Directory class literal should survive roundtrip."
+            Expect.stringContains roundTripped.Expression "listing: outputList" "listing assignment should survive roundtrip."
     ]
 
 let testEncodeNormalizeEdgeCases =

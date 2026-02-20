@@ -548,6 +548,8 @@ steps:
                         "Should roundtrip multiline inline ExpressionTool run"
 
                 Expect.stringContains expressionTool.Expression "return" "Expression should decode after roundtrip."
+                Expect.stringContains expressionTool.Expression "var name = \"arc\"" "Variable assignment should survive roundtrip."
+                Expect.stringContains expressionTool.Expression "{\"out\": name}" "Return object should survive roundtrip."
         ]
     ]
 
