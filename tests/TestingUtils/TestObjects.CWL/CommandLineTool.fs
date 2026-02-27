@@ -105,3 +105,11 @@ outputs: []"""
 class: [CommandLineTool
 inputs: {}
 outputs: []"""
+
+    let withWhitespaceOnlyLine = """cwlVersion: v1.2
+class: CommandLineTool
+inputs:
+      
+  sample:
+    type: string
+outputs: []"""

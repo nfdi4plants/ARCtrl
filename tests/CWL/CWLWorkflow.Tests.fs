@@ -510,6 +510,46 @@ let testCWLWorkflowDescriptionEncode =
                     let roundTrippedInputs = roundTrippedTool.Inputs |> Option.defaultValue (ResizeArray())
                     Expect.equal roundTrippedInputs.Count originalInputs.Count $"Step {i} input count should match"
                     Expect.equal roundTrippedTool.Outputs.Count originalTool.Outputs.Count $"Step {i} output count should match"
+            testCase "inline ExpressionTool multiline expression in workflow step roundtrips" <| fun _ ->
+                let yaml = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs:
+  out:
+    type: string
+    outputSource: expr/out
+steps:
+  expr:
+    run:
+      cwlVersion: v1.2
+      class: ExpressionTool
+      requirements:
+        - class: InlineJavascriptRequirement
+      inputs: {}
+      outputs:
+        out: string
+      expression: |
+        ${ return (function() {
+          var name = "arc";
+          return {"out": name};
+        })(); }
+    in: {}
+    out: [out]"""
+
+                let decoded = Decode.decodeWorkflow yaml
+                let encoded = Encode.encodeWorkflowDescription decoded
+                let roundTripped = Decode.decodeWorkflow encoded
+
+                Expect.stringContains encoded "expression: |" "Expression should encode as block scalar in nested workflow runs."
+
+                let expressionTool =
+                    Expect.wantSome
+                        (WorkflowStepRunOps.tryGetExpressionTool roundTripped.Steps.[0].Run)
+                        "Should roundtrip multiline inline ExpressionTool run"
+
+                Expect.stringContains expressionTool.Expression "return" "Expression should decode after roundtrip."
+                Expect.stringContains expressionTool.Expression "var name = \"arc\"" "Variable assignment should survive roundtrip."
+                Expect.stringContains expressionTool.Expression "{\"out\": name}" "Return object should survive roundtrip."
         ]
     ]
 

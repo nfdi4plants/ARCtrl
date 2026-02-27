@@ -18,7 +18,7 @@ type DockerRequirement = {
         let resolvedDockerFile =
             match dockerFileReference, dockerFile with
             | Some referenceValue, _ -> Some referenceValue
-            | None, Some file -> Some (Literal file)
+            | None, Some file -> Some (SchemaSaladString.Literal file)
             | None, None -> None
 
         {

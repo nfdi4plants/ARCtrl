@@ -22,6 +22,12 @@ let testCWLToolDescriptionDecode =
             let decoded = Decode.decodeCommandLineTool withShebangAndComments
             Expect.equal decoded.CWLVersion "v1.2" ""
             Expect.equal decoded.Outputs.Count 0 ""
+        testCase "sanitize removes whitespace-only lines" <| fun _ ->
+            let withWhitespaceOnlyLine = TestObjects.CWL.CommandLineTool.DecodeEdgeCases.withWhitespaceOnlyLine
+            let decoded = Decode.decodeCommandLineTool withWhitespaceOnlyLine
+            let inputs = Expect.wantSome decoded.Inputs "Inputs should decode when whitespace-only separator lines are present."
+            Expect.equal inputs.Count 1 ""
+            Expect.equal inputs.[0].Name "sample" ""
         testCase "sanitize does not hide malformed yaml errors" <| fun _ ->
             let malformed = TestObjects.CWL.CommandLineTool.DecodeEdgeCases.malformedYaml
             let decodeMalformed () = Decode.decodeCWLProcessingUnit malformed |> ignore
@@ -56,7 +62,7 @@ let testCWLToolDescriptionDecode =
             testCase "InitialWorkDirRequirement" <| fun _ ->
                 let expected =
                     InitialWorkDirRequirement (
-                        ResizeArray [| DirentEntry { Entry = Include "script.fsx"; Entryname = Some (Literal "script.fsx"); Writable = None } |]
+                        ResizeArray [| DirentEntry { Entry = SchemaSaladString.Include "script.fsx"; Entryname = Some (SchemaSaladString.Literal "script.fsx"); Writable = None } |]
                     )
                 let actual = requirementsItem.Value.[0]
                 match actual, expected with
@@ -178,7 +184,7 @@ let testCWLToolDescriptionMetadata =
             testCase "InitialWorkDirRequirement" <| fun _ ->
                 let expected =
                     InitialWorkDirRequirement (
-                        ResizeArray [| DirentEntry { Entry = Include "script.fsx"; Entryname = Some (Literal "script.fsx"); Writable = None } |]
+                        ResizeArray [| DirentEntry { Entry = SchemaSaladString.Include "script.fsx"; Entryname = Some (SchemaSaladString.Literal "script.fsx"); Writable = None } |]
                     )
                 let actual = requirementsItem.Value.[0]
                 match actual, expected with
@@ -440,6 +446,21 @@ let testExpressionTool =
             | Some (File _) -> ()
             | other -> Expect.isTrue false $"Expected File type but got %A{other}"
             Expect.stringContains et.Expression "parseInt" "Expression should use parseInt"
+        testCase "pool output ExpressionTool expression roundtrips" <| fun _ ->
+            let decoded = Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolPoolOutRoundtripFile
+            let encoded = Encode.encodeExpressionToolDescription decoded
+            let roundTripped = Decode.decodeExpressionTool encoded
+            let output = roundTripped.Outputs |> Seq.find (fun o -> o.Name = "pool_DIR")
+            Expect.equal output.Type_ (Some (Directory (DirectoryInstance()))) "pool_DIR output type should remain Directory."
+            Expect.equal roundTripped.Expression decoded.Expression "Expression payload should roundtrip without semantic changes."
+            Expect.stringContains roundTripped.Expression "sanitize(entry)" "Sanitize helper should survive roundtrip."
+            Expect.stringContains roundTripped.Expression "allowedFields" "allowedFields array should survive roundtrip."
+            Expect.stringContains roundTripped.Expression "var outputList = []" "outputList initialization should survive roundtrip."
+            Expect.stringContains roundTripped.Expression "inputs.directory_single" "directory_single input reference should survive roundtrip."
+            Expect.stringContains roundTripped.Expression "inputs.file_single" "file_single input reference should survive roundtrip."
+            Expect.stringContains roundTripped.Expression "inputs.newname" "newname input reference should survive roundtrip."
+            Expect.stringContains roundTripped.Expression "class: Directory" "Directory class literal should survive roundtrip."
+            Expect.stringContains roundTripped.Expression "listing: outputList" "listing assignment should survive roundtrip."
     ]
 
 let testEncodeNormalizeEdgeCases =
@@ -537,3 +558,4 @@ let main =
         testExpressionTool
         testOperation
     ]
+
