@@ -1,3 +1,12 @@
+### 3.0.1+a6b1138f (Released 2026-2-27)
+* Additions:
+    * [[#7102fe4c](https://github.com/nfdi4plants/ARCtrl/commit/7102fe4cbd338b4ed0e9606c66e286ae42ec691a)] update yamlicious
+    * [[#7fdc4f2e](https://github.com/nfdi4plants/ARCtrl/commit/7fdc4f2e82d6bb597217e4103c3efd68571f53ea)] add more tests
+    * [[#4a84989c](https://github.com/nfdi4plants/ARCtrl/commit/4a84989cafbe962957f3ea1c56cbf4c00a053cc1)] changes for yamlicious update
+    * [[#f2709430](https://github.com/nfdi4plants/ARCtrl/commit/f2709430dd2e1338e4fd5f7d9c6c3836c5ea074b)] reapply empty space cleanup
+* Bugfixes:
+    * [[#9eb79fa5](https://github.com/nfdi4plants/ARCtrl/commit/9eb79fa568c05970d172da07f99474697f242b1a)] inline expression scalar fix
+
 ### 3.0.0+3de66bcb (Released 2026-2-19)
 * Additions:
     * [[#c2d0f529](https://github.com/nfdi4plants/ARCtrl/commit/c2d0f5292e34440d9dd09a54f93c319888362e59)] add intent field to all processing units
