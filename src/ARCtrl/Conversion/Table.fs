@@ -119,6 +119,18 @@ module TableTypeExtensions =
                 ]
                 //|> ProcessConversion.mergeIdenticalProcesses
 
+        /// Returns the list of processes specified in this ArcTable, grouping rows with identical process-level metadata.
+        ///
+        /// Parameter values (and other process-level fields) are taken from the first row of each group.
+        /// Inputs and outputs of all grouped rows are aggregated in order.
+        member this.GetProcessesGroupedByParameters(?assayName, ?studyName, ?fs : FileSystem) : LDNode list =
+            if this.RowCount = 0 then
+                LDLabProcess.create(name = this.Name)
+                |> List.singleton
+            else
+                let getter = ProcessConversion.getGroupedProcessGetter assayName studyName this.Name this.Headers fs
+                getter this
+
 
         /// Create a new table from a list of processes
         ///
@@ -138,6 +150,12 @@ module TableTypeExtensions =
             this.Tables
             |> Seq.toList
             |> List.collect (fun t -> t.GetProcesses(?assayName = assayName, ?studyName = studyName, ?fs = fs))
+
+        /// Return a list of grouped processes in all tables.
+        member this.GetProcessesGroupedByParameters(?assayName, ?studyName, ?fs) : LDNode list =
+            this.Tables
+            |> Seq.toList
+            |> List.collect (fun t -> t.GetProcessesGroupedByParameters(?assayName = assayName, ?studyName = studyName, ?fs = fs))
 
         /// Create a collection of tables from a list of processes.
         ///

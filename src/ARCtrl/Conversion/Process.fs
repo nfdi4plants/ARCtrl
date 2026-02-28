@@ -353,6 +353,181 @@ type ProcessConversion =
 
                 )
 
+    /// Given the header sequence of an ArcTable, returns a function for parsing grouped rows to processes.
+    static member getGroupedProcessGetter (assayName: string option) (studyName : string option) (processNameRoot : string) (headers : CompositeHeader seq) (fs : FileSystem option) =
+
+        let headers =
+            headers
+            |> Seq.indexed
+
+        let valueHeaders =
+            headers
+            |> Seq.filter (snd >> fun h -> h.IsCvParamColumn)
+            |> Seq.indexed
+            |> Seq.toList
+
+        let charGetters =
+            valueHeaders
+            |> List.choose (fun (valueI,(generalI,header)) -> ProcessConversion.tryCharacteristicGetter generalI valueI header)
+
+        let factorValueGetters =
+            valueHeaders
+            |> List.choose (fun (valueI,(generalI,header)) -> ProcessConversion.tryFactorGetter generalI valueI header)
+
+        let parameterValueGetters =
+            valueHeaders
+            |> List.choose (fun (valueI,(generalI,header)) -> ProcessConversion.tryParameterGetter generalI valueI header)
+
+        let componentGetters =
+            valueHeaders
+            |> List.choose (fun (valueI,(generalI,header)) -> ProcessConversion.tryComponentGetter generalI valueI header)
+
+        let protocolTypeGetter =
+            headers
+            |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetProtocolTypeGetter generalI header)
+
+        let protocolREFGetter =
+            headers
+            |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetProtocolREFGetter generalI header)
+
+        let protocolDescriptionGetter =
+            headers
+            |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetProtocolDescriptionGetter generalI header)
+
+        let protocolURIGetter =
+            headers
+            |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetProtocolURIGetter generalI header)
+
+        let protocolVersionGetter =
+            headers
+            |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetProtocolVersionGetter generalI header)
+
+        let performerGetter =
+            headers
+            |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetPerformerGetter generalI header)
+
+        let commentGetters =
+            headers
+            |> Seq.choose (fun (generalI,header) -> ProcessConversion.tryGetCommentGetter generalI header)
+            |> Seq.toList
+
+        let inputGetter =
+            match headers |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetInputGetter generalI header fs) with
+            | Some inputGetter ->
+                fun (table : ArcTable) i ->
+                    let chars = charGetters |> Seq.map (fun f -> f table i) |> ResizeArray
+                    let input = inputGetter table i
+
+                    if chars.Count > 0 then
+                        LDSample.setAdditionalProperties(input,chars)
+                    input
+                    |> ResizeArray.singleton
+            | None when charGetters.Length <> 0 ->
+                fun (table : ArcTable) i ->
+                    let chars = charGetters |> Seq.map (fun f -> f table i) |> ResizeArray
+                    LDSample.createSample(name = $"{processNameRoot}_Input_{i}", additionalProperties = chars)
+                    |> ResizeArray.singleton
+            | None ->
+                fun (_ : ArcTable) _ ->
+                    ResizeArray []
+
+        let outputGetter =
+            match headers |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetOutputGetter generalI header fs) with
+            | Some outputGetter ->
+                fun (table : ArcTable) i ->
+                    let factors = factorValueGetters |> Seq.map (fun f -> f table i) |> ResizeArray
+                    let output = outputGetter table i
+                    if factors.Count > 0 then
+                        LDSample.setAdditionalProperties(output,factors)
+                    output
+                    |> ResizeArray.singleton
+            | None when factorValueGetters.Length <> 0 ->
+                fun (table : ArcTable) i ->
+                    let factors = factorValueGetters |> Seq.map (fun f -> f table i) |> ResizeArray
+                    LDSample.createSample(name = $"{processNameRoot}_Output_{i}", additionalProperties = factors)
+                    |> ResizeArray.singleton
+            | None ->
+                fun (_ : ArcTable) _ ->
+                    ResizeArray []
+
+        let rowGroupingKeyGetter (table : ArcTable) i =
+            [
+                parameterValueGetters |> Seq.map (fun f -> (f table i).Id) |> HashCodes.boxHashSeq
+                componentGetters |> Seq.map (fun f -> (f table i).Id) |> HashCodes.boxHashSeq
+                protocolTypeGetter |> Option.map (fun f -> (f table i).Id) |> HashCodes.boxHashOption
+                protocolREFGetter |> Option.map (fun f -> f table i) |> HashCodes.boxHashOption
+                protocolDescriptionGetter |> Option.map (fun f -> f table i) |> HashCodes.boxHashOption
+                protocolURIGetter |> Option.map (fun f -> f table i) |> HashCodes.boxHashOption
+                protocolVersionGetter |> Option.map (fun f -> f table i) |> HashCodes.boxHashOption
+                performerGetter |> Option.map (fun f -> (f table i).Id) |> HashCodes.boxHashOption
+                commentGetters |> Seq.map (fun f -> f table i) |> HashCodes.boxHashSeq
+            ]
+            |> HashCodes.boxHashSeq
+
+        let createProcessFromRows (table : ArcTable) (rowIndices : int list) (processI : int) (processCount : int) =
+
+            let firstRow = rowIndices |> List.head
+
+            let pn =
+                if processCount = 1 then processNameRoot
+                else ProcessConversion.composeProcessName processNameRoot processI
+
+            let paramvalues = parameterValueGetters |> List.map (fun f -> f table firstRow) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
+
+            let comments = commentGetters |> List.map (fun f -> f table firstRow) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
+
+            let components = componentGetters |> List.map (fun f -> f table firstRow) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
+
+            let id = LDLabProcess.genId(processNameRoot,?assayName = assayName, ?studyName = studyName) + $"_{processI}"
+
+            let protocol : LDNode option =
+                let name = (protocolREFGetter |> Option.map (fun f -> f table firstRow))
+                let protocolId = LDLabProtocol.genId(?name = name, processName = processNameRoot)
+                LDLabProtocol.create(
+                    id = protocolId,
+                    ?name = name,
+                    ?description = (protocolDescriptionGetter |> Option.map (fun f -> f table firstRow)),
+                    ?intendedUse = (protocolTypeGetter |> Option.map (fun f -> f table firstRow)),
+                    ?url = (protocolURIGetter |> Option.map (fun f -> f table firstRow)),
+                    ?version = (protocolVersionGetter |> Option.map (fun f -> f table firstRow)),
+                    ?labEquipments = components
+                )
+                |> Some
+
+            let input =
+                rowIndices
+                |> List.collect (fun i -> inputGetter table i |> Seq.toList)
+                |> ResizeArray
+
+            let output =
+                rowIndices
+                |> List.collect (fun i -> outputGetter table i |> Seq.toList)
+                |> ResizeArray
+
+            let agent = performerGetter |> Option.map (fun f -> f table firstRow)
+
+            LDLabProcess.create(
+                name = pn,
+                objects = input,
+                results = output,
+                id = id,
+                ?agent = agent,
+                ?executesLabProtocol = protocol,
+                ?parameterValues = paramvalues,
+                ?disambiguatingDescriptions = comments
+            )
+
+        fun (table : ArcTable) ->
+            let groupedRowIndices =
+                [0 .. table.RowCount - 1]
+                |> List.groupBy (fun i -> rowGroupingKeyGetter table i)
+                |> List.map snd
+
+            groupedRowIndices
+            |> List.mapi (fun processI rowIndices ->
+                createProcessFromRows table rowIndices processI groupedRowIndices.Length
+            )
+
     /// Groups processes by their name, or by the name of the protocol they execute
     ///
     /// Process names are taken from the Worksheet name and numbered: SheetName_1, SheetName_2, etc.
