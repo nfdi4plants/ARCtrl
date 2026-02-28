@@ -450,19 +450,36 @@ type ProcessConversion =
                 fun (_ : ArcTable) _ ->
                     ResizeArray []
 
+        let groupingHeaders =
+            headers
+            |> Seq.filter (fun (_, header) ->
+                match header with
+                | CompositeHeader.Parameter _
+                | CompositeHeader.Component _
+                | CompositeHeader.ProtocolType
+                | CompositeHeader.ProtocolREF
+                | CompositeHeader.ProtocolDescription
+                | CompositeHeader.ProtocolUri
+                | CompositeHeader.ProtocolVersion
+                | CompositeHeader.Performer
+                | CompositeHeader.Comment _ -> true
+                | _ -> false
+            )
+            |> Seq.toList
+
         let rowGroupingKeyGetter (table : ArcTable) i =
-            [
-                parameterValueGetters |> Seq.map (fun f -> (f table i).Id) |> HashCodes.boxHashSeq
-                componentGetters |> Seq.map (fun f -> (f table i).Id) |> HashCodes.boxHashSeq
-                protocolTypeGetter |> Option.map (fun f -> (f table i).Id) |> HashCodes.boxHashOption
-                protocolREFGetter |> Option.map (fun f -> f table i) |> HashCodes.boxHashOption
-                protocolDescriptionGetter |> Option.map (fun f -> f table i) |> HashCodes.boxHashOption
-                protocolURIGetter |> Option.map (fun f -> f table i) |> HashCodes.boxHashOption
-                protocolVersionGetter |> Option.map (fun f -> f table i) |> HashCodes.boxHashOption
-                performerGetter |> Option.map (fun f -> (f table i).Id) |> HashCodes.boxHashOption
-                commentGetters |> Seq.map (fun f -> f table i) |> HashCodes.boxHashSeq
-            ]
-            |> HashCodes.boxHashSeq
+            groupingHeaders
+            |> List.fold (fun acc (generalI, header) ->
+                let cell =
+                    match ArcTableAux.Unchecked.tryGetCellAt(generalI, i) table.Values with
+                    | Some cell -> cell
+                    | None -> ArcTableAux.getEmptyCellForHeader header None
+
+                let headerHash = HashCodes.hash header
+                let cellHash = HashCodes.hash cell
+                let withHeader = HashCodes.mergeHashes acc headerHash
+                HashCodes.mergeHashes withHeader cellHash
+            ) 0
 
         let createProcessFromRows (table : ArcTable) (rowIndices : int list) (processI : int) (processCount : int) =
 
@@ -494,15 +511,13 @@ type ProcessConversion =
                 )
                 |> Some
 
-            let input =
-                rowIndices
-                |> List.collect (fun i -> inputGetter table i |> Seq.toList)
-                |> ResizeArray
+            let input = ResizeArray()
+            for rowI in rowIndices do
+                input.AddRange(inputGetter table rowI)
 
-            let output =
-                rowIndices
-                |> List.collect (fun i -> outputGetter table i |> Seq.toList)
-                |> ResizeArray
+            let output = ResizeArray()
+            for rowI in rowIndices do
+                output.AddRange(outputGetter table rowI)
 
             let agent = performerGetter |> Option.map (fun f -> f table firstRow)
 
