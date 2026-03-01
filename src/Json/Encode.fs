@@ -73,6 +73,11 @@ module Encode =
             |> Seq.map encoder
             |> Encode.seq
 
+    let orderedList (values: list<IEncodable>) =   
+        values
+        |> Encode.list
+        |> fun s -> Encode.object [ "@list", s]
+
     let dictionary (keyEncoder : Encoder<'key>) (valueEncoder : Encoder<'value>) (values: System.Collections.Generic.IDictionary<'key, 'value>) =
         if values.Count = 0 then
             Encode.nil

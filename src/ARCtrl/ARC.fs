@@ -1111,15 +1111,15 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         | ex -> 
             failwithf "Could not parse ARC-RO-Crate metadata: \n%s" ex.Message
 
-    member this.ToROCrateJsonString(?spaces, ?ignoreBrokenWR) =
+    member this.ToROCrateJsonString(?spaces, ?groupProcesses, ?ignoreBrokenWR) =
         this.MakeDataFilesAbsolute()
-        ARCtrl.Json.ARC.ROCrate.encoder(this, ?license = _license, fs = _fs, ?ignoreBrokenWR = ignoreBrokenWR)
+        ARCtrl.Json.ARC.ROCrate.encoder(this, ?license = _license, ?groupProcesses = groupProcesses, fs = _fs, ?ignoreBrokenWR = ignoreBrokenWR)
         |> ARCtrl.Json.Encode.toJsonString (ARCtrl.Json.Encode.defaultSpaces spaces)
 
         /// exports in json-ld format
-    static member toROCrateJsonString(?spaces, ?ignoreBrokenWR) =
+    static member toROCrateJsonString(?spaces, ?groupProcesses, ?ignoreBrokenWR) =
         fun (obj:ARC) ->
-            obj.ToROCrateJsonString(?spaces = spaces, ?ignoreBrokenWR = ignoreBrokenWR)
+            obj.ToROCrateJsonString(?spaces = spaces, ?groupProcesses = groupProcesses, ?ignoreBrokenWR = ignoreBrokenWR)
 
     member this.GetLicenseWriteContract() =
         this.License |> Option.defaultWith License.GetDefaultLicense |> _.ToCreateContract()

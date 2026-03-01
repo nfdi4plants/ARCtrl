@@ -55,7 +55,7 @@ module ARC =
 
         static member getAsGraph (isa : ArcInvestigation, ?license : License, ?fs : FileSystem, ?ignoreBrokenWR) =
             let license = ROCrate.createLicenseNode(license)
-            let isa = isa.ToROCrateInvestigation(?fs = fs, ?ignoreBrokenWR = ignoreBrokenWR)
+            let isa = isa.ToROCrateInvestigation(?groupProcesses = groupProcesses, ?fs = fs, ?ignoreBrokenWR = ignoreBrokenWR)
             LDDataset.setSDDatePublishedAsDateTime(isa, System.DateTime.Now)
             LDDataset.setLicenseAsCreativeWork(isa, license)
             let graph = isa.Flatten()

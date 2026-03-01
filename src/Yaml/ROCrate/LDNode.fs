@@ -97,7 +97,7 @@ module rec LDNode =
 
     let fromROCrateYamlString (s: string) =
         s
-        |> Helpers.sanitizeROCrateYamlKeys
+        |> Helpers.ensureSingleYamlDocument
         |> ARCtrl.Yaml.Decode.fromYamlString decoder
 
     let toROCrateYamlString (whitespace: int option) (obj: ARCtrl.ROCrate.LDNode) =
