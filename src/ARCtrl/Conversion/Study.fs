@@ -13,7 +13,7 @@ open ARCtrl.Helper.Regex.ActivePatterns
 
 type StudyConversion = 
 
-    static member composeStudy (study : ArcStudy, ?fs : FileSystem) =
+    static member composeStudy (study : ArcStudy, ?groupProcesses : bool, ?fs : FileSystem) =
         let dateCreated = study.SubmissionDate |> Option.bind DateTime.tryFromString
         let datePublished = study.PublicReleaseDate |> Option.bind DateTime.tryFromString
         let dateModified = System.DateTime.Now
@@ -26,7 +26,10 @@ type StudyConversion =
             |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
             |> Option.fromSeq
         let processSequence = 
-            ArcTables(study.Tables).GetProcesses(studyName = study.Identifier, ?fs = fs)
+            (if groupProcesses |> Option.defaultValue false then
+                ArcTables(study.Tables).GetProcessesGroupedByParameters(studyName = study.Identifier, ?fs = fs)
+            else
+                ArcTables(study.Tables).GetProcesses(studyName = study.Identifier, ?fs = fs))
             |> ResizeArray
             |> Option.fromSeq
         let fragmentDescriptors =

@@ -6,34 +6,36 @@ open YAMLicious.YAMLiciousTypes
 
 module Helpers =
 
-    let private keyAliases =
-        dict [
-            "id", "@id"
-            "type", "@type"
-            "context", "@context"
-            "value", "@value"
-            "graph", "@graph"
-        ]
+    let normalizeKey (key: string) =
+        key.Trim().Trim('"').Trim('\'')
 
-    let private normalizeKey (key: string) =
-        let k = key.Trim().Trim('"').Trim('\'')
-        match keyAliases.TryGetValue(k) with
-        | true, canonical -> canonical
-        | _ -> k
+    let ensureSingleYamlDocument (yaml: string) =
+        let lines =
+            yaml.Replace("\r\n", "\n").Split('\n')
+            |> Array.map (fun l -> l.Trim())
 
-    let sanitizeROCrateYamlKeys (yaml: string) =
-        let replaceKey (source: string) (target: string) (text: string) =
-            text
-            |> fun t -> t.Replace($"'{source}':", $"{target}:")
-            |> fun t -> t.Replace($"\"{source}\":", $"{target}:")
-            |> fun t -> t.Replace($"{source}:", $"{target}:")
+        let nonEmpty = lines |> Array.filter (String.IsNullOrWhiteSpace >> not)
+        let separators =
+            lines
+            |> Array.indexed
+            |> Array.choose (fun (i, l) -> if l = "---" then Some i else None)
+
+        if separators.Length > 1 then
+            failwith "YAML-LD parser supports only a single YAML document in a stream."
+
+        if separators.Length = 1 then
+            let firstNonEmptyIndex =
+                lines
+                |> Array.tryFindIndex (String.IsNullOrWhiteSpace >> not)
+                |> Option.defaultValue 0
+
+            if separators.[0] <> firstNonEmptyIndex then
+                failwith "YAML-LD parser supports only a single YAML document in a stream."
+
+        if nonEmpty.Length = 0 then
+            failwith "YAML-LD document is empty."
 
         yaml
-        |> replaceKey "@id" "id"
-        |> replaceKey "@type" "type"
-        |> replaceKey "@context" "context"
-        |> replaceKey "@value" "value"
-        |> replaceKey "@graph" "graph"
 
     let unwrapSingleObject = function
         | YAMLElement.Object [single] ->

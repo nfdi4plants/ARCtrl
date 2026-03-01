@@ -14,12 +14,12 @@ open ARCtrl.Helper.Regex.ActivePatterns
 module TypeExtensions =
 
     type ArcAssay with
-         member this.ToROCrateAssay(?fs) = AssayConversion.composeAssay(this, ?fs = fs)
+         member this.ToROCrateAssay(?groupProcesses, ?fs) = AssayConversion.composeAssay(this, ?groupProcesses = groupProcesses, ?fs = fs)
 
          static member fromROCrateAssay (a : LDNode, ?graph : LDGraph, ?context : LDContext) = AssayConversion.decomposeAssay(a, ?graph = graph, ?context = context)
 
     type ArcStudy with
-         member this.ToROCrateStudy(?fs) = StudyConversion.composeStudy(this, ?fs = fs)
+         member this.ToROCrateStudy(?groupProcesses, ?fs) = StudyConversion.composeStudy(this, ?groupProcesses = groupProcesses, ?fs = fs)
 
          static member fromROCrateStudy (a : LDNode, ?graph : LDGraph, ?context : LDContext) = StudyConversion.decomposeStudy(a, ?graph = graph, ?context = context)
 
@@ -34,7 +34,7 @@ module TypeExtensions =
         static member fromROCrateRun (a : LDNode, ?graph : LDGraph, ?context : LDContext) = RunConversion.decomposeRun(a, ?graph = graph, ?context = context)
 
     type ArcInvestigation with
-        member this.ToROCrateInvestigation(?fs, ?ignoreBrokenWR) = InvestigationConversion.composeInvestigation(this, ?fs = fs, ?ignoreBrokenWR = ignoreBrokenWR)
+        member this.ToROCrateInvestigation(?groupProcesses, ?fs, ?ignoreBrokenWR) = InvestigationConversion.composeInvestigation(this, ?groupProcesses = groupProcesses, ?fs = fs, ?ignoreBrokenWR = ignoreBrokenWR)
     
         static member fromROCrateInvestigation (a : LDNode, ?graph : LDGraph, ?context : LDContext) = InvestigationConversion.decomposeInvestigation(a, ?graph = graph, ?context = context)
 
@@ -43,12 +43,12 @@ module TypeExtensions =
         // Assay
         static member toArcAssay(a : LDNode, ?graph : LDGraph, ?context : LDContext) = AssayConversion.decomposeAssay(a, ?graph = graph, ?context = context)
 
-        static member fromArcAssay (a : ArcAssay) = AssayConversion.composeAssay a
+        static member fromArcAssay (a : ArcAssay, ?groupProcesses : bool, ?fs : FileSystem) = AssayConversion.composeAssay(a, ?groupProcesses = groupProcesses, ?fs = fs)
 
         // Study
         static member toArcStudy(a : LDNode, ?graph : LDGraph, ?context : LDContext) = StudyConversion.decomposeStudy(a, ?graph = graph, ?context = context)
 
-        static member fromArcStudy (a : ArcStudy) = StudyConversion.composeStudy a
+        static member fromArcStudy (a : ArcStudy, ?groupProcesses : bool, ?fs : FileSystem) = StudyConversion.composeStudy(a, ?groupProcesses = groupProcesses, ?fs = fs)
 
         // Workflow
         static member toArcWorkflow(a : LDNode, ?graph : LDGraph, ?context : LDContext) = WorkflowConversion.decomposeWorkflow(a, ?graph = graph, ?context = context)
@@ -63,20 +63,20 @@ module TypeExtensions =
         // Investigation
         static member toArcInvestigation(a : LDNode, ?graph : LDGraph, ?context : LDContext) = InvestigationConversion.decomposeInvestigation(a, ?graph = graph, ?context = context)
 
-        static member fromArcInvestigation (a : ArcInvestigation) = InvestigationConversion.composeInvestigation a
+        static member fromArcInvestigation (a : ArcInvestigation, ?groupProcesses : bool, ?fs : FileSystem, ?ignoreBrokenWR) = InvestigationConversion.composeInvestigation(a, ?groupProcesses = groupProcesses, ?fs = fs, ?ignoreBrokenWR = ignoreBrokenWR)
 
 
     [<Fable.Core.AttachMembers>]
     type Conversion =
 
         // Assay
-        static member arcAssayToDataset(a : ArcAssay, ?fs) = a.ToROCrateAssay(?fs = fs)
+        static member arcAssayToDataset(a : ArcAssay, ?groupProcesses, ?fs) = a.ToROCrateAssay(?groupProcesses = groupProcesses, ?fs = fs)
 
         static member datasetToArcAssay(a : LDNode, ?graph : LDGraph, ?context : LDContext) =
             ArcAssay.fromROCrateAssay(a, ?graph = graph, ?context = context)
 
         // Study
-        static member arcStudyToDataset(a : ArcStudy, ?fs) = a.ToROCrateStudy(?fs = fs)
+        static member arcStudyToDataset(a : ArcStudy, ?groupProcesses, ?fs) = a.ToROCrateStudy(?groupProcesses = groupProcesses, ?fs = fs)
 
         static member datasetToArcStudy(a : LDNode, ?graph : LDGraph, ?context : LDContext) =
             ArcStudy.fromROCrateStudy(a, ?graph = graph, ?context = context)
@@ -94,7 +94,7 @@ module TypeExtensions =
             ArcRun.fromROCrateRun(a, ?graph = graph, ?context = context)
 
         // Investigation
-        static member arcInvestigationToDataset(a : ArcInvestigation, ?fs, ?ignoreBrokenWR) = a.ToROCrateInvestigation(?fs = fs, ?ignoreBrokenWR = ignoreBrokenWR)
+        static member arcInvestigationToDataset(a : ArcInvestigation, ?groupProcesses, ?fs, ?ignoreBrokenWR) = a.ToROCrateInvestigation(?groupProcesses = groupProcesses, ?fs = fs, ?ignoreBrokenWR = ignoreBrokenWR)
 
         static member datasetToArcInvestigation(a : LDNode, ?graph : LDGraph, ?context : LDContext) =
             ArcInvestigation.fromROCrateInvestigation(a, ?graph = graph, ?context = context)       
