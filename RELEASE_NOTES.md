@@ -1,3 +1,10 @@
+### 3.0.2+b00b50cf (Released 2026-3-2)
+* Additions:
+    * [[#4ab85c26](https://github.com/nfdi4plants/ARCtrl/commit/4ab85c2660e1da38f5f42b42dfaa30ac3e80128a)] add function to create full LDGraph from ARC
+    * [[#28a96a1d](https://github.com/nfdi4plants/ARCtrl/commit/28a96a1d5cb0f8e749c4a61c938126fcae59007b)] update YAMLicious version
+* Bugfixes:
+    * [[#2c1e1de7](https://github.com/nfdi4plants/ARCtrl/commit/2c1e1de7fe90eab3407471c446891479eaec3580)] fix sdDatePublished key name #582
+
 ### 3.0.1+a6b1138f (Released 2026-2-27)
 * Additions:
     * [[#7102fe4c](https://github.com/nfdi4plants/ARCtrl/commit/7102fe4cbd338b4ed0e9606c66e286ae42ec691a)] update yamlicious
