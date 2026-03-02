@@ -18,7 +18,7 @@ type LDDataset =
 
     static member datePublished = "http://schema.org/datePublished"
 
-    static member sdDatePublished = "http://schema.org/datePublished"
+    static member sdDatePublished = "http://schema.org/sdDatePublished"
 
     static member license = "http://schema.org/license"
 

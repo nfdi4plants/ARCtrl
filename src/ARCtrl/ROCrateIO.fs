@@ -53,7 +53,7 @@ module ARC =
             | path, Some text -> Some (License(contentType = Fulltext,content = text, path = path))
             | path, None -> Some (License(contentType = Fulltext,content = "", path = path))
 
-        static member encoder (isa : ArcInvestigation, ?license : License, ?fs : FileSystem, ?ignoreBrokenWR) =
+        static member getAsGraph (isa : ArcInvestigation, ?license : License, ?fs : FileSystem, ?ignoreBrokenWR) =
             let license = ROCrate.createLicenseNode(license)
             let isa = isa.ToROCrateInvestigation(?fs = fs, ?ignoreBrokenWR = ignoreBrokenWR)
             LDDataset.setSDDatePublishedAsDateTime(isa, System.DateTime.Now)
@@ -63,6 +63,10 @@ module ARC =
             graph.SetContext(context)
             graph.AddNode(ROCrate.metadataFileDescriptor)
             graph.Compact_InPlace()
+            graph
+
+        static member encoder (isa : ArcInvestigation, ?license : License, ?fs : FileSystem, ?ignoreBrokenWR) =
+            let graph = ROCrate.getAsGraph(isa, ?license = license, ?fs = fs, ?ignoreBrokenWR = ignoreBrokenWR)
             LDGraph.encoder graph
 
         /// Returns ArcInvestigation, list of file Ids, and optional License
