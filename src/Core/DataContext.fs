@@ -4,6 +4,7 @@ open ARCtrl
 open ARCtrl.Helper 
 open Fable.Core
 
+[<AttachMembers>]
 type DataContext(?id,?name : string,?dataType,?format,?selectorFormat, ?explication, ?unit, ?objectType, ?label, ?description, ?generatedBy, ?comments) =
 
     inherit Data(?id = id,?name = name, ?dataType = dataType, ?format = format, ?selectorFormat = selectorFormat, ?comments = comments)
