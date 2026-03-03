@@ -47,15 +47,6 @@ type DataContext(?id,?name : string,?dataType,?format,?selectorFormat, ?explicat
     static member fromData(data : Data, ?explication,?unit,?objectType,?label, ?description,?generatedBy) =
         DataContext(?id = data.ID,?name = data.Name, ?dataType = data.DataType, ?format = data.Format, ?selectorFormat = data.SelectorFormat, ?explication = explication, ?unit = unit, ?objectType = objectType, ?label = label, ?description = description, ?generatedBy = generatedBy, comments = data.Comments)
 
-    interface IPropertyValue with
-        member this.AlternateName() = this.Label
-        member this.MeasurementMethod() = this.GeneratedBy
-        member this.GetCategory() = this.Explication
-        member this.GetValue() = this.ObjectType |> Option.map Value.Ontology
-        member this.GetUnit() = this.Unit
-        member this.GetAdditionalType() = "DataContext"
-        member this.Description() = this.Description
-
     static member createAsPV (alternateName : string option) (measurementMethod : string option) (description : string option) (category : OntologyAnnotation option) (value : Value option) (unit : OntologyAnnotation option) =
         let objectType = 
             match value with

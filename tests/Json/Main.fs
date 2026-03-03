@@ -7,6 +7,7 @@ let all = testSequenced <| testList "Json" [
     Tests.Comment.main
     Tests.OntologyAnnotation.main
     Tests.Data.main
+    Tests.Datamap.main
     Tests.CompositeCell.main
     Tests.IOType.main
     Tests.CompositeHeader.main
