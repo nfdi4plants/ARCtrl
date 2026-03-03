@@ -1,3 +1,7 @@
+### 3.0.3+681187d0 (Released 2026-3-3)
+* Additions:
+    * [[#681187d0](https://github.com/nfdi4plants/ARCtrl/commit/681187d0465f2a7dece78ee132f1757ddb5edbd1)] add AttachMembers to DataContext
+
 ### 3.0.2+b00b50cf (Released 2026-3-2)
 * Additions:
     * [[#4ab85c26](https://github.com/nfdi4plants/ARCtrl/commit/4ab85c2660e1da38f5f42b42dfaa30ac3e80128a)] add function to create full LDGraph from ARC
