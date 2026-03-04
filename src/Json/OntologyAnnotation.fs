@@ -64,64 +64,17 @@ module OntologyAnnotation =
             )
         )
 
-    module ROCrate =
 
-        let genID (o:OntologyAnnotation) : string = 
-            match o.TermAccessionNumber with
-            | Some ta -> URI.toString ta
+    let genID (o:OntologyAnnotation) : string = 
+        match o.TermAccessionNumber with
+        | Some ta -> URI.toString ta
+        | None -> 
+            match o.TermSourceREF with
+            | Some r -> "#" + r.Replace(" ","_")
             | None -> 
-                match o.TermSourceREF with
-                | Some r -> "#" + r.Replace(" ","_")
-                | None -> 
-                    match o.Name with
-                    | Some n -> "#UserTerm_" + n .Replace(" ","_")
-                    | None -> "#DummyOntologyAnnotation"
-
-        let encoderDefinedTerm (oa : OntologyAnnotation) = 
-            [
-                "@id", Encode.string (oa |> genID) |> Some
-                "@type", Encode.string "OntologyAnnotation" |> Some
-                Encode.tryInclude "annotationValue" Encode.string (oa.Name)
-                Encode.tryInclude "termSource" Encode.string (oa.TermSourceREF)
-                Encode.tryInclude "termAccession" Encode.string (oa.TermAccessionNumber)
-                Encode.tryIncludeSeq "comments" Comment.ROCrate.encoderDisambiguatingDescription (oa.Comments)
-                "@context", ROCrateContext.OntologyAnnotation.context_jsonvalue |> Some
-            ]
-            |> Encode.choose
-            |> Encode.object
-
-        let decoderDefinedTerm : Decoder<OntologyAnnotation> =
-            Decode.object (fun get ->
-                OntologyAnnotation.create(
-                    ?name = get.Optional.Field "annotationValue" AnnotationValue.decoder,
-                    ?tsr = get.Optional.Field "termSource" Decode.string,
-                    ?tan = get.Optional.Field "termAccession" Decode.string,
-                    ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.ROCrate.decoderDisambiguatingDescription )               
-                )
-            )
-
-        let encoderPropertyValue (oa : OntologyAnnotation) = 
-            [
-                "@id", Encode.string (oa |> genID) |> Some
-                "@type", Encode.string "PropertyValue" |> Some
-
-                Encode.tryInclude "category" Encode.string oa.Name
-                Encode.tryInclude "categoryCode" Encode.string oa.TermAccessionNumber
-                Encode.tryIncludeSeq "comments" Comment.ROCrate.encoderDisambiguatingDescription (oa.Comments)
-                "@context", ROCrateContext.PropertyValue.context_jsonvalue |> Some
-            ]
-            |> Encode.choose
-            |> Encode.object
-
-        let decoderPropertyValue : Decoder<OntologyAnnotation> =
-            Decode.object (fun get ->
-                OntologyAnnotation.create(
-                    ?name = get.Optional.Field "category" Decode.string,
-                    ?tan = get.Optional.Field "categoryCode" Decode.string,
-                    ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.ROCrate.decoderDisambiguatingDescription)               
-                )
-
-            )
+                match o.Name with
+                | Some n -> "#UserTerm_" + n .Replace(" ","_")
+                | None -> "#DummyOntologyAnnotation"
 
     module ISAJson =
         
@@ -134,7 +87,7 @@ module OntologyAnnotation =
                         | Some n when n = Process.ColumnIndex.orderName -> false
                         | _ -> true)
                 [
-                    Encode.tryInclude "@id" Encode.string (ROCrate.genID oa |> Some)
+                    Encode.tryInclude "@id" Encode.string (genID oa |> Some)
                     Encode.tryInclude "annotationValue" Encode.string (oa.Name)
                     Encode.tryInclude "termSource" Encode.string (oa.TermSourceREF)
                     Encode.tryInclude "termAccession" Encode.string (oa.TermAccessionNumber)
@@ -144,6 +97,6 @@ module OntologyAnnotation =
                 |> Encode.object
             match idMap with
             | None -> f oa
-            | Some idMap -> IDTable.encode ROCrate.genID f oa idMap
+            | Some idMap -> IDTable.encode genID f oa idMap
 
         let decoder = decoder

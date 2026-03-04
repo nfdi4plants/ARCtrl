@@ -18,18 +18,6 @@ module PersonExtensions =
         member this.toJsonString(?spaces) =
             Person.toJsonString(?spaces=spaces) this
 
-        static member fromROCrateJsonString (s:string) = 
-            Decode.fromJsonString Person.ROCrate.decoder s
-
-        /// exports in json-ld format
-        static member toROCrateJsonString(?spaces) =
-            fun (obj:Person) ->
-                Person.ROCrate.encoder obj
-                |> Encode.toJsonString (Encode.defaultSpaces spaces)
-
-        member this.toROCrateJsonString(?spaces) =
-            Person.toROCrateJsonString(?spaces=spaces) this
-
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Person.ISAJson.decoder s
 

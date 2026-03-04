@@ -1,4 +1,4 @@
-﻿module Tests.Data
+module Tests.Data
 
 open TestingUtils
 open ARCtrl
@@ -33,14 +33,6 @@ let isa_tests = testList "ISAJson" [
     #endif
 ]
 
-let rocrate_tests = testList "RO-CrateJson" [
-    testCase "AllFields" <| fun _ ->
-        let d = Data("MyID","MyName",DataFile.RawDataFile,"text/csv","MySelector",ResizeArray [Comment.create("MyKey","MyValue")])
-        let json = Data.ROCrate.encoder d |> Encode.toJsonString 2
-        let d2 = Decode.fromJsonString Data.ROCrate.decoder json
-        Expect.equal d2 d "Different after write and read"
-    ]
-
 let compressed_tests =
     testList "CompressedJson" [
         testCase "AllFields" <| fun _ ->
@@ -54,6 +46,5 @@ let compressed_tests =
 let main = testList "Data" [
     basic_tests
     isa_tests
-    rocrate_tests
     compressed_tests
 ]

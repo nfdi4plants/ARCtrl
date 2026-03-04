@@ -32,18 +32,6 @@ module StudyExtensions =
         member this.ToCompressedJsonString(?spaces) = 
             ArcStudy.toCompressedJsonString(?spaces=spaces) this
 
-        static member fromROCrateJsonString (s:string) = 
-            Decode.fromJsonString Study.ROCrate.decoder s
-
-        /// exports in json-ld format
-        static member toROCrateJsonString(?assays: ArcAssay list, ?spaces) =
-            fun (obj:ArcStudy) ->
-                Study.ROCrate.encoder assays obj 
-                |> Encode.toJsonString (Encode.defaultSpaces spaces)
-
-        member this.ToROCrateJsonString(?assays,?spaces) = 
-            ArcStudy.toROCrateJsonString(?assays=assays,?spaces=spaces) this
-
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Study.ISAJson.decoder s
 

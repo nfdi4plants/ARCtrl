@@ -10,19 +10,14 @@ open System.IO
 
 module FactorValue =
     
-    module ROCrate =
-
-        let encoder : FactorValue -> IEncodable = 
-            PropertyValue.ROCrate.encoder
-
-        let decoder : Decoder<FactorValue> =
-            PropertyValue.ROCrate.decoder<FactorValue> (FactorValue.createAsPV)
+    let genID (fv : FactorValue) = 
+        match fv.Category,fv.Value,fv.Unit with
+        | Some t, Some v, Some u -> $"#Factor_{t.NameText}={v.Text}{u.NameText}"
+        | Some t, Some v, None-> $"#Factor_{t.NameText}={v.Text}"
+        | _ -> $"#EmptyFactor"
 
     module ISAJson = 
         
-        let genID (fv : FactorValue) = 
-            PropertyValue.ROCrate.genID fv
-
         let encoder (idMap : IDTable.IDTableWrite option) (fv : FactorValue) = 
             let f (fv : FactorValue) =
                 [

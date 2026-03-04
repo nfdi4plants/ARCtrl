@@ -85,81 +85,17 @@ module Investigation =
             ) 
         )
 
-    module ROCrate = 
-        let genID (i:ArcInvestigation) : string = 
-            "./"
-            // match i.ID with
-            // | Some id -> URI.toString id
-            // | None -> match i.FileName with
-            //           | Some n -> "#Study_" + n.Replace(" ","_")
-            //           | None -> match i.Identifier with
-            //                     | Some id -> "#Study_" + id.Replace(" ","_")
-            //                     | None -> match i.Title with
-            //                               | Some t -> "#Study_" + t.Replace(" ","_")
-            //                               | None -> "#EmptyStudy"
-
-        let encoder (oa : ArcInvestigation) = 
-            [
-                "@id", Encode.string (oa |> genID) |> Some
-                "@type", Encode.string "Investigation" |> Some
-                "additionalType", Encode.string "Investigation" |> Some
-                "identifier", Encode.string oa.Identifier |> Some
-                "filename", Encode.string ArcInvestigation.FileName |> Some
-                Encode.tryInclude "title" Encode.string oa.Title
-                Encode.tryInclude "description" Encode.string oa.Description
-                Encode.tryInclude "submissionDate" Encode.string oa.SubmissionDate
-                "publicReleaseDate", Encode.string (oa.PublicReleaseDate |> (Option.defaultValue (System.DateTime.Today.ToString "yyyy-MM-dd"))) |> Some
-                Encode.tryIncludeSeq "ontologySourceReferences" OntologySourceReference.ROCrate.encoder oa.OntologySourceReferences
-                Encode.tryIncludeSeq "publications" Publication.ROCrate.encoder oa.Publications
-                Encode.tryIncludeSeq "people" Person.ROCrate.encoder oa.Contacts
-                Encode.tryIncludeSeq "studies" (Study.ROCrate.encoder None) oa.Studies
-                Encode.tryIncludeSeq "comments" Comment.ROCrate.encoder oa.Comments
-                "@context", ROCrateContext.Investigation.context_jsonvalue |> Some
-            ]
-            |> Encode.choose
-            |> Encode.object
-
-
-        let decoder : Decoder<ArcInvestigation> =
-            Decode.object (fun get ->
-                let identifier = 
-                    match get.Optional.Field("identifier") Decode.string with
-                    | Some i -> i
-                    | None -> Identifier.createMissingIdentifier()
-                let studiesRaw, assaysRaw =
-                    get.Optional.Field "studies" (Decode.list Study.ROCrate.decoder)
-                    |> Option.defaultValue []
-                    |> List.unzip
-                let assays = assaysRaw |> Seq.concat |> Seq.distinctBy (fun a -> a.Identifier) |> ResizeArray 
-                let studies = ResizeArray(studiesRaw)
-                let studyIdentifiers = studiesRaw |> Seq.map (fun a -> a.Identifier) |> ResizeArray
-
-                ArcInvestigation(
-                    identifier,
-                    ?title = get.Optional.Field "title" Decode.string,
-                    ?description = get.Optional.Field "description" Decode.string,
-                    ?submissionDate = get.Optional.Field "submissionDate" Decode.string,
-                    ?publicReleaseDate = get.Optional.Field "publicReleaseDate" Decode.string,
-                    ?ontologySourceReferences = get.Optional.Field "ontologySourceReferences" (Decode.resizeArray OntologySourceReference.ROCrate.decoder),
-                    ?publications = get.Optional.Field "publications" (Decode.resizeArray Publication.ROCrate.decoder),
-                    ?contacts = get.Optional.Field "people" (Decode.resizeArray Person.ROCrate.decoder),
-                    assays = assays,
-                    studies = studies,
-                    registeredStudyIdentifiers = studyIdentifiers,
-                    ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.ROCrate.decoder)
-                )
-            )
-
-        let encodeRoCrate (oa : ArcInvestigation) = 
-            [
-                Encode.tryInclude "@type" Encode.string (Some "CreativeWork")
-                Encode.tryInclude "@id" Encode.string (Some "ro-crate-metadata.json")
-                Encode.tryInclude "about" encoder (Some oa)
-                "conformsTo", ROCrateContext.ROCrate.conformsTo_jsonvalue |> Some
-                "@context", ROCrateContext.ROCrate.context_jsonvalue |> Some
-                ]
-            |> Encode.choose
-            |> Encode.object
+    let genID (i:ArcInvestigation) : string = 
+        "./"
+        // match i.ID with
+        // | Some id -> URI.toString id
+        // | None -> match i.FileName with
+        //           | Some n -> "#Study_" + n.Replace(" ","_")
+        //           | None -> match i.Identifier with
+        //                     | Some id -> "#Study_" + id.Replace(" ","_")
+        //                     | None -> match i.Title with
+        //                               | Some t -> "#Study_" + t.Replace(" ","_")
+        //                               | None -> "#EmptyStudy"
 
     module ISAJson =
 
@@ -167,7 +103,7 @@ module Investigation =
 
         let encoder idMap (inv: ArcInvestigation) = 
             [
-                "@id", Encode.string (inv |> ROCrate.genID) |> Some
+                "@id", Encode.string (inv |> genID) |> Some
                 "filename", Encode.string ArcInvestigation.FileName |> Some
                 "identifier", Encode.string (inv.Identifier) |> Some
                 Encode.tryInclude "title" Encode.string (inv.Title)

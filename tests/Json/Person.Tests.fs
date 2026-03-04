@@ -1,4 +1,4 @@
-﻿module Tests.Person
+module Tests.Person
 
 open ARCtrl
 open ARCtrl.Process
@@ -91,18 +91,19 @@ let private tests_isa = testList "ISA" [
 ]
 
 let private tests_rocrate = testList "ROCrate" [
-    testCase "Write" <| fun _ ->
-        let person = create()
-        let actual = Person.toROCrateJsonString () person
-        let expected = TestObjects.Json.ROCrate.person
-        Expect.stringEqual actual expected ""
-    createBaseJsonTests 
-        ""
-        create
-        Person.toROCrateJsonString
-        Person.fromROCrateJsonString
-        None
-        None
+    ptestCase "Write" <| fun _ ->
+        ()
+        //let person = create()
+        //let actual = Person.toROCrateJsonString () person
+        //let expected = TestObjects.Json.ROCrate.person
+        //Expect.stringEqual actual expected ""
+    //createBaseJsonTests 
+    //    ""
+    //    create
+    //    Person.toROCrateJsonString
+    //    Person.fromROCrateJsonString
+    //    None
+    //    None
 ]
 
 let tests = testList "core" [

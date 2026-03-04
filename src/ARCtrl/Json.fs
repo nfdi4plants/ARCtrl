@@ -11,19 +11,19 @@ module JsonHelper =
     type OntologyAnnotationJson() =
         member _.fromJsonString (s: string) = OntologyAnnotation.fromJsonString s
         member _.fromISAJsonString (s: string) = OntologyAnnotation.fromISAJsonString s
-        member _.fromROCrateJsonString (s: string) = OntologyAnnotation.fromROCrateJsonString s
+        member _.fromROCrateJsonString (s: string) = LDNode.fromROCrateJsonString s |> ARCtrl.Conversion.BaseTypes.decomposeDefinedTerm
         member _.toJsonString (oa: OntologyAnnotation, ?spaces) = OntologyAnnotation.toJsonString(?spaces=spaces) oa
         member _.toISAJsonString (oa: OntologyAnnotation, ?spaces) = OntologyAnnotation.toISAJsonString(?spaces=spaces) oa
-        member _.toROCrateJsonString(oa: OntologyAnnotation, ?spaces) = OntologyAnnotation.toROCrateJsonString(?spaces=spaces) oa
+        member _.toROCrateJsonString(oa: OntologyAnnotation, ?spaces) = ARCtrl.Conversion.BaseTypes.composeDefinedTerm oa |> LDNode.toROCrateJsonString(?spaces=spaces)
 
     [<AttachMembers>]
     type PersonJson() =
         member _.fromJsonString (s: string) = Person.fromJsonString s
         member _.fromISAJsonString (s: string) = Person.fromISAJsonString s
-        member _.fromROCrateJsonString (s: string) = Person.fromROCrateJsonString s
+        member _.fromROCrateJsonString (s: string) = LDNode.fromROCrateJsonString s |> ARCtrl.Conversion.PersonConversion.decomposePerson
         member _.toJsonString (person: ARCtrl.Person, ?spaces) = Person.toJsonString(?spaces=spaces) person
         member _.toISAJsonString (person: ARCtrl.Person, ?spaces, ?useIDReferencing) = Person.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) person
-        member _.toROCrateJsonString(person: ARCtrl.Person, ?spaces) = ARCtrl.Person.toROCrateJsonString(?spaces=spaces) person
+        member _.toROCrateJsonString(person: ARCtrl.Person, ?spaces) = ARCtrl.Conversion.PersonConversion.composePerson person |> LDNode.toROCrateJsonString(?spaces=spaces)
 
     [<AttachMembers>]
     type DatamapJson() =
@@ -35,23 +35,22 @@ module JsonHelper =
         member _.fromJsonString (s: string) = ArcAssay.fromJsonString s
         member _.fromCompressedJsonString (s: string) = ArcAssay.fromCompressedJsonString s
         member _.fromISAJsonString (s: string) = ArcAssay.fromISAJsonString s
-        member _.fromROCrateJsonString (s: string) = ArcAssay.fromROCrateJsonString s
+        member _.fromROCrateJsonString (s: string) = LDNode.fromROCrateJsonString s |> ARCtrl.Conversion.AssayConversion.decomposeAssay
         member _.toJsonString (assay: ArcAssay, ?spaces) = ArcAssay.toJsonString(?spaces=spaces) assay
         member _.toCompressedJsonString (assay: ArcAssay,?spaces) = ArcAssay.toCompressedJsonString(?spaces=spaces) assay
         member _.toISAJsonString (assay: ArcAssay, ?spaces, ?useIDReferencing) = ArcAssay.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) assay
-        member _.toROCrateJsonString(assay: ArcAssay, studyName, ?spaces) = ArcAssay.toROCrateJsonString(studyName, ?spaces=spaces) assay
+        member _.toROCrateJsonString(assay: ArcAssay, ?spaces) = ARCtrl.Conversion.AssayConversion.composeAssay assay |> LDNode.toROCrateJsonString(?spaces=spaces)
 
     [<AttachMembers>]
     type StudyJson() =
         member _.fromJsonString (s: string) = ArcStudy.fromJsonString s
         member _.fromCompressedJsonString (s: string) = ArcStudy.fromCompressedJsonString s
         member _.fromISAJsonString (s: string) = ArcStudy.fromISAJsonString s
-        member _.fromROCrateJsonString (s: string) = ArcStudy.fromROCrateJsonString s
+        member _.fromROCrateJsonString (s: string) = LDNode.fromROCrateJsonString s |> ARCtrl.Conversion.StudyConversion.decomposeStudy
         member _.toJsonString (study: ArcStudy, ?spaces) = ArcStudy.toJsonString(?spaces=spaces) study
         member _.toCompressedJsonString (study: ArcStudy, ?spaces) = ArcStudy.toCompressedJsonString(?spaces=spaces) study
         member _.toISAJsonString (study: ArcStudy, ?assays,?spaces, ?useIDReferencing) = ArcStudy.toISAJsonString(?assays=assays,?spaces=spaces, ?useIDReferencing = useIDReferencing) study
-        member _.toROCrateJsonString(study: ArcStudy, ?assays,?spaces) = ArcStudy.toROCrateJsonString(?assays=assays,?spaces=spaces) study
-
+        member _.toROCrateJsonString(study: ArcStudy, ?assays,?spaces) = ARCtrl.Conversion.StudyConversion.composeStudy study |> LDNode.toROCrateJsonString(?spaces=spaces)
     [<AttachMembers>]
     type WorkflowJson() =
         member _.fromJsonString (s: string) = ArcWorkflow.fromJsonString s
@@ -71,11 +70,11 @@ module JsonHelper =
         member _.fromJsonString (s: string) = ArcInvestigation.fromJsonString s
         member _.fromCompressedJsonString (s: string) = ArcInvestigation.fromCompressedJsonString s
         member _.fromISAJsonString (s: string) = ArcInvestigation.fromISAJsonString s
-        //member _.fromROCrateJsonString (s: string) = ArcInvestigation.fromROCrateJsonString s
+        member _.fromROCrateJsonString (s: string) = LDNode.fromROCrateJsonString s |> ARCtrl.Conversion.InvestigationConversion.decomposeInvestigation
         member _.toJsonString (investigation: ArcInvestigation, ?spaces) = ArcInvestigation.toJsonString(?spaces=spaces) investigation
         member _.toCompressedJsonString (investigation: ArcInvestigation, ?spaces) = ArcInvestigation.toCompressedJsonString(?spaces=spaces) investigation
         member _.toISAJsonString (investigation: ArcInvestigation, ?spaces, ?useIDReferencing) = ArcInvestigation.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) investigation
-        //member _.toROCrateJsonString(investigation: ArcInvestigation, ?spaces) = ArcInvestigation.toROCrateJsonString(?spaces=spaces) investigation
+        member _.toROCrateJsonString(investigation: ArcInvestigation, ?spaces) = ARCtrl.Conversion.InvestigationConversion.composeInvestigation investigation |> LDNode.toROCrateJsonString(?spaces=spaces)
 
     [<AttachMembers>]
     type ARCJson() =

@@ -19,14 +19,3 @@ module DataExtensions =
 
         member this.toISAJsonString(?spaces, ?useIDReferencing) =
             Data.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) this
-
-        static member fromROCrateJsonString (s:string) =
-            Decode.fromJsonString Data.ROCrate.decoder s
-
-        static member toROCrateJsonString(?spaces) =
-            fun (f:Data) ->
-                Data.ROCrate.encoder f
-                |> Encode.toJsonString (Encode.defaultSpaces spaces)
-
-        member this.toROCrateJsonString(?spaces) =
-            Data.toROCrateJsonString(?spaces=spaces) this

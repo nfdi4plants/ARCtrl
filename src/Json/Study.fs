@@ -102,69 +102,12 @@ module Study =
             ) 
         )
 
-    module ROCrate = 
-
-        let genID (a:ArcStudy) : string = 
-            match a.Identifier with
-            | "" -> "#EmptyStudy"
-            | i -> 
-                let identifier = i.Replace(" ","_")
-                $"studies/{identifier}/"
-    
-        let encoder (assays: ArcAssay list option) (s : ArcStudy) = 
-            let fileName = Identifier.Study.tryFileNameFromIdentifier s.Identifier
-            let processes = s.GetProcesses()
-            let assays = Helper.getAssayInformation assays s
-            [
-                "@id", Encode.string (s |> genID) |> Some
-                "@type", (Encode.list [Encode.string "Study"])  |> Some
-                "additionalType", Encode.string "Study" |> Some
-                "identifier", Encode.string (s.Identifier) |> Some
-                Encode.tryInclude "filename" Encode.string fileName
-                Encode.tryInclude "title" Encode.string (s.Title)
-                Encode.tryInclude "description" Encode.string (s.Description)
-                Encode.tryIncludeSeq "studyDesignDescriptors" OntologyAnnotation.ROCrate.encoderDefinedTerm (s.StudyDesignDescriptors)
-                Encode.tryInclude "submissionDate" Encode.string (s.SubmissionDate)
-                Encode.tryInclude "publicReleaseDate" Encode.string (s.PublicReleaseDate)
-                Encode.tryIncludeSeq "publications" Publication.ROCrate.encoder s.Publications
-                Encode.tryIncludeSeq "people" Person.ROCrate.encoder s.Contacts
-                Encode.tryIncludeList "processSequence" (Process.ROCrate.encoder (Some s.Identifier) None) processes
-                Encode.tryIncludeSeq "assays" (Assay.ROCrate.encoder (Some s.Identifier)) assays 
-                Encode.tryIncludeList "dataFiles" Data.ROCrate.encoder (ARCtrl.Process.ProcessSequence.getData processes)        
-                Encode.tryIncludeSeq "comments" Comment.ROCrate.encoder s.Comments
-                "@context", ROCrateContext.Study.context_jsonvalue |> Some
-            ]
-            |> Encode.choose
-            |> Encode.object
-
-        let decoder : Decoder<ArcStudy*ArcAssay list> =
-            Decode.object (fun get ->             
-                let identifier = 
-                    get.Optional.Field "filename" Decode.string
-                    |> Option.bind Identifier.Study.tryIdentifierFromFileName
-                    |> Option.defaultValue (Identifier.createMissingIdentifier())
-                let assays = 
-                    get.Optional.Field "assays" (Decode.list Assay.ROCrate.decoder)
-                let assayIdentifiers = 
-                    assays 
-                    |> Option.map (List.map (fun a -> a.Identifier) >> ResizeArray)
-                let tables = 
-                    get.Optional.Field "processSequence" (Decode.list Process.ROCrate.decoder)
-                    |> Option.map (fun ps -> ArcTables.fromProcesses(ps).Tables)
-                ArcStudy(
-                    identifier,
-                    ?title = get.Optional.Field "title" Decode.string,
-                    ?description = get.Optional.Field "description" Decode.string,
-                    ?submissionDate = get.Optional.Field "submissionDate" Decode.string,
-                    ?publicReleaseDate = get.Optional.Field "publicReleaseDate" Decode.string,
-                    ?publications = get.Optional.Field "publications" (Decode.resizeArray Publication.ROCrate.decoder),
-                    ?contacts = get.Optional.Field "people" (Decode.resizeArray Person.ROCrate.decoder),
-                    ?studyDesignDescriptors = get.Optional.Field "studyDesignDescriptors" (Decode.resizeArray OntologyAnnotation.ROCrate.decoderDefinedTerm),
-                    ?tables = tables,
-                    ?registeredAssayIdentifiers = assayIdentifiers,
-                    ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.ROCrate.decoder)
-                ), assays |> Option.defaultValue [] 
-            )
+    let genID (a:ArcStudy) : string = 
+        match a.Identifier with
+        | "" -> "#EmptyStudy"
+        | i -> 
+            let identifier = i.Replace(" ","_")
+            $"studies/{identifier}/"
 
     module ISAJson =
 
@@ -206,7 +149,7 @@ module Study =
                     ProcessSequence.getProtocols processes
                     |> Encode.tryIncludeList "protocols" (Protocol.ISAJson.encoder (Some s.Identifier) None None idMap)
                 [
-                    "@id", Encode.string (study |> ROCrate.genID) |> Some
+                    "@id", Encode.string (study |> genID) |> Some
                     "filename", Encode.string fileName |> Some
                     "identifier", Encode.string study.Identifier |> Some
                     Encode.tryInclude "title" Encode.string study.Title
@@ -229,7 +172,7 @@ module Study =
                 |> Encode.object
             match idMap with
             | None -> f s
-            | Some idMap -> IDTable.encode (fun s -> ROCrate.genID s) f s idMap
+            | Some idMap -> IDTable.encode (fun s -> genID s) f s idMap
 
         let allowedFields = ["@id";"filename";"identifier";"title";"description";"submissionDate";"publicReleaseDate";"publications";"people";"studyDesignDescriptors";"protocols";"materials";"assays";"factors";"characteristicCategories";"unitCategories";"processSequence";"comments";"@type"; "@context"]
         

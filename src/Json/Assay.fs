@@ -77,61 +77,13 @@ module Assay =
             ) 
         )
 
-    module ROCrate =
-        
-        let genID (a:ArcAssay) : string = 
-            match a.Identifier with
-            | "" -> "#EmptyAssay"
-            | i -> 
-                let identifier = i.Replace(" ","_")
-                $"assays/{identifier}/"
+    let genID (a:ArcAssay) : string = 
+        match a.Identifier with
+        | "" -> "#EmptyAssay"
+        | i -> 
+            let identifier = i.Replace(" ","_")
+            $"assays/{identifier}/"
 
-        let encoder (assayName:string Option) (a : ArcAssay) = 
-            let fileName = Identifier.Assay.fileNameFromIdentifier a.Identifier
-            let processes = a.GetProcesses()
-            let dataFiles = ProcessSequence.getData processes
-
-            [
-                "@id", Encode.string (a |> genID) |> Some
-                "@type", (Encode.list [ Encode.string "Assay"]) |> Some
-                "additionalType", Encode.string "Assay" |> Some
-                "identifier", Encode.string a.Identifier |> Some
-                "filename", Encode.string fileName |> Some
-                Encode.tryInclude "title" Encode.string a.Title
-                Encode.tryInclude "description" Encode.string a.Description
-                Encode.tryInclude "measurementType" OntologyAnnotation.ROCrate.encoderPropertyValue a.MeasurementType
-                Encode.tryInclude "technologyType" OntologyAnnotation.ROCrate.encoderDefinedTerm a.TechnologyType
-                Encode.tryInclude "technologyPlatform" OntologyAnnotation.ROCrate.encoderDefinedTerm a.TechnologyPlatform
-                Encode.tryIncludeSeq "performers" Person.ROCrate.encoder a.Performers
-                Encode.tryIncludeList "dataFiles" Data.ROCrate.encoder dataFiles
-                Encode.tryIncludeList "processSequence" (Process.ROCrate.encoder assayName (Some a.Identifier)) processes
-                Encode.tryIncludeSeq "comments" Comment.ROCrate.encoder a.Comments
-                "@context", ROCrateContext.Assay.context_jsonvalue |> Some
-            ]
-            |> Encode.choose
-            |> Encode.object
-
-        let decoder : Decoder<ArcAssay> =
-            Decode.object (fun get ->               
-                let identifier = 
-                    get.Optional.Field "identifier" Decode.string
-                    |> Option.defaultValue (Identifier.createMissingIdentifier())
-                let tables = 
-                    get.Optional.Field "processSequence" (Decode.list Process.ROCrate.decoder)
-                    |> Option.map (ArcTables.fromProcesses >> (fun a -> a.Tables))
-                ArcAssay(
-                    identifier,
-                    ?title = get.Optional.Field "title" Decode.string,
-                    ?description = get.Optional.Field "description" Decode.string,
-                    ?measurementType = get.Optional.Field "measurementType" OntologyAnnotation.ROCrate.decoderPropertyValue,
-                    ?technologyType = get.Optional.Field "technologyType" OntologyAnnotation.ROCrate.decoderDefinedTerm,
-                    ?technologyPlatform = get.Optional.Field "technologyPlatform" OntologyAnnotation.ROCrate.decoderDefinedTerm,
-                    ?tables = tables,
-                    ?performers = get.Optional.Field "performers" (Decode.resizeArray Person.ROCrate.decoder),
-                    ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.ROCrate.decoder)
-                )
-            )
-            
     module ISAJson = 
 
         let encoder (studyName:string Option) idMap (a : ArcAssay) = 
@@ -161,7 +113,7 @@ module Assay =
                     ]
                 [
                     "filename", Encode.string fileName |> Some
-                    Encode.tryInclude "@id" Encode.string (ROCrate.genID a |> Some)
+                    Encode.tryInclude "@id" Encode.string (genID a |> Some)
                     Encode.tryInclude "measurementType" (OntologyAnnotation.ISAJson.encoder idMap) a.MeasurementType
                     Encode.tryInclude "technologyType" (OntologyAnnotation.ISAJson.encoder idMap) a.TechnologyType
                     Encode.tryInclude "technologyPlatform" Encode.string (a.TechnologyPlatform |> Option.map Conversion.JsonTypes.composeTechnologyPlatform)
@@ -176,7 +128,7 @@ module Assay =
                 |> Encode.object
             match idMap with
             | None -> f a
-            | Some idMap -> IDTable.encode ROCrate.genID f a idMap
+            | Some idMap -> IDTable.encode genID f a idMap
 
         let allowedFields = ["@id";"filename";"measurementType";"technologyType";"technologyPlatform";"dataFiles";"materials";"characteristicCategories";"unitCategories";"processSequence";"comments";"@type"; "@context"]
 

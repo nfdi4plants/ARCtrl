@@ -8,18 +8,13 @@ open System.IO
 
 module MaterialAttributeValue =
 
-    module ROCrate =
-
-        let encoder : MaterialAttributeValue -> IEncodable = 
-            PropertyValue.ROCrate.encoder
-
-        let decoder : Decoder<MaterialAttributeValue> =
-            PropertyValue.ROCrate.decoder<MaterialAttributeValue> (MaterialAttributeValue.createAsPV)
-
     module ISAJson =
         
-        let genID (oa : MaterialAttributeValue) = 
-            PropertyValue.ROCrate.genID oa
+        let genID (mv : MaterialAttributeValue) = 
+            match mv.Category,mv.Value,mv.Unit with
+            | Some t, Some v, Some u -> $"#Characteristic_{t.NameText}={v.Text}{u.NameText}"
+            | Some t, Some v, None-> $"#Characteristic_{t.NameText}={v.Text}"
+            | _ -> $"#EmptyCharacteristic"
 
         let encoder (idMap : IDTable.IDTableWrite option) (oa : MaterialAttributeValue) = 
             let f (oa : MaterialAttributeValue) =

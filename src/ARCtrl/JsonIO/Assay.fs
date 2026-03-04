@@ -31,18 +31,6 @@ module AssayExtensions =
         member this.ToCompressedJsonString(?spaces) = 
             ArcAssay.toCompressedJsonString(?spaces=spaces) this
 
-        static member fromROCrateJsonString (s:string) = 
-            Decode.fromJsonString Assay.ROCrate.decoder s
-
-        /// exports in json-ld format
-        static member toROCrateJsonString(?studyName, ?spaces) =
-            fun (obj: ArcAssay) ->
-                Assay.ROCrate.encoder studyName obj
-                |> Encode.toJsonString (Encode.defaultSpaces spaces)
-
-        member this.ToROCrateJsonString(?studyName, ?spaces) = 
-            ArcAssay.toROCrateJsonString(?studyName=studyName, ?spaces=spaces) this
-
         static member toISAJsonString(?spaces, ?useIDReferencing) =
             let useIDReferencing = Option.defaultValue false useIDReferencing
             let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None

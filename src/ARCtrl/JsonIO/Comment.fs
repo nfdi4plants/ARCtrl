@@ -17,18 +17,6 @@ module CommentExtensions =
         member this.toJsonString(?spaces) = 
             Comment.toJsonString(?spaces=spaces) this
 
-        static member fromROCrateJsonString (s:string) = 
-            Decode.fromJsonString Comment.ROCrate.decoder s
-
-        /// exports in json-ld format
-        static member toROCrateJsonString(?spaces) =
-            fun (c:Comment) ->
-                Comment.ROCrate.encoder c
-                |> Encode.toJsonString (Encode.defaultSpaces spaces)
-
-        member this.toROCrateJsonString(?spaces) = 
-            Comment.toROCrateJsonString(?spaces=spaces) this
-
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Comment.ISAJson.decoder s
 

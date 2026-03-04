@@ -19,14 +19,3 @@ module MaterialExtensions =
 
         member this.ToISAJsonString(?spaces, ?useIDReferencing) =
             Material.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) this
-
-        static member fromROCrateJsonString (s:string) =
-            Decode.fromJsonString Material.ROCrate.decoder s
-
-        static member toROCrateJsonString(?spaces) =
-            fun (f:Material) ->
-                Material.ROCrate.encoder f
-                |> Encode.toJsonString (Encode.defaultSpaces spaces)
-
-        member this.ToROCrateJsonString(?spaces) =
-            Material.toROCrateJsonString(?spaces=spaces) this

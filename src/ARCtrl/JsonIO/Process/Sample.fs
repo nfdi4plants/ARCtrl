@@ -19,14 +19,3 @@ module SampleExtensions =
 
         member this.ToISAJsonString(?spaces, ?useIDReferencing) =
             Sample.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) this
-
-        static member fromROCrateString (s:string) =
-            Decode.fromJsonString Sample.ROCrate.decoder s
-
-        static member toROCrateString(?spaces) =
-            fun (f:Sample) ->
-                Sample.ROCrate.encoder f
-                |> Encode.toJsonString (Encode.defaultSpaces spaces)
-
-        member this.ToROCrateString(?spaces) =
-            Sample.toROCrateString(?spaces=spaces) this

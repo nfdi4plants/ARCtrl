@@ -8,26 +8,6 @@ open ARCtrl.Process
 /// Functions for handling the ProcessInput Type
 module ProcessInput =
 
-    module ROCrate = 
-        let encoder (value : ProcessInput) = 
-            match value with
-            | ProcessInput.Source s-> 
-                Source.ROCrate.encoder s
-            | ProcessInput.Sample s -> 
-                Sample.ROCrate.encoder s
-            | ProcessInput.Data d -> 
-                Data.ROCrate.encoder d
-            | ProcessInput.Material m -> 
-                Material.ROCrate.encoder m
-
-        let decoder : Decoder<ProcessInput> =
-            Decode.oneOf [
-                Decode.map ProcessInput.Sample Sample.ROCrate.decoder
-                Decode.map ProcessInput.Source Source.ROCrate.decoder
-                Decode.map ProcessInput.Data Data.ROCrate.decoder
-                Decode.map ProcessInput.Material Material.ROCrate.decoder
-            ]
-
     module ISAJson =
 
         let encoder idMap (value : ProcessInput) = 

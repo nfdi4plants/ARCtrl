@@ -10,16 +10,16 @@ open System.IO
 
 module Factor =  
 
-    module ISAJson = 
+    let genID (f : Factor) = 
+        match f.Name with
+        | Some name -> $"#Factor/{name}"
+        | None -> 
+            match f.FactorType with
+            | Some factorType -> 
+                $"#Factor/{OntologyAnnotation.genID factorType}"
+            | None -> "#EmptyFactor"
 
-        let genID (f : Factor) = 
-            match f.Name with
-            | Some name -> $"#Factor/{name}"
-            | None -> 
-                match f.FactorType with
-                | Some factorType -> 
-                    $"#Factor/{OntologyAnnotation.ROCrate.genID factorType}"
-                | None -> "#EmptyFactor"
+    module ISAJson = 
 
         let encoder (idMap : IDTable.IDTableWrite option) (value : Factor) = 
             let f (value : Factor) =

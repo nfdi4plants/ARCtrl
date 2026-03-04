@@ -65,41 +65,13 @@ module Data =
             )
         )
 
-    module ROCrate =
 
-        let genID (d:Data) : string = 
-            match d.ID with
-            | Some id -> URI.toString id
-            | None -> match d.Name with
-                      | Some n -> n.Replace(" ","_")
-                      | None -> "#EmptyData"
-    
-        let encoder (oa : Data) = 
-            [
-                "@id", Encode.string (oa |> genID) |> Some           
-                "@type", (Encode.list [Encode.string "Data"]) |> Some
-                Encode.tryInclude "name" Encode.string (oa.Name)
-                Encode.tryInclude "type" DataFile.ROCrate.encoder oa.DataType
-                Encode.tryInclude "encodingFormat" Encode.string oa.Format
-                Encode.tryInclude "usageInfo" Encode.string oa.SelectorFormat
-                Encode.tryIncludeSeq "comments" Comment.ROCrate.encoder oa.Comments
-                "@context", ROCrateContext.Data.context_jsonvalue |> Some
-            ]
-            |> Encode.choose
-            |> Encode.object
-
-        let decoder : Decoder<Data> =
-            Decode.object (fun get ->
-                Data(
-                    ?id = get.Optional.Field "@id" Decode.uri,
-                    ?name = get.Optional.Field "name" Decode.string,
-                    ?dataType = get.Optional.Field "type" DataFile.ROCrate.decoder,
-                    ?format = get.Optional.Field "encodingFormat" Decode.string,
-                    ?selectorFormat = get.Optional.Field "usageInfo" Decode.uri,
-                    ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.ROCrate.decoder)
-                )
-            
-            )
+    let genID (d:Data) : string = 
+        match d.ID with
+        | Some id -> URI.toString id
+        | None -> match d.Name with
+                    | Some n -> n.Replace(" ","_")
+                    | None -> "#EmptyData"
 
 
     module ISAJson =
@@ -107,7 +79,7 @@ module Data =
         let encoder (idMap : IDTable.IDTableWrite option) (oa : Data) = 
             let f (oa : Data) =
                 [
-                    Encode.tryInclude "@id" Encode.string (oa |> ROCrate.genID |> Some)
+                    Encode.tryInclude "@id" Encode.string (oa |> genID |> Some)
                     Encode.tryInclude "name" Encode.string oa.Name
                     Encode.tryInclude "type" DataFile.ISAJson.encoder oa.DataType
                     Encode.tryIncludeSeq "comments" (Comment.ISAJson.encoder idMap) oa.Comments
@@ -116,7 +88,7 @@ module Data =
                 |> Encode.object
             match idMap with
             | None -> f oa
-            | Some idMap -> IDTable.encode ROCrate.genID f oa idMap
+            | Some idMap -> IDTable.encode genID f oa idMap
 
         let allowedFields = ["@id";"name";"type";"comments";"@type"; "@context"]
 

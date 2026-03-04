@@ -19,14 +19,3 @@ module ProcessOutputExtensions =
 
         member this.toISAJsonString(?spaces, ?useIDReferencing) = 
             ProcessOutput.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) this
-
-        static member fromROCrateJsonString (s:string) =
-            Decode.fromJsonString ProcessOutput.ROCrate.decoder s
-
-        static member toROCrateJsonString(?spaces) =
-            fun (f:ProcessOutput) ->
-                ProcessOutput.ROCrate.encoder f
-                |> Encode.toJsonString (Encode.defaultSpaces spaces)
-
-        member this.toROCrateJsonString(?spaces) =
-            ProcessOutput.toROCrateJsonString(?spaces=spaces) this

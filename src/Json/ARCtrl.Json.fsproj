@@ -8,30 +8,6 @@
   <Import Project="../Package.Metadata.props" />
   
   <ItemGroup>
-    <Compile Include="context\rocrate\property_value_context.fs" />
-    <Compile Include="context\rocrate\isa_assay_context.fs" />
-    <Compile Include="context\rocrate\isa_comment_context.fs" />
-    <Compile Include="context\rocrate\isa_component_context.fs" />
-    <Compile Include="context\rocrate\isa_data_context.fs" />
-    <Compile Include="context\rocrate\isa_factor_context.fs" />
-    <Compile Include="context\rocrate\isa_factor_value_context.fs" />
-    <Compile Include="context\rocrate\isa_investigation_context.fs" />
-    <Compile Include="context\rocrate\isa_material_attribute_context.fs" />
-    <Compile Include="context\rocrate\isa_material_attribute_value_context.fs" />
-    <Compile Include="context\rocrate\isa_material_context.fs" />
-    <Compile Include="context\rocrate\isa_ontology_annotation_context.fs" />
-    <Compile Include="context\rocrate\isa_ontology_source_reference_context.fs" />
-    <Compile Include="context\rocrate\isa_organization_context.fs" />
-    <Compile Include="context\rocrate\isa_person_context.fs" />
-    <Compile Include="context\rocrate\isa_process_context.fs" />
-    <Compile Include="context\rocrate\isa_process_parameter_value_context.fs" />
-    <Compile Include="context\rocrate\isa_protocol_context.fs" />
-    <Compile Include="context\rocrate\isa_protocol_parameter_context.fs" />
-    <Compile Include="context\rocrate\isa_publication_context.fs" />
-    <Compile Include="context\rocrate\isa_sample_context.fs" />
-    <Compile Include="context\rocrate\isa_source_context.fs" />
-    <Compile Include="context\rocrate\isa_study_context.fs" />
-    <Compile Include="context\rocrate\rocrate_context.fs" />
     <Compile Include="ConverterOptions.fs" />
     <Compile Include="Decode.fs" />
     <Compile Include="Encode.fs" />
@@ -44,7 +20,6 @@
     <Compile Include="StringTable.fs" />
     <Compile Include="Comment.fs" />
     <Compile Include="OntologyAnnotation.fs" />
-    <Compile Include="PropertyValue.fs" />
     <Compile Include="OntologySourceReference.fs" />
     <Compile Include="DataFile.fs" />
     <Compile Include="Data.fs" />

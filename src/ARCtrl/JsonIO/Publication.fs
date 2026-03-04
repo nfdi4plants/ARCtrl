@@ -18,18 +18,6 @@ module PublicationExtensions =
         member this.ToJsonString(?spaces) =
             Publication.toJsonString(?spaces=spaces) this
 
-        static member fromROCrateJsonString (s:string) = 
-            Decode.fromJsonString Publication.ROCrate.decoder s
-
-        /// exports in json-ld format
-        static member toROCrateJsonString(?spaces) =
-            fun (obj:Publication) ->
-                Publication.ROCrate.encoder obj
-                |> Encode.toJsonString (Encode.defaultSpaces spaces)
-
-        member this.ToROCrateJsonString(?spaces) =
-            Publication.toROCrateJsonString(?spaces=spaces) this
-
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Publication.ISAJson.decoder s
        

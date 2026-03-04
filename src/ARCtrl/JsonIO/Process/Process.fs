@@ -19,14 +19,3 @@ module ProcessExtensions =
 
         member this.ToISAJsonString(?spaces,?useIDReferencing) =
             Process.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) this
-
-        static member fromROCrateString (s:string) =
-            Decode.fromJsonString Process.ROCrate.decoder s
-
-        static member toROCrateString(?studyName:string,?assayName:string,?spaces) =
-            fun (f:Process) ->
-                Process.ROCrate.encoder studyName assayName f
-                |> Encode.toJsonString (Encode.defaultSpaces spaces)
-
-        member this.ToROCrateString(?studyName:string,?assayName:string,?spaces) =
-            Process.toROCrateString(?studyName=studyName,?assayName=assayName,?spaces=spaces) this

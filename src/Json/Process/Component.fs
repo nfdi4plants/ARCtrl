@@ -25,19 +25,15 @@ module Component =
                 ComponentUnit = get.Optional.Field "unit" OntologyAnnotation.decoder
             }
         )
-
-    module ROCrate =
-
-        let encoder : Component -> IEncodable = 
-            PropertyValue.ROCrate.encoder
-
-        let decoder : Decoder<Component> =
-            PropertyValue.ROCrate.decoder<Component> (Component.createAsPV)
     
     module ISAJson =
 
         let genID (c : Component) = 
-            PropertyValue.ROCrate.genID c
+            match c.ComponentType,c.ComponentValue,c.ComponentUnit with
+            | Some t, Some v, Some u -> $"#Component_{t.NameText}={v.Text}{u.NameText}"
+            | Some t, Some v, None-> $"#Component_{t.NameText}={v.Text}"
+            | _ -> $"#EmptyComponent"
+
 
         let encoder (idMap : IDTable.IDTableWrite option) (c : Component) = 
             [

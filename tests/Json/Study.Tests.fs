@@ -98,8 +98,8 @@ let private test_roCrateEmpty =
     createBaseJsonTests
         "ROCrate-empty"
         create_empty
-        (fun () (s) -> ArcStudy.toROCrateJsonString [] s)
-        (ArcStudy.fromROCrateJsonString >> fun (s,_) -> s)
+        (fun () -> JsonController.Study.toROCrateJsonString)
+        JsonController.Study.fromROCrateJsonString
         None
         compareFields
 
@@ -223,8 +223,8 @@ let private test_roCrate =
     createBaseJsonTests
         "ROCrate"
         create_filled
-        ArcStudy.toROCrateJsonString
-        (ArcStudy.fromROCrateJsonString >> fun (s,_) -> s)
+        (fun () -> JsonController.Study.toROCrateJsonString)
+        JsonController.Study.fromROCrateJsonString
         None
         compareFields
 

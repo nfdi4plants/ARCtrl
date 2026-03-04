@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
@@ -16,15 +16,5 @@ type ProcessSequence =
         fun (f:Process list) ->
             f
             |> List.map (Process.ISAJson.encoder None None idMap)
-            |> Encode.list
-            |> Encode.toJsonString (Encode.defaultSpaces spaces)
-
-    static member fromROCrateJsonString (s:string) =
-        Decode.fromJsonString (Decode.list Process.ROCrate.decoder) s
-
-    static member toROCrateJsonString (?studyName : string, ?assayName : string , ?spaces) =
-        fun (f:Process list) ->
-            f
-            |> List.map (Process.ROCrate.encoder studyName assayName)
             |> Encode.list
             |> Encode.toJsonString (Encode.defaultSpaces spaces)

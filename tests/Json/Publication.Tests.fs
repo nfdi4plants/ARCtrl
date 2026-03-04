@@ -1,4 +1,4 @@
-﻿module Tests.Publication
+module Tests.Publication
 
 open ARCtrl
 open ARCtrl.Process
@@ -75,21 +75,6 @@ let tests_isa = testList "isa" [
         Expect.stringEqual actual expected "Written Publication file does not match read publication file"
 ]
 
-let tests_rocrate = testList "rocrate" [
-    testCase "Write" <| fun _ ->
-        let publication = create()
-        let actual = Publication.toROCrateJsonString () publication
-        let expected = TestObjects.Json.ROCrate.publication
-        Expect.stringEqual actual expected ""
-    createBaseJsonTests
-        ""
-        create
-        Publication.toROCrateJsonString
-        Publication.fromROCrateJsonString
-        None
-        compareFields
-]
-
 let tests = 
     createBaseJsonTests
         ""
@@ -102,5 +87,4 @@ let tests =
 let main = testList "Publication" [
     tests
     tests_isa
-    tests_rocrate
 ]

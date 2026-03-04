@@ -7,68 +7,28 @@ open ARCtrl.Process
 
 module Protocol =   
     
-    module ROCrate =
-
-        let genID (studyName:string Option) (assayName:string Option) (processName:string Option) (p:Protocol): string = 
-            match p.ID with
-            | Some id when id <> "" -> id
-            | _ ->
-                match p.Uri with
-                | Some u -> u
+    let genID (studyName:string Option) (assayName:string Option) (processName:string Option) (p:Protocol): string = 
+        match p.ID with
+        | Some id when id <> "" -> id
+        | _ ->
+            match p.Uri with
+            | Some u -> u
+            | None -> 
+                match p.Name with
+                | Some n -> "#Protocol_" + n.Replace(" ","_")
                 | None -> 
-                    match p.Name with
-                    | Some n -> "#Protocol_" + n.Replace(" ","_")
-                    | None -> 
-                        match (studyName,assayName,processName) with
-                        | (Some sn, Some an, Some pn) -> "#Protocol_" + sn.Replace(" ","_") + "_" + an.Replace(" ","_") + "_" + pn.Replace(" ","_")
-                        | (Some sn, None, Some pn) -> "#Protocol_" + sn.Replace(" ","_") + "_" + pn.Replace(" ","_")
-                        | (None, None, Some pn) -> "#Protocol_" + pn.Replace(" ","_")
-                        | _ -> "#EmptyProtocol" 
-
-        let encoder (studyName:string Option) (assayName:string Option) (processName:string Option) (oa : Protocol) = 
-            [
-                "@id", Encode.string (genID studyName assayName processName oa) |> Some
-                "@type", (Encode.list [Encode.string "Protocol"]) |> Some
-                Encode.tryInclude "name" Encode.string (oa.Name)
-                Encode.tryInclude "protocolType" OntologyAnnotation.ROCrate.encoderDefinedTerm (oa.ProtocolType)
-                Encode.tryInclude "description" Encode.string (oa.Description)
-                Encode.tryInclude "uri" Encode.string (oa.Uri)
-                Encode.tryInclude "version" Encode.string (oa.Version)
-                Encode.tryIncludeListOpt "components" Component.ROCrate.encoder oa.Components
-                Encode.tryIncludeListOpt "comments" Comment.ROCrate.encoder oa.Comments
-                "@context", ROCrateContext.Protocol.context_jsonvalue |> Some
-            ]
-            |> Encode.choose
-            |> Encode.object
-
-        let decoder : Decoder<Protocol> =
-            
-            Decode.object (fun get ->
-                let components = 
-                    get.Optional.Field "components" (Decode.list Component.ROCrate.decoder) |> Option.defaultValue List.empty
-                    |> List.append (get.Optional.Field "reagents" (Decode.list Component.ROCrate.decoder) |> Option.defaultValue List.empty)
-                    |> List.append (get.Optional.Field "computationalTools" (Decode.list Component.ROCrate.decoder) |> Option.defaultValue List.empty)
-                    |> Helper.Option.fromValueWithDefault []
-
-                {
-                    ID = get.Optional.Field "@id" Decode.uri
-                    Name = get.Optional.Field "name" Decode.string
-                    ProtocolType = get.Optional.Field "protocolType" OntologyAnnotation.ROCrate.decoderDefinedTerm
-                    Description = get.Optional.Field "description" Decode.string
-                    Uri = get.Optional.Field "uri" Decode.uri
-                    Parameters = None
-                    Version = get.Optional.Field "version" Decode.string
-                    Components = components
-                    Comments = get.Optional.Field "comments" (Decode.list Comment.ROCrate.decoder)
-                }
-            )
+                    match (studyName,assayName,processName) with
+                    | (Some sn, Some an, Some pn) -> "#Protocol_" + sn.Replace(" ","_") + "_" + an.Replace(" ","_") + "_" + pn.Replace(" ","_")
+                    | (Some sn, None, Some pn) -> "#Protocol_" + sn.Replace(" ","_") + "_" + pn.Replace(" ","_")
+                    | (None, None, Some pn) -> "#Protocol_" + pn.Replace(" ","_")
+                    | _ -> "#EmptyProtocol" 
 
     module ISAJson =
 
         let encoder (studyName:string Option) (assayName:string Option) (processName:string Option) (idMap : IDTable.IDTableWrite option) (oa : Protocol) = 
             let f (oa : Protocol) =
                 [
-                    Encode.tryInclude "@id" Encode.string (oa |> ROCrate.genID studyName assayName processName |> Some)
+                    Encode.tryInclude "@id" Encode.string (oa |> genID studyName assayName processName |> Some)
                     Encode.tryInclude "name" Encode.string (oa.Name)
                     Encode.tryInclude "protocolType" (OntologyAnnotation.ISAJson.encoder idMap) (oa.ProtocolType)
                     Encode.tryInclude "description" Encode.string (oa.Description)
@@ -82,7 +42,7 @@ module Protocol =
                 |> Encode.object
             match idMap with
             | None -> f oa
-            | Some idMap -> IDTable.encode (ROCrate.genID studyName assayName processName) f oa idMap
+            | Some idMap -> IDTable.encode (genID studyName assayName processName) f oa idMap
 
         let decoder: Decoder<Protocol> =
             Decode.object (fun get ->

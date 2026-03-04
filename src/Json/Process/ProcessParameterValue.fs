@@ -7,18 +7,13 @@ open ARCtrl.Process
 
 module ProcessParameterValue =
     
-    module ROCrate =
-
-        let encoder : ProcessParameterValue -> IEncodable = 
-            PropertyValue.ROCrate.encoder
-
-        let decoder : Decoder<ProcessParameterValue> =
-            PropertyValue.ROCrate.decoder<ProcessParameterValue> (ProcessParameterValue.createAsPV)
+    let genID (pv : ProcessParameterValue) = 
+        match pv.Category,pv.Value,pv.Unit with
+        | Some t, Some v, Some u -> $"#Parameter_{t.NameText}={v.Text}{u.NameText}"
+        | Some t, Some v, None-> $"#Parameter_{t.NameText}={v.Text}"
+        | _ -> $"#EmptyParameter"
 
     module ISAJson =
-
-        let genID (oa : ProcessParameterValue) = 
-            failwith "Not implemented"
 
         let encoder (idMap : IDTable.IDTableWrite option) (oa : ProcessParameterValue) = 
             [

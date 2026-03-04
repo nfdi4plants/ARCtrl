@@ -17,18 +17,6 @@ module OntologyAnnotationExtensions =
         member this.ToJsonString(?spaces) =
             OntologyAnnotation.toJsonString(?spaces=spaces) this
 
-        static member fromROCrateJsonString (s:string) = 
-            Decode.fromJsonString OntologyAnnotation.ROCrate.decoderDefinedTerm s
-
-        /// exports in json-ld format
-        static member toROCrateJsonString(?spaces) =
-            fun (obj:OntologyAnnotation) ->
-                OntologyAnnotation.ROCrate.encoderDefinedTerm obj
-                |> Encode.toJsonString (Encode.defaultSpaces spaces)
-
-        member this.ToROCrateJsonString(?spaces) =
-            OntologyAnnotation.toROCrateJsonString(?spaces=spaces) this
-
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString OntologyAnnotation.ISAJson.decoder s
 

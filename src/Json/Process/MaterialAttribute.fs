@@ -8,13 +8,13 @@ open ARCtrl.Process
 
 module MaterialAttribute = 
     
-    module ISAJson = 
+    let genID (m : MaterialAttribute) = 
+        match m.CharacteristicType with
+        | Some mType -> 
+            $"#MaterialAttribute/{OntologyAnnotation.genID mType}"
+        | None -> "#EmptyFactor"
 
-        let genID (m : MaterialAttribute) = 
-            match m.CharacteristicType with
-            | Some mType -> 
-                $"#MaterialAttribute/{OntologyAnnotation.ROCrate.genID mType}"
-            | None -> "#EmptyFactor"
+    module ISAJson = 
 
         let encoder (idMap : IDTable.IDTableWrite option) (value : MaterialAttribute) = 
             let f (value : MaterialAttribute) =
