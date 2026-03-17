@@ -49,6 +49,18 @@ let testCWLToolDescriptionDecode =
             let intent = Expect.wantSome decoded.Intent "Intent should decode on CommandLineTool."
             Expect.sequenceEqual intent (ResizeArray [|"classification"; "quality-control"|]) ""
             Expect.isNone decoded.Metadata "Intent should not be captured as overflow metadata."
+        testCase "typed id decodes and roundtrips for command line tool" <| fun _ ->
+            let yaml = """cwlVersion: v1.2
+class: CommandLineTool
+id: tool-1
+baseCommand: echo
+inputs: {}
+outputs: {}"""
+            let decoded = Decode.decodeCommandLineTool yaml
+            let encoded = Encode.encodeToolDescription decoded
+            let roundTripped = Decode.decodeCommandLineTool encoded
+            Expect.equal decoded.Id (Some "tool-1") "Tool id should decode as typed field."
+            Expect.equal roundTripped.Id decoded.Id "Tool id should roundtrip."
         testList "Hints" [
             let hintsItem = decodeCWLToolDescription.Hints
             testCase "DockerRequirement" <| fun _ ->
@@ -385,6 +397,18 @@ let testExpressionTool =
             let roundTripped = Decode.decodeExpressionTool encoded
             let roundTrippedIntent = Expect.wantSome roundTripped.Intent "Intent should survive ExpressionTool roundtrip."
             Expect.sequenceEqual roundTrippedIntent intent ""
+        testCase "typed id decodes and roundtrips for ExpressionTool" <| fun _ ->
+            let yaml = """cwlVersion: v1.2
+class: ExpressionTool
+id: expr-1
+inputs: {}
+outputs: {}
+expression: $(null)"""
+            let decoded = Decode.decodeExpressionTool yaml
+            let encoded = Encode.encodeExpressionToolDescription decoded
+            let roundTripped = Decode.decodeExpressionTool encoded
+            Expect.equal decoded.Id (Some "expr-1") "ExpressionTool id should decode as typed field."
+            Expect.equal roundTripped.Id decoded.Id "ExpressionTool id should roundtrip."
         testCase "ExpressionTool encode/decode deterministic" <| fun _ ->
             let original = TestObjects.CWL.ExpressionTool.expressionToolWithRequirementsFile
             let (_, d1, d2) =
@@ -535,6 +559,19 @@ let testOperation =
             let roundTripped = Decode.decodeOperation encoded
             let roundTrippedIntent = Expect.wantSome roundTripped.Intent "Intent should survive Operation roundtrip."
             Expect.sequenceEqual roundTrippedIntent intent ""
+        testCase "typed id decodes and roundtrips for Operation" <| fun _ ->
+            let yaml = """cwlVersion: v1.2
+class: Operation
+id: op-1
+inputs:
+  i: string
+outputs:
+  o: string"""
+            let decoded = Decode.decodeOperation yaml
+            let encoded = Encode.encodeOperationDescription decoded
+            let roundTripped = Decode.decodeOperation encoded
+            Expect.equal decoded.Id (Some "op-1") "Operation id should decode as typed field."
+            Expect.equal roundTripped.Id decoded.Id "Operation id should roundtrip."
         testCase "Operation encode/decode deterministic" <| fun _ ->
             let original = TestObjects.CWL.Operation.minimalOperationFile
             let (_, d1, d2) =
