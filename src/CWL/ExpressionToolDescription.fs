@@ -14,10 +14,12 @@ type CWLExpressionToolDescription (
         ?inputs: ResizeArray<CWLInput>,
         ?metadata: DynamicObj,
         ?label: string,
-        ?doc: string
+        ?doc: string,
+        ?id: string
     ) =
     inherit DynamicObj ()
 
+    let mutable _id: string option = id
     let mutable _cwlVersion: string = cwlVersion |> Option.defaultValue "v1.2"
     let mutable _outputs: ResizeArray<CWLOutput> = outputs
     let mutable _expression: string = expression
@@ -28,6 +30,10 @@ type CWLExpressionToolDescription (
     let mutable _metadata: DynamicObj option = metadata
     let mutable _label: string option = label
     let mutable _doc: string option = doc
+
+    member this.Id
+        with get() = _id
+        and set(id) = _id <- id
 
     member this.CWLVersion
         with get() = _cwlVersion

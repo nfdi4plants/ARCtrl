@@ -10,11 +10,12 @@ type DockerRequirement = {
         DockerLoad: string option
         DockerImport: string option
         DockerOutputDirectory: string option
+        DockerRunOptions: ResizeArray<string> option
     }
     with 
     /// Create a DockerRequirement from a plain docker file path or explicit schema-salad reference.
     /// If both `dockerFileReference` and `dockerFile` are provided, `dockerFileReference` takes precedence.
-    static member create(?dockerPull, ?dockerFile: string, ?dockerFileReference: SchemaSaladString, ?dockerImageId, ?dockerLoad, ?dockerImport, ?dockerOutputDirectory) =
+    static member create(?dockerPull, ?dockerFile: string, ?dockerFileReference: SchemaSaladString, ?dockerImageId, ?dockerLoad, ?dockerImport, ?dockerOutputDirectory, ?dockerRunOptions: ResizeArray<string>) =
         let resolvedDockerFile =
             match dockerFileReference, dockerFile with
             | Some referenceValue, _ -> Some referenceValue
@@ -28,6 +29,7 @@ type DockerRequirement = {
             DockerLoad = dockerLoad
             DockerImport = dockerImport
             DockerOutputDirectory = dockerOutputDirectory
+            DockerRunOptions = dockerRunOptions
         }
 
 /// Define an environment variable that will be set in the runtime environment by the workflow platform when executing the command line tool.

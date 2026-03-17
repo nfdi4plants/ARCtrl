@@ -418,6 +418,7 @@ module Encode =
             |> appendOpt "dockerLoad" Encode.string dr.DockerLoad
             |> appendOpt "dockerImport" Encode.string dr.DockerImport
             |> appendOpt "dockerOutputDirectory" Encode.string dr.DockerOutputDirectory
+            |> appendOpt "cwltool:dockerRunOptions" (fun values -> values |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence) dr.DockerRunOptions
             |> yMap
         | SoftwareRequirement pkgs ->
             let encodePkg (p:SoftwarePackage) =
@@ -637,6 +638,7 @@ module Encode =
         let basePairs =
             [ "cwlVersion", Encode.string td.CWLVersion
               "class", Encode.string "CommandLineTool" ]
+            |> appendOptPair (td.Id |> Option.map (fun id -> "id", Encode.string id))
             |> appendOptPair (td.Label |> Option.map encodeLabel)
             |> appendOptPair (td.Doc |> Option.map encodeDoc)
             |> appendOptPair (td.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
@@ -684,6 +686,7 @@ module Encode =
         let basePairs =
             [ "cwlVersion", Encode.string et.CWLVersion
               "class", Encode.string "ExpressionTool" ]
+            |> appendOptPair (et.Id |> Option.map (fun id -> "id", Encode.string id))
             |> appendOptPair (et.Label |> Option.map encodeLabel)
             |> appendOptPair (et.Doc |> Option.map encodeDoc)
             |> appendOptPair (et.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
@@ -728,6 +731,7 @@ module Encode =
         let basePairs =
             [ "cwlVersion", Encode.string op.CWLVersion
               "class", Encode.string "Operation" ]
+            |> appendOptPair (op.Id |> Option.map (fun id -> "id", Encode.string id))
             |> appendOptPair (op.Label |> Option.map encodeLabel)
             |> appendOptPair (op.Doc |> Option.map encodeDoc)
             |> appendOptPair (op.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
@@ -767,6 +771,7 @@ module Encode =
         let basePairs =
             [ "cwlVersion", Encode.string wd.CWLVersion
               "class", Encode.string "Workflow" ]
+            |> appendOptPair (wd.Id |> Option.map (fun id -> "id", Encode.string id))
             |> appendOptPair (wd.Label |> Option.map encodeLabel)
             |> appendOptPair (wd.Doc |> Option.map encodeDoc)
             |> appendOptPair (wd.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
@@ -886,19 +891,19 @@ module Encode =
 
     let encodeToolDescription (td:CWLToolDescription) : string =
         encodeToolDescriptionElement td
-        |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"; "intent"] ["hints"; "requirements"; "baseCommand"; "inputs"; "outputs"]
+        |> renderTopLevelElement ["cwlVersion"; "class"; "id"; "label"; "doc"; "intent"] ["hints"; "requirements"; "baseCommand"; "inputs"; "outputs"]
 
     let encodeWorkflowDescription (wd:CWLWorkflowDescription) : string =
         encodeWorkflowDescriptionElement wd
-        |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"; "intent"] ["hints"; "requirements"; "inputs"; "steps"; "outputs"]
+        |> renderTopLevelElement ["cwlVersion"; "class"; "id"; "label"; "doc"; "intent"] ["hints"; "requirements"; "inputs"; "steps"; "outputs"]
 
     let encodeExpressionToolDescription (et:CWLExpressionToolDescription) : string =
         encodeExpressionToolDescriptionElement et
-        |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"; "intent"] ["hints"; "requirements"; "inputs"; "outputs"; "expression"]
+        |> renderTopLevelElement ["cwlVersion"; "class"; "id"; "label"; "doc"; "intent"] ["hints"; "requirements"; "inputs"; "outputs"; "expression"]
 
     let encodeOperationDescription (op: CWLOperationDescription) : string =
         encodeOperationDescriptionElement op
-        |> renderTopLevelElement ["cwlVersion"; "class"; "label"; "doc"; "intent"] ["hints"; "requirements"; "inputs"; "outputs"]
+        |> renderTopLevelElement ["cwlVersion"; "class"; "id"; "label"; "doc"; "intent"] ["hints"; "requirements"; "inputs"; "outputs"]
 
     let encodeProcessingUnit (pu : CWLProcessingUnit) :string =
         match pu with
