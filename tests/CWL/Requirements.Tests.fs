@@ -201,6 +201,22 @@ outputs: {}"""
                     )
                 let actual = dockerItem
                 Expect.equal actual expected "Mismatch or Wrong requirement type: Type get of Decode Json Syntax for DockerRequirement, can only be DockerRequirement"
+            testCase "Decode and encode cwltool docker run options extension" <| fun _ ->
+                let yaml = """hints:
+  - class: DockerRequirement
+    dockerImageId: devcontainer
+    cwltool:dockerRunOptions:
+      - --gpus=all"""
+                let hints = decodeHints yaml
+                match hints.[0] with
+                | KnownHint (DockerRequirement dockerRequirement) ->
+                    let options = dockerRequirement.DockerRunOptions |> Option.defaultValue (ResizeArray())
+                    Expect.sequenceEqual options (ResizeArray [| "--gpus=all" |]) "DockerRequirement should preserve cwltool docker run options."
+                    let encoded = Encode.encodeHintEntry hints.[0] |> Encode.writeYaml
+                    Expect.stringContains encoded "cwltool:dockerRunOptions:" "Encoded hint should emit cwltool docker run options."
+                    Expect.stringContains encoded "--gpus=all" "Encoded hint should keep cwltool docker run option values."
+                | _ ->
+                    failwith "Expected DockerRequirement hint"
         ]
         testList "InitialWorkDirRequirement" [
             testCase "Class Syntax" <| fun _ ->

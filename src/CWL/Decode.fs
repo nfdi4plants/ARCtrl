@@ -552,7 +552,8 @@ module Decode =
             ?dockerImageId = get.Optional.Field "dockerImageId" Decode.string,
             ?dockerLoad = get.Optional.Field "dockerLoad" Decode.string,
             ?dockerImport = get.Optional.Field "dockerImport" Decode.string,
-            ?dockerOutputDirectory = get.Optional.Field "dockerOutputDirectory" Decode.string
+            ?dockerOutputDirectory = get.Optional.Field "dockerOutputDirectory" Decode.string,
+            ?dockerRunOptions = get.Optional.Field "cwltool:dockerRunOptions" decodeStringArrayOrScalar
         )
 
     /// Decode a YAMLElement into an EnvVarRequirement array.
@@ -1220,6 +1221,9 @@ module Decode =
     let labelDecoder: (YAMLiciousTypes.YAMLElement -> string option) =
         Decode.object (fun get -> get.Optional.Field "label" Decode.string)
 
+    let idDecoder: (YAMLiciousTypes.YAMLElement -> string option) =
+        Decode.object (fun get -> get.Optional.Field "id" Decode.string)
+
     let intentDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<string> option) =
         Decode.object (fun get ->
             get.Optional.Field "intent" id
@@ -1333,7 +1337,8 @@ module Decode =
         let description =
             CWLToolDescription(
                 outputs,
-                cwlVersion
+                ?cwlVersion = Some cwlVersion,
+                ?id = idDecoder yamlCWL
             )
         let metadata =
             let md = new DynamicObj ()
@@ -1371,7 +1376,6 @@ module Decode =
                 description
                 (
                     get.MultipleOptional.FieldList [
-                        "id";
                         "arguments";
                         "stdin";
                         "stderr";
@@ -1415,7 +1419,8 @@ module Decode =
             CWLExpressionToolDescription(
                 outputs,
                 expression,
-                cwlVersion
+                ?cwlVersion = Some cwlVersion,
+                ?id = idDecoder yamlCWL
             )
         let metadata =
             let md = new DynamicObj ()
@@ -1440,16 +1445,6 @@ module Decode =
                     )
             ) |> ignore
             md
-        yamlCWL
-        |> Decode.object (fun get ->
-            overflowDecoder
-                description
-                (
-                    get.MultipleOptional.FieldList [
-                        "id";
-                    ]
-                )
-        ) |> ignore
         if inputs.IsSome then
             description.Inputs <- inputs
         if requirements.IsSome then
@@ -1482,7 +1477,8 @@ module Decode =
             CWLOperationDescription(
                 inputs,
                 outputs,
-                cwlVersion
+                ?cwlVersion = Some cwlVersion,
+                ?id = idDecoder yamlCWL
             )
         let metadata =
             let md = new DynamicObj ()
@@ -1506,16 +1502,6 @@ module Decode =
                     )
             ) |> ignore
             md
-        yamlCWL
-        |> Decode.object (fun get ->
-            overflowDecoder
-                description
-                (
-                    get.MultipleOptional.FieldList [
-                        "id";
-                    ]
-                )
-        ) |> ignore
         if requirements.IsSome then
             description.Requirements <- requirements
         if hints.IsSome then
@@ -1548,7 +1534,8 @@ module Decode =
                 steps,
                 inputs,
                 outputs,
-                cwlVersion
+                ?cwlVersion = Some cwlVersion,
+                ?id = idDecoder yamlCWL
             )
         let metadata =
             let md = new DynamicObj ()
@@ -1573,16 +1560,6 @@ module Decode =
                     )
             ) |> ignore
             md
-        yamlCWL
-        |> Decode.object (fun get ->
-            overflowDecoder
-                description
-                (
-                    get.MultipleOptional.FieldList [
-                        "id";
-                    ]
-                )
-        ) |> ignore
         if requirements.IsSome then
             description.Requirements <- requirements
         if hints.IsSome then

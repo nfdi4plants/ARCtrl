@@ -31,6 +31,13 @@ let tryYamlScalarSequence (y: YAMLElement) =
         |> Some
     | _ -> None
 
+let renderYamlElement (element: YAMLElement) =
+    Encode.writeYaml element
+
+let renderYamlPair pair =
+    Encode.yMap [ pair ]
+    |> Encode.writeYaml
+
 let mkStepInput id source linkMerge =
     {
         Id = id
@@ -348,6 +355,77 @@ let testCWLWorkflowDescriptionDecode =
                 step.In |> Seq.exists (fun si -> si.ValueFrom.IsSome)
             Expect.isTrue stepInputHasLoadContents "Step input should have loadContents"
             Expect.isTrue stepInputHasValueFrom "Step input should have valueFrom"
+        testCase "advanced workflow fixture decodes and preserves full content" <| fun _ ->
+            let original = TestObjects.CWL.Workflow.advancedWorkflowFile
+            let processingUnit = Decode.decodeCWLProcessingUnit original
+            let workflow =
+                match processingUnit with
+                | Workflow workflow -> workflow
+                | other -> failwithf "Expected Workflow but got %A" other
+
+            Expect.equal workflow.CWLVersion "v1.2" ""
+            Expect.equal workflow.Inputs.Count 24 "All workflow inputs should decode."
+            Expect.equal workflow.Steps.Count 11 "All workflow steps should decode."
+            Expect.equal workflow.Outputs.Count 1 "Workflow output should decode."
+            Expect.equal workflow.Id (Some "CWL_advanced_layout_workflow") "Workflow id should be preserved."
+
+            let hints = Expect.wantSome workflow.Hints "Workflow hints should decode."
+            Expect.equal hints.Count 3 "All workflow hints should decode."
+            match hints.[0] with
+            | KnownHint (DockerRequirement dockerRequirement) ->
+                Expect.equal dockerRequirement.DockerImageId (Some "devcontainer") "Docker hint should keep dockerImageId."
+                Expect.equal dockerRequirement.DockerFile (Some (SchemaSaladString.Include "./Dockerfile")) "Docker hint should keep dockerFile include."
+                Expect.sequenceEqual
+                    (dockerRequirement.DockerRunOptions |> Option.defaultValue (ResizeArray()))
+                    (ResizeArray [| "--gpus=all" |])
+                    "Docker hint should keep cwltool docker run options."
+            | other ->
+                failwithf "Expected first hint to decode as DockerRequirement but got %A" other
+
+            match hints.[1] with
+            | UnknownHint unknownHint ->
+                Expect.equal unknownHint.Class (Some "cwltool:CUDARequirement") "Unknown CUDA hint should be preserved."
+            | other ->
+                failwithf "Expected second hint to decode as UnknownHint but got %A" other
+
+            let requirements = Expect.wantSome workflow.Requirements "Workflow requirements should decode."
+            Expect.equal requirements.Count 4 "All workflow requirements should decode."
+
+            let encoded = Encode.encodeWorkflowDescription workflow
+            let roundTripped = Decode.decodeWorkflow encoded
+
+            let encodeInputs (inputs: ResizeArray<CWLInput>) =
+                inputs
+                |> Seq.map (Encode.encodeCWLInput >> renderYamlPair)
+                |> ResizeArray
+
+            let encodeOutputs (outputs: ResizeArray<CWLOutput>) =
+                outputs
+                |> Seq.map (Encode.encodeCWLOutput >> renderYamlPair)
+                |> ResizeArray
+
+            let encodeSteps (steps: ResizeArray<WorkflowStep>) =
+                steps
+                |> Seq.map (Encode.encodeWorkflowStep >> renderYamlPair)
+                |> ResizeArray
+
+            let encodeRequirements (requirements: ResizeArray<Requirement>) =
+                requirements
+                |> Seq.map (Encode.encodeRequirement >> renderYamlElement)
+                |> ResizeArray
+
+            let encodeHints (hints: ResizeArray<HintEntry>) =
+                hints
+                |> Seq.map (Encode.encodeHintEntry >> renderYamlElement)
+                |> ResizeArray
+
+            Expect.equal roundTripped.CWLVersion workflow.CWLVersion "Workflow version should roundtrip."
+            Expect.equal roundTripped.Id workflow.Id "Workflow id should roundtrip."
+            Expect.sequenceEqual (encodeHints (Expect.wantSome roundTripped.Hints "Roundtripped workflow hints should exist.")) (encodeHints hints) "Workflow hints should roundtrip."
+            Expect.sequenceEqual (encodeRequirements (Expect.wantSome roundTripped.Requirements "Roundtripped workflow requirements should exist.")) (encodeRequirements requirements) "Workflow requirements should roundtrip."
+            Expect.sequenceEqual (encodeInputs roundTripped.Inputs) (encodeInputs workflow.Inputs) "Workflow inputs should roundtrip."
+            Expect.sequenceEqual (encodeSteps roundTripped.Steps) (encodeSteps workflow.Steps) "Workflow steps should roundtrip."
+            Expect.sequenceEqual (encodeOutputs roundTripped.Outputs) (encodeOutputs workflow.Outputs) "Workflow outputs should roundtrip."
     ]
 
 let testCWLWorkflowDescriptionEncode =
