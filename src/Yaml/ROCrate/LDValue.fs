@@ -20,7 +20,7 @@ module LDValue =
 
     let encoder (v: LDValue) =
         [
-            "@value", genericEncoder v.Value
-            "@type", Helpers.yamlValue v.ValueType
+            "\"@value\"", genericEncoder v.Value
+            "\"@type\"", Helpers.yamlValue v.ValueType
         ]
         |> Helpers.yamlMap

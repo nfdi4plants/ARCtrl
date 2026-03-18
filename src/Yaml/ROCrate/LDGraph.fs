@@ -29,16 +29,16 @@ module LDGraph =
     let encoder (obj: ARCtrl.ROCrate.LDGraph) =
         [
             match obj.Id with
-            | Some id -> yield "@id", Helpers.yamlValue id
+            | Some id -> yield "\"@id\"", Helpers.yamlValue id
             | None -> ()
             match obj.TryGetContext() with
-            | Some ctx -> yield "@context", LDContext.encoder ctx
+            | Some ctx -> yield "\"@context\"", LDContext.encoder ctx
             | None -> ()
             for kv in (obj.GetProperties true) do
                 let l = kv.Key.ToLower()
                 if l <> "id" && l <> "@context" && l <> "nodes" && l <> "mappings" then
                     yield kv.Key, LDNode.genericEncoder kv.Value
-            yield "@graph", (obj.Nodes |> Seq.map LDNode.encoder |> Seq.toList |> Helpers.yamlSeq)
+            yield "\"@graph\"", (obj.Nodes |> Seq.map LDNode.encoder |> Seq.toList |> Helpers.yamlSeq)
         ]
         |> Helpers.yamlMap
 

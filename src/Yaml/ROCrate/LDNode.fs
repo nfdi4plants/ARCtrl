@@ -81,12 +81,12 @@ module rec LDNode =
 
     and encoder (obj: ARCtrl.ROCrate.LDNode) =
         [
-            yield "@id", Helpers.yamlValue obj.Id
-            yield "@type", (obj.SchemaType |> Seq.map Helpers.yamlValue |> Seq.toList |> Helpers.yamlSeq)
+            yield "\"@id\"", Helpers.yamlValue obj.Id
+            yield "\"@type\"", (obj.SchemaType |> Seq.map Helpers.yamlValue |> Seq.toList |> Helpers.yamlSeq)
             if obj.AdditionalType.Count <> 0 then
                 yield "additionalType", (obj.AdditionalType |> Seq.map Helpers.yamlValue |> Seq.toList |> Helpers.yamlSeq)
             match obj.TryGetContext() with
-            | Some ctx -> yield "@context", LDContext.encoder ctx
+            | Some ctx -> yield "\"@context\"", LDContext.encoder ctx
             | _ -> ()
             for kv in (obj.GetProperties true) do
                 let l = kv.Key.ToLower()

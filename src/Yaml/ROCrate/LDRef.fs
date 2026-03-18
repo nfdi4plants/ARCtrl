@@ -11,6 +11,6 @@ module LDRef =
 
     let encoder (r: LDRef) =
         [
-            "@id", Helpers.yamlValue r.Id
+            "\"@id\"", Helpers.yamlValue r.Id
         ]
         |> Helpers.yamlMap
