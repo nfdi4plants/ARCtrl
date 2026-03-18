@@ -72,10 +72,13 @@ module Encode =
     // ------------------------------
     let yMap (pairs: (string * YAMLElement) list) =
         // Represent a mapping as an Object containing Mapping nodes preserving order.
-        // Avoid wrapping scalar/sequence values inside an extra Object layer so YAMLicious prints 'key: value'.
+        // Preserve single wrapped scalar and alias nodes because YAMLicious alpha.7
+        // can now write them directly without collapsing style/alias information.
         let normalize = function
             // YAMLicious emits `key:` (null) for empty object values unless we force inline `{}`.
             | YAMLElement.Object [] -> YAMLElement.Value (YAMLContent.create "{}")
+            | (YAMLElement.Object [YAMLElement.Value _]) as wrapped -> wrapped
+            | (YAMLElement.Object [YAMLElement.Alias _]) as wrapped -> wrapped
             | YAMLElement.Object [single] -> single // unwrap single wrapped value (legacy helper usage)
             | other -> other
         pairs
@@ -545,7 +548,7 @@ module Encode =
         match sources.Count with
         | 1 -> Encode.string sources.[0]
         | _ -> 
-            // Create sequence with each item as an Object[Value] to force block-style rendering
+            // Wrap scalar items to keep nested `source` arrays in block-sequence form.
             sources 
             |> Seq.map (fun s -> YAMLElement.Object [YAMLElement.Value (YAMLContent.create s)])
             |> List.ofSeq
