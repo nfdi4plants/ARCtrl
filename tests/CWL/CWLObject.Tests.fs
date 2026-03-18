@@ -28,6 +28,23 @@ let testCWLToolDescriptionDecode =
             let inputs = Expect.wantSome decoded.Inputs "Inputs should decode when whitespace-only separator lines are present."
             Expect.equal inputs.Count 1 ""
             Expect.equal inputs.[0].Name "sample" ""
+        testCase "sanitize preserves plain multiline scalar semantics" <| fun _ ->
+            let yaml = """cwlVersion: v1.2
+class: CommandLineTool
+doc: First paragraph line
+  continues here
+
+  Second paragraph
+baseCommand: echo
+inputs: {}
+outputs: {}
+"""
+            let expectedDoc =
+                yaml
+                |> YAMLicious.Decode.read
+                |> YAMLicious.Decode.object (fun get -> get.Required.Field "doc" YAMLicious.Decode.string)
+            let decoded = Decode.decodeCommandLineTool yaml
+            Expect.equal decoded.Doc (Some expectedDoc) "Plain multiline scalars should survive ARCtrl sanitization unchanged."
         testCase "sanitize does not hide malformed yaml errors" <| fun _ ->
             let malformed = TestObjects.CWL.CommandLineTool.DecodeEdgeCases.malformedYaml
             let decodeMalformed () = Decode.decodeCWLProcessingUnit malformed |> ignore
@@ -527,6 +544,13 @@ let testEncodeNormalizeEdgeCases =
                 |> Decode.stepsDecoder
 
             Expect.equal decodedSteps.[0].In.Count 0 "Empty `in` should survive encode/decode as an empty mapping."
+
+        testCase "wrapped alias values stay inline when encoded" <| fun _ ->
+            let encodedYaml =
+                Encode.yMap [ "root", YAMLElement.Object [YAMLElement.Alias "a1"] ]
+                |> Encode.writeYaml
+
+            Expect.stringContains encodedYaml "root: *a1" "Wrapped aliases should use YAMLicious alpha.7 inline alias emission."
     ]
 
 let testOperation =
