@@ -93,3 +93,8 @@ module Encode =
                 Encode.tuple2 Encode.int valueEncoder (k,v))
             |> Seq.toArray
             |> Encode.seq
+
+    let delay (f : unit -> IEncodable) = 
+        { new IEncodable with
+            member _.Encode(helpers) = f().Encode(helpers)
+        }
