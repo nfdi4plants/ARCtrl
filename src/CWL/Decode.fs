@@ -20,6 +20,17 @@ module Decode =
     let isBlankLine (line: string) =
         line.Trim().Length = 0
 
+    let normalizeLineEndings (yaml: string) =
+        if isNull yaml then "" else yaml.Replace("\r\n", "\n")
+
+    let stripLeadingShebang (yaml: string) =
+        let normalized = normalizeLineEndings yaml
+        let lines = normalized.Split('\n')
+        if lines.Length > 0 && lines.[0].StartsWith("#!") then
+            lines.[1..] |> String.concat "\n"
+        else
+            normalized
+
     let tryParseBlockScalarHeader (line: string) : int option =
         if isBlankLine line then
             None
@@ -39,14 +50,8 @@ module Decode =
             if isBlockScalarHeader then Some (countLeadingSpaces line) else None
 
     let normalizeYamlInput (yaml: string) =
-        let normalized =
-            if isNull yaml then "" else yaml.Replace("\r\n", "\n")
+        let normalized = stripLeadingShebang yaml
         let lines = normalized.Split('\n')
-        let withoutShebang =
-            if lines.Length > 0 && lines.[0].StartsWith("#!") then
-                lines.[1..]
-            else
-                lines
 
         let filtered = ResizeArray<string>()
         let mutable blockScalarIndent : int option = None
@@ -74,7 +79,7 @@ module Decode =
                     if line = "" || line.Trim().Length > 0 then
                         filtered.Add line
 
-        withoutShebang |> Array.iter processLine
+        lines |> Array.iter processLine
 
         filtered
         |> Seq.toArray
@@ -129,17 +134,21 @@ module Decode =
         | _ -> false
 
     let readSanitizedYaml (yaml: string) =
-        let normalized = normalizeYamlInput yaml
+        let prepared = stripLeadingShebang yaml
         let tryRead text =
             text
             |> Decode.read
             |> removeYamlComments
         try
-            tryRead normalized
+            tryRead prepared
         with ex when isRecoverableDecodingError ex ->
-            normalized
-            |> removeFullLineComments
-            |> tryRead
+            let normalized = normalizeYamlInput prepared
+            try
+                tryRead normalized
+            with ex2 when isRecoverableDecodingError ex2 ->
+                normalized
+                |> removeFullLineComments
+                |> tryRead
 
     /// Decode key value pairs into a dynamic object, while preserving their tree structure
     let rec overflowDecoder (dynObj: DynamicObj) (dict: System.Collections.Generic.Dictionary<string,YAMLElement>) =
