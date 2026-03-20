@@ -62,7 +62,8 @@ type AssayConversion =
             )
         ResizeArray.append files filesFromfragments
 
-    static member composeAssay (assay : ArcAssay, ?groupProcesses : bool, ?fs : FileSystem) =
+    static member composeAssay (assay : ArcAssay, ?groupProcesses : bool, ?fs : FileSystem, ?skipDatamap) =
+        let includeDatamap = defaultArg skipDatamap false |> not
         let measurementMethod = assay.TechnologyType |> Option.map BaseTypes.composeDefinedTerm
         let measurementTechnique = assay.TechnologyPlatform |> Option.map BaseTypes.composeDefinedTerm
         let variableMeasured = assay.MeasurementType |> Option.map BaseTypes.composePropertyValueFromOA
@@ -78,8 +79,9 @@ type AssayConversion =
             |> ResizeArray
             |> Option.fromSeq
         let fragmentDescriptors =
-            assay.Datamap
-            |> Option.map DatamapConversion.composeFragmentDescriptors
+            match assay.Datamap with
+            | Some d when includeDatamap -> Some (DatamapConversion.composeFragmentDescriptors d)
+            | _ -> None
         let dataFiles = 
             processSequence
             |> Option.map (fun ps -> AssayConversion.getDataFilesFromProcesses(ps, ?fragmentDescriptors = fragmentDescriptors))

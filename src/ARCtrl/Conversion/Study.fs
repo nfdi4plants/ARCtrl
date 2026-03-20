@@ -13,7 +13,8 @@ open ARCtrl.Helper.Regex.ActivePatterns
 
 type StudyConversion = 
 
-    static member composeStudy (study : ArcStudy, ?groupProcesses : bool, ?fs : FileSystem) =
+    static member composeStudy (study : ArcStudy, ?groupProcesses : bool, ?fs : FileSystem, ?skipDatamap) =
+        let includeDatamap = defaultArg skipDatamap false |> not
         let dateCreated = study.SubmissionDate |> Option.bind DateTime.tryFromString
         let datePublished = study.PublicReleaseDate |> Option.bind DateTime.tryFromString
         let dateModified = System.DateTime.Now
@@ -33,8 +34,9 @@ type StudyConversion =
             |> ResizeArray
             |> Option.fromSeq
         let fragmentDescriptors =
-            study.Datamap
-            |> Option.map DatamapConversion.composeFragmentDescriptors
+            match study.Datamap with
+            | Some d when includeDatamap -> Some (DatamapConversion.composeFragmentDescriptors d)
+            | _ -> None
         let dataFiles = 
             processSequence
             |> Option.map (fun ps -> AssayConversion.getDataFilesFromProcesses(ps, ?fragmentDescriptors = fragmentDescriptors))

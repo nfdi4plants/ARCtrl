@@ -14,22 +14,22 @@ open ARCtrl.Helper.Regex.ActivePatterns
 module TypeExtensions =
 
     type ArcAssay with
-         member this.ToROCrateAssay(?groupProcesses, ?fs) = AssayConversion.composeAssay(this, ?groupProcesses = groupProcesses, ?fs = fs)
+         member this.ToROCrateAssay(?groupProcesses, ?fs, ?skipDatamap) = AssayConversion.composeAssay(this, ?groupProcesses = groupProcesses, ?fs = fs, ?skipDatamap = skipDatamap)
 
          static member fromROCrateAssay (a : LDNode, ?graph : LDGraph, ?context : LDContext) = AssayConversion.decomposeAssay(a, ?graph = graph, ?context = context)
 
     type ArcStudy with
-         member this.ToROCrateStudy(?groupProcesses, ?fs) = StudyConversion.composeStudy(this, ?groupProcesses = groupProcesses, ?fs = fs)
+         member this.ToROCrateStudy(?groupProcesses, ?fs, ?skipDatamap) = StudyConversion.composeStudy(this, ?groupProcesses = groupProcesses, ?fs = fs, ?skipDatamap = skipDatamap)
 
          static member fromROCrateStudy (a : LDNode, ?graph : LDGraph, ?context : LDContext) = StudyConversion.decomposeStudy(a, ?graph = graph, ?context = context)
 
     type ArcWorkflow with
-        member this.ToROCrateWorkflow(?fs) = WorkflowConversion.composeWorkflow(this, ?fs = fs)
+        member this.ToROCrateWorkflow(?fs, ?skipDatamap) = WorkflowConversion.composeWorkflow(this, ?fs = fs, ?skipDatamap = skipDatamap)
 
         static member fromROCrateWorkflow (a : LDNode, ?graph : LDGraph, ?context : LDContext) = WorkflowConversion.decomposeWorkflow(a, ?graph = graph, ?context = context)
 
     type ArcRun with
-        member this.ToROCrateRun(?fs) = RunConversion.composeRun(this, ?fs = fs)
+        member this.ToROCrateRun(?fs, ?skipDatamap) = RunConversion.composeRun(this, ?fs = fs, ?skipDatamap = skipDatamap)
 
         static member fromROCrateRun (a : LDNode, ?graph : LDGraph, ?context : LDContext) = RunConversion.decomposeRun(a, ?graph = graph, ?context = context)
 
@@ -48,17 +48,17 @@ module TypeExtensions =
         // Study
         static member toArcStudy(a : LDNode, ?graph : LDGraph, ?context : LDContext) = StudyConversion.decomposeStudy(a, ?graph = graph, ?context = context)
 
-        static member fromArcStudy (a : ArcStudy, ?groupProcesses : bool, ?fs : FileSystem) = StudyConversion.composeStudy(a, ?groupProcesses = groupProcesses, ?fs = fs)
+        static member fromArcStudy (a : ArcStudy, ?groupProcesses : bool, ?skipDatamap : bool, ?fs : FileSystem) = StudyConversion.composeStudy(a, ?groupProcesses = groupProcesses, ?skipDatamap = skipDatamap, ?fs = fs)
 
         // Workflow
         static member toArcWorkflow(a : LDNode, ?graph : LDGraph, ?context : LDContext) = WorkflowConversion.decomposeWorkflow(a, ?graph = graph, ?context = context)
 
-        static member fromArcWorkflow (a : ArcWorkflow) = WorkflowConversion.composeWorkflow a
+        static member fromArcWorkflow (a : ArcWorkflow, ?skipDatamap : bool, ?fs : FileSystem) = WorkflowConversion.composeWorkflow(a, ?skipDatamap = skipDatamap, ?fs = fs)
 
         // Run
         static member toArcRun(a : LDNode, ?graph : LDGraph, ?context : LDContext) = RunConversion.decomposeRun(a, ?graph = graph, ?context = context)
 
-        static member fromArcRun (a : ArcRun) = RunConversion.composeRun a
+        static member fromArcRun (a : ArcRun, ?skipDatamap : bool, ?fs : FileSystem) = RunConversion.composeRun(a, ?skipDatamap = skipDatamap, ?fs = fs)
 
         // Investigation
         static member toArcInvestigation(a : LDNode, ?graph : LDGraph, ?context : LDContext) = InvestigationConversion.decomposeInvestigation(a, ?graph = graph, ?context = context)
@@ -76,19 +76,19 @@ module TypeExtensions =
             ArcAssay.fromROCrateAssay(a, ?graph = graph, ?context = context)
 
         // Study
-        static member arcStudyToDataset(a : ArcStudy, ?groupProcesses, ?fs) = a.ToROCrateStudy(?groupProcesses = groupProcesses, ?fs = fs)
+        static member arcStudyToDataset(a : ArcStudy, ?groupProcesses, ?skipDatamap, ?fs) = a.ToROCrateStudy(?groupProcesses = groupProcesses, ?skipDatamap = skipDatamap, ?fs = fs)
 
         static member datasetToArcStudy(a : LDNode, ?graph : LDGraph, ?context : LDContext) =
             ArcStudy.fromROCrateStudy(a, ?graph = graph, ?context = context)
 
         // Workflow
-        static member arcWorkflowToDataset(a : ArcWorkflow, ?fs) = a.ToROCrateWorkflow(?fs = fs)
+        static member arcWorkflowToDataset(a : ArcWorkflow, ?skipDatamap, ?fs) = a.ToROCrateWorkflow(?skipDatamap = skipDatamap, ?fs = fs)
 
         static member datasetToArcWorkflow(a : LDNode, ?graph : LDGraph, ?context : LDContext) =
             ArcWorkflow.fromROCrateWorkflow(a, ?graph = graph, ?context = context)
 
         // Run
-        static member arcRunToDataset(a : ArcRun, ?fs) = a.ToROCrateRun(?fs = fs)
+        static member arcRunToDataset(a : ArcRun, ?skipDatamap, ?fs) = a.ToROCrateRun(?skipDatamap = skipDatamap, ?fs = fs)
 
         static member datasetToArcRun(a : LDNode, ?graph : LDGraph, ?context : LDContext) =
             ArcRun.fromROCrateRun(a, ?graph = graph, ?context = context)

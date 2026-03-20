@@ -115,6 +115,7 @@ module Helpers =
             else box value
 
     let yamlValue (s: string) =
+        let s = if s.Contains("#") then $"\"{s}\"" else s
         YAMLElement.Value (YAMLContent.create s)
 
     let yamlMap (pairs: (string * YAMLElement) list) =
