@@ -62,7 +62,7 @@ module Fable =
         let print (s:string) : unit = nativeOnly
 
     let fprint(s: string) =
-        #if FABLE_COMPILER_JAVASCRIPT
+        #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         JS.print(s)
         #endif
         #if FABLE_COMPILER_PYTHON

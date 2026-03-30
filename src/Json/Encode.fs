@@ -7,7 +7,7 @@ open Fable.Core
 #if FABLE_COMPILER_PYTHON
 open Fable.Core.PyInterop
 #endif
-#if FABLE_COMPILER_JAVASCRIPT
+#if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
 open Fable.Core.JsInterop
 #endif
 

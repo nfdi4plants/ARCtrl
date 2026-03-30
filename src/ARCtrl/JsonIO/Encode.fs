@@ -7,7 +7,7 @@ open Fable.Core
 //#if FABLE_COMPILER_PYTHON
 //open Fable.Core.PyInterop
 //#endif
-//#if FABLE_COMPILER_JAVASCRIPT
+//#if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
 //open Fable.Core.JsInterop
 //#endif
 
@@ -18,7 +18,7 @@ module Encode =
         #if FABLE_COMPILER_PYTHON
         Thoth.Json.Python.Encode.toString spaces value
         #endif
-        #if FABLE_COMPILER_JAVASCRIPT
+        #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         Thoth.Json.JavaScript.Encode.toString spaces value
         #endif
         #if !FABLE_COMPILER
