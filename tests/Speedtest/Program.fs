@@ -66,7 +66,7 @@ let main argv =
     #endif
     else 
         //let argumentNumber = 
-        //    #if FABLE_COMPILER_JAVASCRIPT
+        //    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         //    1
         //    #else 
         //    0

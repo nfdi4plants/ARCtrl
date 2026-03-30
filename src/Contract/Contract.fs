@@ -3,7 +3,7 @@ namespace ARCtrl.Contract
 open Fable.Core
 open Fable.Core.JsInterop
 
-#if FABLE_COMPILER_JAVASCRIPT
+#if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
 [<StringEnum>]
 #endif
 [<RequireQualifiedAccess>]
@@ -31,7 +31,7 @@ type CLITool =
 
     static member create(name,arguments) = {Name = name; Arguments = arguments}
 
-#if FABLE_COMPILER_JAVASCRIPT
+#if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
 [<Erase>]
 #endif
 [<RequireQualifiedAccess>]
@@ -79,7 +79,7 @@ type Contract =
         /// The actual DTO, as discriminate union.
         DTO: DTO option
     }
-    #if FABLE_COMPILER_JAVASCRIPT
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
     [<NamedParams(fromIndex=2)>]
     #endif    
     static member create(op, path, ?dtoType, ?dto) = {Operation= op; Path = path; DTOType = dtoType; DTO = dto}

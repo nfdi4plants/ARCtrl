@@ -92,7 +92,7 @@ module Validation =
         async {
             try 
 #endif
-                #if FABLE_COMPILER_JAVASCRIPT
+                #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
                 let! isValid, errorList = Fable.validate (schemaURL) (objectString)
                 #endif
                 #if !FABLE_COMPILER

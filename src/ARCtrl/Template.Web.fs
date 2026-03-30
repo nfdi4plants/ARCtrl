@@ -14,7 +14,7 @@ let getTemplates(url: string option) =
         return mapResult
     }
 
-#if FABLE_COMPILER_JAVASCRIPT
+#if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
 
 /// <summary>
 /// This class is used to make async functions more accessible from JavaScript.

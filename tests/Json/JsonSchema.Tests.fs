@@ -131,7 +131,7 @@ let tests_ProcessParameterValue =
 
 let main = 
     testList "JsonSchema-Validation" [
-        #if FABLE_COMPILER_JAVASCRIPT
+        #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         tests_FableBindings
         #endif
         #if !FABLE_COMPILER_PYTHON
