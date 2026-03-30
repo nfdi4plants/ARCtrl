@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--This is a temporary file used by Fable to restore dependencies.
+If you see this file in your project, you can delete it safely-->
+  <PropertyGroup>
+    <Description>A data model of the ARC concept via it's RO Crate profile</Description>
+    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/ROCrate</PackageProjectUrl>
+    <PackageTags>ARC;F#;FSharp;dotnet;.Net;bioinformatics;biology;fable-library;datascience;dataplant;nfdi;metadata;fable-javascript;fable-python;fable-dotnet</PackageTags>
+  </PropertyGroup>
+  <Import Project="../Package.Metadata.props" />
+  <ItemGroup>
+    <!-- Base types -->
+    <Compile Include="Helper.fs" />
+    <Compile Include="DynObjExtensions.fs" />
+    <Compile Include="LDContext.fs" />
+    <Compile Include="ROCrateContext.fs" />
+    <Compile Include="LDObject.fs" />
+    <!-- Generic types -->
+    <Compile Include="LDTypes\Comment.fs" />
+    <Compile Include="LDTypes\DefinedTerm.fs" />
+    <Compile Include="LDTypes\FormalParameter.fs" />
+    <Compile Include="LDTypes\ComputerLanguage.fs" />
+    <Compile Include="LDTypes\PropertyValue.fs" />
+    <Compile Include="LDTypes\PostalAddress.fs" />
+    <Compile Include="LDTypes\Organization.fs" />
+    <Compile Include="LDTypes\Person.fs" />
+    <Compile Include="LDTypes\ScholarlyArticle.fs" />
+    <Compile Include="LDTypes\Sample.fs" />
+    <Compile Include="LDTypes\File.fs" />
+    <Compile Include="LDTypes\LabProtocol.fs" />
+    <Compile Include="LDTypes\LabProcess.fs" />
+    <Compile Include="LDTypes\CreativeWork.fs" />
+    <Compile Include="LDTypes\ComputationalWorkflow.fs" />
+    <Compile Include="LDTypes\CreateAction.fs" />
+    <Compile Include="LDTypes\SoftwareSourceCode.fs" />
+    <Compile Include="LDTypes\WorkflowProtocol.fs" />
+    <Compile Include="LDTypes\WorkflowInvocation.fs" />
+    <Compile Include="LDTypes\Dataset.fs" />
+    <!-- ISA Profile types -->
+    <Compile Include="ISAProfile\Dataset.fs" />
+    <Compile Include="ISAProfile\Investigation.fs" />
+    <Compile Include="ISAProfile\Study.fs" />
+    <Compile Include="ISAProfile\Assay.fs" />
+    <Compile Include="ISAProfile\LabProcess.fs" />
+    <Compile Include="ISAProfile\LabProtocol.fs" />
+    <Compile Include="ISAProfile\Sample.fs" />
+    <Compile Include="ISAProfile\Data.fs" />
+    <Compile Include="ISAProfile\PropertyValue.fs" />
+    <Compile Include="ISAProfile\Person.fs" />
+    <Compile Include="ISAProfile\ScholarlyArticle.fs" />
+    <!-- Main module -->
+    <Compile Include="ArcROCrateMetadata.fs" />
+    <None Include="playground.fsx" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="DynamicObj" />
+    <PackageReference Include="Thoth.Json.Core" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
+  </ItemGroup>
+</Project>
