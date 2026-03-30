@@ -1,3 +1,13 @@
+### 3.0.4+eb91229b (Released 2026-3-30)
+* Additions:
+    * [[#bb749d61](https://github.com/nfdi4plants/ARCtrl/commit/bb749d61a1e80e4489df74d114ee124641ea8c7a)] add dockerRun options and ID
+    * [[#80729c7a](https://github.com/nfdi4plants/ARCtrl/commit/80729c7aa63590662d7c7b56e337a35b808587c7)] add tests for complex wf and dockerRun/ID
+    * [[#cf3460c2](https://github.com/nfdi4plants/ARCtrl/commit/cf3460c28dc3f1a8e6101ec129c836cb5e2c646d)] update yamlicious and de/encoders to match new scalar behavior
+    * [[#401303f5](https://github.com/nfdi4plants/ARCtrl/commit/401303f5afe2151c40a39b22a8991943ce31546a)] add support for union-valued CWL array items
+* Bugfixes:
+    * [[#583c2629](https://github.com/nfdi4plants/ARCtrl/commit/583c26293cc8425a05ba548bcf3094f8b5fe1445)] small fix in DataContext for python
+    * [[#6633282e](https://github.com/nfdi4plants/ARCtrl/commit/6633282ec7cbe41262e4ff1465e646c6f685b7f6)] fix compiler directives #603
+
 ### 3.0.3+681187d0 (Released 2026-3-3)
 * Additions:
     * [[#681187d0](https://github.com/nfdi4plants/ARCtrl/commit/681187d0465f2a7dece78ee132f1757ddb5edbd1)] add AttachMembers to DataContext
