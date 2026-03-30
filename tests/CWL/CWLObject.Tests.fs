@@ -386,6 +386,35 @@ let testNestedArrayDecoding =
             ) "sampleRecordFiles should be File[][]"
     ]
 
+let testUnionArrayItemDecoding =
+    let expectedMixedInputType =
+        Array {
+            Items = Union (ResizeArray [String; File (FileInstance())])
+            Label = None
+            Doc = None
+            Name = None
+        }
+
+    let assertMixedInputType (decoded: CWLToolDescription) =
+        let inputs = Expect.wantSome decoded.Inputs "Union-array-items fixture should decode inputs."
+        let mixedInput = inputs |> Seq.find (fun input -> input.Name = "mixed_input")
+        Expect.equal mixedInput.Type_.Value expectedMixedInputType "mixed_input should decode as array of [string, File]."
+
+    testList "Union Array Items" [
+        testCase "Decode array items union in flow style" <| fun _ ->
+            let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.UnionArrayItems.flowStyleCwlFile
+            assertMixedInputType decoded
+        testCase "Decode array items union in block style" <| fun _ ->
+            let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.UnionArrayItems.blockStyleCwlFile
+            assertMixedInputType decoded
+        testCase "array items union roundtrips through encoder" <| fun _ ->
+            let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.UnionArrayItems.blockStyleCwlFile
+            let encoded = Encode.encodeToolDescription decoded
+            let roundTripped = Decode.decodeCommandLineTool encoded
+            Expect.stringContains encoded "items: [string, File]" "Encoder should normalize union-valued items to flow style."
+            assertMixedInputType roundTripped
+    ]
+
 let testExpressionTool =
     testList "ExpressionTool" [
         testCase "decode top-level ExpressionTool via decodeCWLProcessingUnit" <| fun _ ->
@@ -616,6 +645,7 @@ let main =
         testEncodeNormalizeEdgeCases
         testCWLToolDescriptionMetadata
         testNestedArrayDecoding
+        testUnionArrayItemDecoding
         testExpressionTool
         testOperation
     ]

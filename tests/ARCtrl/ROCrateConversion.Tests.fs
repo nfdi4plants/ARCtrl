@@ -2131,17 +2131,16 @@ let tests_AdditionalTypeErrorHandling =
                 
                 Expect.equal decoded original "Optional record type should round-trip correctly"
             )
-            testCase "ArrayOfUnions_NotSupported" (fun () ->
-                // Array containing union types is not currently supported
+            testCase "ArrayOfUnions_RoundTrip" (fun () ->
+                // Arrays containing union item types are supported and should round-trip.
                 let unionType = CWLType.Union (ResizeArray [CWLType.String; CWLType.Int])
                 let arraySchema = { Items = unionType; Label = None; Doc = None; Name = None }
                 let original = CWLType.Array arraySchema
                 
                 let encoded = WorkflowConversion.composeAdditionalType original
-                // Decoding arrays of unions currently fails - this is a known limitation
-                Expect.throws
-                    (fun () -> WorkflowConversion.decomposeAdditionalType encoded |> ignore)
-                    "Array of unions should fail to decode (known limitation)"
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                
+                Expect.equal decoded original "Array of unions should round-trip correctly"
             )
         ]
     ]

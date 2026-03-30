@@ -88,6 +88,32 @@ inputs:
 outputs: []
 """
 
+module UnionArrayItems =
+
+    let flowStyleCwlFile = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs:
+  mixed_input:
+    type:
+      type: array
+      items: [string, File]
+outputs: {}
+"""
+
+    let blockStyleCwlFile = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs:
+  mixed_input:
+    type:
+      type: array
+      items:
+        - string
+        - File
+outputs: {}
+"""
+
 module DecodeEdgeCases =
 
     let withShebangAndComments = """#!/usr/bin/env cwl-runner

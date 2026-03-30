@@ -439,8 +439,9 @@ module Decode =
         | YAMLElement.Value v | YAMLElement.Object [YAMLElement.Value v] ->
             // Simple type string
             parseTypeString v.Value
-        | YAMLElement.Sequence items ->
-            // Union type
+        | YAMLElement.Sequence items
+        | YAMLElement.Object [YAMLElement.Sequence items] ->
+            // Union type. Mapping values may arrive wrapped as Object [Sequence ...].
             let types = items |> List.map cwlTypeDecoder' |> ResizeArray
             Union types
         | YAMLElement.Object _ ->
@@ -507,6 +508,7 @@ module Decode =
                             match value with
                             | YAMLElement.Value v | YAMLElement.Object [YAMLElement.Value v] -> Some v.Value
                             | YAMLElement.Object o -> None
+                            | YAMLElement.Sequence _ -> None
                             | _ -> raise (System.ArgumentException("Unexpected YAMLElement in cwlTypeDecoder"))
                     )
             match cwlType with
