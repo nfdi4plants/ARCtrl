@@ -18,14 +18,23 @@ let getEmptyCellForHeader (header:CompositeHeader) (columCellOption: CompositeCe
         | Some (CompositeCell.Unitized _)   -> CompositeCell.emptyUnitized
         | _                                 -> failwith "[extendBodyCells] This should never happen, IsTermColumn header must be paired with either term or unitized cell."
 
+/// For a given CompositeCell, check whether its hash is already part of the valueMap. If it is, return the hash. If it is not, add it to the valueMap and return the hash. In case of a hash collision, we add a fixed value (linear probing).
 let ensureCellHashInValueMap (value: CompositeCell) (valueMap: Dictionary<int, CompositeCell>) =
-    let hash = value.GetHashCode()
-    if valueMap.ContainsKey hash then
-        hash
-    else
-        // If value is not in the map, add it.
-        valueMap.Add(hash, value)
-        hash
+    let rec loop (hash : int option) =
+        let hash =
+            match hash with
+            | Some hash -> hash
+            | None -> value.GetHashCode()
+        if valueMap.ContainsKey hash then
+            if valueMap[hash] = value then
+                hash
+            else
+                loop (Some (hash + 4269))
+        else
+            // If value is not in the map, add it.
+            valueMap.Add(hash, value)
+            hash
+    loop None
 
 type ColumnValueRefs =
     | Constant of int

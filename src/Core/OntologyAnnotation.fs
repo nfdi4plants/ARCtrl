@@ -171,7 +171,38 @@ type OntologyAnnotation(?name,?tsr,?tan, (*?tanInfo, *)?comments) =
         |> HashCodes.mergeHashes nameHash
 
     override this.Equals(obj) : bool =
-        HashCodes.hash this = HashCodes.hash obj
+        match obj with
+        | :? OntologyAnnotation as oa ->
+            let equalName =
+                match this.Name, oa.Name with
+                | Some n1, Some n2 -> n1 = n2
+                | None, None -> true
+                | _ -> false
+            match this.TANInfo with
+            | Some taninfo1 ->
+                match oa.TANInfo with
+                | Some taninfo2 ->
+                    let equalTSR =
+                        match this.TermSourceREF, oa.TermSourceREF with
+                        | Some t1, Some t2 -> t1.ToLower() = t2.ToLower()
+                        | _, _ -> true
+                    equalName && equalTSR && taninfo1.IDSpace.ToLower() = taninfo2.IDSpace.ToLower() && taninfo1.LocalID = taninfo2.LocalID
+                | None -> false
+            | None ->
+                let equalTSR =
+                    match this.TermSourceREF, oa.TermSourceREF with
+                    | Some t1, Some t2 -> t1.ToLower() = t2.ToLower()
+                    | None, None -> true
+                    | _ -> false
+                let equalTAN =
+                    match this.TermAccessionNumber, oa.TermAccessionNumber with
+                    | Some tan1, Some tan2 -> tan1.ToLower() = tan2.ToLower()
+                    | None, None -> true
+                    | _ -> false
+                equalName && equalTSR && equalTAN         
+        | _ -> false
+
+        //HashCodes.hash this = HashCodes.hash obj
    
     interface System.IComparable with
         member this.CompareTo(obj) =
