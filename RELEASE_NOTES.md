@@ -1,3 +1,9 @@
+### 3.0.5+48b19118 (Released 2026-4-20)
+* Additions:
+    * [[#2f67a4a4](https://github.com/nfdi4plants/ARCtrl/commit/2f67a4a4e53a3099a9a1482c7a2143e107e917d1)] add test for js hash duplication
+* Bugfixes:
+    * [[#8966d3c2](https://github.com/nfdi4plants/ARCtrl/commit/8966d3c20f3879c60bec05f5cbb97e46f000deab)] hotfix CompositeCell Hash clashes in Javascript through linear probing
+
 ### 3.0.4+eb91229b (Released 2026-3-30)
 * Additions:
     * [[#bb749d61](https://github.com/nfdi4plants/ARCtrl/commit/bb749d61a1e80e4489df74d114ee124641ea8c7a)] add dockerRun options and ID
