@@ -57,7 +57,7 @@ module rec LDNode =
             |> Seq.map genericEncoder
             |> Seq.toList
             |> Helpers.yamlSeq
-        | _ -> failwith "Unknown type"
+        | _ -> failwith $"Could not encode object {obj}: Unknown type"
 
     and decoder (value: YAMLElement) : ARCtrl.ROCrate.LDNode =
         let schemaType = Helpers.requireField "@type" value |> Helpers.decodeStringResizeArray

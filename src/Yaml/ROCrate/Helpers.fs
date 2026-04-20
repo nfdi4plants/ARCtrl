@@ -116,11 +116,11 @@ module Helpers =
 
     let yamlValue (s: string) =
         let s = if s.Contains("#") then $"\"{s}\"" else s
-        YAMLElement.Value (YAMLContent.create s)
+        YAMLElement.Value (YAMLContent.create(s,style = ScalarStyle.Plain))
 
     let yamlMap (pairs: (string * YAMLElement) list) =
         pairs
-        |> List.map (fun (k,v) -> YAMLElement.Mapping (YAMLContent.create k, v))
+        |> List.map (fun (k,v) -> YAMLElement.Mapping (YAMLContent.create(k,style = ScalarStyle.Plain), v))
         |> YAMLElement.Object
 
     let yamlSeq (items: YAMLElement list) =
