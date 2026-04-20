@@ -190,11 +190,16 @@ let private tests_GetHashCode = testList "GetHashCode" [
             let cc = CompositeCell.createFreeText("TestTerm")
             cc.GetHashCode() |> ignore
             Expect.isTrue true " "
+        ftestCase "FreeText does not clash" <| fun _ ->
+            let cc1 = CompositeCell.createFreeText("VBT04P")
+            let cc2 = CompositeCell.createFreeText("VBT07s")
+            Expect.notEqual (cc1.GetHashCode()) (cc2.GetHashCode()) "FreeText VBT04P and FreeText VBT07s should not have the same hash code"
         testCase "Data" <| fun _ ->
             let d = Data(name = "MyData#row=1", format = "text/csv", selectorFormat = "MySelector")
             let cc = CompositeCell.createData d
             cc.GetHashCode() |> ignore
             Expect.isTrue true " "
+
     ]
 ]
 
