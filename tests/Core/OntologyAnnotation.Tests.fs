@@ -14,27 +14,32 @@ module Helper =
 open Helper
 
 let private tests_hashcode = testList "GetHashCode" [
-    testCase "Empty" (fun () ->
+    testCase "Empty" <| fun _ ->
         let oa1 = OntologyAnnotation()
         let oa2 = OntologyAnnotation()
         let h1 = oa1.GetHashCode()
         let h2 = oa2.GetHashCode()
         Expect.equal h1 h2 "Hashes should be equal"    
-    )
-    testCase "Equal" (fun () ->
+    testCase "Equal"  <| fun _ ->
         let oa1 = OntologyAnnotation("MyOntology",tsr = "EFO",tan = uri)
         let oa2 = OntologyAnnotation("MyOntology",tsr = "EFO",tan = uri)
         let h1 = oa1.GetHashCode()
         let h2 = oa2.GetHashCode()
         Expect.equal h1 h2 "Hashes should be equal"
-    )
-    testCase "Different" (fun () ->
+    testCase "Different"  <| fun _ ->
         let oa1 = OntologyAnnotation("MyOntology",tsr = "EFO",tan = uri)
         let oa2 = OntologyAnnotation("YourOntology",tsr = "NCBI",tan = "http://purl.obolibrary.org/obo/NCBI_0000123")
         let h1 = oa1.GetHashCode()
         let h2 = oa2.GetHashCode()
         Expect.notEqual h1 h2 "Hashes should not be equal"
-    )
+    // Fix in future, js hash codes for strings are unfortunately not avalanching
+    ptestCase "js_clash" <| fun _ ->
+        let oa1 = OntologyAnnotation(name = "VBT04P")
+        let oa2 = OntologyAnnotation(name = "VBT07s")
+        let h1 = oa1.GetHashCode()
+        let h2 = oa2.GetHashCode()
+        Expect.notEqual h1 h2 "Hashes should not be equal"
+
 ]
 
 let private tests_equals = testList "Equals" [
@@ -82,6 +87,10 @@ let private tests_equals = testList "Equals" [
     testCase "not equal" <| fun _ ->   
         let oa1 = OntologyAnnotation("instrument model", "MS", "http://purl.obolibrary.org/obo/MS_00000001", comments = ResizeArray [Comment("KeyName", "Value1")])
         let oa2 = OntologyAnnotation(tan= "MS:00000001", comments=ResizeArray [Comment("KeyName", "Value1")])
+        Expect.notEqual oa1 oa2 ""
+    testCase "js_clash" <| fun _ ->
+        let oa1 = OntologyAnnotation(name = "VBT04P")
+        let oa2 = OntologyAnnotation(name = "VBT07s")
         Expect.notEqual oa1 oa2 ""
 ]
 

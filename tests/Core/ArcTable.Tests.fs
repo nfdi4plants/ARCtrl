@@ -2897,6 +2897,74 @@ let private tests_fillMissing = testList "fillMissing" [
             Expect.notEqual cell otherCell "Should not be the same cell"        
     ]
 
+let tests_CompositeCellHashClash = testList "CompositeCellHashClash" [
+    testCase "HashClash_Freetext" <| fun _ ->
+        let cc1 = CompositeCell.createFreeText("VBT04P")
+        let cc2 = CompositeCell.createFreeText("VBT07s")
+
+        let t = ArcTable.init("dawd")
+
+        t.AddColumn(CompositeHeader.Input (IOType.Sample), ResizeArray [cc1; cc2])
+
+        let inputs = t.GetInputColumn().Cells
+
+        Expect.equal inputs.[0] cc1 "First cell should be cc1"
+        Expect.equal inputs.[1] cc2 "Second cell should be cc2"
+    testCase "HashClash_TermCell" <| fun _ ->
+        let cc1 = CompositeCell.createTermFromString(name = "VBT04P")
+        let cc2 = CompositeCell.createTermFromString(name = "VBT07s")
+
+        let t = ArcTable.init("dawd")
+
+        t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation(name = "ABC")), ResizeArray [cc1; cc2])
+
+        let inputs = t.GetColumn(0).Cells
+
+        Expect.equal inputs.[0].AsTerm.NameText cc1.AsTerm.NameText "First cell should be cc1"
+        Expect.equal inputs.[1].AsTerm.NameText cc2.AsTerm.NameText "Second cell should be cc2"
+    testCase "NoHashDuplication_Freetext" <| fun _ ->
+        let cc1 = CompositeCell.createFreeText("VBT04P")
+        let cc2 = CompositeCell.createFreeText("VBT07s")
+
+        let t = ArcTable.init("dawd")
+
+        t.AddColumn(CompositeHeader.Input (IOType.Sample), ResizeArray [cc1; cc2; cc1])
+
+        let inputs = t.GetInputColumn().Cells
+
+        Expect.equal inputs.[0] cc1 "First cell should be cc1"
+        Expect.equal inputs.[1] cc2 "Second cell should be cc2"
+        Expect.equal inputs.[2] cc1 "Third cell should be cc1"
+
+        let col = t.Values.Columns.[0].AsSparse()
+
+        let hashes = 
+            col.Values
+            |> Seq.distinct
+            |> Seq.toArray
+
+        printfn "Row keys: %A" hashes
+
+        Expect.equal (Seq.length hashes) 2 "There should only be 2 distinct keys in the column"
+    testCase "NoHashDuplication_TermCell" <| fun _ ->
+        let cc1 = CompositeCell.createTermFromString(name = "VBT04P")
+        let cc2 = CompositeCell.createTermFromString(name = "VBT07s")
+        let t = ArcTable.init("dawd")
+        t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation(name = "ABC")), ResizeArray [cc1; cc2; cc1])
+        let inputs = t.GetColumn(0).Cells
+        Expect.equal inputs.[0].AsTerm.NameText cc1.AsTerm.NameText "First cell should be cc1"
+        Expect.equal inputs.[1].AsTerm.NameText cc2.AsTerm.NameText "Second cell should be cc2"
+        Expect.equal inputs.[2].AsTerm.NameText cc1.AsTerm.NameText "Third cell should be cc1"
+        let col = t.Values.Columns.[0].AsSparse()
+        let hashes = 
+            col.Values
+            |> Seq.distinct
+            |> Seq.toArray
+        printfn "Row keys: %A" hashes
+        Expect.equal (Seq.length hashes) 2 "There should only be 2 distinct keys in the column"
+]
+
+
 let main = 
     testList "ArcTable" [
         tests_SanityChecks
@@ -2930,4 +2998,5 @@ let main =
         tests_equality
         tests_copy
         tests_fillMissing
+        tests_CompositeCellHashClash
     ]
