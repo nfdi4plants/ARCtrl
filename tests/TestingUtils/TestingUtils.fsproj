@@ -23,6 +23,8 @@
     <Compile Include="TestObjects.ROCrate\ArcPrototype_ed123499_deprecated.fs" />
     <Compile Include="TestObjects.Json\Study.fs" />
     <Compile Include="TestObjects.Json\ROCrate.fs" />
+    <Compile Include="TestObjects.Yaml\ROCrate.fs" />
+    <Compile Include="TestObjects.Yaml\ROCrate.fs" />
     <Content Include="TestObjects.Json\MinimalJson.json" />
     <Compile Include="TestObjects.Json\Assay.fs" />
     <Compile Include="TestObjects.Json\Investigation.fs" />

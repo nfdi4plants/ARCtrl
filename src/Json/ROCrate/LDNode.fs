@@ -43,7 +43,8 @@ module rec LDNode =
         | SomeObj o -> genericEncoder o
         #endif
         | null -> Encode.nil
-        | :? System.Collections.IEnumerable as l -> [ for x in l -> genericEncoder x] |> Encode.list
+        | :? System.Collections.IEnumerable as l ->
+            [ for x in l -> genericEncoder x] |> Encode.list //|> Encode.orderedList
         | _ -> failwith "Unknown type"
 
     let rec encoder(obj: LDNode) =

@@ -3,7 +3,6 @@ namespace ARCtrl.Json
 open ARCtrl
 open ARCtrl.ROCrate
 open System
-open ARCtrl.ROCrate
 open Thoth.Json.Core
 open DynamicObj
 open Fable.Core
@@ -34,7 +33,7 @@ module LDNodeExtensions =
         static member toROCrateJsonString(node : LDNode, ?spaces) =
             LDNode.encoder node
             |> Encode.toJsonString (Encode.defaultSpaces spaces)
-
+        
 [<AutoOpen>]
 module LDGraphExtensions =
 
