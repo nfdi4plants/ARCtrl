@@ -93,6 +93,41 @@ module Encode =
         | Some v -> acc @ [name, encoder v]
         | None -> acc
 
+    let rec encodeDynamicValue (value: obj) =
+        match value with
+        | null -> None
+        | :? string as s -> Some (Encode.string s)
+        | :? bool as b -> Some (yBool b)
+        | :? int as i -> Some (Encode.int i)
+        | :? int64 as i -> Some (Encode.string (string i))
+        | :? float as f -> Some (Encode.float f)
+        | :? YAMLElement as y -> Some y
+        | :? DynamicObj as dynObj -> Some (encodeDynamicObj dynObj)
+        | :? System.Collections.IEnumerable as values ->
+            values
+            |> Seq.cast<obj>
+            |> Seq.choose encodeDynamicValue
+            |> Seq.toList
+            |> YAMLElement.Sequence
+            |> Some
+        | _ -> None
+
+    and encodeDynamicObj (dynObj: DynamicObj) =
+        dynObj.GetProperties(false)
+        |> Seq.choose (fun kvp -> encodeDynamicValue kvp.Value |> Option.map (fun encoded -> kvp.Key, encoded))
+        |> Seq.toList
+        |> yMap
+
+    let appendDynamicPropertiesExcept (knownFieldNames: seq<string>) (dynObj: DynamicObj) acc =
+        let knownFieldSet = knownFieldNames |> Set.ofSeq
+        dynObj.GetProperties(false)
+        |> Seq.filter (fun kvp -> not (Set.contains kvp.Key knownFieldSet))
+        |> Seq.choose (fun kvp -> encodeDynamicValue kvp.Value |> Option.map (fun encoded -> kvp.Key, encoded))
+        |> Seq.fold (fun pairs pair -> pairs @ [ pair ]) acc
+
+    let appendDynamicProperties (dynObj: DynamicObj) acc =
+        appendDynamicPropertiesExcept Seq.empty dynObj acc
+
     let normalizeDocString (doc:string) =
         doc.Replace("\r\n","\n").TrimEnd('\n').TrimEnd('\r')
 
@@ -171,14 +206,48 @@ module Encode =
     // ------------------------------
     // CWLType encoder
     // ------------------------------
+    let private encodeFilePairs discriminatorKey discriminatorValue (file: FileInstance) =
+        [ discriminatorKey, Encode.string discriminatorValue ]
+        |> appendOpt "location" Encode.string file.Location
+        |> appendOpt "path" Encode.string file.Path
+        |> appendOpt "basename" Encode.string file.Basename
+        |> appendOpt "dirname" Encode.string file.Dirname
+        |> appendOpt "nameroot" Encode.string file.Nameroot
+        |> appendOpt "nameext" Encode.string file.Nameext
+        |> appendOpt "checksum" Encode.string file.Checksum
+        |> appendOpt "size" (fun size -> YAMLElement.Value (YAMLContent.create (string size))) file.Size
+        |> appendOpt "secondaryFiles" id file.SecondaryFiles
+        |> appendOpt "format" Encode.string file.Format
+        |> appendOpt "contents" Encode.string file.Contents
+        |> appendDynamicPropertiesExcept FileInstance.KnownFieldNames file
+
+    let private encodeDirectoryPairs discriminatorKey discriminatorValue (directory: DirectoryInstance) =
+        [ discriminatorKey, Encode.string discriminatorValue ]
+        |> appendOpt "location" Encode.string directory.Location
+        |> appendOpt "path" Encode.string directory.Path
+        |> appendOpt "basename" Encode.string directory.Basename
+        |> appendOpt "listing" id directory.Listing
+        |> appendDynamicPropertiesExcept DirectoryInstance.KnownFieldNames directory
+
     let rec encodeCWLType (t:CWLType) : YAMLElement =
+        let hasFileFields (file: FileInstance) =
+            (encodeFilePairs "type" "File" file).Length > 1
+
+        let hasDirectoryFields (directory: DirectoryInstance) =
+            (encodeDirectoryPairs "type" "Directory" directory).Length > 1
+
         match t with
+        | File file when hasFileFields file ->
+            encodeFilePairs "type" "File" file |> yMap
         | File _ -> Encode.string "File"
+        | Directory directory when hasDirectoryFields directory ->
+            encodeDirectoryPairs "type" "Directory" directory |> yMap
         | Directory _ -> Encode.string "Directory"
         | Dirent d ->
             [ "entry", encodeSchemaSaladString d.Entry ]
             |> appendOpt "entryname" encodeSchemaSaladString d.Entryname
             |> appendOpt "writable" (fun b -> yBool b) d.Writable
+            |> appendDynamicPropertiesExcept DirentInstance.KnownFieldNames d
             |> yMap
         | String -> Encode.string "string"
         | Int -> Encode.string "int"
@@ -229,7 +298,12 @@ module Encode =
     // ------------------------------
 
     and encodeInputRecordField (field:InputRecordField) : (string * YAMLElement) =
-        field.Name, yMap [ "type", encodeCWLType field.Type ]
+        let pairs =
+            [ "type", encodeCWLType field.Type ]
+            |> appendOpt "doc" Encode.string field.Doc
+            |> appendOpt "label" Encode.string field.Label
+            |> appendDynamicPropertiesExcept InputRecordField.KnownFieldNames field
+        field.Name, yMap pairs
 
     and encodeInputRecordSchema (schema:InputRecordSchema) : YAMLElement =
         let fieldsElement =
@@ -238,18 +312,32 @@ module Encode =
                 let fieldPairs = fs |> Seq.map encodeInputRecordField |> Seq.toList
                 yMap fieldPairs
             | None -> yMap []
-        
-        yMap [ "type", Encode.string "record"; "fields", fieldsElement ]
+        [ "type", Encode.string "record"; "fields", fieldsElement ]
+        |> appendOpt "label" Encode.string schema.Label
+        |> appendOpt "doc" Encode.string schema.Doc
+        |> appendOpt "name" Encode.string schema.Name
+        |> appendDynamicPropertiesExcept InputRecordSchema.KnownFieldNames schema
+        |> yMap
 
     and encodeInputEnumSchema (schema:InputEnumSchema) : YAMLElement =
         let pairs =
             [ "type", Encode.string "enum" ]
             @ [ "symbols", (schema.Symbols |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence) ]
-        
-        yMap pairs
+
+        pairs
+        |> appendOpt "label" Encode.string schema.Label
+        |> appendOpt "doc" Encode.string schema.Doc
+        |> appendOpt "name" Encode.string schema.Name
+        |> appendDynamicPropertiesExcept InputEnumSchema.KnownFieldNames schema
+        |> yMap
 
     and encodeInputArraySchema (schema:InputArraySchema) : YAMLElement =
-        yMap [ "type", Encode.string "array"; "items", encodeCWLType schema.Items ]
+        [ "type", Encode.string "array"; "items", encodeCWLType schema.Items ]
+        |> appendOpt "label" Encode.string schema.Label
+        |> appendOpt "doc" Encode.string schema.Doc
+        |> appendOpt "name" Encode.string schema.Name
+        |> appendDynamicPropertiesExcept InputArraySchema.KnownFieldNames schema
+        |> yMap
 
     // ------------------------------
     // Binding & Port encoders
@@ -258,6 +346,10 @@ module Encode =
     let encodeOutputBinding (ob:OutputBinding) : YAMLElement =
         [ ob.Glob |> Option.map (fun g -> "glob", Encode.string g) ]
         |> List.choose id
+        |> appendOpt "loadContents" yBool ob.LoadContents
+        |> appendOpt "loadListing" (LoadListingEnum.toCwlString >> Encode.string) ob.LoadListing
+        |> appendOpt "outputEval" Encode.string ob.OutputEval
+        |> appendDynamicPropertiesExcept OutputBinding.KnownFieldNames ob
         |> yMap
 
     let encodeStringArrayOrScalar (values: ResizeArray<string>) : YAMLElement =
@@ -322,8 +414,14 @@ module Encode =
         let pairs =
             []
             |> appendOpt "type" id typeElement
+            |> appendOpt "label" Encode.string o.Label
+            |> appendOpt "secondaryFiles" id o.SecondaryFiles
+            |> appendOpt "streamable" yBool o.Streamable
+            |> appendOpt "doc" Encode.string o.Doc
+            |> appendOpt "format" Encode.string o.Format
             |> appendOpt "outputBinding" encodeOutputBinding o.OutputBinding
             |> appendOpt "outputSource" id outputSourceElement
+            |> appendDynamicPropertiesExcept CWLOutput.KnownFieldNames o
         match pairs with
         | [ ("type", t) ] -> o.Name, t // only type specified
         | _ ->
@@ -332,10 +430,14 @@ module Encode =
 
     let encodeInputBinding (ib:InputBinding) : YAMLElement =
         []
+        |> appendOpt "loadContents" yBool ib.LoadContents
         |> appendOpt "prefix" Encode.string ib.Prefix
         |> appendOpt "position" (fun p -> Encode.int p) ib.Position
         |> appendOpt "itemSeparator" Encode.string ib.ItemSeparator
         |> appendOpt "separate" yBool ib.Separate
+        |> appendOpt "valueFrom" Encode.string ib.ValueFrom
+        |> appendOpt "shellQuote" yBool ib.ShellQuote
+        |> appendDynamicPropertiesExcept InputBinding.KnownFieldNames ib
         |> yMap
 
     let encodeCWLInput (i:CWLInput) : (string * YAMLElement) =
@@ -385,8 +487,16 @@ module Encode =
         let pairs =
             []
             |> appendOpt "type" id typeElement
+            |> appendOpt "label" Encode.string i.Label
+            |> appendOpt "secondaryFiles" id i.SecondaryFiles
+            |> appendOpt "streamable" yBool i.Streamable
+            |> appendOpt "doc" Encode.string i.Doc
+            |> appendOpt "format" Encode.string i.Format
+            |> appendOpt "loadContents" yBool i.LoadContents
+            |> appendOpt "loadListing" (LoadListingEnum.toCwlString >> Encode.string) i.LoadListing
+            |> appendOpt "default" id i.DefaultValue
             |> appendOpt "inputBinding" encodeInputBinding i.InputBinding
-            |> appendOpt "optional" yBool i.Optional
+            |> appendDynamicPropertiesExcept CWLInput.KnownFieldNames i
         match pairs with
         | [ ("type", t) ] -> i.Name, t
         | _ -> i.Name, yMap pairs
@@ -396,10 +506,12 @@ module Encode =
     // ------------------------------
 
     let encodeSchemaDefRequirementType (s:SchemaDefRequirementType) : YAMLElement =
-        yMap [
+        [
             "name", Encode.string s.Name
             "type", encodeCWLType s.Type_
         ]
+        |> appendDynamicPropertiesExcept SchemaDefRequirementType.KnownFieldNames s
+        |> yMap
 
     let encodeRequirement (r:Requirement) : YAMLElement =
         match r with
@@ -409,6 +521,7 @@ module Encode =
                 |> Option.bind (fun entries -> if entries.Count > 0 then Some entries else None)
             [ "class", Encode.string "InlineJavascriptRequirement" ]
             |> appendOpt "expressionLib" (fun entries -> entries |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence) expressionLib
+            |> appendDynamicPropertiesExcept InlineJavascriptRequirementValue.KnownFieldNames value
             |> yMap
         | SchemaDefRequirement types ->
             [ "class", Encode.string "SchemaDefRequirement";
@@ -422,6 +535,7 @@ module Encode =
             |> appendOpt "dockerImport" Encode.string dr.DockerImport
             |> appendOpt "dockerOutputDirectory" Encode.string dr.DockerOutputDirectory
             |> appendOpt "cwltool:dockerRunOptions" (fun values -> values |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence) dr.DockerRunOptions
+            |> appendDynamicPropertiesExcept DockerRequirement.KnownFieldNames dr
             |> yMap
         | SoftwareRequirement pkgs ->
             let encodePkg (p:SoftwarePackage) =
@@ -429,55 +543,39 @@ module Encode =
                 |> fun acc -> acc @ [ "package", Encode.string p.Package ]
                 |> appendOpt "version" (fun vs -> vs |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence) p.Version
                 |> appendOpt "specs" (fun vs -> vs |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence) p.Specs
+                |> appendDynamicPropertiesExcept SoftwarePackage.KnownFieldNames p
                 |> yMap
             [ "class", Encode.string "SoftwareRequirement";
               "packages", (pkgs |> Seq.map encodePkg |> List.ofSeq |> YAMLElement.Sequence) ] |> yMap
         | LoadListingRequirement loadListing ->
             [ "class", Encode.string "LoadListingRequirement"
               "loadListing", Encode.string (LoadListingEnum.toCwlString loadListing.LoadListing) ]
+            |> appendDynamicPropertiesExcept LoadListingRequirementValue.KnownFieldNames loadListing
             |> yMap
         | InitialWorkDirRequirement listing ->
-            let encodeDynamicObjWithClass (className: string) (dynObj: DynamicObj) =
-                let dynamicPairs =
-                    dynObj.GetProperties(false)
-                    |> Seq.choose (fun kvp ->
-                        match kvp.Value with
-                        | :? string as s -> Some (kvp.Key, Encode.string s)
-                        | :? bool as b -> Some (kvp.Key, yBool b)
-                        | :? int as i -> Some (kvp.Key, Encode.int i)
-                        | :? int64 as i -> Some (kvp.Key, Encode.string (string i))
-                        | :? float as f -> Some (kvp.Key, Encode.float f)
-                        | :? YAMLElement as y -> Some (kvp.Key, y)
-                        | _ -> None
-                    )
-                    |> Seq.toList
-
-                let hasClass = dynamicPairs |> List.exists (fun (k, _) -> k = "class")
-                if hasClass then
-                    yMap dynamicPairs
-                else
-                    yMap (("class", Encode.string className) :: dynamicPairs)
-
             let encodeInitialWorkDirEntry = function
                 | DirentEntry d ->
                     [ ]
                     |> appendOpt "entryname" encodeSchemaSaladString d.Entryname
                     |> fun acc -> acc @ [ "entry", encodeSchemaSaladString d.Entry ]
                     |> appendOpt "writable" yBool d.Writable
+                    |> appendDynamicPropertiesExcept DirentInstance.KnownFieldNames d
                     |> yMap
                 | StringEntry s ->
                     encodeSchemaSaladString s
                 | FileEntry file ->
-                    encodeDynamicObjWithClass "File" file
+                    encodeFilePairs "class" "File" file |> yMap
                 | DirectoryEntry directory ->
-                    encodeDynamicObjWithClass "Directory" directory
+                    encodeDirectoryPairs "class" "Directory" directory |> yMap
 
             [ "class", Encode.string "InitialWorkDirRequirement";
               "listing", (listing |> Seq.map encodeInitialWorkDirEntry |> List.ofSeq |> YAMLElement.Sequence) ] |> yMap
         | EnvVarRequirement envs ->
             let encodeEnv (e:EnvironmentDef) =
                 let v = normalizeEnvValueForEncode e.EnvValue
-                [ "envName", Encode.string e.EnvName; "envValue", Encode.string v ] |> yMap
+                [ "envName", Encode.string e.EnvName; "envValue", Encode.string v ]
+                |> appendDynamicPropertiesExcept EnvironmentDef.KnownFieldNames e
+                |> yMap
             [ "class", Encode.string "EnvVarRequirement";
               "envDef", (envs |> Seq.map encodeEnv |> List.ofSeq |> YAMLElement.Sequence) ] |> yMap
         | ShellCommandRequirement -> [ "class", Encode.string "ShellCommandRequirement" ] |> yMap
@@ -491,8 +589,19 @@ module Encode =
                 | :? bool as b -> Some (key, yBool b)
                 | _ -> None
 
+            let knownPairs =
+                rr.KnownFieldValues
+                |> List.choose (fun (key, value) ->
+                    value |> Option.bind (tryEncodeScalar key))
+
+            let knownFieldNames =
+                ResourceRequirementInstance.KnownFieldNames
+                |> Seq.map id
+                |> Set.ofSeq
+
             let dynamicPairs =
                 rr.GetProperties(false)
+                |> Seq.filter (fun kvp -> not (Set.contains kvp.Key knownFieldNames))
                 |> Seq.choose (fun kvp ->
                     match kvp.Value with
                     | :? Option<obj> as optionalValue ->
@@ -501,11 +610,12 @@ module Encode =
                     | directValue ->
                         tryEncodeScalar kvp.Key directValue)
                 |> Seq.toList
-            [ "class", Encode.string "ResourceRequirement" ] @ dynamicPairs |> yMap
+            [ "class", Encode.string "ResourceRequirement" ] @ knownPairs @ dynamicPairs |> yMap
         // Canonicalize class names to short CWL forms where applicable.
         | WorkReuseRequirement workReuse ->
             [ "class", Encode.string "WorkReuse"
               "enableReuse", yBool workReuse.EnableReuse ]
+            |> appendDynamicPropertiesExcept WorkReuseRequirementValue.KnownFieldNames workReuse
             |> yMap
         | WorkReuseExpressionRequirement expression ->
             [ "class", Encode.string "WorkReuse"
@@ -514,6 +624,7 @@ module Encode =
         | NetworkAccessRequirement networkAccess ->
             [ "class", Encode.string "NetworkAccess"
               "networkAccess", yBool networkAccess.NetworkAccess ]
+            |> appendDynamicPropertiesExcept NetworkAccessRequirementValue.KnownFieldNames networkAccess
             |> yMap
         | NetworkAccessExpressionRequirement expression ->
             [ "class", Encode.string "NetworkAccess"
@@ -522,6 +633,7 @@ module Encode =
         | InplaceUpdateRequirement inplaceUpdate ->
             [ "class", Encode.string "InplaceUpdateRequirement"
               "inplaceUpdate", yBool inplaceUpdate.InplaceUpdate ]
+            |> appendDynamicPropertiesExcept InplaceUpdateRequirementValue.KnownFieldNames inplaceUpdate
             |> yMap
         | ToolTimeLimitRequirement tl ->
             let timelimit =
@@ -575,6 +687,7 @@ module Encode =
             |> appendOpt "loadContents" yBool si.LoadContents
             |> appendOpt "loadListing" Encode.string si.LoadListing
             |> appendOpt "label" Encode.string si.Label
+            |> appendDynamicPropertiesExcept StepInput.KnownFieldNames si
         match pairs with
         | [ ("source", s) ]
             when
@@ -596,7 +709,9 @@ module Encode =
         |> yMap
 
     let encodeStepOutputParameter (so: StepOutputParameter) : YAMLElement =
-        yMap [ "id", Encode.string so.Id ]
+        [ "id", Encode.string so.Id ]
+        |> appendDynamicPropertiesExcept StepOutputParameter.KnownFieldNames so
+        |> yMap
 
     let encodeStepOutputs (outputs: ResizeArray<StepOutput>) : YAMLElement =
         outputs
@@ -660,30 +775,30 @@ module Encode =
             | Some bc when bc.Count > 0 ->
                 withRequirements @ [ "baseCommand", (bc |> Seq.map Encode.string |> List.ofSeq |> YAMLElement.Sequence) ]
             | _ -> withRequirements
+        let withCommandFields =
+            withBaseCommand
+            |> appendOpt "arguments" id td.Arguments
+            |> appendOpt "stdin" Encode.string td.Stdin
+            |> appendOpt "stderr" Encode.string td.Stderr
+            |> appendOpt "stdout" Encode.string td.Stdout
+            |> appendOpt "successCodes" (fun codes -> codes |> Seq.map Encode.int |> List.ofSeq |> YAMLElement.Sequence) td.SuccessCodes
+            |> appendOpt "temporaryFailCodes" (fun codes -> codes |> Seq.map Encode.int |> List.ofSeq |> YAMLElement.Sequence) td.TemporaryFailCodes
+            |> appendOpt "permanentFailCodes" (fun codes -> codes |> Seq.map Encode.int |> List.ofSeq |> YAMLElement.Sequence) td.PermanentFailCodes
         let withInputs =
             match td.Inputs with
             | Some i when i.Count > 0 ->
-                withBaseCommand @ [ "inputs", (i |> Seq.map encodeCWLInput |> Seq.toList |> yMap) ]
-            | _ -> withBaseCommand
+                withCommandFields @ [ "inputs", (i |> Seq.map encodeCWLInput |> Seq.toList |> yMap) ]
+            | _ -> withCommandFields
         let withOutputs =
             withInputs @ [ "outputs", (td.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> yMap) ]
         let withMetadata =
             match td.Metadata with
             | Some md ->
-                md.GetProperties(false)
-                |> Seq.fold (fun acc kvp ->
-                    let encodedValue =
-                        match kvp.Value with
-                        | :? string as s -> Encode.string s
-                        | :? bool as b -> yBool b
-                        | :? int as i -> Encode.int i
-                        | :? float as f -> Encode.float f
-                        | :? YAMLElement as y -> y
-                        | _ -> Encode.string (string kvp.Value)
-                    acc @ [ kvp.Key, encodedValue ]
-                ) withOutputs
+                appendDynamicProperties md withOutputs
             | None -> withOutputs
-        yMap withMetadata
+        withMetadata
+        |> appendDynamicPropertiesExcept CWLToolDescription.KnownFieldNames td
+        |> yMap
 
     and encodeExpressionToolDescriptionElement (et: CWLExpressionToolDescription) : YAMLElement =
         let basePairs =
@@ -715,20 +830,11 @@ module Encode =
         let withMetadata =
             match et.Metadata with
             | Some md ->
-                md.GetProperties(false)
-                |> Seq.fold (fun acc kvp ->
-                    let encodedValue =
-                        match kvp.Value with
-                        | :? string as s -> Encode.string s
-                        | :? bool as b -> yBool b
-                        | :? int as i -> Encode.int i
-                        | :? float as f -> Encode.float f
-                        | :? YAMLElement as y -> y
-                        | _ -> Encode.string (string kvp.Value)
-                    acc @ [ kvp.Key, encodedValue ]
-                ) withExpression
+                appendDynamicProperties md withExpression
             | None -> withExpression
-        yMap withMetadata
+        withMetadata
+        |> appendDynamicPropertiesExcept CWLExpressionToolDescription.KnownFieldNames et
+        |> yMap
 
     and encodeOperationDescriptionElement (op: CWLOperationDescription) : YAMLElement =
         let basePairs =
@@ -755,20 +861,11 @@ module Encode =
         let withMetadata =
             match op.Metadata with
             | Some md ->
-                md.GetProperties(false)
-                |> Seq.fold (fun acc kvp ->
-                    let encodedValue =
-                        match kvp.Value with
-                        | :? string as s -> Encode.string s
-                        | :? bool as b -> yBool b
-                        | :? int as i -> Encode.int i
-                        | :? float as f -> Encode.float f
-                        | :? YAMLElement as y -> y
-                        | _ -> Encode.string (string kvp.Value)
-                    acc @ [ kvp.Key, encodedValue ]
-                ) withOutputs
+                appendDynamicProperties md withOutputs
             | None -> withOutputs
-        yMap withMetadata
+        withMetadata
+        |> appendDynamicPropertiesExcept CWLOperationDescription.KnownFieldNames op
+        |> yMap
 
     and encodeWorkflowDescriptionElement (wd: CWLWorkflowDescription) : YAMLElement =
         let basePairs =
@@ -794,20 +891,11 @@ module Encode =
         let withMetadata =
             match wd.Metadata with
             | Some md ->
-                md.GetProperties(false)
-                |> Seq.fold (fun acc kvp ->
-                    let encodedValue =
-                        match kvp.Value with
-                        | :? string as s -> Encode.string s
-                        | :? bool as b -> yBool b
-                        | :? int as i -> Encode.int i
-                        | :? float as f -> Encode.float f
-                        | :? YAMLElement as y -> y
-                        | _ -> Encode.string (string kvp.Value)
-                    acc @ [ kvp.Key, encodedValue ]
-                ) withOutputs
+                appendDynamicProperties md withOutputs
             | None -> withOutputs
-        yMap withMetadata
+        withMetadata
+        |> appendDynamicPropertiesExcept CWLWorkflowDescription.KnownFieldNames wd
+        |> yMap
 
     and encodeWorkflowStep (ws:WorkflowStep) : (string * YAMLElement) =
         let basePairs =
@@ -819,6 +907,7 @@ module Encode =
             |> appendOpt "scatter" encodeScatter ws.Scatter
             |> appendOpt "scatterMethod" encodeScatterMethod ws.ScatterMethod
             |> appendOpt "when" Encode.string ws.When_
+            |> appendDynamicPropertiesExcept WorkflowStep.KnownFieldNames ws
         let withHints =
             match ws.Hints with
             | Some h when h.Count > 0 -> basePairs @ [ "hints", (h |> Seq.map encodeHintEntry |> List.ofSeq |> YAMLElement.Sequence) ]

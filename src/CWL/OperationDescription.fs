@@ -69,6 +69,20 @@ type CWLOperationDescription(
         with get() = _doc
         and set(value) = _doc <- value
 
+    static member KnownFieldNames =
+        ResizeArray [|
+            "inputs"
+            "outputs"
+            "label"
+            "doc"
+            "intent"
+            "class"
+            "id"
+            "requirements"
+            "hints"
+            "cwlVersion"
+        |]
+
     static member getInputs (operation: CWLOperationDescription) =
         operation.Inputs
 

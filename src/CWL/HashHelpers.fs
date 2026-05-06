@@ -1,5 +1,7 @@
 module ARCtrl.CWL.HashHelpers
 
+open DynamicObj
+
 let mergeHashes (hash1 : int) (hash2 : int) : int =
     0x9e3779b9 + hash2 + (hash1 <<< 6) + (hash1 >>> 2)
 
@@ -36,3 +38,16 @@ let boxHashSeq (a: seq<'a>) : obj =
         hash o
         |> mergeHashes acc) 0
     |> box
+
+let dynamicPropertiesSnapshot (dynObj: DynamicObj) =
+    dynObj.GetProperties(false)
+    |> Seq.map (fun kv -> kv.Key, kv.Value)
+    |> Seq.sortBy fst
+    |> Seq.toList
+
+let dynamicPropertiesEqual (left: DynamicObj) (right: DynamicObj) =
+    dynamicPropertiesSnapshot left = dynamicPropertiesSnapshot right
+
+let hashDynamicProperties (dynObj: DynamicObj) =
+    dynamicPropertiesSnapshot dynObj
+    |> Operators.hash

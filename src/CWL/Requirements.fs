@@ -3,16 +3,78 @@ namespace ARCtrl.CWL
 open DynamicObj
 open YAMLicious.YAMLiciousTypes
 
-type DockerRequirement = {
-        DockerPull: string option
-        DockerFile: SchemaSaladString option
-        DockerImageId: string option
-        DockerLoad: string option
-        DockerImport: string option
-        DockerOutputDirectory: string option
-        DockerRunOptions: ResizeArray<string> option
-    }
-    with 
+type DockerRequirement (
+    ?dockerPull: string,
+    ?dockerFile: SchemaSaladString,
+    ?dockerImageId: string,
+    ?dockerLoad: string,
+    ?dockerImport: string,
+    ?dockerOutputDirectory: string,
+    ?dockerRunOptions: ResizeArray<string>
+) =
+    inherit DynamicObj ()
+
+    let mutable _dockerPull = dockerPull
+    let mutable _dockerFile = dockerFile
+    let mutable _dockerImageId = dockerImageId
+    let mutable _dockerLoad = dockerLoad
+    let mutable _dockerImport = dockerImport
+    let mutable _dockerOutputDirectory = dockerOutputDirectory
+    let mutable _dockerRunOptions = dockerRunOptions
+
+    member this.DockerPull
+        with get() = _dockerPull
+        and set(value) = _dockerPull <- value
+
+    member this.DockerFile
+        with get() = _dockerFile
+        and set(value) = _dockerFile <- value
+
+    member this.DockerImageId
+        with get() = _dockerImageId
+        and set(value) = _dockerImageId <- value
+
+    member this.DockerLoad
+        with get() = _dockerLoad
+        and set(value) = _dockerLoad <- value
+
+    member this.DockerImport
+        with get() = _dockerImport
+        and set(value) = _dockerImport <- value
+
+    member this.DockerOutputDirectory
+        with get() = _dockerOutputDirectory
+        and set(value) = _dockerOutputDirectory <- value
+
+    member this.DockerRunOptions
+        with get() = _dockerRunOptions
+        and set(value) = _dockerRunOptions <- value
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? DockerRequirement as other ->
+            this.DockerPull = other.DockerPull &&
+            this.DockerFile = other.DockerFile &&
+            this.DockerImageId = other.DockerImageId &&
+            this.DockerLoad = other.DockerLoad &&
+            this.DockerImport = other.DockerImport &&
+            this.DockerOutputDirectory = other.DockerOutputDirectory &&
+            this.DockerRunOptions = other.DockerRunOptions &&
+            HashHelpers.dynamicPropertiesEqual this other
+        | _ -> false
+
+    override this.GetHashCode() =
+        hash (
+            this.DockerPull,
+            this.DockerFile,
+            this.DockerImageId,
+            this.DockerLoad,
+            this.DockerImport,
+            this.DockerOutputDirectory,
+            this.DockerRunOptions,
+            HashHelpers.hashDynamicProperties this
+        )
+
     /// Create a DockerRequirement from a plain docker file path or explicit schema-salad reference.
     /// If both `dockerFileReference` and `dockerFile` are provided, `dockerFileReference` takes precedence.
     static member create(?dockerPull, ?dockerFile: string, ?dockerFileReference: SchemaSaladString, ?dockerImageId, ?dockerLoad, ?dockerImport, ?dockerOutputDirectory, ?dockerRunOptions: ResizeArray<string>) =
@@ -22,21 +84,47 @@ type DockerRequirement = {
             | None, Some file -> Some (SchemaSaladString.Literal file)
             | None, None -> None
 
-        {
-            DockerPull = dockerPull
-            DockerFile = resolvedDockerFile
-            DockerImageId = dockerImageId
-            DockerLoad = dockerLoad
-            DockerImport = dockerImport
-            DockerOutputDirectory = dockerOutputDirectory
-            DockerRunOptions = dockerRunOptions
-        }
+        DockerRequirement(
+            ?dockerPull = dockerPull,
+            ?dockerFile = resolvedDockerFile,
+            ?dockerImageId = dockerImageId,
+            ?dockerLoad = dockerLoad,
+            ?dockerImport = dockerImport,
+            ?dockerOutputDirectory = dockerOutputDirectory,
+            ?dockerRunOptions = dockerRunOptions
+        )
+
+    static member KnownFieldNames =
+        ResizeArray [| "class"; "dockerPull"; "dockerFile"; "dockerImageId"; "dockerLoad"; "dockerImport"; "dockerOutputDirectory"; "cwltool:dockerRunOptions" |]
 
 /// Define an environment variable that will be set in the runtime environment by the workflow platform when executing the command line tool.
-type EnvironmentDef = {
-    EnvName: string
-    EnvValue: string
-}
+type EnvironmentDef (envName: string, envValue: string) =
+    inherit DynamicObj ()
+
+    let mutable _envName = envName
+    let mutable _envValue = envValue
+
+    member this.EnvName
+        with get() = _envName
+        and set(value) = _envName <- value
+
+    member this.EnvValue
+        with get() = _envValue
+        and set(value) = _envValue <- value
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? EnvironmentDef as other ->
+            this.EnvName = other.EnvName &&
+            this.EnvValue = other.EnvValue &&
+            HashHelpers.dynamicPropertiesEqual this other
+        | _ -> false
+
+    override this.GetHashCode() =
+        hash (this.EnvName, this.EnvValue, HashHelpers.hashDynamicProperties this)
+
+    static member KnownFieldNames =
+        ResizeArray [| "envName"; "envValue" |]
 
 type LoadListingEnum =
     | NoListing
@@ -55,37 +143,105 @@ type LoadListingEnum =
         | "deep_listing" -> Some DeepListing
         | _ -> None
 
-type LoadListingRequirementValue = {
-    LoadListing: LoadListingEnum
-}
+type LoadListingRequirementValue (loadListing: LoadListingEnum) =
+    inherit DynamicObj ()
 
-    with
+    let mutable _loadListing = loadListing
+
+    member this.LoadListing
+        with get() = _loadListing
+        and set(value) = _loadListing <- value
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? LoadListingRequirementValue as other ->
+            this.LoadListing = other.LoadListing &&
+            HashHelpers.dynamicPropertiesEqual this other
+        | _ -> false
+
+    override this.GetHashCode() =
+        hash (this.LoadListing, HashHelpers.hashDynamicProperties this)
+
     static member defaultNoListing =
-        { LoadListing = NoListing }
+        LoadListingRequirementValue(NoListing)
 
-type WorkReuseRequirementValue = {
-    EnableReuse: bool
-}
+    static member KnownFieldNames =
+        ResizeArray [| "class"; "loadListing" |]
 
-    with
+type WorkReuseRequirementValue (enableReuse: bool) =
+    inherit DynamicObj ()
+
+    let mutable _enableReuse = enableReuse
+
+    member this.EnableReuse
+        with get() = _enableReuse
+        and set(value) = _enableReuse <- value
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? WorkReuseRequirementValue as other ->
+            this.EnableReuse = other.EnableReuse &&
+            HashHelpers.dynamicPropertiesEqual this other
+        | _ -> false
+
+    override this.GetHashCode() =
+        hash (this.EnableReuse, HashHelpers.hashDynamicProperties this)
+
     static member defaultEnabled =
-        { EnableReuse = true }
+        WorkReuseRequirementValue(true)
 
-type NetworkAccessRequirementValue = {
-    NetworkAccess: bool
-}
+    static member KnownFieldNames =
+        ResizeArray [| "class"; "enableReuse" |]
 
-    with
+type NetworkAccessRequirementValue (networkAccess: bool) =
+    inherit DynamicObj ()
+
+    let mutable _networkAccess = networkAccess
+
+    member this.NetworkAccess
+        with get() = _networkAccess
+        and set(value) = _networkAccess <- value
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? NetworkAccessRequirementValue as other ->
+            this.NetworkAccess = other.NetworkAccess &&
+            HashHelpers.dynamicPropertiesEqual this other
+        | _ -> false
+
+    override this.GetHashCode() =
+        hash (this.NetworkAccess, HashHelpers.hashDynamicProperties this)
+
     static member defaultEnabled =
-        { NetworkAccess = true }
+        NetworkAccessRequirementValue(true)
 
-type InplaceUpdateRequirementValue = {
-    InplaceUpdate: bool
-}
+    static member KnownFieldNames =
+        ResizeArray [| "class"; "networkAccess" |]
 
-    with
+type InplaceUpdateRequirementValue (inplaceUpdate: bool) =
+    inherit DynamicObj ()
+
+    let mutable _inplaceUpdate = inplaceUpdate
+
+    member this.InplaceUpdate
+        with get() = _inplaceUpdate
+        and set(value) = _inplaceUpdate <- value
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? InplaceUpdateRequirementValue as other ->
+            this.InplaceUpdate = other.InplaceUpdate &&
+            HashHelpers.dynamicPropertiesEqual this other
+        | _ -> false
+
+    override this.GetHashCode() =
+        hash (this.InplaceUpdate, HashHelpers.hashDynamicProperties this)
+
     static member defaultEnabled =
-        { InplaceUpdate = true }
+        InplaceUpdateRequirementValue(true)
+
+    static member KnownFieldNames =
+        ResizeArray [| "class"; "inplaceUpdate" |]
 
 type ToolTimeLimitValue =
     | ToolTimeLimitSeconds of int64
@@ -99,57 +255,113 @@ type ToolTimeLimitValue =
 /// It is an error if the value of any of these fields is negative.
 /// If neither "min" nor "max" is specified for a resource, default values are used.
 type ResourceRequirementInstance (
-    ?coresMin,
-    ?coresMax,
-    ?ramMin,
-    ?ramMax,
-    ?tmpdirMin,
-    ?tmpdirMax,
-    ?outdirMin,
-    ?outdirMax
-) as this =
+    ?coresMin: obj,
+    ?coresMax: obj,
+    ?ramMin: obj,
+    ?ramMax: obj,
+    ?tmpdirMin: obj,
+    ?tmpdirMax: obj,
+    ?outdirMin: obj,
+    ?outdirMax: obj
+) =
     inherit DynamicObj ()
-    do
-        DynObj.setOptionalProperty (nameof coresMin) coresMin this
-        DynObj.setOptionalProperty (nameof coresMax) coresMax this
-        DynObj.setOptionalProperty (nameof ramMin) ramMin this
-        DynObj.setOptionalProperty (nameof ramMax) ramMax this
-        DynObj.setOptionalProperty (nameof tmpdirMin) tmpdirMin this
-        DynObj.setOptionalProperty (nameof tmpdirMax) tmpdirMax this
-        DynObj.setOptionalProperty (nameof outdirMin) outdirMin this
-        DynObj.setOptionalProperty (nameof outdirMax) outdirMax this
+
+    let mutable _coresMin = coresMin
+    let mutable _coresMax = coresMax
+    let mutable _ramMin = ramMin
+    let mutable _ramMax = ramMax
+    let mutable _tmpdirMin = tmpdirMin
+    let mutable _tmpdirMax = tmpdirMax
+    let mutable _outdirMin = outdirMin
+    let mutable _outdirMax = outdirMax
+
+    member this.CoresMin
+        with get() = _coresMin
+        and set(value) = _coresMin <- value
+
+    member this.CoresMax
+        with get() = _coresMax
+        and set(value) = _coresMax <- value
+
+    member this.RamMin
+        with get() = _ramMin
+        and set(value) = _ramMin <- value
+
+    member this.RamMax
+        with get() = _ramMax
+        and set(value) = _ramMax <- value
+
+    member this.TmpdirMin
+        with get() = _tmpdirMin
+        and set(value) = _tmpdirMin <- value
+
+    member this.TmpdirMax
+        with get() = _tmpdirMax
+        and set(value) = _tmpdirMax <- value
+
+    member this.OutdirMin
+        with get() = _outdirMin
+        and set(value) = _outdirMin <- value
+
+    member this.OutdirMax
+        with get() = _outdirMax
+        and set(value) = _outdirMax <- value
+
+    member this.TryGetKnownField(name: string) =
+        match name with
+        | "coresMin" -> this.CoresMin
+        | "coresMax" -> this.CoresMax
+        | "ramMin" -> this.RamMin
+        | "ramMax" -> this.RamMax
+        | "tmpdirMin" -> this.TmpdirMin
+        | "tmpdirMax" -> this.TmpdirMax
+        | "outdirMin" -> this.OutdirMin
+        | "outdirMax" -> this.OutdirMax
+        | _ -> None
 
     member this.TryGetInt64(name: string) =
-        this.TryGetPropertyValue(name)
-        |> Option.bind (function
-            | :? Option<obj> as optionValue -> optionValue
-            | :? int64 as value -> Some (box value)
-            | :? int as value -> Some (box (int64 value))
-            | _ -> None)
+        this.TryGetKnownField(name)
         |> Option.bind (function
             | :? int64 as value -> Some value
             | :? int as value -> Some (int64 value)
             | _ -> None)
 
     member this.TryGetFloat(name: string) =
-        this.TryGetPropertyValue(name)
-        |> Option.bind (function
-            | :? Option<obj> as optionValue -> optionValue
-            | :? float as value -> Some (box value)
-            | _ -> None)
+        this.TryGetKnownField(name)
         |> Option.bind (function
             | :? float as value -> Some value
             | _ -> None)
 
     member this.TryGetExpression(name: string) =
-        this.TryGetPropertyValue(name)
-        |> Option.bind (function
-            | :? Option<obj> as optionValue -> optionValue
-            | :? string as value -> Some (box value)
-            | _ -> None)
+        this.TryGetKnownField(name)
         |> Option.bind (function
             | :? string as value -> Some value
             | _ -> None)
+
+    member this.KnownFieldValues =
+        [
+            "coresMin", this.CoresMin
+            "coresMax", this.CoresMax
+            "ramMin", this.RamMin
+            "ramMax", this.RamMax
+            "tmpdirMin", this.TmpdirMin
+            "tmpdirMax", this.TmpdirMax
+            "outdirMin", this.OutdirMin
+            "outdirMax", this.OutdirMax
+        ]
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? ResourceRequirementInstance as other ->
+            this.KnownFieldValues = other.KnownFieldValues &&
+            HashHelpers.dynamicPropertiesEqual this other
+        | _ -> false
+
+    override this.GetHashCode() =
+        hash (this.KnownFieldValues, HashHelpers.hashDynamicProperties this)
+
+    static member KnownFieldNames =
+        ResizeArray [| "class"; "coresMin"; "coresMax"; "ramMin"; "ramMax"; "tmpdirMin"; "tmpdirMax"; "outdirMin"; "outdirMax" |]
 
 /// Entry in InitialWorkDirRequirement listing.
 /// CWL allows either a Dirent object or a string/expression entry.
@@ -159,18 +371,58 @@ type InitialWorkDirEntry =
     | FileEntry of FileInstance
     | DirectoryEntry of DirectoryInstance
 
-type InlineJavascriptRequirementValue = {
-    ExpressionLib: ResizeArray<string> option
-}
+type InlineJavascriptRequirementValue (?expressionLib: ResizeArray<string>) =
+    inherit DynamicObj ()
 
-    with
+    let mutable _expressionLib = expressionLib
+
+    member this.ExpressionLib
+        with get() = _expressionLib
+        and set(value) = _expressionLib <- value
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? InlineJavascriptRequirementValue as other ->
+            this.ExpressionLib = other.ExpressionLib &&
+            HashHelpers.dynamicPropertiesEqual this other
+        | _ -> false
+
+    override this.GetHashCode() =
+        hash (this.ExpressionLib, HashHelpers.hashDynamicProperties this)
+
     static member defaultEmpty =
-        { ExpressionLib = None }
+        InlineJavascriptRequirementValue()
 
-type HintUnknownValue = {
-    Class: string option
-    Raw: YAMLElement
-}
+    static member KnownFieldNames =
+        ResizeArray [| "class"; "expressionLib" |]
+
+type HintUnknownValue (class_: string option, raw: YAMLElement) =
+    inherit DynamicObj ()
+
+    let mutable _class = class_
+    let mutable _raw = raw
+
+    member this.Class
+        with get() = _class
+        and set(value) = _class <- value
+
+    member this.Raw
+        with get() = _raw
+        and set(value) = _raw <- value
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? HintUnknownValue as other ->
+            this.Class = other.Class &&
+            this.Raw = other.Raw &&
+            HashHelpers.dynamicPropertiesEqual this other
+        | _ -> false
+
+    override this.GetHashCode() =
+        hash (this.Class, this.Raw, HashHelpers.hashDynamicProperties this)
+
+    static member KnownFieldNames =
+        ResizeArray [| "class"; "raw" |]
 
 type Requirement =
     /// Indicates that the workflow platform must support inline Javascript expressions.
