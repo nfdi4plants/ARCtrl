@@ -28,9 +28,15 @@ type InputBinding (
         with get() = _prefix
         and set(value) = _prefix <- value
 
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+    member this.Position
+        with [<EmitProperty("_position")>] get() = _position
+        and set(value) = _position <- value
+    #else
     member this.Position
         with get() = _position
         and set(value) = _position <- value
+    #endif
 
     member this.ItemSeparator
         with get() = _itemSeparator
@@ -62,7 +68,7 @@ type InputBinding (
             this.LoadContents = other.LoadContents &&
             this.ValueFrom = other.ValueFrom &&
             this.ShellQuote = other.ShellQuote &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
@@ -74,7 +80,7 @@ type InputBinding (
             this.LoadContents,
             this.ValueFrom,
             this.ShellQuote,
-            HashHelpers.hashDynamicProperties this
+            DynamicObjHelpers.hashDynamicProperties this
         )
 
     static member KnownFieldNames =
@@ -186,7 +192,7 @@ type CWLInput (
             this.LoadContents = other.LoadContents &&
             this.LoadListing = other.LoadListing &&
             this.DefaultValue = other.DefaultValue &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
@@ -203,7 +209,7 @@ type CWLInput (
             this.LoadContents,
             this.LoadListing,
             this.DefaultValue,
-            HashHelpers.hashDynamicProperties this
+            DynamicObjHelpers.hashDynamicProperties this
         )
 
     static member KnownFieldNames =
