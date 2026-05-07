@@ -17,18 +17,18 @@ let decodeCWLToolDescriptionMetadata: CWLToolDescription =
 
 let testCWLToolDescriptionDecode =
     testList "Decode" [
-        testCase "sanitize allows shebang and full-line comments" <| fun _ ->
+        testCase "decode allows shebang and full-line comments" <| fun _ ->
             let withShebangAndComments = TestObjects.CWL.CommandLineTool.DecodeEdgeCases.withShebangAndComments
             let decoded = Decode.decodeCommandLineTool withShebangAndComments
             Expect.equal decoded.CWLVersion "v1.2" ""
             Expect.equal decoded.Outputs.Count 0 ""
-        testCase "sanitize removes whitespace-only lines" <| fun _ ->
+        testCase "decode allows whitespace-only separator lines" <| fun _ ->
             let withWhitespaceOnlyLine = TestObjects.CWL.CommandLineTool.DecodeEdgeCases.withWhitespaceOnlyLine
             let decoded = Decode.decodeCommandLineTool withWhitespaceOnlyLine
             let inputs = Expect.wantSome decoded.Inputs "Inputs should decode when whitespace-only separator lines are present."
             Expect.equal inputs.Count 1 ""
             Expect.equal inputs.[0].Name "sample" ""
-        testCase "sanitize preserves plain multiline scalar semantics" <| fun _ ->
+        testCase "decode preserves plain multiline scalar semantics" <| fun _ ->
             let yaml = """cwlVersion: v1.2
 class: CommandLineTool
 doc: First paragraph line
@@ -45,11 +45,11 @@ outputs: {}
                 |> YAMLicious.Decode.object (fun get -> get.Required.Field "doc" YAMLicious.Decode.string)
             let decoded = Decode.decodeCommandLineTool yaml
             Expect.equal decoded.Doc (Some expectedDoc) "Plain multiline scalars should survive ARCtrl sanitization unchanged."
-        testCase "sanitize does not hide malformed yaml errors" <| fun _ ->
+        testCase "decode does not hide malformed yaml errors" <| fun _ ->
             let malformed = TestObjects.CWL.CommandLineTool.DecodeEdgeCases.malformedYaml
             let decodeMalformed () = Decode.decodeCWLProcessingUnit malformed |> ignore
             Expect.throws decodeMalformed "Malformed YAML should fail decoding"
-        testCase "sanitize propagates non-recoverable exception type" <| fun _ ->
+        testCase "decode propagates non-recoverable exception type" <| fun _ ->
             let nonRecoverableInput = "cwlVersion:\u0000 v1.2"
             let decodeInvalid () = Decode.decodeCWLProcessingUnit nonRecoverableInput |> ignore
             Expect.throws decodeInvalid "Non-recoverable parse exceptions should not be swallowed"

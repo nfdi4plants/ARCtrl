@@ -785,6 +785,34 @@ steps:
     valueFrom: "merge_properties"
   out: [merged_output]"""
 
+let workflowWithBlankSeparatedSequenceFieldsFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+
+
+- id: trial_id
+  type: string
+
+- id: sensorthingsapi_url
+  type: string
+outputs:
+
+- id: result
+  type: File
+  outputSource: collect/result
+steps:
+
+- id: collect
+  run: ./collect.cwl
+  in:
+
+  - id: trial_id
+    source: trial_id
+
+  - id: sensorthingsapi_url
+    source: sensorthingsapi_url
+  out: [result]"""
+
 let workflowWithUnnamedMalformedEntriesFile = """cwlVersion: v1.2
 class: Workflow
 inputs:

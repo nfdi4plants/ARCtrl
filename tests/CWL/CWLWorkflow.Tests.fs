@@ -231,6 +231,14 @@ let testCWLWorkflowDescriptionDecode =
             Expect.isTrue (decoded.Inputs |> Seq.exists (fun input -> input.Name = "input_data")) "input_data should decode."
             Expect.isTrue (decoded.Outputs |> Seq.exists (fun output -> output.Name = "result_data")) "result_data output should decode."
             Expect.equal decoded.Doc (Some "Workflow doc line.\n# This line is doc text, not a YAML comment.\n") "Block scalar comment-looking text should be preserved."
+        testCase "sequence-form workflow fields with blank separator lines decode" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithBlankSeparatedSequenceFieldsFile
+            Expect.equal decoded.Inputs.Count 2 "Blank lines before and between sequence-form inputs should decode."
+            Expect.equal decoded.Outputs.Count 1 "Blank lines before sequence-form outputs should decode."
+            Expect.equal decoded.Steps.Count 1 "Blank lines before sequence-form steps should decode."
+            Expect.equal decoded.Steps.[0].In.Count 2 "Blank lines before and between nested step inputs should decode."
+            Expect.isTrue (decoded.Inputs |> Seq.exists (fun input -> input.Name = "trial_id")) "trial_id should decode."
+            Expect.equal decoded.Steps.[0].Id "collect" "The step following blank separators should stay mapped under steps."
         testCase "decodeWorkflowWithWarnings skips malformed unnamed entries" <| fun _ ->
             let result = Decode.decodeWorkflowWithWarnings TestObjects.CWL.Workflow.workflowWithUnnamedMalformedEntriesFile
             Expect.equal result.Value.Inputs.Count 1 "Only valid input should decode."
