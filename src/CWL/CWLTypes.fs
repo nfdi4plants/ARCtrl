@@ -1,6 +1,7 @@
 namespace ARCtrl.CWL
 
 open DynamicObj
+open Fable.Core
 open YAMLicious.YAMLiciousTypes
 
 type SchemaSaladString =
@@ -32,6 +33,7 @@ module SchemaSaladString =
 
     let toDirectiveString (saladString: SchemaSaladString) = saladString.AsDirectiveString
 
+[<AttachMembers>]
 type FileInstance (
     ?location: string,
     ?path: string,
@@ -133,7 +135,7 @@ type FileInstance (
             this.SecondaryFiles,
             this.Format,
             this.Contents,
-            HashHelpers.hashDynamicProperties this
+            DynamicObjHelpers.hashDynamicProperties this
         )
 
     override this.Equals (o: obj): bool =
@@ -150,9 +152,10 @@ type FileInstance (
             this.SecondaryFiles = o.SecondaryFiles &&
             this.Format = o.Format &&
             this.Contents = o.Contents &&
-            HashHelpers.dynamicPropertiesEqual this o
+            DynamicObjHelpers.dynamicPropertiesEqual this o
         | _ -> false
 
+[<AttachMembers>]
 type DirectoryInstance (
     ?location: string,
     ?path: string,
@@ -192,12 +195,13 @@ type DirectoryInstance (
             this.Path = o.Path &&
             this.Basename = o.Basename &&
             this.Listing = o.Listing &&
-            HashHelpers.dynamicPropertiesEqual this o
+            DynamicObjHelpers.dynamicPropertiesEqual this o
         | _ -> false
 
     override this.GetHashCode (): int = 
-        hash (this.Location, this.Path, this.Basename, this.Listing, HashHelpers.hashDynamicProperties this)
+        hash (this.Location, this.Path, this.Basename, this.Listing, DynamicObjHelpers.hashDynamicProperties this)
 
+[<AttachMembers>]
 type DirentInstance (entry: SchemaSaladString, ?entryname: SchemaSaladString, ?writable: bool) =
     inherit DynamicObj ()
 
@@ -223,17 +227,18 @@ type DirentInstance (entry: SchemaSaladString, ?entryname: SchemaSaladString, ?w
             this.Entry = other.Entry &&
             this.Entryname = other.Entryname &&
             this.Writable = other.Writable &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
-        hash (this.Entry, this.Entryname, this.Writable, HashHelpers.hashDynamicProperties this)
+        hash (this.Entry, this.Entryname, this.Writable, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
         ResizeArray [| "entry"; "entryname"; "writable" |]
 
 /// Represents an enumeration type with a defined set of valid symbol values.
 /// Per the CWL specification, symbol order is semantically significant and preserved during serialization.
+[<AttachMembers>]
 type InputEnumSchema (symbols: ResizeArray<string>, ?label: string, ?doc: string, ?name: string) =
     inherit DynamicObj ()
 
@@ -269,16 +274,17 @@ type InputEnumSchema (symbols: ResizeArray<string>, ?label: string, ?doc: string
             this.Name = other.Name &&
             this.Symbols.Count = other.Symbols.Count &&
             Seq.forall2 (=) this.Symbols other.Symbols &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode(): int =
-        hash (this.Symbols |> Seq.toList, this.Label, this.Doc, this.Name, HashHelpers.hashDynamicProperties this)
+        hash (this.Symbols |> Seq.toList, this.Label, this.Doc, this.Name, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
         ResizeArray [| "type"; "symbols"; "label"; "doc"; "name" |]
 
 /// Represents a field in an InputRecordSchema
+[<AttachMembers>]
 type InputRecordField (name: string, type_: CWLType, ?doc: string, ?label: string) =
     inherit DynamicObj ()
 
@@ -310,17 +316,17 @@ type InputRecordField (name: string, type_: CWLType, ?doc: string, ?label: strin
             this.Type.Equals(other.Type) &&
             this.Doc = other.Doc &&
             this.Label = other.Label &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode(): int =
-        hash (this.Name, this.Type, this.Doc, this.Label, HashHelpers.hashDynamicProperties this)
+        hash (this.Name, this.Type, this.Doc, this.Label, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
         ResizeArray [| "name"; "type"; "doc"; "label" |]
 
 /// Represents a record schema for workflow input parameters
-and InputRecordSchema (?fields: ResizeArray<InputRecordField>, ?label: string, ?doc: string, ?name: string) =
+and [<AttachMembers>] InputRecordSchema (?fields: ResizeArray<InputRecordField>, ?label: string, ?doc: string, ?name: string) =
     inherit DynamicObj ()
 
     let mutable _fields = fields
@@ -358,20 +364,20 @@ and InputRecordSchema (?fields: ResizeArray<InputRecordField>, ?label: string, ?
                     Seq.forall2 (fun (a: InputRecordField) (b: InputRecordField) -> a.Equals(b)) f1 f2
                 | _ -> false
             ) &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode(): int =
         let fieldsHash =
             this.Fields
             |> Option.map (Seq.map (fun field -> field.GetHashCode()) >> Seq.toList)
-        hash (fieldsHash, this.Label, this.Doc, this.Name, HashHelpers.hashDynamicProperties this)
+        hash (fieldsHash, this.Label, this.Doc, this.Name, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
         ResizeArray [| "type"; "fields"; "label"; "doc"; "name" |]
 
 /// Represents an array schema for workflow input parameters
-and InputArraySchema (items: CWLType, ?label: string, ?doc: string, ?name: string) =
+and [<AttachMembers>] InputArraySchema (items: CWLType, ?label: string, ?doc: string, ?name: string) =
     inherit DynamicObj ()
 
     let mutable _items = items
@@ -402,11 +408,11 @@ and InputArraySchema (items: CWLType, ?label: string, ?doc: string, ?name: strin
             this.Label = other.Label &&
             this.Doc = other.Doc &&
             this.Name = other.Name &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode(): int =
-        hash (this.Items, this.Label, this.Doc, this.Name, HashHelpers.hashDynamicProperties this)
+        hash (this.Items, this.Label, this.Doc, this.Name, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
         ResizeArray [| "type"; "items"; "label"; "doc"; "name" |]
@@ -480,6 +486,7 @@ and [<CustomEquality; NoComparison>] CWLType =
 
     static member directory() = Directory(DirectoryInstance())
 
+[<AttachMembers>]
 type SchemaDefRequirementType (name: string, type_: CWLType) =
     inherit DynamicObj ()
 
@@ -499,15 +506,16 @@ type SchemaDefRequirementType (name: string, type_: CWLType) =
         | :? SchemaDefRequirementType as other ->
             this.Name = other.Name &&
             this.Type_.Equals(other.Type_) &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
-        hash (this.Name, this.Type_, HashHelpers.hashDynamicProperties this)
+        hash (this.Name, this.Type_, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
         ResizeArray [| "name"; "type" |]
 
+[<AttachMembers>]
 type SoftwarePackage (package: string, ?version: ResizeArray<string>, ?specs: ResizeArray<string>) =
     inherit DynamicObj ()
 
@@ -533,11 +541,11 @@ type SoftwarePackage (package: string, ?version: ResizeArray<string>, ?specs: Re
             this.Package = other.Package &&
             this.Version = other.Version &&
             this.Specs = other.Specs &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
-        hash (this.Package, this.Version, this.Specs, HashHelpers.hashDynamicProperties this)
+        hash (this.Package, this.Version, this.Specs, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
         ResizeArray [| "package"; "version"; "specs" |]

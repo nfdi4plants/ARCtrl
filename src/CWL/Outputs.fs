@@ -36,11 +36,11 @@ type OutputBinding (?glob: string, ?loadContents: bool, ?loadListing: LoadListin
             this.LoadContents = other.LoadContents &&
             this.LoadListing = other.LoadListing &&
             this.OutputEval = other.OutputEval &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
-        hash (this.Glob, this.LoadContents, this.LoadListing, this.OutputEval, HashHelpers.hashDynamicProperties this)
+        hash (this.Glob, this.LoadContents, this.LoadListing, this.OutputEval, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
         ResizeArray [| "loadContents"; "loadListing"; "glob"; "outputEval" |]
@@ -141,7 +141,7 @@ type CWLOutput (
             this.Streamable = other.Streamable &&
             this.Doc = other.Doc &&
             this.Format = other.Format &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
@@ -155,7 +155,7 @@ type CWLOutput (
             this.Streamable,
             this.Doc,
             this.Format,
-            HashHelpers.hashDynamicProperties this
+            DynamicObjHelpers.hashDynamicProperties this
         )
 
     static member KnownFieldNames =

@@ -29,7 +29,7 @@ type CWLParameterReference(key : string, ?values: string ResizeArray, ?type_: CW
             HashHelpers.boxHashSeq this.Values
             HashHelpers.hash this.Key
             HashHelpers.boxHashOption this.Type
-            HashHelpers.hashDynamicProperties this
+            DynamicObjHelpers.hashDynamicProperties this
         |]
         |> HashHelpers.boxHashArray
         |> fun x -> x :?> int
@@ -44,7 +44,7 @@ type CWLParameterReference(key : string, ?values: string ResizeArray, ?type_: CW
         this.Values.Count = other.Values.Count &&
         Seq.forall2 (=) this.Values other.Values &&
         this.Type = other.Type &&
-        HashHelpers.dynamicPropertiesEqual this other
+        DynamicObjHelpers.dynamicPropertiesEqual this other
 
     member this.ReferenceEquals (other: CWLParameterReference) : bool =
         System.Object.ReferenceEquals(this,other)

@@ -113,15 +113,13 @@ module Encode =
         | _ -> None
 
     and encodeDynamicObj (dynObj: DynamicObj) =
-        dynObj.GetProperties(false)
+        DynamicObjHelpers.dynamicPropertiesExcept Seq.empty dynObj
         |> Seq.choose (fun kvp -> encodeDynamicValue kvp.Value |> Option.map (fun encoded -> kvp.Key, encoded))
         |> Seq.toList
         |> yMap
 
     let appendDynamicPropertiesExcept (knownFieldNames: seq<string>) (dynObj: DynamicObj) acc =
-        let knownFieldSet = knownFieldNames |> Set.ofSeq
-        dynObj.GetProperties(false)
-        |> Seq.filter (fun kvp -> not (Set.contains kvp.Key knownFieldSet))
+        DynamicObjHelpers.dynamicPropertiesExcept knownFieldNames dynObj
         |> Seq.choose (fun kvp -> encodeDynamicValue kvp.Value |> Option.map (fun encoded -> kvp.Key, encoded))
         |> Seq.fold (fun pairs pair -> pairs @ [ pair ]) acc
 
@@ -600,8 +598,7 @@ module Encode =
                 |> Set.ofSeq
 
             let dynamicPairs =
-                rr.GetProperties(false)
-                |> Seq.filter (fun kvp -> not (Set.contains kvp.Key knownFieldNames))
+                DynamicObjHelpers.dynamicPropertiesExcept knownFieldNames rr
                 |> Seq.choose (fun kvp ->
                     match kvp.Value with
                     | :? Option<obj> as optionalValue ->

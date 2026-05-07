@@ -137,7 +137,7 @@ type StepInput (
             this.LoadContents = other.LoadContents &&
             this.LoadListing = other.LoadListing &&
             this.Label = other.Label &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
@@ -152,7 +152,7 @@ type StepInput (
             this.LoadContents,
             this.LoadListing,
             this.Label,
-            HashHelpers.hashDynamicProperties this
+            DynamicObjHelpers.hashDynamicProperties this
         )
 
     static member create(
@@ -214,11 +214,11 @@ type StepOutputParameter (id: string) =
         match o with
         | :? StepOutputParameter as other ->
             this.Id = other.Id &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
-        hash (this.Id, HashHelpers.hashDynamicProperties this)
+        hash (this.Id, DynamicObjHelpers.hashDynamicProperties this)
 
     static member create(id: string) =
         StepOutputParameter(id)

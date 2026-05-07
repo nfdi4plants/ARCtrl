@@ -1,8 +1,10 @@
 namespace ARCtrl.CWL
 
 open DynamicObj
+open Fable.Core
 open YAMLicious.YAMLiciousTypes
 
+[<AttachMembers>]
 type DockerRequirement (
     ?dockerPull: string,
     ?dockerFile: SchemaSaladString,
@@ -60,7 +62,7 @@ type DockerRequirement (
             this.DockerImport = other.DockerImport &&
             this.DockerOutputDirectory = other.DockerOutputDirectory &&
             this.DockerRunOptions = other.DockerRunOptions &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
@@ -72,7 +74,7 @@ type DockerRequirement (
             this.DockerImport,
             this.DockerOutputDirectory,
             this.DockerRunOptions,
-            HashHelpers.hashDynamicProperties this
+            DynamicObjHelpers.hashDynamicProperties this
         )
 
     /// Create a DockerRequirement from a plain docker file path or explicit schema-salad reference.
@@ -98,6 +100,7 @@ type DockerRequirement (
         ResizeArray [| "class"; "dockerPull"; "dockerFile"; "dockerImageId"; "dockerLoad"; "dockerImport"; "dockerOutputDirectory"; "cwltool:dockerRunOptions" |]
 
 /// Define an environment variable that will be set in the runtime environment by the workflow platform when executing the command line tool.
+[<AttachMembers>]
 type EnvironmentDef (envName: string, envValue: string) =
     inherit DynamicObj ()
 
@@ -117,11 +120,11 @@ type EnvironmentDef (envName: string, envValue: string) =
         | :? EnvironmentDef as other ->
             this.EnvName = other.EnvName &&
             this.EnvValue = other.EnvValue &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
-        hash (this.EnvName, this.EnvValue, HashHelpers.hashDynamicProperties this)
+        hash (this.EnvName, this.EnvValue, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
         ResizeArray [| "envName"; "envValue" |]
@@ -143,6 +146,7 @@ type LoadListingEnum =
         | "deep_listing" -> Some DeepListing
         | _ -> None
 
+[<AttachMembers>]
 type LoadListingRequirementValue (loadListing: LoadListingEnum) =
     inherit DynamicObj ()
 
@@ -156,11 +160,11 @@ type LoadListingRequirementValue (loadListing: LoadListingEnum) =
         match o with
         | :? LoadListingRequirementValue as other ->
             this.LoadListing = other.LoadListing &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
-        hash (this.LoadListing, HashHelpers.hashDynamicProperties this)
+        hash (this.LoadListing, DynamicObjHelpers.hashDynamicProperties this)
 
     static member defaultNoListing =
         LoadListingRequirementValue(NoListing)
@@ -168,6 +172,7 @@ type LoadListingRequirementValue (loadListing: LoadListingEnum) =
     static member KnownFieldNames =
         ResizeArray [| "class"; "loadListing" |]
 
+[<AttachMembers>]
 type WorkReuseRequirementValue (enableReuse: bool) =
     inherit DynamicObj ()
 
@@ -181,11 +186,11 @@ type WorkReuseRequirementValue (enableReuse: bool) =
         match o with
         | :? WorkReuseRequirementValue as other ->
             this.EnableReuse = other.EnableReuse &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
-        hash (this.EnableReuse, HashHelpers.hashDynamicProperties this)
+        hash (this.EnableReuse, DynamicObjHelpers.hashDynamicProperties this)
 
     static member defaultEnabled =
         WorkReuseRequirementValue(true)
@@ -193,6 +198,7 @@ type WorkReuseRequirementValue (enableReuse: bool) =
     static member KnownFieldNames =
         ResizeArray [| "class"; "enableReuse" |]
 
+[<AttachMembers>]
 type NetworkAccessRequirementValue (networkAccess: bool) =
     inherit DynamicObj ()
 
@@ -206,11 +212,11 @@ type NetworkAccessRequirementValue (networkAccess: bool) =
         match o with
         | :? NetworkAccessRequirementValue as other ->
             this.NetworkAccess = other.NetworkAccess &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
-        hash (this.NetworkAccess, HashHelpers.hashDynamicProperties this)
+        hash (this.NetworkAccess, DynamicObjHelpers.hashDynamicProperties this)
 
     static member defaultEnabled =
         NetworkAccessRequirementValue(true)
@@ -218,6 +224,7 @@ type NetworkAccessRequirementValue (networkAccess: bool) =
     static member KnownFieldNames =
         ResizeArray [| "class"; "networkAccess" |]
 
+[<AttachMembers>]
 type InplaceUpdateRequirementValue (inplaceUpdate: bool) =
     inherit DynamicObj ()
 
@@ -231,11 +238,11 @@ type InplaceUpdateRequirementValue (inplaceUpdate: bool) =
         match o with
         | :? InplaceUpdateRequirementValue as other ->
             this.InplaceUpdate = other.InplaceUpdate &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
-        hash (this.InplaceUpdate, HashHelpers.hashDynamicProperties this)
+        hash (this.InplaceUpdate, DynamicObjHelpers.hashDynamicProperties this)
 
     static member defaultEnabled =
         InplaceUpdateRequirementValue(true)
@@ -254,6 +261,7 @@ type ToolTimeLimitValue =
 /// It is an error if max < min.
 /// It is an error if the value of any of these fields is negative.
 /// If neither "min" nor "max" is specified for a resource, default values are used.
+[<AttachMembers>]
 type ResourceRequirementInstance (
     ?coresMin: obj,
     ?coresMax: obj,
@@ -354,11 +362,11 @@ type ResourceRequirementInstance (
         match o with
         | :? ResourceRequirementInstance as other ->
             this.KnownFieldValues = other.KnownFieldValues &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
-        hash (this.KnownFieldValues, HashHelpers.hashDynamicProperties this)
+        hash (this.KnownFieldValues, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
         ResizeArray [| "class"; "coresMin"; "coresMax"; "ramMin"; "ramMax"; "tmpdirMin"; "tmpdirMax"; "outdirMin"; "outdirMax" |]
@@ -371,6 +379,7 @@ type InitialWorkDirEntry =
     | FileEntry of FileInstance
     | DirectoryEntry of DirectoryInstance
 
+[<AttachMembers>]
 type InlineJavascriptRequirementValue (?expressionLib: ResizeArray<string>) =
     inherit DynamicObj ()
 
@@ -384,11 +393,11 @@ type InlineJavascriptRequirementValue (?expressionLib: ResizeArray<string>) =
         match o with
         | :? InlineJavascriptRequirementValue as other ->
             this.ExpressionLib = other.ExpressionLib &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
-        hash (this.ExpressionLib, HashHelpers.hashDynamicProperties this)
+        hash (this.ExpressionLib, DynamicObjHelpers.hashDynamicProperties this)
 
     static member defaultEmpty =
         InlineJavascriptRequirementValue()
@@ -396,6 +405,7 @@ type InlineJavascriptRequirementValue (?expressionLib: ResizeArray<string>) =
     static member KnownFieldNames =
         ResizeArray [| "class"; "expressionLib" |]
 
+[<AttachMembers>]
 type HintUnknownValue (class_: string option, raw: YAMLElement) =
     inherit DynamicObj ()
 
@@ -415,11 +425,11 @@ type HintUnknownValue (class_: string option, raw: YAMLElement) =
         | :? HintUnknownValue as other ->
             this.Class = other.Class &&
             this.Raw = other.Raw &&
-            HashHelpers.dynamicPropertiesEqual this other
+            DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
-        hash (this.Class, this.Raw, HashHelpers.hashDynamicProperties this)
+        hash (this.Class, this.Raw, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
         ResizeArray [| "class"; "raw" |]
