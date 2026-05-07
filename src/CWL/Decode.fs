@@ -38,83 +38,6 @@ module Decode =
         | None ->
             ()
 
-    let countLeadingSpaces (line: string) =
-        line |> Seq.takeWhile (fun c -> c = ' ') |> Seq.length
-
-    let isBlankLine (line: string) =
-        line.Trim().Length = 0
-
-    let normalizeLineEndings (yaml: string) =
-        if isNull yaml then "" else yaml.Replace("\r\n", "\n")
-
-    let stripLeadingShebang (yaml: string) =
-        let normalized = normalizeLineEndings yaml
-        let lines = normalized.Split('\n')
-        if lines.Length > 0 && lines.[0].StartsWith("#!") then
-            lines.[1..] |> String.concat "\n"
-        else
-            normalized
-
-    let tryParseBlockScalarHeader (line: string) : int option =
-        if isBlankLine line then
-            None
-        else
-            let trimmed = line.TrimEnd()
-            // Match common block scalar headers:
-            //   key: |
-            //   key: >-
-            //   - |
-            //   - >+
-            // and preserve surrounding comments.
-            let isBlockScalarHeader =
-                System.Text.RegularExpressions.Regex.IsMatch(
-                    trimmed,
-                    @"^(?:.+:\s*[|>][1-9]?[+-]?\s*(?:#.*)?|-\s*[|>][1-9]?[+-]?\s*(?:#.*)?)$"
-                )
-            if isBlockScalarHeader then Some (countLeadingSpaces line) else None
-
-    let normalizeYamlInput (yaml: string) =
-        let normalized = stripLeadingShebang yaml
-        let lines = normalized.Split('\n')
-
-        let filtered = ResizeArray<string>()
-        let mutable blockScalarIndent : int option = None
-
-        let rec processLine (line: string) =
-            match blockScalarIndent with
-            | Some indent ->
-                if isBlankLine line then
-                    // Preserve whitespace-only blank content lines in block scalars.
-                    filtered.Add line
-                else
-                    let currentIndent = countLeadingSpaces line
-                    if currentIndent > indent then
-                        filtered.Add line
-                    else
-                        // End of block scalar; re-process this line in normal mode.
-                        blockScalarIndent <- None
-                        processLine line
-            | None ->
-                match tryParseBlockScalarHeader line with
-                | Some indent ->
-                    blockScalarIndent <- Some indent
-                    filtered.Add line
-                | None ->
-                    if line = "" || line.Trim().Length > 0 then
-                        filtered.Add line
-
-        lines |> Array.iter processLine
-
-        filtered
-        |> Seq.toArray
-        |> String.concat "\n"
-        |> fun text -> text.TrimEnd()
-
-    let removeFullLineComments (yaml: string) =
-        yaml.Split('\n')
-        |> Array.filter (fun line -> line.TrimStart().StartsWith("#") |> not)
-        |> String.concat "\n"
-
     let rec removeYamlComments (yamlElement: YAMLElement) : YAMLElement =
         match yamlElement with
         | YAMLElement.Object elements ->
@@ -158,21 +81,9 @@ module Decode =
         | _ -> false
 
     let readSanitizedYaml (yaml: string) =
-        let prepared = stripLeadingShebang yaml
-        let tryRead text =
-            text
-            |> Decode.read
-            |> removeYamlComments
-        try
-            tryRead prepared
-        with ex when isRecoverableDecodingError ex ->
-            let normalized = normalizeYamlInput prepared
-            try
-                tryRead normalized
-            with ex2 when isRecoverableDecodingError ex2 ->
-                normalized
-                |> removeFullLineComments
-                |> tryRead
+        yaml
+        |> Decode.read
+        |> removeYamlComments
 
     /// Decode key value pairs into a dynamic object, while preserving their tree structure.
     let rec overflowDecoder (dynObj: DynamicObj) (dict: System.Collections.Generic.Dictionary<string,YAMLElement>) =
