@@ -783,6 +783,27 @@ let private tests_ArcTableProcess =
             Expect.arcTableEqual table expectedTable "Table should be equal"
         )
 
+        testCase "TwoRowsSameParamValue GetProcessesGroupedByParameters" (fun () ->
+            let t = twoRowsSameParamValue.Copy()
+            let processes = t.GetProcessesGroupedByParameters()
+            Expect.equal processes.Length 1 "Should have 1 grouped process"
+            let p = processes.[0]
+            let inputs = LDLabProcess.getObjects(p)
+            let outputs = LDLabProcess.getResults(p)
+            let pvs = LDLabProcess.getParameterValues(p)
+            Expect.equal inputs.Count 2 "Grouped process should have 2 inputs"
+            Expect.equal outputs.Count 2 "Grouped process should have 2 outputs"
+            Expect.equal pvs.Count 1 "Grouped process should have 1 parameter value"
+        )
+
+        testCase "TwoRowsSameParamValue GroupedGetAndFromProcesses" (fun () ->
+            let t = twoRowsSameParamValue.Copy()
+            let processes = t.GetProcessesGroupedByParameters()
+            let table = ArcTable.fromProcesses(tableName1,processes)
+            let expectedTable = t
+            Expect.arcTableEqual table expectedTable "Table should be equal"
+        )
+
         testCase "TwoRowsDifferentParamValues GetProcesses" (fun () ->
             let t = twoRowsDifferentParamValue.Copy()
             let processes = t.GetProcesses()
@@ -795,6 +816,12 @@ let private tests_ArcTableProcess =
             let table = ArcTable.fromProcesses(tableName1,processes)
             let expectedTable = t
             Expect.arcTableEqual table expectedTable "Table should be equal"
+        )
+
+        testCase "TwoRowsDifferentParamValues GetProcessesGroupedByParameters" (fun () ->
+            let t = twoRowsDifferentParamValue.Copy()
+            let processes = t.GetProcessesGroupedByParameters()
+            Expect.equal processes.Length 2 "Should have 2 grouped processes"
         )
 
         testCase "SingleRowWithProtocolREF GetProcesses" (fun () ->

@@ -80,7 +80,7 @@ module JsonHelper =
     [<AttachMembers>]
     type ARCJson() =
         member _.fromROCrateJsonString (s: string) = ARC.fromROCrateJsonString s
-        member _.toROCrateJsonString(?spaces) = ARC.toROCrateJsonString(?spaces=spaces)
+        member _.toROCrateJsonString(?spaces, ?groupProcesses, ?ignoreBrokenWR) = ARC.toROCrateJsonString(?spaces=spaces, ?groupProcesses = groupProcesses, ?ignoreBrokenWR = ignoreBrokenWR)
 
     [<AttachMembers>]
     type LDGraphJson() =
