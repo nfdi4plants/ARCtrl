@@ -209,6 +209,10 @@ type ArcTables(initTables:ResizeArray<ArcTable>) =
         this.Tables.[index]
 
     // - Table API - //
+    member this.TryGetTable (tableIdentifier: string) =
+        this.Tables |> Seq.tryFind(fun s -> s.Name = tableIdentifier)
+
+    // - Table API - //
     member this.GetTable(name: string) : ArcTable =
         findIndexByTableName name this.Tables
         |> this.GetTableAt

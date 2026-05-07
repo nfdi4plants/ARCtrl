@@ -162,6 +162,19 @@ let tests_member = testList "member" [
         let arctables = ArcTables(ResizeArray tableSeq)
         let _ = arctables.InitTable("New Table!")
         Expect.sequenceEqual arctables.TableNames ["Table 1"; "Table 2"; "New Table!"] "TableNames"
+    testList "TryGetTable" [
+        let expectedTable = ArcTable.init("Table 1")
+        testCase "Should return some table" <| fun _ ->
+            let tableSeq = [ArcTable.init("Table 1"); ArcTable.init("Table 2")]
+            let arctables = ArcTables(ResizeArray tableSeq)
+            let t = Expect.wantSome (arctables.TryGetTable("Table 1")) "Did not return some"
+            Expect.equal t expectedTable "tryGetTable did not return expected table"
+        testCase "Should return none" <| fun _ ->
+            let tableSeq = [ArcTable.init("Table 1"); ArcTable.init("Table 2")]
+            let arctables = ArcTables(ResizeArray tableSeq)
+            let t = arctables.TryGetTable("Table 999999999")
+            Expect.isNone t "tryGetTable did not return none"
+    ]
     testList "MoveTable" [
         testCase "Move to end" <| fun _ ->
             let actual = ResizeArray [for i in 0 .. 5 do ArcTable.init(sprintf "Table %i" i)] |> ArcTables
