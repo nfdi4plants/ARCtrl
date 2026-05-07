@@ -45,4 +45,22 @@ module String =
 
     let inputSecondArg = CWLInput(inputStringName, inputStringType, inputBinding = inputStringBinding)
 
+
+let specInputFieldsDecodeFileContent = """inputs:
+  sample:
+    label: Sample
+    inputBinding:
+      valueFrom: $(self.path)
+      shellQuote: false
+      prefix: --sample
+      loadContents: true
+      position: 1
+    default: sample.txt
+    type: File
+    doc: Sample input docs
+    loadListing: shallow_listing
+    loadContents: true
+    streamable: false
+    format: edam:format_2330
+    secondaryFiles: .bai"""
     

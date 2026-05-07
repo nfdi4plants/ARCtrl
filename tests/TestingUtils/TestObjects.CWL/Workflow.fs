@@ -745,3 +745,110 @@ steps:
       in1: input1
     out: [out]"""
 
+let workflowWithSequencePortsAndCommentsFile = """#!/usr/bin/env cwl-runner
+
+cwlVersion: v1.2
+class: Workflow
+doc: |
+  Workflow doc line.
+  # This line is doc text, not a YAML comment.
+inputs:
+# Primary input
+- id: input_data
+  type: File
+  doc: A file input for processing
+- id: param_value
+  type: double
+  default: 0.5
+outputs:
+# Primary output
+- id: result_data
+  type: File
+  outputSource: process_step/result_data
+- id: merged_output
+  type: File
+  outputSource: combine_step/merged_output
+steps:
+# First step
+- id: process_step
+  run: ./tools/process_step.cwl
+  in: []
+  out: [result_data]
+# Second step
+- id: combine_step
+  run: ./tools/combine_step.cwl
+  in:
+  - id: component_files
+    source:
+    - process_step/result_data
+  - id: action
+    valueFrom: "merge_properties"
+  out: [merged_output]"""
+
+let workflowWithUnnamedMalformedEntriesFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+- id: valid_input
+  type: string
+- not_a_cwl_port: true
+outputs:
+- id: valid_output
+  type: File
+  outputSource: step1/out
+- [not, a, cwl, output]
+steps:
+- "not a workflow step"
+- id: step1
+  run: ./tool.cwl
+  in:
+  - id: in1
+    source: valid_input
+  - not_a_step_input: true
+  out: [out]"""
+
+let workflowWithMalformedNamedInputFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+- id: broken_input
+  doc: Missing required type.
+outputs:
+- id: result
+  type: File
+  outputSource: step1/out
+steps:
+- id: step1
+  run: ./tool.cwl
+  in: []
+  out: [out]"""
+
+let workflowWithUnknownPortFieldsFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+- id: sample
+  type:
+    type: File
+    arc:type note: keep input type note
+  inputBinding:
+    prefix: --sample
+    arc:binding note: keep input binding note
+  arc:note: keep input note
+outputs:
+- id: result
+  type:
+    type: File
+    arc:type note: keep output type note
+  outputSource: step1/out
+  outputBinding:
+    glob: result.txt
+    arc:binding note: keep output binding note
+  arc:note: keep output note
+steps:
+- id: step1
+  run: ./tool.cwl
+  arc:step note: keep step note
+  in:
+    sample:
+      source: sample
+      arc:step input note: keep step input note
+  out: [out]"""
+

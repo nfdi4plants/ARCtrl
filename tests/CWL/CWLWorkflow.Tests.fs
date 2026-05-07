@@ -39,18 +39,7 @@ let renderYamlPair pair =
     |> Encode.writeYaml
 
 let mkStepInput id source linkMerge =
-    {
-        Id = id
-        Source = source
-        DefaultValue = None
-        ValueFrom = None
-        LinkMerge = linkMerge
-        PickValue = None
-        Doc = None
-        LoadContents = None
-        LoadListing = None
-        Label = None
-    }
+    StepInput.create(id, ?source = source, ?linkMerge = linkMerge)
 
 let testCWLWorkflowDescriptionDecode =
     testList "Decode" [
@@ -211,7 +200,7 @@ let testCWLWorkflowDescriptionDecode =
             Expect.equal step.In.[0].LoadListing (Some "deep_listing") ""
             Expect.equal step.In.[0].Label (Some "Input label") ""
             Expect.equal step.In.[0].LinkMerge (Some MergeNested) ""
-            let expectedOut = ResizeArray [| StepOutputRecord { Id = "out" } |]
+            let expectedOut = ResizeArray [| StepOutputRecord (StepOutputParameter.create "out") |]
             Expect.sequenceEqual step.Out expectedOut ""
         testCase "inline run commandline tool decode" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithInlineRunCommandLineToolFile
@@ -234,6 +223,84 @@ let testCWLWorkflowDescriptionDecode =
             let yaml = TestObjects.CWL.Workflow.workflowWithNoStepsFile
             let decoded = Decode.decodeWorkflow yaml
             Expect.equal decoded.Steps.Count 0 ""
+        testCase "sequence-form workflow ports with comments decode" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithSequencePortsAndCommentsFile
+            Expect.equal decoded.Inputs.Count 2 "Sequence-form inputs should decode."
+            Expect.equal decoded.Outputs.Count 2 "Sequence-form outputs should decode."
+            Expect.equal decoded.Steps.Count 2 "Sequence-form steps should decode after comments."
+            Expect.isTrue (decoded.Inputs |> Seq.exists (fun input -> input.Name = "input_data")) "input_data should decode."
+            Expect.isTrue (decoded.Outputs |> Seq.exists (fun output -> output.Name = "result_data")) "result_data output should decode."
+            Expect.equal decoded.Doc (Some "Workflow doc line.\n# This line is doc text, not a YAML comment.\n") "Block scalar comment-looking text should be preserved."
+        testCase "decodeWorkflowWithWarnings skips malformed unnamed entries" <| fun _ ->
+            let result = Decode.decodeWorkflowWithWarnings TestObjects.CWL.Workflow.workflowWithUnnamedMalformedEntriesFile
+            Expect.equal result.Value.Inputs.Count 1 "Only valid input should decode."
+            Expect.equal result.Value.Outputs.Count 1 "Only valid output should decode."
+            Expect.equal result.Value.Steps.Count 1 "Only valid step should decode."
+            Expect.equal result.Value.Steps.[0].In.Count 1 "Only valid step input should decode."
+            Expect.equal result.Warnings.Count 4 "Each malformed unnamed entry should produce one warning."
+            Expect.sequenceEqual
+                (result.Warnings |> Seq.map (fun w -> w.Path) |> Seq.sort |> ResizeArray)
+                (ResizeArray [| "inputs[1]"; "outputs[1]"; "steps[0]"; "steps[1].in[1]" |] |> Seq.sort |> ResizeArray)
+                "Warning paths should identify skipped entries."
+        testCase "malformed named input still fails" <| fun _ ->
+            Expect.throws
+                (fun _ -> Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithMalformedNamedInputFile |> ignore)
+                "Named CWL inputs with missing type should fail."
+        testCase "unknown fields on named ports and steps are preserved as dynamic properties" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithUnknownPortFieldsFile
+            let input = decoded.Inputs |> Seq.find (fun input -> input.Name = "sample")
+            let output = decoded.Outputs |> Seq.find (fun output -> output.Name = "result")
+            let step = decoded.Steps |> Seq.find (fun step -> step.Id = "step1")
+            let stepInput = step.In |> Seq.find (fun input -> input.Id = "sample")
+            let inputBinding = Expect.wantSome input.InputBinding "Input binding should decode."
+            let outputBinding = Expect.wantSome output.OutputBinding "Output binding should decode."
+            Expect.equal
+                (DynObj.tryGetTypedPropertyValue<string> "arc:note" input)
+                (Some "keep input note")
+                "Unknown input fields should be preserved."
+            match input.Type_ with
+            | Some (CWLType.File file) ->
+                Expect.equal
+                    (DynObj.tryGetTypedPropertyValue<string> "arc:type note" file)
+                    (Some "keep input type note")
+                    "Unknown input type-object fields should be preserved on the file instance."
+            | other -> failwith $"Expected sample input to decode as File, got %A{other}."
+            Expect.isNone
+                (DynObj.tryGetTypedPropertyValue<string> "arc:binding note" input)
+                "Unknown input binding fields should not be flattened onto the input."
+            Expect.equal
+                (DynObj.tryGetTypedPropertyValue<string> "arc:binding note" inputBinding)
+                (Some "keep input binding note")
+                "Unknown input binding fields should be preserved on the binding."
+            Expect.equal
+                (DynObj.tryGetTypedPropertyValue<string> "arc:note" output)
+                (Some "keep output note")
+                "Unknown output fields should be preserved."
+            match output.Type_ with
+            | Some (CWLType.File file) ->
+                Expect.equal
+                    (DynObj.tryGetTypedPropertyValue<string> "arc:type note" file)
+                    (Some "keep output type note")
+                    "Unknown output type-object fields should be preserved on the file instance."
+            | other -> failwith $"Expected result output to decode as File, got %A{other}."
+            Expect.isNone
+                (DynObj.tryGetTypedPropertyValue<string> "arc:binding note" output)
+                "Unknown output binding fields should not be flattened onto the output."
+            Expect.equal
+                (DynObj.tryGetTypedPropertyValue<string> "arc:binding note" outputBinding)
+                (Some "keep output binding note")
+                "Unknown output binding fields should be preserved on the binding."
+            Expect.equal
+                (DynObj.tryGetTypedPropertyValue<string> "arc:step note" step)
+                (Some "keep step note")
+                "Unknown workflow step fields should be preserved."
+            Expect.isNone
+                (DynObj.tryGetTypedPropertyValue<string> "arc:step input note" step)
+                "Unknown step input fields should not be flattened onto the step."
+            Expect.equal
+                (DynObj.tryGetTypedPropertyValue<string> "arc:step input note" stepInput)
+                (Some "keep step input note")
+                "Unknown step input fields should be preserved on the step input."
         testCase "steps array form decode with when/pickValue/doc/default" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithStepsArrayFile
             let step = decoded.Steps.[0]
@@ -483,6 +550,37 @@ let testCWLWorkflowDescriptionEncode =
                 Expect.stringContains encoded "intent:" "Workflow intent should be present in encoded output"
                 let intent = Expect.wantSome roundTripped.Intent "Workflow intent should survive roundtrip"
                 Expect.sequenceEqual intent (ResizeArray [|"primary-analysis"; "quality-control"|]) ""
+            testCase "workflow direct overflow and nested port overflow roundtrip" <| fun _ ->
+                let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithUnknownPortFieldsFile
+                DynObj.setProperty "arc:direct note" "workflow note" decoded
+                let encoded = Encode.encodeWorkflowDescription decoded
+                let roundTripped = Decode.decodeWorkflow encoded
+                let metadata = Expect.wantSome roundTripped.Metadata "Decoded direct overflow should be available as metadata."
+                Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:direct note" metadata) (Some "workflow note") "Workflow direct DynamicObj overflow should encode."
+
+                let input = roundTripped.Inputs |> Seq.find (fun input -> input.Name = "sample")
+                let output = roundTripped.Outputs |> Seq.find (fun output -> output.Name = "result")
+                let step = roundTripped.Steps |> Seq.find (fun step -> step.Id = "step1")
+                let stepInput = step.In |> Seq.find (fun input -> input.Id = "sample")
+                let inputBinding = Expect.wantSome input.InputBinding "Input binding should survive roundtrip."
+                let outputBinding = Expect.wantSome output.OutputBinding "Output binding should survive roundtrip."
+
+                Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" input) (Some "keep input note") "Input overflow should roundtrip."
+                match input.Type_ with
+                | Some (CWLType.File file) ->
+                    Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:type note" file) (Some "keep input type note") "Input type overflow should roundtrip."
+                | other -> failwith $"Expected File input type, got %A{other}."
+                Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:binding note" inputBinding) (Some "keep input binding note") "Input binding overflow should roundtrip."
+
+                Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" output) (Some "keep output note") "Output overflow should roundtrip."
+                match output.Type_ with
+                | Some (CWLType.File file) ->
+                    Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:type note" file) (Some "keep output type note") "Output type overflow should roundtrip."
+                | other -> failwith $"Expected File output type, got %A{other}."
+                Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:binding note" outputBinding) (Some "keep output binding note") "Output binding overflow should roundtrip."
+
+                Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:step note" step) (Some "keep step note") "Workflow step overflow should roundtrip."
+                Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:step input note" stepInput) (Some "keep step input note") "Step input overflow should roundtrip."
             testList "PickValueMethod roundtrip" [
                 for (pickValueMethod, cwlString) in [
                     FirstNonNull, "first_non_null"
@@ -552,14 +650,14 @@ let testCWLWorkflowDescriptionEncode =
                 let decodedHints = Expect.wantSome decodedStep.Hints "Step hints should decode"
                 let decodedRequirements = Expect.wantSome decodedStep.Requirements "Step requirements should decode"
                 Expect.equal decodedHints.[0] (KnownHint StepInputExpressionRequirement) ""
-                Expect.equal decodedRequirements.[0] (NetworkAccessRequirement { NetworkAccess = true }) ""
+                Expect.equal decodedRequirements.[0] (NetworkAccessRequirement (NetworkAccessRequirementValue(true))) ""
                 let encoded = Encode.encodeWorkflowDescription decoded
                 let roundTripped = Decode.decodeWorkflow encoded
                 let roundTrippedStep = roundTripped.Steps.[0]
                 let roundTrippedHints = Expect.wantSome roundTrippedStep.Hints "Step hints should survive roundtrip"
                 let roundTrippedRequirements = Expect.wantSome roundTrippedStep.Requirements "Step requirements should survive roundtrip"
                 Expect.equal roundTrippedHints.[0] (KnownHint StepInputExpressionRequirement) ""
-                Expect.equal roundTrippedRequirements.[0] (NetworkAccessRequirement { NetworkAccess = true }) ""
+                Expect.equal roundTrippedRequirements.[0] (NetworkAccessRequirement (NetworkAccessRequirementValue(true))) ""
             testCase "inline ExpressionTool roundtrip preserves expression" <| fun _ ->
                 let original = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithMixedToolAndExpressionStepFile
                 let encoded = Encode.encodeWorkflowDescription original

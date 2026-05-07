@@ -1,6 +1,7 @@
 module Tests.Inputs
 
 open ARCtrl.CWL
+open DynamicObj
 open YAMLicious
 open TestingUtils
 
@@ -22,7 +23,7 @@ let testInput =
             let fileItem = decodeInput.[1]
             testCase "Name" <| fun _ -> Expect.equal "firstArg"  fileItem.Name ""
             testCase "Type" <| fun _ -> Expect.equal (File (FileInstance()))  fileItem.Type_.Value ""
-            testCase "InputBinding" <| fun _ -> Expect.equal (Some {Position = Some 1; Prefix = Some "--example"; ItemSeparator = None; Separate = None}) fileItem.InputBinding ""
+            testCase "InputBinding" <| fun _ -> Expect.equal (Some (InputBinding.create(position = 1, prefix = "--example"))) fileItem.InputBinding ""
         ]
         testList "File optional" [
             let fileItem = decodeInput.[2]
@@ -36,7 +37,7 @@ let testInput =
             let fileItem = decodeInput.[3]
             testCase "Name" <| fun _ -> Expect.equal "argOptionalMap"  fileItem.Name ""
             testCase "Type" <| fun _ -> 
-                let expected = Union (ResizeArray [Null; Array {Items = File (FileInstance()); Label = None; Doc = None; Name = None}])
+                let expected = Union (ResizeArray [Null; Array (InputArraySchema(File (FileInstance())))])
                 Expect.equal fileItem.Type_.Value expected "Should be Union of [Null; File[]]"
             testCase "Optional" <| fun _ -> Expect.equal (Some true) fileItem.Optional ""
         ]
@@ -48,7 +49,7 @@ let testInput =
                 let actual = stringItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "InputBinding" <| fun _ ->
-                let expected = Some {Position = Some 2; Prefix = None; ItemSeparator = None; Separate = Some false}
+                let expected = Some (InputBinding.create(position = 2, separate = false))
                 let actual = stringItem.InputBinding
                 Expect.equal actual expected ""
         ]
@@ -59,11 +60,11 @@ let testInputMutationApi =
         testCase "typed setters roundtrip values" <| fun _ ->
             let input = CWLInput("arg")
             input.Type_ <- Some CWLType.String
-            input.InputBinding <- Some { Prefix = Some "--arg"; Position = Some 1; ItemSeparator = None; Separate = Some true }
+            input.InputBinding <- Some (InputBinding.create(prefix = "--arg", position = 1, separate = true))
             input.Optional <- Some true
 
             Expect.equal input.Type_ (Some CWLType.String) "Type_ setter should write DynamicObj-backed value."
-            Expect.equal input.InputBinding (Some { Prefix = Some "--arg"; Position = Some 1; ItemSeparator = None; Separate = Some true }) "InputBinding setter should write value."
+            Expect.equal input.InputBinding (Some (InputBinding.create(prefix = "--arg", position = 1, separate = true))) "InputBinding setter should write value."
             Expect.equal input.Optional (Some true) "Optional setter should write value."
 
         testCase "typed setters can clear optional values" <| fun _ ->
@@ -75,6 +76,75 @@ let testInputMutationApi =
             Expect.isNone input.Type_ "Type_ should be removable."
             Expect.isNone input.Optional "Optional should be removable."
             Expect.isNone input.InputBinding "InputBinding should be removable."
+
+        testCase "known fields are typed fields, not dynamic overflow" <| fun _ ->
+            let binding = InputBinding.create(prefix = "--arg", position = 1, itemSeparator = ",", separate = true, loadContents = true, valueFrom = "$(self)", shellQuote = false)
+            let input =
+                CWLInput(
+                    "arg",
+                    type_ = CWLType.String,
+                    inputBinding = binding,
+                    optional = true,
+                    label = "Argument",
+                    doc = "Argument docs",
+                    format = "edam:format_2330",
+                    loadContents = true,
+                    loadListing = LoadListingEnum.ShallowListing,
+                    streamable = false
+                )
+
+            Expect.sequenceEqual InputBinding.KnownFieldNames (ResizeArray [| "loadContents"; "position"; "prefix"; "separate"; "itemSeparator"; "valueFrom"; "shellQuote" |]) "InputBinding known fields should be declared on the type."
+            Expect.sequenceEqual CWLInput.KnownFieldNames (ResizeArray [| "id"; "type"; "label"; "secondaryFiles"; "streamable"; "doc"; "format"; "loadContents"; "loadListing"; "default"; "inputBinding" |]) "CWLInput known fields should be declared on the type."
+            Expect.isEmpty (binding |> DynamicObjHelpers.dynamicPropertiesSnapshot) "InputBinding known fields should not be stored as dynamic properties."
+            Expect.isEmpty (input |> DynamicObjHelpers.dynamicPropertiesSnapshot) "CWLInput known fields should not be stored as dynamic properties."
+
+            DynObj.setProperty "arc:note" "keep overflow" input
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" input) (Some "keep overflow") "Unknown fields should still use DynamicObj overflow."
+
+        testCase "known DynamicObj keys are not encoded as input overflow" <| fun _ ->
+            let input = CWLInput("arg", type_ = CWLType.String)
+            DynObj.setProperty "label" "dynamic label" input
+            DynObj.setProperty "arc:note" "keep overflow" input
+
+            let _, encoded = Encode.encodeCWLInput input
+            let yaml = Encode.writeYaml encoded
+
+            Expect.isFalse (yaml.Contains("label")) "Known input fields should not be encoded from DynamicObj storage."
+            Expect.stringContains yaml "arc:note" "Unknown overflow should still be encoded."
+
+        testCase "missing optional inputBinding fields are not encoded as defaults" <| fun _ ->
+            let binding = InputBinding.create(prefix = "--arg")
+
+            let yaml =
+                binding
+                |> Encode.encodeInputBinding
+                |> Encode.writeYaml
+
+            Expect.stringContains yaml "prefix" "The present prefix field should be encoded."
+            Expect.isFalse (yaml.Contains("position")) "Missing position should not encode as 0."
+            Expect.isFalse (yaml.Contains("_position")) "Compiler backing storage should not be encoded."
+            Expect.isFalse (yaml.Contains("itemSeparator")) "Missing itemSeparator should not encode as an empty string."
+
+        testCase "spec input fields decode as typed members regardless of order" <| fun _ ->
+            let input =
+                TestObjects.CWL.Inputs.specInputFieldsDecodeFileContent
+                |> Decode.read
+                |> Decode.inputsDecoder
+                |> Option.get
+                |> fun inputs -> inputs.[0]
+
+            Expect.equal input.Label (Some "Sample") "label should decode to a typed field."
+            Expect.equal input.Doc (Some "Sample input docs") "doc should decode to a typed field."
+            Expect.equal input.Format (Some "edam:format_2330") "format should decode to a typed field."
+            Expect.equal input.LoadContents (Some true) "loadContents should decode to a typed field."
+            Expect.equal input.LoadListing (Some LoadListingEnum.ShallowListing) "loadListing should decode to a typed field."
+            Expect.equal input.Streamable (Some false) "streamable should decode to a typed field."
+            Expect.isSome input.DefaultValue "default should decode to a typed field."
+            Expect.isSome input.SecondaryFiles "secondaryFiles should decode to a typed field."
+            Expect.equal input.InputBinding.Value.ValueFrom (Some "$(self.path)") "inputBinding.valueFrom should decode to a typed field."
+            Expect.equal input.InputBinding.Value.LoadContents (Some true) "inputBinding.loadContents should decode to a typed field."
+            Expect.equal input.InputBinding.Value.ShellQuote (Some false) "inputBinding.shellQuote should decode to a typed field."
+            Expect.isEmpty (input |> DynamicObjHelpers.dynamicPropertiesSnapshot) "Known input fields should not be overflow."
     ]
 
 let testProcessingUnitInputOps =
@@ -194,7 +264,7 @@ let testProcessingUnitRequirementOps =
             Expect.equal operationReqs.Count 0 "Operation requirements should normalize to empty collection."
 
         testCase "getRequirements returns existing collection for all variants" <| fun _ ->
-            let toolReqs = ResizeArray [| NetworkAccessRequirement { NetworkAccess = true } |]
+            let toolReqs = ResizeArray [| NetworkAccessRequirement (NetworkAccessRequirementValue(true)) |]
             let workflowReqs = ResizeArray [| SubworkflowFeatureRequirement |]
             let expressionReqs = ResizeArray [| Requirement.defaultInlineJavascriptRequirement |]
             let operationReqs = ResizeArray [| Requirement.defaultInlineJavascriptRequirement |]
@@ -265,8 +335,8 @@ let testProcessingUnitHintOps =
             let operationHints = CWLOperationDescription.getOrCreateHints operation
 
             toolHints.Add(KnownHint Requirement.defaultInlineJavascriptRequirement)
-            workflowHints.Add(UnknownHint { Class = Some "acme:Hint"; Raw = Decode.read "class: acme:Hint" })
-            expressionHints.Add(KnownHint (NetworkAccessRequirement { NetworkAccess = true }))
+            workflowHints.Add(UnknownHint (HintUnknownValue(Some "acme:Hint", Decode.read "class: acme:Hint")))
+            expressionHints.Add(KnownHint (NetworkAccessRequirement (NetworkAccessRequirementValue(true))))
             operationHints.Add(KnownHint Requirement.defaultInlineJavascriptRequirement)
 
             Expect.equal tool.Hints.Value.Count 1 "Tool hints should be initialized and retained."
@@ -278,8 +348,8 @@ let testProcessingUnitHintOps =
             let hints =
                 ResizeArray [|
                     KnownHint Requirement.defaultInlineJavascriptRequirement
-                    UnknownHint { Class = Some "acme:Hint"; Raw = Decode.read "class: acme:Hint" }
-                    KnownHint (WorkReuseRequirement { EnableReuse = true })
+                    UnknownHint (HintUnknownValue(Some "acme:Hint", Decode.read "class: acme:Hint"))
+                    KnownHint (WorkReuseRequirement (WorkReuseRequirementValue(true)))
                 |]
 
             let tool = CWLToolDescription(outputs = ResizeArray(), hints = hints)
