@@ -165,15 +165,15 @@ let tests_member = testList "member" [
     testList "TryGetTable" [
         let expectedTable = ArcTable.init("Table 1")
         testCase "Should return some table" <| fun _ ->
-            let tableSeq = [ArcTable.init("Table 1"); ArcTable.init("Table 2")]
+            let tableSeq = [expectedTable]
             let arctables = ArcTables(ResizeArray tableSeq)
-            let t = Expect.wantSome (arctables.TryGetTable("Table 1")) "Did not return some"
-            Expect.equal t expectedTable "tryGetTable did not return expected table"
+            let t = Expect.wantSome (arctables.TryGetTable("Table 1")) "TryGetTable did not return some"
+            Expect.equal t expectedTable "TryGetTable did not return expected table"
         testCase "Should return none" <| fun _ ->
-            let tableSeq = [ArcTable.init("Table 1"); ArcTable.init("Table 2")]
+            let tableSeq = [expectedTable; ArcTable.init("Table 2")]
             let arctables = ArcTables(ResizeArray tableSeq)
             let t = arctables.TryGetTable("Table 999999999")
-            Expect.isNone t "tryGetTable did not return none"
+            Expect.isNone t "TryGetTable did not return none"
     ]
     testList "MoveTable" [
         testCase "Move to end" <| fun _ ->
