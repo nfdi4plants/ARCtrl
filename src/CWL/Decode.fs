@@ -456,6 +456,8 @@ module Decode =
         fun value ->
         Decode.object (fun get ->
             let symbols = get.Required.Field "symbols" (Decode.resizearray Decode.string)
+            if symbols.Count = 0 then
+                raise (System.ArgumentException("CWL enum schema must define at least one symbol."))
             
             let schema =
                 InputEnumSchema(
