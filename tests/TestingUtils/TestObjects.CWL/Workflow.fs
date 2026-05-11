@@ -833,6 +833,34 @@ inputs:
 outputs: []
 steps: {}"""
 
+let workflowWithMultilineValueFromFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  source_reads:
+    type: File?
+outputs: []
+steps:
+  expr_step:
+    run:
+      class: ExpressionTool
+      inputs:
+        reads:
+          type: File?
+      outputs:
+        out:
+          type: File[]?
+      expression: ${ return {"out": inputs.reads ? [inputs.reads] : null}; }
+    in:
+      reads:
+        source: source_reads
+        valueFrom:
+          ${
+            var reads = null;
+            if (self !== null) { reads = [self]; }
+            return reads;
+          }
+    out: [out]"""
+
 let workflowWithUnnamedMalformedEntriesFile = """cwlVersion: v1.2
 class: Workflow
 inputs:

@@ -248,6 +248,14 @@ let testCWLWorkflowDescriptionDecode =
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithLowerIndentedCommentBeforeSequenceInputFile
             Expect.equal decoded.Inputs.Count 1 "Comment before sequence-form inputs should decode."
             Expect.equal decoded.Inputs.[0].Name "first" "first input should decode."
+        testCase "multiline valueFrom expression decodes as one string" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithMultilineValueFromFile
+            let step = decoded.Steps |> Seq.find (fun step -> step.Id = "expr_step")
+            let stepInput = step.In |> Seq.find (fun input -> input.Id = "reads")
+            let valueFrom = Expect.wantSome stepInput.ValueFrom "valueFrom should decode."
+            Expect.stringContains valueFrom "${" "valueFrom should include the expression opener."
+            Expect.stringContains valueFrom "return reads;" "valueFrom should include the expression body."
+            Expect.stringContains valueFrom "}" "valueFrom should include the expression closer."
         testCase "decodeWorkflowWithWarnings skips malformed unnamed entries" <| fun _ ->
             let result = Decode.decodeWorkflowWithWarnings TestObjects.CWL.Workflow.workflowWithUnnamedMalformedEntriesFile
             Expect.equal result.Value.Inputs.Count 1 "Only valid input should decode."
