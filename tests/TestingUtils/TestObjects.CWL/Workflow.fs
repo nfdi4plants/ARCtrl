@@ -813,6 +813,26 @@ steps:
     source: sensorthingsapi_url
   out: [result]"""
 
+let workflowWithLowerIndentedCommentMapInputsFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  first:
+    type: string
+# group comment between map entries
+  second:
+    type: string
+outputs: []
+steps: {}"""
+
+let workflowWithLowerIndentedCommentBeforeSequenceInputFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+# group comment before sequence item
+  - id: first
+    type: string
+outputs: []
+steps: {}"""
+
 let workflowWithUnnamedMalformedEntriesFile = """cwlVersion: v1.2
 class: Workflow
 inputs:
