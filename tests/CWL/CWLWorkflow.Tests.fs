@@ -256,6 +256,51 @@ let testCWLWorkflowDescriptionDecode =
             Expect.stringContains valueFrom "${" "valueFrom should include the expression opener."
             Expect.stringContains valueFrom "return reads;" "valueFrom should include the expression body."
             Expect.stringContains valueFrom "}" "valueFrom should include the expression closer."
+        testCase "optional array shorthand input types decode" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithOptionalArrayInputTypesFile
+            let assertOptionalArray name expectedItem =
+                let input = decoded.Inputs |> Seq.find (fun input -> input.Name = name)
+                match input.Type_ with
+                | Some (Union types) ->
+                    Expect.isTrue (types |> Seq.exists ((=) Null)) $"{name} should include null in the union."
+                    let arrayItems =
+                        types
+                        |> Seq.choose (function | Array arraySchema -> Some arraySchema.Items | _ -> None)
+                        |> Seq.toList
+                    Expect.equal arrayItems [expectedItem] $"{name} should include exactly one array type."
+                | other -> failwithf "Expected optional array type for %s, got %A" name other
+            assertOptionalArray "optional_files" (File (FileInstance()))
+            assertOptionalArray "optional_dirs" (Directory (DirectoryInstance()))
+        testCase "inline enum and record schema union types decode" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithInlineSchemaUnionTypesFile
+            let mode = decoded.Inputs |> Seq.find (fun input -> input.Name = "mode")
+            match mode.Type_ with
+            | Some (Union types) ->
+                Expect.isTrue (types |> Seq.exists ((=) Null)) "mode should include null in the union."
+                match types |> Seq.choose (function | Enum schema -> Some schema | _ -> None) |> Seq.toList with
+                | [enumSchema] ->
+                    Expect.equal enumSchema.Name (Some "Mode") "Inline enum name should decode."
+                    Expect.sequenceEqual enumSchema.Symbols (ResizeArray [| "fast"; "stringent" |]) "Inline enum symbols should decode."
+                | other -> failwithf "Expected one inline enum schema, got %A" other
+            | other -> failwithf "Expected mode to decode as a union, got %A" other
+            let recordPayload = decoded.Inputs |> Seq.find (fun input -> input.Name = "record_payload")
+            match recordPayload.Type_ with
+            | Some (Union types) ->
+                Expect.isTrue (types |> Seq.exists ((=) Null)) "record_payload should include null in the union."
+                match types |> Seq.choose (function | Record schema -> Some schema | _ -> None) |> Seq.toList with
+                | [recordSchema] ->
+                    Expect.equal recordSchema.Name (Some "Payload") "Inline record name should decode."
+                    let fields = Expect.wantSome recordSchema.Fields "Inline record fields should decode."
+                    let sampleId = fields |> Seq.find (fun field -> field.Name = "sample_id")
+                    Expect.equal sampleId.Type String "sample_id type should decode."
+                    let files = fields |> Seq.find (fun field -> field.Name = "files")
+                    match files.Type with
+                    | Array arraySchema -> Expect.equal arraySchema.Items (File (FileInstance())) "files should decode as File array."
+                    | other -> failwithf "Expected files to decode as an array, got %A" other
+                | other -> failwithf "Expected one inline record schema, got %A" other
+            | other -> failwithf "Expected record_payload to decode as a union, got %A" other
+            Expect.isNone (DynObj.tryGetTypedPropertyValue<obj> "symbols" decoded) "Nested enum fields should not become workflow overflow."
+            Expect.isNone (DynObj.tryGetTypedPropertyValue<obj> "fields" decoded) "Nested record fields should not become workflow overflow."
         testCase "decodeWorkflowWithWarnings skips malformed unnamed entries" <| fun _ ->
             let result = Decode.decodeWorkflowWithWarnings TestObjects.CWL.Workflow.workflowWithUnnamedMalformedEntriesFile
             Expect.equal result.Value.Inputs.Count 1 "Only valid input should decode."

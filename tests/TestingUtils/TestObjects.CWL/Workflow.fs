@@ -861,6 +861,37 @@ steps:
           }
     out: [out]"""
 
+let workflowWithOptionalArrayInputTypesFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  optional_files:
+    type: File[]?
+  optional_dirs:
+    type: Directory[]?
+outputs: []
+steps: {}"""
+
+let workflowWithInlineSchemaUnionTypesFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  mode:
+    type:
+      - "null"
+      - type: enum
+        name: Mode
+        symbols: [fast, stringent]
+  record_payload:
+    type:
+      - "null"
+      - type: record
+        name: Payload
+        fields:
+          sample_id: string
+          files:
+            type: File[]
+outputs: []
+steps: {}"""
+
 let workflowWithUnnamedMalformedEntriesFile = """cwlVersion: v1.2
 class: Workflow
 inputs:
