@@ -72,11 +72,7 @@ module Encode =
     // ------------------------------
     let yMap (pairs: (string * YAMLElement) list) =
         // Represent a mapping as an Object containing Mapping nodes preserving order.
-        // Preserve single wrapped scalar and alias nodes because YAMLicious alpha.7
-        // can now write them directly without collapsing style/alias information.
         let normalize = function
-            // YAMLicious emits `key:` (null) for empty object values unless we force inline `{}`.
-            | YAMLElement.Object [] -> YAMLElement.Value (YAMLContent.create "{}")
             | (YAMLElement.Object [YAMLElement.Value _]) as wrapped -> wrapped
             | (YAMLElement.Object [YAMLElement.Alias _]) as wrapped -> wrapped
             | YAMLElement.Object [single] -> single // unwrap single wrapped value (legacy helper usage)

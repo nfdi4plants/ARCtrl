@@ -542,7 +542,7 @@ expression: $(null)"""
             Expect.stringContains roundTripped.Expression "inputs.directory_single" "directory_single input reference should survive roundtrip."
             Expect.stringContains roundTripped.Expression "inputs.file_single" "file_single input reference should survive roundtrip."
             Expect.stringContains roundTripped.Expression "inputs.newname" "newname input reference should survive roundtrip."
-            Expect.stringContains roundTripped.Expression "class: Directory" "Directory class literal should survive roundtrip."
+            Expect.stringContains roundTripped.Expression "\"Directory\"" "Directory class literal should survive roundtrip."
             Expect.stringContains roundTripped.Expression "listing: outputList" "listing assignment should survive roundtrip."
     ]
 
