@@ -49,6 +49,7 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 # ----- linux rules -----
+*.swp
 # taken from https://github.com/github/gitignore/blob/main/Global/Linux.gitignore
 *~
 # temporary files which can be created if a process still has a handle open of a deleted file
