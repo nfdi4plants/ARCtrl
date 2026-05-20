@@ -163,6 +163,7 @@ type Datamap(dataContexts : ResizeArray<DataContext>) =
 
     override this.GetHashCode() = 
         dataContexts
+        |> Seq.append [DataContext()] // append empty hashcode, so Datamap Hashcode is not 0 when dataContexts is empty
         |> HashCodes.boxHashSeq
         |> fun x -> x :?> int
 
