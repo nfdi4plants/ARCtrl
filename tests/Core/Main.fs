@@ -19,6 +19,7 @@ let all = testSequenced <| testList "Core" [
     ArcStudy.Tests.main
     ArcWorkflow.Tests.main
     ArcRun.Tests.main
+    Datamap.Tests.main
     ArcInvestigation.Tests.main
     Template.Tests.main
     ArcJsonConversion.Tests.main
