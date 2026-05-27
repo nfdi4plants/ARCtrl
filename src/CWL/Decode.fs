@@ -118,14 +118,10 @@ module Decode =
                 decodeOverflowScalar v
             | YAMLElement.Object [YAMLElement.Sequence items]
             | YAMLElement.Sequence items ->
-                let decodedItems =
-                    items
-                    |> List.map decodeOverflowValue
-                    |> ResizeArray
-                if decodedItems.Count = 1 then
-                    decodedItems.[0]
-                else
-                    box decodedItems
+                items
+                |> List.map decodeOverflowValue
+                |> ResizeArray
+                |> box
             | YAMLElement.Object _ ->
                 let nested = DynamicObj()
                 value
@@ -145,29 +141,28 @@ module Decode =
         | YAMLElement.Object [] -> true
         | _ -> false
 
-    let private tryGetStringField (fieldName: string) (value: YAMLElement) =
-        try
-            Decode.object (fun get -> get.Optional.Field fieldName Decode.string) value
-        with ex when isRecoverableDecodingError ex ->
+    let private tryGetPresentField (fieldName: string) (decoder: YAMLElement -> 'T) (value: YAMLElement) : 'T option =
+        match value with
+        | YAMLElement.Object fields
+            when fields
+                 |> List.exists (function
+                     | YAMLElement.Mapping (key, _) when key.Value = fieldName -> true
+                     | _ -> false) ->
+            Decode.object (fun get -> get.Optional.Field fieldName decoder) value
+        | _ ->
             None
+
+    let private tryGetStringField (fieldName: string) (value: YAMLElement) =
+        tryGetPresentField fieldName Decode.string value
 
     let private tryGetBoolField (fieldName: string) (value: YAMLElement) =
-        try
-            Decode.object (fun get -> get.Optional.Field fieldName Decode.bool) value
-        with ex when isRecoverableDecodingError ex ->
-            None
+        tryGetPresentField fieldName Decode.bool value
 
     let private tryGetYamlField (fieldName: string) (value: YAMLElement) =
-        try
-            Decode.object (fun get -> get.Optional.Field fieldName id) value
-        with ex when isRecoverableDecodingError ex ->
-            None
+        tryGetPresentField fieldName id value
 
     let private tryGetIntArrayField (fieldName: string) (value: YAMLElement) =
-        try
-            Decode.object (fun get -> get.Optional.Field fieldName (Decode.resizearray Decode.int)) value
-        with ex when isRecoverableDecodingError ex ->
-            None
+        tryGetPresentField fieldName (Decode.resizearray Decode.int) value
 
     let private tryGetInt64Field (fieldName: string) (value: YAMLElement) =
         let decodeInt64 = function
@@ -177,10 +172,7 @@ module Decode =
                 | true, parsed -> parsed
                 | false, _ -> raise (System.ArgumentException($"Invalid int64 value for {fieldName}: {scalar.Value}"))
             | other -> raise (System.ArgumentException($"Invalid int64 value for {fieldName}: {other}"))
-        try
-            Decode.object (fun get -> get.Optional.Field fieldName decodeInt64) value
-        with ex when isRecoverableDecodingError ex ->
-            None
+        tryGetPresentField fieldName decodeInt64 value
 
     let private tryGetLoadListingField (fieldName: string) (value: YAMLElement) =
         tryGetStringField fieldName value

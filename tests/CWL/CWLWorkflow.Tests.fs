@@ -316,6 +316,65 @@ let testCWLWorkflowDescriptionDecode =
             Expect.throws
                 (fun _ -> Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithMalformedNamedInputFile |> ignore)
                 "Named CWL inputs with missing type should fail."
+        testCase "malformed known field on named input fails" <| fun _ ->
+            let yaml = """cwlVersion: v1.2
+class: Workflow
+inputs:
+- id: named
+  type: string
+  label: [not, a, string]
+outputs: {}
+steps: {}"""
+            Expect.throws
+                (fun _ -> Decode.decodeWorkflow yaml |> ignore)
+                "Named CWL inputs with malformed known fields should fail."
+        testCase "malformed id-bearing sequence entries fail instead of becoming warnings" <| fun _ ->
+            let malformedInputId = """cwlVersion: v1.2
+class: Workflow
+inputs:
+- id: [not, a, string]
+  type: string
+outputs: {}
+steps: {}"""
+            let malformedOutputId = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs:
+- id: [not, a, string]
+  type: string
+steps: {}"""
+            let malformedStepId = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs: {}
+steps:
+- id: [not, a, string]
+  run: ./tool.cwl
+  in: []
+  out: []"""
+            let malformedStepInputId = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs: {}
+steps:
+- id: step1
+  run: ./tool.cwl
+  in:
+  - id: [not, a, string]
+    source: input
+  out: []"""
+            Expect.throws
+                (fun _ -> Decode.decodeWorkflowWithWarnings malformedInputId |> ignore)
+                "Malformed input ids should fail rather than become skipped unnamed inputs."
+            Expect.throws
+                (fun _ -> Decode.decodeWorkflowWithWarnings malformedOutputId |> ignore)
+                "Malformed output ids should fail rather than become skipped unnamed outputs."
+            Expect.throws
+                (fun _ -> Decode.decodeWorkflowWithWarnings malformedStepId |> ignore)
+                "Malformed step ids should fail rather than become skipped unnamed steps."
+            Expect.throws
+                (fun _ -> Decode.decodeWorkflowWithWarnings malformedStepInputId |> ignore)
+                "Malformed step input ids should fail rather than become skipped unnamed step inputs."
         testCase "unknown fields on named ports and steps are preserved as dynamic properties" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithUnknownPortFieldsFile
             let input = decoded.Inputs |> Seq.find (fun input -> input.Name = "sample")
@@ -665,6 +724,22 @@ steps: {}"""
                 let roundTripped = Decode.decodeWorkflow encoded
                 let input = roundTripped.Inputs |> Seq.find (fun input -> input.Name = "sample")
                 Expect.equal (DynObj.tryGetTypedPropertyValue<float> "arc:threshold" input) (Some 2.5) "Decimal overflow should roundtrip as a float."
+            testCase "workflow singleton sequence overflow roundtrips as a sequence" <| fun _ ->
+                let yaml = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  sample:
+    type: string
+    arc:list: [only]
+outputs: {}
+steps: {}"""
+                let decoded = Decode.decodeWorkflow yaml
+                let encoded = Encode.encodeWorkflowDescription decoded
+                let roundTripped = Decode.decodeWorkflow encoded
+                let input = roundTripped.Inputs |> Seq.find (fun input -> input.Name = "sample")
+                let items = Expect.wantSome (DynObj.tryGetTypedPropertyValue<ResizeArray<obj>> "arc:list" input) "Singleton overflow should roundtrip as a collection."
+                Expect.equal items.Count 1 "Singleton overflow sequence should keep its item count."
+                Expect.equal (items.[0] :?> string) "only" "Singleton overflow sequence should keep its value."
             testList "PickValueMethod roundtrip" [
                 for (pickValueMethod, cwlString) in [
                     FirstNonNull, "first_non_null"

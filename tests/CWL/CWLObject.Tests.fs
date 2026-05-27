@@ -307,10 +307,33 @@ let testCWLToolDescriptionMetadata =
             ]
         ]
         testCase "Metadata" <| fun _ ->
-            Expect.isSome decodeCWLToolDescriptionMetadata.Metadata $"Expected {decodeCWLToolDescriptionMetadata.Metadata} to be Some"
-            let expected = TestObjects.CWL.CommandLineToolMetadata.expectedMetadataString.Trim().Replace("\r\n", "\n")
-            let actual = (decodeCWLToolDescriptionMetadata.Metadata.Value |> DynObj.format).Trim().Replace("\r\n", "\n")
-            Expect.equal actual expected ""
+            let metadata = Expect.wantSome decodeCWLToolDescriptionMetadata.Metadata "Metadata should decode."
+            let singletonObject fieldName (parent: DynamicObj) =
+                let values =
+                    Expect.wantSome
+                        (DynObj.tryGetTypedPropertyValue<ResizeArray<obj>> fieldName parent)
+                        $"{fieldName} should remain a sequence."
+                Expect.equal values.Count 1 $"{fieldName} should have one value."
+                values.[0] :?> DynamicObj
+
+            let technologyType = singletonObject "arc:has technology type" metadata
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "class" technologyType) (Some "arc:technology type") ""
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:annotation value" technologyType) (Some "Fsharp Devcontainer") ""
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:technology platform" metadata) (Some ".NET") ""
+
+            let performer = singletonObject "arc:performer" metadata
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:first name" performer) (Some "Timo") ""
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:last name" performer) (Some "Mühlhaus") ""
+            let role = singletonObject "arc:has role" performer
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:annotation value" role) (Some "Formal analysis") ""
+
+            let processSequence = singletonObject "arc:has process sequence" metadata
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:name" processSequence) (Some "script.fsx") ""
+            let processInput = singletonObject "arc:has input" processSequence
+            Expect.equal
+                (DynObj.tryGetTypedPropertyValue<string> "arc:name" processInput)
+                (Some "./arc/assays/measurement1/dataset/table.csv")
+                ""
     ]
 
 let testCWLToolDescriptionEncode =

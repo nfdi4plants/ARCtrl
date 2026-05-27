@@ -50,6 +50,16 @@ let testMetadata =
             Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:name" first) (Some "one") "First item should keep its own payload."
             Expect.equal (DynObj.tryGetTypedPropertyValue<string> "class" second) (Some "arc:Second") "Second item should keep its own class."
             Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:name" second) (Some "two") "Second item should keep its own payload."
+        testCase "single sequence entry stays a collection in overflow" <| fun _ ->
+            let yaml = "arc:list: [only]"
+            let decoded =
+                yaml
+                |> Decode.read
+                |> Decode.object (fun get -> get.Overflow.FieldList [])
+                |> overflowDecoder (DynamicObj())
+            let items = Expect.wantSome (DynObj.tryGetTypedPropertyValue<ResizeArray<obj>> "arc:list" decoded) "Singleton sequence overflow should remain a collection."
+            Expect.equal items.Count 1 "Singleton sequence should keep one entry."
+            Expect.equal (items.[0] :?> string) "only" "Singleton sequence entry should be preserved."
         testCase "nested overflow decodes unquoted YAML primitive scalars with their types" <| fun _ ->
             let yaml = """arc:nested:
   enabled: true
