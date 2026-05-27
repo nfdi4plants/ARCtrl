@@ -50,6 +50,22 @@ let testMetadata =
             Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:name" first) (Some "one") "First item should keep its own payload."
             Expect.equal (DynObj.tryGetTypedPropertyValue<string> "class" second) (Some "arc:Second") "Second item should keep its own class."
             Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:name" second) (Some "two") "Second item should keep its own payload."
+        testCase "nested overflow decodes unquoted YAML primitive scalars with their types" <| fun _ ->
+            let yaml = """arc:nested:
+  enabled: true
+  count: 1
+  threshold: 2.5
+  quotedFlag: 'true'"""
+            let decoded =
+                yaml
+                |> Decode.read
+                |> Decode.object (fun get -> get.Overflow.FieldList [])
+                |> overflowDecoder (DynamicObj())
+            let nested = Expect.wantSome (DynObj.tryGetTypedPropertyValue<DynamicObj> "arc:nested" decoded) "Nested overflow should decode as an object."
+            Expect.equal (DynObj.tryGetTypedPropertyValue<bool> "enabled" nested) (Some true) "Plain booleans should retain their YAML type."
+            Expect.equal (DynObj.tryGetTypedPropertyValue<int64> "count" nested) (Some 1L) "Plain integers should retain their YAML type."
+            Expect.equal (DynObj.tryGetTypedPropertyValue<float> "threshold" nested) (Some 2.5) "Plain floats should retain their YAML type."
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "quotedFlag" nested) (Some "true") "Quoted scalar text should remain text."
     ]
 
 

@@ -87,11 +87,28 @@ module Decode =
 
     /// Decode key value pairs into a dynamic object, while preserving their tree structure.
     let rec overflowDecoder (dynObj: DynamicObj) (dict: System.Collections.Generic.Dictionary<string,YAMLElement>) =
+        let decodeOverflowScalar (value: YAMLContent) : obj =
+            match value.Style with
+            | Some ScalarStyle.SingleQuoted
+            | Some ScalarStyle.DoubleQuoted
+            | Some (ScalarStyle.Block _) ->
+                box value.Value
+            | _ ->
+                match System.Boolean.TryParse value.Value with
+                | true, parsed -> box parsed
+                | _ ->
+                    match System.Int64.TryParse(value.Value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture) with
+                    | true, parsed -> box parsed
+                    | _ ->
+                        match System.Double.TryParse(value.Value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture) with
+                        | true, parsed -> box parsed
+                        | _ -> box value.Value
+
         let rec decodeOverflowValue (value: YAMLElement) : obj =
             match value with
             | YAMLElement.Value v
             | YAMLElement.Object [YAMLElement.Value v] ->
-                box v.Value
+                decodeOverflowScalar v
             | YAMLElement.Object [YAMLElement.Sequence items]
             | YAMLElement.Sequence items ->
                 let decodedItems =
