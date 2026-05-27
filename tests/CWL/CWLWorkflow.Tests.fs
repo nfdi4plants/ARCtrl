@@ -651,6 +651,20 @@ let testCWLWorkflowDescriptionEncode =
 
                 Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:step note" step) (Some "keep step note") "Workflow step overflow should roundtrip."
                 Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:step input note" stepInput) (Some "keep step input note") "Step input overflow should roundtrip."
+            testCase "workflow decimal overflow roundtrips" <| fun _ ->
+                let yaml = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  sample:
+    type: string
+    arc:threshold: 2.5
+outputs: {}
+steps: {}"""
+                let decoded = Decode.decodeWorkflow yaml
+                let encoded = Encode.encodeWorkflowDescription decoded
+                let roundTripped = Decode.decodeWorkflow encoded
+                let input = roundTripped.Inputs |> Seq.find (fun input -> input.Name = "sample")
+                Expect.equal (DynObj.tryGetTypedPropertyValue<float> "arc:threshold" input) (Some 2.5) "Decimal overflow should roundtrip as a float."
             testList "PickValueMethod roundtrip" [
                 for (pickValueMethod, cwlString) in [
                     FirstNonNull, "first_non_null"

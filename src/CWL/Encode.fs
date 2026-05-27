@@ -67,6 +67,13 @@ module Encode =
     let yBool (b:bool) =
         YAMLElement.Value (YAMLContent.create (if b then "true" else "false"))
 
+    let yFloat (value: float) =
+#if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        YAMLElement.Value (YAMLContent.create (value.ToString()))
+#else
+        YAMLElement.Value (YAMLContent.create (value.ToString("R", System.Globalization.CultureInfo.InvariantCulture)))
+#endif
+
     // ------------------------------
     // Helper to build YAML mappings preserving order
     // ------------------------------
@@ -94,9 +101,10 @@ module Encode =
         | null -> None
         | :? string as s -> Some (Encode.string s)
         | :? bool as b -> Some (yBool b)
+        // Fable JavaScript/TypeScript use `number` for int and float; avoid truncating decimal values through Encode.int.
+        | :? float as f -> Some (yFloat f)
         | :? int as i -> Some (Encode.int i)
         | :? int64 as i -> Some (Encode.string (string i))
-        | :? float as f -> Some (Encode.float f)
         | :? YAMLElement as y -> Some y
         | :? DynamicObj as dynObj -> Some (encodeDynamicObj dynObj)
         | :? System.Collections.IEnumerable as values ->
@@ -576,9 +584,10 @@ module Encode =
         | ResourceRequirement rr ->
             let tryEncodeScalar (key: string) (value: obj) =
                 match value with
+                // Fable JavaScript/TypeScript use `number` for int and float; preserve decimal resource values.
+                | :? float as f -> Some (key, yFloat f)
                 | :? int as i -> Some (key, Encode.int i)
                 | :? int64 as i -> Some (key, YAMLElement.Value (YAMLContent.create (string i)))
-                | :? float as f -> Some (key, Encode.float f)
                 | :? string as s -> Some (key, Encode.string s)
                 | :? bool as b -> Some (key, yBool b)
                 | _ -> None

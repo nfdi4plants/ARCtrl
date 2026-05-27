@@ -85,6 +85,13 @@ module Decode =
         |> Decode.read
         |> removeYamlComments
 
+    let private boxOverflowInt64 (value: int64) : obj =
+#if FABLE_COMPILER_PYTHON
+        Fable.Core.PyInterop.emitPyExpr value "int64($0)"
+#else
+        box value
+#endif
+
     /// Decode key value pairs into a dynamic object, while preserving their tree structure.
     let rec overflowDecoder (dynObj: DynamicObj) (dict: System.Collections.Generic.Dictionary<string,YAMLElement>) =
         let decodeOverflowScalar (value: YAMLContent) : obj =
@@ -98,7 +105,7 @@ module Decode =
                 | true, parsed -> box parsed
                 | _ ->
                     match System.Int64.TryParse(value.Value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture) with
-                    | true, parsed -> box parsed
+                    | true, parsed -> boxOverflowInt64 parsed
                     | _ ->
                         match System.Double.TryParse(value.Value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture) with
                         | true, parsed -> box parsed

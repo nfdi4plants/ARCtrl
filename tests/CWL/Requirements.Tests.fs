@@ -863,7 +863,7 @@ outputs: {}"""
                 Expect.stringContains yaml "arc:note" "Unknown overflow should still be encoded."
 
             testCase "Resource scalars roundtrip through encode and decode" <| fun _ ->
-                let resourceRequirement = ResourceRequirementInstance(coresMin = 2L)
+                let resourceRequirement = ResourceRequirementInstance(coresMin = 2L, ramMin = 4.5)
                 let requirement = ResourceRequirement resourceRequirement
                 let encodedElement = Encode.encodeRequirement requirement
                 let roundtripped =
@@ -874,8 +874,11 @@ outputs: {}"""
                 | ResourceRequirement original, ResourceRequirement roundtrip ->
                     let originalCoresMin = original.CoresMin.Value :?> int64
                     let roundtripCoresMin = roundtrip.CoresMin.Value :?> int64
+                    let originalRamMin = original.RamMin.Value :?> float
+                    let roundtripRamMin = roundtrip.RamMin.Value :?> float
 
                     Expect.equal roundtripCoresMin originalCoresMin "coresMin should roundtrip as int64"
+                    Expect.equal roundtripRamMin originalRamMin "ramMin should roundtrip as float"
                 | _ ->
                     failwith "Expected ResourceRequirement in both original and roundtrip values"
 
