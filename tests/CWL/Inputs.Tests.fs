@@ -93,8 +93,8 @@ let testInputMutationApi =
                     streamable = false
                 )
 
-            Expect.sequenceEqual InputBinding.KnownFieldNames (ResizeArray [| "loadContents"; "position"; "prefix"; "separate"; "itemSeparator"; "valueFrom"; "shellQuote" |]) "InputBinding known fields should be declared on the type."
-            Expect.sequenceEqual CWLInput.KnownFieldNames (ResizeArray [| "id"; "type"; "label"; "secondaryFiles"; "streamable"; "doc"; "format"; "loadContents"; "loadListing"; "default"; "inputBinding" |]) "CWLInput known fields should be declared on the type."
+            Expect.sequenceEqual InputBinding.KnownFieldNames (Set [| "loadContents"; "position"; "prefix"; "separate"; "itemSeparator"; "valueFrom"; "shellQuote" |]) "InputBinding known fields should be declared on the type."
+            Expect.sequenceEqual CWLInput.KnownFieldNames (Set [| "id"; "type"; "label"; "secondaryFiles"; "streamable"; "doc"; "format"; "loadContents"; "loadListing"; "default"; "inputBinding" |]) "CWLInput known fields should be declared on the type."
             Expect.isEmpty (binding |> DynamicObjHelpers.dynamicPropertiesSnapshot) "InputBinding known fields should not be stored as dynamic properties."
             Expect.isEmpty (input |> DynamicObjHelpers.dynamicPropertiesSnapshot) "CWLInput known fields should not be stored as dynamic properties."
 

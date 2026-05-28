@@ -106,7 +106,7 @@ type FileInstance (
         and set(value) = _contents <- value
 
     static member KnownFieldNames =
-        ResizeArray [|
+        Set [|
             "class"
             "type"
             "location"
@@ -186,7 +186,7 @@ type DirectoryInstance (
         and set(value) = _listing <- value
 
     static member KnownFieldNames =
-        ResizeArray [| "class"; "type"; "location"; "path"; "basename"; "listing" |]
+        Set [ "class"; "type"; "location"; "path"; "basename"; "listing" ]
 
     override this.Equals (o: obj): bool =
         match o with
@@ -234,7 +234,7 @@ type DirentInstance (entry: SchemaSaladString, ?entryname: SchemaSaladString, ?w
         hash (this.Entry, this.Entryname, this.Writable, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        ResizeArray [| "entry"; "entryname"; "writable" |]
+        Set [ "entry"; "entryname"; "writable" ]
 
 /// Represents an enumeration type with a defined set of valid symbol values.
 /// Per the CWL specification, symbol order is semantically significant and preserved during serialization.
@@ -281,7 +281,7 @@ type InputEnumSchema (symbols: ResizeArray<string>, ?label: string, ?doc: string
         hash (this.Symbols |> Seq.toList, this.Label, this.Doc, this.Name, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        ResizeArray [| "type"; "symbols"; "label"; "doc"; "name" |]
+        Set [ "type"; "symbols"; "label"; "doc"; "name" ]
 
 /// Represents a field in an InputRecordSchema
 [<AttachMembers>]
@@ -323,7 +323,7 @@ type InputRecordField (name: string, type_: CWLType, ?doc: string, ?label: strin
         hash (this.Name, this.Type, this.Doc, this.Label, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        ResizeArray [| "name"; "type"; "doc"; "label" |]
+        Set [ "name"; "type"; "doc"; "label" ]
 
 /// Represents a record schema for workflow input parameters
 and [<AttachMembers>] InputRecordSchema (?fields: ResizeArray<InputRecordField>, ?label: string, ?doc: string, ?name: string) =
@@ -374,7 +374,7 @@ and [<AttachMembers>] InputRecordSchema (?fields: ResizeArray<InputRecordField>,
         hash (fieldsHash, this.Label, this.Doc, this.Name, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        ResizeArray [| "type"; "fields"; "label"; "doc"; "name" |]
+        Set [ "type"; "fields"; "label"; "doc"; "name" ]
 
 /// Represents an array schema for workflow input parameters
 and [<AttachMembers>] InputArraySchema (items: CWLType, ?label: string, ?doc: string, ?name: string) =
@@ -415,7 +415,7 @@ and [<AttachMembers>] InputArraySchema (items: CWLType, ?label: string, ?doc: st
         hash (this.Items, this.Label, this.Doc, this.Name, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        ResizeArray [| "type"; "items"; "label"; "doc"; "name" |]
+        Set [ "type"; "items"; "label"; "doc"; "name" ]
 
 /// Primitive types with the concept of a file and directory as a builtin type.
 and [<CustomEquality; NoComparison>] CWLType =
@@ -513,7 +513,7 @@ type SchemaDefRequirementType (name: string, type_: CWLType) =
         hash (this.Name, this.Type_, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        ResizeArray [| "name"; "type" |]
+        Set [ "name"; "type" ]
 
 [<AttachMembers>]
 type SoftwarePackage (package: string, ?version: ResizeArray<string>, ?specs: ResizeArray<string>) =
@@ -548,4 +548,4 @@ type SoftwarePackage (package: string, ?version: ResizeArray<string>, ?specs: Re
         hash (this.Package, this.Version, this.Specs, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        ResizeArray [| "package"; "version"; "specs" |]
+        Set [ "package"; "version"; "specs" ]

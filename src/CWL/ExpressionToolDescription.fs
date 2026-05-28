@@ -76,7 +76,7 @@ type CWLExpressionToolDescription (
         and set(doc) = _doc <- doc
 
     static member KnownFieldNames =
-        ResizeArray [|
+        Set [|
             "inputs"
             "outputs"
             "class"

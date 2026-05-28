@@ -181,7 +181,7 @@ type StepInput (
         )
 
     static member KnownFieldNames =
-        ResizeArray [|
+        Set [|
             "id"
             "source"
             "default"
@@ -224,7 +224,7 @@ type StepOutputParameter (id: string) =
         StepOutputParameter(id)
 
     static member KnownFieldNames =
-        ResizeArray [| "id" |]
+        Set [| "id" |]
 
 [<AttachMembers>]
 type StepOutput =
@@ -339,7 +339,7 @@ type WorkflowStep (
         )
 
     static member KnownFieldNames =
-        ResizeArray [|
+        Set [|
             "id"
             "run"
             "in"

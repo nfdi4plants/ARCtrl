@@ -177,7 +177,7 @@ let testWorkflowStep =
             Expect.throws decodeInvalid "Step output record without id should fail decoding"
         testCase "step output parameter known fields are typed fields, not dynamic overflow" <| fun _ ->
             let output = StepOutputParameter.create "out"
-            Expect.sequenceEqual StepOutputParameter.KnownFieldNames (ResizeArray [| "id" |]) "Step output known fields should be declared on the type."
+            Expect.sequenceEqual StepOutputParameter.KnownFieldNames (Set [| "id" |]) "Step output known fields should be declared on the type."
             Expect.isEmpty (output |> DynamicObjHelpers.dynamicPropertiesSnapshot) "Step output known fields should not be stored as dynamic properties."
             DynObj.setProperty "arc:note" "keep overflow" output
             Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" output) (Some "keep overflow") "Unknown fields should still use DynamicObj overflow."

@@ -139,8 +139,8 @@ let testOutputMutationApi =
                     streamable = true
                 )
 
-            Expect.sequenceEqual OutputBinding.KnownFieldNames (ResizeArray [| "loadContents"; "loadListing"; "glob"; "outputEval" |]) "OutputBinding known fields should be declared on the type."
-            Expect.sequenceEqual CWLOutput.KnownFieldNames (ResizeArray [| "id"; "type"; "label"; "secondaryFiles"; "streamable"; "doc"; "format"; "outputBinding"; "outputSource" |]) "CWLOutput known fields should be declared on the type."
+            Expect.sequenceEqual OutputBinding.KnownFieldNames (Set [| "loadContents"; "loadListing"; "glob"; "outputEval" |]) "OutputBinding known fields should be declared on the type."
+            Expect.sequenceEqual CWLOutput.KnownFieldNames (Set [| "id"; "type"; "label"; "secondaryFiles"; "streamable"; "doc"; "format"; "outputBinding"; "outputSource" |]) "CWLOutput known fields should be declared on the type."
             Expect.isEmpty (binding |> DynamicObjHelpers.dynamicPropertiesSnapshot) "OutputBinding known fields should not be stored as dynamic properties."
             Expect.isEmpty (output |> DynamicObjHelpers.dynamicPropertiesSnapshot) "CWLOutput known fields should not be stored as dynamic properties."
 

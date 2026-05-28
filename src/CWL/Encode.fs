@@ -117,18 +117,18 @@ module Encode =
         | _ -> None
 
     and encodeDynamicObj (dynObj: DynamicObj) =
-        DynamicObjHelpers.dynamicPropertiesExcept Seq.empty dynObj
+        DynamicObjHelpers.dynamicPropertiesExcept Set.empty dynObj
         |> Seq.choose (fun kvp -> encodeDynamicValue kvp.Value |> Option.map (fun encoded -> kvp.Key, encoded))
         |> Seq.toList
         |> yMap
 
-    let appendDynamicPropertiesExcept (knownFieldNames: seq<string>) (dynObj: DynamicObj) acc =
+    let appendDynamicPropertiesExcept (knownFieldNames: Set<string>) (dynObj: DynamicObj) acc =
         DynamicObjHelpers.dynamicPropertiesExcept knownFieldNames dynObj
         |> Seq.choose (fun kvp -> encodeDynamicValue kvp.Value |> Option.map (fun encoded -> kvp.Key, encoded))
         |> Seq.fold (fun pairs pair -> pairs @ [ pair ]) acc
 
     let appendDynamicProperties (dynObj: DynamicObj) acc =
-        appendDynamicPropertiesExcept Seq.empty dynObj acc
+        appendDynamicPropertiesExcept Set.empty dynObj acc
 
     let normalizeDocString (doc:string) =
         doc.Replace("\r\n","\n").TrimEnd('\n').TrimEnd('\r')

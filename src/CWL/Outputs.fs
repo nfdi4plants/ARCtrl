@@ -43,7 +43,7 @@ type OutputBinding (?glob: string, ?loadContents: bool, ?loadListing: LoadListin
         hash (this.Glob, this.LoadContents, this.LoadListing, this.OutputEval, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        ResizeArray [| "loadContents"; "loadListing"; "glob"; "outputEval" |]
+        Set [| "loadContents"; "loadListing"; "glob"; "outputEval" |]
 
     static member create(?glob: string, ?loadContents: bool, ?loadListing: LoadListingEnum, ?outputEval: string) =
         OutputBinding(?glob = glob, ?loadContents = loadContents, ?loadListing = loadListing, ?outputEval = outputEval)
@@ -159,4 +159,4 @@ type CWLOutput (
         )
 
     static member KnownFieldNames =
-        ResizeArray [| "id"; "type"; "label"; "secondaryFiles"; "streamable"; "doc"; "format"; "outputBinding"; "outputSource" |]
+        Set [| "id"; "type"; "label"; "secondaryFiles"; "streamable"; "doc"; "format"; "outputBinding"; "outputSource" |]

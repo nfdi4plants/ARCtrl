@@ -36,22 +36,21 @@ let typedBackingFieldNames (dynObj: DynamicObj) =
         })
     |> Set.ofSeq
 
-let dynamicPropertiesExcept (knownFieldNames: seq<string>) (dynObj: DynamicObj) =
-    let knownFieldSet = knownFieldNames |> Set.ofSeq
+let dynamicPropertiesExcept (knownFieldNames: Set<string>) (dynObj: DynamicObj) =
     let typedBackingFields = typedBackingFieldNames dynObj
     dynObj.GetProperties(false)
     |> Seq.filter (fun kv ->
-        not (Set.contains kv.Key knownFieldSet) &&
+        not (Set.contains kv.Key knownFieldNames) &&
         not (Set.contains kv.Key typedBackingFields))
 
-let dynamicPropertiesSnapshotExcept (knownFieldNames: seq<string>) (dynObj: DynamicObj) =
+let dynamicPropertiesSnapshotExcept (knownFieldNames: Set<string>) (dynObj: DynamicObj) =
     dynamicPropertiesExcept knownFieldNames dynObj
     |> Seq.map (fun kv -> kv.Key, kv.Value)
     |> Seq.sortBy fst
     |> Seq.toList
-
+    
 let dynamicPropertiesSnapshot (dynObj: DynamicObj) =
-    dynamicPropertiesSnapshotExcept Seq.empty dynObj
+    dynamicPropertiesSnapshotExcept Set.empty dynObj
 
 let dynamicPropertiesEqual (left: DynamicObj) (right: DynamicObj) =
     dynamicPropertiesSnapshot left = dynamicPropertiesSnapshot right

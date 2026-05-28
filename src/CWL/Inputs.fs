@@ -84,7 +84,7 @@ type InputBinding (
         )
 
     static member KnownFieldNames =
-        ResizeArray [| "loadContents"; "position"; "prefix"; "separate"; "itemSeparator"; "valueFrom"; "shellQuote" |]
+        Set [| "loadContents"; "position"; "prefix"; "separate"; "itemSeparator"; "valueFrom"; "shellQuote" |]
 
     static member create
         (
@@ -213,4 +213,4 @@ type CWLInput (
         )
 
     static member KnownFieldNames =
-        ResizeArray [| "id"; "type"; "label"; "secondaryFiles"; "streamable"; "doc"; "format"; "loadContents"; "loadListing"; "default"; "inputBinding" |]
+        Set [| "id"; "type"; "label"; "secondaryFiles"; "streamable"; "doc"; "format"; "loadContents"; "loadListing"; "default"; "inputBinding" |]

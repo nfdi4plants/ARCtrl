@@ -67,7 +67,7 @@ let testYAMLParameterFile =
                     values = ResizeArray [| "value" |],
                     type_ = CWLType.String
                 )
-            Expect.sequenceEqual CWLParameterReference.KnownFieldNames (ResizeArray [| "class"; "path"; "location"; "type"; "value" |]) ""
+            Expect.sequenceEqual CWLParameterReference.KnownFieldNames (Set [| "class"; "path"; "location"; "type"; "value" |]) ""
             Expect.isEmpty ((reference :> DynamicObj) |> DynamicObjHelpers.dynamicPropertiesSnapshot) "Known fields should not be stored as dynamic properties."
             DynObj.setProperty "arc:note" "keep me" reference
             Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" reference) (Some "keep me") "Unknown fields should stay in dynamic overflow."

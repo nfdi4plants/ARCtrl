@@ -50,4 +50,4 @@ type CWLParameterReference(key : string, ?values: string ResizeArray, ?type_: CW
         System.Object.ReferenceEquals(this,other)
 
     static member KnownFieldNames =
-        ResizeArray [| "class"; "path"; "location"; "type"; "value" |]
+        Set [| "class"; "path"; "location"; "type"; "value" |]

@@ -831,7 +831,7 @@ outputs: {}"""
 
                 Expect.sequenceEqual
                     ResourceRequirementInstance.KnownFieldNames
-                    (ResizeArray [| "class"; "coresMin"; "coresMax"; "ramMin"; "ramMax"; "tmpdirMin"; "tmpdirMax"; "outdirMin"; "outdirMax" |])
+                    (Set [| "class"; "coresMin"; "coresMax"; "ramMin"; "ramMax"; "tmpdirMin"; "tmpdirMax"; "outdirMin"; "outdirMax" |])
                     "ResourceRequirement known fields should be declared on the type."
                 Expect.isEmpty
                     (resourceRequirement |> DynamicObjHelpers.dynamicPropertiesSnapshot)
@@ -1202,13 +1202,13 @@ let testDynamicPayloadModel =
             let schemaDef = SchemaDefRequirementType("SampleRecord", CWLType.Record recordSchema)
             let package = SoftwarePackage("samtools", version = ResizeArray [| "1.19" |])
 
-            Expect.sequenceEqual InputRecordField.KnownFieldNames (ResizeArray [| "name"; "type"; "doc"; "label" |]) ""
-            Expect.sequenceEqual InputRecordSchema.KnownFieldNames (ResizeArray [| "type"; "fields"; "label"; "doc"; "name" |]) ""
-            Expect.sequenceEqual InputArraySchema.KnownFieldNames (ResizeArray [| "type"; "items"; "label"; "doc"; "name" |]) ""
-            Expect.sequenceEqual InputEnumSchema.KnownFieldNames (ResizeArray [| "type"; "symbols"; "label"; "doc"; "name" |]) ""
-            Expect.sequenceEqual DirentInstance.KnownFieldNames (ResizeArray [| "entry"; "entryname"; "writable" |]) ""
-            Expect.sequenceEqual SchemaDefRequirementType.KnownFieldNames (ResizeArray [| "name"; "type" |]) ""
-            Expect.sequenceEqual SoftwarePackage.KnownFieldNames (ResizeArray [| "package"; "version"; "specs" |]) ""
+            Expect.sequenceEqual InputRecordField.KnownFieldNames (Set [| "name"; "type"; "doc"; "label" |]) ""
+            Expect.sequenceEqual InputRecordSchema.KnownFieldNames (Set [| "type"; "fields"; "label"; "doc"; "name" |]) ""
+            Expect.sequenceEqual InputArraySchema.KnownFieldNames (Set [| "type"; "items"; "label"; "doc"; "name" |]) ""
+            Expect.sequenceEqual InputEnumSchema.KnownFieldNames (Set [| "type"; "symbols"; "label"; "doc"; "name" |]) ""
+            Expect.sequenceEqual DirentInstance.KnownFieldNames (Set [| "entry"; "entryname"; "writable" |]) ""
+            Expect.sequenceEqual SchemaDefRequirementType.KnownFieldNames (Set [| "name"; "type" |]) ""
+            Expect.sequenceEqual SoftwarePackage.KnownFieldNames (Set [| "package"; "version"; "specs" |]) ""
 
             for dynObj in [
                 field :> DynamicObj
@@ -1233,14 +1233,14 @@ let testDynamicPayloadModel =
             let inlineJs = InlineJavascriptRequirementValue(expressionLib = ResizeArray [| "helper.js" |])
             let unknownHint = HintUnknownValue(Some "acme:Hint", Decode.read "class: acme:Hint")
 
-            Expect.sequenceEqual DockerRequirement.KnownFieldNames (ResizeArray [| "class"; "dockerPull"; "dockerFile"; "dockerImageId"; "dockerLoad"; "dockerImport"; "dockerOutputDirectory"; "cwltool:dockerRunOptions" |]) ""
-            Expect.sequenceEqual EnvironmentDef.KnownFieldNames (ResizeArray [| "envName"; "envValue" |]) ""
-            Expect.sequenceEqual LoadListingRequirementValue.KnownFieldNames (ResizeArray [| "class"; "loadListing" |]) ""
-            Expect.sequenceEqual WorkReuseRequirementValue.KnownFieldNames (ResizeArray [| "class"; "enableReuse" |]) ""
-            Expect.sequenceEqual NetworkAccessRequirementValue.KnownFieldNames (ResizeArray [| "class"; "networkAccess" |]) ""
-            Expect.sequenceEqual InplaceUpdateRequirementValue.KnownFieldNames (ResizeArray [| "class"; "inplaceUpdate" |]) ""
-            Expect.sequenceEqual InlineJavascriptRequirementValue.KnownFieldNames (ResizeArray [| "class"; "expressionLib" |]) ""
-            Expect.sequenceEqual HintUnknownValue.KnownFieldNames (ResizeArray [| "class"; "raw" |]) ""
+            Expect.sequenceEqual DockerRequirement.KnownFieldNames (Set [| "class"; "dockerPull"; "dockerFile"; "dockerImageId"; "dockerLoad"; "dockerImport"; "dockerOutputDirectory"; "cwltool:dockerRunOptions" |]) ""
+            Expect.sequenceEqual EnvironmentDef.KnownFieldNames (Set [| "envName"; "envValue" |]) ""
+            Expect.sequenceEqual LoadListingRequirementValue.KnownFieldNames (Set [| "class"; "loadListing" |]) ""
+            Expect.sequenceEqual WorkReuseRequirementValue.KnownFieldNames (Set [| "class"; "enableReuse" |]) ""
+            Expect.sequenceEqual NetworkAccessRequirementValue.KnownFieldNames (Set [| "class"; "networkAccess" |]) ""
+            Expect.sequenceEqual InplaceUpdateRequirementValue.KnownFieldNames (Set [| "class"; "inplaceUpdate" |]) ""
+            Expect.sequenceEqual InlineJavascriptRequirementValue.KnownFieldNames (Set [| "class"; "expressionLib" |]) ""
+            Expect.sequenceEqual HintUnknownValue.KnownFieldNames (Set [| "class"; "raw" |]) ""
 
             for dynObj in [
                 docker :> DynamicObj

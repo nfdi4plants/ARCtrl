@@ -848,13 +848,13 @@ module Decode =
     let schemaDefRequirementTypeDecoder (value: YAMLElement) : SchemaDefRequirementType =
         let dict = Decode.object (fun get -> get.Overflow.FieldList []) value
         let schemaDefKnownFields =
-            [
-                yield! SchemaDefRequirementType.KnownFieldNames
-                yield! InputRecordSchema.KnownFieldNames
-                yield! InputArraySchema.KnownFieldNames
-                yield! InputEnumSchema.KnownFieldNames
-            ]
-            |> Seq.distinct
+            Set.unionMany
+                [
+                    SchemaDefRequirementType.KnownFieldNames
+                    InputRecordSchema.KnownFieldNames
+                    InputArraySchema.KnownFieldNames
+                    InputEnumSchema.KnownFieldNames
+                ]
             |> Seq.toList
         if dict.ContainsKey "name" then
             let schema = SchemaDefRequirementType(decodeStringOrExpression dict.["name"], cwlTypeDecoder' value)
