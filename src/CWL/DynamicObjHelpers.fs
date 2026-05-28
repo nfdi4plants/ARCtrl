@@ -3,7 +3,7 @@ module ARCtrl.CWL.DynamicObjHelpers
 open System
 open DynamicObj
 
-let private toCompilerBackingName (propertyName: string) =
+let toCompilerBackingName (propertyName: string) =
     let propertyName =
         if String.IsNullOrEmpty propertyName then
             propertyName
@@ -26,7 +26,7 @@ let private toCompilerBackingName (propertyName: string) =
 
     "_" + String(chars)
 
-let private typedBackingFieldNames (dynObj: DynamicObj) =
+let typedBackingFieldNames (dynObj: DynamicObj) =
     dynObj.GetPropertyHelpers(true)
     |> Seq.filter (fun property -> not property.IsDynamic)
     |> Seq.collect (fun property ->

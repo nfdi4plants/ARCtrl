@@ -208,7 +208,7 @@ module Encode =
     // ------------------------------
     // CWLType encoder
     // ------------------------------
-    let private encodeFilePairs discriminatorKey discriminatorValue (file: FileInstance) =
+    let encodeFilePairs discriminatorKey discriminatorValue (file: FileInstance) =
         [ discriminatorKey, Encode.string discriminatorValue ]
         |> appendOpt "location" Encode.string file.Location
         |> appendOpt "path" Encode.string file.Path
@@ -223,7 +223,7 @@ module Encode =
         |> appendOpt "contents" Encode.string file.Contents
         |> appendDynamicPropertiesExcept FileInstance.KnownFieldNames file
 
-    let private encodeDirectoryPairs discriminatorKey discriminatorValue (directory: DirectoryInstance) =
+    let encodeDirectoryPairs discriminatorKey discriminatorValue (directory: DirectoryInstance) =
         [ discriminatorKey, Encode.string discriminatorValue ]
         |> appendOpt "location" Encode.string directory.Location
         |> appendOpt "path" Encode.string directory.Path

@@ -25,9 +25,9 @@ module Decode =
         Warnings: ResizeArray<DecodeWarning>
     }
 
-    type private WarningSink = ResizeArray<DecodeWarning> option
+    type WarningSink = ResizeArray<DecodeWarning> option
 
-    let private addWarning (warnings: WarningSink) (path: string) (message: string) (raw: YAMLElement option) =
+    let addWarning (warnings: WarningSink) (path: string) (message: string) (raw: YAMLElement option) =
         match warnings with
         | Some warningList ->
             warningList.Add({
@@ -85,7 +85,7 @@ module Decode =
         |> Decode.read
         |> removeYamlComments
 
-    let private boxOverflowInt64 (value: int64) : obj =
+    let boxOverflowInt64 (value: int64) : obj =
 #if FABLE_COMPILER_PYTHON
         Fable.Core.PyInterop.emitPyExpr value "int64($0)"
 #else
@@ -135,13 +135,13 @@ module Decode =
             DynObj.setProperty e.Key (decodeOverflowValue e.Value) dynObj
         dynObj
 
-    let private isIgnorableYamlNoise (value: YAMLElement) =
+    let isIgnorableYamlNoise (value: YAMLElement) =
         match value with
         | YAMLElement.Comment _ -> true
         | YAMLElement.Object [] -> true
         | _ -> false
 
-    let private tryGetPresentField (fieldName: string) (decoder: YAMLElement -> 'T) (value: YAMLElement) : 'T option =
+    let tryGetPresentField (fieldName: string) (decoder: YAMLElement -> 'T) (value: YAMLElement) : 'T option =
         match value with
         | YAMLElement.Object fields
             when fields
@@ -152,19 +152,19 @@ module Decode =
         | _ ->
             None
 
-    let private tryGetStringField (fieldName: string) (value: YAMLElement) =
+    let tryGetStringField (fieldName: string) (value: YAMLElement) =
         tryGetPresentField fieldName Decode.string value
 
-    let private tryGetBoolField (fieldName: string) (value: YAMLElement) =
+    let tryGetBoolField (fieldName: string) (value: YAMLElement) =
         tryGetPresentField fieldName Decode.bool value
 
-    let private tryGetYamlField (fieldName: string) (value: YAMLElement) =
+    let tryGetYamlField (fieldName: string) (value: YAMLElement) =
         tryGetPresentField fieldName id value
 
-    let private tryGetIntArrayField (fieldName: string) (value: YAMLElement) =
+    let tryGetIntArrayField (fieldName: string) (value: YAMLElement) =
         tryGetPresentField fieldName (Decode.resizearray Decode.int) value
 
-    let private tryGetInt64Field (fieldName: string) (value: YAMLElement) =
+    let tryGetInt64Field (fieldName: string) (value: YAMLElement) =
         let decodeInt64 = function
             | YAMLElement.Value scalar
             | YAMLElement.Object [YAMLElement.Value scalar] ->
@@ -174,7 +174,7 @@ module Decode =
             | other -> raise (System.ArgumentException($"Invalid int64 value for {fieldName}: {other}"))
         tryGetPresentField fieldName decodeInt64 value
 
-    let private tryGetLoadListingField (fieldName: string) (value: YAMLElement) =
+    let tryGetLoadListingField (fieldName: string) (value: YAMLElement) =
         tryGetStringField fieldName value
         |> Option.map (fun loadListingValue ->
             match LoadListingEnum.tryParse loadListingValue with
@@ -191,7 +191,7 @@ module Decode =
             ()
         dynObj
 
-    let private decodeFileInstanceFields (element: YAMLElement) =
+    let decodeFileInstanceFields (element: YAMLElement) =
         let file =
             FileInstance(
                 ?location = tryGetStringField "location" element,
@@ -209,7 +209,7 @@ module Decode =
         overflowIntoDynamicObj file (FileInstance.KnownFieldNames |> Seq.toList) element |> ignore
         file
 
-    let private decodeDirectoryInstanceFields (element: YAMLElement) =
+    let decodeDirectoryInstanceFields (element: YAMLElement) =
         let directory =
             DirectoryInstance(
                 ?location = tryGetStringField "location" element,
@@ -610,7 +610,7 @@ module Decode =
                 cwlType, false
         )
 
-    let private decodeNamedOutput (name: string) (value: YAMLElement) =
+    let decodeNamedOutput (name: string) (value: YAMLElement) =
         let outputBinding = outputBindingDecoder value
         let outputSourceValues = outputSourceDecoder value
         let cwlType =
@@ -635,7 +635,7 @@ module Decode =
         overflowIntoDynamicObj output (CWLOutput.KnownFieldNames |> Seq.toList) value |> ignore
         output
 
-    let private decodeOutputSequenceItem (warnings: WarningSink) (path: string) (index: int) (item: YAMLElement) =
+    let decodeOutputSequenceItem (warnings: WarningSink) (path: string) (index: int) (item: YAMLElement) =
         match tryGetStringField "id" item with
         | Some id -> Some (decodeNamedOutput id item)
         | None when isIgnorableYamlNoise item -> None
@@ -960,7 +960,7 @@ module Decode =
         | "StepInputExpressionRequirement" -> StepInputExpressionRequirement
         | _ -> raise (System.ArgumentException($"Invalid or unsupported requirement class: {cls}"))
 
-    let private addRequirementPayloadOverflow (element: YAMLElement) (requirement: Requirement) =
+    let addRequirementPayloadOverflow (element: YAMLElement) (requirement: Requirement) =
         let knownWithClass knownFields = "class" :: (knownFields |> Seq.toList)
         match requirement with
         | InlineJavascriptRequirement value ->
@@ -1131,7 +1131,7 @@ module Decode =
             outputBinding
         )
 
-    let private decodeNamedInput (name: string) (value: YAMLElement) =
+    let decodeNamedInput (name: string) (value: YAMLElement) =
         let inputBinding = inputBindingDecoder value
         let cwlType, optional =
             match value with
@@ -1155,7 +1155,7 @@ module Decode =
         overflowIntoDynamicObj input (CWLInput.KnownFieldNames |> Seq.toList) value |> ignore
         input
 
-    let private decodeInputSequenceItem (warnings: WarningSink) (path: string) (index: int) (item: YAMLElement) =
+    let decodeInputSequenceItem (warnings: WarningSink) (path: string) (index: int) (item: YAMLElement) =
         match tryGetStringField "id" item with
         | Some id -> Some (decodeNamedInput id item)
         | None when isIgnorableYamlNoise item -> None
