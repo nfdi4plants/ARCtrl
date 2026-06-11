@@ -21,7 +21,7 @@
     <Compile Include="Comment.fs" />
     <Compile Include="CommentList.fs" />
     <Compile Include="OntologyAnnotation.fs" />
-    <Compile Include="Value.fs" />
+    <Compile Include="PropertyValue.fs" />
     <Compile Include="IPropertyValue.fs" />
     <Compile Include="DataFile.fs" />
     <Compile Include="Data.fs" />

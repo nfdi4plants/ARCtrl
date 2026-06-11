@@ -806,9 +806,8 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
             | None -> ResizeArray.singleton (table.Copy())
 
     /// Splits the table rowWise into a collection of tables, so that each new table has only one value for the ProtocolREF column
-    static member SplitByProtocolREF =
-        fun (table : ArcTable) ->
-            ArcTable.SplitByColumnValuesByHeader CompositeHeader.ProtocolREF table
+    static member SplitByProtocolREF (table : ArcTable) =
+        ArcTable.SplitByColumnValuesByHeader CompositeHeader.ProtocolREF table
 
 
     /// This method is meant to update an ArcTable stored as a protocol in a study or investigation file with the information from an ArcTable actually stored as an annotation table

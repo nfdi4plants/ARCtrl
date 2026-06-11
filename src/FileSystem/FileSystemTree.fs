@@ -6,8 +6,8 @@ open ARCtrl
 
 [<AttachMembers>]
 type FileSystemTree =
-    | File of name:string
-    | Folder of name:string * children:FileSystemTree array
+    | File of entryName:string
+    | Folder of entryName:string * children:FileSystemTree array
 
     member this.Name = match this with | File n | Folder (n,_) -> n
     member this.isFolder = match this with | Folder _ -> true | _ -> false

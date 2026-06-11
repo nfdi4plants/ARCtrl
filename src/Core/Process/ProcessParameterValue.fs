@@ -9,7 +9,7 @@ open Fable.Core
 type ProcessParameterValue =
     {
         Category    : ProtocolParameter option
-        Value       : Value option
+        Value       : PropertyValue option
         Unit        : OntologyAnnotation option
     }
 
@@ -42,10 +42,10 @@ type ProcessParameterValue =
         this.Value
         |> Option.map (fun oa ->
             match oa with
-            | Value.Ontology oa  -> oa.NameText
-            | Value.Float f -> string f
-            | Value.Int i   -> string i
-            | Value.Name s  -> s
+            | PropertyValue.Ontology oa  -> oa.NameText
+            | PropertyValue.Float f -> string f
+            | PropertyValue.Int i   -> string i
+            | PropertyValue.Name s  -> s
         )
         |> Option.defaultValue ""
 
@@ -113,7 +113,7 @@ type ProcessParameterValue =
         member this.GetValue() = this.Value
         member this.GetUnit() = this.Unit
 
-    static member createAsPV (alternateName : string option) (measurementMethod : string option) (description : string option) (category : OntologyAnnotation option) (value : Value option) (unit : OntologyAnnotation option) =
+    static member createAsPV (alternateName : string option) (measurementMethod : string option) (description : string option) (category : OntologyAnnotation option) (value : PropertyValue option) (unit : OntologyAnnotation option) =
         let category = category |> Option.map (fun c -> ProtocolParameter.create(ParameterName = c))
         ProcessParameterValue.create(?Category = category, ?Value = value, ?Unit = unit)
 
@@ -122,7 +122,7 @@ type ProcessParameterValue =
     //    static member unit = pv.Unit |> Option.bind (OntologyAnnotation.tryGetNameAsString)
     //    pv.Value
     //    |> Option.map (fun v ->
-    //        static member s = v |> Value.toString
+    //        static member s = v |> PropertyValue.toString
     //        match unit with
     //        | Some u -> s + " " + u
     //        | None -> s

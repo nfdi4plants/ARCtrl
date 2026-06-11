@@ -8,7 +8,7 @@ type FactorValue =
     {
         ID : URI option
         Category : Factor option
-        Value : Value option
+        Value : PropertyValue option
         Unit : OntologyAnnotation option
     }
 
@@ -30,10 +30,10 @@ type FactorValue =
         this.Value
         |> Option.map (fun oa ->
             match oa with
-            | Value.Ontology oa  -> oa.NameText
-            | Value.Float f -> string f
-            | Value.Int i   -> string i
-            | Value.Name s  -> s
+            | PropertyValue.Ontology oa  -> oa.NameText
+            | PropertyValue.Float f -> string f
+            | PropertyValue.Int i   -> string i
+            | PropertyValue.Name s  -> s
         )
         |> Option.defaultValue ""
 
@@ -107,7 +107,7 @@ type FactorValue =
             "FactorValue"
 
     // TODO: @hlweil why are there unused params?
-    static member createAsPV (alternateName : string option) (measurementMethod : string option) (description : string option) (category : OntologyAnnotation option) (value : Value option) (unit : OntologyAnnotation option) =
+    static member createAsPV (alternateName : string option) (measurementMethod : string option) (description : string option) (category : OntologyAnnotation option) (value : PropertyValue option) (unit : OntologyAnnotation option) =
         let category = category |> Option.map (fun c -> Factor.create(FactorType = c))
         FactorValue.create(?Category = category, ?Value = value, ?Unit = unit)
 
@@ -116,7 +116,7 @@ type FactorValue =
     //    let unit = fv.Unit |> Option.map (OntologyAnnotation.getNameText)
     //    fv.Value
     //    |> Option.map (fun v ->
-    //        let s = v |> Value.toString
+    //        let s = v |> PropertyValue.toString
     //        match unit with
     //        | Some u -> s + " " + u
     //        | None -> s

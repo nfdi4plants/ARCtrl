@@ -89,7 +89,7 @@ let private tests_source =
         testCase "LD_WriteReadWithCharacteristics" (fun () ->
             let charaHeader = Process.MaterialAttribute.create(CharacteristicType = OntologyAnnotation.create("MyAnnotation","NCIT","http://purl.obolibrary.org/obo/NCIT_C42781"))
             let charaValue = OntologyAnnotation.create("MyAnnotationValue","NCIT","http://purl.obolibrary.org/obo/NCIT_C42782")
-            let chara = Process.MaterialAttributeValue.create(Category = charaHeader, Value = Value.Ontology charaValue)
+            let chara = Process.MaterialAttributeValue.create(Category = charaHeader, Value = PropertyValue.Ontology charaValue)
             let source = Source.create(Name = "#sample/sample-P-0.1-aliquot7", Characteristics = [chara])
             let o_out = ProcessInput.ROCrate.encoder (ProcessInput.Source source) |> Encode.toJsonString 0
             let inputPI = Decode.fromJsonString ProcessInput.ROCrate.decoder o_out
@@ -171,7 +171,7 @@ let private tests_sample =
         testCase "LD_WriteReadWithCharacteristics" (fun () ->
             let charaHeader = Process.MaterialAttribute.create(CharacteristicType = OntologyAnnotation.create("MyAnnotation","NCIT","http://purl.obolibrary.org/obo/NCIT_C42781"))
             let charaValue = OntologyAnnotation.create("MyAnnotationValue","NCIT","http://purl.obolibrary.org/obo/NCIT_C42782")
-            let chara = Process.MaterialAttributeValue.create(Category = charaHeader, Value = Value.Ontology charaValue)
+            let chara = Process.MaterialAttributeValue.create(Category = charaHeader, Value = PropertyValue.Ontology charaValue)
             let sample = Sample.create(Name = "#sample/sample-P-0.1-aliquot7", Characteristics = [chara])
             let o_out = ProcessInput.ROCrate.encoder (ProcessInput.Sample sample) |> Encode.toJsonString 0
             let inputPI = Decode.fromJsonString ProcessInput.ROCrate.decoder o_out

@@ -14,7 +14,7 @@ module Helper =
 
     let create_component(i) =
         Process.Component.create(
-            Value.Int i,
+            PropertyValue.Int i,
             OntologyAnnotation("Unit", "MS", "MS:123456"),
             OntologyAnnotation("Explication", "MS", "MS:123456")
         )

@@ -69,11 +69,11 @@ module JsonTypes =
     let valueOfCell (value : CompositeCell) =
         match value with
         | CompositeCell.FreeText ("") -> None, None
-        | CompositeCell.FreeText (text) -> Some (Value.fromString text), None        
+        | CompositeCell.FreeText (text) -> Some (PropertyValue.fromString text), None        
         | CompositeCell.Term (term) when term.isEmpty() -> None, None
-        | CompositeCell.Term (term) -> Some (Value.Ontology term), None
+        | CompositeCell.Term (term) -> Some (PropertyValue.Ontology term), None
         | CompositeCell.Unitized (text,unit) -> 
-            (if text = "" then None else Value.fromString text |> Some), 
+            (if text = "" then None else PropertyValue.fromString text |> Some), 
             if unit.isEmpty() then None else unit |> Some
         | CompositeCell.Data (data) -> failwith "Data cell should not be parsed to isa value"
 
@@ -130,17 +130,17 @@ module JsonTypes =
             failwithf "Could not parse output header %O" header
 
     /// Convert an ISA Value and Unit tuple to a CompositeCell
-    let cellOfValue (value : Value option) (unit : OntologyAnnotation option) =
-        let value = value |> Option.defaultValue (Value.Name "")
+    let cellOfValue (value : PropertyValue option) (unit : OntologyAnnotation option) =
+        let value = value |> Option.defaultValue (PropertyValue.Name "")
         match value,unit with
-        | Value.Ontology oa, None -> CompositeCell.Term oa
-        | Value.Name "", None -> CompositeCell.Term (OntologyAnnotation())
-        | Value.Name text, None -> CompositeCell.Term (OntologyAnnotation(text))
-        | Value.Name name, Some u -> CompositeCell.Unitized (name,u)
-        | Value.Float f, Some u -> CompositeCell.Unitized (f.ToString(),u)
-        | Value.Float f, None -> CompositeCell.Unitized (f.ToString(),OntologyAnnotation())
-        | Value.Int i, Some u -> CompositeCell.Unitized (i.ToString(),u)
-        | Value.Int i, None -> CompositeCell.Unitized (i.ToString(),OntologyAnnotation())
+        | PropertyValue.Ontology oa, None -> CompositeCell.Term oa
+        | PropertyValue.Name "", None -> CompositeCell.Term (OntologyAnnotation())
+        | PropertyValue.Name text, None -> CompositeCell.Term (OntologyAnnotation(text))
+        | PropertyValue.Name name, Some u -> CompositeCell.Unitized (name,u)
+        | PropertyValue.Float f, Some u -> CompositeCell.Unitized (f.ToString(),u)
+        | PropertyValue.Float f, None -> CompositeCell.Unitized (f.ToString(),OntologyAnnotation())
+        | PropertyValue.Int i, Some u -> CompositeCell.Unitized (i.ToString(),u)
+        | PropertyValue.Int i, None -> CompositeCell.Unitized (i.ToString(),OntologyAnnotation())
         | _ -> failwithf "Could not parse value %O with unit %O" value unit
 
     /// Convert an ISA Component to a CompositeHeader and Cell tuple
@@ -688,7 +688,7 @@ type CompositeCell with
     /// </summary>
     /// <param name="value"></param>
     /// <param name="unit"></param>
-    static member fromValue(value : Value, ?unit : OntologyAnnotation) =
+    static member fromValue(value : PropertyValue, ?unit : OntologyAnnotation) =
         JsonTypes.cellOfValue (Some value) unit
 
 
@@ -708,10 +708,10 @@ module CompositeRow =
                 let pp = ProtocolParameter.create(ParameterName = oa)
                 Protocol.addParameter (pp) p
             | CompositeHeader.Component oa, CompositeCell.Unitized(v,unit) -> 
-                let c = Component.create(componentType = oa, value = Value.fromString v, unit = unit)
+                let c = Component.create(componentType = oa, value = PropertyValue.fromString v, unit = unit)
                 Protocol.addComponent c p        
             | CompositeHeader.Component oa, CompositeCell.Term t -> 
-                let c = Component.create(componentType = oa, value = Value.Ontology t)
+                let c = Component.create(componentType = oa, value = PropertyValue.Ontology t)
                 Protocol.addComponent c p     
             | _ -> p
         ) (Protocol.create(Name = tableName))

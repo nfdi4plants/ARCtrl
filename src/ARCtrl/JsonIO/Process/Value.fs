@@ -5,13 +5,13 @@ open ARCtrl
 [<AutoOpen>]
 module ValueExtensions =
 
-    type Value with
+    type PropertyValue with
 
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Value.ISAJson.decoder s   
 
         static member toISAJsonString(?spaces) =
-            fun (v:Value) ->
+            fun (v:PropertyValue) ->
                 Value.ISAJson.encoder None v
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
             
