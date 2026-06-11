@@ -23,6 +23,7 @@ export { FileSystemTree } from './ts/FileSystem/FileSystemTree.js'
 /// CWL
 import { CWLProcessingUnit } from './ts/CWL/CWLProcessingUnit.js'
 import { CWLType, FileInstance, DirectoryInstance, DirentInstance, InputEnumSchema, InputRecordField, InputRecordSchema, InputArraySchema, SchemaDefRequirementType, SoftwarePackage } from './ts/CWL/CWLTypes.js'
+import { CWLParameterValue, CWLParameterRecordField } from './ts/CWL/ParameterValue.js'
 import { CWLParameterReference } from './ts/CWL/ParameterReference.js'
 import { CWLInput, InputBinding } from './ts/CWL/Inputs.js'
 import { CWLOutput, OutputBinding } from './ts/CWL/Outputs.js'
@@ -43,6 +44,8 @@ export const CWL = {
     InputArraySchema,
     SchemaDefRequirementType,
     SoftwarePackage,
+    CWLParameterValue,
+    CWLParameterRecordField,
     CWLParameterReference,
     CWLInput,
     InputBinding,

@@ -4,18 +4,30 @@ open Fable.Core
 open System
 
 [<AttachMembers>]
-type CWLParameterReference(key : string, ?values: string ResizeArray, ?type_: CWLType) =
+type CWLParameterReference(key : string, ?values: string ResizeArray, ?value: CWLParameterValue, ?type_: CWLType) =
     let mutable _key = key
-    let mutable _values = defaultArg values (ResizeArray<string>())
+    let mutable _value =
+        value
+        |> Option.orElseWith (fun () ->
+            values
+            |> Option.bind CWLParameterValue.fromFlatStrings
+        )
     let mutable _type = type_
 
     member this.Key
         with get() = _key
         and set(value) = _key <- value
 
+    member this.Value
+        with get() = _value
+        and set(value) = _value <- value
+
     member this.Values
-        with get() = _values
-        and set(value) = _values <- value
+        with get() =
+            _value
+            |> Option.map CWLParameterValue.toFlatStrings
+            |> Option.defaultValue (ResizeArray())
+        and set(values) = _value <- CWLParameterValue.fromFlatStrings values
 
     member this.Type
         with get() = _type
@@ -23,18 +35,22 @@ type CWLParameterReference(key : string, ?values: string ResizeArray, ?type_: CW
 
     override this.GetHashCode() =
         [|
-            HashHelpers.boxHashSeq this.Values
-            HashHelpers.hash this.Key
+            HashHelpers.hash this.Key |> box
+            HashHelpers.boxHashOption this.Value
             HashHelpers.boxHashOption this.Type
         |]
         |> HashHelpers.boxHashArray
         |> fun x -> x :?> int
 
     override this.Equals (obj: obj) : bool = 
-        this.StructurallyEquals (obj :?> CWLParameterReference)
+        match obj with
+        | :? CWLParameterReference as other -> this.StructurallyEquals other
+        | _ -> false
 
     member this.StructurallyEquals (other: CWLParameterReference) : bool =
-        this.GetHashCode() = other.GetHashCode()
+        this.Key = other.Key &&
+        this.Value = other.Value &&
+        this.Type = other.Type
 
     member this.ReferenceEquals (other: CWLParameterReference) : bool =
         System.Object.ReferenceEquals(this,other)

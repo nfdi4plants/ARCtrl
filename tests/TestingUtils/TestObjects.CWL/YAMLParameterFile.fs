@@ -28,3 +28,25 @@ module String =
 
     let stringValue = "abcdefg"
     let stringParameterReference = CWLParameterReference(key = Inputs.String.inputStringName, values = ResizeArray [stringValue])
+
+module Structured =
+
+    let nestedFileArray = """sampleRecordFiles:
+  - - class: File
+      path: ../../assays/RNASeq/dataset/DB_097.fastq.gz
+      format: edam:format_1930
+  - - class: File
+      path: ../../assays/RNASeq/dataset/DB_163.fastq.gz
+      format: edam:format_1930"""
+
+    let arrayOfRecords = """sampleRecords:
+  - name: DB_097
+    reads:
+      - class: File
+        path: ../../assays/RNASeq/dataset/DB_097.fastq.gz
+  - name: DB_163
+    reads:
+      - class: File
+        path: ../../assays/RNASeq/dataset/DB_163.fastq.gz"""
+
+    let emptyArray = """sampleRecordFiles: []"""

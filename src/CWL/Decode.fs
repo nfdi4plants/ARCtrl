@@ -1624,71 +1624,109 @@ module Decode =
 
 module DecodeParameters =
 
-    let cwlParameterReferenceDecoder (get : Decode.IGetters) (key: string) (yEle: YAMLElement): CWLParameterReference =
+    let private tryField (fieldName: string) (yEle: YAMLElement) =
         match yEle with
-        | YAMLElement.Object[YAMLElement.Value v] ->
-            CWLParameterReference(
-                key = key,
-                values = ResizeArray [v.Value]
+        | YAMLElement.Object fields ->
+            fields
+            |> List.tryPick (function
+                | YAMLElement.Mapping (key, value) when key.Value = fieldName -> Some value
+                | _ -> None
             )
-        | YAMLElement.Object[YAMLElement.Mapping (_,YAMLElement.Object [YAMLElement.Value v1]) ; YAMLElement.Mapping (_,YAMLElement.Object [YAMLElement.Value v2])] ->
-            let t,b = Decode.cwlTypeStringMatcher v1.Value get
-            CWLParameterReference(
-                key = key,
-                values = ResizeArray [v2.Value],
-                type_ = t
+        | _ -> None
+
+    let private tryScalarString (yEle: YAMLElement) =
+        match yEle with
+        | YAMLElement.Value value
+        | YAMLElement.Object [YAMLElement.Value value] -> Some value.Value
+        | _ -> None
+
+    let private decodeFileInstance (yEle: YAMLElement) =
+        let file = FileInstance()
+        yEle
+        |> Decode.object (fun get ->
+            Decode.overflowDecoder file (get.Overflow.FieldList [])
+        )
+        |> ignore
+        file
+
+    let private decodeDirectoryInstance (yEle: YAMLElement) =
+        let directory = DirectoryInstance()
+        yEle
+        |> Decode.object (fun get ->
+            Decode.overflowDecoder directory (get.Overflow.FieldList [])
+        )
+        |> ignore
+        directory
+
+    let rec decodeParameterValue (value: YAMLElement) : CWLParameterValue =
+        match value with
+        | YAMLElement.Value scalar
+        | YAMLElement.Object [YAMLElement.Value scalar] ->
+            match scalar.Value with
+            | "null" -> CWLParameterValue.Null
+            | "true" -> CWLParameterValue.Boolean true
+            | "false" -> CWLParameterValue.Boolean false
+            | text ->
+                match System.Int64.TryParse(text, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture) with
+                | true, parsed -> CWLParameterValue.Int parsed
+                | false, _ ->
+                    match System.Double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture) with
+                    | true, parsed -> CWLParameterValue.Float parsed
+                    | false, _ -> CWLParameterValue.String text
+        | YAMLElement.Object [YAMLElement.Sequence items]
+        | YAMLElement.Sequence items ->
+            items
+            |> List.map decodeParameterValue
+            |> ResizeArray
+            |> CWLParameterValue.Array
+        | YAMLElement.Object (YAMLElement.Sequence items :: trailingMappings)
+            when trailingMappings
+                 |> List.exists (function
+                     | YAMLElement.Mapping _ -> true
+                     | _ -> false) ->
+            items
+            |> List.map (fun item ->
+                match item with
+                | YAMLElement.Object itemFields -> YAMLElement.Object (itemFields @ trailingMappings)
+                | other -> YAMLElement.Object (other :: trailingMappings)
             )
-        | YAMLElement.Object[YAMLElement.Sequence s] ->
-            // Check what type of sequence this is by examining the first element
-            match s |> List.tryHead with
-            | Some (YAMLElement.Object mappings) ->
-                // Check if mappings actually contains Mapping elements (not just Value)
-                let hasMappings = mappings |> List.exists (function
-                    | YAMLElement.Mapping _ -> true
-                    | _ -> false)
-                
-                if not hasMappings then
-                    // Not actually mappings, just wrapped values - use default decoder
-                    CWLParameterReference(
-                        key = key,
-                        values = Decode.resizearray Decode.string (YAMLElement.Sequence s)
-                    )
-                else
-                    // Check if it's a File/Directory object with a "class" field
-                    let hasClassField = mappings |> List.exists (function
-                        | YAMLElement.Mapping (k, _) when k.Value = "class" -> true
-                        | _ -> false)
-                    
-                    if hasClassField then
-                        // Sequence of File/Directory objects - extract paths
-                        let paths = ResizeArray<string>()
-                        for item in s do
-                            match item with
-                            | YAMLElement.Object itemMappings ->
-                                for mapping in itemMappings do
-                                    match mapping with
-                                    | YAMLElement.Mapping (k, YAMLElement.Object [YAMLElement.Value v]) when k.Value = "path" ->
-                                        paths.Add(v.Value)
-                                    | _ -> ()
-                            | _ -> ()
-                        // Since this is a sequence of Files, the type should be File[] (Array)
-                        CWLParameterReference(
-                            key = key,
-                            values = paths,
-                            type_ = Array { Items = File (FileInstance()); Label = None; Doc = None; Name = None }
-                        )
-                    else
-                        // Sequence of complex record objects (no "class" field)
-                        // Return empty placeholder
-                        CWLParameterReference(key = key, values = ResizeArray())
+            |> List.map decodeParameterValue
+            |> ResizeArray
+            |> CWLParameterValue.Array
+        | YAMLElement.Object fields ->
+            match tryField "class" value |> Option.bind tryScalarString with
+            | Some "File" -> decodeFileInstance value |> CWLParameterValue.File
+            | Some "Directory" -> decodeDirectoryInstance value |> CWLParameterValue.Directory
             | _ ->
-                // Simple values sequence (strings, numbers, etc.) or empty
-                // Use original decoder logic
-                CWLParameterReference(
-                    key = key,
-                    values = Decode.resizearray Decode.string (YAMLElement.Sequence s)
+                fields
+                |> List.choose (function
+                    | YAMLElement.Mapping (key, value) ->
+                        Some (CWLParameterRecordField(key.Value, decodeParameterValue value))
+                    | _ -> None
                 )
-        | _ -> raise (System.ArgumentException($"Unexpected YAMLElement format in cwlParameterReferenceDecoder: %A{yEle}"))
+                |> ResizeArray
+                |> CWLParameterValue.Record
+        | other ->
+            CWLParameterValue.String (sprintf "%A" other)
+
+    let cwlParameterReferenceDecoder (get : Decode.IGetters) (key: string) (yEle: YAMLElement): CWLParameterReference =
+        let makeReference (value: CWLParameterValue) (explicitType: CWLType option) =
+            let type_ =
+                explicitType
+                |> Option.orElseWith (fun () -> CWLParameterValue.tryInferType value)
+
+            CWLParameterReference(key = key, value = value, ?type_ = type_)
+
+        match tryField "type" yEle, tryField "value" yEle with
+        | Some typeElement, Some valueElement ->
+            let type_ =
+                match tryScalarString typeElement with
+                | Some typeName -> Decode.cwlTypeStringMatcher typeName get |> fst
+                | None -> Decode.cwlTypeDecoder' typeElement
+
+            makeReference (decodeParameterValue valueElement) (Some type_)
+        | _ ->
+            makeReference (decodeParameterValue yEle) None
 
     let cwlparameterReferenceArrayDecoder: YAMLElement -> ResizeArray<CWLParameterReference> =
         Decode.object (fun get ->

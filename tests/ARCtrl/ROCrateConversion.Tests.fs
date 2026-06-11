@@ -8,6 +8,7 @@ open ARCtrl.Process
 open TestingUtils
 open ARCtrl.FileSystem
 open CrossAsync
+open DynamicObj
 
 module Helper =
 
@@ -2250,8 +2251,8 @@ let tests_YAMLInputValue =
             Expect.isTrue (propValue.Id.StartsWith("#")) "PropertyValue ID should start with #"
             let name' = Expect.wantSome (LDPropertyValue.tryGetNameAsString propValue) "PropertyValue should have a name"
             Expect.equal name' name "PropertyValue name should match input name"
-            let value = LDPropertyValue.getValueAsString propValue
-            Expect.equal value "a,b" "PropertyValue value should match input value"  
+            let values = LDPropertyValue.getValueObjects propValue |> Seq.cast<string> |> ResizeArray
+            Expect.sequenceEqual values (ResizeArray value) "PropertyValue value should preserve the input array"
         )
         testCase "SimpleArray_DifferentSeparator" (fun () ->
             let name = "MyInput"
@@ -2266,8 +2267,38 @@ let tests_YAMLInputValue =
             Expect.isTrue (propValue.Id.StartsWith("#")) "PropertyValue ID should start with #"
             let name' = Expect.wantSome (LDPropertyValue.tryGetNameAsString propValue) "PropertyValue should have a name"
             Expect.equal name' name "PropertyValue name should match input name"
-            let value = LDPropertyValue.getValueAsString propValue
-            Expect.equal value "a;b" "PropertyValue value should match input value"
+            let values = LDPropertyValue.getValueObjects propValue |> Seq.cast<string> |> ResizeArray
+            Expect.sequenceEqual values (ResizeArray value) "PropertyValue value should preserve the input array independently of itemSeparator"
+        )
+        testCase "NestedFileArray_Roundtrip" (fun () ->
+            let name = "sampleRecordFiles"
+            let runName = "kallisto"
+            let createFile path =
+                let file = CWL.FileInstance()
+                DynObj.setProperty "class" "File" file
+                DynObj.setProperty "path" path file
+                DynObj.setProperty "format" "edam:format_1930" file
+                file
+            let value =
+                CWL.CWLParameterValue.Array (ResizeArray [
+                    CWL.CWLParameterValue.Array (ResizeArray [
+                        CWL.CWLParameterValue.File (createFile "../../assays/RNASeq/dataset/DB_097.fastq.gz")
+                    ])
+                    CWL.CWLParameterValue.Array (ResizeArray [
+                        CWL.CWLParameterValue.File (createFile "../../assays/RNASeq/dataset/DB_163.fastq.gz")
+                    ])
+                ])
+            let paramValue = CWLParameterReference(name, value = value)
+            let cwlParam =
+                CWL.CWLInput(
+                    name = name,
+                    type_ = CWLType.Array { Items = CWLType.Array { Items = CWLType.file(); Label = None; Doc = None; Name = None }; Label = None; Doc = None; Name = None }
+                )
+            let formalParam = WorkflowConversion.composeFormalParameterFromInput(cwlParam, runName = runName)
+            let node = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
+            let graph = node.Flatten()
+            let roundTripped = RunConversion.decomposeCWLInputValue(node, runName, graph = graph)
+            Expect.equal roundTripped paramValue "Nested file arrays should roundtrip through RO-Crate."
         )
     ]
 
@@ -2862,6 +2893,46 @@ let tests_ArcRun =
             // Test decomposition works with mainEntity and graph
             let run' = RunConversion.decomposeRun(ro_Run, graph = graph)
             Expect.equal run' run "Run should match after decomposition with graph"
+        )
+        testCase "NestedFileArrayInput_Roundtrip" (fun () ->
+            let inputName = "sampleRecordFiles"
+            let inputType =
+                CWLType.Array {
+                    Items = CWLType.Array { Items = CWLType.file(); Label = None; Doc = None; Name = None }
+                    Label = None
+                    Doc = None
+                    Name = None
+                }
+            let workflow =
+                CWL.CWLWorkflowDescription(
+                    steps = ResizeArray(),
+                    inputs = ResizeArray [CWL.CWLInput(name = inputName, type_ = inputType)],
+                    outputs = ResizeArray()
+                )
+            let runInputValues =
+                """sampleRecordFiles:
+  - - class: File
+      path: ../../assays/RNASeq/dataset/DB_097.fastq.gz
+      format: edam:format_1930
+  - - class: File
+      path: ../../assays/RNASeq/dataset/DB_163.fastq.gz
+      format: edam:format_1930"""
+                |> CWL.DecodeParameters.decodeYAMLParameterFile
+            let run =
+                ArcRun.create(
+                    identifier = "kallisto",
+                    cwlDescription = CWL.Workflow workflow,
+                    cwlInput = runInputValues
+                )
+            let ro_Run = RunConversion.composeRun run
+            let graph = ro_Run.Flatten()
+            let run' = RunConversion.decomposeRun(ro_Run, graph = graph)
+            Expect.equal run'.Identifier run.Identifier "Run identifier should roundtrip."
+            let expectedInput = Expect.wantExactlyOne run.CWLInput "Expected one source input."
+            let actualInput = Expect.wantExactlyOne run'.CWLInput "Expected one roundtripped input."
+            Expect.equal actualInput.Key expectedInput.Key "Input key should roundtrip."
+            Expect.equal actualInput.Value expectedInput.Value "Run with nested File[][] input should roundtrip through RO-Crate."
+            Expect.sequenceEqual actualInput.Values expectedInput.Values "Legacy flattened Values projection should roundtrip."
         )
         testCaseCrossAsync "RelativeWorkflowRunReference_ResolvesToWorkflow" (crossAsync {
             let sampleArcDirectory = TestObjects.IO.testSimpleARCWithCWL

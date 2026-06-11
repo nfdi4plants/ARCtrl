@@ -5,6 +5,7 @@ open ARCtrl
 open ARCtrl.Helper
 open ARCtrl.FileSystem
 open System.Collections.Generic
+open DynamicObj
 //open ColumnIndex
 
 open ColumnIndex
@@ -13,6 +14,35 @@ open ARCtrl.Helper.Regex.ActivePatterns
 
 
 type RunConversion = 
+
+    static member private tryDynamicString name (value: DynamicObj) =
+        DynObj.tryGetTypedPropertyValue<string> name value
+
+    static member private getPathOrLocation (value: DynamicObj) =
+        RunConversion.tryDynamicString "path" value
+        |> Option.orElse (RunConversion.tryDynamicString "location" value)
+        |> Option.defaultValue ""
+
+    static member cwlTypesEqual (left : CWL.CWLType) (right : CWL.CWLType) =
+        match left, right with
+        | CWL.CWLType.File _, CWL.CWLType.File _
+        | CWL.CWLType.Directory _, CWL.CWLType.Directory _ -> true
+        | CWL.CWLType.Array left, CWL.CWLType.Array right ->
+            RunConversion.cwlTypesEqual left.Items right.Items
+        | CWL.CWLType.Union left, CWL.CWLType.Union right ->
+            left.Count = right.Count &&
+            Seq.forall2 RunConversion.cwlTypesEqual left right
+        | CWL.CWLType.Record left, CWL.CWLType.Record right ->
+            match left.Fields, right.Fields with
+            | None, None -> true
+            | Some leftFields, Some rightFields ->
+                leftFields.Count = rightFields.Count &&
+                Seq.forall2 (fun (leftField: CWL.InputRecordField) (rightField: CWL.InputRecordField) ->
+                    leftField.Name = rightField.Name &&
+                    RunConversion.cwlTypesEqual leftField.Type rightField.Type
+                ) leftFields rightFields
+            | _ -> false
+        | _ -> left = right
 
     /// Helper function to format CWLType for display in error messages
     static member formatCWLType (type_ : CWL.CWLType) =
@@ -26,6 +56,69 @@ type RunConversion =
         | CWL.CWLType.Array _ -> true
         | CWL.CWLType.Union types -> types |> Seq.exists (function CWL.CWLType.Array _ -> true | _ -> false)
         | _ -> false
+
+    static member tryGetArrayItemType (type_ : CWL.CWLType) =
+        match type_ with
+        | CWL.CWLType.Array schema -> Some schema.Items
+        | CWL.CWLType.Union types ->
+            types
+            |> Seq.tryPick (function
+                | CWL.CWLType.Array schema -> Some schema.Items
+                | _ -> None)
+        | _ -> None
+
+    static member tryGetNonNullUnionType (type_ : CWL.CWLType) =
+        match type_ with
+        | CWL.CWLType.Union types ->
+            types
+            |> Seq.tryFind (function
+                | CWL.CWLType.Null -> false
+                | _ -> true)
+        | _ -> Some type_
+
+    static member private tryParseInt64 (value: obj) =
+        let tryConvert (convert: unit -> int64) =
+            try Some (convert()) with _ -> None
+        match value with
+        | :? int as value -> Some (int64 value)
+        | :? int64 as value -> Some value
+        | :? decimal as value ->
+            tryConvert (fun () ->
+                let converted = int64 value
+                if decimal converted = value then converted
+                else failwith "Expected an integral decimal value."
+            )
+        | :? float as value ->
+            tryConvert (fun () ->
+                let converted = int64 value
+                if float converted = value then converted
+                else failwith "Expected an integral floating-point value."
+            )
+        | :? string as value ->
+            match System.Int64.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture) with
+            | true, parsed -> Some parsed
+            | false, _ -> None
+        | _ -> None
+
+    static member private tryParseFloat (value: obj) =
+        match value with
+        | :? float as value -> Some value
+        | :? decimal as value -> Some (float value)
+        | :? int as value -> Some (float value)
+        | :? int64 as value -> Some (float value)
+        | :? string as value ->
+            match System.Double.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture) with
+            | true, parsed -> Some parsed
+            | false, _ -> None
+        | _ -> None
+
+    static member private tryGetRecordFieldType (name: string) (schema: CWL.InputRecordSchema) =
+        schema.Fields
+        |> Option.bind (fun fields ->
+            fields
+            |> Seq.tryFind (fun field -> field.Name = name)
+            |> Option.map (fun field -> field.Type)
+        )
 
     /// File paths in CWL files are relative to the file itself. In RO-Crate, we use relative paths from the root of the crate.
     ///
@@ -43,36 +136,228 @@ type RunConversion =
         else
             ArcPathHelper.combine "../.." path
 
+    static member composeCWLParameterValue(value: CWL.CWLParameterValue, runName: string, ?context: LDContext) : obj =
+        match value with
+        | CWL.CWLParameterValue.File file ->
+            let path =
+                file
+                |> RunConversion.getPathOrLocation
+                |> fun path -> RunConversion.composeCWLInputFilePath(path, runName)
+            let encodingFormat = RunConversion.tryDynamicString "format" file
+            LDFile.create(path, ?encodingFormat = encodingFormat, ?context = context) :> obj
+        | CWL.CWLParameterValue.Directory directory ->
+            let path =
+                directory
+                |> RunConversion.getPathOrLocation
+                |> fun path -> RunConversion.composeCWLInputFilePath(path, runName)
+            LDFile.create(path, ?context = context) :> obj
+        | CWL.CWLParameterValue.Array values ->
+            values
+            |> ResizeArray.map (fun value -> RunConversion.composeCWLParameterValue(value, runName, ?context = context))
+            :> obj
+        | CWL.CWLParameterValue.Record fields ->
+            let record = DynamicObj()
+            fields
+            |> Seq.iter (fun field ->
+                DynObj.setProperty field.Name (RunConversion.composeCWLParameterValue(field.Value, runName, ?context = context)) record
+            )
+            record :> obj
+        | CWL.CWLParameterValue.String value -> value :> obj
+        | CWL.CWLParameterValue.Int value -> value :> obj
+        | CWL.CWLParameterValue.Float value -> value :> obj
+        | CWL.CWLParameterValue.Boolean value -> value :> obj
+        | CWL.CWLParameterValue.Null -> null
+
+    static member private composeLegacyValue (inputValue: CWL.CWLParameterReference) =
+        inputValue.Value
+        |> Option.defaultWith (fun () ->
+            inputValue.Values
+            |> Seq.map CWL.CWLParameterValue.String
+            |> ResizeArray
+            |> CWL.CWLParameterValue.Array
+        )
+
     static member composeCWLInputValue (inputValue : CWL.CWLParameterReference, exampleOfWork : LDNode, inputParam : CWL.CWLInput, runName : string) =
         if inputParam.Type_.IsNone then
             failwith $"Cannot convert param values \"{inputValue.Values}\" as Input parameter \"{inputParam.Name}\" has no type."
         let type_ = inputParam.Type_.Value
         if inputValue.Type.IsSome then
-            if inputValue.Type.Value <> type_ then
+            if not (RunConversion.cwlTypesEqual inputValue.Type.Value type_) then
                 let typeStr = RunConversion.formatCWLType inputValue.Type.Value
                 let paramTypeStr = RunConversion.formatCWLType type_
                 failwith $"Type ({typeStr}) of yml input value \"{inputValue.Key}\" does not match type of workflow input parameter ({paramTypeStr})."
         match type_ with
         | CWL.CWLType.File _ when inputValue.Values.Count = 1 ->
             let path = RunConversion.composeCWLInputFilePath(inputValue.Values[0], runName)
-            LDFile.createCWLParameter(path, exampleOfWork = exampleOfWork)
+            let file = LDFile.createCWLParameter(path, exampleOfWork = exampleOfWork)
+            match inputValue.Value with
+            | Some (CWL.CWLParameterValue.File fileValue) ->
+                RunConversion.tryDynamicString "format" fileValue
+                |> Option.iter (fun format -> LDFile.setEncodingFormatAsString(file, format))
+            | _ -> ()
+            file
         | _ when RunConversion.isArrayType type_ ->
-            let separator =
-                inputParam.InputBinding
-                |> Option.bind (fun ib -> ib.ItemSeparator)
-                |> Option.defaultValue ","
-            let values = String.concat separator inputValue.Values
             LDPropertyValue.createCWLParameter(
                 exampleOfWork,
                 inputValue.Key,
-                ResizeArray.singleton values
+                ResizeArray()
             )
+            |> fun pv ->
+                inputValue.Value
+                |> Option.defaultValue (RunConversion.composeLegacyValue inputValue)
+                |> fun value -> RunConversion.composeCWLParameterValue(value, runName)
+                |> fun value -> LDPropertyValue.setValueObjects(pv, value)
+                pv
         | _ ->
-            LDPropertyValue.createCWLParameter(
-                exampleOfWork,
-                inputValue.Key,
-                inputValue.Values
-            )
+            let pv =
+                LDPropertyValue.createCWLParameter(
+                    exampleOfWork,
+                    inputValue.Key,
+                    ResizeArray()
+                )
+            let value =
+                inputValue.Value
+                |> Option.defaultWith (fun () ->
+                    match inputValue.Values.Count with
+                    | 0 -> CWL.CWLParameterValue.Array (ResizeArray())
+                    | 1 -> CWL.CWLParameterValue.String inputValue.Values.[0]
+                    | _ -> inputValue.Values |> ResizeArray.map CWL.CWLParameterValue.String |> CWL.CWLParameterValue.Array
+                )
+                |> fun value -> RunConversion.composeCWLParameterValue(value, runName)
+            LDPropertyValue.setValueObjects(pv, value)
+            pv
+
+    static member private resolveLDValue(value: obj, ?graph: LDGraph) =
+        match value with
+        | :? LDRef as ref when graph.IsSome ->
+            graph.Value.TryGetNode ref.Id
+            |> Option.map (fun node -> node :> obj)
+            |> Option.defaultValue value
+        | _ -> value
+
+    static member decomposeCWLParameterValue(value: obj, runName: string, ?expectedType: CWL.CWLType, ?graph: LDGraph) : CWL.CWLParameterValue =
+        let value = RunConversion.resolveLDValue(value, ?graph = graph)
+        let expectedType = expectedType |> Option.bind RunConversion.tryGetNonNullUnionType
+
+        match expectedType with
+        | Some (CWL.CWLType.Array arraySchema) ->
+            match value with
+            | :? string as value ->
+                CWL.CWLParameterValue.Array (ResizeArray [CWL.CWLParameterValue.String value])
+            | :? System.Collections.IEnumerable as values ->
+                values
+                |> Seq.cast<obj>
+                |> Seq.map (fun value ->
+                    RunConversion.decomposeCWLParameterValue(value, runName, expectedType = arraySchema.Items, ?graph = graph)
+                )
+                |> ResizeArray
+                |> CWL.CWLParameterValue.Array
+            | _ ->
+                CWL.CWLParameterValue.Array (ResizeArray [RunConversion.decomposeCWLParameterValue(value, runName, expectedType = arraySchema.Items, ?graph = graph)])
+        | Some (CWL.CWLType.File _) ->
+            let file = CWL.FileInstance()
+            match value with
+            | :? LDNode as node when LDFile.validate(node) ->
+                DynObj.setProperty "class" "File" file
+                DynObj.setProperty "path" (RunConversion.decomposeCWLInputFilePath(node.Id, runName)) file
+                LDFile.tryGetEncodingFormatAsString node
+                |> Option.iter (fun format -> DynObj.setProperty "format" format file)
+                CWL.CWLParameterValue.File file
+            | :? string as path ->
+                DynObj.setProperty "class" "File" file
+                DynObj.setProperty "path" (RunConversion.decomposeCWLInputFilePath(path, runName)) file
+                CWL.CWLParameterValue.File file
+            | _ -> CWL.CWLParameterValue.String (string value)
+        | Some (CWL.CWLType.Directory _) ->
+            let directory = CWL.DirectoryInstance()
+            match value with
+            | :? LDNode as node when LDFile.validate(node) ->
+                DynObj.setProperty "class" "Directory" directory
+                DynObj.setProperty "path" (RunConversion.decomposeCWLInputFilePath(node.Id, runName)) directory
+                CWL.CWLParameterValue.Directory directory
+            | :? string as path ->
+                DynObj.setProperty "class" "Directory" directory
+                DynObj.setProperty "path" (RunConversion.decomposeCWLInputFilePath(path, runName)) directory
+                CWL.CWLParameterValue.Directory directory
+            | _ -> CWL.CWLParameterValue.String (string value)
+        | Some CWL.CWLType.String ->
+            match value with
+            | null -> CWL.CWLParameterValue.Null
+            | :? string as value -> CWL.CWLParameterValue.String value
+            | _ -> CWL.CWLParameterValue.String (string value)
+        | Some CWL.CWLType.Int
+        | Some CWL.CWLType.Long ->
+            RunConversion.tryParseInt64 value
+            |> Option.map CWL.CWLParameterValue.Int
+            |> Option.defaultWith (fun () -> CWL.CWLParameterValue.String (string value))
+        | Some CWL.CWLType.Float
+        | Some CWL.CWLType.Double ->
+            RunConversion.tryParseFloat value
+            |> Option.map CWL.CWLParameterValue.Float
+            |> Option.defaultWith (fun () -> CWL.CWLParameterValue.String (string value))
+        | Some CWL.CWLType.Boolean ->
+            match value with
+            | :? bool as value -> CWL.CWLParameterValue.Boolean value
+            | :? string as value ->
+                match System.Boolean.TryParse value with
+                | true, parsed -> CWL.CWLParameterValue.Boolean parsed
+                | false, _ -> CWL.CWLParameterValue.String value
+            | _ -> CWL.CWLParameterValue.String (string value)
+        | Some CWL.CWLType.Null ->
+            CWL.CWLParameterValue.Null
+        | Some (CWL.CWLType.Enum _) ->
+            match value with
+            | null -> CWL.CWLParameterValue.Null
+            | :? string as value -> CWL.CWLParameterValue.String value
+            | _ -> CWL.CWLParameterValue.String (string value)
+        | Some (CWL.CWLType.Record recordSchema) ->
+            match value with
+            | :? DynamicObj as record ->
+                record.GetProperties(false)
+                |> Seq.map (fun kvp ->
+                    let expectedFieldType = RunConversion.tryGetRecordFieldType kvp.Key recordSchema
+                    CWL.CWLParameterRecordField(kvp.Key, RunConversion.decomposeCWLParameterValue(kvp.Value, runName, ?expectedType = expectedFieldType, ?graph = graph))
+                )
+                |> ResizeArray
+                |> CWL.CWLParameterValue.Record
+            | _ -> CWL.CWLParameterValue.String (string value)
+        | _ ->
+            match value with
+            | null -> CWL.CWLParameterValue.Null
+            | :? string as value -> CWL.CWLParameterValue.String value
+            | :? int as value -> CWL.CWLParameterValue.Int (int64 value)
+            | :? int64 as value -> CWL.CWLParameterValue.Int value
+            | :? decimal as value -> CWL.CWLParameterValue.Float (float value)
+            | :? float as value -> CWL.CWLParameterValue.Float value
+            | :? bool as value -> CWL.CWLParameterValue.Boolean value
+            | :? LDNode as node when LDFile.validate(node) ->
+                let file = CWL.FileInstance()
+                DynObj.setProperty "class" "File" file
+                DynObj.setProperty "path" (RunConversion.decomposeCWLInputFilePath(node.Id, runName)) file
+                LDFile.tryGetEncodingFormatAsString node
+                |> Option.iter (fun format -> DynObj.setProperty "format" format file)
+                CWL.CWLParameterValue.File file
+            | :? System.Collections.IEnumerable as values ->
+                values
+                |> Seq.cast<obj>
+                |> Seq.map (fun value -> RunConversion.decomposeCWLParameterValue(value, runName, ?graph = graph))
+                |> ResizeArray
+                |> CWL.CWLParameterValue.Array
+            | :? DynamicObj as record ->
+                record.GetProperties(false)
+                |> Seq.map (fun kvp ->
+                    CWL.CWLParameterRecordField(kvp.Key, RunConversion.decomposeCWLParameterValue(kvp.Value, runName, ?graph = graph))
+                )
+                |> ResizeArray
+                |> CWL.CWLParameterValue.Record
+            | _ -> CWL.CWLParameterValue.String (string value)
+
+    static member private tryGetExpectedTypeFromFormalParameter(exampleOfWork: LDNode, ?context: LDContext, ?graph: LDGraph) =
+        try
+            let input = WorkflowConversion.decomposeInputFromFormalParameter(exampleOfWork, ?context = context, ?graph = graph)
+            input.Type_
+        with _ ->
+            None
 
     static member decomposeCWLInputValue (inputValue : LDNode, runName : string, ?context : LDContext, ?graph : LDGraph) =
         let exampleOfWork =
@@ -88,10 +373,12 @@ type RunConversion =
                 type_ = CWL.CWLType.file()
             )
         else if LDPropertyValue.validateCWLParameter(inputValue, ?context = context) then
-            let values = LDPropertyValue.getValuesAsString(inputValue, ?context = context)
+            let valueObject = LDPropertyValue.getValueObject(inputValue, ?context = context)
+            let expectedType = RunConversion.tryGetExpectedTypeFromFormalParameter(exampleOfWork, ?context = context, ?graph = graph)
+            let value = RunConversion.decomposeCWLParameterValue(valueObject, runName, ?expectedType = expectedType, ?graph = graph)
             CWL.CWLParameterReference(
                 key = key,
-                values = values
+                value = value
             )
         else
             failwithf "Input value %s of run %s is neither a CWL File nor a CWL Parameter." inputValue.Id runName

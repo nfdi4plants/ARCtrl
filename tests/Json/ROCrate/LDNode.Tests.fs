@@ -239,6 +239,20 @@ let private test_roundabout = testList "Roundabout" [
         let json = LDNode.toROCrateJsonString() node
         let parsedNode = LDNode.fromROCrateJsonString(json)
         Expect.equal node parsedNode "Roundabout conversion failed for BoolProperty"
+    testCase "DynamicObjectProperty" <| fun _ ->
+        let record = DynamicObj()
+        DynObj.setProperty "name" "DB_097" record
+        DynObj.setProperty "file" (LDNode("reads.fastq.gz", ResizeArray["File"])) record
+        let node = LDNode("MyID", ResizeArray["MyType"])
+        node.SetProperty("record", record)
+        node.Flatten() |> ignore
+        let json = LDNode.toROCrateJsonString() node
+        let parsedNode = LDNode.fromROCrateJsonString(json)
+        let parsedRecord = Expect.wantSome (DynObj.tryGetTypedPropertyValue<DynamicObj> "record" parsedNode) "Dynamic object property was not parsed"
+        let name = Expect.wantSome (DynObj.tryGetTypedPropertyValue<string> "name" parsedRecord) "Dynamic object field `name` was not parsed"
+        let file = Expect.wantSome (DynObj.tryGetTypedPropertyValue<LDRef> "file" parsedRecord) "Nested LDNode should be flattened and parsed as an LDRef"
+        Expect.equal name "DB_097" "Dynamic object field should survive JSON roundtrip"
+        Expect.equal file (LDRef("reads.fastq.gz")) "Nested LDNode should survive as a reference"
     
 ]
 

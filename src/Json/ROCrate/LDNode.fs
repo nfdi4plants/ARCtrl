@@ -33,6 +33,8 @@ module rec LDNode =
         match obj with
         | :? string as s -> Encode.string s
         | :? int as i -> Encode.int i
+        | :? int64 as i -> Encode.int64 i
+        | :? decimal as d -> Encode.decimal d
         | :? bool as b -> Encode.bool b
         | :? float as f -> Encode.float f
         | :? DateTime as d -> Encode.dateTime d
@@ -43,6 +45,10 @@ module rec LDNode =
         | SomeObj o -> genericEncoder o
         #endif
         | null -> Encode.nil
+        | :? DynamicObj as dyn ->
+            dyn.GetProperties(false)
+            |> Seq.map (fun kv -> kv.Key, genericEncoder kv.Value)
+            |> Encode.object
         | :? System.Collections.IEnumerable as l -> [ for x in l -> genericEncoder x] |> Encode.list
         | _ -> failwith "Unknown type"
 
@@ -154,6 +160,30 @@ module rec LDNode =
                         else
                             ("", BadPrimitive("an array", value)) |> Error
                 }
+            let dynamicObject : Decoder<DynamicObj> =
+                { new Decoder<DynamicObj> with
+                    member _.Decode(helpers, value) =
+                        if helpers.isObject value then
+                            let getters = Decode.Getters(helpers, value)
+                            let properties = helpers.getProperties value
+                            let o = DynamicObj()
+                            let builder =
+                                fun (get : Decode.IGetters) ->
+                                    for property in properties do
+                                        let r = get.Required.Field property (decode(false))
+                                        if r <> null then DynObj.setProperty property r o
+                                    o
+                            let result = builder getters
+                            match getters.Errors with
+                            | [] -> Ok result
+                            | fst :: _ as errors ->
+                                if errors.Length > 1 then
+                                    ("", BadOneOf errors) |> Error
+                                else
+                                    Error fst
+                        else
+                            ("", BadPrimitive("an object", value)) |> Error
+                }
             if expectObject then
                 Decode.map box (decodeObject)
             else
@@ -161,9 +191,11 @@ module rec LDNode =
                     Decode.map box (LDValue.decoder)
                     Decode.map box (decodeObject)
                     Decode.map box (LDRef.decoder)
+                    Decode.map box (dynamicObject)
                     Decode.map box (resizeArray)
                     Decode.map box (Decode.string)
                     Decode.map box (Decode.int)
+                    Decode.map box (Decode.int64)
                     Decode.map box (Decode.decimal)
                     Decode.map box (Decode.bool)
                     Decode.map box (nullDecoder)

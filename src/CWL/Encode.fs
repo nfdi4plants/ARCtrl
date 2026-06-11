@@ -269,6 +269,60 @@ module Encode =
             |> List.ofSeq
             |> YAMLElement.Sequence
 
+    let rec encodeDynamicValue (value: obj) : YAMLElement =
+        match value with
+        | null -> YAMLElement.Value (YAMLContent.create "null")
+        | :? string as value -> Encode.string value
+        | :? bool as value -> yBool value
+        | :? int as value -> Encode.int value
+        | :? int64 as value -> YAMLElement.Value (YAMLContent.create (string value))
+        | :? float as value -> YAMLElement.Value (YAMLContent.create (value.ToString("R", System.Globalization.CultureInfo.InvariantCulture)))
+        | :? YAMLElement as value -> value
+        | :? DynamicObj as value ->
+            value.GetProperties(false)
+            |> Seq.map (fun kvp -> kvp.Key, encodeDynamicValue kvp.Value)
+            |> Seq.toList
+            |> yMap
+        | :? System.Collections.IEnumerable as values ->
+            values
+            |> Seq.cast<obj>
+            |> Seq.map encodeDynamicValue
+            |> Seq.toList
+            |> YAMLElement.Sequence
+        | value -> Encode.string (string value)
+
+    let encodeDynamicObjWithClass (className: string) (dynObj: DynamicObj) =
+        let dynamicPairs =
+            dynObj.GetProperties(false)
+            |> Seq.map (fun kvp -> kvp.Key, encodeDynamicValue kvp.Value)
+            |> Seq.toList
+
+        let hasClass = dynamicPairs |> List.exists (fun (key, _) -> key = "class")
+        if hasClass then
+            yMap dynamicPairs
+        else
+            yMap (("class", Encode.string className) :: dynamicPairs)
+
+    let rec encodeCWLParameterValue (value: CWLParameterValue) : YAMLElement =
+        match value with
+        | CWLParameterValue.Null -> YAMLElement.Value (YAMLContent.create "null")
+        | CWLParameterValue.String value -> Encode.string value
+        | CWLParameterValue.Int value -> YAMLElement.Value (YAMLContent.create (string value))
+        | CWLParameterValue.Float value -> YAMLElement.Value (YAMLContent.create (value.ToString("R", System.Globalization.CultureInfo.InvariantCulture)))
+        | CWLParameterValue.Boolean value -> yBool value
+        | CWLParameterValue.File file -> encodeDynamicObjWithClass "File" file
+        | CWLParameterValue.Directory directory -> encodeDynamicObjWithClass "Directory" directory
+        | CWLParameterValue.Array values ->
+            values
+            |> Seq.map encodeCWLParameterValue
+            |> Seq.toList
+            |> YAMLElement.Sequence
+        | CWLParameterValue.Record fields ->
+            fields
+            |> Seq.map (fun field -> field.Name, encodeCWLParameterValue field.Value)
+            |> Seq.toList
+            |> yMap
+
     let encodeCWLOutput (o:CWLOutput) : (string * YAMLElement) =
         let typeElement = o.Type_ |> Option.map (fun t ->
             match t with
@@ -836,6 +890,19 @@ module Encode =
     let writeYaml (element:YAMLElement) =
         // Use whitespace=2 to match fixtures (assumed)
         YAMLicious.Writer.write element (Some (fun c -> { c with Whitespace = 2 }))
+
+    let encodeCWLParameterReference (reference: CWLParameterReference) =
+        reference.Key,
+        reference.Value
+        |> Option.map encodeCWLParameterValue
+        |> Option.defaultValue (YAMLElement.Sequence [])
+
+    let encodeYAMLParameterFile (references: CWLParameterReference ResizeArray) =
+        references
+        |> Seq.map encodeCWLParameterReference
+        |> Seq.toList
+        |> yMap
+        |> writeYaml
 
     let getObjectPairs (element: YAMLElement) : (string * YAMLElement) list =
         match element with
