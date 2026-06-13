@@ -1,0 +1,42 @@
+---
+title: "ARCtrl"
+lastUpdated: 2026-06-13
+authors:
+  - lukas-weil
+sidebar:
+  order: 0
+---
+
+ARCtrl is the in-memory model and IO toolkit for Annotated Research Contexts.
+Use it when an application needs to construct ARC metadata, edit ISA annotation
+tables, serialize metadata, or read and write ARC scaffold files.
+
+ARCtrl is available for .NET, TypeScript, and Python. The examples in this
+section use the public package roots in all three languages and avoid generated
+internal module paths.
+
+## What ARCtrl Covers
+
+ARCtrl provides model objects for investigations, studies, assays, runs,
+workflows, annotation tables, datamaps, people, publications, comments,
+templates, and validation package configuration. It also provides controller
+APIs for JSON and XLSX conversion.
+
+The most portable IO APIs are:
+
+- `JsonController` for ARCtrl JSON, ISA-JSON, and selected RO-Crate JSON-LD
+  helpers.
+- `XlsxController` for workbook conversion and xlsx file read/write.
+- `ARC` and contracts for full ARC scaffold loading and writing.
+
+## What ARCtrl Is Not
+
+ARCtrl is not a spreadsheet UI, a full DataHUB client, or a validator runner.
+Those tools can build on ARCtrl, but ARCtrl itself focuses on the model,
+serialization, spreadsheet conversion, and storage contracts.
+
+## First Check
+
+Start with the setup page to verify that the package imports from the public
+root in your language. Then use the quickstart to build a first annotation
+table and serialize a top-level investigation.

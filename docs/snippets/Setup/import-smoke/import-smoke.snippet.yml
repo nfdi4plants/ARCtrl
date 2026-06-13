@@ -1,0 +1,19 @@
+id: setup.import-smoke
+title: Import ARCtrl from the public package root
+source: import-smoke.fsx
+
+render:
+  showImports: true
+  showPackageInstall: false
+  tabs:
+    - fsharp
+    - typescript
+    - python
+
+translation:
+  profile: arctrl-public-api
+  allowOverrides: true
+
+checks:
+  run: true
+  compareSnapshot: false

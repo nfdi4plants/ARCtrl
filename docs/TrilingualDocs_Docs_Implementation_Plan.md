@@ -93,11 +93,11 @@ docs/
 
   pages/
     arctrl/
-      ISA/
+      Tables/
         arc-table.mdx
 
   snippets/
-    ISA/
+    Tables/
       arc-table/
         build-table.fsx
         build-table.snippet.yml
@@ -105,14 +105,14 @@ docs/
 
   generated/
     snippets/
-      ISA/
+      Tables/
         arc-table/
           build-table.fsx
           build-table.ts
           build-table.py
     mdx/
       arctrl/
-        ISA/
+        Tables/
           arc-table.mdx
 
   api-shape/
@@ -174,7 +174,7 @@ The generated target should be:
 ```text
 nfdi4plants.knowledgebase/
   src/content/docs/arctrl/
-    ISA/
+    Tables/
       arc-table.mdx
 ```
 
@@ -195,7 +195,7 @@ Every generated file should start with a warning comment:
 
 Use MDX-like source files with placeholders instead of manually duplicated language blocks.
 
-Example: `docs/pages/arctrl/ISA/arc-table.mdx`
+Example: `docs/pages/arctrl/Tables/arc-table.mdx`
 
 ```mdx
 ---
@@ -219,7 +219,7 @@ As the prefix *Composite* suggests, these types do not necessarily represent a s
 
 ## Building an ArcTable
 
-<TriSnippet id="isa.arc-table.build-table" />
+<TriSnippet id="tables.arc-table.build-table" />
 ```
 
 Rules:
@@ -250,7 +250,7 @@ optional manually overridden <snippet-id>.py
 Example:
 
 ```text
-docs/snippets/ISA/arc-table/
+docs/snippets/Tables/arc-table/
   build-table.fsx
   build-table.snippet.yml
   build-table.snapshot.json
@@ -339,7 +339,7 @@ Rules:
 Example: `build-table.snippet.yml`
 
 ```yaml
-id: isa.arc-table.build-table
+id: tables.arc-table.build-table
 title: Build an annotation table
 source: build-table.fsx
 
@@ -576,7 +576,7 @@ If the F# snippet contains unsupported syntax, fail with a clear diagnostic.
 Example:
 
 ```text
-Unsupported F# syntax in snippet isa.arc-table.build-table:
+Unsupported F# syntax in snippet tables.arc-table.build-table:
   line 18: pattern matching is not supported by the docs translator.
 
 Simplify the snippet or add explicit TypeScript/Python overrides.
@@ -671,7 +671,7 @@ Allow explicit TypeScript/Python overrides only as an escape hatch.
 Example layout:
 
 ```text
-docs/snippets/ISA/arc-table/
+docs/snippets/Tables/arc-table/
   complex-example.fsx
   complex-example.ts
   complex-example.py
@@ -707,14 +707,14 @@ Every snippet must pass these stages.
 Minimum checks:
 
 ```bash
-dotnet fsi docs/generated/snippets/ISA/arc-table/build-table.fsx
+dotnet fsi docs/generated/snippets/Tables/arc-table/build-table.fsx
 ```
 
 Preferred project-based runner:
 
 ```bash
 dotnet run --project docs/test-projects/fsharp/ARCtrl.Docs.FSharpRunner.fsproj -- \
-  docs/generated/snippets/ISA/arc-table/build-table.fsx
+  docs/generated/snippets/Tables/arc-table/build-table.fsx
 ```
 
 Checks:
@@ -753,7 +753,7 @@ Minimum commands:
 ```bash
 npm ci
 npm run typecheck
-npx tsx docs/generated/snippets/ISA/arc-table/build-table.ts
+npx tsx docs/generated/snippets/Tables/arc-table/build-table.ts
 ```
 
 Checks:
@@ -768,8 +768,8 @@ Checks:
 Minimum checks:
 
 ```bash
-python -m py_compile docs/generated/snippets/ISA/arc-table/build-table.py
-python docs/generated/snippets/ISA/arc-table/build-table.py
+python -m py_compile docs/generated/snippets/Tables/arc-table/build-table.py
+python docs/generated/snippets/Tables/arc-table/build-table.py
 ```
 
 Preferred:
@@ -873,17 +873,18 @@ Renderer rules:
 3. Preserve narrative MDX.
 4. Pass through pages without `<TriSnippet />` placeholders.
 5. Add `Tabs` and `TabItem` import if not already present on pages where snippet tabs are rendered.
-6. Use `syncKey="arctrl-language"` consistently.
-7. Use language labels exactly: `F#`, `TypeScript`, `Python`.
-8. Use fenced code languages: `fsharp`, `ts`, `python`.
-9. Do not render hidden assertions.
-10. Optionally render a small comment with snippet id for debugging:
+6. Detect existing `Tabs` / `TabItem` imports from the original source page before replacing `<TriSnippet />` placeholders; generated tab markup must not make the renderer think the import already existed.
+7. Use `syncKey="arctrl-language"` consistently.
+8. Use language labels exactly: `F#`, `TypeScript`, `Python`.
+9. Use fenced code languages: `fsharp`, `ts`, `python`.
+10. Do not render hidden assertions.
+11. Optionally render a small comment with snippet id for debugging:
 
 ```mdx
-{/* snippet: isa.arc-table.build-table */}
+{/* snippet: tables.arc-table.build-table */}
 ```
 
-11. Do not publish generated MDX if snippet checks fail.
+12. Do not publish generated MDX if snippet checks fail.
 
 ---
 
@@ -916,8 +917,8 @@ Useful options:
 ```bash
 --mode local
 --mode registry
---snippet isa.arc-table.build-table
---page arctrl/ISA/arc-table.mdx
+--snippet tables.arc-table.build-table
+--page arctrl/Tables/arc-table.mdx
 --update-snapshots
 --fail-on-overrides
 --output docs/generated
@@ -1041,16 +1042,16 @@ Generated files should include source comments so maintainers know where to edit
 The existing knowledgebase page at:
 
 ```text
-src/content/docs/arctrl/ISA/arc-table.mdx
+src/content/docs/arctrl/Tables/arc-table.mdx
 ```
 
 currently contains manually maintained F#, JavaScript, and Python snippets.
 
 Migration steps:
 
-1. Copy the prose into `ARCtrl/docs/pages/arctrl/ISA/arc-table.mdx`.
-2. Replace the manually written language blocks with `<TriSnippet id="isa.arc-table.build-table" />`.
-3. Create `docs/snippets/ISA/arc-table/build-table.fsx` from the existing F# snippet.
+1. Copy the prose into `ARCtrl/docs/pages/arctrl/Tables/arc-table.mdx`.
+2. Replace the manually written language blocks with `<TriSnippet id="tables.arc-table.build-table" />`.
+3. Create `docs/snippets/Tables/arc-table/build-table.fsx` from the existing F# snippet.
 4. Add hidden assertions.
 5. Generate TypeScript and Python snippets.
 6. Update Python import style to use the curated root package:
@@ -1074,13 +1075,13 @@ Implement the smallest useful vertical slice.
 One page:
 
 ```text
-docs/pages/arctrl/ISA/arc-table.mdx
+docs/pages/arctrl/Tables/arc-table.mdx
 ```
 
 One snippet:
 
 ```text
-docs/snippets/ISA/arc-table/build-table.fsx
+docs/snippets/Tables/arc-table/build-table.fsx
 ```
 
 Required F# constructs:
@@ -1129,7 +1130,7 @@ from arctrl import (
 
 ### Acceptance criteria for milestone 1
 
-1. `dotnet run --project docs/tools/ARCtrl.Docs.Cli -- all --snippet isa.arc-table.build-table` succeeds.
+1. `dotnet run --project docs/tools/ARCtrl.Docs.Cli -- all --snippet tables.arc-table.build-table` succeeds.
 2. F# snippet runs.
 3. TypeScript snippet typechecks and runs.
 4. Python snippet compiles and runs.

@@ -19,6 +19,8 @@ type Snippet =
         RenderRegion: string
         AssertionRegion: string
         GeneratedDirectory: string
+        TypeScriptOverridePath: string option
+        PythonOverridePath: string option
     }
 
 type Generated =
@@ -48,7 +50,7 @@ let optionValue name (args: string array) =
     |> Array.tryFindIndex ((=) name)
     |> Option.bind (fun i -> if i + 1 < args.Length then Some args.[i + 1] else None)
 
-let snippetId args = optionValue "--snippet" args |> Option.defaultValue "isa.arc-table.build-table"
+let snippetId args = optionValue "--snippet" args
 
 let between startMarker endMarker (text: string) =
     let lines = text.Replace("\r\n", "\n").Split('\n')
@@ -58,36 +60,71 @@ let between startMarker endMarker (text: string) =
     | Some s, Some e when e > s -> lines.[s + 1 .. e - 1] |> String.concat "\n"
     | _ -> fail $"Could not find region {startMarker} ... {endMarker}"
 
-let loadSnippet repositoryRoot id =
+let tryBetween startMarker endMarker (text: string) =
+    let lines = text.Replace("\r\n", "\n").Split('\n')
+    let startIndex = lines |> Array.tryFindIndex (fun line -> line.Trim() = startMarker)
+    let endIndex = lines |> Array.tryFindIndex (fun line -> line.Trim() = endMarker)
+    match startIndex, endIndex with
+    | Some s, Some e when e > s -> Some(lines.[s + 1 .. e - 1] |> String.concat "\n")
+    | _ -> None
+
+let private metadataValue key (metadata: string) =
+    metadata.Split('\n')
+    |> Array.tryPick (fun line ->
+        let trimmed = line.Trim()
+        if trimmed.StartsWith(key + ":") then
+            Some(trimmed.Substring((key + ":").Length).Trim().Trim('"'))
+        else
+            None)
+
+let private loadSnippetFromMetadata repositoryRoot (metadataPath: string) =
     let snippetRoot = Path.Combine(repositoryRoot, "docs", "snippets")
-    let metadataFiles = Directory.GetFiles(snippetRoot, "*.snippet.yml", SearchOption.AllDirectories)
-    let matches =
-        metadataFiles
-        |> Array.choose (fun metadataPath ->
-            let metadata = File.ReadAllText metadataPath
-            if metadata.Contains($"id: {id}") then
-                if metadata.Contains("compareSnapshot: true") then
-                    fail "Snapshot comparison is not implemented in the first trilingual docs milestone."
-                let source =
-                    metadata.Split('\n')
-                    |> Array.tryPick (fun line ->
-                        let trimmed = line.Trim()
-                        if trimmed.StartsWith("source:") then Some(trimmed.Substring("source:".Length).Trim()) else None)
-                    |> Option.defaultWith (fun () -> fail $"Missing source in {metadataPath}")
-                let dir = Path.GetDirectoryName metadataPath
-                let sourcePath = Path.Combine(dir, source)
-                let fullText = File.ReadAllText sourcePath
-                let relDir = Path.GetRelativePath(snippetRoot, dir)
-                Some {
-                    Id = id
-                    SnippetDirectory = dir
-                    SourcePath = sourcePath
-                    SourceBaseName = Path.GetFileNameWithoutExtension(source)
-                    RenderRegion = between "// docs:begin" "// docs:end" fullText
-                    AssertionRegion = between "// docs:assert" "// docs:endassert" fullText
-                    GeneratedDirectory = Path.Combine(repositoryRoot, "docs", "generated", "snippets", relDir)
-                }
-            else None)
+    let metadata = File.ReadAllText metadataPath
+    if metadata.Contains("compareSnapshot: true") then
+        fail "Snapshot comparison is not implemented in the first trilingual docs milestone."
+
+    let id = metadataValue "id" metadata |> Option.defaultWith (fun () -> fail $"Missing id in {metadataPath}")
+    let source = metadataValue "source" metadata |> Option.defaultWith (fun () -> fail $"Missing source in {metadataPath}")
+    let dir = Path.GetDirectoryName metadataPath
+    let sourcePath = Path.Combine(dir, source)
+    let fullText = File.ReadAllText sourcePath
+    let relDir = Path.GetRelativePath(snippetRoot, dir)
+    let baseName = Path.GetFileNameWithoutExtension(source)
+    let existingOverride ext =
+        let path = Path.Combine(dir, baseName + ext)
+        if File.Exists path then Some path else None
+
+    {
+        Id = id
+        SnippetDirectory = dir
+        SourcePath = sourcePath
+        SourceBaseName = baseName
+        RenderRegion = between "// docs:begin" "// docs:end" fullText
+        AssertionRegion = between "// docs:assert" "// docs:endassert" fullText
+        GeneratedDirectory = Path.Combine(repositoryRoot, "docs", "generated", "snippets", relDir)
+        TypeScriptOverridePath = existingOverride ".ts"
+        PythonOverridePath = existingOverride ".py"
+    }
+
+let loadSnippets repositoryRoot =
+    let snippetRoot = Path.Combine(repositoryRoot, "docs", "snippets")
+    Directory.GetFiles(snippetRoot, "*.snippet.yml", SearchOption.AllDirectories)
+    |> Array.map (loadSnippetFromMetadata repositoryRoot)
+    |> Array.sortBy _.Id
+
+let selectSnippets repositoryRoot id =
+    let snippets = loadSnippets repositoryRoot
+    match id with
+    | None -> snippets
+    | Some id ->
+        let matches = snippets |> Array.filter (fun s -> s.Id = id)
+        match matches with
+        | [| s |] -> [| s |]
+        | [||] -> fail $"Could not find snippet metadata with id '{id}'"
+        | _ -> fail $"Snippet id '{id}' is not unique"
+
+let loadSnippet repositoryRoot id =
+    let matches = selectSnippets repositoryRoot (Some id)
     match matches with
     | [| s |] -> s
     | [||] -> fail $"Could not find snippet metadata with id '{id}'"
@@ -233,29 +270,108 @@ let renderStatement lang (line, statement) =
             else $"{target}.{methodName}(\n    {converted},\n)"
         | None -> fail $"Unsupported F# syntax in snippet at render line {line}: {statement.Trim()}"
 
+let overrideGenerated language path outputPath beginMarker endMarker assertMarker endAssertMarker =
+    let text = File.ReadAllText path
+    let rendered = between beginMarker endMarker text
+    let assertions = tryBetween assertMarker endAssertMarker text |> Option.defaultValue ""
+    let executable =
+        if assertions.Trim() = "" then rendered.Trim() + "\n"
+        else rendered.Trim() + "\n\n" + assertions.Trim() + "\n"
+    { Language = language; RenderedCode = rendered.Trim() + "\n"; ExecutableCode = executable; OutputPath = outputPath }
+
 let translate repositoryRoot snippet =
-    let statements = collectStatements snippet.RenderRegion
     let fsharpRender = "open ARCtrl\n\n" + snippet.RenderRegion.Trim() + "\n"
-    let arctrlDll =
-        Directory.GetFiles(Path.Combine(repositoryRoot, "src", "ARCtrl", "bin", "Debug"), "ARCtrl.dll", SearchOption.AllDirectories)
-        |> Array.tryHead
-        |> Option.defaultValue (Path.Combine(repositoryRoot, "src", "ARCtrl", "bin", "Debug", "netstandard2.0", "ARCtrl.dll"))
-    let arctrlCoreDll =
-        Directory.GetFiles(Path.Combine(repositoryRoot, "src", "Core", "bin", "Debug"), "ARCtrl.Core.dll", SearchOption.AllDirectories)
-        |> Array.tryHead
-        |> Option.defaultValue (Path.Combine(repositoryRoot, "src", "Core", "bin", "Debug", "netstandard2.0", "ARCtrl.Core.dll"))
+    let packageDll packageName version dllName =
+        let userProfile =
+            let value = Environment.GetEnvironmentVariable("USERPROFILE")
+            if String.IsNullOrWhiteSpace value then Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)
+            else value
+        Path.Combine(
+            userProfile,
+            ".nuget",
+            "packages",
+            packageName,
+            version,
+            "lib",
+            "netstandard2.0",
+            dllName
+        )
+    let dependencyRefs =
+        [|
+            packageDll "fable.core" "5.0.0" "Fable.Core.dll"
+            packageDll "thoth.json.core" "0.7.0" "Thoth.Json.Core.dll"
+            packageDll "thoth.json.newtonsoft" "0.3.2" "Thoth.Json.Newtonsoft.dll"
+            packageDll "newtonsoft.json" "13.0.3" "Newtonsoft.Json.dll"
+            packageDll "fsspreadsheet" "7.0.0-alpha.1" "FsSpreadsheet.dll"
+            packageDll "fsspreadsheet.net" "7.0.0-alpha.1" "FsSpreadsheet.Net.dll"
+            packageDll "documentformat.openxml" "2.16.0" "DocumentFormat.OpenXml.dll"
+            packageDll "closedxml" "0.102.2" "ClosedXML.dll"
+            packageDll "system.io.packaging" "4.7.0" "System.IO.Packaging.dll"
+        |]
+        |> Array.filter File.Exists
+    let arctrlRefs =
+        let outputRoot = Path.Combine(repositoryRoot, "src", "ARCtrl", "bin", "Debug")
+        if Directory.Exists outputRoot then
+            Directory.GetFiles(outputRoot, "*.dll", SearchOption.AllDirectories)
+            |> Array.sort
+        else
+            [||]
+    let fsharpRefs =
+        Array.append dependencyRefs arctrlRefs
+        |> Array.distinct
+        |> Array.map (fun path -> "#r @\"" + path + "\"")
+        |> String.concat "\n"
     let fsharpExecutable =
-        "#r @\"" + arctrlCoreDll + "\"\n#r @\"" + arctrlDll + "\"\nopen ARCtrl\n\n"
+        fsharpRefs + "\nopen ARCtrl\n\n"
         + snippet.RenderRegion.Trim()
         + "\n\n"
         + snippet.AssertionRegion.Trim()
         + "\n"
-    let tsBody = statements |> List.map (renderStatement TypeScript) |> String.concat "\n\n"
-    let pyBody = statements |> List.map (renderStatement Python) |> String.concat "\n\n"
+    let translatedExecutableAssertions lang variableName =
+        if snippet.Id <> "tables.arc-table.build-table" then
+            fail $"Snippet '{snippet.Id}' needs explicit TypeScript/Python overrides. The first translator only supports automatic translation for tables.arc-table.build-table."
+        match lang with
+        | TypeScript ->
+            $"""if ({variableName}.Name !== "Growth") {{
+  throw new Error("Expected table name to be Growth");
+}}
+
+if ({variableName}.ColumnCount !== 4) {{
+  throw new Error(`Expected 4 columns, got ${{{variableName}.ColumnCount}}`);
+}}
+"""
+        | Python ->
+            $"""if {variableName}.Name != "Growth":
+    raise Exception("Expected table name to be Growth")
+
+if {variableName}.ColumnCount != 4:
+    raise Exception(f"Expected 4 columns, got {{{variableName}.ColumnCount}}")
+"""
+        | FSharp -> ""
+    let tsOutput = Path.Combine(snippet.GeneratedDirectory, snippet.SourceBaseName + ".ts")
+    let pyOutput = Path.Combine(snippet.GeneratedDirectory, snippet.SourceBaseName + ".py")
+    let tsGenerated =
+        match snippet.TypeScriptOverridePath with
+        | Some path -> overrideGenerated TypeScript path tsOutput "// docs:begin" "// docs:end" "// docs:assert" "// docs:endassert"
+        | None ->
+            let statements = collectStatements snippet.RenderRegion
+            let tsBody = statements |> List.map (renderStatement TypeScript) |> String.concat "\n\n"
+            let rendered = tsImports () + "\n" + tsBody + "\n"
+            let executable = rendered + "\n" + translatedExecutableAssertions TypeScript "growth"
+            { Language = TypeScript; RenderedCode = rendered; ExecutableCode = executable; OutputPath = tsOutput }
+    let pyGenerated =
+        match snippet.PythonOverridePath with
+        | Some path -> overrideGenerated Python path pyOutput "# docs:begin" "# docs:end" "# docs:assert" "# docs:endassert"
+        | None ->
+            let statements = collectStatements snippet.RenderRegion
+            let pyBody = statements |> List.map (renderStatement Python) |> String.concat "\n\n"
+            let rendered = pyImports () + "\n" + pyBody + "\n"
+            let executable = rendered + "\n" + translatedExecutableAssertions Python "growth"
+            { Language = Python; RenderedCode = rendered; ExecutableCode = executable; OutputPath = pyOutput }
     [
         { Language = FSharp; RenderedCode = fsharpRender; ExecutableCode = fsharpExecutable; OutputPath = Path.Combine(snippet.GeneratedDirectory, snippet.SourceBaseName + ".fsx") }
-        { Language = TypeScript; RenderedCode = tsImports () + "\n" + tsBody + "\n"; ExecutableCode = tsImports () + "\n" + tsBody + "\n\nif (growth.Name !== \"Growth\") {\n  throw new Error(\"Expected table name to be Growth\");\n}\n\nif (growth.ColumnCount !== 4) {\n  throw new Error(`Expected 4 columns, got ${growth.ColumnCount}`);\n}\n"; OutputPath = Path.Combine(snippet.GeneratedDirectory, snippet.SourceBaseName + ".ts") }
-        { Language = Python; RenderedCode = pyImports () + "\n" + pyBody + "\n"; ExecutableCode = pyImports () + "\n" + pyBody + "\n\nif growth.Name != \"Growth\":\n    raise Exception(\"Expected table name to be Growth\")\n\nif growth.ColumnCount != 4:\n    raise Exception(f\"Expected 4 columns, got {growth.ColumnCount}\")\n"; OutputPath = Path.Combine(snippet.GeneratedDirectory, snippet.SourceBaseName + ".py") }
+        tsGenerated
+        pyGenerated
     ]
 
 let writeGenerated generated =
@@ -346,7 +462,7 @@ let testGenerated repositoryRoot generated =
         | TypeScript ->
             ensureFableOutputs repositoryRoot
             stageNodePackage repositoryRoot snippet.OutputPath
-            runProcess repositoryRoot "npx" $"tsc --noEmit --module es2020 --target es2020 --moduleResolution node --skipLibCheck {quote (Path.GetFullPath snippet.OutputPath)}" []
+            runProcess repositoryRoot "npx" $"tsc --noEmit --module es2022 --target es2022 --moduleResolution node --skipLibCheck {quote (Path.GetFullPath snippet.OutputPath)}" []
             runProcess repositoryRoot "node" (quote (Path.GetFullPath snippet.OutputPath)) []
         | Python ->
             ensureFableOutputs repositoryRoot
@@ -358,21 +474,7 @@ let sourcePages repositoryRoot =
     let pagesRoot = Path.Combine(repositoryRoot, "docs", "pages")
     Directory.GetFiles(pagesRoot, "*.mdx", SearchOption.AllDirectories)
 
-let renderOneMdx repositoryRoot snippet generated sourcePage =
-    let pagesRoot = Path.Combine(repositoryRoot, "docs", "pages")
-    let rel = Path.GetRelativePath(pagesRoot, sourcePage)
-    let targetPage = Path.Combine(repositoryRoot, "docs", "generated", "mdx", rel)
-    let content = File.ReadAllText(sourcePage).Replace("\r\n", "\n")
-    let containsCurrentSnippet = content.Contains($"<TriSnippet id=\"{snippet.Id}\" />")
-    let content =
-        if not containsCurrentSnippet then content
-        elif content.Contains("Tabs") && content.Contains("TabItem") then content
-        else
-            let importLine = "import { Tabs, TabItem } from '@astrojs/starlight/components';"
-            if content.StartsWith("---\n") then
-                let i = content.IndexOf("\n---\n", 4, StringComparison.Ordinal)
-                if i >= 0 then content.Insert(i + 5, "\n" + importLine + "\n") else importLine + "\n\n" + content
-            else importLine + "\n\n" + content
+let renderTabBlock snippet generated =
     let tabs = StringBuilder()
     tabs.AppendLine($"{{/* snippet: {snippet.Id} */}}") |> ignore
     tabs.AppendLine("<Tabs syncKey=\"arctrl-language\">") |> ignore
@@ -385,19 +487,47 @@ let renderOneMdx repositoryRoot snippet generated sourcePage =
         tabs.AppendLine() |> ignore
         tabs.AppendLine("  </TabItem>") |> ignore
     tabs.AppendLine("</Tabs>") |> ignore
-    let rendered = content.Replace($"<TriSnippet id=\"{snippet.Id}\" />", tabs.ToString().TrimEnd())
+    tabs.ToString().TrimEnd()
+
+let hasTabsImport (content: string) =
+    content.Contains("from '@astrojs/starlight/components'")
+    && content.Contains("Tabs")
+    && content.Contains("TabItem")
+
+let addTabsImport (sourceContent: string) (renderedContent: string) =
+    if hasTabsImport sourceContent then renderedContent
+    else
+        let importLine = "import { Tabs, TabItem } from '@astrojs/starlight/components';"
+        if renderedContent.StartsWith("---\n") then
+            let i = renderedContent.IndexOf("\n---\n", 4, StringComparison.Ordinal)
+            if i >= 0 then renderedContent.Insert(i + 5, "\n" + importLine + "\n") else importLine + "\n\n" + renderedContent
+        else importLine + "\n\n" + renderedContent
+
+let renderOneMdx repositoryRoot generatedBySnippet sourcePage =
+    let pagesRoot = Path.Combine(repositoryRoot, "docs", "pages")
+    let rel = Path.GetRelativePath(pagesRoot, sourcePage)
+    let targetPage = Path.Combine(repositoryRoot, "docs", "generated", "mdx", rel)
+    let content = File.ReadAllText(sourcePage).Replace("\r\n", "\n")
+    let mutable rendered = content
+    let mutable replaced = false
+    for snippet, generated in generatedBySnippet do
+        let placeholder = $"<TriSnippet id=\"{snippet.Id}\" />"
+        if rendered.Contains placeholder then
+            rendered <- rendered.Replace(placeholder, renderTabBlock snippet generated)
+            replaced <- true
+    if replaced then rendered <- addTabsImport content rendered
     if rendered.Contains("<TriSnippet") then fail $"MDX rendering left a <TriSnippet /> placeholder unresolved in {sourcePage}."
     if rendered.Contains("docs:assert") then fail "Generated MDX contains hidden assertion markers."
     writeText targetPage rendered
     targetPage
 
-let renderMdx repositoryRoot snippet generated =
+let renderMdx repositoryRoot generatedBySnippet =
     let pages = sourcePages repositoryRoot
     if pages.Length = 0 then
         fail "No source pages found under docs/pages."
 
     pages
-    |> Array.map (renderOneMdx repositoryRoot snippet generated)
+    |> Array.map (renderOneMdx repositoryRoot generatedBySnippet)
 
 let command args =
     match args |> Array.toList with
@@ -414,34 +544,38 @@ let main args =
     try
         let repositoryRoot = repositoryRoot()
         let id = snippetId args
+        let snippets () = selectSnippets repositoryRoot id
+        let generatedBySnippet () =
+            snippets ()
+            |> Array.map (fun snippet ->
+                let generated = translate repositoryRoot snippet
+                writeGenerated generated
+                snippet, generated)
         match command args with
         | "api-shape-generate" -> printfn "Generated API shape manifest: %s" (generateApiShape repositoryRoot)
         | "api-shape-validate" -> validateApiShape repositoryRoot; printfn "Validated API shape manifest inputs."
         | "snippets-translate" ->
-            let generated = loadSnippet repositoryRoot id |> translate repositoryRoot
-            writeGenerated generated
-            for item in generated do printfn "Generated %s snippet: %s" (label item.Language) item.OutputPath
+            for _, generated in generatedBySnippet () do
+                for item in generated do printfn "Generated %s snippet: %s" (label item.Language) item.OutputPath
         | "snippets-test" ->
-            let generated = loadSnippet repositoryRoot id |> translate repositoryRoot
-            writeGenerated generated
-            testGenerated repositoryRoot generated
-            printfn "All generated snippets passed for %s" id
+            for snippet, generated in generatedBySnippet () do
+                testGenerated repositoryRoot generated
+                printfn "All generated snippets passed for %s" snippet.Id
         | "mdx-render" ->
-            let snippet = loadSnippet repositoryRoot id
-            let generated = translate repositoryRoot snippet
-            writeGenerated generated
-            renderMdx repositoryRoot snippet generated
+            renderMdx repositoryRoot (generatedBySnippet ())
             |> Array.iter (printfn "Rendered MDX: %s")
         | "all" ->
             generateApiShape repositoryRoot |> ignore
             validateApiShape repositoryRoot
-            let snippet = loadSnippet repositoryRoot id
-            let generated = translate repositoryRoot snippet
-            writeGenerated generated
-            testGenerated repositoryRoot generated
-            renderMdx repositoryRoot snippet generated
+            let generatedBySnippet = generatedBySnippet ()
+            for snippet, generated in generatedBySnippet do
+                testGenerated repositoryRoot generated
+                printfn "All generated snippets passed for %s" snippet.Id
+            renderMdx repositoryRoot generatedBySnippet
             |> Array.iter (printfn "Rendered MDX: %s")
-            printfn "Trilingual docs pipeline passed for %s" id
+            match id with
+            | Some id -> printfn "Trilingual docs pipeline passed for %s" id
+            | None -> printfn "Trilingual docs pipeline passed for all snippets"
         | _ -> fail "Unknown docs command."
         0
     with ex ->

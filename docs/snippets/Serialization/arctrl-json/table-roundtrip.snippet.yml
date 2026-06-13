@@ -1,0 +1,19 @@
+id: serialization.arctrl-json.investigation-roundtrip
+title: Roundtrip an investigation through ARCtrl JSON
+source: table-roundtrip.fsx
+
+render:
+  showImports: true
+  showPackageInstall: false
+  tabs:
+    - fsharp
+    - typescript
+    - python
+
+translation:
+  profile: arctrl-public-api
+  allowOverrides: true
+
+checks:
+  run: true
+  compareSnapshot: false

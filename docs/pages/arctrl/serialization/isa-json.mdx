@@ -1,0 +1,26 @@
+---
+title: "ISA-JSON"
+lastUpdated: 2026-06-13
+authors:
+  - lukas-weil
+sidebar:
+  order: 31
+---
+
+ISA-JSON is the interoperability JSON format for ISA metadata. Use it when you
+need to exchange ARCtrl objects with ISA-aware tools rather than persist native
+ARCtrl application state.
+
+## Investigation ISA-JSON
+
+Use `JsonController` for ISA-JSON conversion. The controller helpers expose
+matching `toISAJsonString` and `fromISAJsonString` methods in F# and
+TypeScript. In Python, call the helper first and use snake_case methods.
+
+<TriSnippet id="serialization.isa-json.investigation-roundtrip" />
+
+## ARCtrl JSON vs ISA-JSON
+
+Use ARCtrl JSON for native ARCtrl object roundtrips. Use ISA-JSON when the
+consumer expects ISA metadata. Both are available through `JsonController`, so
+the calling pattern stays consistent.

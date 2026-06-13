@@ -1,0 +1,28 @@
+---
+title: "Runs and Workflows"
+lastUpdated: 2026-06-13
+authors:
+  - lukas-weil
+sidebar:
+  order: 50
+---
+
+`ArcWorkflow` describes a computational or analytical workflow. `ArcRun`
+describes an execution of one or more workflows. Both can carry metadata,
+datamaps, and comments, and runs can reference workflow identifiers.
+
+## Create and Serialize a Run
+
+The example below creates a workflow, creates a run that references it, and
+roundtrips the run through ARCtrl JSON using `JsonController.Run`.
+
+<TriSnippet id="workflows.runs-and-workflows.run-workflow-json" />
+
+## Where They Fit
+
+Runs and workflows sit alongside studies and assays in an investigation. Use
+them when an ARC needs to describe computational processing, workflow
+definitions, run-specific inputs or outputs, or workflow-level datamaps.
+
+For xlsx conversion, use `XlsxController.Workflow` and `XlsxController.Run`.
+For JSON, use `JsonController.Workflow` and `JsonController.Run`.

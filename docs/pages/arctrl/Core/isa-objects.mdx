@@ -1,0 +1,32 @@
+---
+title: "Investigation, Study, and Assay"
+lastUpdated: 2026-06-13
+authors:
+  - lukas-weil
+sidebar:
+  order: 10
+---
+
+`ArcInvestigation`, `ArcStudy`, and `ArcAssay` are the core ISA metadata
+objects. Investigations hold studies and assays. Studies register the assays
+that belong to them.
+
+## Identifiers and Titles
+
+Identifiers are stable machine-facing names. They are used for registration
+and often become part of ARC-relative paths. Titles and descriptions are
+human-facing metadata and can change without changing the object identity.
+
+## Create and Register Objects
+
+Use the parent investigation when you want object creation and registration to
+stay together. `InitStudy` adds a new study to the investigation. `InitAssay`
+adds a new assay and can register it in one or more studies.
+
+<TriSnippet id="core.isa-objects.create-study-assay" />
+
+## Practical Pattern
+
+Applications usually load or create an investigation, ensure the required
+study and assay exist, update their metadata, then serialize or write through
+`JsonController`, `XlsxController`, or ARC contracts.

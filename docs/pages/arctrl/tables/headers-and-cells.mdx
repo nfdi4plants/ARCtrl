@@ -7,27 +7,25 @@ sidebar:
   order: 4
 ---
 
-Headers describe what a table column means. Cells hold the values for each row
-under that header.
+Headers describe what a table column means. Cells hold the row values under
+that header. ARCtrl keeps these concerns separate so applications can preserve
+ISA semantics while editing table data programmatically.
 
-Common header families:
+## Header Families
 
-- input and output headers for sources, samples, data files, and other IO types
-- characteristic, factor, parameter, and component headers backed by ontology
-  annotations
-- protocol headers for protocol references, types, descriptions, URIs, and
-  versions
-- generic metadata headers such as dates, performers, free-text headers, and
-  comments where the public API shape is stable
+Input and output headers describe sources, samples, materials, and data files.
+Characteristic, factor, parameter, and component headers are backed by
+`OntologyAnnotation`. Protocol headers describe protocol references, types,
+descriptions, URIs, versions, dates, and performers. Free-text and comment
+headers cover project-specific columns.
 
-Common cell families:
+## Cell Families
 
-- free text
-- ontology term
-- unitized value
-- data/file reference
-- empty cells
+Use `CompositeCell.createFreeText` for identifiers and plain text. Use
+`CompositeCell.createTerm` when the value itself is an ontology term. Use
+`CompositeCell.createUnitized` for a value plus unit, such as `"5"` plus the
+ontology term for day.
 
-The first executable table example is available on the `ArcTable` page. This
-page should receive dedicated snippets once the translator supports the full
-header and cell API shape across F#, TypeScript, and Python.
+The `ArcTable` page shows these header and cell families in one complete table
+example. The row-update page shows how the same cell objects are used for
+editing existing table values.

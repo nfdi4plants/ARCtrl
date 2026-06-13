@@ -7,30 +7,39 @@ sidebar:
   order: 2
 ---
 
-This quickstart introduces the normal ARCtrl workflow: create or load ARC
-metadata, edit the in-memory objects, then serialize or write the result.
+ARCtrl lets applications create, inspect, serialize, and write ARC metadata.
+Most code follows the same pattern: build or load model objects, edit them in
+memory, then serialize them or write them back through ARC IO contracts.
 
-The smallest useful ARC usually contains:
+The smallest useful mental model is:
 
-- an `ARC` container
-- an `ArcInvestigation`
-- one or more `ArcStudy` objects
-- one or more `ArcAssay` objects
-- annotation tables on studies or assays
+- `ArcInvestigation` is the top-level ISA metadata object.
+- `ArcStudy`, `ArcAssay`, `ArcWorkflow`, and `ArcRun` sit below an
+  investigation.
+- `ArcTable` stores study and assay annotation tables.
+- `Datamap` describes data files and fragments.
+- `JsonController`, `XlsxController`, and the `ARC` contract APIs are the
+  portable IO and serialization surface.
 
-## First Table
+## First Annotation Table
 
 Annotation tables are often the first object users need to create or update.
-The following example builds a small growth table with source input, organism
+The example below builds a small growth table with source input, organism
 characteristic, time parameter, and sample output.
 
-<TriSnippet id="isa.arc-table.build-table" />
+<TriSnippet id="tables.arc-table.build-table" />
 
-## Next Steps
+## First JSON Roundtrip
 
-After building tables, the next common tasks are:
+Use ARCtrl JSON when you want a native ARCtrl representation without converting
+to ISA-JSON or RO-Crate. Use `JsonController` instead of lower-level
+serialization helpers when writing examples intended to work in all three
+languages.
 
-- attach tables to a study or assay
-- serialize the investigation to ARCtrl JSON or ISA-JSON
-- write metadata back to an ARC scaffold
-- use contracts for custom storage backends such as DataHUB file access
+<TriSnippet id="serialization.arctrl-json.investigation-roundtrip" />
+
+## Where to Go Next
+
+Use the table pages for column and row manipulation, the datamap page for data
+file descriptions, and the IO pages when you need to read or write a full ARC
+instead of just serializing one object.

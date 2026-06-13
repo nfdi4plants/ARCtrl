@@ -1,0 +1,19 @@
+id: datamaps.datamap.xlsx-roundtrip
+title: Roundtrip a datamap through XlsxController
+source: xlsx-roundtrip.fsx
+
+render:
+  showImports: true
+  showPackageInstall: false
+  tabs:
+    - fsharp
+    - typescript
+    - python
+
+translation:
+  profile: arctrl-public-api
+  allowOverrides: true
+
+checks:
+  run: true
+  compareSnapshot: false

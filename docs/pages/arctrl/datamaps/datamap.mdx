@@ -8,18 +8,43 @@ sidebar:
 ---
 
 Datamaps describe data files and data fragments inside an ARC. A `Datamap`
-contains `DataContext` rows that can annotate file paths, selectors, labels,
-object types, units, and comments.
+contains `DataContext` rows that can store a file path, selector, label,
+description, object type, unit, and comments.
 
-Datamaps can belong to studies, assays, runs, and workflows.
+Use datamaps when a file needs more structure than a table cell can provide,
+for example when one CSV file contains multiple measured entities or when a
+workflow output should be annotated separately from the assay table.
 
-This page should document:
+## Create a Datamap
 
-- creating `DataContext` objects
-- creating a `Datamap`
-- attaching a datamap to a parent object
-- converting datamaps to and from xlsx
-- serializing datamaps to ARCtrl JSON
+The example below creates one `DataContext` for a synthetic results file and
+stores it in a `Datamap`.
 
-The examples should use a small CSV-like data file path such as
-`assays/Measurement/dataset/results.csv` and avoid reading real data files.
+<TriSnippet id="datamaps.datamap.create-datamap" />
+
+## Convert Through XLSX
+
+Use `XlsxController` for xlsx conversion. The controller surface is the stable
+cross-language API; direct static or extension helpers may exist in F#, but
+they are not the portable path for TypeScript and Python.
+
+This example converts a datamap to an in-memory workbook and back. File-based
+code uses the same controller family: `toXlsxFile` / `fromXlsxFile` in F# and
+Python, and `toXlsxFileAsync` / `fromXlsxFileAsync` in TypeScript.
+
+<TriSnippet id="datamaps.datamap.xlsx-roundtrip" />
+
+## Write and Read an XLSX File
+
+For file-level access, write through the same controller and read the file back
+through the matching controller. TypeScript uses async file APIs, while F# and
+Python use synchronous file APIs.
+
+<TriSnippet id="datamaps.datamap.xlsx-file-roundtrip" />
+
+## Attaching Datamaps
+
+Datamaps can belong to studies, assays, workflows, and runs. Keep paths
+relative to the ARC where possible, such as
+`assays/Measurement/dataset/results.csv`, so the same metadata works locally
+and in remote storage.

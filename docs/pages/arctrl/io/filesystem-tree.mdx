@@ -7,20 +7,32 @@ sidebar:
   order: 20
 ---
 
-ARCtrl can represent the ARC file tree independently from the ISA metadata
-objects. This is useful when an application needs to inspect files, filter
-hidden paths, detect payload files, or build an ARC from a remote file listing.
+ARCtrl can represent an ARC file tree independently from ISA metadata objects.
+This is useful for applications that list files from disk, DataHUB, S3-like
+storage, or another backend before deciding which metadata contracts to read.
 
-The public model includes `FileSystem` and `FileSystemTree`.
+The public model includes `FileSystem` and `FileSystemTree`. Use these types
+when you need to reason about paths without immediately loading file contents.
 
-This page should document:
+## Typical Uses
 
-- creating a tree from relative file paths
-- converting a tree back to file paths
-- adding files to the tree
-- filtering files and folders
-- finding a path with `TryGetPath`
-- using the tree together with contract-based ARC loading
+Use a filesystem tree to inspect an ARC scaffold, filter hidden files, keep
+relative paths stable, and decide which read contracts should be fulfilled. A
+remote UI can build the same tree from an API file listing that a CLI would
+build from local disk.
 
-Filesystem examples should use synthetic relative paths only. They should not
-read or write user-specific local directories.
+## Path Conventions
+
+Keep ARC paths relative and use forward slashes in metadata-facing examples:
+`isa.investigation.xlsx`, `studies/Study/isa.study.xlsx`, and
+`assays/Measurement/isa.assay.xlsx`. Only resolve paths to local absolute paths
+at the IO boundary.
+
+## Contract-Based Loading
+
+The higher-level `ARC` APIs expose read and write contracts. A contract says
+which path should be read or written and which DTO shape is expected. This lets
+applications use ARCtrl's ARC logic while still controlling storage themselves.
+
+Filesystem snippets should use synthetic relative paths and temporary
+directories only. They should not depend on a user's local ARC checkout.

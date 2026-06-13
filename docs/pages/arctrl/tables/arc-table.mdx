@@ -7,28 +7,25 @@ sidebar:
   order: 3
 ---
 
-`ArcTable` models the annotation tables stored in ISA spreadsheet files. It is a
-column-major structure: each logical column combines a `CompositeHeader` with a
-collection of `CompositeCell` values.
+`ArcTable` models ISA annotation tables. It is easiest to use it as a
+column-oriented table: each column has a `CompositeHeader` that describes the
+column and a list of `CompositeCell` values for the rows.
 
-A logical `CompositeColumn` does not always equal one spreadsheet column. For
-example, a free-text input column maps to one xlsx column, while a term column
-may map to value, term source reference, and term accession number columns.
+A logical ARCtrl column can expand to multiple spreadsheet columns. For
+example, a term cell may become a value, term source reference, and term
+accession number in xlsx. Work with `CompositeHeader` and `CompositeCell`
+objects instead of manually composing spreadsheet column names.
 
 ## Build a Table
 
-<TriSnippet id="isa.arc-table.build-table" />
+<TriSnippet id="tables.arc-table.build-table" />
 
-## What This Covers
+## Core Pieces
 
-This example uses the core table building blocks:
+`ArcTable.init` creates a named table. `AddColumn` appends a typed column and
+sets the row count from the supplied cells. `CompositeHeader.Input` and
+`CompositeHeader.Output` describe material or data flow. Ontology-backed
+headers such as characteristics and parameters use `OntologyAnnotation`.
 
-- `ArcTable.init` to create a named table
-- `OntologyAnnotation` to describe ontology-backed headers and values
-- `CompositeHeader.Input` and `CompositeHeader.Output` for material/data flow
-- `CompositeHeader.Characteristic` and `CompositeHeader.Parameter` for metadata
-- `CompositeCell.createFreeText`, `createTerm`, and `createUnitized` for cell
-  values
-
-Later table pages should expand this with row insertion, cell updates, table
-collections on studies and assays, and JSON/xlsx serialization.
+For cells, use free text for plain identifiers, term cells for ontology terms,
+and unitized cells for values with units.

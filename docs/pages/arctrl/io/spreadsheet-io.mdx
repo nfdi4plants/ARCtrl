@@ -1,0 +1,39 @@
+---
+title: "Spreadsheet IO"
+lastUpdated: 2026-06-13
+authors:
+  - lukas-weil
+sidebar:
+  order: 21
+---
+
+Use `XlsxController` for spreadsheet conversion. The controller surface is the
+portable API across F#, TypeScript, and Python.
+
+## Workbooks and Files
+
+Controller helpers exist at two levels. `toFsWorkbook` and `fromFsWorkbook`
+convert between ARCtrl objects and in-memory workbooks. File helpers write or
+read `.xlsx` files. In TypeScript, file helpers are async; in F# and Python,
+they are synchronous.
+
+## Investigation Files
+
+The example below writes an investigation xlsx file and reads it back through
+`XlsxController.Investigation`.
+
+<TriSnippet id="io.spreadsheet-io.investigation-xlsx-file" />
+
+## Object-Specific Controllers
+
+Use the helper for the object you are converting:
+
+- `XlsxController.Investigation`
+- `XlsxController.Study`
+- `XlsxController.Assay`
+- `XlsxController.Datamap`
+- `XlsxController.Workflow`
+- `XlsxController.Run`
+
+Study conversion can include assays when writing a study workbook. Assays,
+datamaps, runs, and workflows can be converted independently.

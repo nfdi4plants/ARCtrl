@@ -1,0 +1,19 @@
+id: datamaps.datamap.xlsx-file-roundtrip
+title: Write and read a datamap xlsx file
+source: xlsx-file-roundtrip.fsx
+
+render:
+  showImports: true
+  showPackageInstall: false
+  tabs:
+    - fsharp
+    - typescript
+    - python
+
+translation:
+  profile: arctrl-public-api
+  allowOverrides: true
+
+checks:
+  run: true
+  compareSnapshot: false

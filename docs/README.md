@@ -3,12 +3,11 @@
 This folder contains the source files and local tooling for generated trilingual
 ARCtrl narrative documentation.
 
-The current implementation is a first vertical slice. It supports all source
-pages under `docs/pages/**` and one executable trilingual snippet shape:
+The docs tooling batch-processes source pages and executable snippets:
 
 - Source pages: `docs/pages/**/*.mdx`
-- Source snippet: `docs/snippets/ISA/arc-table/build-table.fsx`
-- Snippet id: `isa.arc-table.build-table`
+- Source snippets: `docs/snippets/**/*.fsx`
+- Snippet metadata: `docs/snippets/**/*.snippet.yml`
 
 Generated files are written to `docs/generated/` and are ignored by git.
 
@@ -18,8 +17,10 @@ Author prose in `docs/pages/**` as MDX-like files. Do not write manual language
 tabs in these files. Insert examples with:
 
 ```mdx
-<TriSnippet id="isa.arc-table.build-table" />
+<TriSnippet id="tables.arc-table.build-table" />
 ```
+
+Use the `id` declared in the matching `*.snippet.yml` file.
 
 Author executable F# snippets in `docs/snippets/**`. The rendered region is
 between:
@@ -65,30 +66,35 @@ dotnet run --project docs/tools/ARCtrl.Docs.Cli -- api-shape validate
 Generate F#, TypeScript, and Python snippets:
 
 ```powershell
-dotnet run --project docs/tools/ARCtrl.Docs.Cli -- snippets translate --snippet isa.arc-table.build-table
+dotnet run --project docs/tools/ARCtrl.Docs.Cli -- snippets translate
 ```
 
 Run generated snippets:
 
 ```powershell
-dotnet run --project docs/tools/ARCtrl.Docs.Cli -- snippets test --snippet isa.arc-table.build-table
+dotnet run --project docs/tools/ARCtrl.Docs.Cli -- snippets test
 ```
 
 Render generated MDX:
 
 ```powershell
-dotnet run --project docs/tools/ARCtrl.Docs.Cli -- mdx render --snippet isa.arc-table.build-table
+dotnet run --project docs/tools/ARCtrl.Docs.Cli -- mdx render
 ```
 
-This renders every page under `docs/pages/**`. The `--snippet` argument selects
-which snippet is expanded in pages that reference it; pages without that snippet
-are still rendered unchanged.
+This renders every page under `docs/pages/**`. Pages without snippet
+placeholders are copied through. Pages with `<TriSnippet id="..." />`
+placeholders receive generated Starlight language tabs for the referenced
+snippets.
 
-Run the full local pipeline:
+Run the full local pipeline. This is the main command to transpile, test, and
+render the docs in batch:
 
 ```powershell
-dotnet run --project docs/tools/ARCtrl.Docs.Cli -- all --snippet isa.arc-table.build-table
+dotnet run --project docs/tools/ARCtrl.Docs.Cli -- all
 ```
+
+To focus on one snippet while developing it, add `--snippet <snippet-id>` to
+`snippets translate`, `snippets test`, `mdx render`, or `all`.
 
 ## Generated output
 
@@ -119,9 +125,10 @@ to create them with Fable and `npm run build`.
 
 ## Current limits
 
-- Only the `isa.arc-table.build-table` snippet shape is supported.
-- `mdx render` renders all source pages, but expands only the selected snippet
-  id for the current command.
+- Snippets can be generated from the supported deterministic F# subset or from
+  explicit TypeScript and Python overrides.
+- `mdx render` renders all source pages and expands all referenced snippets by
+  default. A selected `--snippet` is useful for focused development.
 - Translation is deterministic and intentionally narrow.
 - Unsupported F# syntax fails instead of being approximated.
 - Snapshot comparison is not implemented yet; use hidden assertions.

@@ -7,18 +7,25 @@ sidebar:
   order: 30
 ---
 
-ARCtrl JSON is the native JSON representation of ARCtrl objects. Use it when
-you want to persist or exchange ARCtrl objects without converting to an ISA or
-RO-Crate interoperability format.
+ARCtrl JSON is the native JSON representation of ARCtrl model objects. Use it
+when you want to persist or exchange ARCtrl objects without converting to
+ISA-JSON or RO-Crate.
 
-This page should document JSON roundtrips for:
+## Roundtrip an Investigation
 
-- annotation tables
-- studies
-- assays
-- investigations
-- datamaps
-- runs and workflows once their root API shapes are verified
+`JsonController` groups JSON helpers by model type. The investigation helper is
+the usual entry point for top-level ISA metadata. Prefer these controller
+helpers for documentation and application examples because they are exposed in
+F#, TypeScript, and Python.
 
-Each serialization snippet should assert that key identifiers and collection
-counts survive the roundtrip.
+<TriSnippet id="serialization.arctrl-json.investigation-roundtrip" />
+
+## Choosing a JSON Format
+
+Use ARCtrl JSON for application state and ARCtrl-to-ARCtrl exchange. Use
+ISA-JSON when interoperating with ISA tooling. Use RO-Crate JSON-LD when you
+need linked-data publication or crate metadata.
+
+The same pattern applies to studies, assays, workflows, runs, datamaps, people,
+and ontology annotations: choose the controller helper for the object type,
+serialize, and deserialize through the matching helper.

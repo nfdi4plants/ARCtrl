@@ -1,0 +1,19 @@
+id: datamaps.datamap.create-datamap
+title: Create a datamap with one data context
+source: create-datamap.fsx
+
+render:
+  showImports: true
+  showPackageInstall: false
+  tabs:
+    - fsharp
+    - typescript
+    - python
+
+translation:
+  profile: arctrl-public-api
+  allowOverrides: true
+
+checks:
+  run: true
+  compareSnapshot: false

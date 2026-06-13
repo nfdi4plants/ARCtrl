@@ -1,0 +1,19 @@
+id: io.spreadsheet-io.investigation-xlsx-file
+title: Write and read an investigation xlsx file
+source: investigation-xlsx-file.fsx
+
+render:
+  showImports: true
+  showPackageInstall: false
+  tabs:
+    - fsharp
+    - typescript
+    - python
+
+translation:
+  profile: arctrl-public-api
+  allowOverrides: true
+
+checks:
+  run: true
+  compareSnapshot: false

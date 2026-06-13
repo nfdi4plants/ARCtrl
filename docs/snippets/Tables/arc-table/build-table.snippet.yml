@@ -1,4 +1,4 @@
-id: isa.arc-table.build-table
+id: tables.arc-table.build-table
 title: Build an annotation table
 source: build-table.fsx
 

@@ -8,19 +8,22 @@ sidebar:
 ---
 
 Real ARCtrl applications rarely create a table once and leave it untouched.
-Downstream projects such as Swate, brapi2arc, and elab2arc commonly add
-columns, add rows, inspect existing rows, and update individual cells.
+Downstream tools commonly add columns, append rows, inspect existing rows, and
+update individual cells after parsing user input or external data.
 
-This page should document:
+## Add and Update Values
 
-- adding one column with a header and cells
-- adding multiple columns
-- adding empty rows
-- adding populated rows
-- reading a row or column
-- updating a cell by column and row index
-- replacing a table on a study or assay
+The example below creates a two-column measurement table, appends a third row,
+updates one cell by column and row index, and reads the updated value back as
+free text.
 
-The implementation should prefer small executable snippets instead of one large
-example. Each snippet should assert table name, row count, column count, and at
-least one updated cell value.
+<TriSnippet id="tables.rows-columns-and-updates.update-cell" />
+
+## Indexing
+
+`GetCellAt` and `UpdateCellAt` use zero-based column and row indexes. In the
+example, column `1` is the sample output column and row `2` is the third row.
+
+Use `RowCount` and `ColumnCount` to guard UI actions and data imports before
+writing into a table. ARCtrl validates row lengths when populated rows are
+added.

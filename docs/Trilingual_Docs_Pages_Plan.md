@@ -61,46 +61,46 @@ arctrl/
   setup.mdx
   quickstart.mdx
 
-  core/
+  Core/
     arc.mdx
     isa-objects.mdx
     people-publications-comments.mdx
     identifiers-and-registration.mdx
 
-  tables/
+  Tables/
     arc-table.mdx
     headers-and-cells.mdx
     rows-columns-and-updates.mdx
     arc-tables-collections.mdx
     table-json-and-templates.mdx
 
-  io/
+  IO/
     local-arc-io.mdx
     contracts.mdx
     filesystem-tree.mdx
     spreadsheet-io.mdx
     custom-storage-and-datahub.mdx
 
-  serialization/
+  Serialization/
     arctrl-json.mdx
     isa-json.mdx
     ro-crate.mdx
     json-ld-graph.mdx
 
-  datamaps/
+  Datamaps/
     datamap.mdx
     attach-datamaps.mdx
 
-  templates/
+  Templates/
     templates.mdx
     validation-packages.mdx
 
-  workflows/
+  Workflows/
     runs-and-workflows.mdx
     cwl.mdx
     workflow-graph.mdx
 
-  recipes/
+  Recipes/
     export-annotation-tables.mdx
     create-arc-from-sops.mdx
     transform-external-data.mdx
@@ -183,7 +183,7 @@ Snippet candidates:
 
 ## Priority 2: Core ARC and ISA Model
 
-### `core/arc.mdx`: The ARC Object
+### `Core/arc.mdx`: The ARC Object
 
 Language support: trilingual stable for basic object usage.
 
@@ -208,7 +208,7 @@ Snippet candidates:
 - `arc.from-investigation`
 - `arc.find-contained-objects`
 
-### `core/isa-objects.mdx`: Investigation, Study, and Assay
+### `Core/isa-objects.mdx`: Investigation, Study, and Assay
 
 Language support: trilingual stable.
 
@@ -230,7 +230,7 @@ Snippet candidates:
 - `isa.register-study-assay`
 - `isa.update-metadata`
 
-### `core/people-publications-comments.mdx`
+### `Core/people-publications-comments.mdx`
 
 Language support: trilingual stable after public shapes are verified.
 
@@ -252,7 +252,7 @@ Snippet candidates:
 - `core.comments`
 - `core.contacts-on-study`
 
-### `core/identifiers-and-registration.mdx`
+### `Core/identifiers-and-registration.mdx`
 
 Language support: trilingual stable for public methods; F#/TypeScript advanced
 for helper APIs until root exports are confirmed.
@@ -275,7 +275,7 @@ Snippet candidates:
 
 ## Priority 3: Annotation Tables
 
-### `tables/arc-table.mdx`: Build an Annotation Table
+### `Tables/arc-table.mdx`: Build an Annotation Table
 
 Language support: trilingual stable.
 
@@ -290,9 +290,9 @@ Include:
 Snippet candidates:
 
 - `tables.arc-table.build-basic`
-- Existing `isa.arc-table.build-table` can become the first snippet here.
+- Existing `tables.arc-table.build-table` is the first snippet here.
 
-### `tables/headers-and-cells.mdx`
+### `Tables/headers-and-cells.mdx`
 
 Language support: trilingual stable.
 
@@ -323,7 +323,7 @@ Snippet candidates:
 - `tables.cells.data-file`
 - `tables.headers.protocol`
 
-### `tables/rows-columns-and-updates.mdx`
+### `Tables/rows-columns-and-updates.mdx`
 
 Language support: trilingual stable.
 
@@ -346,7 +346,7 @@ Snippet candidates:
 - `tables.update-cell`
 - `tables.copy-row-between-tables`
 
-### `tables/arc-tables-collections.mdx`
+### `Tables/arc-tables-collections.mdx`
 
 Language support: trilingual stable after `ArcTables` root behavior is verified;
 Python root exports include `ArcTables`.
@@ -365,7 +365,7 @@ Snippet candidates:
 - `tables.collection-update-table`
 - `tables.collection-remove-table`
 
-### `tables/table-json-and-templates.mdx`
+### `Tables/table-json-and-templates.mdx`
 
 Language support: trilingual stable for JSON; template support requires API
 shape verification.
@@ -385,7 +385,7 @@ Snippet candidates:
 
 ## Priority 4: IO, Contracts, and Filesystem
 
-### `io/local-arc-io.mdx`
+### `IO/local-arc-io.mdx`
 
 Language support: trilingual stable for `ARC.load`; write/update APIs must be
 verified per language.
@@ -405,7 +405,7 @@ Snippet candidates:
 - `io.arc-write-new`
 - `io.arc-update-existing`
 
-### `io/contracts.mdx`
+### `IO/contracts.mdx`
 
 Language support: trilingual stable after `Contract` and DTO shapes are verified.
 
@@ -426,7 +426,7 @@ Snippet candidates:
 - `io.contracts-fulfill-memory`
 - `io.contracts-write`
 
-### `io/filesystem-tree.mdx`
+### `IO/filesystem-tree.mdx`
 
 Language support: trilingual stable.
 
@@ -451,7 +451,7 @@ Snippet candidates:
 - `filesystem.filter-hidden`
 - `filesystem.try-get-path`
 
-### `io/spreadsheet-io.mdx`
+### `IO/spreadsheet-io.mdx`
 
 Language support: trilingual stable after `XlsxController` public shapes are
 verified.
@@ -470,7 +470,7 @@ Snippet candidates:
 - `xlsx.assay-roundtrip`
 - `xlsx.datamap-roundtrip`
 
-### `io/custom-storage-and-datahub.mdx`
+### `IO/custom-storage-and-datahub.mdx`
 
 Language support: Python and TypeScript examples should be allowed as explicit
 overrides; F# canonical snippet can show the contract pattern.
@@ -493,7 +493,7 @@ Snippet candidates:
 
 ## Priority 5: Serialization Formats
 
-### `serialization/arctrl-json.mdx`
+### `Serialization/arctrl-json.mdx`
 
 Language support: trilingual stable.
 
@@ -515,7 +515,7 @@ Snippet candidates:
 - `json.arctrl.study-roundtrip`
 - `json.arctrl.investigation-roundtrip`
 
-### `serialization/isa-json.mdx`
+### `Serialization/isa-json.mdx`
 
 Language support: trilingual stable after controller method shape verification.
 
@@ -533,7 +533,7 @@ Snippet candidates:
 - `json.isa.study`
 - `json.isa.assay`
 
-### `serialization/ro-crate.mdx`
+### `Serialization/ro-crate.mdx`
 
 Language support: trilingual stable for high-level ARC/ISA conversion if public
 methods exist; F#/TypeScript advanced for lower-level conversion helpers.
@@ -552,7 +552,7 @@ Snippet candidates:
 - `rocrate.json-to-arc`
 - `rocrate.export-with-filesystem`
 
-### `serialization/json-ld-graph.mdx`
+### `Serialization/json-ld-graph.mdx`
 
 Language support: F#/TypeScript advanced. Python root exports do not currently
 include `ROCrate`.
@@ -578,7 +578,7 @@ Snippet candidates:
 
 ## Priority 6: Datamaps and Data Annotation
 
-### `datamaps/datamap.mdx`
+### `Datamaps/datamap.mdx`
 
 Language support: trilingual stable.
 
@@ -597,7 +597,7 @@ Snippet candidates:
 - `datamap.json-roundtrip`
 - `datamap.xlsx-roundtrip`
 
-### `datamaps/attach-datamaps.mdx`
+### `Datamaps/attach-datamaps.mdx`
 
 Language support: trilingual stable.
 
@@ -618,7 +618,7 @@ Snippet candidates:
 
 ## Priority 7: Templates, Validation Packages, and YAML
 
-### `templates/templates.mdx`
+### `Templates/templates.mdx`
 
 Language support: trilingual stable after `Template`, `Templates`, and
 `WebController` method shapes are verified.
@@ -638,7 +638,7 @@ Snippet candidates:
 - `templates.table-from-template`
 - `templates.json-roundtrip`
 
-### `templates/validation-packages.mdx`
+### `Templates/validation-packages.mdx`
 
 Language support: F# stable; TypeScript/Python support depends on root exports.
 `YamlController` is root-exported in both TypeScript and Python, but validation
@@ -662,7 +662,7 @@ Snippet candidates:
 
 ## Priority 8: Runs, Workflows, CWL, and Graphs
 
-### `workflows/runs-and-workflows.mdx`
+### `Workflows/runs-and-workflows.mdx`
 
 Language support: trilingual stable for `ArcRun` and `ArcWorkflow` core objects.
 
@@ -681,7 +681,7 @@ Snippet candidates:
 - `workflow.attach-datamap`
 - `workflow.json-roundtrip`
 
-### `workflows/cwl.mdx`
+### `Workflows/cwl.mdx`
 
 Language support: F#/TypeScript advanced. TypeScript root exports expose `CWL`;
 Python root exports do not currently expose CWL.
@@ -707,7 +707,7 @@ Snippet candidates:
 - `cwl.docker-requirement`
 - `cwl.yaml-roundtrip`
 
-### `workflows/workflow-graph.mdx`
+### `Workflows/workflow-graph.mdx`
 
 Language support: F# advanced first; TypeScript only after public root API is
 confirmed. This subsystem is not currently root-exported through
@@ -734,7 +734,7 @@ Snippet candidates:
 Recipes should combine the concept pages into end-to-end tasks. They may use
 longer snippets and explicit TypeScript/Python overrides when necessary.
 
-### `recipes/export-annotation-tables.mdx`
+### `Recipes/export-annotation-tables.mdx`
 
 Language support: trilingual stable.
 
@@ -750,7 +750,7 @@ Snippet candidates:
 - `recipe.export-study-tables`
 - `recipe.export-assay-tables`
 
-### `recipes/create-arc-from-sops.mdx`
+### `Recipes/create-arc-from-sops.mdx`
 
 Language support: trilingual stable where table/template APIs permit.
 
@@ -766,7 +766,7 @@ Snippet candidates:
 - `recipe.sop-load-table`
 - `recipe.sop-build-arc`
 
-### `recipes/transform-external-data.mdx`
+### `Recipes/transform-external-data.mdx`
 
 Language support: trilingual stable.
 
@@ -782,7 +782,7 @@ Snippet candidates:
 - `recipe.external-data-to-table`
 - `recipe.external-data-to-assay`
 
-### `recipes/update-existing-arc.mdx`
+### `Recipes/update-existing-arc.mdx`
 
 Language support: trilingual stable.
 
@@ -801,7 +801,7 @@ Snippet candidates:
 - `recipe.update-existing-table`
 - `recipe.update-study-metadata`
 
-### `recipes/export-ro-crate-summary.mdx`
+### `Recipes/export-ro-crate-summary.mdx`
 
 Language support: F# first; TypeScript/Python support depends on stable high-level
 RO-Crate APIs.
@@ -918,28 +918,28 @@ Milestone D:
 
 1. `setup.mdx`
 2. `quickstart.mdx`
-3. `tables/arc-table.mdx`
-4. `tables/headers-and-cells.mdx`
-5. `tables/rows-columns-and-updates.mdx`
-6. `core/isa-objects.mdx`
-7. `io/filesystem-tree.mdx`
-8. `io/local-arc-io.mdx`
-9. `serialization/arctrl-json.mdx`
-10. `datamaps/datamap.mdx`
+3. `Tables/arc-table.mdx`
+4. `Tables/headers-and-cells.mdx`
+5. `Tables/rows-columns-and-updates.mdx`
+6. `Core/isa-objects.mdx`
+7. `IO/filesystem-tree.mdx`
+8. `IO/local-arc-io.mdx`
+9. `Serialization/arctrl-json.mdx`
+10. `Datamaps/datamap.mdx`
 
 After those are stable, add:
 
-1. `io/contracts.mdx`
-2. `serialization/isa-json.mdx`
-3. `serialization/ro-crate.mdx`
-4. `templates/validation-packages.mdx`
-5. `workflows/runs-and-workflows.mdx`
+1. `IO/contracts.mdx`
+2. `Serialization/isa-json.mdx`
+3. `Serialization/ro-crate.mdx`
+4. `Templates/validation-packages.mdx`
+5. `Workflows/runs-and-workflows.mdx`
 
 Advanced publication can follow later:
 
-1. `serialization/json-ld-graph.mdx`
-2. `workflows/cwl.mdx`
-3. `workflows/workflow-graph.mdx`
+1. `Serialization/json-ld-graph.mdx`
+2. `Workflows/cwl.mdx`
+3. `Workflows/workflow-graph.mdx`
 4. all recipes
 
 ## Quality Gates
@@ -948,6 +948,8 @@ Advanced publication can follow later:
   snippet.
 - No rendered examples use obsolete Python imports.
 - No rendered TypeScript examples import raw generated paths.
+- Every generated MDX page that contains rendered snippet tabs also contains
+  `import { Tabs, TabItem } from '@astrojs/starlight/components';`.
 - Each page includes at least one assertion-backed snippet unless it is prose
   only.
 - IO examples use temp paths or in-memory contracts, never user-specific paths.
