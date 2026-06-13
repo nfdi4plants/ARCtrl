@@ -1,0 +1,26 @@
+---
+title: "Rows, Columns, and Updates"
+lastUpdated: 2026-06-13
+authors:
+  - lukas-weil
+sidebar:
+  order: 5
+---
+
+Real ARCtrl applications rarely create a table once and leave it untouched.
+Downstream projects such as Swate, brapi2arc, and elab2arc commonly add
+columns, add rows, inspect existing rows, and update individual cells.
+
+This page should document:
+
+- adding one column with a header and cells
+- adding multiple columns
+- adding empty rows
+- adding populated rows
+- reading a row or column
+- updating a cell by column and row index
+- replacing a table on a study or assay
+
+The implementation should prefer small executable snippets instead of one large
+example. Each snippet should assert table name, row count, column count, and at
+least one updated cell value.

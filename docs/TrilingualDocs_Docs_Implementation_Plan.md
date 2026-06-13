@@ -227,9 +227,11 @@ Rules:
 1. Authors write prose in normal MDX.
 2. Authors do not manually write language tabs in source pages.
 3. Authors insert examples with `<TriSnippet id="..." />`.
-4. The renderer replaces each placeholder with generated Starlight `Tabs` / `TabItem` markup.
-5. The renderer must preserve frontmatter and imports.
-6. The renderer must add the required `Tabs` / `TabItem` import if missing.
+4. The renderer writes generated MDX for every source page under `docs/pages/**`, not only pages that contain snippets.
+5. Source pages without snippet placeholders are copied through with frontmatter, imports, and prose preserved.
+6. For pages with `<TriSnippet id="..." />`, the renderer replaces each matching placeholder with generated Starlight `Tabs` / `TabItem` markup.
+7. The renderer must preserve frontmatter and imports.
+8. The renderer must add the required `Tabs` / `TabItem` import if missing, but only for pages where snippet tabs are rendered.
 
 ---
 
@@ -823,7 +825,10 @@ assert normalized(pythonOutput) == normalized(snapshot)
 
 ## 13. MDX Rendering
 
-Render `<TriSnippet id="..." />` placeholders into Starlight tabs.
+Render every source page under `docs/pages/**` into `docs/generated/mdx/**`.
+Pages without snippet placeholders are passed through unchanged except for
+normal line-ending handling. Pages with `<TriSnippet id="..." />` placeholders
+have the matching placeholders rendered into Starlight tabs.
 
 Target output:
 
@@ -863,20 +868,22 @@ growth = ArcTable.init("Growth")
 
 Renderer rules:
 
-1. Preserve frontmatter.
-2. Preserve narrative MDX.
-3. Add `Tabs` and `TabItem` import if not already present.
-4. Use `syncKey="arctrl-language"` consistently.
-5. Use language labels exactly: `F#`, `TypeScript`, `Python`.
-6. Use fenced code languages: `fsharp`, `ts`, `python`.
-7. Do not render hidden assertions.
-8. Optionally render a small comment with snippet id for debugging:
+1. Render every source page from `docs/pages/**` to the corresponding path under `docs/generated/mdx/**`.
+2. Preserve frontmatter.
+3. Preserve narrative MDX.
+4. Pass through pages without `<TriSnippet />` placeholders.
+5. Add `Tabs` and `TabItem` import if not already present on pages where snippet tabs are rendered.
+6. Use `syncKey="arctrl-language"` consistently.
+7. Use language labels exactly: `F#`, `TypeScript`, `Python`.
+8. Use fenced code languages: `fsharp`, `ts`, `python`.
+9. Do not render hidden assertions.
+10. Optionally render a small comment with snippet id for debugging:
 
 ```mdx
 {/* snippet: isa.arc-table.build-table */}
 ```
 
-9. Do not publish generated MDX if snippet checks fail.
+11. Do not publish generated MDX if snippet checks fail.
 
 ---
 

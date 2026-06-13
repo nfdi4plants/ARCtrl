@@ -369,3 +369,6 @@ tmp/
 /tests/UI/cypress/screenshots/Tests/Dictionary.cy.js
 /tests/ISA/ISA.Tests/py
 /ro-crate-test.json
+
+# Trilingual docs generated artifacts
+docs/generated/

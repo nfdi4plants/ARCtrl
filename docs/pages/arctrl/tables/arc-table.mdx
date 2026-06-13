@@ -1,0 +1,34 @@
+---
+title: "ArcTable"
+lastUpdated: 2026-06-13
+authors:
+  - lukas-weil
+sidebar:
+  order: 3
+---
+
+`ArcTable` models the annotation tables stored in ISA spreadsheet files. It is a
+column-major structure: each logical column combines a `CompositeHeader` with a
+collection of `CompositeCell` values.
+
+A logical `CompositeColumn` does not always equal one spreadsheet column. For
+example, a free-text input column maps to one xlsx column, while a term column
+may map to value, term source reference, and term accession number columns.
+
+## Build a Table
+
+<TriSnippet id="isa.arc-table.build-table" />
+
+## What This Covers
+
+This example uses the core table building blocks:
+
+- `ArcTable.init` to create a named table
+- `OntologyAnnotation` to describe ontology-backed headers and values
+- `CompositeHeader.Input` and `CompositeHeader.Output` for material/data flow
+- `CompositeHeader.Characteristic` and `CompositeHeader.Parameter` for metadata
+- `CompositeCell.createFreeText`, `createTerm`, and `createUnitized` for cell
+  values
+
+Later table pages should expand this with row insertion, cell updates, table
+collections on studies and assays, and JSON/xlsx serialization.

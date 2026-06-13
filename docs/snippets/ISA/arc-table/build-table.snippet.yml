@@ -1,0 +1,67 @@
+id: isa.arc-table.build-table
+title: Build an annotation table
+source: build-table.fsx
+
+render:
+  showImports: true
+  showPackageInstall: false
+  tabs:
+    - fsharp
+    - typescript
+    - python
+
+packages:
+  fsharp:
+    registry: nuget
+    package: ARCtrl
+    mode: local
+  typescript:
+    registry: npm
+    package: "@nfdi4plants/arctrl"
+    mode: local
+  python:
+    registry: pypi
+    package: arctrl
+    mode: local
+
+publicApi:
+  fsharp:
+    - ArcTable
+    - OntologyAnnotation
+    - CompositeHeader
+    - CompositeCell
+    - IOType
+  typescript:
+    - ArcTable
+    - OntologyAnnotation
+    - CompositeHeader
+    - CompositeCell
+    - IOType
+  python:
+    - ArcTable
+    - OntologyAnnotation
+    - CompositeHeader
+    - CompositeCell
+    - IOType
+
+translation:
+  profile: arctrl-public-api
+  allowOverrides: false
+  casing:
+    fsharp: pascal-or-camel-as-authored
+    typescriptVariables: camelCase
+    pythonVariables: snake_case
+
+checks:
+  run: true
+  compareSnapshot: false
+  minimum:
+    fsharp:
+      - compile
+      - run
+    typescript:
+      - typecheck
+      - run
+    python:
+      - compile
+      - run

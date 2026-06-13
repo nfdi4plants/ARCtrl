@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "generatedFrom": {
+    "fsharp": "src/ARCtrl/ARCtrl.fsproj local build",
+    "typescript": "src/ARCtrl/index.ts and generated dist/ts/index.js",
+    "python": "src/ARCtrl/__init__.py and generated src/ARCtrl/py"
+  }
+}

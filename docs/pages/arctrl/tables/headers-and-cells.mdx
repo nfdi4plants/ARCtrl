@@ -1,0 +1,33 @@
+---
+title: "Headers and Cells"
+lastUpdated: 2026-06-13
+authors:
+  - lukas-weil
+sidebar:
+  order: 4
+---
+
+Headers describe what a table column means. Cells hold the values for each row
+under that header.
+
+Common header families:
+
+- input and output headers for sources, samples, data files, and other IO types
+- characteristic, factor, parameter, and component headers backed by ontology
+  annotations
+- protocol headers for protocol references, types, descriptions, URIs, and
+  versions
+- generic metadata headers such as dates, performers, free-text headers, and
+  comments where the public API shape is stable
+
+Common cell families:
+
+- free text
+- ontology term
+- unitized value
+- data/file reference
+- empty cells
+
+The first executable table example is available on the `ArcTable` page. This
+page should receive dedicated snippets once the translator supports the full
+header and cell API shape across F#, TypeScript, and Python.

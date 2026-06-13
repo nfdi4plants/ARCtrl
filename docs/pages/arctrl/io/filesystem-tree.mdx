@@ -1,0 +1,26 @@
+---
+title: "Filesystem Tree"
+lastUpdated: 2026-06-13
+authors:
+  - lukas-weil
+sidebar:
+  order: 20
+---
+
+ARCtrl can represent the ARC file tree independently from the ISA metadata
+objects. This is useful when an application needs to inspect files, filter
+hidden paths, detect payload files, or build an ARC from a remote file listing.
+
+The public model includes `FileSystem` and `FileSystemTree`.
+
+This page should document:
+
+- creating a tree from relative file paths
+- converting a tree back to file paths
+- adding files to the tree
+- filtering files and folders
+- finding a path with `TryGetPath`
+- using the tree together with contract-based ARC loading
+
+Filesystem examples should use synthetic relative paths only. They should not
+read or write user-specific local directories.

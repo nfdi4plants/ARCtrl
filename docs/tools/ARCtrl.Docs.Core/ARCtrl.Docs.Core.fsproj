@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>library</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" VersionOverride="8.0.100" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="SnippetModel.fs" />
+    <Compile Include="PublicApiShape.fs" />
+    <Compile Include="SnippetParser.fs" />
+    <Compile Include="Translator.fs" />
+    <Compile Include="Renderer.fs" />
+    <Compile Include="Runner.fs" />
+  </ItemGroup>
+</Project>

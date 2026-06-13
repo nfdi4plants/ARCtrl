@@ -1,0 +1,69 @@
+---
+title: "Setup"
+lastUpdated: 2026-06-13
+authors:
+  - lukas-weil
+sidebar:
+  order: 1
+---
+
+ARCtrl is distributed for .NET, TypeScript, and Python. The packages expose the
+same ARC model, but each language should import it from its curated public
+package root.
+
+## Install
+
+Use the package for your language:
+
+<Tabs syncKey="arctrl-language">
+  <TabItem label="F#">
+```powershell
+dotnet add package ARCtrl
+```
+For F# scripts, reference the NuGet package directly:
+
+```fsharp
+#r "nuget: ARCtrl"
+open ARCtrl
+```
+  </TabItem>
+  <TabItem label="TypeScript">
+```bash
+npm install @nfdi4plants/arctrl
+```
+  </TabItem>
+  <TabItem label="Python">
+```bash
+pip install arctrl
+```
+  </TabItem>
+</Tabs>
+
+## Imports
+
+Use these public entry points in examples and applications:
+<Tabs syncKey="arctrl-language">
+  <TabItem label="F#">
+
+```fsharp
+open ARCtrl
+```
+  </TabItem>
+  <TabItem label="TypeScript">
+```ts
+import { ARC, ArcTable, JsonController } from "@nfdi4plants/arctrl";
+```
+  </TabItem>
+  <TabItem label="Python">
+```python
+from arctrl import ARC, ArcTable, JsonController
+```
+
+
+Avoid older Python imports such as `from arctrl.arc import ARC` and
+`from arctrl.arctrl import ArcTable`. They appear in older downstream projects,
+but the trilingual docs should use the root package import style.
+
+  </TabItem>
+</Tabs>
+

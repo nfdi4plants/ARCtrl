@@ -1,0 +1,24 @@
+---
+title: "ARCtrl JSON"
+lastUpdated: 2026-06-13
+authors:
+  - lukas-weil
+sidebar:
+  order: 30
+---
+
+ARCtrl JSON is the native JSON representation of ARCtrl objects. Use it when
+you want to persist or exchange ARCtrl objects without converting to an ISA or
+RO-Crate interoperability format.
+
+This page should document JSON roundtrips for:
+
+- annotation tables
+- studies
+- assays
+- investigations
+- datamaps
+- runs and workflows once their root API shapes are verified
+
+Each serialization snippet should assert that key identifiers and collection
+counts survive the roundtrip.

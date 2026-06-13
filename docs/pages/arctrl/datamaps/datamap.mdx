@@ -1,0 +1,25 @@
+---
+title: "Datamap"
+lastUpdated: 2026-06-13
+authors:
+  - lukas-weil
+sidebar:
+  order: 40
+---
+
+Datamaps describe data files and data fragments inside an ARC. A `Datamap`
+contains `DataContext` rows that can annotate file paths, selectors, labels,
+object types, units, and comments.
+
+Datamaps can belong to studies, assays, runs, and workflows.
+
+This page should document:
+
+- creating `DataContext` objects
+- creating a `Datamap`
+- attaching a datamap to a parent object
+- converting datamaps to and from xlsx
+- serializing datamaps to ARCtrl JSON
+
+The examples should use a small CSV-like data file path such as
+`assays/Measurement/dataset/results.csv` and avoid reading real data files.
