@@ -1,0 +1,33 @@
+---
+title: "Table JSON and Templates"
+lastUpdated: 2026-06-14
+authors:
+  - lukas-weil
+sidebar:
+  order: 7
+---
+
+Tables can be exchanged independently from full investigations. This is useful
+for annotation-table templates, web editors, importers, and tests that only need
+one sheet.
+
+## Native Table JSON
+
+Use ARCtrl JSON when the consumer is another ARCtrl-based tool. The native JSON
+shape preserves ARCtrl concepts directly and avoids converting through an
+interoperability format.
+
+For trilingual examples, prefer controller-backed serialization on parent
+objects such as investigations, studies, and assays until the table-level JSON
+helpers are exposed through the same public root controller surface in
+TypeScript and Python.
+
+## Templates
+
+Templates are reusable table definitions. A template can provide a known set of
+headers and, depending on the workflow, starter rows or recommended ontology
+terms. Swate-style workflows commonly use templates to start from a consistent
+annotation shape and then fill rows from user input or imported data.
+
+Use table JSON for ARCtrl-to-ARCtrl exchange. Use template APIs when the table
+is meant to be selected and reused as a named annotation pattern.

@@ -29,3 +29,14 @@ headers such as characteristics and parameters use `OntologyAnnotation`.
 
 For cells, use free text for plain identifiers, term cells for ontology terms,
 and unitized cells for values with units.
+
+## Spreadsheet Shape
+
+ARCtrl tables are not a direct two-dimensional mirror of the visible xlsx
+sheet. A single composite term cell can render as multiple spreadsheet cells:
+the human-readable value, the term source reference, and the accession number.
+A unitized value adds unit columns as well.
+
+This is why table code should create `CompositeHeader` and `CompositeCell`
+values instead of manually constructing ISA column labels. The conversion layer
+can then preserve the expected ISA spreadsheet shape.

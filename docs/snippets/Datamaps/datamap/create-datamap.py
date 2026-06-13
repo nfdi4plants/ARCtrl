@@ -2,16 +2,9 @@
 from arctrl import DataContext, Datamap
 
 leaf_area = DataContext(
-    None,
-    "assays/Measurement/dataset/results.csv",
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    "leaf area",
-    "Leaf area measurements exported from image analysis.",
+    name="assays/Measurement/dataset/results.csv",
+    label="leaf area",
+    description="Leaf area measurements exported from image analysis.",
 )
 
 datamap = Datamap([leaf_area])

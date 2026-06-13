@@ -3,7 +3,7 @@ from arctrl import ArcInvestigation, JsonController
 
 investigation = ArcInvestigation(
     "RoundtripInvestigation",
-    "Roundtrip Example",
+    title="Roundtrip Example",
 )
 
 json = JsonController.Investigation().to_json_string(investigation, 2)

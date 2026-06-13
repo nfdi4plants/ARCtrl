@@ -1,0 +1,19 @@
+id: datamaps.attach-datamaps.attach-to-assay
+title: Attach a datamap to an assay
+source: attach-to-assay.fsx
+
+render:
+  showImports: true
+  showPackageInstall: false
+  tabs:
+    - fsharp
+    - typescript
+    - python
+
+translation:
+  profile: arctrl-public-api
+  allowOverrides: true
+
+checks:
+  run: true
+  compareSnapshot: false

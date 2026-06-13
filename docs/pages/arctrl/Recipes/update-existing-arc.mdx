@@ -1,0 +1,39 @@
+---
+title: "Update an Existing ARC"
+lastUpdated: 2026-06-14
+authors:
+  - lukas-weil
+sidebar:
+  order: 70
+---
+
+Updating an ARC is a composition of the smaller workflows from the concept
+pages: discover files, load metadata, edit model objects, and write the changed
+metadata back through contracts.
+
+## Workflow
+
+1. Start from a file listing or a local ARC folder.
+2. Build an ARC shell and read the required metadata contracts.
+3. Find or create the study, assay, run, or workflow you need to update.
+4. Edit tables, datamaps, or top-level metadata in memory.
+5. Request write contracts and fulfill them in your storage backend.
+
+The first step can be tested without reading real files by starting from
+ARC-relative paths:
+
+<TriSnippet id="core.arc.from-file-paths" />
+
+## Updating Table Content
+
+Once the parent object is available, update table content with the table APIs.
+The example below shows the row and cell editing part of a larger ARC update.
+
+<TriSnippet id="tables.rows-columns-and-updates.update-cell" />
+
+## Updating Datamaps
+
+For file-level annotations, replace or attach the datamap on the parent object
+and then write the parent metadata.
+
+<TriSnippet id="datamaps.attach-datamaps.attach-to-assay" />

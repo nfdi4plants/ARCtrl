@@ -1,0 +1,40 @@
+---
+title: "The ARC Object"
+lastUpdated: 2026-06-14
+authors:
+  - lukas-weil
+sidebar:
+  order: 9
+---
+
+`ARC` is the high-level container for an Annotated Research Context. It combines
+the ISA investigation model with a filesystem tree, optional default files, and
+contract-based IO helpers.
+
+Use `ArcInvestigation` when you only need ISA metadata. Use `ARC` when the code
+also needs to reason about files, scaffold paths, local loading, remote loading,
+or which metadata files should be read or written.
+
+## ARC from File Paths
+
+Applications often start with a list of files from disk, DataHUB, GitLab, or
+another storage backend. `ARC.fromFilePaths` builds an ARC shell from those
+relative paths. It does not read file contents by itself; instead, it lets ARCtrl
+derive read contracts for the metadata files it recognizes.
+
+<TriSnippet id="core.arc.from-file-paths" />
+
+## ARC Versus Investigation
+
+`ARC` inherits the investigation-level metadata shape, so study and assay
+operations feel familiar. The additional value is the file tree and contract
+layer:
+
+- `ARC.fromFilePaths` creates an ARC shell from known paths
+- `GetReadContracts` asks which metadata files should be supplied
+- `SetISAFromContracts` fills the in-memory ISA model from fulfilled contracts
+- `GetWriteContracts` asks which files should be written for the current model
+- `ARC.load` is the local convenience API when the files are already on disk
+
+For remote storage, prefer the contract pattern over assuming a local clone.
+That keeps the ARCtrl model independent from the storage implementation.

@@ -29,3 +29,19 @@ ontology term for day.
 The `ArcTable` page shows these header and cell families in one complete table
 example. The row-update page shows how the same cell objects are used for
 editing existing table values.
+
+## Choosing the Cell Type
+
+Choose the narrowest cell type that represents the metadata:
+
+- free text for source names, sample names, file names, protocol references,
+  dates, and performer names
+- term cells for ontology-backed qualitative values
+- unitized cells for measured values with units
+- data cells for data-file references when the public API for that table shape
+  is being used directly
+
+Headers and cells should agree semantically. A characteristic header usually
+contains terms or free text; a parameter header often contains unitized values;
+input and output headers usually contain source, sample, material, or data
+identifiers.

@@ -3,17 +3,13 @@ from arctrl import ArcRun, ArcWorkflow, JsonController
 
 workflow = ArcWorkflow(
     "Workflow-001",
-    "Image analysis workflow",
+    title="Image analysis workflow",
 )
 
 run = ArcRun(
     "Run-001",
-    "Image analysis run",
-    None,
-    None,
-    None,
-    None,
-    [workflow.Identifier],
+    title="Image analysis run",
+    workflow_identifiers=[workflow.Identifier],
 )
 
 run_json = JsonController.Run().to_json_string(run, 2)

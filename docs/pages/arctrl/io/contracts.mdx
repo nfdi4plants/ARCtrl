@@ -1,0 +1,40 @@
+---
+title: "Read and Write Contracts"
+lastUpdated: 2026-06-14
+authors:
+  - lukas-weil
+sidebar:
+  order: 19
+---
+
+Contracts are ARCtrl's storage boundary. They let the library decide which ARC
+metadata files are needed while the host application decides how bytes are
+actually read or written.
+
+## Why Contracts Exist
+
+ARCs can live on disk, in DataHUB, in Git-backed storage, or behind an API. If
+ARCtrl directly owned every storage operation, applications would have to fit
+one IO model. Contracts split the work:
+
+- ARCtrl builds read or write requests from the model
+- your application fulfills those requests in its storage backend
+- ARCtrl consumes fulfilled read contracts or emits write payloads
+
+## Read Contracts
+
+Start with known ARC-relative paths. `ARC.fromFilePaths` builds a shell ARC, and
+`GetReadContracts` returns the recognized ISA metadata files that should be
+provided.
+
+<TriSnippet id="core.arc.from-file-paths" />
+
+## Write Contracts
+
+After constructing or editing an ARC, `GetWriteContracts` returns the files that
+represent the current model. This includes spreadsheet or JSON payloads for ISA
+objects and, where supported, datamaps, runs, workflows, and default scaffold
+files.
+
+Use contracts when you need predictable IO without coupling documentation or
+application logic to a local filesystem.

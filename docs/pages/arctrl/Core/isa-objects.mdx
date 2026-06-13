@@ -30,3 +30,12 @@ adds a new assay and can register it in one or more studies.
 Applications usually load or create an investigation, ensure the required
 study and assay exist, update their metadata, then serialize or write through
 `JsonController`, `XlsxController`, or ARC contracts.
+
+For command-line and UI applications, keep identifiers stable and put mutable
+human-facing wording into titles and descriptions. A study or assay identifier
+is commonly reflected in folder names and registration lists, while a title can
+be adjusted without moving files.
+
+When you need a full ARC instead of a standalone investigation, use the `ARC`
+object. It extends the same ISA model with a filesystem tree, optional license
+metadata, and contract-based read/write behavior.

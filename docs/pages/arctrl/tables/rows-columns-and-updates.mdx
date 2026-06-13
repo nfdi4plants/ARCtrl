@@ -27,3 +27,18 @@ example, column `1` is the sample output column and row `2` is the third row.
 Use `RowCount` and `ColumnCount` to guard UI actions and data imports before
 writing into a table. ARCtrl validates row lengths when populated rows are
 added.
+
+## Update Workflow
+
+A robust table update usually follows this order:
+
+1. load or create the table
+2. ensure the required headers exist
+3. append missing rows
+4. update individual cells
+5. serialize or write the parent study/assay
+
+This mirrors how tools such as spreadsheet editors, importers, and domain
+converters work: user input or external data is normalized into
+`CompositeCell` values first, then applied to the table in a small number of
+structured operations.

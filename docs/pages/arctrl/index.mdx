@@ -7,33 +7,67 @@ sidebar:
   order: 0
 ---
 
-ARCtrl is the in-memory model and IO toolkit for Annotated Research Contexts.
-Use it when an application needs to construct ARC metadata, edit ISA annotation
-tables, serialize metadata, or read and write ARC scaffold files.
 
-ARCtrl is available for .NET, TypeScript, and Python. The examples in this
-section use the public package roots in all three languages and avoid generated
-internal module paths.
+import { Steps } from '@astrojs/starlight/components';
+import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-## What ARCtrl Covers
+![ARCtrl](https://github.com/nfdi4plants/ARCtrl/raw/main/logos/ARCtrl_horizontal.png)
 
-ARCtrl provides model objects for investigations, studies, assays, runs,
-workflows, annotation tables, datamaps, people, publications, comments,
-templates, and validation package configuration. It also provides controller
-APIs for JSON and XLSX conversion.
+`ARCtrl` is a software library to work with Annotated Research Contexts (ARCs). 
+It contains an in-memory representation of an ARC and loads of functions to 
+- manipulate and build both the ARC and its subcomponents
+- read and write different representations, including the ARC Scaffold and ARC-RO-Crate
 
-The most portable IO APIs are:
+:::tip
+If you're not sure about the ARC concept, check out [arc-rdm.org](https://arc-rdm.org/details/organization-principle/)
+:::
 
-- `JsonController` for ARCtrl JSON, ISA-JSON, and selected RO-Crate JSON-LD
-  helpers.
-- `XlsxController` for workbook conversion and xlsx file read/write.
-- `ARC` and contracts for full ARC scaffold loading and writing.
+
+
+By transpilation from the `F#` source code using [Fable](https://fable.io/), it is not only hosted on `nuget`, but also available as a JavaScript package on `npm` and as a python package on `PyPI`.
+
+| Version | Downloads |
+| :--------|-----------:|
+|<a href="https://www.nuget.org/packages/ARCtrl/"><img alt="Nuget" src="https://img.shields.io/nuget/v/ARCtrl?logo=nuget&color=%234fb3d9"/></a>|<a href="https://www.nuget.org/packages/ARCtrl/"><img alt="Nuget" src="https://img.shields.io/nuget/dt/ARCtrl?color=%234FB3D9"/></a>|
+|<a href="https://www.npmjs.com/package/@nfdi4plants/arctrl"><img alt="NPM" src="https://img.shields.io/npm/v/%40nfdi4plants/arctrl?logo=npm&color=%234fb3d9"/></a>|<a href="https://www.npmjs.com/package/@nfdi4plants/arctrl"><img alt="NPM" src="https://img.shields.io/npm/dt/%40nfdi4plants%2Farctrl?color=%234fb3d9"/></a>|
+|<a href="https://pypi.org/project/ARCtrl/"><img alt="PyPI" src="https://img.shields.io/pypi/v/arctrl?logo=pypi&color=%234fb3d9"/></a>|<a href="https://pypi.org/project/ARCtrl/"><img alt="PyPI" src="https://img.shields.io/pepy/dt/arctrl?color=%234fb3d9"/></a>|
+
+
+Therefore you can use `ARCtrl` either as a `.NET`, `Python` or `JavaScript` developer! Yay 🎉
+
+------- 
+
+By the way: not only the source code is being transpiled. 
+Instead, all **2300** tests are being transpiled and run, too. 
+This ensures an ever growing reliability of the tool-stack.
+
+If you still encounter bugs, unintuitive behaviours or missing functionality, feel free to open an Issue on the [GitHub page](https://github.com/nfdi4plants/ARCtrl).
 
 ## What ARCtrl Is Not
 
 ARCtrl is not a spreadsheet UI, a full DataHUB client, or a validator runner.
 Those tools can build on ARCtrl, but ARCtrl itself focuses on the model,
 serialization, spreadsheet conversion, and storage contracts.
+
+## Main Capabilities
+
+Use ARCtrl when an application needs to create or update ARC metadata without
+hand-editing xlsx sheets or JSON documents. The central model types are
+`ARC`, `ArcInvestigation`, `ArcStudy`, `ArcAssay`, `ArcRun`, `ArcWorkflow`,
+`ArcTable`, and `Datamap`.
+
+The common workflows are:
+
+- build ISA metadata objects in memory
+- create and edit annotation tables
+- convert investigations, studies, assays, and datamaps to xlsx workbooks
+- serialize native ARCtrl JSON or ISA-JSON
+- inspect an ARC file tree and request read/write contracts
+- attach runs, workflows, datamaps, templates, and validation-package metadata
+
+The portable IO examples in this documentation prefer `JsonController`,
+`XlsxController`, and `ARC` contract APIs because those are available from the
+public roots in F#, TypeScript, and Python.
 
 ## First Check
 

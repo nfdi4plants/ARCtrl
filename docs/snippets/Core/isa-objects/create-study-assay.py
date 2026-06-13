@@ -3,7 +3,7 @@ from arctrl import ArcInvestigation
 
 investigation = ArcInvestigation(
     "Investigation-001",
-    "Growth experiment",
+    title="Growth experiment",
 )
 
 study = investigation.InitStudy("Study-001")

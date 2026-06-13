@@ -1,0 +1,31 @@
+---
+title: "Attach Datamaps"
+lastUpdated: 2026-06-14
+authors:
+  - lukas-weil
+sidebar:
+  order: 41
+---
+
+A datamap becomes useful when it is attached to the object that owns the data.
+Studies, assays, runs, and workflows can carry datamaps, which lets applications
+keep file-level annotations close to the metadata object that produced or uses
+the file.
+
+## Attach to an Assay
+
+Assay datamaps are common for measured output files, result tables, and
+instrument exports. Keep the data-context path ARC-relative so the same datamap
+works whether the ARC is local or remote.
+
+<TriSnippet id="datamaps.attach-datamaps.attach-to-assay" />
+
+## Replacement Pattern
+
+When updating an existing ARC, treat datamaps as replaceable structured values:
+load the parent object, build the next `Datamap`, assign it to the parent, and
+then serialize or write the parent through controllers or ARC contracts.
+
+If the application computes stable hashes or identifiers for datamaps, keep
+that logic outside of path normalization. The metadata path should remain the
+portable ARC-relative location.

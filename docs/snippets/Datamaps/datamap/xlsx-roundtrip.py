@@ -2,15 +2,8 @@
 from arctrl import DataContext, Datamap, XlsxController
 
 leaf_area = DataContext(
-    None,
-    "assays/Measurement/dataset/results.csv",
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    "leaf area",
+    name="assays/Measurement/dataset/results.csv",
+    label="leaf area",
 )
 
 datamap = Datamap([leaf_area])

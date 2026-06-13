@@ -1,0 +1,32 @@
+---
+title: "RO-Crate JSON-LD"
+lastUpdated: 2026-06-14
+authors:
+  - lukas-weil
+sidebar:
+  order: 32
+---
+
+RO-Crate JSON-LD is the publication-oriented linked-data representation of an
+ARC. Use it when metadata needs to be exported as crate metadata rather than as
+native ARCtrl JSON or ISA-JSON.
+
+## When to Use RO-Crate
+
+Use RO-Crate when a workflow needs:
+
+- linked-data metadata for publication or exchange
+- a file inventory together with descriptive metadata
+- conversion between ARC metadata and crate graph objects
+- inspection of registered and additional payload files
+
+Use ARCtrl JSON for native application state. Use ISA-JSON for interoperability
+with ISA tooling. Use RO-Crate when the output is meant to describe a crate.
+
+## Current Documentation Status
+
+High-level RO-Crate support is available in ARCtrl, but this page is currently
+kept prose-first until the trilingual examples for the public root APIs are
+covered by executable snippets. Advanced JSON-LD graph manipulation belongs on
+the JSON-LD graph page once the public TypeScript and Python surfaces are
+verified for those examples.

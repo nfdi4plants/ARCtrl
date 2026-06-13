@@ -1,0 +1,37 @@
+---
+title: "ArcTables Collections"
+lastUpdated: 2026-06-14
+authors:
+  - lukas-weil
+sidebar:
+  order: 6
+---
+
+`ArcTables` is the collection wrapper used around groups of `ArcTable` objects.
+Studies, assays, runs, and some conversion routines work with table lists, while
+individual editing operations usually happen on one `ArcTable`.
+
+## When to Think in Collections
+
+Use a single `ArcTable` when you are editing rows, columns, and cells. Think in
+`ArcTables` when you are attaching multiple sheets to a study or assay,
+importing templates, or converting between process sequences and table sheets.
+
+Common collection-level tasks are:
+
+- add one or more tables to a parent object
+- initialize tables from names
+- keep table order stable for spreadsheet output
+- replace a table after editing it
+- reconcile reference tables between studies and assays
+
+## Parent Objects
+
+Study and assay objects expose their tables through the same in-memory model.
+The practical pattern is to get or create the table you care about, edit that
+table with the APIs from the row and column pages, then write the parent object
+through `XlsxController`, `JsonController`, or ARC write contracts.
+
+The row-update example shows the single-table part of this workflow.
+
+<TriSnippet id="tables.rows-columns-and-updates.update-cell" />

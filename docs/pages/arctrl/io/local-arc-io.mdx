@@ -1,0 +1,35 @@
+---
+title: "Local ARC IO"
+lastUpdated: 2026-06-14
+authors:
+  - lukas-weil
+sidebar:
+  order: 18
+---
+
+Local ARC IO is the convenient path when the ARC scaffold is available on disk.
+ARCtrl can load a folder, inspect the file tree, and read recognized metadata
+files into the in-memory model.
+
+## Loading Strategy
+
+There are two useful levels:
+
+- `ARC.load` for local folders when ARCtrl should perform the file access
+- `ARC.fromFilePaths` plus contracts when your application controls storage
+
+The second pattern is also useful locally because it makes the file boundary
+explicit and is easy to adapt to remote backends.
+
+<TriSnippet id="core.arc.from-file-paths" />
+
+## Writing Strategy
+
+After modifying the in-memory ARC, request write contracts with
+`GetWriteContracts`. Those contracts describe the files ARCtrl wants to write,
+such as investigation, study, assay, run, workflow, and datamap metadata. A CLI
+can fulfill them against the local filesystem; a web application can fulfill
+the same contracts against an upload or repository API.
+
+Use temporary directories in tests and examples. Do not hard-code user-specific
+paths in reusable docs or scripts.

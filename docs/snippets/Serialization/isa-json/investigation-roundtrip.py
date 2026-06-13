@@ -3,7 +3,7 @@ from arctrl import ArcInvestigation, JsonController
 
 investigation = ArcInvestigation(
     "Investigation-ISAJSON",
-    "ISA-JSON example",
+    title="ISA-JSON example",
 )
 
 isa_json = JsonController.Investigation().to_isajson_string(investigation, 2)

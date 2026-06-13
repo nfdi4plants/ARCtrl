@@ -5,7 +5,7 @@ from arctrl import ArcInvestigation, XlsxController
 
 investigation = ArcInvestigation(
     "Investigation-XLSX",
-    "Spreadsheet IO example",
+    title="Spreadsheet IO example",
 )
 
 xlsx_path = Path(__file__).with_name("isa.investigation.xlsx")
