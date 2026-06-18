@@ -42,7 +42,7 @@ module RunContractExtensions =
                 if withFolder then 
                     let folderFS =  FileSystemTree.createRunsFolder([|FileSystemTree.createRunFolder this.Identifier|])
                     for p in folderFS.ToFilePaths(false) do
-                        if p <> path && p <> "runs/.gitkeep" then Contract.createCreate(p, DTOType.PlainText)
+                        if p <> path then Contract.createCreate(p, DTOType.PlainText)
                 if this.CWLDescription.IsSome then
                     let path = Identifier.Run.cwlFileNameFromIdentifier this.Identifier
                     let dto = CWL.Encode.encodeProcessingUnit this.CWLDescription.Value

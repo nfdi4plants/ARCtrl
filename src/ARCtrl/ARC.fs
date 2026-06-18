@@ -733,98 +733,49 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     member this.GetWriteContracts (?skipUpdateFS : bool) =
         if not (defaultArg skipUpdateFS false) then
             this.UpdateFileSystem()
-        //let datamapFile = defaultArg datamapFile false
-        /// Map containing the fileName and the types for DTOTypes and objects.
-        let filemap = System.Collections.Generic.Dictionary<string, DTOType*DTO>()
-        
-        let investigationConverter = ArcInvestigation.toFsWorkbook
-        filemap.Add (InvestigationFileName, (DTOType.ISA_Investigation, investigationConverter this |> box |> DTO.Spreadsheet))
-        this.StaticHash <- this.GetLightHashCode()
-        this.Studies
-        |> Seq.iter (fun s ->
-            s.StaticHash <- s.GetLightHashCode()
-            filemap.Add (
-                Identifier.Study.fileNameFromIdentifier s.Identifier,
-                (DTOType.ISA_Study, ArcStudy.toFsWorkbook s |> box |> DTO.Spreadsheet)
-            )
-            if s.Datamap.IsSome (*&& datamapFile*) then 
-                let dm = s.Datamap.Value
-                dm.StaticHash <- dm.GetHashCode()
-                filemap.Add (
-                    Identifier.Study.datamapFileNameFromIdentifier s.Identifier,
-                    (DTOType.ISA_Datamap, Spreadsheet.Datamap.toFsWorkbook dm |> box |> DTO.Spreadsheet)
-                )
-                
-        )
-        this.Assays
-        |> Seq.iter (fun a ->
-            a.StaticHash <- a.GetLightHashCode()
-            filemap.Add (
-                Identifier.Assay.fileNameFromIdentifier a.Identifier,
-                (DTOType.ISA_Assay, ArcAssay.toFsWorkbook a |> box |> DTO.Spreadsheet))     
-            if a.Datamap.IsSome (*&& datamapFile*) then 
-                let dm = a.Datamap.Value
-                dm.StaticHash <- dm.GetHashCode()
-                filemap.Add (
-                    Identifier.Assay.datamapFileNameFromIdentifier a.Identifier,
-                    (DTOType.ISA_Datamap, Spreadsheet.Datamap.toFsWorkbook dm |> box |> DTO.Spreadsheet)
-                )
-        )
-        this.Workflows
-        |> Seq.iter (fun w ->
-            w.StaticHash <- w.GetLightHashCode()
-            filemap.Add (
-                Identifier.Workflow.fileNameFromIdentifier w.Identifier,
-                (DTOType.ISA_Workflow, ArcWorkflow.toFsWorkbook w |> box |> DTO.Spreadsheet)
-            )
-            if w.CWLDescription.IsSome then
-                failwith "Not implemented yet: CWL description in ARC.GetWriteContracts"
-            if w.Datamap.IsSome (*&& datamapFile*) then 
-                let dm = w.Datamap.Value
-                dm.StaticHash <- dm.GetHashCode()
-                filemap.Add (
-                    Identifier.Workflow.datamapFileNameFromIdentifier w.Identifier,
-                    (DTOType.ISA_Datamap, Spreadsheet.Datamap.toFsWorkbook dm |> box |> DTO.Spreadsheet)
-                )
-        )
-        this.Runs
-        |> Seq.iter (fun r ->
-            r.StaticHash <- r.GetLightHashCode()
-            filemap.Add (
-                Identifier.Run.fileNameFromIdentifier r.Identifier,
-                (DTOType.ISA_Run, ArcRun.toFsWorkbook r |> box |> DTO.Spreadsheet)
-            )
-            if r.CWLDescription.IsSome then
-                failwith "Not implemented yet: CWL description in ARC.GetWriteContracts"
-            if r.CWLInput.Count > 0 then
-                failwith "Not implemented yet: CWL YAML input in ARC.GetWriteContracts"
-            if r.Datamap.IsSome (*&& datamapFile*) then 
-                let dm = r.Datamap.Value
-                dm.StaticHash <- dm.GetHashCode()
-                filemap.Add (
-                    Identifier.Run.datamapFileNameFromIdentifier r.Identifier,
-                    (DTOType.ISA_Datamap, Spreadsheet.Datamap.toFsWorkbook dm |> box |> DTO.Spreadsheet)
-                )
-        )
 
-        match this.License with
-        | Some l ->
-            match l.Type with
-            | LicenseContentType.Fulltext ->
+        [|
+            this.StaticHash <- this.GetLightHashCode()
+            yield this.ToCreateContract()
+            for s in this.Studies do
+                s.StaticHash <- s.GetLightHashCode()
+                yield! s.ToCreateContract(WithFolder = true)
+                if s.Datamap.IsSome then 
+                    let dm = s.Datamap.Value
+                    dm.StaticHash <- dm.GetHashCode()
+                    yield dm.ToCreateContractForStudy(s.Identifier)
+            for a in this.Assays do
+                a.StaticHash <- a.GetLightHashCode()
+                yield! a.ToCreateContract(WithFolder = true)
+                if a.Datamap.IsSome then 
+                    let dm = a.Datamap.Value
+                    dm.StaticHash <- dm.GetHashCode()
+                    yield dm.ToCreateContractForAssay(a.Identifier)
+            for w in this.Workflows do
+                w.StaticHash <- w.GetLightHashCode()
+                yield! w.ToCreateContract(WithFolder = true)
+                if w.Datamap.IsSome then 
+                    let dm = w.Datamap.Value
+                    dm.StaticHash <- dm.GetHashCode()
+                    yield dm.ToCreateContractForWorkflow(w.Identifier)
+            for r in this.Runs do
+                r.StaticHash <- r.GetLightHashCode()
+                yield! r.ToCreateContract(WithFolder = true)
+                if r.Datamap.IsSome then 
+                    let dm = r.Datamap.Value
+                    dm.StaticHash <- dm.GetHashCode()
+                    yield dm.ToCreateContractForRun(r.Identifier)
+            if this.License.IsSome then
+                let l = this.License.Value
                 l.StaticHash <- l.GetHashCode()
-                filemap.Add (l.Path, (DTOType.PlainText, DTO.Text l.Content))
-        | None ->
-            ()
+                yield l.ToCreateContract()
+            yield Contract.createCreate(ArcPathHelper.combine ArcPathHelper.AssaysFolderName ArcPathHelper.GitKeepFileName, DTOType.PlainText)
+            yield Contract.createCreate(ArcPathHelper.combine ArcPathHelper.StudiesFolderName ArcPathHelper.GitKeepFileName, DTOType.PlainText)
+            yield Contract.createCreate(ArcPathHelper.combine ArcPathHelper.WorkflowsFolderName ArcPathHelper.GitKeepFileName, DTOType.PlainText)
+            yield Contract.createCreate(ArcPathHelper.combine ArcPathHelper.RunsFolderName ArcPathHelper.GitKeepFileName, DTOType.PlainText)
+            yield Contract.createCreate(ArcPathHelper.combine ArcPathHelper.ARCConfigFolderName ArcPathHelper.GitKeepFileName, DTOType.PlainText)
+        |]
 
-        // Iterates over filesystem and creates a write contract for every file. If possible, include DTO.
-        // "No idea why we do this, i think this is done to also write .gitkeep files and folders? Then this should be part of getWriteContracts on the class objects.
-        // Will keep it for now but this is not DRY" ~Kevin Frey
-        _fs.Tree.ToFilePaths(true)
-        |> Array.map (fun fp ->
-            match Dictionary.tryGet fp filemap with
-            | Some (dto,wb) -> Contract.createCreate(fp,dto,wb)
-            | None -> Contract.createCreate(fp, DTOType.PlainText)
-        )
     /// <summary>
     /// This function returns the all update Contracts for the current state of the ARC. Only update contracts for those ISA objects that have been changed will be returned.
     /// If an ISA object was added to the ARC, instead a write contract for the complete object folder will be returned. 
