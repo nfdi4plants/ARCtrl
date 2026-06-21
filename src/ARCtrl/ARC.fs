@@ -773,7 +773,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             yield Contract.createCreate(ArcPathHelper.combine ArcPathHelper.StudiesFolderName ArcPathHelper.GitKeepFileName, DTOType.PlainText)
             yield Contract.createCreate(ArcPathHelper.combine ArcPathHelper.WorkflowsFolderName ArcPathHelper.GitKeepFileName, DTOType.PlainText)
             yield Contract.createCreate(ArcPathHelper.combine ArcPathHelper.RunsFolderName ArcPathHelper.GitKeepFileName, DTOType.PlainText)
-            yield Contract.createCreate(ArcPathHelper.combine ArcPathHelper.ARCConfigFolderName ArcPathHelper.GitKeepFileName, DTOType.PlainText)
+            //yield Contract.createCreate(ArcPathHelper.combine ArcPathHelper.ARCConfigFolderName ArcPathHelper.GitKeepFileName, DTOType.PlainText)
         |]
 
     /// <summary>

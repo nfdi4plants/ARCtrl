@@ -36,7 +36,7 @@ module WorkflowContractExtensions =
                 if withFolder then 
                     let folderFS =  FileSystemTree.createWorkflowsFolder([|FileSystemTree.createWorkflowFolder this.Identifier|])
                     for p in folderFS.ToFilePaths(false) do
-                        if p <> path then Contract.createCreate(p, DTOType.PlainText)
+                        if p <> path && p <> "workflows/.gitkeep" then Contract.createCreate(p, DTOType.PlainText)
                 if this.CWLDescription.IsSome then
                     let path = Identifier.Workflow.cwlFileNameFromIdentifier this.Identifier
                     let dto = CWL.Encode.encodeProcessingUnit this.CWLDescription.Value
