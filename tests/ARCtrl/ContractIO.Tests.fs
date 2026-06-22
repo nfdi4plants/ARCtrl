@@ -79,7 +79,7 @@ let testWrite =
             Expect.equal resultText testText $"File {filePath} was not empty"
         })
         testCaseCrossAsync "ForceOverwrite" (crossAsync {
-            let fileName = "TestReadMe.txt"
+            let fileName = "TestReadMe_FO.txt"
             let initialText = "This is the initial text"
             let newText = "This is the new text"
             let filePath = ArcPathHelper.combine TestObjects.IO.testResultsFolder fileName
@@ -93,7 +93,7 @@ let testWrite =
             Expect.equal resultText newText $"File {filePath} was not overwritten"
         })
         testCaseCrossAsync "NoOverwrite" (crossAsync {
-            let fileName = "TestReadMe.txt"
+            let fileName = "TestReadMe_NFO.txt"
             let initialText = "This is the initial text"
             let newText = "This is the new text"
             let filePath = ArcPathHelper.combine TestObjects.IO.testResultsFolder fileName
