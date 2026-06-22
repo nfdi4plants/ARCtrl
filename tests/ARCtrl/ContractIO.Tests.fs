@@ -49,7 +49,7 @@ let testWrite =
 
             do! FileSystemHelper.ensureDirectoryAsync TestObjects.IO.testResultsFolder
 
-            let! resultContract = fulfillWriteContractAsync TestObjects.IO.testResultsFolder contract
+            let! resultContract = fulfillWriteContractAsync false TestObjects.IO.testResultsFolder contract
 
             Expect.isOk resultContract "Contract was not fulfilled correctly"
 
@@ -67,7 +67,7 @@ let testWrite =
 
             do! FileSystemHelper.ensureDirectoryAsync TestObjects.IO.testResultsFolder
 
-            let! resultContract = fulfillWriteContractAsync TestObjects.IO.testResultsFolder contract
+            let! resultContract = fulfillWriteContractAsync false TestObjects.IO.testResultsFolder contract
 
             Expect.isOk resultContract "Contract was not fulfilled correctly"
 
@@ -77,6 +77,37 @@ let testWrite =
 
             let! resultText = FileSystemHelper.readFileTextAsync filePath
             Expect.equal resultText testText $"File {filePath} was not empty"
+        })
+        testCaseCrossAsync "ForceOverwrite" (crossAsync {
+            let fileName = "TestReadMe.txt"
+            let initialText = "This is the initial text"
+            let newText = "This is the new text"
+            let filePath = ArcPathHelper.combine TestObjects.IO.testResultsFolder fileName
+            do! FileSystemHelper.writeFileTextAsync filePath initialText
+            let dto = DTO.Text newText
+            let contract = Contract.createCreate(fileName,DTOType.PlainText, dto)
+            do! FileSystemHelper.ensureDirectoryAsync TestObjects.IO.testResultsFolder
+            let! resultContract = fulfillWriteContractAsync true TestObjects.IO.testResultsFolder contract
+            Expect.isOk resultContract "Contract was not fulfilled correctly"
+            let! resultText = FileSystemHelper.readFileTextAsync filePath
+            Expect.equal resultText newText $"File {filePath} was not overwritten"
+        })
+        testCaseCrossAsync "NoOverwrite" (crossAsync {
+            let fileName = "TestReadMe.txt"
+            let initialText = "This is the initial text"
+            let newText = "This is the new text"
+            let filePath = ArcPathHelper.combine TestObjects.IO.testResultsFolder fileName
+            do! FileSystemHelper.writeFileTextAsync filePath initialText
+            let dto = DTO.Text newText
+            let contract = Contract.createCreate(fileName,DTOType.PlainText, dto)
+            do! FileSystemHelper.ensureDirectoryAsync TestObjects.IO.testResultsFolder
+            try
+                let! r = fulfillWriteContractAsync false TestObjects.IO.testResultsFolder contract
+                failwith $"Contract was fulfilled when it should not have been: {r}"
+            with
+            | _ -> ()
+            let! resultText = FileSystemHelper.readFileTextAsync filePath
+            Expect.equal resultText initialText $"File {filePath} was overwritten when it should not have been"
         })
         testCaseCrossAsync "XLSXFile" (crossAsync { 
 
@@ -92,7 +123,7 @@ let testWrite =
 
             do! FileSystemHelper.ensureDirectoryAsync TestObjects.IO.testResultsFolder
 
-            let! resultContract = fulfillWriteContractAsync TestObjects.IO.testResultsFolder contract
+            let! resultContract = fulfillWriteContractAsync false TestObjects.IO.testResultsFolder contract
 
             Expect.isOk resultContract "Contract was not fulfilled correctly"
 

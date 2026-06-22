@@ -151,13 +151,13 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     static member fromArcInvestigation (isa : ArcInvestigation, ?fs : FileSystem, ?license: License) = 
         ARC(identifier = isa.Identifier, ?title = isa.Title, ?description = isa.Description, ?submissionDate = isa.SubmissionDate, ?publicReleaseDate = isa.PublicReleaseDate, ontologySourceReferences = isa.OntologySourceReferences, publications = isa.Publications, contacts = isa.Contacts, assays = isa.Assays, studies = isa.Studies, workflows = isa.Workflows, runs = isa.Runs, registeredStudyIdentifiers = isa.RegisteredStudyIdentifiers, comments = isa.Comments, remarks = isa.Remarks, ?fs = fs, ?license = license) 
 
-    member this.TryWriteAsync(arcPath) =
+    member this.TryWriteAsync(arcPath, ?forceOverwrite) =
         this.GetWriteContracts()
-        |> fullFillContractBatchAsync arcPath
+        |> fullFillContractBatchAsync (defaultArg forceOverwrite false) arcPath
 
-    member this.TryUpdateAsync(arcPath) =
+    member this.TryUpdateAsync(arcPath, ?forceOverwrite) =
         this.GetUpdateContracts()
-        |> fullFillContractBatchAsync arcPath
+        |> fullFillContractBatchAsync (defaultArg forceOverwrite false) arcPath
 
     member this.SetLicenseFulltext (fulltext : string, ?path : string) : unit =
         match this.License with
@@ -180,7 +180,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
       
             let! fulFilledContracts = 
                 contracts 
-                |> fullFillContractBatchAsync arcPath
+                |> fullFillContractBatchAsync false arcPath
 
             match fulFilledContracts with
             | Ok c -> 
@@ -236,15 +236,15 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
 
     member this.TryRemoveAssayAsync(arcPath : string, assayIdentifier: string) =
         this.GetAssayRemoveContracts(assayIdentifier)
-        |> fullFillContractBatchAsync arcPath
+        |> fullFillContractBatchAsync false arcPath
 
     member this.TryRemoveRunAsync(arcPath : string, runIdentifier: string) =
         this.GetRunRemoveContracts(runIdentifier)
-        |> fullFillContractBatchAsync arcPath
+        |> fullFillContractBatchAsync false arcPath
 
     member this.TryRemoveWorkflowAsync(arcPath : string, workflowIdentifier: string) =
         this.GetWorkflowRemoveContracts(workflowIdentifier)
-        |> fullFillContractBatchAsync arcPath
+        |> fullFillContractBatchAsync false arcPath
 
     member this.RemoveRunAsync(arcPath, runIdentifier) =
         crossAsync {
@@ -268,11 +268,11 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
 
     member this.TryRenameRunAsync(arcPath : string, oldRunIdentifier: string, newRunIdentifier: string) =
         this.GetRunRenameContracts(oldRunIdentifier,newRunIdentifier)
-        |> fullFillContractBatchAsync arcPath
+        |> fullFillContractBatchAsync false arcPath
 
     member this.TryRenameWorkflowAsync(arcPath : string, oldWorkflowIdentifier: string, newWorkflowIdentifier: string) =
         this.GetWorkflowRenameContracts(oldWorkflowIdentifier,newWorkflowIdentifier)
-        |> fullFillContractBatchAsync arcPath
+        |> fullFillContractBatchAsync false arcPath
 
     member this.RenameRunAsync(arcPath, oldRunIdentifier, newRunIdentifier) =
         crossAsync {
@@ -341,7 +341,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
 
     member this.TryRenameAssayAsync(arcPath : string, oldAssayIdentifier: string, newAssayIdentifier: string) =
         this.GetAssayRenameContracts(oldAssayIdentifier,newAssayIdentifier)
-        |> fullFillContractBatchAsync arcPath
+        |> fullFillContractBatchAsync false arcPath
 
     member this.GetStudyRemoveContracts(studyIdentifier: string) =
         base.RemoveStudy(studyIdentifier)
@@ -356,7 +356,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
 
     member this.TryRemoveStudyAsync(arcPath : string, studyIdentifier: string) =
         this.GetStudyRemoveContracts(studyIdentifier)
-        |> fullFillContractBatchAsync arcPath
+        |> fullFillContractBatchAsync false arcPath
 
     member this.GetStudyRenameContracts(oldStudyIdentifier: string, newStudyIdentifier: string) =
         if this.StudyIdentifiers |> Seq.contains oldStudyIdentifier |> not then
@@ -375,7 +375,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
 
     member this.TryRenameStudyAsync(arcPath : string, oldStudyIdentifier: string, newStudyIdentifier: string) =
         this.GetStudyRenameContracts(oldStudyIdentifier,newStudyIdentifier)
-        |> fullFillContractBatchAsync arcPath
+        |> fullFillContractBatchAsync false arcPath
 
 
     member this.WriteAsync(arcPath) =
