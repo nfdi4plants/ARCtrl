@@ -276,7 +276,7 @@ module Encode =
         | :? bool as value -> yBool value
         | :? int as value -> Encode.int value
         | :? int64 as value -> YAMLElement.Value (YAMLContent.create (string value))
-        | :? float as value -> YAMLElement.Value (YAMLContent.create (value.ToString("R", System.Globalization.CultureInfo.InvariantCulture)))
+        | :? float as value -> YAMLElement.Value (YAMLContent.create (CWLParameterValue.floatToRoundTripString value))
         | :? YAMLElement as value -> value
         | :? DynamicObj as value ->
             value.GetProperties(false)
@@ -308,7 +308,7 @@ module Encode =
         | CWLParameterValue.Null -> YAMLElement.Value (YAMLContent.create "null")
         | CWLParameterValue.String value -> Encode.string value
         | CWLParameterValue.Int value -> YAMLElement.Value (YAMLContent.create (string value))
-        | CWLParameterValue.Float value -> YAMLElement.Value (YAMLContent.create (value.ToString("R", System.Globalization.CultureInfo.InvariantCulture)))
+        | CWLParameterValue.Float value -> YAMLElement.Value (YAMLContent.create (CWLParameterValue.floatToRoundTripString value))
         | CWLParameterValue.Boolean value -> yBool value
         | CWLParameterValue.File file -> encodeDynamicObjWithClass "File" file
         | CWLParameterValue.Directory directory -> encodeDynamicObjWithClass "Directory" directory

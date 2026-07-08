@@ -63,6 +63,13 @@ and [<CustomEquality; NoComparison; RequireQualifiedAccess; AttachMembers>] CWLP
 
 module CWLParameterValue =
 
+    let floatToRoundTripString (value: float) =
+#if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        string value
+#else
+        value.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
+#endif
+
     let private tryDynamicString name (value: DynamicObj) =
         DynObj.tryGetTypedPropertyValue<string> name value
 
@@ -84,7 +91,7 @@ module CWLParameterValue =
         | CWLParameterValue.String value -> ResizeArray [| value |]
         | CWLParameterValue.Int value -> ResizeArray [| string value |]
         | CWLParameterValue.Float value ->
-            ResizeArray [| value.ToString("R", System.Globalization.CultureInfo.InvariantCulture) |]
+            ResizeArray [| floatToRoundTripString value |]
         | CWLParameterValue.Boolean value -> ResizeArray [| if value then "true" else "false" |]
         | CWLParameterValue.File file -> ResizeArray [| getPathOrLocation file |]
         | CWLParameterValue.Directory directory -> ResizeArray [| getPathOrLocation directory |]
