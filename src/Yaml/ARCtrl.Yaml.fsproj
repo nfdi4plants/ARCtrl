@@ -10,15 +10,22 @@
   <ItemGroup>
     <Compile Include="Encode.fs" />
     <Compile Include="Decode.fs" />
+    <Compile Include="ROCrate\Helpers.fs" />
+    <Compile Include="ROCrate\LDContext.fs" />
+    <Compile Include="ROCrate\LDValue.fs" />
+    <Compile Include="ROCrate\LDRef.fs" />
+    <Compile Include="ROCrate\LDNode.fs" />
+    <Compile Include="ROCrate\LDGraph.fs" />
     <Compile Include="ValidationPackage.fs" />
     <Compile Include="ValidationPackagesConfig.fs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="YAMLicious"/>
+    <PackageReference Include="YAMLicious" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
+    <ProjectReference Include="..\ROCrate\ARCtrl.ROCrate.fsproj" />
     <ProjectReference Include="..\ValidationPackages\ARCtrl.ValidationPackages.fsproj" />
   </ItemGroup>
 </Project>

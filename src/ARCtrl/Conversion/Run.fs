@@ -171,7 +171,8 @@ type RunConversion =
             )
         cwlDescription, parameterRefs
 
-    static member composeRun (run : ArcRun, ?fs : FileSystem) =
+    static member composeRun (run : ArcRun, ?fs : FileSystem, ?skipDatamap) =
+        let includeDatamap = defaultArg skipDatamap false |> not
         let workflowProtocol =
             let workflowFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
             match run.CWLDescription with
@@ -194,8 +195,9 @@ type RunConversion =
         LDComputationalWorkflow.setSdPublisher(workflowProtocol, publisher)
         LDComputationalWorkflow.setDateCreatedAsDateTime(workflowProtocol, dateCreated)
         let fragmentDescriptors =
-            run.Datamap
-            |> Option.map DatamapConversion.composeFragmentDescriptors
+            match run.Datamap with
+            | Some d when includeDatamap -> Some (DatamapConversion.composeFragmentDescriptors d)
+            | _ -> None
         let dataFiles = 
             workflowInvocations
             |> Option.map (fun ps -> AssayConversion.getDataFilesFromProcesses(ps, ?fragmentDescriptors = fragmentDescriptors))

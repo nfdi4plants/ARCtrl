@@ -5,6 +5,9 @@ open Fable.Pyxpecto
 let all = testSequenced <| testList "Yaml" [
     Tests.ValidationPackage.main
     Tests.ValidationPackagesConfig.main
+    Tests.ROCrate.LDContext.main
+    Tests.ROCrate.LDNode.main
+    Tests.ROCrate.LDGraph.main
 ]
 
 #if !TESTS_ALL

@@ -50,6 +50,7 @@
       <ProjectReference Include="..\ROCrate\ARCtrl.ROCrate.fsproj" />
       <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
       <ProjectReference Include="..\Json\ARCtrl.Json.fsproj" />
+      <ProjectReference Include="..\Yaml\ARCtrl.Yaml.fsproj" />
       <ProjectReference Include="..\Spreadsheet\ARCtrl.Spreadsheet.fsproj" />
       <ProjectReference Include="..\WorkflowGraph\ARCtrl.WorkflowGraph.fsproj" />
   </ItemGroup>

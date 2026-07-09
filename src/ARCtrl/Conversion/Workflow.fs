@@ -503,7 +503,8 @@ type WorkflowConversion =
             WorkflowConversion.decomposeWorkflowProtocolToToolDescription(protocol, ?context = context, ?graph = graph)
             |> CWL.CommandLineTool              
 
-    static member composeWorkflow (workflow : ArcWorkflow, ?fs : FileSystem) =
+    static member composeWorkflow (workflow : ArcWorkflow, ?fs : FileSystem, ?skipDatamap) =
+        let includeDatamap = defaultArg skipDatamap false |> not
         let workflowProtocol =
             let workflowFilePath = Identifier.Workflow.cwlFileNameFromIdentifier workflow.Identifier
             match workflow.CWLDescription with
@@ -534,8 +535,9 @@ type WorkflowConversion =
         //        )
         //    LDLabProtocol.set(workflowProtocol, inputs)
         let fragmentDescriptors =
-            workflow.Datamap
-            |> Option.map DatamapConversion.composeFragmentDescriptors
+            match workflow.Datamap with
+            | Some d when includeDatamap -> Some (DatamapConversion.composeFragmentDescriptors d)
+            | _ -> None
         let dataFiles =
             fragmentDescriptors
             |> Option.defaultValue (ResizeArray [])

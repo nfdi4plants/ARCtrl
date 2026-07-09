@@ -6,6 +6,9 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ROCrate.LDContext.Tests.fs" />
+    <Compile Include="ROCrate.LDGraph.Tests.fs" />
+    <Compile Include="ROCrate.LDNode.Tests.fs" />
     <Compile Include="ValidationPackage.Tests.fs" />
     <Compile Include="ValidationPackageConfig.Tests.fs" />
     <Compile Include="Main.fs" />

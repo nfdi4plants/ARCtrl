@@ -12,7 +12,7 @@ open ARCtrl.Helper.Regex.ActivePatterns
 
 type InvestigationConversion =
 
-    static member composeInvestigation (investigation : ArcInvestigation, ?fs : FileSystem, ?ignoreBrokenWR) =
+    static member composeInvestigation (investigation : ArcInvestigation, ?groupProcesses : bool, ?fs : FileSystem, ?ignoreBrokenWR) =
         let name = match investigation.Title with | Some t -> t | None -> failwith "Investigation must have a title"
         let dateCreated = investigation.SubmissionDate |> Option.bind DateTime.tryFromString
         let datePublished =
@@ -34,8 +34,8 @@ type InvestigationConversion =
             |> Option.fromSeq
         let hasParts =
             [
-                yield! (investigation.Assays |> ResizeArray.map (fun a -> AssayConversion.composeAssay(a, ?fs = fs)))
-                yield! (investigation.Studies |> ResizeArray.map (fun s -> StudyConversion.composeStudy(s, ?fs = fs)))
+                yield! (investigation.Assays |> ResizeArray.map (fun a -> AssayConversion.composeAssay(a, ?groupProcesses = groupProcesses, ?fs = fs)))
+                yield! (investigation.Studies |> ResizeArray.map (fun s -> StudyConversion.composeStudy(s, ?groupProcesses = groupProcesses, ?fs = fs)))
                 yield! (investigation.Workflows |> ResizeArray.choose (fun w ->
                     try 
                         WorkflowConversion.composeWorkflow(w, ?fs = fs) |> Some
