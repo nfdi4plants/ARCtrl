@@ -101,3 +101,19 @@ module Docker =
     let dockerRequirement = DockerRequirement.create (dockerImageId = "devcontainer", dockerFileReference = Include "FSharpArcCapsule/Dockerfile")
 
     let requirement = Requirement.DockerRequirement dockerRequirement
+
+
+let initialWorkDirListingTypedFileContent = """requirements:
+  - class: InitialWorkDirRequirement
+    listing:
+      - checksum: sha1$abc
+        class: File
+        path: /tmp/in.txt
+        basename: in.txt
+        size: 42
+        arc:file note: keep file overflow
+      - class: Directory
+        listing: [out.txt]
+        path: /tmp/out
+        basename: out
+        arc:dir note: keep dir overflow"""

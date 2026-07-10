@@ -745,3 +745,217 @@ steps:
       in1: input1
     out: [out]"""
 
+let workflowWithSequencePortsAndCommentsFile = """#!/usr/bin/env cwl-runner
+
+cwlVersion: v1.2
+class: Workflow
+doc: |
+  Workflow doc line.
+  # This line is doc text, not a YAML comment.
+inputs:
+# Primary input
+- id: input_data
+  type: File
+  doc: A file input for processing
+- id: param_value
+  type: double
+  default: 0.5
+outputs:
+# Primary output
+- id: result_data
+  type: File
+  outputSource: process_step/result_data
+- id: merged_output
+  type: File
+  outputSource: combine_step/merged_output
+steps:
+# First step
+- id: process_step
+  run: ./tools/process_step.cwl
+  in: []
+  out: [result_data]
+# Second step
+- id: combine_step
+  run: ./tools/combine_step.cwl
+  in:
+  - id: component_files
+    source:
+    - process_step/result_data
+  - id: action
+    valueFrom: "merge_properties"
+  out: [merged_output]"""
+
+let workflowWithBlankSeparatedSequenceFieldsFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+
+
+- id: trial_id
+  type: string
+
+- id: sensorthingsapi_url
+  type: string
+outputs:
+
+- id: result
+  type: File
+  outputSource: collect/result
+steps:
+
+- id: collect
+  run: ./collect.cwl
+  in:
+
+  - id: trial_id
+    source: trial_id
+
+  - id: sensorthingsapi_url
+    source: sensorthingsapi_url
+  out: [result]"""
+
+let workflowWithLowerIndentedCommentMapInputsFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  first:
+    type: string
+# group comment between map entries
+  second:
+    type: string
+outputs: []
+steps: {}"""
+
+let workflowWithLowerIndentedCommentBeforeSequenceInputFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+# group comment before sequence item
+  - id: first
+    type: string
+outputs: []
+steps: {}"""
+
+let workflowWithMultilineValueFromFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  source_reads:
+    type: File?
+outputs: []
+steps:
+  expr_step:
+    run:
+      class: ExpressionTool
+      inputs:
+        reads:
+          type: File?
+      outputs:
+        out:
+          type: File[]?
+      expression: ${ return {"out": inputs.reads ? [inputs.reads] : null}; }
+    in:
+      reads:
+        source: source_reads
+        valueFrom:
+          ${
+            var reads = null;
+            if (self !== null) { reads = [self]; }
+            return reads;
+          }
+    out: [out]"""
+
+let workflowWithOptionalArrayInputTypesFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  optional_files:
+    type: File[]?
+  optional_dirs:
+    type: Directory[]?
+outputs: []
+steps: {}"""
+
+let workflowWithInlineSchemaUnionTypesFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  mode:
+    type:
+      - "null"
+      - type: enum
+        name: Mode
+        symbols: [fast, stringent]
+  record_payload:
+    type:
+      - "null"
+      - type: record
+        name: Payload
+        fields:
+          sample_id: string
+          files:
+            type: File[]
+outputs: []
+steps: {}"""
+
+let workflowWithUnnamedMalformedEntriesFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+- id: valid_input
+  type: string
+- not_a_cwl_port: true
+outputs:
+- id: valid_output
+  type: File
+  outputSource: step1/out
+- [not, a, cwl, output]
+steps:
+- "not a workflow step"
+- id: step1
+  run: ./tool.cwl
+  in:
+  - id: in1
+    source: valid_input
+  - not_a_step_input: true
+  out: [out]"""
+
+let workflowWithMalformedNamedInputFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+- id: broken_input
+  doc: Missing required type.
+outputs:
+- id: result
+  type: File
+  outputSource: step1/out
+steps:
+- id: step1
+  run: ./tool.cwl
+  in: []
+  out: [out]"""
+
+let workflowWithUnknownPortFieldsFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+- id: sample
+  type:
+    type: File
+    arc:type note: keep input type note
+  inputBinding:
+    prefix: --sample
+    arc:binding note: keep input binding note
+  arc:note: keep input note
+outputs:
+- id: result
+  type:
+    type: File
+    arc:type note: keep output type note
+  outputSource: step1/out
+  outputBinding:
+    glob: result.txt
+    arc:binding note: keep output binding note
+  arc:note: keep output note
+steps:
+- id: step1
+  run: ./tool.cwl
+  arc:step note: keep step note
+  in:
+    sample:
+      source: sample
+      arc:step input note: keep step input note
+  out: [out]"""
+

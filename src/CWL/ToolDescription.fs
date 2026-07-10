@@ -2,12 +2,20 @@ namespace ARCtrl.CWL
 
 open DynamicObj
 open Fable.Core
+open YAMLicious.YAMLiciousTypes
 
 [<AttachMembers>]
 type CWLToolDescription (
         outputs: ResizeArray<CWLOutput>,
         ?cwlVersion: string,
         ?baseCommand: ResizeArray<string>,
+        ?arguments: YAMLElement,
+        ?stdin: string,
+        ?stderr: string,
+        ?stdout: string,
+        ?successCodes: ResizeArray<int>,
+        ?temporaryFailCodes: ResizeArray<int>,
+        ?permanentFailCodes: ResizeArray<int>,
         ?requirements: ResizeArray<Requirement>,
         ?hints: ResizeArray<HintEntry>,
         ?intent: ResizeArray<string>,
@@ -23,6 +31,13 @@ type CWLToolDescription (
     let mutable _cwlVersion: string = cwlVersion |> Option.defaultValue "v1.2"
     let mutable _outputs: ResizeArray<CWLOutput> = outputs
     let mutable _baseCommand: ResizeArray<string> option = baseCommand
+    let mutable _arguments: YAMLElement option = arguments
+    let mutable _stdin: string option = stdin
+    let mutable _stderr: string option = stderr
+    let mutable _stdout: string option = stdout
+    let mutable _successCodes: ResizeArray<int> option = successCodes
+    let mutable _temporaryFailCodes: ResizeArray<int> option = temporaryFailCodes
+    let mutable _permanentFailCodes: ResizeArray<int> option = permanentFailCodes
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<HintEntry> option = hints
     let mutable _intent: ResizeArray<string> option = intent
@@ -46,6 +61,34 @@ type CWLToolDescription (
     member this.BaseCommand
         with get() = _baseCommand
         and set(baseCommand) = _baseCommand <- baseCommand
+
+    member this.Arguments
+        with get() = _arguments
+        and set(value) = _arguments <- value
+
+    member this.Stdin
+        with get() = _stdin
+        and set(value) = _stdin <- value
+
+    member this.Stderr
+        with get() = _stderr
+        and set(value) = _stderr <- value
+
+    member this.Stdout
+        with get() = _stdout
+        and set(value) = _stdout <- value
+
+    member this.SuccessCodes
+        with get() = _successCodes
+        and set(value) = _successCodes <- value
+
+    member this.TemporaryFailCodes
+        with get() = _temporaryFailCodes
+        and set(value) = _temporaryFailCodes <- value
+
+    member this.PermanentFailCodes
+        with get() = _permanentFailCodes
+        and set(value) = _permanentFailCodes <- value
 
     member this.Requirements
         with get() = _requirements
@@ -74,6 +117,28 @@ type CWLToolDescription (
     member this.Doc
         with get() = _doc
         and set(doc) = _doc <- doc
+
+    static member KnownFieldNames =
+        Set [|
+            "inputs"
+            "outputs"
+            "class"
+            "id"
+            "label"
+            "doc"
+            "intent"
+            "requirements"
+            "hints"
+            "cwlVersion"
+            "baseCommand"
+            "arguments"
+            "stdin"
+            "stderr"
+            "stdout"
+            "successCodes"
+            "temporaryFailCodes"
+            "permanentFailCodes"
+        |]
 
     /// Returns the tool's inputs or an empty ResizeArray if None.
     static member getInputsOrEmpty (tool: CWLToolDescription) =

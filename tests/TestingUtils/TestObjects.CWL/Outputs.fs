@@ -32,6 +32,22 @@ module CSV =
 
     let outputCSVGlobStr = "*.csv"
 
-    let outputCSVGlob = {Glob = Some outputCSVGlobStr}
+    let outputCSVGlob = OutputBinding.create(glob = outputCSVGlobStr)
 
     let outputCSV = CWLOutput(outputCSVName, outputCSVType, outputBinding = outputCSVGlob)
+
+
+let specOutputFieldsDecodeFileContent = """outputs:
+  result:
+    label: Result
+    outputBinding:
+      outputEval: $(self[0])
+      glob: "*.txt"
+      loadListing: deep_listing
+      loadContents: true
+    secondaryFiles: .idx
+    type: File
+    outputSource: step/out
+    doc: Result docs
+    streamable: true
+    format: edam:format_2330"""

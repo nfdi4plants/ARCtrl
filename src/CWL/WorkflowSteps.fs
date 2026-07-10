@@ -59,20 +59,102 @@ type ScatterMethod =
         | _ -> None
 
 [<AttachMembers>]
-type StepInput = {
-    Id: string
-    Source: ResizeArray<string> option
-    DefaultValue: YAMLElement option
-    ValueFrom: string option
-    LinkMerge: LinkMergeMethod option
-    PickValue: PickValueMethod option
-    Doc: string option
-    LoadContents: bool option
-    LoadListing: string option
-    Label: string option
-}
+type StepInput (
+    id: string,
+    ?source: ResizeArray<string>,
+    ?defaultValue: YAMLElement,
+    ?valueFrom: string,
+    ?linkMerge: LinkMergeMethod,
+    ?pickValue: PickValueMethod,
+    ?doc: string,
+    ?loadContents: bool,
+    ?loadListing: string,
+    ?label: string
+) =
+    inherit DynamicObj ()
 
-    with
+    let mutable _id = id
+    let mutable _source = source
+    let mutable _defaultValue = defaultValue
+    let mutable _valueFrom = valueFrom
+    let mutable _linkMerge = linkMerge
+    let mutable _pickValue = pickValue
+    let mutable _doc = doc
+    let mutable _loadContents = loadContents
+    let mutable _loadListing = loadListing
+    let mutable _label = label
+
+    member this.Id
+        with get() = _id
+        and set(value) = _id <- value
+
+    member this.Source
+        with get() = _source
+        and set(value) = _source <- value
+
+    member this.DefaultValue
+        with get() = _defaultValue
+        and set(value) = _defaultValue <- value
+
+    member this.ValueFrom
+        with get() = _valueFrom
+        and set(value) = _valueFrom <- value
+
+    member this.LinkMerge
+        with get() = _linkMerge
+        and set(value) = _linkMerge <- value
+
+    member this.PickValue
+        with get() = _pickValue
+        and set(value) = _pickValue <- value
+
+    member this.Doc
+        with get() = _doc
+        and set(value) = _doc <- value
+
+    member this.LoadContents
+        with get() = _loadContents
+        and set(value) = _loadContents <- value
+
+    member this.LoadListing
+        with get() = _loadListing
+        and set(value) = _loadListing <- value
+
+    member this.Label
+        with get() = _label
+        and set(value) = _label <- value
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? StepInput as other ->
+            this.Id = other.Id &&
+            this.Source = other.Source &&
+            this.DefaultValue = other.DefaultValue &&
+            this.ValueFrom = other.ValueFrom &&
+            this.LinkMerge = other.LinkMerge &&
+            this.PickValue = other.PickValue &&
+            this.Doc = other.Doc &&
+            this.LoadContents = other.LoadContents &&
+            this.LoadListing = other.LoadListing &&
+            this.Label = other.Label &&
+            DynamicObjHelpers.dynamicPropertiesEqual this other
+        | _ -> false
+
+    override this.GetHashCode() =
+        hash (
+            this.Id,
+            this.Source,
+            this.DefaultValue,
+            this.ValueFrom,
+            this.LinkMerge,
+            this.PickValue,
+            this.Doc,
+            this.LoadContents,
+            this.LoadListing,
+            this.Label,
+            DynamicObjHelpers.hashDynamicProperties this
+        )
+
     static member create(
         id: string,
         ?source: ResizeArray<string>,
@@ -85,16 +167,32 @@ type StepInput = {
         ?loadListing: string,
         ?label: string
     ) =
-        { Id = id
-          Source = source
-          DefaultValue = defaultValue
-          ValueFrom = valueFrom
-          LinkMerge = linkMerge
-          PickValue = pickValue
-          Doc = doc
-          LoadContents = loadContents
-          LoadListing = loadListing
-          Label = label }
+        StepInput(
+            id,
+            ?source = source,
+            ?defaultValue = defaultValue,
+            ?valueFrom = valueFrom,
+            ?linkMerge = linkMerge,
+            ?pickValue = pickValue,
+            ?doc = doc,
+            ?loadContents = loadContents,
+            ?loadListing = loadListing,
+            ?label = label
+        )
+
+    static member KnownFieldNames =
+        Set [|
+            "id"
+            "source"
+            "default"
+            "valueFrom"
+            "linkMerge"
+            "pickValue"
+            "doc"
+            "loadContents"
+            "loadListing"
+            "label"
+        |]
 
     /// Updates a StepInput at the given index.
     static member updateAt (index: int) (f: StepInput -> StepInput) (inputs: ResizeArray<StepInput>) =
@@ -103,13 +201,30 @@ type StepInput = {
         inputs.[index] <- f inputs.[index]
 
 [<AttachMembers>]
-type StepOutputParameter = {
-    Id: string
-}
+type StepOutputParameter (id: string) =
+    inherit DynamicObj ()
 
-    with
+    let mutable _id = id
+
+    member this.Id
+        with get() = _id
+        and set(value) = _id <- value
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? StepOutputParameter as other ->
+            this.Id = other.Id &&
+            DynamicObjHelpers.dynamicPropertiesEqual this other
+        | _ -> false
+
+    override this.GetHashCode() =
+        hash (this.Id, DynamicObjHelpers.hashDynamicProperties this)
+
     static member create(id: string) =
-        { Id = id }
+        StepOutputParameter(id)
+
+    static member KnownFieldNames =
+        Set [| "id" |]
 
 [<AttachMembers>]
 type StepOutput =
@@ -222,6 +337,21 @@ type WorkflowStep (
             ?requirements = requirements,
             ?hints = hints
         )
+
+    static member KnownFieldNames =
+        Set [|
+            "id"
+            "run"
+            "in"
+            "out"
+            "requirements"
+            "hints"
+            "label"
+            "doc"
+            "scatter"
+            "scatterMethod"
+            "when"
+        |]
 
     /// Updates a workflow step input by index.
     static member updateInputAt (index: int) (f: StepInput -> StepInput) (step: WorkflowStep) =
