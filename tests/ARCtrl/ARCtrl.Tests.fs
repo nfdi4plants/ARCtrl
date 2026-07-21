@@ -2498,7 +2498,7 @@ let tests_ROCrate =
             let arc' = ARC.fromROCrateJsonString(roCrate)
             Expect.testFileSystemTree arc'.FileSystem.Tree arc.FileSystem.Tree 
             Expect.equal arc'.Assays[0] arc.Assays[0] "Assays should be equal"
-        ftestCase "PersonGetsMergedOneORCID" <| fun _ ->
+        testCase "PersonGetsMergedOneORCID" <| fun _ ->
             let pWithORCID = Person(firstName = "John", lastName = "Doe", orcid = "0000-0003-3925-6778", email = "john.doe@example.com")
             let pWithoutORCID = Person(firstName = "John", lastName = "Doe", phone = "123456")
             let arc = ARC("MyInvestigation", title = "MyTitle")
@@ -2515,6 +2515,20 @@ let tests_ROCrate =
             Expect.equal phone "123456" "Person with ORCID should have correct phone"
             let p2 = graph.TryGetNode(ROCrate.LDPerson.genId(givenName = "John", familyName = "Doe"))
             Expect.isNone p2 "Person without ORCID should not be present in graph"
+        testCase "PersonDoesNotGetMergedWithPublication" <| fun _ ->
+            let p = Person(firstName = "John", lastName = "Doe")
+            let pub = Publication(title = "MyPublication", authors = "John Doe")
+            let arc = ARC("MyInvestigation", title = "MyTitle")
+            arc.Contacts.Add(p)
+            arc.Publications.Add(pub)
+            let roCrate = arc.ToROCrateJsonString()
+            let graph = JsonController.LDGraph.fromROCrateJsonString(roCrate)
+            let p1O = graph.TryGetNode(ROCrate.LDPerson.genId(givenName = "John", familyName = "Doe"))
+            let p1 = Expect.wantSome p1O "Person should be present in graph"
+            let givenNames = p1.GetPropertyValues(ROCrate.LDPerson.givenName, ?context = graph.TryGetContext())
+            Expect.hasLength givenNames 1 "Person should have one given name"
+            let gn = try givenNames.[0] :?> string |> Some with | _ -> None
+            Expect.equal gn (Some "John") "Person should have correct given name"
     ]
 
 
