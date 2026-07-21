@@ -510,9 +510,10 @@ type WorkflowConversion =
             | Some pu -> WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(workflowFilePath, pu, workflowName = workflow.Identifier)
             | None -> failwithf "Workflow %s must have a CWL description" workflow.Identifier
         let publisher = LDOrganization.create("DataPLANT")
+        let persons = workflow.Investigation |> Option.map (fun inv -> seq(inv.GetAllPersons()))
         let creators =
             workflow.Contacts
-            |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
+            |> ResizeArray.map (fun c -> PersonConversion.composePerson(c, ?persons = persons))
             |> Option.fromSeq
         let dateCreated = System.DateTime.UtcNow
         if creators.IsSome then

@@ -183,9 +183,10 @@ type RunConversion =
         let measurementMethod = run.TechnologyType |> Option.map BaseTypes.composeDefinedTerm
         let measurementTechnique = run.TechnologyPlatform |> Option.map BaseTypes.composeDefinedTerm
         let variableMeasured = run.MeasurementType |> Option.map BaseTypes.composePropertyValueFromOA
+        let persons = run.Investigation |> Option.map (fun i -> seq (i.GetAllPersons()))
         let creators = 
             run.Performers
-            |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
+            |> ResizeArray.map (fun c -> PersonConversion.composePerson(c, ?persons = persons))
             |> Option.fromSeq
         let publisher = LDOrganization.create("DataPLANT")
         let dateCreated = System.DateTime.UtcNow

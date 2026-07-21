@@ -2498,8 +2498,23 @@ let tests_ROCrate =
             let arc' = ARC.fromROCrateJsonString(roCrate)
             Expect.testFileSystemTree arc'.FileSystem.Tree arc.FileSystem.Tree 
             Expect.equal arc'.Assays[0] arc.Assays[0] "Assays should be equal"
-                    
-        
+        ftestCase "PersonGetsMergedOneORCID" <| fun _ ->
+            let pWithORCID = Person(firstName = "John", lastName = "Doe", orcid = "0000-0003-3925-6778", email = "john.doe@example.com")
+            let pWithoutORCID = Person(firstName = "John", lastName = "Doe", phone = "123456")
+            let arc = ARC("MyInvestigation", title = "MyTitle")
+            let assay = arc.InitAssay("MyAssay")
+            assay.Performers.Add(pWithORCID)
+            arc.Contacts.Add(pWithoutORCID)
+            let roCrate = arc.ToROCrateJsonString()
+            let graph = JsonController.LDGraph.fromROCrateJsonString(roCrate)
+            let p1O = graph.TryGetNode(ROCrate.LDPerson.genId(givenName = "John", familyName = "Doe", orcid = "0000-0003-3925-6778"))
+            let p1 = Expect.wantSome p1O "Person with ORCID should be present in graph"
+            let email = Expect.wantSome (ROCrate.LDPerson.tryGetEmailAsString(p1, ?context = graph.TryGetContext())) "Person with ORCID should have email"
+            Expect.equal email "john.doe@example.com" "Person with ORCID should have correct email"
+            let phone = Expect.wantSome (ROCrate.LDPerson.tryGetTelephoneAsString(p1, ?context = graph.TryGetContext())) "Person with ORCID should have phone"
+            Expect.equal phone "123456" "Person with ORCID should have correct phone"
+            let p2 = graph.TryGetNode(ROCrate.LDPerson.genId(givenName = "John", familyName = "Doe"))
+            Expect.isNone p2 "Person without ORCID should not be present in graph"
     ]
 
 

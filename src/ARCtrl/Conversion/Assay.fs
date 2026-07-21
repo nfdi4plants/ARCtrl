@@ -66,9 +66,10 @@ type AssayConversion =
         let measurementMethod = assay.TechnologyType |> Option.map BaseTypes.composeDefinedTerm
         let measurementTechnique = assay.TechnologyPlatform |> Option.map BaseTypes.composeDefinedTerm
         let variableMeasured = assay.MeasurementType |> Option.map BaseTypes.composePropertyValueFromOA
+        let persons = assay.Investigation |> Option.map (fun i -> seq (i.GetAllPersons()))
         let creators = 
             assay.Performers
-            |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
+            |> ResizeArray.map (fun c -> PersonConversion.composePerson(c, ?persons = persons))
             |> Option.fromSeq
         let processSequence = 
             ArcTables(assay.Tables).GetProcesses(assayName = assay.Identifier, ?fs = fs)
