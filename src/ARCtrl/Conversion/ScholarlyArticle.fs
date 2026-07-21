@@ -15,10 +15,12 @@ open ARCtrl.Helper.Regex.ActivePatterns
 type ScholarlyArticleConversion =
 
     static member composeAuthor (author : string) : LDNode =
-        try 
+        try
             ARCtrl.Json.Decode.fromJsonString Json.LDNode.decoder author
         with
-        | _ -> LDPerson.create(givenName = author)
+        | _ ->
+            let id = $"#Author_{author}"
+            LDPerson.create(id = id, givenName = author)
 
     static member splitAuthors (a : string) =
         let mutable bracketCount = 0

@@ -2472,6 +2472,11 @@ let tests_ROCrate =
             Expect.sequenceEqual inputCol.Cells expectedCells "First table input column should have correct cells"
             // Assays
             Expect.equal arc.AssayCount 2 "ARC should contain 2 assays"
+        // to-do: check in again
+        ptestCase "ReadWriteEquality" <| fun _ ->
+            let arc = ARC.fromROCrateJsonString(TestObjects.ROCrate.ArcPrototype.ed123499)
+            let roCrate = arc.ToROCrateJsonString(2)
+            Expect.equal roCrate TestObjects.ROCrate.ArcPrototype.ed123499 "RO-Crate JSON should be equal"
         testCase "IncludeFilesystem" <| fun _ ->
             let arc = ARC("MyARC", title = "MyTitle", description = "MyDescription")
             let assay = arc.InitAssay("MyAssay")
