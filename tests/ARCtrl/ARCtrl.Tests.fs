@@ -2472,6 +2472,11 @@ let tests_ROCrate =
             Expect.sequenceEqual inputCol.Cells expectedCells "First table input column should have correct cells"
             // Assays
             Expect.equal arc.AssayCount 2 "ARC should contain 2 assays"
+        // to-do: check in again
+        ptestCase "ReadWriteEquality" <| fun _ ->
+            let arc = ARC.fromROCrateJsonString(TestObjects.ROCrate.ArcPrototype.ed123499)
+            let roCrate = arc.ToROCrateJsonString(2)
+            Expect.equal roCrate TestObjects.ROCrate.ArcPrototype.ed123499 "RO-Crate JSON should be equal"
         testCase "IncludeFilesystem" <| fun _ ->
             let arc = ARC("MyARC", title = "MyTitle", description = "MyDescription")
             let assay = arc.InitAssay("MyAssay")
@@ -2493,8 +2498,37 @@ let tests_ROCrate =
             let arc' = ARC.fromROCrateJsonString(roCrate)
             Expect.testFileSystemTree arc'.FileSystem.Tree arc.FileSystem.Tree 
             Expect.equal arc'.Assays[0] arc.Assays[0] "Assays should be equal"
-                    
-        
+        testCase "PersonGetsMergedOneORCID" <| fun _ ->
+            let pWithORCID = Person(firstName = "John", lastName = "Doe", orcid = "0000-0003-3925-6778", email = "john.doe@example.com")
+            let pWithoutORCID = Person(firstName = "John", lastName = "Doe", phone = "123456")
+            let arc = ARC("MyInvestigation", title = "MyTitle")
+            let assay = arc.InitAssay("MyAssay")
+            assay.Performers.Add(pWithORCID)
+            arc.Contacts.Add(pWithoutORCID)
+            let roCrate = arc.ToROCrateJsonString()
+            let graph = JsonController.LDGraph.fromROCrateJsonString(roCrate)
+            let p1O = graph.TryGetNode(ROCrate.LDPerson.genId(givenName = "John", familyName = "Doe", orcid = "0000-0003-3925-6778"))
+            let p1 = Expect.wantSome p1O "Person with ORCID should be present in graph"
+            let email = Expect.wantSome (ROCrate.LDPerson.tryGetEmailAsString(p1, ?context = graph.TryGetContext())) "Person with ORCID should have email"
+            Expect.equal email "john.doe@example.com" "Person with ORCID should have correct email"
+            let phone = Expect.wantSome (ROCrate.LDPerson.tryGetTelephoneAsString(p1, ?context = graph.TryGetContext())) "Person with ORCID should have phone"
+            Expect.equal phone "123456" "Person with ORCID should have correct phone"
+            let p2 = graph.TryGetNode(ROCrate.LDPerson.genId(givenName = "John", familyName = "Doe"))
+            Expect.isNone p2 "Person without ORCID should not be present in graph"
+        testCase "PersonDoesNotGetMergedWithPublication" <| fun _ ->
+            let p = Person(firstName = "John", lastName = "Doe")
+            let pub = Publication(title = "MyPublication", authors = "John Doe")
+            let arc = ARC("MyInvestigation", title = "MyTitle")
+            arc.Contacts.Add(p)
+            arc.Publications.Add(pub)
+            let roCrate = arc.ToROCrateJsonString()
+            let graph = JsonController.LDGraph.fromROCrateJsonString(roCrate)
+            let p1O = graph.TryGetNode(ROCrate.LDPerson.genId(givenName = "John", familyName = "Doe"))
+            let p1 = Expect.wantSome p1O "Person should be present in graph"
+            let givenNames = p1.GetPropertyValues(ROCrate.LDPerson.givenName, ?context = graph.TryGetContext())
+            Expect.hasLength givenNames 1 "Person should have one given name"
+            let gn = try givenNames.[0] :?> string |> Some with | _ -> None
+            Expect.equal gn (Some "John") "Person should have correct given name"
     ]
 
 

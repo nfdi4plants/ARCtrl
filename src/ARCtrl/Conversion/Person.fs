@@ -48,7 +48,20 @@ type PersonConversion =
             |> ARCtrl.Json.Encode.toJsonString 0
         | _ -> failwith "Address must be a string or a Json.LDNode"
 
-    static member composePerson (person : ARCtrl.Person) =
+    static member composePerson (person : ARCtrl.Person, ?persons : ARCtrl.Person seq) =
+        let orcid =
+            match person.ORCID with
+            | Some o -> 
+                match ORCID.tryGetOrcidNumber o with
+                | Some n -> Some n
+                | None -> failwithf "Invalid ORCID: %s" o
+            | None ->
+                match persons with
+                | Some ps ->
+                    ps
+                    |> Seq.tryFind (fun p -> p.FirstName = person.FirstName && p.LastName = person.LastName)
+                    |> Option.bind (fun p -> p.ORCID)
+                | None -> None
         let givenName =
             match person.FirstName with
             | Some fn -> fn
@@ -67,7 +80,7 @@ type PersonConversion =
         let affiliation = 
             person.Affiliation
             |> Option.map PersonConversion.composeAffiliation
-        LDPerson.create(givenName, ?orcid = person.ORCID, ?affiliation = affiliation, ?email = person.EMail, ?familyName = person.LastName, ?jobTitles = jobTitles, ?additionalName = person.MidInitials, ?address = address, ?disambiguatingDescriptions = disambiguatingDescriptions, ?faxNumber = person.Fax, ?telephone = person.Phone)
+        LDPerson.create(givenName, ?orcid = orcid, ?affiliation = affiliation, ?email = person.EMail, ?familyName = person.LastName, ?jobTitles = jobTitles, ?additionalName = person.MidInitials, ?address = address, ?disambiguatingDescriptions = disambiguatingDescriptions, ?faxNumber = person.Fax, ?telephone = person.Phone)
 
     static member decomposePerson (person : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let orcid = ORCID.tryGetOrcidNumber person.Id

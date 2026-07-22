@@ -58,7 +58,9 @@ let fulfillWriteContractAsync (forceOverwrite : bool) basePath (c : Contract) =
     crossAsync {
         try
             let! exists = FileSystemHelper.fileExistsAsync (ArcPathHelper.combine basePath c.Path)
-            if exists && not forceOverwrite then
+            if exists && c.Path.EndsWith(".gitkeep") then 
+                return Ok (c)
+            elif exists && not forceOverwrite then
                 return Error (sprintf "Contract %s already exists and overwrite is not allowed" c.Path)
             else
             match c.DTO with

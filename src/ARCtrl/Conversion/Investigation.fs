@@ -26,7 +26,7 @@ type InvestigationConversion =
             |> Option.fromSeq
         let creators =
             investigation.Contacts
-            |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
+            |> ResizeArray.map (fun c -> PersonConversion.composePerson(c, persons = seq (investigation.GetAllPersons())))
             |> Option.fromSeq
         let comments = 
             investigation.Comments
