@@ -1,3 +1,11 @@
+### 3.1.1+3dd44f72 (Released 2026-7-22)
+* Additions:
+    * [[#fba76c8b](https://github.com/nfdi4plants/ARCtrl/commit/fba76c8bb5c78e1692f88e971eebcd945eb1b6c0)] merge persons with and without orcid when writing ro-crate
+    * [[#d59dc81c](https://github.com/nfdi4plants/ARCtrl/commit/d59dc81c8837bee85b717e31c1e4d7dab6423473)] add test against merging of same name persons
+    * [[#a9734c1d](https://github.com/nfdi4plants/ARCtrl/commit/a9734c1dfd827edcb752264ce4c57c503b120b22)] small safeguard to stop writers failing on existing .gitkeep
+* Bugfixes:
+    * [[#bab9035c](https://github.com/nfdi4plants/ARCtrl/commit/bab9035c2d00ff11eb8e639a0c5be64e1ae9c7fb)] start working on some Author-related RO-Crate conversion fixes
+
 ### 3.1.0+a36ace7f (Released 2026-6-22)
 * Additions:
     * [[#c9df71d5](https://github.com/nfdi4plants/ARCtrl/commit/c9df71d587af8b4449ac2c97809739b367ac7cc4)] add forceOverwrite flag to write contract handling
