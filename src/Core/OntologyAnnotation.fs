@@ -154,9 +154,13 @@ type OntologyAnnotation(?name,?tsr,?tan, (*?tanInfo, *)?comments) =
     member this.isEmpty() = 
            this.Name.IsNone && this.TermSourceREF.IsNone && this.TermAccessionNumber.IsNone && this.Comments.Count = 0
 
-    override this.GetHashCode() = 
+    override this.GetHashCode() =
         // Same as above but don't create unneccessary arrays
-        let nameHash = 
+        // HashCodes.hashString rather than the built-in `hash`: Fable's Python `string_hash`
+        // saturates at Int32.MaxValue for strings of ~10 characters or more, so distinct
+        // annotations would otherwise share a hash code and compare equal.
+        let hash = HashCodes.hashString
+        let nameHash =
             match this.Name with
             | Some name -> hash name
             | None -> 0
@@ -207,6 +211,11 @@ type OntologyAnnotation(?name,?tsr,?tan, (*?tanInfo, *)?comments) =
 
         //HashCodes.hash this = HashCodes.hash obj
    
+    // Fable/Python: exposes __lt__/__le__/__gt__/__ge__ from CompareTo. Without it, structural
+    // comparison of a container holding OntologyAnnotations falls through to Python's own element
+    // ordering and raises, because `fable_library.util.compare` has no case for Fable's native Array.
+    interface Fable.Core.Py.Comparable
+
     interface System.IComparable with
         member this.CompareTo(obj) =
             match obj with
