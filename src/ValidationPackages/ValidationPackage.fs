@@ -22,6 +22,9 @@ type ValidationPackage(name, ?version) =
     member this.Copy() =
         ValidationPackage.make this.Name this.Version
 
+    // Fable/Python: emits __str__ from ToString(); without this marker `string x` yields the default object repr.
+    interface Py.Stringable
+
     /// Pretty printer 
     override this.ToString() =
         [

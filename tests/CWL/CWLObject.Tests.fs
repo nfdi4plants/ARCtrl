@@ -512,9 +512,11 @@ expression: $(null)"""
             let et = Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolLoadContentsFile
             let inputs = Expect.wantSome et.Inputs "Inputs should be present"
             let inp = inputs.[0]
-            match inp.Type_ with
-            | Some (File _) -> ()
-            | other -> Expect.isTrue false $"Expected File type but got %A{other}"
+            // Asserted via `if`/bool rather than a `match` with a unit success branch: Fable's
+            // Python backend drops empty branches from a match in statement position, which would
+            // leave `Expect.isTrue false` unconditional and make this assertion always fail.
+            let isFile = match inp.Type_ with Some (File _) -> true | _ -> false
+            Expect.isTrue isFile $"Expected File type but got %A{inp.Type_}"
             Expect.stringContains et.Expression "parseInt" "Expression should use parseInt"
         testCase "pool output ExpressionTool expression roundtrips" <| fun _ ->
             let decoded = Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolPoolOutRoundtripFile
@@ -529,7 +531,7 @@ expression: $(null)"""
             Expect.stringContains roundTripped.Expression "inputs.directory_single" "directory_single input reference should survive roundtrip."
             Expect.stringContains roundTripped.Expression "inputs.file_single" "file_single input reference should survive roundtrip."
             Expect.stringContains roundTripped.Expression "inputs.newname" "newname input reference should survive roundtrip."
-            Expect.stringContains roundTripped.Expression "class: Directory" "Directory class literal should survive roundtrip."
+            Expect.stringContains roundTripped.Expression "class: \"Directory\"" "Directory class literal should survive roundtrip."
             Expect.stringContains roundTripped.Expression "listing: outputList" "listing assignment should survive roundtrip."
     ]
 

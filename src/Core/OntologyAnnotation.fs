@@ -129,6 +129,9 @@ type OntologyAnnotation(?name,?tsr,?tan, (*?tanInfo, *)?comments) =
         member this.PrintCompact() =
             "OA " + this.NameText
 
+    // Fable/Python: emits __str__ from ToString(); without this marker `string x` yields the default object repr.
+    interface Py.Stringable
+
     override this.ToString() =
         let sb = System.Text.StringBuilder()
         sb.Append("{") |> ignore

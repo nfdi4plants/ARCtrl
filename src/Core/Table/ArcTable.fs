@@ -844,6 +844,9 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         let alignedheaders,alignedCells = ArcTableAux.Unchecked.alignByHeaders false (thisCells @ otherCells)
         ArcTable.fromArcTableValues(table1.Name,alignedheaders,alignedCells)
 
+    // Fable/Python: emits __str__ from ToString(); without this marker `string x` yields the default object repr.
+    interface Py.Stringable
+
     /// Pretty printer
     override this.ToString() =
         let rowCount = this.RowCount

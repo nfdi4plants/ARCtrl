@@ -340,10 +340,12 @@ let testCWLWorkflowDescriptionDecode =
             | other ->
                 Expect.isTrue false $"Expected int[] but got %A{other}"
 
-            match step2.Inputs.Value.[0].Type_ with
-            | Some (Array _) -> ()
-            | other ->
-                Expect.isTrue false $"step2 input should be int[] but got %A{other}"
+            // Asserted via `if`/bool rather than a `match` with a unit success branch: Fable's
+            // Python backend drops empty branches from a match in statement position, which would
+            // leave `Expect.isTrue false` unconditional and make this assertion always fail.
+            let step2InputType = step2.Inputs.Value.[0].Type_
+            let isArray = match step2InputType with Some (Array _) -> true | _ -> false
+            Expect.isTrue isArray $"step2 input should be int[] but got %A{step2InputType}"
 
             Expect.equal step3.Outputs.[0].Type_ (Some CWLType.Int) "step3 output should be int"
         testCase "step-level loadContents with valueFrom on ExpressionTool" <| fun _ ->

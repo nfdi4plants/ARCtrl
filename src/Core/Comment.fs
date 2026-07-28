@@ -44,6 +44,9 @@ type Comment(?name, ?value) =
         |> HashCodes.boxHashArray
         |> fun x -> x :?> int
 
+    // Fable/Python: emits __str__ from ToString(); without this marker `string x` yields the default object repr.
+    interface Py.Stringable
+
     override this.ToString() =
         let sb = System.Text.StringBuilder()
         sb.Append("Comment {") |> ignore

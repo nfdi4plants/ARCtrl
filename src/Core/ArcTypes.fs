@@ -453,6 +453,9 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
             let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Comments assay.Comments
             this.Comments <- s
 
+    // Fable/Python: emits __str__ from ToString(); without this marker `string x` yields the default object repr.
+    interface Py.Stringable
+
     // Use this for better print debugging and better unit test output
     override this.ToString() =
         sprintf
@@ -1075,6 +1078,9 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     /// <param name="other">The other ArcStudy to test for reference.</param>
     member this.ReferenceEquals (other: ArcStudy) = System.Object.ReferenceEquals(this,other)
 
+    // Fable/Python: emits __str__ from ToString(); without this marker `string x` yields the default object repr.
+    interface Py.Stringable
+
     // Use this for better print debugging and better unit test output
     override this.ToString() =
         sprintf
@@ -1367,6 +1373,9 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     /// </summary>
     /// <param name="other">The other ArcWorkflow to test for reference.</param>
     member this.ReferenceEquals (other: ArcStudy) = System.Object.ReferenceEquals(this,other)
+
+    // Fable/Python: emits __str__ from ToString(); without this marker `string x` yields the default object repr.
+    interface Py.Stringable
 
     // Use this for better print debugging and better unit test output
     override this.ToString() =
@@ -1814,6 +1823,9 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
         if run.Comments.Count <> 0 || updateAlways then
             let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Comments run.Comments
             this.Comments <- s
+
+    // Fable/Python: emits __str__ from ToString(); without this marker `string x` yields the default object repr.
+    interface Py.Stringable
 
     // Use this for better print debugging and better unit test output
     override this.ToString() =
@@ -2990,6 +3002,9 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     /// </summary>
     /// <param name="other">The other ArcInvestigation to test for reference.</param>
     member this.ReferenceEquals (other: ArcInvestigation) = System.Object.ReferenceEquals(this,other)
+
+    // Fable/Python: emits __str__ from ToString(); without this marker `string x` yields the default object repr.
+    interface Py.Stringable
 
     // Use this for better print debugging and better unit test output
     override this.ToString() =

@@ -23,6 +23,9 @@ type ValidationPackagesConfig(validation_packages, ?arc_specification) =
         ValidationPackagesConfig.make this.ValidationPackages this.ARCSpecification
 
 
+    // Fable/Python: emits __str__ from ToString(); without this marker `string x` yields the default object repr.
+    interface Py.Stringable
+
     /// Pretty printer 
     override this.ToString() =
         [
