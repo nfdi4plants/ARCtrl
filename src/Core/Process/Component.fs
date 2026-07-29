@@ -8,7 +8,7 @@ open Regex.ActivePatterns
 type Component = 
     {
         /// This can be the main column value of the component column. (e.g. "SCIEX instrument model" as `OntologyAnnotation`; 14;..)
-        ComponentValue : PropertyValue option
+        ComponentValue : ScalarValue option
         /// This can be the unit describing a non `OntologyAnnotation` value in `ComponentValue`. (e.g. "degree celcius")
         ComponentUnit : OntologyAnnotation option
         /// This can be the component column header (e.g. "instrument model")
@@ -37,9 +37,9 @@ type Component =
     /// Components do not have enough fields in ISA-JSON to include all existing ontology term information. 
     /// This function allows us, to add the same information as `Parameter`, `Characteristics`.., to `Component`. 
     /// Without this string composition we loose the ontology information for the header value.
-    static member composeName (value : PropertyValue) (unit : OntologyAnnotation option) = 
+    static member composeName (value : ScalarValue) (unit : OntologyAnnotation option) = 
         match value,unit with
-        | PropertyValue.Ontology oa, _ ->
+        | ScalarValue.Ontology oa, _ ->
             $"{oa.NameText} ({oa.TermAccessionShort})"
         | v, None ->
             $"{v.Text}"
@@ -58,7 +58,7 @@ type Component =
         match name with
         | Regex unitPattern unitr ->
             let oa = (unitr.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAnnotation 
-            let v =  (unitr.Groups.Item "value").Value      |> PropertyValue.fromString
+            let v =  (unitr.Groups.Item "value").Value      |> ScalarValue.fromString
             let u =  (unitr.Groups.Item "unit").Value
             oa.Name <- Some u
             v, Some oa
@@ -66,13 +66,13 @@ type Component =
             let oa = (r.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAnnotation 
             let v =  (r.Groups.Item "value").Value      
             oa.Name <- Some v
-            PropertyValue.Ontology oa, None
+            ScalarValue.Ontology oa, None
         | Regex emptyOAPattern r ->
             let oa =  OntologyAnnotation((r.Groups.Item "value").Value)
-            let v = PropertyValue.Ontology oa
+            let v = ScalarValue.Ontology oa
             v, None
         | _ -> 
-            PropertyValue.Name (name), None       
+            ScalarValue.Name (name), None       
 
     /// Create a ISAJson Component from ISATab string entries
     static member fromISAString (?name: string, ?term:string, ?source:string, ?accession:string, ?comments : ResizeArray<Comment>) = 
@@ -80,7 +80,7 @@ type Component =
         match name with
         | Some n -> 
             let v,u = Component.decomposeName n
-            Component.make (Option.fromValueWithDefault (PropertyValue.Name "") v) u cType
+            Component.make (Option.fromValueWithDefault (ScalarValue.Name "") v) u cType
         | None ->
             Component.make None None cType
 
@@ -128,5 +128,5 @@ type Component =
         member this.GetValue() = this.ComponentValue
         member this.GetUnit() = this.ComponentUnit
 
-    static member createAsPV (alternateName : string option) (measurementMethod : string option) (description : string option) (category : OntologyAnnotation option) (value : PropertyValue option) (unit : OntologyAnnotation option) =
+    static member createAsPV (alternateName : string option) (measurementMethod : string option) (description : string option) (category : OntologyAnnotation option) (value : ScalarValue option) (unit : OntologyAnnotation option) =
         Component.create(?componentType = category, ?value = value, ?unit = unit)

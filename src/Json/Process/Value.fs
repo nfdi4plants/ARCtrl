@@ -11,21 +11,21 @@ module Value =
 
     module ISAJson = 
 
-        let encoder (idMap : IDTable.IDTableWrite option) (value : PropertyValue) = 
+        let encoder (idMap : IDTable.IDTableWrite option) (value : ScalarValue) = 
             match value with
-            | PropertyValue.Float f -> 
+            | ScalarValue.Float f -> 
                 Encode.float f
-            | PropertyValue.Int i -> 
+            | ScalarValue.Int i -> 
                 Encode.int i
-            | PropertyValue.Name s -> 
+            | ScalarValue.Name s -> 
                 Encode.string s
-            | PropertyValue.Ontology s -> 
+            | ScalarValue.Ontology s -> 
                 OntologyAnnotation.ISAJson.encoder idMap s
 
-        let decoder : Decoder<PropertyValue> =
+        let decoder : Decoder<ScalarValue> =
             Decode.oneOf [
-                Decode.map PropertyValue.Int Decode.int
-                Decode.map PropertyValue.Float Decode.float
-                Decode.map PropertyValue.Ontology OntologyAnnotation.ISAJson.decoder
-                Decode.map PropertyValue.Name Decode.string           
+                Decode.map ScalarValue.Int Decode.int
+                Decode.map ScalarValue.Float Decode.float
+                Decode.map ScalarValue.Ontology OntologyAnnotation.ISAJson.decoder
+                Decode.map ScalarValue.Name Decode.string           
             ]

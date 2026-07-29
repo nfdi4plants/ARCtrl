@@ -7,7 +7,7 @@ type MaterialAttributeValue =
     {
         ID : URI option
         Category : MaterialAttribute option
-        Value : PropertyValue option
+        Value : ScalarValue option
         Unit : OntologyAnnotation option
     
     }
@@ -41,10 +41,10 @@ type MaterialAttributeValue =
         this.Value
         |> Option.map (fun oa ->
             match oa with
-            | PropertyValue.Ontology oa  -> oa.NameText
-            | PropertyValue.Float f -> string f
-            | PropertyValue.Int i   -> string i
-            | PropertyValue.Name s  -> s
+            | ScalarValue.Ontology oa  -> oa.NameText
+            | ScalarValue.Float f -> string f
+            | ScalarValue.Int i   -> string i
+            | ScalarValue.Name s  -> s
         )
         |> Option.defaultValue ""
 
@@ -108,7 +108,7 @@ type MaterialAttributeValue =
         member this.GetUnit() = this.Unit
         member this.GetAdditionalType() = "MaterialAttributeValue"
 
-    static member createAsPV (alternateName : string option) (measurementMethod : string option) (description : string option) (category : OntologyAnnotation option) (value : PropertyValue option) (unit : OntologyAnnotation option) =
+    static member createAsPV (alternateName : string option) (measurementMethod : string option) (description : string option) (category : OntologyAnnotation option) (value : ScalarValue option) (unit : OntologyAnnotation option) =
         let category = category |> Option.map (fun c -> MaterialAttribute.create(CharacteristicType = c))
         MaterialAttributeValue.create(?Category = category, ?Value = value, ?Unit = unit)
 
@@ -117,7 +117,7 @@ type MaterialAttributeValue =
     //    let unit = mv.Unit |> Option.bind (OntologyAnnotation.tryGetNameAsString)
     //    mv.Value
     //    |> Option.map (fun v ->
-    //        let s = v |> PropertyValue.toString
+    //        let s = v |> ScalarValue.toString
     //        match unit with
     //        | Some u -> s + " " + u
     //        | None -> s

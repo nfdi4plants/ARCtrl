@@ -47,10 +47,10 @@ type DataContext(?id,?name : string,?dataType,?format,?selectorFormat, ?explicat
     static member fromData(data : Data, ?explication,?unit,?objectType,?label, ?description,?generatedBy) =
         DataContext(?id = data.ID,?name = data.Name, ?dataType = data.DataType, ?format = data.Format, ?selectorFormat = data.SelectorFormat, ?explication = explication, ?unit = unit, ?objectType = objectType, ?label = label, ?description = description, ?generatedBy = generatedBy, comments = data.Comments)
 
-    static member createAsPV (alternateName : string option) (measurementMethod : string option) (description : string option) (category : OntologyAnnotation option) (value : PropertyValue option) (unit : OntologyAnnotation option) =
+    static member createAsPV (alternateName : string option) (measurementMethod : string option) (description : string option) (category : OntologyAnnotation option) (value : ScalarValue option) (unit : OntologyAnnotation option) =
         let objectType = 
             match value with
-            | Some (PropertyValue.Ontology oa)  -> 
+            | Some (ScalarValue.Ontology oa)  -> 
                 Some oa
             | Some v -> OntologyAnnotation(name = v.Text) |> Some
             | None -> None

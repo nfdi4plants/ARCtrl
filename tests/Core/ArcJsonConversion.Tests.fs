@@ -147,7 +147,7 @@ let private tests_ArcTableProcess =
             let t = singleRowSingleParam.Copy()
             let processes = t.GetProcesses()
             let expectedParam = ProtocolParameter.create(ParameterName = oa_species)
-            let expectedValue = PropertyValue.Ontology oa_chlamy
+            let expectedValue = ScalarValue.Ontology oa_chlamy
             let expectedPPV = ProcessParameterValue.create(Category = expectedParam, Value = expectedValue)
             let expectedInput = Source.create(Name = "Source_0") |> ProcessInput.Source 
             let expectedOutput = Sample.create(Name = "Sample_0") |> ProcessOutput.Sample
@@ -413,7 +413,7 @@ let private tests_ArcTableProcess =
             Expect.equal 1 p.ParameterValues.Value.Length "Should have 1 parameter value"
             let pv = p.ParameterValues.Value.[0]
             let resultValue = Expect.wantSome pv.Value "Should have value"
-            Expect.equal resultValue (PropertyValue.Int 5) "Value should match"
+            Expect.equal resultValue (ScalarValue.Int 5) "Value should match"
             let resultCategory = Expect.wantSome pv.Category "Should have category"
             Expect.equal resultCategory (ProtocolParameter.create(ParameterName = oa_temperature)) "Category should match"
             Expect.isNone pv.Unit "Should have no unit"

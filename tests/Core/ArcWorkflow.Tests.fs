@@ -14,7 +14,7 @@ module Helper =
     let oa_time = OntologyAnnotation("time","PATO","PATO:0000165")
 
     let component_instrument = Process.Component.create(
-        value = PropertyValue.Ontology oa_SCIEXInstrumentModel,
+        value = ScalarValue.Ontology oa_SCIEXInstrumentModel,
         componentType = oa_instrumentModel
     )
 
@@ -183,7 +183,7 @@ let private tests_Copy =
             copy.Version <- Some "2.0.0"
             copy.SubWorkflowIdentifiers.Add("NewSubWorkflow")
             copy.Parameters.Add(OntologyAnnotation("NewParameter"))
-            copy.Components.Add(Process.Component.create(PropertyValue.Ontology (OntologyAnnotation("NewComponent")), OntologyAnnotation("NewComponentType")))
+            copy.Components.Add(Process.Component.create(ScalarValue.Ontology (OntologyAnnotation("NewComponent")), OntologyAnnotation("NewComponentType")))
             copy.Contacts.Add(Person(firstName = "New", lastName = "Person"))
             copy.Comments.Add(Comment.create("New Comment"))
             let expected = create_exampleWorkflow()

@@ -76,7 +76,7 @@ let componentCastingTests =
     testList "ComponentCastingTests" [
         testCase "ComposeNameText" (fun () -> 
             
-            let v = PropertyValue.Name "Test"
+            let v = ScalarValue.Name "Test"
             let u = None
             let expected = "Test"
 
@@ -87,7 +87,7 @@ let componentCastingTests =
         )
         testCase "ComposeNameOntology" (fun () -> 
             
-            let v = OntologyAnnotation("Test", "OBO", "OBO:123") |> PropertyValue.Ontology
+            let v = OntologyAnnotation("Test", "OBO", "OBO:123") |> ScalarValue.Ontology
             let u = None
             let expected = "Test (OBO:123)"
 
@@ -98,7 +98,7 @@ let componentCastingTests =
         )
         testCase "ComposeNameUnit" (fun () -> 
             
-            let v = PropertyValue.Int 10
+            let v = ScalarValue.Int 10
             let u = OntologyAnnotation("degree Celsius", "UO", "UO:123") |> Some
             let expected = "10 degree Celsius (UO:123)"
 
@@ -113,7 +113,7 @@ let componentCastingTests =
 
             let actualV, actualU = Component.decomposeName n
 
-            let expectedV = PropertyValue.Name "Test"
+            let expectedV = ScalarValue.Name "Test"
 
             let expectedU = None
 
@@ -127,7 +127,7 @@ let componentCastingTests =
 
             let actualV, actualU = Component.decomposeName n
 
-            let expectedV = PropertyValue.Name "Test (This component is very important)"
+            let expectedV = ScalarValue.Name "Test (This component is very important)"
 
             let expectedU = None
 
@@ -141,7 +141,7 @@ let componentCastingTests =
 
             let actualV, actualU = Component.decomposeName n
 
-            let expectedV = OntologyAnnotation("Test", "OBO", "OBO:123") |> PropertyValue.Ontology
+            let expectedV = OntologyAnnotation("Test", "OBO", "OBO:123") |> ScalarValue.Ontology
 
             let expectedU = None
 
@@ -154,7 +154,7 @@ let componentCastingTests =
 
             let actualV, actualU = Component.decomposeName n
 
-            let expectedV = OntologyAnnotation("Test") |> PropertyValue.Ontology
+            let expectedV = OntologyAnnotation("Test") |> ScalarValue.Ontology
 
             let expectedU = None
 
@@ -167,7 +167,7 @@ let componentCastingTests =
 
             let actualV, actualU = Component.decomposeName n
 
-            let expectedV = OntologyAnnotation("Test This Stuff", "OBO", "OBO:123") |> PropertyValue.Ontology
+            let expectedV = OntologyAnnotation("Test This Stuff", "OBO", "OBO:123") |> ScalarValue.Ontology
 
             let expectedU = None
 
@@ -182,7 +182,7 @@ let componentCastingTests =
 
             let actualV, actualU = Component.decomposeName n
 
-            let expectedV = PropertyValue.Int 10
+            let expectedV = ScalarValue.Int 10
 
             let expectedU = OntologyAnnotation("degree Celsius", "UO", "UO:123") |> Some
 
@@ -192,7 +192,7 @@ let componentCastingTests =
         )
         testCase "FromStringText" (fun () -> 
             
-            let v = PropertyValue.Name "Text" |> Some
+            let v = ScalarValue.Name "Text" |> Some
 
             let expected = Component.make v None None
 
@@ -202,7 +202,7 @@ let componentCastingTests =
         )
         testCase "FromStringTextWithCategory" (fun () -> 
             
-            let v = PropertyValue.Name "Text" |> Some
+            let v = ScalarValue.Name "Text" |> Some
 
             let header = OntologyAnnotation("TestCategory", "CO", "CO:567") |> Some 
 
@@ -215,7 +215,7 @@ let componentCastingTests =
         )
         testCase "FromStringOntology" (fun () -> 
             
-            let v = OntologyAnnotation("Test", "OBO", "OBO:123") |> PropertyValue.Ontology |> Some 
+            let v = OntologyAnnotation("Test", "OBO", "OBO:123") |> ScalarValue.Ontology |> Some 
 
             let expected = Component.make v None None
 
@@ -226,7 +226,7 @@ let componentCastingTests =
         )
         testCase "FromStringUnit" (fun () -> 
           
-            let v = PropertyValue.Int 10 |> Some
+            let v = ScalarValue.Int 10 |> Some
             let u = OntologyAnnotation("degree Celsius", "UO", "UO:123") |> Some
             let expected = Component.make  v u None
 
@@ -242,14 +242,14 @@ let valueTests =
     testList "ValueTests" [
         testCase "FromStringInt" (fun () -> 
             
-            let expected = PropertyValue.Int 10
-            let actual = PropertyValue.fromString "10"
+            let expected = ScalarValue.Int 10
+            let actual = ScalarValue.fromString "10"
             Expect.equal actual expected "Value was not correctly composed"
         )
         testCase "FromStringFloat" (fun () -> 
             
-            let expected = PropertyValue.Float 10.0
-            let actual = PropertyValue.fromString "10.0"
+            let expected = ScalarValue.Float 10.0
+            let actual = ScalarValue.fromString "10.0"
             Expect.equal actual expected "Value was not correctly composed"
         )
 
@@ -257,32 +257,32 @@ let valueTests =
         // As the Value type is not used outside of term triplets, we can always assume that the Value is an ontology or at least a number 
         ptestCase "FromStringText" (fun () -> 
             
-            let expected = PropertyValue.Name "Test"
-            let actual = PropertyValue.fromString "Test"
+            let expected = ScalarValue.Name "Test"
+            let actual = ScalarValue.fromString "Test"
             Expect.equal actual expected "Value was not correctly composed"
         )
         testCase "ToStringInt" (fun () -> 
             
             let expected = "10"
-            let actual = PropertyValue.getText (PropertyValue.Int 10)
+            let actual = ScalarValue.getText (ScalarValue.Int 10)
             Expect.equal actual expected "Value was not correctly composed"
         )
         testCase "ToStringFloat" (fun () -> 
             
             let expected = "10"
-            let actual = PropertyValue.getText (PropertyValue.Float 10.0)
+            let actual = ScalarValue.getText (ScalarValue.Float 10.0)
             Expect.equal actual expected "Value was not correctly composed"
         )
         testCase "ToStringText" (fun () -> 
             
             let expected = "Test"
-            let actual = PropertyValue.getText (PropertyValue.Name "Test")
+            let actual = ScalarValue.getText (ScalarValue.Name "Test")
             Expect.equal actual expected "Value was not correctly composed"
         )
         testCase "ToStringOntology" (fun () -> 
             
             let expected = "Test"
-            let actual = PropertyValue.getText (OntologyAnnotation("Test", "OBO", "OBO:123") |> PropertyValue.Ontology)
+            let actual = ScalarValue.getText (OntologyAnnotation("Test", "OBO", "OBO:123") |> ScalarValue.Ontology)
             Expect.equal actual expected "Value was not correctly composed"
         )
     ]

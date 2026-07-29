@@ -8,7 +8,7 @@ open ARCtrl.Helper
 
 
 [<AttachMembers>]
-type PropertyValue =
+type ScalarValue =
     | Ontology of OntologyAnnotation
     | Int of int
     | Float of float
@@ -16,7 +16,7 @@ type PropertyValue =
 
     static member fromString (value : string) =
         match System.Int32.TryParse value  with
-        | (true, i) -> PropertyValue.Int i
+        | (true, i) -> ScalarValue.Int i
         | _ -> 
             let parser =
                 #if FABLE_COMPILER
@@ -25,22 +25,22 @@ type PropertyValue =
                 fun (v: string) -> System.Double.TryParse(v,NumberStyles.Any,CultureInfo.InvariantCulture) // this throws warnings in fable as options are ignored
                 #endif
             match parser value with
-            | (true, f) -> PropertyValue.Float f
-            | _ -> PropertyValue.Name value
+            | (true, f) -> ScalarValue.Float f
+            | _ -> ScalarValue.Name value
 
     static member fromOptions (value : string Option) (termSource: string Option) (termAccesssion: string Option) =
         match value, termSource, termAccesssion with
         | Some value, None, None ->
-            PropertyValue.fromString value
+            ScalarValue.fromString value
             |> Some
         | None, None, None -> 
             None
         | _ -> 
             OntologyAnnotation.create (Option.defaultValue "" value, ?tsr = termSource, ?tan = termAccesssion)
-            |> PropertyValue.Ontology
+            |> ScalarValue.Ontology
             |> Some
 
-    static member toOptions (value : PropertyValue) =
+    static member toOptions (value : ScalarValue) =
         match value with
         | Ontology oa -> oa.Name,oa.TermAccessionNumber,oa.TermSourceREF
         | Int i -> string i |> Some, None, None
@@ -49,29 +49,29 @@ type PropertyValue =
 
     member this.Text =         
         match this with
-        | PropertyValue.Ontology oa  -> oa.NameText
-        | PropertyValue.Float f -> string f
-        | PropertyValue.Int i   -> string i
-        | PropertyValue.Name s  -> s
+        | ScalarValue.Ontology oa  -> oa.NameText
+        | ScalarValue.Float f -> string f
+        | ScalarValue.Int i   -> string i
+        | ScalarValue.Name s  -> s
 
     member this.AsName() =         
         match this with
-        | PropertyValue.Name s  -> s
+        | ScalarValue.Name s  -> s
         | _ -> failwith $"Value {this} is not of case name"
 
     member this.AsInt() =         
         match this with           
-        | PropertyValue.Int i   -> i
+        | ScalarValue.Int i   -> i
         | _ -> failwith $"Value {this} is not of case int"
 
     member this.AsFloat() = 
         match this with
-        | PropertyValue.Float f -> f
+        | ScalarValue.Float f -> f
         | _ -> failwith $"Value {this} is not of case float"
 
     member this.AsOntology() =         
         match this with
-        | PropertyValue.Ontology oa  -> oa
+        | ScalarValue.Ontology oa  -> oa
         | _ -> failwith $"Value {this} is not of case ontology"
 
     member this.IsAnOntology = 
@@ -109,5 +109,5 @@ type PropertyValue =
             | Float f       -> sprintf "%f" f        
             | Name n        -> n
 
-    static member getText (v: PropertyValue) =
+    static member getText (v: ScalarValue) =
         v.Text

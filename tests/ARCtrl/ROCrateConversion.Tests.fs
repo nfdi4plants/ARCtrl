@@ -229,7 +229,7 @@ module Helper =
         let version = "1.0.0"
         //let subWorkflowIdentifiers = ResizeArray ["SubWorkflow1"; "SubWorkflow2"]
         //let parameters = ResizeArray [OntologyAnnotation(name = "statistical Method")]
-        let components = ResizeArray [Process.Component.create(value = PropertyValue.Name "Proteomiqon", componentType = OntologyAnnotation(name = "Mass Spec Toolkit", tsr = "EDAM", tan = "EDAM:213123"))]
+        let components = ResizeArray [Process.Component.create(value = ScalarValue.Name "Proteomiqon", componentType = OntologyAnnotation(name = "Mass Spec Toolkit", tsr = "EDAM", tan = "EDAM:213123"))]
         let person =
             let role = OntologyAnnotation(name = "Resarcher", tsr = "PO", tan = "PO:123")
             ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
