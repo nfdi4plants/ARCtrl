@@ -1305,3 +1305,9 @@ module Encode =
     let cwlTypeToYamlString (t: CWLType) : string =
         encodeCWLTypeYaml t
 
+    /// Helper function to format CWLType for display in error messages
+    let formatCWLType (type_ : CWLType) =
+        encodeCWLType type_
+        |> writeYaml
+        |> fun s -> s.Trim()
+

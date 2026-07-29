@@ -535,3 +535,69 @@ type SoftwarePackage (package: string, ?version: ResizeArray<string>, ?specs: Re
 
     static member KnownFieldNames =
         CWLKnownFieldNames.softwarePackage
+
+module FileInstance =
+
+    let pathOrLocation (value: FileInstance) =
+        value.Path
+        |> Option.orElse value.Location
+        |> Option.defaultValue ""
+
+module DirectoryInstance =
+
+    let pathOrLocation (value: DirectoryInstance) =
+        value.Path
+        |> Option.orElse value.Location
+        |> Option.defaultValue ""
+
+module InputRecordSchema =
+
+    let tryGetFieldType (name: string) (schema: InputRecordSchema) =
+        schema.Fields
+        |> Option.bind (fun fields ->
+            fields
+            |> Seq.tryFind (fun field -> field.Name = name)
+            |> Option.map (fun field -> field.Type)
+        )
+
+module CWLType =
+
+    /// Compare two CWLTypes for equality, ignoring the metadata carried by File and Directory instances.
+    ///
+    /// This is deliberately laxer than CWLType.Equals, which compares FileInstance and DirectoryInstance contents.
+    let rec typesEqual (left : CWLType) (right : CWLType) =
+        match left, right with
+        | CWLType.File _, CWLType.File _
+        | CWLType.Directory _, CWLType.Directory _ -> true
+        | CWLType.Array left, CWLType.Array right ->
+            typesEqual left.Items right.Items
+        | CWLType.Union left, CWLType.Union right ->
+            left.Count = right.Count &&
+            Seq.forall2 typesEqual left right
+        | CWLType.Record left, CWLType.Record right ->
+            match left.Fields, right.Fields with
+            | None, None -> true
+            | Some leftFields, Some rightFields ->
+                leftFields.Count = rightFields.Count &&
+                Seq.forall2 (fun (leftField: InputRecordField) (rightField: InputRecordField) ->
+                    leftField.Name = rightField.Name &&
+                    typesEqual leftField.Type rightField.Type
+                ) leftFields rightFields
+            | _ -> false
+        | _ -> left = right
+
+    /// Helper function to check if a CWLType is or contains an Array type
+    let isArrayType (type_ : CWLType) =
+        match type_ with
+        | CWLType.Array _ -> true
+        | CWLType.Union types -> types |> Seq.exists (function CWLType.Array _ -> true | _ -> false)
+        | _ -> false
+
+    let tryGetNonNullUnionType (type_ : CWLType) =
+        match type_ with
+        | CWLType.Union types ->
+            types
+            |> Seq.tryFind (function
+                | CWLType.Null -> false
+                | _ -> true)
+        | _ -> Some type_

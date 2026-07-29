@@ -70,12 +70,41 @@ module CWLParameterValue =
         value.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
 #endif
 
-    let rec private inferredTypesEqual left right =
-        match left, right with
-        | CWLType.File _, CWLType.File _
-        | CWLType.Directory _, CWLType.Directory _ -> true
-        | CWLType.Array left, CWLType.Array right -> inferredTypesEqual left.Items right.Items
-        | _ -> left = right
+    let tryParseInt64 (value: obj) =
+        let tryConvert (convert: unit -> int64) =
+            try Some (convert()) with _ -> None
+        match value with
+        | :? int as value -> Some (int64 value)
+        | :? int64 as value -> Some value
+        | :? decimal as value ->
+            tryConvert (fun () ->
+                let converted = int64 value
+                if decimal converted = value then converted
+                else failwith "Expected an integral decimal value."
+            )
+        | :? float as value ->
+            tryConvert (fun () ->
+                let converted = int64 value
+                if float converted = value then converted
+                else failwith "Expected an integral floating-point value."
+            )
+        | :? string as value ->
+            match System.Int64.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture) with
+            | true, parsed -> Some parsed
+            | false, _ -> None
+        | _ -> None
+
+    let tryParseFloat (value: obj) =
+        match value with
+        | :? float as value -> Some value
+        | :? decimal as value -> Some (float value)
+        | :? int as value -> Some (float value)
+        | :? int64 as value -> Some (float value)
+        | :? string as value ->
+            match System.Double.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture) with
+            | true, parsed -> Some parsed
+            | false, _ -> None
+        | _ -> None
 
     let rec toFlatStrings value =
         match value with
@@ -86,17 +115,9 @@ module CWLParameterValue =
             ResizeArray [| floatToRoundTripString value |]
         | CWLParameterValue.Boolean value -> ResizeArray [| if value then "true" else "false" |]
         | CWLParameterValue.File file ->
-            ResizeArray [|
-                file.Path
-                |> Option.orElse file.Location
-                |> Option.defaultValue ""
-            |]
+            ResizeArray [| FileInstance.pathOrLocation file |]
         | CWLParameterValue.Directory directory ->
-            ResizeArray [|
-                directory.Path
-                |> Option.orElse directory.Location
-                |> Option.defaultValue ""
-            |]
+            ResizeArray [| DirectoryInstance.pathOrLocation directory |]
         | CWLParameterValue.Array values ->
             values
             |> Seq.collect (fun value -> toFlatStrings value :> seq<string>)
@@ -131,7 +152,7 @@ module CWLParameterValue =
             | Some firstType
                 when inferredItemTypes
                      |> Array.forall (function
-                         | Some itemType -> inferredTypesEqual firstType itemType
+                         | Some itemType -> CWLType.typesEqual firstType itemType
                          | None -> false) ->
                 Some (CWLType.Array (InputArraySchema(firstType)))
             | _ -> None

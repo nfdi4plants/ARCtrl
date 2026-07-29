@@ -15,113 +15,6 @@ open ARCtrl.Helper.Regex.ActivePatterns
 
 type RunConversion = 
 
-    static member private getFilePathOrLocation (value: CWL.FileInstance) =
-        value.Path
-        |> Option.orElse value.Location
-        |> Option.defaultValue ""
-
-    static member private getDirectoryPathOrLocation (value: CWL.DirectoryInstance) =
-        value.Path
-        |> Option.orElse value.Location
-        |> Option.defaultValue ""
-
-    static member cwlTypesEqual (left : CWL.CWLType) (right : CWL.CWLType) =
-        match left, right with
-        | CWL.CWLType.File _, CWL.CWLType.File _
-        | CWL.CWLType.Directory _, CWL.CWLType.Directory _ -> true
-        | CWL.CWLType.Array left, CWL.CWLType.Array right ->
-            RunConversion.cwlTypesEqual left.Items right.Items
-        | CWL.CWLType.Union left, CWL.CWLType.Union right ->
-            left.Count = right.Count &&
-            Seq.forall2 RunConversion.cwlTypesEqual left right
-        | CWL.CWLType.Record left, CWL.CWLType.Record right ->
-            match left.Fields, right.Fields with
-            | None, None -> true
-            | Some leftFields, Some rightFields ->
-                leftFields.Count = rightFields.Count &&
-                Seq.forall2 (fun (leftField: CWL.InputRecordField) (rightField: CWL.InputRecordField) ->
-                    leftField.Name = rightField.Name &&
-                    RunConversion.cwlTypesEqual leftField.Type rightField.Type
-                ) leftFields rightFields
-            | _ -> false
-        | _ -> left = right
-
-    /// Helper function to format CWLType for display in error messages
-    static member formatCWLType (type_ : CWL.CWLType) =
-        CWL.Encode.encodeCWLType type_
-        |> CWL.Encode.writeYaml
-        |> fun s -> s.Trim()
-
-    /// Helper function to check if a CWLType is or contains an Array type
-    static member isArrayType (type_ : CWL.CWLType) =
-        match type_ with
-        | CWL.CWLType.Array _ -> true
-        | CWL.CWLType.Union types -> types |> Seq.exists (function CWL.CWLType.Array _ -> true | _ -> false)
-        | _ -> false
-
-    static member tryGetArrayItemType (type_ : CWL.CWLType) =
-        match type_ with
-        | CWL.CWLType.Array schema -> Some schema.Items
-        | CWL.CWLType.Union types ->
-            types
-            |> Seq.tryPick (function
-                | CWL.CWLType.Array schema -> Some schema.Items
-                | _ -> None)
-        | _ -> None
-
-    static member tryGetNonNullUnionType (type_ : CWL.CWLType) =
-        match type_ with
-        | CWL.CWLType.Union types ->
-            types
-            |> Seq.tryFind (function
-                | CWL.CWLType.Null -> false
-                | _ -> true)
-        | _ -> Some type_
-
-    static member private tryParseInt64 (value: obj) =
-        let tryConvert (convert: unit -> int64) =
-            try Some (convert()) with _ -> None
-        match value with
-        | :? int as value -> Some (int64 value)
-        | :? int64 as value -> Some value
-        | :? decimal as value ->
-            tryConvert (fun () ->
-                let converted = int64 value
-                if decimal converted = value then converted
-                else failwith "Expected an integral decimal value."
-            )
-        | :? float as value ->
-            tryConvert (fun () ->
-                let converted = int64 value
-                if float converted = value then converted
-                else failwith "Expected an integral floating-point value."
-            )
-        | :? string as value ->
-            match System.Int64.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture) with
-            | true, parsed -> Some parsed
-            | false, _ -> None
-        | _ -> None
-
-    static member private tryParseFloat (value: obj) =
-        match value with
-        | :? float as value -> Some value
-        | :? decimal as value -> Some (float value)
-        | :? int as value -> Some (float value)
-        | :? int64 as value -> Some (float value)
-        | :? string as value ->
-            match System.Double.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture) with
-            | true, parsed -> Some parsed
-            | false, _ -> None
-        | _ -> None
-
-    static member private tryGetRecordFieldType (name: string) (schema: CWL.InputRecordSchema) =
-        schema.Fields
-        |> Option.bind (fun fields ->
-            fields
-            |> Seq.tryFind (fun field -> field.Name = name)
-            |> Option.map (fun field -> field.Type)
-        )
-
     /// File paths in CWL files are relative to the file itself. In RO-Crate, we use relative paths from the root of the crate.
     ///
     /// This function replaces the relative paths in the CWL input file with paths relative to the root of the crate.
@@ -143,14 +36,14 @@ type RunConversion =
         | CWL.CWLParameterValue.File file ->
             let path =
                 file
-                |> RunConversion.getFilePathOrLocation
+                |> CWL.FileInstance.pathOrLocation
                 |> fun path -> RunConversion.composeCWLInputFilePath(path, runName)
             let encodingFormat = file.Format
             LDFile.create(path, ?encodingFormat = encodingFormat, ?context = context) :> obj
         | CWL.CWLParameterValue.Directory directory ->
             let path =
                 directory
-                |> RunConversion.getDirectoryPathOrLocation
+                |> CWL.DirectoryInstance.pathOrLocation
                 |> fun path -> RunConversion.composeCWLInputFilePath(path, runName)
             LDFile.create(path, ?context = context) :> obj
         | CWL.CWLParameterValue.Array values ->
@@ -184,9 +77,9 @@ type RunConversion =
             failwith $"Cannot convert param values \"{inputValue.Values}\" as Input parameter \"{inputParam.Name}\" has no type."
         let type_ = inputParam.Type_.Value
         if inputValue.Type.IsSome then
-            if not (RunConversion.cwlTypesEqual inputValue.Type.Value type_) then
-                let typeStr = RunConversion.formatCWLType inputValue.Type.Value
-                let paramTypeStr = RunConversion.formatCWLType type_
+            if not (CWL.CWLType.typesEqual inputValue.Type.Value type_) then
+                let typeStr = CWL.Encode.formatCWLType inputValue.Type.Value
+                let paramTypeStr = CWL.Encode.formatCWLType type_
                 failwith $"Type ({typeStr}) of yml input value \"{inputValue.Key}\" does not match type of workflow input parameter ({paramTypeStr})."
         match type_ with
         | CWL.CWLType.File _ when inputValue.Values.Count = 1 ->
@@ -198,7 +91,7 @@ type RunConversion =
                 |> Option.iter (fun format -> LDFile.setEncodingFormatAsString(file, format))
             | _ -> ()
             file
-        | _ when RunConversion.isArrayType type_ ->
+        | _ when CWL.CWLType.isArrayType type_ ->
             LDPropertyValue.createCWLParameter(
                 exampleOfWork,
                 inputValue.Key,
@@ -239,7 +132,7 @@ type RunConversion =
 
     static member decomposeCWLParameterValue(value: obj, runName: string, ?expectedType: CWL.CWLType, ?graph: LDGraph) : CWL.CWLParameterValue =
         let value = RunConversion.resolveLDValue(value, ?graph = graph)
-        let expectedType = expectedType |> Option.bind RunConversion.tryGetNonNullUnionType
+        let expectedType = expectedType |> Option.bind CWL.CWLType.tryGetNonNullUnionType
 
         match expectedType with
         | Some (CWL.CWLType.Array arraySchema) ->
@@ -282,12 +175,12 @@ type RunConversion =
             | _ -> CWL.CWLParameterValue.String (string value)
         | Some CWL.CWLType.Int
         | Some CWL.CWLType.Long ->
-            RunConversion.tryParseInt64 value
+            CWL.CWLParameterValue.tryParseInt64 value
             |> Option.map CWL.CWLParameterValue.Int
             |> Option.defaultWith (fun () -> CWL.CWLParameterValue.String (string value))
         | Some CWL.CWLType.Float
         | Some CWL.CWLType.Double ->
-            RunConversion.tryParseFloat value
+            CWL.CWLParameterValue.tryParseFloat value
             |> Option.map CWL.CWLParameterValue.Float
             |> Option.defaultWith (fun () -> CWL.CWLParameterValue.String (string value))
         | Some CWL.CWLType.Boolean ->
@@ -310,7 +203,7 @@ type RunConversion =
             | :? DynamicObj as record ->
                 record.GetProperties(false)
                 |> Seq.map (fun kvp ->
-                    let expectedFieldType = RunConversion.tryGetRecordFieldType kvp.Key recordSchema
+                    let expectedFieldType = CWL.InputRecordSchema.tryGetFieldType kvp.Key recordSchema
                     CWL.CWLParameterRecordField(kvp.Key, RunConversion.decomposeCWLParameterValue(kvp.Value, runName, ?expectedType = expectedFieldType, ?graph = graph))
                 )
                 |> ResizeArray
