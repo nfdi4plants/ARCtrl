@@ -27,10 +27,10 @@ module PropertyValue =
                 match pv.GetValue() with
                 | Some v -> 
                     match v with
-                    | Value.Name t -> Some (Encode.string t), None
-                    | Value.Int t -> Some (Encode.int t), None
-                    | Value.Float t -> Some (Encode.float t), None
-                    | Value.Ontology oa -> oa.Name |> Option.map Encode.string, oa.TermAccessionNumber |> Option.map Encode.string
+                    | ScalarValue.Name t -> Some (Encode.string t), None
+                    | ScalarValue.Int t -> Some (Encode.int t), None
+                    | ScalarValue.Float t -> Some (Encode.float t), None
+                    | ScalarValue.Ontology oa -> oa.Name |> Option.map Encode.string, oa.TermAccessionNumber |> Option.map Encode.string
                 | None -> None, None
             let unit,unitCode = 
                 match pv.GetUnit() with
@@ -98,7 +98,7 @@ module PropertyValue =
                     let code = get.Optional.Field "valueCode" Decode.string
                     if value.IsNone && code.IsNone then None
                     else 
-                        try Value.fromOptions value None code
+                        try ScalarValue.fromOptions value None code
                         with
                         | err -> 
                             failwith $"Error while decoding value {value},{code}: {err}"

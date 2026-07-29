@@ -357,7 +357,7 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
         match v with
         | None -> false
         | Some v when v = null -> false
-        //| Some (:? string as s) -> s <> "" // Caught by next rule?
+        | Some (:? string) -> true
         | Some (:? System.Collections.IEnumerable as e) -> e.GetEnumerator().MoveNext()
         | _ -> true
 
@@ -384,6 +384,11 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
                     | :? LDNode as n ->
                         n.Flatten(graph) |> ignore
                         LDRef(n.Id)
+                    | :? DynamicObj as dyn ->
+                        dyn.GetProperties(false)
+                        |> Seq.toArray
+                        |> Array.iter (fun kvp -> DynObj.setProperty kvp.Key (f kvp.Value) dyn)
+                        dyn :> obj
                     | _ -> o
                 f
             | None -> Operators.id
@@ -403,6 +408,11 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
                     | :? LDNode as n ->
                         n.Flatten(graph) |> ignore
                         LDRef(n.Id)
+                    | :? DynamicObj as dyn ->
+                        dyn.GetProperties(false)
+                        |> Seq.toArray
+                        |> Array.iter (fun kvp -> DynObj.setProperty kvp.Key (f kvp.Value) dyn)
+                        dyn :> obj
                     | ActivePattern.NonStringEnumerable e ->
                         [for v in e do f v] |> ResizeArray |> box
                     | _ -> o
@@ -490,6 +500,11 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
                 n
             | :? string as s ->
                 s
+            | :? DynamicObj as dyn ->
+                dyn.GetProperties(false)
+                |> Seq.toArray
+                |> Array.iter (fun kvp -> DynObj.setProperty kvp.Key (compactValue_inPlace kvp.Value) dyn)
+                dyn :> obj
             | :? System.Collections.IEnumerable as e ->
                 let en = e.GetEnumerator()
                 let l = ResizeArray [
@@ -533,6 +548,11 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
                 n.Flatten(graph) |> ignore
                 LDRef(n.Id)
             | :? string as s -> s
+            | :? DynamicObj as dyn ->
+                dyn.GetProperties(false)
+                |> Seq.toArray
+                |> Array.iter (fun kvp -> DynObj.setProperty kvp.Key (flattenValue kvp.Value) dyn)
+                dyn :> obj
             | :? System.Collections.IEnumerable as e ->
                 let en = e.GetEnumerator()
                 let l = ResizeArray [
@@ -559,6 +579,11 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
             | :? LDNode as n ->
                 n.Unflatten(graph)
                 n
+            | :? DynamicObj as dyn ->
+                dyn.GetProperties(false)
+                |> Seq.toArray
+                |> Array.iter (fun kvp -> DynObj.setProperty kvp.Key (unflattenValue kvp.Value) dyn)
+                dyn :> obj
             | :? System.Collections.IEnumerable as e ->
                 let en = e.GetEnumerator()
                 let l = ResizeArray [

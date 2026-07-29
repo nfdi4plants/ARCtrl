@@ -5,20 +5,32 @@ open Fable.Core
 open System
 
 [<AttachMembers>]
-type CWLParameterReference(key : string, ?values: string ResizeArray, ?type_: CWLType) =
+type CWLParameterReference(key : string, ?values: string ResizeArray, ?value: CWLParameterValue, ?type_: CWLType) =
     inherit DynamicObj ()
 
     let mutable _key = key
-    let mutable _values = defaultArg values (ResizeArray<string>())
+    let mutable _value =
+        value
+        |> Option.orElseWith (fun () ->
+            values
+            |> Option.bind CWLParameterValue.fromFlatStrings
+        )
     let mutable _type = type_
 
     member this.Key
         with get() = _key
         and set(value) = _key <- value
 
+    member this.Value
+        with get() = _value
+        and set(value) = _value <- value
+
     member this.Values
-        with get() = _values
-        and set(value) = _values <- value
+        with get() =
+            _value
+            |> Option.map CWLParameterValue.toFlatStrings
+            |> Option.defaultValue (ResizeArray())
+        and set(values) = _value <- CWLParameterValue.fromFlatStrings values
 
     member this.Type
         with get() = _type
@@ -26,8 +38,8 @@ type CWLParameterReference(key : string, ?values: string ResizeArray, ?type_: CW
 
     override this.GetHashCode() =
         [|
-            HashHelpers.boxHashSeq this.Values
-            HashHelpers.hash this.Key
+            HashHelpers.hash this.Key |> box
+            HashHelpers.boxHashOption this.Value
             HashHelpers.boxHashOption this.Type
             DynamicObjHelpers.hashDynamicProperties this
         |]
@@ -41,8 +53,7 @@ type CWLParameterReference(key : string, ?values: string ResizeArray, ?type_: CW
 
     member this.StructurallyEquals (other: CWLParameterReference) : bool =
         this.Key = other.Key &&
-        this.Values.Count = other.Values.Count &&
-        Seq.forall2 (=) this.Values other.Values &&
+        this.Value = other.Value &&
         this.Type = other.Type &&
         DynamicObjHelpers.dynamicPropertiesEqual this other
 
@@ -50,4 +61,4 @@ type CWLParameterReference(key : string, ?values: string ResizeArray, ?type_: CW
         System.Object.ReferenceEquals(this,other)
 
     static member KnownFieldNames =
-        Set [| "class"; "path"; "location"; "type"; "value" |]
+        CWLKnownFieldNames.parameterReference

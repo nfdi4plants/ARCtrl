@@ -27,7 +27,7 @@ let testRead =
             let resultContract = Expect.wantOk result "Contract was not fulfilled correctly"
             let dto = Expect.wantSome resultContract.DTO "DTO was not read correctly"
             Expect.isTrue dto.isSpreadsheet "DTO was not read correctly"
-            let wb = dto.AsSpreadsheet() :?> FsSpreadsheet.FsWorkbook
+            let wb = dto.AsSpreadsheet()
             let ws = Expect.wantSome (wb.TryGetWorksheetByName "TestSheet") "Workbook does not contain worksheet"
             let row1 = Expect.wantSome (ws.TryGetRowValuesAt 1) "Worksheet does not contain row 1"
             let row1AsInts = row1 |> Seq.map (string >> int)

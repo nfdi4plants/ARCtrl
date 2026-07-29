@@ -2,6 +2,23 @@ module ARCtrl.CWL.DynamicObjHelpers
 
 open System
 open DynamicObj
+open Fable.Core
+open Fable.Core.PyInterop
+
+/// Read a dynamically stored collection consistently across runtimes.
+///
+/// Fable Python represents ResizeArray as a native list, so its generated
+/// ResizeArray type test always fails unless handled explicitly.
+let inline tryGetTypedPropertyValueAsResizeArray<'T> (name: string) (dynObj: DynamicObj) =
+    match dynObj.TryGetPropertyValue(name) with
+#if FABLE_COMPILER_PYTHON
+    | Some value when emitPyExpr value "isinstance($0, list)" ->
+        Some (value :?> ResizeArray<'T>)
+#else
+    | Some (:? ResizeArray<'T> as values) -> Some values
+#endif
+    | Some (:? 'T as singleton) -> Some (ResizeArray [ singleton ])
+    | _ -> None
 
 /// Convert a public F# property name to the private backing-field name that
 /// DynamicObj exposes for typed members compiled by Fable or .NET.
@@ -55,7 +72,7 @@ let dynamicPropertiesSnapshotExcept (knownFieldNames: Set<string>) (dynObj: Dyna
     |> Seq.map (fun kv -> kv.Key, kv.Value)
     |> Seq.sortBy fst
     |> Seq.toList
-    
+
 /// Snapshot all dynamic extension properties on an object.
 let dynamicPropertiesSnapshot (dynObj: DynamicObj) =
     dynamicPropertiesSnapshotExcept Set.empty dynObj

@@ -73,7 +73,7 @@ module RunContractExtensions =
         static member tryFromReadContract (c:Contract) =
             match c with
             | {Operation = READ; DTOType = Some DTOType.ISA_Run; DTO = Some (DTO.Spreadsheet fsworkbook)} ->
-                fsworkbook :?> FsWorkbook
+                fsworkbook
                 |> ArcRun.fromFsWorkbook
                 |> Some 
             | _ -> None

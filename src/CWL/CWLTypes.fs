@@ -106,21 +106,7 @@ type FileInstance (
         and set(value) = _contents <- value
 
     static member KnownFieldNames =
-        Set [|
-            "class"
-            "type"
-            "location"
-            "path"
-            "basename"
-            "dirname"
-            "nameroot"
-            "nameext"
-            "checksum"
-            "size"
-            "secondaryFiles"
-            "format"
-            "contents"
-        |]
+        CWLKnownFieldNames.fileInstance
 
     override this.GetHashCode (): int =
         hash (
@@ -186,7 +172,7 @@ type DirectoryInstance (
         and set(value) = _listing <- value
 
     static member KnownFieldNames =
-        Set [ "class"; "type"; "location"; "path"; "basename"; "listing" ]
+        CWLKnownFieldNames.directoryInstance
 
     override this.Equals (o: obj): bool =
         match o with
@@ -234,7 +220,7 @@ type DirentInstance (entry: SchemaSaladString, ?entryname: SchemaSaladString, ?w
         hash (this.Entry, this.Entryname, this.Writable, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        Set [ "entry"; "entryname"; "writable" ]
+        CWLKnownFieldNames.direntInstance
 
 /// Represents an enumeration type with a defined set of valid symbol values.
 /// Per the CWL specification, symbol order is semantically significant and preserved during serialization.
@@ -281,7 +267,7 @@ type InputEnumSchema (symbols: ResizeArray<string>, ?label: string, ?doc: string
         hash (this.Symbols |> Seq.toList, this.Label, this.Doc, this.Name, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        Set [ "type"; "symbols"; "label"; "doc"; "name" ]
+        CWLKnownFieldNames.inputEnumSchema
 
 /// Represents a field in an InputRecordSchema
 [<AttachMembers>]
@@ -323,7 +309,7 @@ type InputRecordField (name: string, type_: CWLType, ?doc: string, ?label: strin
         hash (this.Name, this.Type, this.Doc, this.Label, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        Set [ "name"; "type"; "doc"; "label" ]
+        CWLKnownFieldNames.inputRecordField
 
 /// Represents a record schema for workflow input parameters
 and [<AttachMembers>] InputRecordSchema (?fields: ResizeArray<InputRecordField>, ?label: string, ?doc: string, ?name: string) =
@@ -374,7 +360,7 @@ and [<AttachMembers>] InputRecordSchema (?fields: ResizeArray<InputRecordField>,
         hash (fieldsHash, this.Label, this.Doc, this.Name, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        Set [ "type"; "fields"; "label"; "doc"; "name" ]
+        CWLKnownFieldNames.inputRecordSchema
 
 /// Represents an array schema for workflow input parameters
 and [<AttachMembers>] InputArraySchema (items: CWLType, ?label: string, ?doc: string, ?name: string) =
@@ -415,7 +401,7 @@ and [<AttachMembers>] InputArraySchema (items: CWLType, ?label: string, ?doc: st
         hash (this.Items, this.Label, this.Doc, this.Name, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        Set [ "type"; "items"; "label"; "doc"; "name" ]
+        CWLKnownFieldNames.inputArraySchema
 
 /// Primitive types with the concept of a file and directory as a builtin type.
 and [<CustomEquality; NoComparison>] CWLType =
@@ -513,7 +499,7 @@ type SchemaDefRequirementType (name: string, type_: CWLType) =
         hash (this.Name, this.Type_, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        Set [ "name"; "type" ]
+        CWLKnownFieldNames.schemaDefRequirementType
 
 [<AttachMembers>]
 type SoftwarePackage (package: string, ?version: ResizeArray<string>, ?specs: ResizeArray<string>) =
@@ -548,4 +534,70 @@ type SoftwarePackage (package: string, ?version: ResizeArray<string>, ?specs: Re
         hash (this.Package, this.Version, this.Specs, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        Set [ "package"; "version"; "specs" ]
+        CWLKnownFieldNames.softwarePackage
+
+module FileInstance =
+
+    let pathOrLocation (value: FileInstance) =
+        value.Path
+        |> Option.orElse value.Location
+        |> Option.defaultValue ""
+
+module DirectoryInstance =
+
+    let pathOrLocation (value: DirectoryInstance) =
+        value.Path
+        |> Option.orElse value.Location
+        |> Option.defaultValue ""
+
+module InputRecordSchema =
+
+    let tryGetFieldType (name: string) (schema: InputRecordSchema) =
+        schema.Fields
+        |> Option.bind (fun fields ->
+            fields
+            |> Seq.tryFind (fun field -> field.Name = name)
+            |> Option.map (fun field -> field.Type)
+        )
+
+module CWLType =
+
+    /// Compare two CWLTypes for equality, ignoring the metadata carried by File and Directory instances.
+    ///
+    /// This is deliberately laxer than CWLType.Equals, which compares FileInstance and DirectoryInstance contents.
+    let rec typesEqual (left : CWLType) (right : CWLType) =
+        match left, right with
+        | CWLType.File _, CWLType.File _
+        | CWLType.Directory _, CWLType.Directory _ -> true
+        | CWLType.Array left, CWLType.Array right ->
+            typesEqual left.Items right.Items
+        | CWLType.Union left, CWLType.Union right ->
+            left.Count = right.Count &&
+            Seq.forall2 typesEqual left right
+        | CWLType.Record left, CWLType.Record right ->
+            match left.Fields, right.Fields with
+            | None, None -> true
+            | Some leftFields, Some rightFields ->
+                leftFields.Count = rightFields.Count &&
+                Seq.forall2 (fun (leftField: InputRecordField) (rightField: InputRecordField) ->
+                    leftField.Name = rightField.Name &&
+                    typesEqual leftField.Type rightField.Type
+                ) leftFields rightFields
+            | _ -> false
+        | _ -> left = right
+
+    /// Helper function to check if a CWLType is or contains an Array type
+    let isArrayType (type_ : CWLType) =
+        match type_ with
+        | CWLType.Array _ -> true
+        | CWLType.Union types -> types |> Seq.exists (function CWLType.Array _ -> true | _ -> false)
+        | _ -> false
+
+    let tryGetNonNullUnionType (type_ : CWLType) =
+        match type_ with
+        | CWLType.Union types ->
+            types
+            |> Seq.tryFind (function
+                | CWLType.Null -> false
+                | _ -> true)
+        | _ -> Some type_

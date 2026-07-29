@@ -51,7 +51,7 @@ type PersonConversion =
     static member composePerson (person : ARCtrl.Person, ?persons : ARCtrl.Person seq) =
         let orcid =
             match person.ORCID with
-            | Some o -> 
+            | Some o ->
                 match ORCID.tryGetOrcidNumber o with
                 | Some n -> Some n
                 | None -> failwithf "Invalid ORCID: %s" o
@@ -114,4 +114,3 @@ type PersonConversion =
             ?address = address,
             comments = comments
         )
-        

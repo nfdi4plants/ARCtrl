@@ -4,6 +4,6 @@ class TestInvestigation:
     
     def test_json(self):
         i = ArcInvestigation.init("My Investigation")
-        actual = JsonController.Investigation().to_json_string(i)
+        actual = JsonController.Investigation.to_json_string(i)
         expected = """{"Identifier":"My Investigation"}"""
         assert actual == expected

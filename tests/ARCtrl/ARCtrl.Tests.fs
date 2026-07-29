@@ -1036,7 +1036,7 @@ let private tests_updateContracts = testList "update_contracts" [
         let assayFileDTOType = Expect.wantSome assayFileContract.DTOType "DTOType for assay file contract missing"
         Expect.equal assayFileDTOType DTOType.ISA_Assay "DTOType for assay file contract should be ISA_Assay"
         let assayFileDTO = Expect.wantSome assayFileContract.DTO "DTO for assay file contract missing"
-        let wb = assayFileDTO.AsSpreadsheet() :?> FsWorkbook
+        let wb = assayFileDTO.AsSpreadsheet()
         let assay = ArcAssay.fromFsWorkbook wb
         Expect.equal assay.Identifier "MyAssay" "Assay identifier should be set"
         // readme contract
@@ -1076,7 +1076,7 @@ let private tests_updateContracts = testList "update_contracts" [
         let studyFileDTOType = Expect.wantSome studyFileContract.DTOType "DTOType for study file contract missing"
         Expect.equal studyFileDTOType DTOType.ISA_Study "DTOType for study file contract should be ISA_Study"
         let studyFileDTO = Expect.wantSome studyFileContract.DTO "DTO for study file contract missing"
-        let wb = studyFileDTO.AsSpreadsheet() :?> FsWorkbook
+        let wb = studyFileDTO.AsSpreadsheet()
         let study,_ = ArcStudy.fromFsWorkbook wb
         Expect.equal study.Identifier "MyStudy" "Study identifier should be set"
         // readme contract
@@ -1116,7 +1116,7 @@ let private tests_updateContracts = testList "update_contracts" [
         let workflowFileDTOType = Expect.wantSome workflowFileContract.DTOType "DTOType for workflow file contract missing"
         Expect.equal workflowFileDTOType DTOType.ISA_Workflow "DTOType for workflow file contract should be ISA_Workflow"
         let workflowFileDTO = Expect.wantSome workflowFileContract.DTO "DTO for workflow file contract missing"
-        let wb = workflowFileDTO.AsSpreadsheet() :?> FsWorkbook
+        let wb = workflowFileDTO.AsSpreadsheet()
         let workflow = ArcWorkflow.fromFsWorkbook wb
         Expect.equal workflow.Identifier "MyWorkflow" "Workflow identifier should be set"
         // readme contract
@@ -1159,7 +1159,7 @@ let private tests_updateContracts = testList "update_contracts" [
         let runFileDTOType = Expect.wantSome runFileContract.DTOType "DTOType for run file contract missing"
         Expect.equal runFileDTOType DTOType.ISA_Run "DTOType for run file contract should be ISA_Run"
         let runFileDTO = Expect.wantSome runFileContract.DTO "DTO for run file contract missing"
-        let wb = runFileDTO.AsSpreadsheet() :?> FsWorkbook
+        let wb = runFileDTO.AsSpreadsheet()
         let run = ArcRun.fromFsWorkbook wb
         Expect.equal run.Identifier "MyRun" "Run identifier should be set"
         // readme contract
@@ -1591,7 +1591,7 @@ let tests_GetAssayRenameContracts = testList "GetAssayRenameContracts" [
         Expect.equal updateContract.Path "assays/MyNewAssay/isa.assay.xlsx" "Update contract path"
         let updateDTO = Expect.wantSome updateContract.DTO "Update contract dto"
         Expect.isTrue updateDTO.isSpreadsheet "Update contract dto"
-        let wb = updateDTO.AsSpreadsheet() :?> FsWorkbook
+        let wb = updateDTO.AsSpreadsheet()
         let updatedAssay = ArcAssay.fromFsWorkbook wb
         Expect.equal updatedAssay.Identifier "MyNewAssay" "Update contract Assay Identifier"
     testCase "NotRegisteredInStudy" <| fun _ ->
@@ -1613,7 +1613,7 @@ let tests_GetAssayRenameContracts = testList "GetAssayRenameContracts" [
         Expect.equal updateContract.Path "assays/MyNewAssay/isa.assay.xlsx" "Update contract path"
         let updateDTO = Expect.wantSome updateContract.DTO "Update contract dto"
         Expect.isTrue updateDTO.isSpreadsheet "Update contract dto"
-        let wb = updateDTO.AsSpreadsheet() :?> FsWorkbook
+        let wb = updateDTO.AsSpreadsheet()
         let updatedAssay = ArcAssay.fromFsWorkbook wb
         Expect.equal updatedAssay.Identifier "MyNewAssay" "Update contract Assay Identifier"
     testCase "RegisteredInStudy" <| fun _ ->
@@ -1637,7 +1637,7 @@ let tests_GetAssayRenameContracts = testList "GetAssayRenameContracts" [
         Expect.equal StudyUpdateContract.Path "studies/MyStudy/isa.study.xlsx" "Update contract path"
         let studyUpdateDTO = Expect.wantSome StudyUpdateContract.DTO "Update contract dto"
         Expect.isTrue studyUpdateDTO.isSpreadsheet "Update contract dto"
-        let wb = studyUpdateDTO.AsSpreadsheet() :?> FsWorkbook
+        let wb = studyUpdateDTO.AsSpreadsheet()
         let updatedStudy,_ = ArcStudy.fromFsWorkbook wb
         Expect.equal updatedStudy.Identifier "MyStudy" "Update contract Study Identifier"
         Expect.hasLength updatedStudy.RegisteredAssayIdentifiers 1 "Update contract Study Assay count"
@@ -1648,7 +1648,7 @@ let tests_GetAssayRenameContracts = testList "GetAssayRenameContracts" [
         Expect.equal assayUpdateContract.Path "assays/MyNewAssay/isa.assay.xlsx" "Update contract path"
         let assayUpdateDTO = Expect.wantSome assayUpdateContract.DTO "Update contract dto"
         Expect.isTrue assayUpdateDTO.isSpreadsheet "Update contract dto"
-        let wb = assayUpdateDTO.AsSpreadsheet() :?> FsWorkbook
+        let wb = assayUpdateDTO.AsSpreadsheet()
         let updatedAssay = ArcAssay.fromFsWorkbook wb
         Expect.equal updatedAssay.Identifier "MyNewAssay" "Update contract Assay Identifier"
 ]
@@ -1684,7 +1684,7 @@ let tests_GetStudyRenameContracts = testList "GetStudyRenameContracts" [
         Expect.equal updateContract.Path "studies/MyNewStudy/isa.study.xlsx" "Update contract path"
         let updateDTO = Expect.wantSome updateContract.DTO "Update contract dto"
         Expect.isTrue updateDTO.isSpreadsheet "Update contract dto"
-        let wb = updateDTO.AsSpreadsheet() :?> FsWorkbook
+        let wb = updateDTO.AsSpreadsheet()
         let updatedStudy,_ = ArcStudy.fromFsWorkbook wb
         Expect.equal updatedStudy.Identifier "MyNewStudy" "Update contract Study Identifier"
     testCase "RegisteredInInvestigation" <| fun _ ->
@@ -1708,7 +1708,7 @@ let tests_GetStudyRenameContracts = testList "GetStudyRenameContracts" [
         Expect.equal invUpdateContract.Path "isa.investigation.xlsx" "Update contract path"
         let invUpdateDTO = Expect.wantSome invUpdateContract.DTO "Update contract dto"
         Expect.isTrue invUpdateDTO.isSpreadsheet "Update contract dto"
-        let wb = invUpdateDTO.AsSpreadsheet() :?> FsWorkbook
+        let wb = invUpdateDTO.AsSpreadsheet()
         let updatedInvestigation = ArcInvestigation.fromFsWorkbook wb
         Expect.equal updatedInvestigation.Identifier "MyInvestigation" "Update contract Investigation Identifier"
         Expect.hasLength updatedInvestigation.RegisteredStudyIdentifiers 1 "Update contract Investigation Study count"
@@ -1719,7 +1719,7 @@ let tests_GetStudyRenameContracts = testList "GetStudyRenameContracts" [
         Expect.equal studyUpdateContract.Path "studies/MyNewStudy/isa.study.xlsx" "Update contract path"
         let studyUpdateDTO = Expect.wantSome studyUpdateContract.DTO "Update contract dto"
         Expect.isTrue studyUpdateDTO.isSpreadsheet "Update contract dto"
-        let wb = studyUpdateDTO.AsSpreadsheet() :?> FsWorkbook
+        let wb = studyUpdateDTO.AsSpreadsheet()
         let updatedStudy,_ = ArcStudy.fromFsWorkbook wb
         Expect.equal updatedStudy.Identifier "MyNewStudy" "Update contract Study Identifier"
 
@@ -1759,7 +1759,7 @@ let tests_GetWorkflowRemoveContracts = testList "GetWorkflowRemoveContracts" [
         let update = Expect.wantSome (actual |> Array.tryFind (fun c -> c.Operation = UPDATE)) "Should contain run update contract"
         Expect.equal update.Path (Identifier.Run.fileNameFromIdentifier "MyRun") "Run update contract path"
         let updateDTO = Expect.wantSome update.DTO "Run update contract should have DTO"
-        let parsedRun = XlsxController.Run.fromFsWorkbook (updateDTO.AsSpreadsheet() :?> FsWorkbook)
+        let parsedRun = XlsxController.Run.fromFsWorkbook (updateDTO.AsSpreadsheet())
         Expect.isFalse (parsedRun.WorkflowIdentifiers.Contains("MyWorkflow")) "Parsed Run should no longer reference the removed workflow"
     testCase "RegisteredInWorkflow" <| fun _ ->
         let i = ArcInvestigation("MyInvestigation")
@@ -1778,7 +1778,7 @@ let tests_GetWorkflowRemoveContracts = testList "GetWorkflowRemoveContracts" [
         let update = Expect.wantSome (actual |> Array.tryFind (fun c -> c.Operation = UPDATE)) "Should contain workflow update contract"
         Expect.equal update.Path (Identifier.Workflow.fileNameFromIdentifier "MyWorkflow") "Workflow update contract path"
         let updateDTO = Expect.wantSome update.DTO "Workflow update contract should have DTO"
-        let parsedWorkflow = XlsxController.Workflow.fromFsWorkbook (updateDTO.AsSpreadsheet() :?> FsWorkbook)
+        let parsedWorkflow = XlsxController.Workflow.fromFsWorkbook (updateDTO.AsSpreadsheet())
         Expect.isFalse (parsedWorkflow.SubWorkflowIdentifiers.Contains("MySubWorkflow")) "Parsed Workflow should no longer reference the removed sub-workflow"
     ]
 
@@ -1827,7 +1827,7 @@ let tests_GetWorkflowRenameContracts = testList "GetWorkflowRenameContracts" [
         Expect.equal updateContract.Path "workflows/MyNewWorkflow/isa.workflow.xlsx" "Update contract path"
         let updateDTO = Expect.wantSome updateContract.DTO "Update contract dto"
         Expect.isTrue updateDTO.isSpreadsheet "Update contract dto"
-        let wb = updateDTO.AsSpreadsheet() :?> FsWorkbook
+        let wb = updateDTO.AsSpreadsheet()
         let updatedWorkflow = ArcWorkflow.fromFsWorkbook wb
         Expect.equal updatedWorkflow.Identifier "MyNewWorkflow" "Update contract Workflow Identifier"
     testCase "RegisteredInRun" <| fun _ ->
@@ -1847,7 +1847,7 @@ let tests_GetWorkflowRenameContracts = testList "GetWorkflowRenameContracts" [
         Expect.equal runUpdateContract.Path "runs/MyRun/isa.run.xlsx" "Update contract path"
         let runUpdateDTO = Expect.wantSome runUpdateContract.DTO "Update contract dto"
         Expect.isTrue runUpdateDTO.isSpreadsheet "Update contract dto"
-        let wb = runUpdateDTO.AsSpreadsheet() :?> FsWorkbook
+        let wb = runUpdateDTO.AsSpreadsheet()
         let updatedRun = ArcRun.fromFsWorkbook wb
         Expect.equal updatedRun.Identifier "MyRun" "Update contract Run Identifier"
         Expect.hasLength updatedRun.WorkflowIdentifiers 1 "Update contract Run Workflow count"
@@ -1869,7 +1869,7 @@ let tests_GetWorkflowRenameContracts = testList "GetWorkflowRenameContracts" [
         Expect.equal workflowUpdateContract.Path "workflows/MyWorkflow/isa.workflow.xlsx" "Update contract path"
         let workflowUpdateDTO = Expect.wantSome workflowUpdateContract.DTO "Update contract dto"
         Expect.isTrue workflowUpdateDTO.isSpreadsheet "Update contract dto"
-        let wb = workflowUpdateDTO.AsSpreadsheet() :?> FsWorkbook
+        let wb = workflowUpdateDTO.AsSpreadsheet()
         let updatedWorkflow = ArcWorkflow.fromFsWorkbook wb
         Expect.equal updatedWorkflow.Identifier "MyWorkflow" "Update contract Workflow Identifier"
         Expect.hasLength updatedWorkflow.SubWorkflowIdentifiers 1 "Updated contract still has Sub workflow"
@@ -1902,7 +1902,7 @@ let tests_GetRunRenameContracts = testList "GetRunRenameContracts" [
         Expect.equal updateContract.Path "runs/MyNewRun/isa.run.xlsx" "Update contract path"
         let updateDTO = Expect.wantSome updateContract.DTO "Update contract dto"
         Expect.isTrue updateDTO.isSpreadsheet "Update contract dto"
-        let wb = updateDTO.AsSpreadsheet() :?> FsWorkbook
+        let wb = updateDTO.AsSpreadsheet()
         let updatedRun = ArcRun.fromFsWorkbook wb
         Expect.equal updatedRun.Identifier "MyNewRun" "Update contract Run Identifier"
 ]

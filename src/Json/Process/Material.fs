@@ -33,9 +33,15 @@ module Material =
         let decoder : Decoder<Material> =       
             let rec decode() =
                 Decode.object (fun get ->
-                    match get.Optional.Field "additionalType" Decode.uri with
-                    | Some "Material" | None -> ()
-                    | Some _ -> get.Required.Field "FailBecauseNotSample" Decode.unit
+                    // This discriminator is written as `if` rather than as a `match` with a unit
+                    // success branch: Fable's Python backend drops empty branches from a match in
+                    // statement position, which would leave the reject unconditional and make this
+                    // decoder fail on every input.
+                    let additionalTypeMatches =
+                        match get.Optional.Field "additionalType" Decode.uri with
+                        | Some "Material" | None -> true
+                        | Some _ -> false
+                    if not additionalTypeMatches then get.Required.Field "FailBecauseNotSample" Decode.unit
                     {                       
                         ID = get.Optional.Field "@id" Decode.uri
                         Name = get.Optional.Field "name" Decode.string

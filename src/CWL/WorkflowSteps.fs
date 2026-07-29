@@ -181,18 +181,7 @@ type StepInput (
         )
 
     static member KnownFieldNames =
-        Set [|
-            "id"
-            "source"
-            "default"
-            "valueFrom"
-            "linkMerge"
-            "pickValue"
-            "doc"
-            "loadContents"
-            "loadListing"
-            "label"
-        |]
+        CWLKnownFieldNames.stepInput
 
     /// Updates a StepInput at the given index.
     static member updateAt (index: int) (f: StepInput -> StepInput) (inputs: ResizeArray<StepInput>) =
@@ -224,7 +213,7 @@ type StepOutputParameter (id: string) =
         StepOutputParameter(id)
 
     static member KnownFieldNames =
-        Set [| "id" |]
+        CWLKnownFieldNames.stepOutputParameter
 
 [<AttachMembers>]
 type StepOutput =
@@ -339,19 +328,7 @@ type WorkflowStep (
         )
 
     static member KnownFieldNames =
-        Set [|
-            "id"
-            "run"
-            "in"
-            "out"
-            "requirements"
-            "hints"
-            "label"
-            "doc"
-            "scatter"
-            "scatterMethod"
-            "when"
-        |]
+        CWLKnownFieldNames.workflowStep
 
     /// Updates a workflow step input by index.
     static member updateInputAt (index: int) (f: StepInput -> StepInput) (step: WorkflowStep) =

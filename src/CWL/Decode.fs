@@ -530,11 +530,7 @@ module Decode =
     and inputEnumSchemaDecoder: (YAMLiciousTypes.YAMLElement -> InputEnumSchema) =
         fun value ->
         Decode.object (fun get ->
-            // CWL enums are invalid without symbols; fail before constructing a
-            // partially meaningful enum schema.
             let symbols = get.Required.Field "symbols" (Decode.resizearray Decode.string)
-            if symbols.Count = 0 then
-                raise (System.ArgumentException("CWL enum schema must define at least one symbol."))
             
             let schema =
                 InputEnumSchema(
@@ -1995,123 +1991,119 @@ module Decode =
 
 module DecodeParameters =
 
-    /// Decode one YAML parameter entry from scalar, object, or sequence forms.
+    let private tryField (fieldName: string) (yEle: YAMLElement) =
+        match yEle with
+        | YAMLElement.Object fields ->
+            fields
+            |> List.tryPick (function
+                | YAMLElement.Mapping (key, value) when key.Value = fieldName -> Some value
+                | _ -> None
+            )
+        | _ -> None
+
+    let private tryScalarString (yEle: YAMLElement) =
+        match yEle with
+        | YAMLElement.Value value
+        | YAMLElement.Object [YAMLElement.Value value] -> Some value.Value
+        | _ -> None
+
+    let private decodeFileInstance (yEle: YAMLElement) =
+        Decode.decodeFileInstanceFields yEle
+
+    let private decodeDirectoryInstance (yEle: YAMLElement) =
+        Decode.decodeDirectoryInstanceFields yEle
+
+    let rec decodeParameterValue (value: YAMLElement) : CWLParameterValue =
+        match value with
+        | YAMLElement.Value scalar
+        | YAMLElement.Object [YAMLElement.Value scalar] ->
+            match scalar.Value with
+            | "null" -> CWLParameterValue.Null
+            | "true" -> CWLParameterValue.Boolean true
+            | "false" -> CWLParameterValue.Boolean false
+            | text ->
+                match System.Int64.TryParse(text, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture) with
+                | true, parsed -> CWLParameterValue.Int parsed
+                | false, _ ->
+                    match System.Double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture) with
+                    | true, parsed -> CWLParameterValue.Float parsed
+                    | false, _ -> CWLParameterValue.String text
+        | YAMLElement.Object [YAMLElement.Sequence items]
+        | YAMLElement.Sequence items ->
+            items
+            |> List.filter (Decode.isIgnorableYamlNoise >> not)
+            |> List.map decodeParameterValue
+            |> ResizeArray
+            |> CWLParameterValue.Array
+        | YAMLElement.Object (YAMLElement.Sequence items :: trailingMappings)
+            when trailingMappings
+                 |> List.exists (function
+                     | YAMLElement.Mapping _ -> true
+                     | _ -> false) ->
+            items
+            |> List.map (fun item ->
+                match item with
+                | YAMLElement.Object itemFields -> YAMLElement.Object (itemFields @ trailingMappings)
+                | other -> YAMLElement.Object (other :: trailingMappings)
+            )
+            |> List.map decodeParameterValue
+            |> ResizeArray
+            |> CWLParameterValue.Array
+        | YAMLElement.Object fields ->
+            match tryField "class" value |> Option.bind tryScalarString with
+            | Some "File" -> decodeFileInstance value |> CWLParameterValue.File
+            | Some "Directory" -> decodeDirectoryInstance value |> CWLParameterValue.Directory
+            | _ ->
+                fields
+                |> List.choose (function
+                    | YAMLElement.Mapping (key, value) ->
+                        Some (CWLParameterRecordField(key.Value, decodeParameterValue value))
+                    | _ -> None
+                )
+                |> ResizeArray
+                |> CWLParameterValue.Record
+        | other ->
+            CWLParameterValue.String (sprintf "%A" other)
+
     let cwlParameterReferenceDecoder (get : Decode.IGetters) (key: string) (yEle: YAMLElement): CWLParameterReference =
-        let tryScalarString = function
-            // Parameter files commonly use plain scalar values.
-            | YAMLElement.Value v
-            | YAMLElement.Object [YAMLElement.Value v] -> Some v.Value
-            | _ -> None
+        let makeReference (value: CWLParameterValue) (explicitType: CWLType option) =
+            let type_ =
+                explicitType
+                |> Option.orElseWith (fun () -> CWLParameterValue.tryInferType value)
 
-        let tryField fieldName value =
-            try
-                // Optional field reads here are intentionally tolerant because
-                // parameter files may mix scalar and object entries.
-                Decode.object (fun get -> get.Optional.Field fieldName id) value
-            with ex when Decode.isRecoverableDecodingError ex ->
-                None
+            CWLParameterReference(key = key, value = value, ?type_ = type_)
 
-        let tryStringField fieldName value =
-            tryField fieldName value
-            |> Option.bind tryScalarString
-
-        let withOverflow (reference: CWLParameterReference) value =
-            // Preserve non-standard parameter fields beside the normalized key/value/type.
-            Decode.overflowIntoDynamicObj reference (CWLParameterReference.KnownFieldNames |> Seq.toList) value |> ignore
+        let withOverflow (reference: CWLParameterReference) =
+            Decode.overflowIntoDynamicObj
+                reference
+                (CWLParameterReference.KnownFieldNames |> Seq.toList)
+                yEle
+            |> ignore
             reference
 
-        let fileOrDirectoryType className =
-            // Parameter object class values are normalized to CWL file/directory types.
-            match className with
-            | "File" -> Some (CWLType.file())
-            | "Directory" -> Some (CWLType.directory())
-            | _ -> None
+        match tryField "type" yEle, tryField "value" yEle with
+        | Some typeElement, Some valueElement ->
+            let type_ =
+                match tryScalarString typeElement with
+                | Some typeName -> Decode.cwlTypeStringMatcher typeName get |> fst
+                | None -> Decode.cwlTypeDecoder' typeElement
 
-        let pathValue value =
-            // File/Directory parameters may use either path or location for the
-            // value consumed by ARCtrl's parameter reference model.
-            tryStringField "path" value
-            |> Option.orElseWith (fun () -> tryStringField "location" value)
+            makeReference (decodeParameterValue valueElement) (Some type_)
+            |> withOverflow
+        | None, Some valueElement ->
+            makeReference (decodeParameterValue valueElement) None
+            |> withOverflow
+        | Some typeElement, None ->
+            let type_ =
+                match tryScalarString typeElement with
+                | Some typeName -> Decode.cwlTypeStringMatcher typeName get |> fst
+                | None -> Decode.cwlTypeDecoder' typeElement
 
-        let decodeObjectParameter value =
-            match tryStringField "class" value, tryStringField "type" value with
-            | Some className, _ ->
-                // File/Directory parameter object.
-                let cwlType = fileOrDirectoryType className
-                let values =
-                    pathValue value
-                    |> Option.map (fun p -> ResizeArray [| p |])
-                    |> Option.defaultValue (ResizeArray())
-                let reference = CWLParameterReference(key = key, values = values, ?type_ = cwlType)
-                withOverflow reference value
-            | None, Some typeName ->
-                // Typed parameter object with an explicit value field.
-                let cwlType, _ = Decode.cwlTypeStringMatcher typeName get
-                let values =
-                    match tryField "value" value with
-                    | Some (YAMLElement.Object [YAMLElement.Sequence _] as sequenceValue)
-                    | Some (YAMLElement.Sequence _ as sequenceValue) ->
-                        // value: [a, b]
-                        Decode.resizearray Decode.string sequenceValue
-                    | Some scalarOrObject ->
-                        match tryScalarString scalarOrObject with
-                        | Some scalar -> ResizeArray [| scalar |]
-                        | None -> ResizeArray()
-                    | None -> ResizeArray()
-                let reference = CWLParameterReference(key = key, values = values, type_ = cwlType)
-                withOverflow reference value
-            | None, None ->
-                // Unknown object shape; keep the object as overflow with no normalized values.
-                let reference = CWLParameterReference(key = key, values = ResizeArray())
-                withOverflow reference value
-
-        let decodeSequenceParameter (items: YAMLElement list) =
-            match items |> List.tryHead with
-            | Some first ->
-                match tryStringField "class" first with
-                | Some className when className = "File" || className = "Directory" ->
-                    // Sequence of File/Directory objects becomes an array type with
-                    // all available path/location values.
-                    let paths =
-                        items
-                        |> List.choose pathValue
-                        |> ResizeArray
-                    let itemType =
-                        match className with
-                        | "Directory" -> Directory (DirectoryInstance())
-                        | _ -> File (FileInstance())
-                    CWLParameterReference(
-                        key = key,
-                        values = paths,
-                        type_ = Array (InputArraySchema(itemType))
-                    )
-                | _ ->
-                    // Sequence of scalars becomes a multi-value untyped reference.
-                    let values =
-                        items
-                        |> List.choose tryScalarString
-                        |> ResizeArray
-                    CWLParameterReference(key = key, values = values)
-            | None ->
-                // Empty parameter arrays are represented as empty value lists.
-                CWLParameterReference(key = key, values = ResizeArray())
-
-        match yEle with
-        | YAMLElement.Value v
-        | YAMLElement.Object [YAMLElement.Value v] ->
-            // Scalar top-level parameter: key: value
-            CWLParameterReference(
-                key = key,
-                values = ResizeArray [v.Value]
-            )
-        | YAMLElement.Object [YAMLElement.Sequence s]
-        | YAMLElement.Sequence s ->
-            // Sequence top-level parameter.
-            decodeSequenceParameter s
-        | YAMLElement.Object _ ->
-            // Object top-level parameter with class/type/value metadata.
-            decodeObjectParameter yEle
-        | _ -> raise (System.ArgumentException($"Unexpected YAMLElement format in cwlParameterReferenceDecoder: %A{yEle}"))
+            makeReference CWLParameterValue.Null (Some type_)
+            |> withOverflow
+        | _ ->
+            makeReference (decodeParameterValue yEle) None
+            |> withOverflow
 
     /// Decode every top-level parameter entry into CWLParameterReference values.
     let cwlparameterReferenceArrayDecoder: YAMLElement -> ResizeArray<CWLParameterReference> =

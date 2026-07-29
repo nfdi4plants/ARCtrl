@@ -1,0 +1,159 @@
+namespace ARCtrl.CWL
+
+open DynamicObj
+open Fable.Core
+
+[<AttachMembers>]
+type CWLParameterRecordField(name: string, value: CWLParameterValue) =
+
+    member val Name = name with get, set
+
+    member val Value = value with get, set
+
+    override this.Equals(other: obj) =
+        match other with
+        | :? CWLParameterRecordField as other ->
+            this.Name = other.Name && this.Value = other.Value
+        | _ -> false
+
+    override this.GetHashCode() =
+        hash (this.Name, this.Value)
+
+and [<CustomEquality; NoComparison; RequireQualifiedAccess; AttachMembers>] CWLParameterValue =
+    | Null
+    | String of string
+    | Int of int64
+    | Float of float
+    | Boolean of bool
+    | File of FileInstance
+    | Directory of DirectoryInstance
+    | Array of ResizeArray<CWLParameterValue>
+    | Record of ResizeArray<CWLParameterRecordField>
+
+    override this.Equals(other: obj) =
+        let resizeArrayEqual (left: ResizeArray<'T>) (right: ResizeArray<'T>) =
+            left.Count = right.Count && Seq.forall2 (=) left right
+
+        match other with
+        | :? CWLParameterValue as other ->
+            match this, other with
+            | Null, Null -> true
+            | String left, String right -> left = right
+            | Int left, Int right -> left = right
+            | Float left, Float right -> left = right
+            | Boolean left, Boolean right -> left = right
+            | File left, File right -> left.Equals right
+            | Directory left, Directory right -> left.Equals right
+            | Array left, Array right -> resizeArrayEqual left right
+            | Record left, Record right -> resizeArrayEqual left right
+            | _ -> false
+        | _ -> false
+
+    override this.GetHashCode() =
+        match this with
+        | Null -> hash 0
+        | String value -> hash (1, value)
+        | Int value -> hash (2, value)
+        | Float value -> hash (3, value)
+        | Boolean value -> hash (4, value)
+        | File value -> hash (5, value)
+        | Directory value -> hash (6, value)
+        | Array values -> hash (7, values |> Seq.map hash |> Seq.toArray)
+        | Record fields -> hash (8, fields |> Seq.map hash |> Seq.toArray)
+
+module CWLParameterValue =
+
+    let floatToRoundTripString (value: float) =
+#if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        string value
+#else
+        value.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
+#endif
+
+    let tryParseInt64 (value: obj) =
+        let tryConvert (convert: unit -> int64) =
+            try Some (convert()) with _ -> None
+        match value with
+        | :? int as value -> Some (int64 value)
+        | :? int64 as value -> Some value
+        | :? decimal as value ->
+            tryConvert (fun () ->
+                let converted = int64 value
+                if decimal converted = value then converted
+                else failwith "Expected an integral decimal value."
+            )
+        | :? float as value ->
+            tryConvert (fun () ->
+                let converted = int64 value
+                if float converted = value then converted
+                else failwith "Expected an integral floating-point value."
+            )
+        | :? string as value ->
+            match System.Int64.TryParse(value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture) with
+            | true, parsed -> Some parsed
+            | false, _ -> None
+        | _ -> None
+
+    let tryParseFloat (value: obj) =
+        match value with
+        | :? float as value -> Some value
+        | :? decimal as value -> Some (float value)
+        | :? int as value -> Some (float value)
+        | :? int64 as value -> Some (float value)
+        | :? string as value ->
+            match System.Double.TryParse(value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture) with
+            | true, parsed -> Some parsed
+            | false, _ -> None
+        | _ -> None
+
+    let rec toFlatStrings value =
+        match value with
+        | CWLParameterValue.Null -> ResizeArray()
+        | CWLParameterValue.String value -> ResizeArray [| value |]
+        | CWLParameterValue.Int value -> ResizeArray [| string value |]
+        | CWLParameterValue.Float value ->
+            ResizeArray [| floatToRoundTripString value |]
+        | CWLParameterValue.Boolean value -> ResizeArray [| if value then "true" else "false" |]
+        | CWLParameterValue.File file ->
+            ResizeArray [| FileInstance.pathOrLocation file |]
+        | CWLParameterValue.Directory directory ->
+            ResizeArray [| DirectoryInstance.pathOrLocation directory |]
+        | CWLParameterValue.Array values ->
+            values
+            |> Seq.collect (fun value -> toFlatStrings value :> seq<string>)
+            |> ResizeArray
+        | CWLParameterValue.Record fields ->
+            fields
+            |> Seq.collect (fun field -> toFlatStrings field.Value :> seq<string>)
+            |> ResizeArray
+
+    let fromFlatStrings (values: ResizeArray<string>) =
+        match values.Count with
+        | 0 -> None
+        | 1 -> Some (CWLParameterValue.String values.[0])
+        | _ ->
+            values
+            |> Seq.map CWLParameterValue.String
+            |> ResizeArray
+            |> CWLParameterValue.Array
+            |> Some
+
+    let rec tryInferType value =
+        match value with
+        | CWLParameterValue.File _ -> Some (CWLType.file())
+        | CWLParameterValue.Directory _ -> Some (CWLType.directory())
+        | CWLParameterValue.Array values when values.Count > 0 ->
+            let inferredItemTypes =
+                values
+                |> Seq.map tryInferType
+                |> Seq.toArray
+
+            match inferredItemTypes.[0] with
+            | Some firstType
+                when inferredItemTypes
+                     |> Array.forall (function
+                         | Some itemType -> CWLType.typesEqual firstType itemType
+                         | None -> false) ->
+                Some (CWLType.Array (InputArraySchema(firstType)))
+            | _ -> None
+        | _ -> None

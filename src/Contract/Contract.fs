@@ -2,6 +2,7 @@ namespace ARCtrl.Contract
 
 open Fable.Core
 open Fable.Core.JsInterop
+open FsSpreadsheet
 
 #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
 [<StringEnum>]
@@ -36,7 +37,7 @@ type CLITool =
 #endif
 [<RequireQualifiedAccess>]
 type DTO =
-    | Spreadsheet of obj
+    | Spreadsheet of FsWorkbook
     | Text of string
     | CLITool of CLITool
 

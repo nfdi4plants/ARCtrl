@@ -68,6 +68,20 @@ type LDPropertyValue =
         pv.GetPropertyValues(LDPropertyValue.value, filter = filter, ?context = context)
         |> ResizeArray.map (fun (o : obj) -> o :?> string)
 
+    static member getValueObjects(pv : LDNode, ?context : LDContext) =
+        pv.GetPropertyValues(LDPropertyValue.value, ?context = context)
+
+    static member tryGetValueObject(pv : LDNode, ?context : LDContext) =
+        pv.TryGetProperty(LDPropertyValue.value, ?context = context)
+
+    static member getValueObject(pv : LDNode, ?context : LDContext) =
+        match LDPropertyValue.tryGetValueObject(pv, ?context = context) with
+        | Some value -> value
+        | None -> failwith $"Could not access property `value` of object with @id `{pv.Id}`"
+
+    static member setValueObjects(pv : LDNode, values : obj, ?context : LDContext) =
+        pv.SetProperty(LDPropertyValue.value, values, ?context = context)
+
     static member tryGetValueAsString(pv : LDNode, ?context : LDContext) =
         match pv.TryGetPropertyAsSingleton(LDPropertyValue.value, ?context = context) with
         | Some (:? string as v) -> Some v
@@ -195,9 +209,13 @@ type LDPropertyValue =
         //&& LDPropertyValue.tryGetPropertyIDAsString(pv, ?context = context) = (Some "URLToFragmentDescriptor")
 
     static member validateCWLParameter (pv : LDNode, ?context : LDContext) =
+        let hasValue =
+            match LDPropertyValue.tryGetValueObject(pv, ?context = context) with
+            | Some value when not (isNull value) -> true
+            | _ -> false
         LDPropertyValue.validate(pv, ?context = context)
         && pv.HasProperty(LDPropertyValue.exampleOfWork, ?context = context)
-        && pv.HasProperty(LDPropertyValue.value, ?context = context)
+        && hasValue
         && pv.AdditionalType.Contains("WorkflowInput")
 
     static member validateDOI (pv : LDNode, ?context : LDContext) =

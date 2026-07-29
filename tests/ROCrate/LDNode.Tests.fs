@@ -194,6 +194,13 @@ let tests_TryGetProperty = testList "TryGetProperty" [
         ]
     ]
 
+let tests_HasProperty = testList "HasProperty" [
+    testCase "empty string is present" <| fun _ ->
+        let node = LDNode("#node", ResizeArray [LDPropertyValue.schemaType])
+        node.SetProperty(LDPropertyValue.value, "")
+        Expect.isTrue (node.HasProperty(LDPropertyValue.value)) "Empty string is still a present JSON property."
+]
+
 let tests_HasType = testList "HasType" [
     testList "NoContext" [
         testCase "null" <| fun _ -> 
@@ -870,6 +877,7 @@ let main = testList "LDNode" [
     tests_instance_methods
     tests_static_methods
     tests_TryGetProperty
+    tests_HasProperty
     tests_HasType
     tests_GetPropertyValues
     tests_GetPropertyNodes

@@ -129,6 +129,18 @@ module ARCAux =
             |> FileSystem.create
         fs.Union(tree)
 
+    /// Backing value for ARC.DefaultContracts.
+    ///
+    /// Held here rather than inline in the static property: Fable's Python backend fails to
+    /// transform a non-trivial static property getter on an [<AttachMembers>] type and silently
+    /// substitutes None, which left ARC.DefaultContracts empty in the Python package. A property
+    /// whose body is a plain reference to a module-level value transforms correctly.
+    let defaultContracts =
+        Map<string, Contract> [|
+            ARCtrl.Contract.Git.gitignoreFileName, ARCtrl.Contract.Git.gitignoreContract
+            ARCtrl.Contract.Git.gitattributesFileName, ARCtrl.Contract.Git.gitattributesContract
+        |]
+
 [<AttachMembers>]
 type ARC(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?workflows : ResizeArray<ArcWorkflow>, ?runs : ResizeArray<ArcRun>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks, ?fs : FileSystem.FileSystem, ?license) as this =
 
@@ -740,28 +752,28 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             for s in this.Studies do
                 s.StaticHash <- s.GetLightHashCode()
                 yield! s.ToCreateContract(WithFolder = true)
-                if s.Datamap.IsSome then 
+                if s.Datamap.IsSome then
                     let dm = s.Datamap.Value
                     dm.StaticHash <- dm.GetHashCode()
                     yield dm.ToCreateContractForStudy(s.Identifier)
             for a in this.Assays do
                 a.StaticHash <- a.GetLightHashCode()
                 yield! a.ToCreateContract(WithFolder = true)
-                if a.Datamap.IsSome then 
+                if a.Datamap.IsSome then
                     let dm = a.Datamap.Value
                     dm.StaticHash <- dm.GetHashCode()
                     yield dm.ToCreateContractForAssay(a.Identifier)
             for w in this.Workflows do
                 w.StaticHash <- w.GetLightHashCode()
                 yield! w.ToCreateContract(WithFolder = true)
-                if w.Datamap.IsSome then 
+                if w.Datamap.IsSome then
                     let dm = w.Datamap.Value
                     dm.StaticHash <- dm.GetHashCode()
                     yield dm.ToCreateContractForWorkflow(w.Identifier)
             for r in this.Runs do
                 r.StaticHash <- r.GetLightHashCode()
                 yield! r.ToCreateContract(WithFolder = true)
-                if r.Datamap.IsSome then 
+                if r.Datamap.IsSome then
                     let dm = r.Datamap.Value
                     dm.StaticHash <- dm.GetHashCode()
                     yield dm.ToCreateContractForRun(r.Identifier)
@@ -1038,10 +1050,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         |> Option.bind (fun tree -> if ignoreHidden then tree |> FileSystemTree.filterFolders (fun n -> not (n.StartsWith("."))) else Some tree)
         |> Option.defaultValue (FileSystemTree.fromFilePaths [||])
         
-    static member DefaultContracts = Map<string,Contract> [|
-        ARCtrl.Contract.Git.gitignoreFileName, ARCtrl.Contract.Git.gitignoreContract
-        ARCtrl.Contract.Git.gitattributesFileName, ARCtrl.Contract.Git.gitattributesContract
-    |]
+    static member DefaultContracts = ARCAux.defaultContracts
 
     static member fromDeprecatedROCrateJsonString (s:string) =
         try

@@ -119,26 +119,7 @@ type CWLToolDescription (
         and set(doc) = _doc <- doc
 
     static member KnownFieldNames =
-        Set [|
-            "inputs"
-            "outputs"
-            "class"
-            "id"
-            "label"
-            "doc"
-            "intent"
-            "requirements"
-            "hints"
-            "cwlVersion"
-            "baseCommand"
-            "arguments"
-            "stdin"
-            "stderr"
-            "stdout"
-            "successCodes"
-            "temporaryFailCodes"
-            "permanentFailCodes"
-        |]
+        CWLKnownFieldNames.toolDescription
 
     /// Returns the tool's inputs or an empty ResizeArray if None.
     static member getInputsOrEmpty (tool: CWLToolDescription) =

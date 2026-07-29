@@ -18,7 +18,7 @@ let fulfillReadContractAsync basePath (c : Contract) =
             | Some DTOType.ISA_Datamap ->
                 let path = ArcPathHelper.combine basePath c.Path
                 let! wb = FileSystemHelper.readFileXlsxAsync path
-                let dto = wb |> box |> DTO.Spreadsheet
+                let dto = wb |> DTO.Spreadsheet
                 return Ok {c with DTO = Some dto}
             | Some DTOType.PlainText | Some DTOType.CWL | Some DTOType.YAML ->
                 let path = ArcPathHelper.combine basePath c.Path
@@ -58,7 +58,7 @@ let fulfillWriteContractAsync (forceOverwrite : bool) basePath (c : Contract) =
     crossAsync {
         try
             let! exists = FileSystemHelper.fileExistsAsync (ArcPathHelper.combine basePath c.Path)
-            if exists && c.Path.EndsWith(".gitkeep") then 
+            if exists && c.Path.EndsWith(".gitkeep") then
                 return Ok (c)
             elif exists && not forceOverwrite then
                 return Error (sprintf "Contract %s already exists and overwrite is not allowed" c.Path)
@@ -72,7 +72,7 @@ let fulfillWriteContractAsync (forceOverwrite : bool) basePath (c : Contract) =
             | Some (DTO.Spreadsheet wb) ->
                 let path = ArcPathHelper.combine basePath c.Path
                 do! FileSystemHelper.ensureDirectoryOfFileAsync path
-                do! FileSystemHelper.writeFileXlsxAsync path (wb :?> FsWorkbook)
+                do! FileSystemHelper.writeFileXlsxAsync path wb
                 return Ok (c)           
             | None ->
                 let path = ArcPathHelper.combine basePath c.Path
@@ -98,7 +98,7 @@ let fulfillUpdateContractAsync basePath (c : Contract) =
             | Some (DTO.Spreadsheet wb) ->
                 let path = ArcPathHelper.combine basePath c.Path
                 do! FileSystemHelper.ensureDirectoryOfFileAsync path
-                do! FileSystemHelper.writeFileXlsxAsync path (wb :?> FsWorkbook)
+                do! FileSystemHelper.writeFileXlsxAsync path wb
                 return Ok (c)
             | None -> 
                 let path = ArcPathHelper.combine basePath c.Path

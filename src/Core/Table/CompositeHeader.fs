@@ -23,9 +23,12 @@ type IOType =
         Material
     |]
 
-    static member Cases = 
-        Microsoft.FSharp.Reflection.FSharpType.GetUnionCases(typeof<IOType>) 
-        |> Array.map (fun x -> x.Tag, x.Name)
+    // Written without `|>`: Fable's Python backend fails to transform a piped static property
+    // getter on an [<AttachMembers>] union and silently substitutes None for the whole property.
+    static member Cases =
+        Array.map
+            (fun (x: Microsoft.FSharp.Reflection.UnionCaseInfo) -> x.Tag, x.Name)
+            (Microsoft.FSharp.Reflection.FSharpType.GetUnionCases(typeof<IOType>))
 
     member this.asInput = 
         let stringCreate x = $"Input [{x.ToString()}]"
@@ -137,9 +140,12 @@ type CompositeHeader =
 
     with 
 
-    static member Cases = 
-        Microsoft.FSharp.Reflection.FSharpType.GetUnionCases(typeof<CompositeHeader>) 
-        |> Array.map (fun x -> x.Tag, x.Name)
+    // Written without `|>`: Fable's Python backend fails to transform a piped static property
+    // getter on an [<AttachMembers>] union and silently substitutes None for the whole property.
+    static member Cases =
+        Array.map
+            (fun (x: Microsoft.FSharp.Reflection.UnionCaseInfo) -> x.Tag, x.Name)
+            (Microsoft.FSharp.Reflection.FSharpType.GetUnionCases(typeof<CompositeHeader>))
 
     /// <summary>
     /// This function is used to programmatically create `CompositeHeaders` in JavaScript. Returns integer code representative of input type.

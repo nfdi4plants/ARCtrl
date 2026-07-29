@@ -155,10 +155,10 @@ type WorkflowConversion =
             | _ -> failwith "Component must have a type"
         let v,va =
             match tool.ComponentValue with
-            | Some (Value.Name s) -> Some s, None
-            | Some (Value.Float f) -> Some (f.ToString()), None
-            | Some (Value.Int i) -> Some (i.ToString()), None
-            | Some (Value.Ontology oa) -> oa.Name, oa.TermAccessionNumber
+            | Some (ScalarValue.Name s) -> Some s, None
+            | Some (ScalarValue.Float f) -> Some (f.ToString()), None
+            | Some (ScalarValue.Int i) -> Some (i.ToString()), None
+            | Some (ScalarValue.Ontology oa) -> oa.Name, oa.TermAccessionNumber
             | None -> None, None
         let u,ua =
             match tool.ComponentUnit with

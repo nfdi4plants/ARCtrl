@@ -42,7 +42,7 @@ let private test_read = testList "Read" [
         let json = LDNode.fromROCrateJsonString(GenericObjects.withStringArray)
         Expect.equal json.Id "MyIdentifier" "id was not parsed correctly"
         Expect.sequenceEqual json.SchemaType ResizeArray["MyType"] "type was not parsed correctly"
-        let names = Expect.wantSome (DynObj.tryGetTypedPropertyValue<ResizeArray<obj>> "names" json) "field names was not parsed"
+        let names = Expect.wantSome (ARCtrl.ROCrate.DynObj.tryGetTypedPropertyValueAsResizeArray<obj> "names" json) "field names was not parsed"
         Expect.equal names.Count 2 "ResizeArray length is wrong"
         Expect.equal names.[0] "MyName" "First name was not parsed correctly"
         Expect.equal names.[1] "MySecondName" "Second name was not parsed correctly"
@@ -85,7 +85,7 @@ let private test_read = testList "Read" [
         let json = LDNode.fromROCrateJsonString(GenericObjects.withObjectArray)
         Expect.equal json.Id "OuterIdentifier" "id was not parsed correctly"
         Expect.sequenceEqual json.SchemaType ResizeArray["MyType"] "type was not parsed correctly"
-        let nested = Expect.wantSome (DynObj.tryGetTypedPropertyValue<ResizeArray<obj>> "nested" json) "field nested was not parsed"
+        let nested = Expect.wantSome (ARCtrl.ROCrate.DynObj.tryGetTypedPropertyValueAsResizeArray<obj> "nested" json) "field nested was not parsed"
         Expect.equal nested.Count 2 "ResizeArray length is wrong"
         let o1 = nested.[0] :?> LDNode
         Expect.equal o1.Id "MyIdentifier" "First nested id was not parsed correctly"
@@ -97,7 +97,7 @@ let private test_read = testList "Read" [
         let json = LDNode.fromROCrateJsonString(GenericObjects.withMixedArray)
         Expect.equal json.Id "OuterIdentifier" "id was not parsed correctly"
         Expect.sequenceEqual json.SchemaType ResizeArray["MyType"] "type was not parsed correctly"
-        let nested = Expect.wantSome (DynObj.tryGetTypedPropertyValue<ResizeArray<obj>> "nested" json) "field nested was not parsed"
+        let nested = Expect.wantSome (ARCtrl.ROCrate.DynObj.tryGetTypedPropertyValueAsResizeArray<obj> "nested" json) "field nested was not parsed"
         Expect.equal nested.Count 3 "ResizeArray length is wrong"
         let o1 = nested.[0] :?> LDNode
         Expect.equal o1.Id "MyIdentifier" "First nested id of object was not parsed correctly"
@@ -239,6 +239,20 @@ let private test_roundabout = testList "Roundabout" [
         let json = LDNode.toROCrateJsonString() node
         let parsedNode = LDNode.fromROCrateJsonString(json)
         Expect.equal node parsedNode "Roundabout conversion failed for BoolProperty"
+    testCase "DynamicObjectProperty" <| fun _ ->
+        let record = DynamicObj()
+        DynObj.setProperty "name" "DB_097" record
+        DynObj.setProperty "file" (LDNode("reads.fastq.gz", ResizeArray["File"])) record
+        let node = LDNode("MyID", ResizeArray["MyType"])
+        node.SetProperty("record", record)
+        node.Flatten() |> ignore
+        let json = LDNode.toROCrateJsonString() node
+        let parsedNode = LDNode.fromROCrateJsonString(json)
+        let parsedRecord = Expect.wantSome (DynObj.tryGetTypedPropertyValue<DynamicObj> "record" parsedNode) "Dynamic object property was not parsed"
+        let name = Expect.wantSome (DynObj.tryGetTypedPropertyValue<string> "name" parsedRecord) "Dynamic object field `name` was not parsed"
+        let file = Expect.wantSome (DynObj.tryGetTypedPropertyValue<LDRef> "file" parsedRecord) "Nested LDNode should be flattened and parsed as an LDRef"
+        Expect.equal name "DB_097" "Dynamic object field should survive JSON roundtrip"
+        Expect.equal file (LDRef("reads.fastq.gz")) "Nested LDNode should survive as a reference"
     
 ]
 

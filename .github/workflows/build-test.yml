@@ -31,7 +31,9 @@ jobs:
     - name: Setup Node.js environment
       uses: actions/setup-node@v3
       with:
-          node-version: 18
+          # 20 minimum: fable-library-ts uses globalThis.crypto (Guid.ts -> crypto.getRandomValues),
+          # which is only available by default from Node 19 onwards. Node 18 is also EOL.
+          node-version: 20
     - name: install node modules
       working-directory: ./
       run: npm install --ignore-scripts
@@ -43,7 +45,9 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        # 3.12 minimum: fable-library uses PEP 695 generics (`class FSharpList[T]`), which do not
+        # parse on 3.11. Its own metadata still claims >=3.10, but Fable tests against 3.12+ only.
+        python-version: '3.12'
     - name: Setup Virtual Environment
       run: python -m venv .venv
     - name: Setup Poetry Windows

@@ -9,12 +9,14 @@
   
   <ItemGroup> 
     <Compile Include="HashHelpers.fs" /> 
-    <Compile Include="DynamicObjHelpers.fs" /> 
+    <Compile Include="CWLKnownFieldNames.fs" />
+    <Compile Include="DynamicObjHelpers.fs" />
     <Compile Include="CWLTypes.fs" /> 
     <Compile Include="Requirements.fs" /> 
     <Compile Include="Outputs.fs" /> 
     <Compile Include="Inputs.fs" /> 
     <Compile Include="WorkflowSteps.fs" /> 
+    <Compile Include="ParameterValue.fs" />
     <Compile Include="ParameterReference.fs" /> 
     <Compile Include="ToolDescription.fs" /> 
     <Compile Include="WorkflowDescription.fs" /> 

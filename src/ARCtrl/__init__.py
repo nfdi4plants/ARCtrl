@@ -21,4 +21,4 @@ from .py.json import JsonController
 from .py.yaml import YamlController
 from .py.xlsx import XlsxController
 from .py.arc import ARC
-from .py.fable_modules.fable_library.async_ import start_as_task
+from fable_library.async_ import start_as_task

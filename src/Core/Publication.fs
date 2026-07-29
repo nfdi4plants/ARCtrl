@@ -75,6 +75,9 @@ type Publication(?pubMedID, ?doi, ?authors, ?title, ?status, ?comments) =
     //let mutable _status : OntologyAnnotation option = status
     //let mutable _comments : ResizeArray<Comment> = Option.defaultValue (ResizeArray()) comments
 
+    // Fable/Python: emits __str__ from ToString(); without this marker `string x` yields the default object repr.
+    interface Py.Stringable
+
     override this.ToString() =
         let sb = System.Text.StringBuilder()
         sb.Append("Publication {\n\t") |> ignore

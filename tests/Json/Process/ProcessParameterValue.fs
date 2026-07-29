@@ -10,7 +10,7 @@ let private tests_roCrate =
     testList "RO-Crate" [
         testCase "ReadWriteIntegerValue" (fun () -> 
             let pp = ProtocolParameter.create(ParameterName = OntologyAnnotation("temperature","NCIT","http://purl.obolibrary.org/obo/NCIT_0000029"))
-            let value = Value.Int 25
+            let value = ScalarValue.Int 25
             let unit = OntologyAnnotation("degree Celsius","UO","http://purl.obolibrary.org/obo/UO_0000185")
             let ppv = ProcessParameterValue.create(pp,value,unit)
 
@@ -23,7 +23,7 @@ let private tests_roCrate =
         ptestCase "ReadWriteUnitEmptyUnit" (fun () -> 
             let pp = ProtocolParameter.create(ParameterName = OntologyAnnotation("temperature","NCIT","http://purl.obolibrary.org/obo/NCIT_0000029"))
             let unit = OntologyAnnotation("","","")
-            let value = Value.Int 25
+            let value = ScalarValue.Int 25
             let ppv = ProcessParameterValue.create(pp,value,unit)
 
             let roCrate = ProcessParameterValue.toROCrateJsonString() ppv
@@ -34,7 +34,7 @@ let private tests_roCrate =
         testCase "ReadWriteUnitEmptyValue" (fun () -> 
             let pp = ProtocolParameter.create(ParameterName = OntologyAnnotation("temperature","NCIT","http://purl.obolibrary.org/obo/NCIT_0000029"))
             let unit = OntologyAnnotation("degree Celsius","UO","http://purl.obolibrary.org/obo/UO_0000185")
-            let value = Value.Name ""
+            let value = ScalarValue.Name ""
             let ppv = ProcessParameterValue.create(pp,value,unit)
 
             let roCrate = ProcessParameterValue.toROCrateJsonString() ppv
@@ -63,7 +63,7 @@ let private tests_roCrate =
         )
         testCase "ReadWriteOntologyValue" (fun () -> 
             let pp = ProtocolParameter.create(ParameterName = OntologyAnnotation("organism","NCIT","http://purl.obolibrary.org/obo/NCIT_0000029"))
-            let value = Value.Ontology (OntologyAnnotation(
+            let value = ScalarValue.Ontology (OntologyAnnotation(
                 "chlamydomonas reinhardtii",
                  "NCIT",
                  "http://purl.obolibrary.org/obo/NCIT_0000030"

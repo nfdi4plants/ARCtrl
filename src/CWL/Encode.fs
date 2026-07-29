@@ -417,6 +417,30 @@ module Encode =
             |> List.ofSeq
             |> YAMLElement.Sequence
 
+    let rec encodeCWLParameterValue (value: CWLParameterValue) : YAMLElement =
+        match value with
+        | CWLParameterValue.Null -> YAMLElement.Value (YAMLContent.create "null")
+        | CWLParameterValue.String value -> Encode.string value
+        | CWLParameterValue.Int value -> YAMLElement.Value (YAMLContent.create (string value))
+        | CWLParameterValue.Float value -> YAMLElement.Value (YAMLContent.create (CWLParameterValue.floatToRoundTripString value))
+        | CWLParameterValue.Boolean value -> yBool value
+        | CWLParameterValue.File file ->
+            encodeFilePairs "class" "File" file
+            |> yMap
+        | CWLParameterValue.Directory directory ->
+            encodeDirectoryPairs "class" "Directory" directory
+            |> yMap
+        | CWLParameterValue.Array values ->
+            values
+            |> Seq.map encodeCWLParameterValue
+            |> Seq.toList
+            |> YAMLElement.Sequence
+        | CWLParameterValue.Record fields ->
+            fields
+            |> Seq.map (fun field -> field.Name, encodeCWLParameterValue field.Value)
+            |> Seq.toList
+            |> yMap
+
     /// Encode a workflow or tool output, choosing shorthand only when type is the sole field.
     let encodeCWLOutput (o:CWLOutput) : (string * YAMLElement) =
         let typeElement = o.Type_ |> Option.map (fun t ->
@@ -1068,6 +1092,64 @@ module Encode =
         // Use whitespace=2 to match fixtures (assumed)
         YAMLicious.Writer.write element (Some (fun c -> { c with Whitespace = 2 }))
 
+    let encodeCWLParameterReference (reference: CWLParameterReference) =
+        let encodedValue =
+            reference.Value
+            |> Option.map encodeCWLParameterValue
+            |> Option.defaultValue (YAMLElement.Sequence [])
+
+        let dynamicPairs =
+            DynamicObjHelpers.dynamicPropertiesExcept
+                CWLParameterReference.KnownFieldNames
+                reference
+            |> Seq.choose (fun property ->
+                encodeDynamicValue property.Value
+                |> Option.map (fun encoded -> property.Key, encoded)
+            )
+            |> Seq.toList
+
+        let inferredType =
+            reference.Value
+            |> Option.bind CWLParameterValue.tryInferType
+
+        let explicitTypePair =
+            match reference.Type with
+            | Some type_ when inferredType <> Some type_ ->
+                Some ("type", encodeCWLType type_)
+            | _ -> None
+
+        let encodedReference =
+            match explicitTypePair, dynamicPairs, encodedValue with
+            | None, [], value -> value
+            | None, overflow, YAMLElement.Object mappings ->
+                let valuePairs =
+                    mappings
+                    |> List.choose (function
+                        | YAMLElement.Mapping (key, value) -> Some (key.Value, value)
+                        | _ -> None
+                    )
+                let valueKeys = valuePairs |> Seq.map fst |> Set.ofSeq
+                let uniqueOverflow =
+                    overflow
+                    |> List.filter (fun (key, _) -> not (Set.contains key valueKeys))
+                yMap (valuePairs @ uniqueOverflow)
+            | typePair, overflow, value ->
+                [
+                    yield! typePair |> Option.toList
+                    yield "value", value
+                    yield! overflow
+                ]
+                |> yMap
+
+        reference.Key, encodedReference
+
+    let encodeYAMLParameterFile (references: CWLParameterReference ResizeArray) =
+        references
+        |> Seq.map encodeCWLParameterReference
+        |> Seq.toList
+        |> yMap
+        |> writeYaml
+
     /// Extract object mappings in order, dropping non-mapping presentation nodes.
     let getObjectPairs (element: YAMLElement) : (string * YAMLElement) list =
         match element with
@@ -1222,4 +1304,10 @@ module Encode =
     /// Convert a CWLType to a YAML-formatted string for use in serialization
     let cwlTypeToYamlString (t: CWLType) : string =
         encodeCWLTypeYaml t
+
+    /// Helper function to format CWLType for display in error messages
+    let formatCWLType (type_ : CWLType) =
+        encodeCWLType type_
+        |> writeYaml
+        |> fun s -> s.Trim()
 

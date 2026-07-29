@@ -311,7 +311,7 @@ let testCWLToolDescriptionMetadata =
             let singletonObject fieldName (parent: DynamicObj) =
                 let values =
                     Expect.wantSome
-                        (DynObj.tryGetTypedPropertyValue<ResizeArray<obj>> fieldName parent)
+                        (DynamicObjHelpers.tryGetTypedPropertyValueAsResizeArray<obj> fieldName parent)
                         $"{fieldName} should remain a sequence."
                 Expect.equal values.Count 1 $"{fieldName} should have one value."
                 values.[0] :?> DynamicObj
@@ -548,9 +548,11 @@ expression: $(null)"""
             let et = Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolLoadContentsFile
             let inputs = Expect.wantSome et.Inputs "Inputs should be present"
             let inp = inputs.[0]
-            match inp.Type_ with
-            | Some (File _) -> ()
-            | other -> Expect.isTrue false $"Expected File type but got %A{other}"
+            // Asserted via `if`/bool rather than a `match` with a unit success branch: Fable's
+            // Python backend drops empty branches from a match in statement position, which would
+            // leave `Expect.isTrue false` unconditional and make this assertion always fail.
+            let isFile = match inp.Type_ with Some (File _) -> true | _ -> false
+            Expect.isTrue isFile $"Expected File type but got %A{inp.Type_}"
             Expect.stringContains et.Expression "parseInt" "Expression should use parseInt"
         testCase "pool output ExpressionTool expression roundtrips" <| fun _ ->
             let decoded = Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolPoolOutRoundtripFile

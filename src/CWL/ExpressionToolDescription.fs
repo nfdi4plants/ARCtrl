@@ -76,19 +76,7 @@ type CWLExpressionToolDescription (
         and set(doc) = _doc <- doc
 
     static member KnownFieldNames =
-        Set [|
-            "inputs"
-            "outputs"
-            "class"
-            "id"
-            "label"
-            "doc"
-            "intent"
-            "requirements"
-            "hints"
-            "cwlVersion"
-            "expression"
-        |]
+        CWLKnownFieldNames.expressionToolDescription
 
     /// Returns the expression tool's inputs or an empty ResizeArray if None.
     static member getInputsOrEmpty (tool: CWLExpressionToolDescription) =

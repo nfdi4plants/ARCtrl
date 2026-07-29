@@ -84,7 +84,7 @@ type InputBinding (
         )
 
     static member KnownFieldNames =
-        Set [| "loadContents"; "position"; "prefix"; "separate"; "itemSeparator"; "valueFrom"; "shellQuote" |]
+        CWLKnownFieldNames.inputBinding
 
     static member create
         (
@@ -213,4 +213,4 @@ type CWLInput (
         )
 
     static member KnownFieldNames =
-        Set [| "id"; "type"; "label"; "secondaryFiles"; "streamable"; "doc"; "format"; "loadContents"; "loadListing"; "default"; "inputBinding" |]
+        CWLKnownFieldNames.cwlInput

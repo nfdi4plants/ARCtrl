@@ -42,7 +42,7 @@ let testMetadata =
                 |> Decode.read
                 |> Decode.object (fun get -> get.Overflow.FieldList [])
                 |> overflowDecoder (DynamicObj())
-            let items = Expect.wantSome (DynObj.tryGetTypedPropertyValue<ResizeArray<obj>> "arc:items" decoded) "Sequence overflow should decode as a collection."
+            let items = Expect.wantSome (DynamicObjHelpers.tryGetTypedPropertyValueAsResizeArray<obj> "arc:items" decoded) "Sequence overflow should decode as a collection."
             Expect.equal items.Count 2 "Both sequence entries should survive."
             let first = items.[0] :?> DynamicObj
             let second = items.[1] :?> DynamicObj
@@ -57,7 +57,7 @@ let testMetadata =
                 |> Decode.read
                 |> Decode.object (fun get -> get.Overflow.FieldList [])
                 |> overflowDecoder (DynamicObj())
-            let items = Expect.wantSome (DynObj.tryGetTypedPropertyValue<ResizeArray<obj>> "arc:list" decoded) "Singleton sequence overflow should remain a collection."
+            let items = Expect.wantSome (DynamicObjHelpers.tryGetTypedPropertyValueAsResizeArray<obj> "arc:list" decoded) "Singleton sequence overflow should remain a collection."
             Expect.equal items.Count 1 "Singleton sequence should keep one entry."
             Expect.equal (items.[0] :?> string) "only" "Singleton sequence entry should be preserved."
         testCase "nested overflow decodes unquoted YAML primitive scalars with their types" <| fun _ ->

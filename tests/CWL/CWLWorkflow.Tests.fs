@@ -536,10 +536,12 @@ steps:
             | other ->
                 Expect.isTrue false $"Expected int[] but got %A{other}"
 
-            match step2.Inputs.Value.[0].Type_ with
-            | Some (Array _) -> ()
-            | other ->
-                Expect.isTrue false $"step2 input should be int[] but got %A{other}"
+            // Asserted via `if`/bool rather than a `match` with a unit success branch: Fable's
+            // Python backend drops empty branches from a match in statement position, which would
+            // leave `Expect.isTrue false` unconditional and make this assertion always fail.
+            let step2InputType = step2.Inputs.Value.[0].Type_
+            let isArray = match step2InputType with Some (Array _) -> true | _ -> false
+            Expect.isTrue isArray $"step2 input should be int[] but got %A{step2InputType}"
 
             Expect.equal step3.Outputs.[0].Type_ (Some CWLType.Int) "step3 output should be int"
         testCase "step-level loadContents with valueFrom on ExpressionTool" <| fun _ ->
@@ -737,7 +739,7 @@ steps: {}"""
                 let encoded = Encode.encodeWorkflowDescription decoded
                 let roundTripped = Decode.decodeWorkflow encoded
                 let input = roundTripped.Inputs |> Seq.find (fun input -> input.Name = "sample")
-                let items = Expect.wantSome (DynObj.tryGetTypedPropertyValue<ResizeArray<obj>> "arc:list" input) "Singleton overflow should roundtrip as a collection."
+                let items = Expect.wantSome (DynamicObjHelpers.tryGetTypedPropertyValueAsResizeArray<obj> "arc:list" input) "Singleton overflow should roundtrip as a collection."
                 Expect.equal items.Count 1 "Singleton overflow sequence should keep its item count."
                 Expect.equal (items.[0] :?> string) "only" "Singleton overflow sequence should keep its value."
             testList "PickValueMethod roundtrip" [

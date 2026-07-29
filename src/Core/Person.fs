@@ -164,6 +164,9 @@ type Person(?orcid, ?lastName, ?firstName, ?midInitials, ?email, ?phone, ?fax, ?
     override this.Equals(obj) : bool =
         HashCodes.hash this = HashCodes.hash obj
 
+    // Fable/Python: emits __str__ from ToString(); without this marker `string x` yields the default object repr.
+    interface Py.Stringable
+
     // Use this for better print debugging and better unit test output
     override this.ToString() =
         let sb = System.Text.StringBuilder()

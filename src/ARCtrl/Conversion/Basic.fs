@@ -258,16 +258,16 @@ type BaseTypes =
             failwithf "Could not parse value %s with unit %O and unit reference %O" (Option.defaultValue "" v) u uRef
 
     /// Convert an ISA Component to a CompositeHeader and Cell tuple
-    static member decomposePropertyValue (pv : LDNode, ?context : LDContext) : OntologyAnnotation*Value option*OntologyAnnotation option =
+    static member decomposePropertyValue (pv : LDNode, ?context : LDContext) : OntologyAnnotation*ScalarValue option*OntologyAnnotation option =
         let header = BaseTypes.headerOntologyOfPropertyValue(pv, ?context = context)
         let value =           
             let v = LDPropertyValue.tryGetValueAsString(pv, ?context = context)
             let vRef = LDPropertyValue.tryGetValueReferenceAsString(pv, ?context = context)
             match v,vRef with
             | _, Some vr ->
-                Some (Value.Ontology (OntologyAnnotation.fromTermAnnotation(vr,?name = v)))
+                Some (ScalarValue.Ontology (OntologyAnnotation.fromTermAnnotation(vr,?name = v)))
             | Some v, None ->
-                Value.Name v |> Some
+                ScalarValue.Name v |> Some
             | None, None ->
                 None
         let unit =

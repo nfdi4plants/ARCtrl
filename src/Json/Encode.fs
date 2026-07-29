@@ -62,7 +62,7 @@ module Encode =
 
     let addPropertyToObject (name : string) (value : Json) (obj : Json) = 
         match obj with
-        | Json.Object kvs -> Json.Object (Seq.append kvs [name, value] )
+        | Json.Object kvs -> Json.Object (List.append kvs [name, value] )
         | _ -> failwith "Expected object"
 
     let resizeArrayOrSingleton (encoder : 'T -> IEncodable) (values: ResizeArray<'T>) =

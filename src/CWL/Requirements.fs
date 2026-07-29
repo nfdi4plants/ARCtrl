@@ -97,7 +97,7 @@ type DockerRequirement (
         )
 
     static member KnownFieldNames =
-        Set [| "class"; "dockerPull"; "dockerFile"; "dockerImageId"; "dockerLoad"; "dockerImport"; "dockerOutputDirectory"; "cwltool:dockerRunOptions" |]
+        CWLKnownFieldNames.dockerRequirement
 
 /// Define an environment variable that will be set in the runtime environment by the workflow platform when executing the command line tool.
 [<AttachMembers>]
@@ -127,7 +127,7 @@ type EnvironmentDef (envName: string, envValue: string) =
         hash (this.EnvName, this.EnvValue, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        Set [| "envName"; "envValue" |]
+        CWLKnownFieldNames.environmentDef
 
 type LoadListingEnum =
     | NoListing
@@ -170,7 +170,7 @@ type LoadListingRequirementValue (loadListing: LoadListingEnum) =
         LoadListingRequirementValue(NoListing)
 
     static member KnownFieldNames =
-        Set [| "class"; "loadListing" |]
+        CWLKnownFieldNames.loadListingRequirementValue
 
 [<AttachMembers>]
 type WorkReuseRequirementValue (enableReuse: bool) =
@@ -196,7 +196,7 @@ type WorkReuseRequirementValue (enableReuse: bool) =
         WorkReuseRequirementValue(true)
 
     static member KnownFieldNames =
-        Set [| "class"; "enableReuse" |]
+        CWLKnownFieldNames.workReuseRequirementValue
 
 [<AttachMembers>]
 type NetworkAccessRequirementValue (networkAccess: bool) =
@@ -222,7 +222,7 @@ type NetworkAccessRequirementValue (networkAccess: bool) =
         NetworkAccessRequirementValue(true)
 
     static member KnownFieldNames =
-        Set [| "class"; "networkAccess" |]
+        CWLKnownFieldNames.networkAccessRequirementValue
 
 [<AttachMembers>]
 type InplaceUpdateRequirementValue (inplaceUpdate: bool) =
@@ -248,7 +248,7 @@ type InplaceUpdateRequirementValue (inplaceUpdate: bool) =
         InplaceUpdateRequirementValue(true)
 
     static member KnownFieldNames =
-        Set [| "class"; "inplaceUpdate" |]
+        CWLKnownFieldNames.inplaceUpdateRequirementValue
 
 type ToolTimeLimitValue =
     | ToolTimeLimitSeconds of int64
@@ -369,7 +369,7 @@ type ResourceRequirementInstance (
         hash (this.KnownFieldValues, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        Set [| "class"; "coresMin"; "coresMax"; "ramMin"; "ramMax"; "tmpdirMin"; "tmpdirMax"; "outdirMin"; "outdirMax" |]
+        CWLKnownFieldNames.resourceRequirementInstance
 
 /// Entry in InitialWorkDirRequirement listing.
 /// CWL allows either a Dirent object or a string/expression entry.
@@ -403,7 +403,7 @@ type InlineJavascriptRequirementValue (?expressionLib: ResizeArray<string>) =
         InlineJavascriptRequirementValue()
 
     static member KnownFieldNames =
-        Set [| "class"; "expressionLib" |]
+        CWLKnownFieldNames.inlineJavascriptRequirementValue
 
 [<AttachMembers>]
 type HintUnknownValue (class_: string option, raw: YAMLElement) =
@@ -432,7 +432,7 @@ type HintUnknownValue (class_: string option, raw: YAMLElement) =
         hash (this.Class, this.Raw, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
-        Set [| "class"; "raw" |]
+        CWLKnownFieldNames.hintUnknownValue
 
 type Requirement =
     /// Indicates that the workflow platform must support inline Javascript expressions.
