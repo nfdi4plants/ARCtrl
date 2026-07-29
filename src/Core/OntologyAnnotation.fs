@@ -165,16 +165,16 @@ type OntologyAnnotation(?name,?tsr,?tan, (*?tanInfo, *)?comments) =
             | Some name -> hash name
             | None -> 0
         match this.TermSourceREF, this.TANInfo with
-        | None, Some taninfo -> 
+        | None, Some taninfo ->
             HashCodes.mergeHashes (hash (taninfo.IDSpace.ToLower())) (hash taninfo.LocalID)
-        | Some tsr, Some taninfo -> 
+        | Some tsr, Some taninfo ->
             HashCodes.mergeHashes (hash (tsr.ToLower())) (hash taninfo.LocalID)
         | Some tsr, None ->
             match this.TermAccessionNumber with
             | Some tan -> HashCodes.mergeHashes (hash (tsr.ToLower())) (hash tan)
             | None -> hash (tsr.ToLower())
         | None, None ->
-            0    
+            0
         |> HashCodes.mergeHashes nameHash
 
     override this.Equals(obj) : bool =
@@ -211,24 +211,22 @@ type OntologyAnnotation(?name,?tsr,?tan, (*?tanInfo, *)?comments) =
 
         //HashCodes.hash this = HashCodes.hash obj
    
-    // Fable/Python: exposes __lt__/__le__/__gt__/__ge__ from CompareTo. Without it, structural
-    // comparison of a container holding OntologyAnnotations falls through to Python's own element
-    // ordering and raises, because `fable_library.util.compare` has no case for Fable's native Array.
+    // Fable/Python protocol markers. `fable_library.util.compare` has no case for Fable's native
+    // Array, so comparing two unions whose fields hold OntologyAnnotations falls through to Python's
+    // own element ordering: Comparable supplies __lt__/__le__/__gt__/__ge__ from CompareTo so that
+    // does not raise, and Equatable supplies __eq__ from Equals so element-wise array equality
+    // succeeds and `compare` can report 0 for equal values instead of defaulting to 1.
+    // Hashable is required alongside Equatable: a Python class that defines __eq__ without __hash__
+    // is unhashable, which would break every dict and set keyed on OntologyAnnotation.
     interface Fable.Core.Py.Comparable
+    interface Fable.Core.Py.Equatable
+    interface Fable.Core.Py.Hashable
 
     interface System.IComparable with
         member this.CompareTo(obj) =
             match obj with
-            | :? OntologyAnnotation as oa -> 
-                #if FABLE_COMPILER
-                let hash = this.GetHashCode()
-                let otherHash = oa.GetHashCode()
-                if hash = otherHash then 0
-                else if hash < otherHash then -1
-                else 1                
-                #else
+            | :? OntologyAnnotation as oa ->
                 this.GetHashCode().CompareTo(oa.GetHashCode())
-                #endif
             | _ -> 1
 
     member this.Copy() =
