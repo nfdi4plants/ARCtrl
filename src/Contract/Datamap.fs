@@ -57,7 +57,7 @@ module DatamapContractExtensions =
             match c with
             | {Path = p; Operation = READ; DTOType = Some DTOType.ISA_Datamap; DTO = Some (DTO.Spreadsheet fsworkbook)} when p = path ->
                 let dm = 
-                    fsworkbook :?> FsWorkbook
+                    fsworkbook
                     |> Datamap.fromFsWorkbook                
                 dm.StaticHash <- dm.GetHashCode()
                 dm
@@ -94,7 +94,7 @@ module DatamapContractExtensions =
             match c with
             | {Path = p; Operation = READ; DTOType = Some DTOType.ISA_Datamap; DTO = Some (DTO.Spreadsheet fsworkbook)} when p = path->
                 let dm = 
-                    fsworkbook :?> FsWorkbook
+                    fsworkbook
                     |> Datamap.fromFsWorkbook                
                 dm.StaticHash <- dm.GetHashCode()
                 Some (dm)
@@ -129,7 +129,7 @@ module DatamapContractExtensions =
             match c with
             | {Path = p; Operation = READ; DTOType = Some DTOType.ISA_Datamap; DTO = Some (DTO.Spreadsheet fsworkbook)} when p = path->
                 let dm = 
-                    fsworkbook :?> FsWorkbook
+                    fsworkbook
                     |> Datamap.fromFsWorkbook                
                 dm.StaticHash <- dm.GetHashCode()
                 Some (dm)
@@ -164,7 +164,7 @@ module DatamapContractExtensions =
             match c with
             | {Path = p; Operation = READ; DTOType = Some DTOType.ISA_Datamap; DTO = Some (DTO.Spreadsheet fsworkbook)} when p = path->
                 let dm = 
-                    fsworkbook :?> FsWorkbook
+                    fsworkbook
                     |> Datamap.fromFsWorkbook                
                 dm.StaticHash <- dm.GetHashCode()
                 Some (dm)

@@ -2100,16 +2100,14 @@ let tests_AdditionalTypeErrorHandling =
                 
                 Expect.equal decoded original "Unicode enum symbols should round-trip correctly"
             )
-            testCase "EmptyEnumSymbols_NotSupported" (fun () ->
-                // Empty enum symbols cause decoder error - this is a known limitation
+            testCase "EmptyEnumSymbols_RoundTrip" (fun () ->
                 let schema = { Symbols = ResizeArray []; Label = None; Doc = None; Name = None }
                 let original = CWLType.Enum schema
                 
                 let encoded = WorkflowConversion.composeAdditionalType original
-                // Decoding empty enum currently fails - this is acceptable as empty enums are semantically invalid
-                Expect.throws
-                    (fun () -> WorkflowConversion.decomposeAdditionalType encoded |> ignore)
-                    "Empty enum should fail to decode (known limitation)"
+                let decoded = WorkflowConversion.decomposeAdditionalType encoded
+
+                Expect.equal decoded original "Empty enum should round-trip correctly"
             )
             testCase "NullInNonOptionalUnion" (fun () ->
                 // Test union with null not in optional position: [String, Null, Int]

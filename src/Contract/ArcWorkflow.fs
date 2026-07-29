@@ -67,7 +67,7 @@ module WorkflowContractExtensions =
         static member tryFromReadContract (c:Contract) =
             match c with
             | {Operation = READ; DTOType = Some DTOType.ISA_Workflow; DTO = Some (DTO.Spreadsheet fsworkbook)} ->
-                fsworkbook :?> FsWorkbook
+                fsworkbook
                 |> ArcWorkflow.fromFsWorkbook
                 |> Some 
             | _ -> None

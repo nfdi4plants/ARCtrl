@@ -750,21 +750,21 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         let filemap = System.Collections.Generic.Dictionary<string, DTOType*DTO>()
         
         let investigationConverter = ArcInvestigation.toFsWorkbook
-        filemap.Add (InvestigationFileName, (DTOType.ISA_Investigation, investigationConverter this |> box |> DTO.Spreadsheet))
+        filemap.Add (InvestigationFileName, (DTOType.ISA_Investigation, investigationConverter this |> DTO.Spreadsheet))
         this.StaticHash <- this.GetLightHashCode()
         this.Studies
         |> Seq.iter (fun s ->
             s.StaticHash <- s.GetLightHashCode()
             filemap.Add (
                 Identifier.Study.fileNameFromIdentifier s.Identifier,
-                (DTOType.ISA_Study, ArcStudy.toFsWorkbook s |> box |> DTO.Spreadsheet)
+                (DTOType.ISA_Study, ArcStudy.toFsWorkbook s |> DTO.Spreadsheet)
             )
             if s.Datamap.IsSome (*&& datamapFile*) then 
                 let dm = s.Datamap.Value
                 dm.StaticHash <- dm.GetHashCode()
                 filemap.Add (
                     Identifier.Study.datamapFileNameFromIdentifier s.Identifier,
-                    (DTOType.ISA_Datamap, Spreadsheet.Datamap.toFsWorkbook dm |> box |> DTO.Spreadsheet)
+                    (DTOType.ISA_Datamap, Spreadsheet.Datamap.toFsWorkbook dm |> DTO.Spreadsheet)
                 )
                 
         )
@@ -773,13 +773,13 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             a.StaticHash <- a.GetLightHashCode()
             filemap.Add (
                 Identifier.Assay.fileNameFromIdentifier a.Identifier,
-                (DTOType.ISA_Assay, ArcAssay.toFsWorkbook a |> box |> DTO.Spreadsheet))     
+                (DTOType.ISA_Assay, ArcAssay.toFsWorkbook a |> DTO.Spreadsheet))
             if a.Datamap.IsSome (*&& datamapFile*) then 
                 let dm = a.Datamap.Value
                 dm.StaticHash <- dm.GetHashCode()
                 filemap.Add (
                     Identifier.Assay.datamapFileNameFromIdentifier a.Identifier,
-                    (DTOType.ISA_Datamap, Spreadsheet.Datamap.toFsWorkbook dm |> box |> DTO.Spreadsheet)
+                    (DTOType.ISA_Datamap, Spreadsheet.Datamap.toFsWorkbook dm |> DTO.Spreadsheet)
                 )
         )
         this.Workflows
@@ -787,7 +787,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             w.StaticHash <- w.GetLightHashCode()
             filemap.Add (
                 Identifier.Workflow.fileNameFromIdentifier w.Identifier,
-                (DTOType.ISA_Workflow, ArcWorkflow.toFsWorkbook w |> box |> DTO.Spreadsheet)
+                (DTOType.ISA_Workflow, ArcWorkflow.toFsWorkbook w |> DTO.Spreadsheet)
             )
             if w.CWLDescription.IsSome then
                 failwith "Not implemented yet: CWL description in ARC.GetWriteContracts"
@@ -796,7 +796,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                 dm.StaticHash <- dm.GetHashCode()
                 filemap.Add (
                     Identifier.Workflow.datamapFileNameFromIdentifier w.Identifier,
-                    (DTOType.ISA_Datamap, Spreadsheet.Datamap.toFsWorkbook dm |> box |> DTO.Spreadsheet)
+                    (DTOType.ISA_Datamap, Spreadsheet.Datamap.toFsWorkbook dm |> DTO.Spreadsheet)
                 )
         )
         this.Runs
@@ -804,7 +804,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             r.StaticHash <- r.GetLightHashCode()
             filemap.Add (
                 Identifier.Run.fileNameFromIdentifier r.Identifier,
-                (DTOType.ISA_Run, ArcRun.toFsWorkbook r |> box |> DTO.Spreadsheet)
+                (DTOType.ISA_Run, ArcRun.toFsWorkbook r |> DTO.Spreadsheet)
             )
             if r.CWLDescription.IsSome then
                 failwith "Not implemented yet: CWL description in ARC.GetWriteContracts"
@@ -815,7 +815,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                 dm.StaticHash <- dm.GetHashCode()
                 filemap.Add (
                     Identifier.Run.datamapFileNameFromIdentifier r.Identifier,
-                    (DTOType.ISA_Datamap, Spreadsheet.Datamap.toFsWorkbook dm |> box |> DTO.Spreadsheet)
+                    (DTOType.ISA_Datamap, Spreadsheet.Datamap.toFsWorkbook dm |> DTO.Spreadsheet)
                 )
         )
 

@@ -51,8 +51,7 @@ module InvestigationContractExtensions =
         static member tryFromReadContract (c:Contract) =
             match c with
             | {Operation = READ; DTOType = Some DTOType.ISA_Investigation; DTO = Some (DTO.Spreadsheet fsworkbook)} ->
-                fsworkbook :?> FsWorkbook
+                fsworkbook
                 |> ArcInvestigation.fromFsWorkbook
                 |> Some 
             | _ -> None
-      

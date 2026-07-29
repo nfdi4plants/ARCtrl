@@ -55,7 +55,7 @@ module AssayContractExtensions =
         static member tryFromReadContract (c:Contract) =
             match c with
             | {Operation = READ; DTOType = Some DTOType.ISA_Assay; DTO = Some (DTO.Spreadsheet fsworkbook)} ->
-                fsworkbook :?> FsWorkbook
+                fsworkbook
                 |> ArcAssay.fromFsWorkbook
                 |> Some 
             | _ -> None
