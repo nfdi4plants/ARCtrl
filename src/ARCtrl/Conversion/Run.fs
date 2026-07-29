@@ -15,21 +15,14 @@ open ARCtrl.Helper.Regex.ActivePatterns
 
 type RunConversion = 
 
-    static member private tryDynamicString name (value: DynamicObj) =
-        DynObj.tryGetTypedPropertyValue<string> name value
-
     static member private getFilePathOrLocation (value: CWL.FileInstance) =
         value.Path
         |> Option.orElse value.Location
-        |> Option.orElseWith (fun () -> RunConversion.tryDynamicString "path" value)
-        |> Option.orElseWith (fun () -> RunConversion.tryDynamicString "location" value)
         |> Option.defaultValue ""
 
     static member private getDirectoryPathOrLocation (value: CWL.DirectoryInstance) =
         value.Path
         |> Option.orElse value.Location
-        |> Option.orElseWith (fun () -> RunConversion.tryDynamicString "path" value)
-        |> Option.orElseWith (fun () -> RunConversion.tryDynamicString "location" value)
         |> Option.defaultValue ""
 
     static member cwlTypesEqual (left : CWL.CWLType) (right : CWL.CWLType) =
@@ -152,9 +145,7 @@ type RunConversion =
                 file
                 |> RunConversion.getFilePathOrLocation
                 |> fun path -> RunConversion.composeCWLInputFilePath(path, runName)
-            let encodingFormat =
-                file.Format
-                |> Option.orElseWith (fun () -> RunConversion.tryDynamicString "format" file)
+            let encodingFormat = file.Format
             LDFile.create(path, ?encodingFormat = encodingFormat, ?context = context) :> obj
         | CWL.CWLParameterValue.Directory directory ->
             let path =
@@ -204,7 +195,6 @@ type RunConversion =
             match inputValue.Value with
             | Some (CWL.CWLParameterValue.File fileValue) ->
                 fileValue.Format
-                |> Option.orElseWith (fun () -> RunConversion.tryDynamicString "format" fileValue)
                 |> Option.iter (fun format -> LDFile.setEncodingFormatAsString(file, format))
             | _ -> ()
             file
