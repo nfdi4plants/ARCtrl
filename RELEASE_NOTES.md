@@ -1,3 +1,25 @@
+### 3.1.1+3dd44f72 (Released 2026-7-22)
+* Additions:
+    * [[#fba76c8b](https://github.com/nfdi4plants/ARCtrl/commit/fba76c8bb5c78e1692f88e971eebcd945eb1b6c0)] merge persons with and without orcid when writing ro-crate
+    * [[#d59dc81c](https://github.com/nfdi4plants/ARCtrl/commit/d59dc81c8837bee85b717e31c1e4d7dab6423473)] add test against merging of same name persons
+    * [[#a9734c1d](https://github.com/nfdi4plants/ARCtrl/commit/a9734c1dfd827edcb752264ce4c57c503b120b22)] small safeguard to stop writers failing on existing .gitkeep
+* Bugfixes:
+    * [[#bab9035c](https://github.com/nfdi4plants/ARCtrl/commit/bab9035c2d00ff11eb8e639a0c5be64e1ae9c7fb)] start working on some Author-related RO-Crate conversion fixes
+
+### 3.1.0+a36ace7f (Released 2026-6-22)
+* Additions:
+    * [[#c9df71d5](https://github.com/nfdi4plants/ARCtrl/commit/c9df71d587af8b4449ac2c97809739b367ac7cc4)] add forceOverwrite flag to write contract handling
+    * [[#c38d4365](https://github.com/nfdi4plants/ARCtrl/commit/c38d4365217c8cdd2e83c6f7247df5d7d1b4226a)] add start_as_task to python imports
+    * [[#2dc34a94](https://github.com/nfdi4plants/ARCtrl/commit/2dc34a945305b7c294767a09c6a31239daf221a2)] Add tryGetTable + tests
+    * [[#fadb506d](https://github.com/nfdi4plants/ARCtrl/commit/fadb506d7b0de5002cc31ac2f55395b8ff64eae2)] add .swp files to gitignore
+* Deletions:
+    * [[#28bd9b9a](https://github.com/nfdi4plants/ARCtrl/commit/28bd9b9af1f28b9c35a2f95c50dfa8c8c7572237)] remove text file overwriting in ARC.GetWriteContracts()
+* Bugfixes:
+    * [[#722239c8](https://github.com/nfdi4plants/ARCtrl/commit/722239c82921a73773e2560c7bd18ac529c9d672)] fix contract io tests writing into same test file
+    * [[#49692b8d](https://github.com/nfdi4plants/ARCtrl/commit/49692b8d2bf9eb4803181be83c9e62111c138b19)] last fixes to GetWriteContracts fixes
+    * [[#9ed0594d](https://github.com/nfdi4plants/ARCtrl/commit/9ed0594d796c5f7d3bad1cff8884ebe1b133e518)] fix empty datamap returning HashCode 0
+    * [[#56c51317](https://github.com/nfdi4plants/ARCtrl/commit/56c513174b44244e8b7c2988e2d2a265f41b51ec)] fixed changes
+
 ### 3.0.5+48b19118 (Released 2026-4-20)
 * Additions:
     * [[#2f67a4a4](https://github.com/nfdi4plants/ARCtrl/commit/2f67a4a4e53a3099a9a1482c7a2143e107e917d1)] add test for js hash duplication

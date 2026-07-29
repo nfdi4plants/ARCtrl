@@ -37,17 +37,6 @@
     <Compile Include="LDTypes\Dataset.fs" />
 
     <!-- ISA Profile types -->
-    <Compile Include="ISAProfile\Dataset.fs" />
-    <Compile Include="ISAProfile\Investigation.fs" />
-    <Compile Include="ISAProfile\Study.fs" />
-    <Compile Include="ISAProfile\Assay.fs" />
-    <Compile Include="ISAProfile\LabProcess.fs" />
-    <Compile Include="ISAProfile\LabProtocol.fs" />
-    <Compile Include="ISAProfile\Sample.fs" />
-    <Compile Include="ISAProfile\Data.fs" />
-    <Compile Include="ISAProfile\PropertyValue.fs" />
-    <Compile Include="ISAProfile\Person.fs" />
-    <Compile Include="ISAProfile\ScholarlyArticle.fs" />
 
     <!-- Main module -->
     <Compile Include="ArcROCrateMetadata.fs" />

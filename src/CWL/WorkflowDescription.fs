@@ -76,6 +76,9 @@ type CWLWorkflowDescription(
         with get() = _doc
         and set(doc) = _doc <- doc
 
+    static member KnownFieldNames =
+        CWLKnownFieldNames.workflowDescription
+
     /// Returns workflow inputs.
     static member getInputs (workflow: CWLWorkflowDescription) =
         workflow.Inputs

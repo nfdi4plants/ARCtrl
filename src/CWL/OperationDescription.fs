@@ -69,6 +69,9 @@ type CWLOperationDescription(
         with get() = _doc
         and set(value) = _doc <- value
 
+    static member KnownFieldNames =
+        CWLKnownFieldNames.operationDescription
+
     static member getInputs (operation: CWLOperationDescription) =
         operation.Inputs
 

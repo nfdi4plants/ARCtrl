@@ -1,9 +1,9 @@
 module Tests.YAMLParameterFile
 
 open ARCtrl.CWL
+open DynamicObj
 open YAMLicious
 open TestingUtils
-open DynamicObj
 
 let decodeYAMLParameterFile =
     TestObjects.CWL.YAMLParameterFile.yamlParameterFileContent
@@ -64,7 +64,7 @@ let testYAMLParameterFile =
             let decoded = DecodeParameters.decodeYAMLParameterFile TestObjects.CWL.YAMLParameterFile.Structured.nestedFileArray
             let reference = Expect.wantExactlyOne decoded "Expected one parameter reference."
             Expect.equal reference.Key "sampleRecordFiles" "Key should decode."
-            Expect.equal reference.Type (Some (CWLType.Array { Items = CWLType.Array { Items = CWLType.file(); Label = None; Doc = None; Name = None }; Label = None; Doc = None; Name = None })) "Nested file array type should be inferred."
+            Expect.equal reference.Type (Some (CWLType.Array (InputArraySchema(CWLType.Array (InputArraySchema(CWLType.file())))))) "Nested file array type should be inferred."
             match reference.Value with
             | Some (CWLParameterValue.Array outer) ->
                 Expect.equal outer.Count 2 "Outer array should contain one entry per sample."
@@ -74,8 +74,8 @@ let testYAMLParameterFile =
                         let file = Expect.wantExactlyOne inner "Each sample entry should contain one file in this fixture."
                         match file with
                         | CWLParameterValue.File file ->
-                            Expect.isSome (DynObj.tryGetTypedPropertyValue<string> "path" file) "File path should be preserved."
-                            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "format" file) (Some "edam:format_1930") "File format metadata should be preserved."
+                            Expect.isSome file.Path "File path should be preserved."
+                            Expect.equal file.Format (Some "edam:format_1930") "File format metadata should be preserved."
                         | other -> failwithf "Expected file value but got %A" other
                     | other -> failwithf "Expected nested array but got %A" other
             | other -> failwithf "Expected structured array value but got %A" other
@@ -106,6 +106,30 @@ let testYAMLParameterFile =
             let encoded = Encode.encodeYAMLParameterFile decoded
             let decodedAgain = DecodeParameters.decodeYAMLParameterFile encoded
             Expect.sequenceEqual decodedAgain decoded "Structured parameter values should roundtrip through YAML."
+        testCase "known fields are typed fields, not dynamic overflow" <| fun _ ->
+            let reference =
+                CWLParameterReference(
+                    key = "input",
+                    values = ResizeArray [| "value" |],
+                    type_ = CWLType.String
+                )
+            Expect.sequenceEqual CWLParameterReference.KnownFieldNames (Set [| "class"; "path"; "location"; "type"; "value" |]) ""
+            Expect.isEmpty ((reference :> DynamicObj) |> DynamicObjHelpers.dynamicPropertiesSnapshot) "Known fields should not be stored as dynamic properties."
+            DynObj.setProperty "arc:note" "keep me" reference
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" reference) (Some "keep me") "Unknown fields should stay in dynamic overflow."
+        testCase "file object parameter fields decode without field order assumptions and keep overflow" <| fun _ ->
+            let yaml = """exampleFile:
+  path: ../examplePath
+  arc:file note: keep file note
+  class: File"""
+            let decoded = DecodeParameters.decodeYAMLParameterFile yaml
+            let reference = decoded.[0]
+            Expect.equal reference.Key "exampleFile" ""
+            Expect.sequenceEqual reference.Values (ResizeArray [| "../examplePath" |]) "Path should decode even when it appears before class."
+            Expect.equal reference.Type (Some (CWLType.file())) "Class should decode to File type regardless of field order."
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:file note" reference) (Some "keep file note") "Unknown parameter object fields should be preserved on the parameter reference."
+            Expect.isNone (DynObj.tryGetTypedPropertyValue<string> "class" reference) "Known class field should not be overflow."
+            Expect.isNone (DynObj.tryGetTypedPropertyValue<string> "path" reference) "Known path field should not be overflow."
     ]
 
 let main = 

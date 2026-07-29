@@ -156,9 +156,7 @@ outputs: {}"""
 
             testCase "Encode emits expressionLib when present" <| fun _ ->
                 let requirement =
-                    InlineJavascriptRequirement {
-                        ExpressionLib = Some (ResizeArray [| "$(function() { return 1; })" |])
-                    }
+                    InlineJavascriptRequirement (InlineJavascriptRequirementValue(expressionLib = ResizeArray [| "$(function() { return 1; })" |]))
                 let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
                 Expect.stringContains encoded "class: InlineJavascriptRequirement" "Encoded output should include class"
                 Expect.stringContains encoded "expressionLib" "Encoded output should include expressionLib"
@@ -169,7 +167,7 @@ outputs: {}"""
                 Expect.isFalse (encoded.Contains("expressionLib")) "Encoded output should omit expressionLib when absent"
 
             testCase "Encode omits expressionLib when empty" <| fun _ ->
-                let requirement = InlineJavascriptRequirement { ExpressionLib = Some (ResizeArray()) }
+                let requirement = InlineJavascriptRequirement (InlineJavascriptRequirementValue(expressionLib = ResizeArray()))
                 let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
                 Expect.isFalse (encoded.Contains("expressionLib")) "Encoded output should omit expressionLib for empty arrays"
         ]
@@ -217,6 +215,36 @@ outputs: {}"""
                     Expect.stringContains encoded "--gpus=all" "Encoded hint should keep cwltool docker run option values."
                 | _ ->
                     failwith "Expected DockerRequirement hint"
+
+            testCase "Unknown DockerRequirement payload fields stay on payload and roundtrip" <| fun _ ->
+                let yaml = """requirements:
+  - class: DockerRequirement
+    dockerPull: ubuntu:24.04
+    arc:note: keep docker note"""
+                let reqs = decodeRequirements yaml
+                let requirement = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
+                match requirement with
+                | DockerRequirement dockerRequirement ->
+                    Expect.equal
+                        (DynObj.tryGetTypedPropertyValue<string> "arc:note" dockerRequirement)
+                        (Some "keep docker note")
+                        "Unknown DockerRequirement fields should be stored on the DockerRequirement payload."
+                    let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
+                    let document = "requirements:\n  - " + encoded.Replace("\n", "\n    ")
+                    let roundTripped =
+                        Decode.read document
+                        |> Decode.requirementsDecoder
+                        |> Option.get
+                        |> fun reqs -> findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
+                    match roundTripped with
+                    | DockerRequirement roundTrippedDocker ->
+                        Expect.equal
+                            (DynObj.tryGetTypedPropertyValue<string> "arc:note" roundTrippedDocker)
+                            (Some "keep docker note")
+                            "Unknown DockerRequirement fields should survive encode/decode."
+                    | _ -> failwith "Expected DockerRequirement after roundtrip"
+                | _ ->
+                    failwith "Expected DockerRequirement"
         ]
         testList "InitialWorkDirRequirement" [
             testCase "Class Syntax" <| fun _ ->
@@ -225,8 +253,8 @@ outputs: {}"""
                 let expected =
                     InitialWorkDirRequirement (
                         ResizeArray [|
-                            DirentEntry { Entryname = Some (SchemaSaladString.Literal "arc"); Entry = SchemaSaladString.Literal "$(inputs.arcDirectory)"; Writable = Some true }
-                            DirentEntry { Entryname = None; Entry = SchemaSaladString.Literal "$(inputs.outputDirectory)"; Writable = Some true }
+                            DirentEntry (DirentInstance(SchemaSaladString.Literal "$(inputs.arcDirectory)", entryname = SchemaSaladString.Literal "arc", writable = true))
+                            DirentEntry (DirentInstance(SchemaSaladString.Literal "$(inputs.outputDirectory)", writable = true))
                         |]
                     )
                 let actual = initialWorkDirItem
@@ -241,8 +269,8 @@ outputs: {}"""
                 let expected =
                     InitialWorkDirRequirement (
                         ResizeArray [|
-                            DirentEntry { Entryname = Some (SchemaSaladString.Literal "arc"); Entry = SchemaSaladString.Literal "$(inputs.arcDirectory)"; Writable = Some true }
-                            DirentEntry { Entryname = None; Entry = SchemaSaladString.Literal "$(inputs.outputDirectory)"; Writable = Some true }
+                            DirentEntry (DirentInstance(SchemaSaladString.Literal "$(inputs.arcDirectory)", entryname = SchemaSaladString.Literal "arc", writable = true))
+                            DirentEntry (DirentInstance(SchemaSaladString.Literal "$(inputs.outputDirectory)", writable = true))
                         |]
                     )
                 let actual = initialWorkDirItem
@@ -257,8 +285,8 @@ outputs: {}"""
                 let expected =
                     InitialWorkDirRequirement (
                         ResizeArray [|
-                            DirentEntry { Entryname = Some (SchemaSaladString.Literal "arc"); Entry = SchemaSaladString.Literal "$(inputs.arcDirectory)"; Writable = Some true }
-                            DirentEntry { Entryname = None; Entry = SchemaSaladString.Literal "$(inputs.outputDirectory)"; Writable = Some true }
+                            DirentEntry (DirentInstance(SchemaSaladString.Literal "$(inputs.arcDirectory)", entryname = SchemaSaladString.Literal "arc", writable = true))
+                            DirentEntry (DirentInstance(SchemaSaladString.Literal "$(inputs.outputDirectory)", writable = true))
                         |]
                     )
                 let actual = initialWorkDirItem
@@ -336,11 +364,7 @@ outputs: {}"""
                 | InitialWorkDirRequirement listing ->
                     let expected =
                         ResizeArray [|
-                            DirentEntry {
-                                Entry = SchemaSaladString.Include "scripts/bootstrap.sh"
-                                Entryname = Some (SchemaSaladString.Literal "script-name.txt")
-                                Writable = None
-                            }
+                            DirentEntry (DirentInstance(SchemaSaladString.Include "scripts/bootstrap.sh", entryname = SchemaSaladString.Literal "script-name.txt"))
                         |]
                     Expect.sequenceEqual listing expected "Dirent entry include wrapper should preserve directive kind."
                 | _ ->
@@ -370,7 +394,7 @@ outputs: {}"""
             testCase "Class Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsClassFileContent
                 let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
-                let expected = EnvVarRequirement (ResizeArray [|{EnvName = "DOTNET_NOLOGO"; EnvValue = "true"}; {EnvName = "TEST"; EnvValue = "false"}|])
+                let expected = EnvVarRequirement (ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", "true"); EnvironmentDef("TEST", "false") |])
                 let actual = envVarItem
                 match actual, expected with
                 | EnvVarRequirement a, EnvVarRequirement e ->
@@ -380,7 +404,7 @@ outputs: {}"""
             testCase "Mapping Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsMappingFileContent
                 let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
-                let expected = EnvVarRequirement (ResizeArray [|{EnvName = "DOTNET_NOLOGO"; EnvValue = "true"}; {EnvName = "TEST"; EnvValue = "false"}|])
+                let expected = EnvVarRequirement (ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", "true"); EnvironmentDef("TEST", "false") |])
                 let actual = envVarItem
                 match actual, expected with
                 | EnvVarRequirement a, EnvVarRequirement e ->
@@ -390,7 +414,7 @@ outputs: {}"""
             testCase "Json Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsJSONFileContent
                 let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
-                let expected = EnvVarRequirement (ResizeArray [|{EnvName = "DOTNET_NOLOGO"; EnvValue = "true"}; {EnvName = "TEST"; EnvValue = "false"}|])
+                let expected = EnvVarRequirement (ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", "true"); EnvironmentDef("TEST", "false") |])
                 let actual = envVarItem
                 match actual, expected with
                 | EnvVarRequirement a, EnvVarRequirement e ->
@@ -407,7 +431,7 @@ outputs: {}"""
                 let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
                 match envVarItem with
                 | EnvVarRequirement envs ->
-                    let expected = ResizeArray [|{EnvName = "DOTNET_NOLOGO"; EnvValue = "true"}; {EnvName = "TEST"; EnvValue = "false"}|]
+                    let expected = ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", "true"); EnvironmentDef("TEST", "false") |]
                     Expect.sequenceEqual envs expected "EnvVar map shorthand should decode to normalized EnvironmentDef list."
                 | _ ->
                     failwith "Wrong requirement type: expected EnvVarRequirement"
@@ -441,7 +465,7 @@ outputs: {}"""
                 Expect.stringContains encoded "envValue: \"true\"" "Boolean-like strings should remain quoted in default array encoder"
 
             testCase "Compact map encode helper emits envDef map" <| fun _ ->
-                let envs = ResizeArray [|{ EnvName = "DOTNET_NOLOGO"; EnvValue = "true" }; { EnvName = "TEST"; EnvValue = "false" }|]
+                let envs = ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", "true"); EnvironmentDef("TEST", "false") |]
                 let encoded = Encode.encodeEnvVarRequirementCompactMap envs |> Encode.writeYaml
                 Expect.stringContains encoded "class: EnvVarRequirement" "EnvVar compact helper should emit class"
                 Expect.stringContains encoded "envDef:" "EnvVar compact helper should emit envDef map"
@@ -451,7 +475,7 @@ outputs: {}"""
             testCase "Class Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsClassFileContent
                 let softwareItem = findRequirement reqs (function SoftwareRequirement _ -> true | _ -> false)
-                let expected = SoftwareRequirement (ResizeArray [|{Package = "interproscan"; Specs = Some (ResizeArray [| "https://identifiers.org/rrid/RRID:SCR_005829" |]); Version = Some (ResizeArray[| "5.21-60" |])}|])
+                let expected = SoftwareRequirement (ResizeArray [| SoftwarePackage("interproscan", version = ResizeArray [| "5.21-60" |], specs = ResizeArray [| "https://identifiers.org/rrid/RRID:SCR_005829" |]) |])
                 let actual = softwareItem
                 match actual, expected with
                 | SoftwareRequirement actualType, SoftwareRequirement expectedType ->
@@ -465,7 +489,7 @@ outputs: {}"""
             testCase "Mapping Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsMappingFileContent
                 let softwareItem = findRequirement reqs (function SoftwareRequirement _ -> true | _ -> false)
-                let expected = SoftwareRequirement (ResizeArray [|{Package = "interproscan"; Specs = Some (ResizeArray [| "https://identifiers.org/rrid/RRID:SCR_005829" |]); Version = Some (ResizeArray[| "5.21-60" |])}|])
+                let expected = SoftwareRequirement (ResizeArray [| SoftwarePackage("interproscan", version = ResizeArray [| "5.21-60" |], specs = ResizeArray [| "https://identifiers.org/rrid/RRID:SCR_005829" |]) |])
                 let actual = softwareItem
                 match actual, expected with
                 | SoftwareRequirement actualType, SoftwareRequirement expectedType ->
@@ -479,7 +503,7 @@ outputs: {}"""
             testCase "Json Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsJSONFileContent
                 let softwareItem = findRequirement reqs (function SoftwareRequirement _ -> true | _ -> false)
-                let expected = SoftwareRequirement (ResizeArray [|{Package = "interproscan"; Specs = Some (ResizeArray [| "https://identifiers.org/rrid/RRID:SCR_005829" |]); Version = Some (ResizeArray[| "5.21-60" |])}|])
+                let expected = SoftwareRequirement (ResizeArray [| SoftwarePackage("interproscan", version = ResizeArray [| "5.21-60" |], specs = ResizeArray [| "https://identifiers.org/rrid/RRID:SCR_005829" |]) |])
                 let actual = softwareItem
                 match actual, expected with
                 | SoftwareRequirement actualType, SoftwareRequirement expectedType ->
@@ -564,11 +588,11 @@ outputs: {}"""
             testCase "Compact map encode helper emits packages map" <| fun _ ->
                 let packages =
                     ResizeArray [|
-                        {
-                            Package = "interproscan"
-                            Specs = Some (ResizeArray [| "https://identifiers.org/rrid/RRID:SCR_005829" |])
-                            Version = Some (ResizeArray [| "5.21-60" |])
-                        }
+                        SoftwarePackage(
+                            "interproscan",
+                            version = ResizeArray [| "5.21-60" |],
+                            specs = ResizeArray [| "https://identifiers.org/rrid/RRID:SCR_005829" |]
+                        )
                     |]
                 let encoded = Encode.encodeSoftwareRequirementCompactMap packages |> Encode.writeYaml
                 Expect.stringContains encoded "class: SoftwareRequirement" "Software compact helper should emit class"
@@ -579,19 +603,19 @@ outputs: {}"""
             testCase "Class Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsClassFileContent
                 let networkAccessItem = findRequirement reqs (function NetworkAccessRequirement _ -> true | _ -> false)
-                let expected = NetworkAccessRequirement { NetworkAccess = true }
+                let expected = NetworkAccessRequirement (NetworkAccessRequirementValue(true))
                 let actual = networkAccessItem
                 Expect.equal actual expected "Type of Decode Classs Syntax for NetworkAccess, Requirement can only be NetworkAccess"
             testCase "Mapping Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsMappingFileContent
                 let networkAccessItem = findRequirement reqs (function NetworkAccessRequirement _ -> true | _ -> false)
-                let expected = NetworkAccessRequirement { NetworkAccess = true }
+                let expected = NetworkAccessRequirement (NetworkAccessRequirementValue(true))
                 let actual = networkAccessItem
                 Expect.equal actual expected "Type of Decode Mapping Syntax for NetworkAccess, Requirement can only be NetworkAccess"
             testCase "Json Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsJSONFileContent
                 let networkAccessItem = findRequirement reqs (function NetworkAccessRequirement _ -> true | _ -> false)
-                let expected = NetworkAccessRequirement { NetworkAccess = true }
+                let expected = NetworkAccessRequirement (NetworkAccessRequirementValue(true))
                 let actual = networkAccessItem
                 Expect.equal actual expected "Type of Decode Json Syntax for NetworkAccess, Requirement can only be NetworkAccess"
         ]
@@ -646,7 +670,7 @@ outputs: {}"""
     loadListing: deep_listing"""
                 let reqs = decodeRequirements yaml
                 let requirement = findRequirement reqs (function LoadListingRequirement _ -> true | _ -> false)
-                let expected = LoadListingRequirement { LoadListing = DeepListing }
+                let expected = LoadListingRequirement (LoadListingRequirementValue(DeepListing))
                 Expect.equal requirement expected "Class-array syntax should decode LoadListingRequirement payload."
             testCase "Mapping Syntax" <| fun _ ->
                 let yaml = """requirements:
@@ -654,20 +678,20 @@ outputs: {}"""
     loadListing: shallow_listing"""
                 let reqs = decodeRequirements yaml
                 let requirement = findRequirement reqs (function LoadListingRequirement _ -> true | _ -> false)
-                let expected = LoadListingRequirement { LoadListing = ShallowListing }
+                let expected = LoadListingRequirement (LoadListingRequirementValue(ShallowListing))
                 Expect.equal requirement expected "Mapping syntax should decode LoadListingRequirement payload."
             testCase "Json Syntax" <| fun _ ->
                 let yaml = """requirements: { LoadListingRequirement: { loadListing: "no_listing" } }"""
                 let reqs = decodeRequirements yaml
                 let requirement = findRequirement reqs (function LoadListingRequirement _ -> true | _ -> false)
-                let expected = LoadListingRequirement { LoadListing = NoListing }
+                let expected = LoadListingRequirement (LoadListingRequirementValue(NoListing))
                 Expect.equal requirement expected "JSON object syntax should decode LoadListingRequirement payload."
             testCase "Default value when field omitted" <| fun _ ->
                 let yaml = """requirements:
   - class: LoadListingRequirement"""
                 let reqs = decodeRequirements yaml
                 let requirement = findRequirement reqs (function LoadListingRequirement _ -> true | _ -> false)
-                let expected = LoadListingRequirement { LoadListing = NoListing }
+                let expected = LoadListingRequirement (LoadListingRequirementValue(NoListing))
                 Expect.equal requirement expected "Missing loadListing should default to no_listing."
             testCase "Invalid value fails clearly" <| fun _ ->
                 let yaml = """requirements:
@@ -686,7 +710,7 @@ outputs: {}"""
                     "Non-canonical case should fail for loadListing values."
 
             testCase "Encode canonical loadListing symbol" <| fun _ ->
-                let requirement = LoadListingRequirement { LoadListing = ShallowListing }
+                let requirement = LoadListingRequirement (LoadListingRequirementValue(ShallowListing))
                 let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
                 Expect.stringContains encoded "loadListing: shallow_listing" "Enum should encode to canonical CWL symbol."
         ]
@@ -698,8 +722,8 @@ outputs: {}"""
                 let reqs = decodeRequirements yaml
                 let workReuse = findRequirement reqs (function WorkReuseRequirement _ -> true | _ -> false)
                 let inplace = findRequirement reqs (function InplaceUpdateRequirement _ -> true | _ -> false)
-                Expect.equal workReuse (WorkReuseRequirement { EnableReuse = true }) "WorkReuse without explicit payload should default to true."
-                Expect.equal inplace (InplaceUpdateRequirement { InplaceUpdate = true }) "InplaceUpdateRequirement without payload should default to true."
+                Expect.equal workReuse (WorkReuseRequirement (WorkReuseRequirementValue(true))) "WorkReuse without explicit payload should default to true."
+                Expect.equal inplace (InplaceUpdateRequirement (InplaceUpdateRequirementValue(true))) "InplaceUpdateRequirement without payload should default to true."
             testCase "WorkReuse, NetworkAccess, InplaceUpdate decode explicit false payloads" <| fun _ ->
                 let yaml = """requirements:
   - class: WorkReuse
@@ -712,9 +736,9 @@ outputs: {}"""
                 let workReuse = findRequirement reqs (function WorkReuseRequirement _ -> true | _ -> false)
                 let network = findRequirement reqs (function NetworkAccessRequirement _ -> true | _ -> false)
                 let inplace = findRequirement reqs (function InplaceUpdateRequirement _ -> true | _ -> false)
-                Expect.equal workReuse (WorkReuseRequirement { EnableReuse = false }) "WorkReuse enableReuse=false should decode."
-                Expect.equal network (NetworkAccessRequirement { NetworkAccess = false }) "NetworkAccess networkAccess=false should decode."
-                Expect.equal inplace (InplaceUpdateRequirement { InplaceUpdate = false }) "InplaceUpdateRequirement inplaceUpdate=false should decode."
+                Expect.equal workReuse (WorkReuseRequirement (WorkReuseRequirementValue(false))) "WorkReuse enableReuse=false should decode."
+                Expect.equal network (NetworkAccessRequirement (NetworkAccessRequirementValue(false))) "NetworkAccess networkAccess=false should decode."
+                Expect.equal inplace (InplaceUpdateRequirement (InplaceUpdateRequirementValue(false))) "InplaceUpdateRequirement inplaceUpdate=false should decode."
             testCase "WorkReuse and NetworkAccess accept expression payloads" <| fun _ ->
                 let yaml = """requirements:
   - class: WorkReuse
@@ -787,10 +811,10 @@ outputs: {}"""
                 let requirement = findRequirement reqs (function ResourceRequirement _ -> true | _ -> false)
                 match requirement with
                 | ResourceRequirement resourceRequirement ->
-                    let coresMin = resourceRequirement.GetPropertyValue("coresMin") |> unbox<obj option> |> Option.get |> unbox<int64>
-                    let coresMax = resourceRequirement.GetPropertyValue("coresMax") |> unbox<obj option> |> Option.get |> unbox<int64>
-                    let ramMin = resourceRequirement.GetPropertyValue("ramMin") |> unbox<obj option> |> Option.get |> unbox<float>
-                    let outdirMin = resourceRequirement.GetPropertyValue("outdirMin") |> unbox<obj option> |> Option.get |> unbox<string>
+                    let coresMin = resourceRequirement.CoresMin.Value :?> int64
+                    let coresMax = resourceRequirement.CoresMax.Value :?> int64
+                    let ramMin = resourceRequirement.RamMin.Value :?> float
+                    let outdirMin = resourceRequirement.OutdirMin.Value :?> string
                     Expect.equal coresMin 2L "coresMin should decode to int64"
                     Expect.equal coresMax 922337203685477580L "coresMax should decode to int64"
                     Expect.equal ramMin 4.5 "ramMin should decode to float"
@@ -801,9 +825,45 @@ outputs: {}"""
                 | _ ->
                     failwith "Expected ResourceRequirement"
 
-            testCase "Resource scalars roundtrip through encode and decode" <| fun _ ->
+            testCase "known fields are typed fields, not dynamic overflow" <| fun _ ->
+                let resourceRequirement =
+                    ResourceRequirementInstance(coresMin = 2L, ramMin = 4.5, outdirMin = "$(inputs.outdir_min)")
+
+                Expect.sequenceEqual
+                    ResourceRequirementInstance.KnownFieldNames
+                    (Set [| "class"; "coresMin"; "coresMax"; "ramMin"; "ramMax"; "tmpdirMin"; "tmpdirMax"; "outdirMin"; "outdirMax" |])
+                    "ResourceRequirement known fields should be declared on the type."
+                Expect.isEmpty
+                    (resourceRequirement |> DynamicObjHelpers.dynamicPropertiesSnapshot)
+                    "ResourceRequirement known fields should not be stored as dynamic properties."
+                Expect.equal (resourceRequirement.TryGetInt64("coresMin")) (Some 2L) "Typed int64 getter should read known field."
+                Expect.equal (resourceRequirement.TryGetFloat("ramMin")) (Some 4.5) "Typed float getter should read known field."
+                Expect.equal (resourceRequirement.TryGetExpression("outdirMin")) (Some "$(inputs.outdir_min)") "Typed expression getter should read known field."
+
+                DynObj.setProperty "arc:note" "keep overflow" resourceRequirement
+                Expect.equal
+                    (DynObj.tryGetTypedPropertyValue<string> "arc:note" resourceRequirement)
+                    (Some "keep overflow")
+                    "Unknown fields should still use DynamicObj overflow."
+
+            testCase "DynamicObj values with known resource keys are not treated as typed fields" <| fun _ ->
                 let resourceRequirement = ResourceRequirementInstance()
-                DynObj.setProperty "coresMin" (Some (box 2L)) resourceRequirement
+                DynObj.setProperty "coresMin" (box 99L) resourceRequirement
+                DynObj.setProperty "arc:note" "keep overflow" resourceRequirement
+
+                Expect.equal
+                    (resourceRequirement.TryGetInt64("coresMin"))
+                    None
+                    "Typed getters should not read known resource fields from DynamicObj storage."
+
+                let yaml = Encode.encodeRequirement (ResourceRequirement resourceRequirement) |> Encode.writeYaml
+                Expect.isFalse
+                    (yaml.Contains("coresMin"))
+                    "Encoding should not emit known resource fields from DynamicObj storage."
+                Expect.stringContains yaml "arc:note" "Unknown overflow should still be encoded."
+
+            testCase "Resource scalars roundtrip through encode and decode" <| fun _ ->
+                let resourceRequirement = ResourceRequirementInstance(coresMin = 2L, ramMin = 4.5)
                 let requirement = ResourceRequirement resourceRequirement
                 let encodedElement = Encode.encodeRequirement requirement
                 let roundtripped =
@@ -812,11 +872,13 @@ outputs: {}"""
 
                 match requirement, roundtripped with
                 | ResourceRequirement original, ResourceRequirement roundtrip ->
-                    let originalCoresMin = original.GetPropertyValue("coresMin") |> unbox<obj option> |> Option.get |> unbox<int64>
-
-                    let roundtripCoresMin = roundtrip.GetPropertyValue("coresMin") |> unbox<obj option> |> Option.get |> unbox<int64>
+                    let originalCoresMin = original.CoresMin.Value :?> int64
+                    let roundtripCoresMin = roundtrip.CoresMin.Value :?> int64
+                    let originalRamMin = original.RamMin.Value :?> float
+                    let roundtripRamMin = roundtrip.RamMin.Value :?> float
 
                     Expect.equal roundtripCoresMin originalCoresMin "coresMin should roundtrip as int64"
+                    Expect.equal roundtripRamMin originalRamMin "ramMin should roundtrip as float"
                 | _ ->
                     failwith "Expected ResourceRequirement in both original and roundtrip values"
 
@@ -831,7 +893,7 @@ outputs: {}"""
                 let requirement = findRequirement reqs (function SchemaDefRequirement _ -> true | _ -> false)
                 match requirement with
                 | SchemaDefRequirement definitions ->
-                    let expected = ResizeArray [| { Name = "SampleId"; Type_ = CWLType.String } |]
+                    let expected = ResizeArray [| SchemaDefRequirementType("SampleId", CWLType.String) |]
                     Expect.sequenceEqual definitions expected "Legacy map-style schema definitions should decode into explicit schema-def entries."
                 | _ ->
                     failwith "Expected SchemaDefRequirement"
@@ -902,7 +964,7 @@ let testRequirementEncode =
                 let listing =
                     ResizeArray [|
                         StringEntry (SchemaSaladString.Literal "$(inputs.stageDirectory)")
-                        DirentEntry { Entry = SchemaSaladString.Literal "$(inputs.outputDirectory)"; Entryname = Some (SchemaSaladString.Literal "outdir"); Writable = Some true }
+                        DirentEntry (DirentInstance(SchemaSaladString.Literal "$(inputs.outputDirectory)", entryname = SchemaSaladString.Literal "outdir", writable = true))
                     |]
                 let req = InitialWorkDirRequirement listing
                 let yaml = Encode.encodeRequirement req |> Encode.writeYaml
@@ -922,7 +984,7 @@ let testRequirementEncode =
                     ResizeArray [|
                         StringEntry (SchemaSaladString.Include "scripts/load.js")
                         StringEntry (SchemaSaladString.Import "scripts/manifest.yml")
-                        DirentEntry { Entry = SchemaSaladString.Include "scripts/bootstrap.sh"; Entryname = Some (SchemaSaladString.Import "scripts/name.txt"); Writable = Some false }
+                        DirentEntry (DirentInstance(SchemaSaladString.Include "scripts/bootstrap.sh", entryname = SchemaSaladString.Import "scripts/name.txt", writable = false))
                     |]
                 let req = InitialWorkDirRequirement listing
                 let yaml = Encode.encodeRequirement req |> Encode.writeYaml
@@ -1012,7 +1074,7 @@ let testRequirementEncode =
                     |> Option.get
                 Expect.equal decoded.[0] requirement "dockerFile $import directive should roundtrip."
             testCase "LoadListingRequirement roundtrips" <| fun _ ->
-                let requirement = LoadListingRequirement { LoadListing = DeepListing }
+                let requirement = LoadListingRequirement (LoadListingRequirementValue(DeepListing))
                 let yaml = Encode.encodeRequirement requirement |> Encode.writeYaml
                 let document = "requirements:\n  - " + yaml.Replace("\n", "\n    ")
                 let decoded =
@@ -1023,9 +1085,9 @@ let testRequirementEncode =
             testCase "WorkReuse/NetworkAccess/InplaceUpdate payloads roundtrip" <| fun _ ->
                 let requirements =
                     ResizeArray [|
-                        WorkReuseRequirement { EnableReuse = false }
-                        NetworkAccessRequirement { NetworkAccess = false }
-                        InplaceUpdateRequirement { InplaceUpdate = false }
+                        WorkReuseRequirement (WorkReuseRequirementValue(false))
+                        NetworkAccessRequirement (NetworkAccessRequirementValue(false))
+                        InplaceUpdateRequirement (InplaceUpdateRequirementValue(false))
                     |]
                 let encodedLines =
                     requirements
@@ -1048,7 +1110,7 @@ let testRequirementEncode =
                 Expect.equal decoded.[0] requirement "Expression timelimit should roundtrip."
             testCase "SchemaDefRequirement roundtrips with explicit typed representation" <| fun _ ->
                 let requirement =
-                    SchemaDefRequirement (ResizeArray [| { Name = "SampleId"; Type_ = CWLType.String } |])
+                    SchemaDefRequirement (ResizeArray [| SchemaDefRequirementType("SampleId", CWLType.String) |])
                 let yaml = Encode.encodeRequirement requirement |> Encode.writeYaml
                 Expect.stringContains yaml "name: SampleId" "SchemaDefRequirement should encode canonical name field."
                 Expect.stringContains yaml "type: string" "SchemaDefRequirement should encode canonical type field."
@@ -1060,7 +1122,7 @@ let testRequirementEncode =
                     |> Option.get
                 match decoded.[0] with
                 | SchemaDefRequirement definitions ->
-                    let expected = ResizeArray [| { Name = "SampleId"; Type_ = CWLType.String } |]
+                    let expected = ResizeArray [| SchemaDefRequirementType("SampleId", CWLType.String) |]
                     Expect.sequenceEqual definitions expected "SchemaDefRequirement should roundtrip with explicit Name/Type_ entries."
                 | _ ->
                     failwith "Expected SchemaDefRequirement"
@@ -1092,10 +1154,8 @@ let testInitialWorkDirFileDirectoryEntries =
                 failwith "Wrong requirement type: expected InitialWorkDirRequirement"
 
         testCase "Encode mixed listing with File and Directory entries" <| fun _ ->
-            let file = FileInstance()
-            DynObj.setProperty "path" "/tmp/input.txt" file
-            let directory = DirectoryInstance()
-            DynObj.setProperty "path" "/tmp/output" directory
+            let file = FileInstance(path = "/tmp/input.txt", basename = "input.txt")
+            let directory = DirectoryInstance(path = "/tmp/output", basename = "output")
             let requirement =
                 InitialWorkDirRequirement (
                     ResizeArray [|
@@ -1108,6 +1168,193 @@ let testInitialWorkDirFileDirectoryEntries =
             Expect.stringContains encoded "class: InitialWorkDirRequirement" "Encoded output should include requirement class"
             Expect.stringContains encoded "class: File" "Encoded output should include File listing entry"
             Expect.stringContains encoded "class: Directory" "Encoded output should include Directory listing entry"
+
+        testCase "File and Directory listing object fields decode as typed members" <| fun _ ->
+            let reqs = decodeRequirements TestObjects.CWL.Requirements.initialWorkDirListingTypedFileContent
+            match findRequirement reqs (function InitialWorkDirRequirement _ -> true | _ -> false) with
+            | InitialWorkDirRequirement listing ->
+                match listing.[0], listing.[1] with
+                | FileEntry file, DirectoryEntry directory ->
+                    Expect.equal file.Path (Some "/tmp/in.txt") "File path should decode as a typed field."
+                    Expect.equal file.Basename (Some "in.txt") "File basename should decode as a typed field."
+                    Expect.equal file.Checksum (Some "sha1$abc") "File checksum should decode as a typed field."
+                    Expect.equal file.Size (Some 42L) "File size should decode as a typed field."
+                    Expect.equal directory.Path (Some "/tmp/out") "Directory path should decode as a typed field."
+                    Expect.equal directory.Basename (Some "out") "Directory basename should decode as a typed field."
+                    Expect.isSome directory.Listing "Directory listing should decode as a typed field."
+                    Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:file note" file) (Some "keep file overflow") "File extension should remain overflow."
+                    Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:dir note" directory) (Some "keep dir overflow") "Directory extension should remain overflow."
+                    Expect.isNone (DynObj.tryGetTypedPropertyValue<string> "path" file) "Known File fields should not be overflow."
+                    Expect.isNone (DynObj.tryGetTypedPropertyValue<string> "path" directory) "Known Directory fields should not be overflow."
+                | _ -> failwith "Expected File and Directory entries"
+            | _ ->
+                failwith "Expected InitialWorkDirRequirement"
+    ]
+
+let testDynamicPayloadModel =
+    testList "DynamicObj payload model" [
+        testCase "CWL schema payloads keep known fields typed and overflow dynamic" <| fun _ ->
+            let field = InputRecordField("sampleName", CWLType.String, doc = "field docs", label = "Sample")
+            let recordSchema = InputRecordSchema(fields = ResizeArray [| field |], doc = "record docs", name = "SampleRecord")
+            let arraySchema = InputArraySchema(CWLType.Record recordSchema, label = "array label")
+            let enumSchema = InputEnumSchema(ResizeArray [| "A"; "B" |], name = "Choice")
+            let dirent = DirentInstance(SchemaSaladString.Literal "$(inputs.sample)", entryname = SchemaSaladString.Literal "sample.txt")
+            let schemaDef = SchemaDefRequirementType("SampleRecord", CWLType.Record recordSchema)
+            let package = SoftwarePackage("samtools", version = ResizeArray [| "1.19" |])
+
+            Expect.sequenceEqual InputRecordField.KnownFieldNames (Set [| "name"; "type"; "doc"; "label" |]) ""
+            Expect.sequenceEqual InputRecordSchema.KnownFieldNames (Set [| "type"; "fields"; "label"; "doc"; "name" |]) ""
+            Expect.sequenceEqual InputArraySchema.KnownFieldNames (Set [| "type"; "items"; "label"; "doc"; "name" |]) ""
+            Expect.sequenceEqual InputEnumSchema.KnownFieldNames (Set [| "type"; "symbols"; "label"; "doc"; "name" |]) ""
+            Expect.sequenceEqual DirentInstance.KnownFieldNames (Set [| "entry"; "entryname"; "writable" |]) ""
+            Expect.sequenceEqual SchemaDefRequirementType.KnownFieldNames (Set [| "name"; "type" |]) ""
+            Expect.sequenceEqual SoftwarePackage.KnownFieldNames (Set [| "package"; "version"; "specs" |]) ""
+
+            for dynObj in [
+                field :> DynamicObj
+                recordSchema :> DynamicObj
+                arraySchema :> DynamicObj
+                enumSchema :> DynamicObj
+                dirent :> DynamicObj
+                schemaDef :> DynamicObj
+                package :> DynamicObj
+            ] do
+                Expect.equal (dynObj |> DynamicObjHelpers.dynamicPropertiesSnapshot |> Seq.length) 0 "Known fields should not be stored in dynamic overflow."
+                DynObj.setProperty "arc:note" "keep me" dynObj
+                Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" dynObj) (Some "keep me") "Unknown fields should stay in dynamic overflow."
+
+        testCase "requirement payloads keep known fields typed and overflow dynamic" <| fun _ ->
+            let docker = DockerRequirement.create(dockerPull = "ubuntu:24.04")
+            let env = EnvironmentDef("PATH", "/usr/bin")
+            let loadListing = LoadListingRequirementValue(DeepListing)
+            let workReuse = WorkReuseRequirementValue(false)
+            let network = NetworkAccessRequirementValue(false)
+            let inplace = InplaceUpdateRequirementValue(false)
+            let inlineJs = InlineJavascriptRequirementValue(expressionLib = ResizeArray [| "helper.js" |])
+            let unknownHint = HintUnknownValue(Some "acme:Hint", Decode.read "class: acme:Hint")
+
+            Expect.sequenceEqual DockerRequirement.KnownFieldNames (Set [| "class"; "dockerPull"; "dockerFile"; "dockerImageId"; "dockerLoad"; "dockerImport"; "dockerOutputDirectory"; "cwltool:dockerRunOptions" |]) ""
+            Expect.sequenceEqual EnvironmentDef.KnownFieldNames (Set [| "envName"; "envValue" |]) ""
+            Expect.sequenceEqual LoadListingRequirementValue.KnownFieldNames (Set [| "class"; "loadListing" |]) ""
+            Expect.sequenceEqual WorkReuseRequirementValue.KnownFieldNames (Set [| "class"; "enableReuse" |]) ""
+            Expect.sequenceEqual NetworkAccessRequirementValue.KnownFieldNames (Set [| "class"; "networkAccess" |]) ""
+            Expect.sequenceEqual InplaceUpdateRequirementValue.KnownFieldNames (Set [| "class"; "inplaceUpdate" |]) ""
+            Expect.sequenceEqual InlineJavascriptRequirementValue.KnownFieldNames (Set [| "class"; "expressionLib" |]) ""
+            Expect.sequenceEqual HintUnknownValue.KnownFieldNames (Set [| "class"; "raw" |]) ""
+
+            for dynObj in [
+                docker :> DynamicObj
+                env :> DynamicObj
+                loadListing :> DynamicObj
+                workReuse :> DynamicObj
+                network :> DynamicObj
+                inplace :> DynamicObj
+                inlineJs :> DynamicObj
+                unknownHint :> DynamicObj
+            ] do
+                Expect.equal (dynObj |> DynamicObjHelpers.dynamicPropertiesSnapshot |> Seq.length) 0 "Known fields should not be stored in dynamic overflow."
+                DynObj.setProperty "arc:note" "keep me" dynObj
+                Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" dynObj) (Some "keep me") "Unknown fields should stay in dynamic overflow."
+    ]
+
+let testRequirementDynamicOverflowRoundtrip =
+    let encodeDecodeRequirement requirement =
+        let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
+        let document = "requirements:\n  - " + encoded.Replace("\n", "\n    ")
+        let decoded =
+            Decode.read document
+            |> Decode.requirementsDecoder
+            |> Option.get
+        decoded.[0]
+
+    testList "Requirement DynamicObj overflow roundtrip" [
+        testCase "payload and nested entry overflow survives encode/decode" <| fun _ ->
+            let inlineJs = InlineJavascriptRequirementValue(expressionLib = ResizeArray [| "helper.js" |])
+            DynObj.setProperty "arc:inline note" "inline" inlineJs
+
+            let loadListing = LoadListingRequirementValue(DeepListing)
+            DynObj.setProperty "arc:load note" "load" loadListing
+
+            let workReuse = WorkReuseRequirementValue(false)
+            DynObj.setProperty "arc:reuse note" "reuse" workReuse
+
+            let network = NetworkAccessRequirementValue(true)
+            DynObj.setProperty "arc:network note" "network" network
+
+            let inplace = InplaceUpdateRequirementValue(true)
+            DynObj.setProperty "arc:inplace note" "inplace" inplace
+
+            let dirent = DirentInstance(SchemaSaladString.Literal "contents", entryname = SchemaSaladString.Literal "file.txt")
+            DynObj.setProperty "arc:dirent note" "dirent" dirent
+
+            let env = EnvironmentDef("ENV_NAME", "ENV_VALUE")
+            DynObj.setProperty "arc:env note" "env" env
+
+            let package = SoftwarePackage("samtools", version = ResizeArray [| "1.19" |])
+            DynObj.setProperty "arc:package note" "package" package
+
+            let recordField = InputRecordField("sample", CWLType.String)
+            DynObj.setProperty "arc:field note" "field" recordField
+            let recordSchema = InputRecordSchema(fields = ResizeArray [| recordField |], name = "SampleRecord")
+            DynObj.setProperty "arc:record note" "record" recordSchema
+            let schemaDef = SchemaDefRequirementType("SampleRecord", CWLType.Record recordSchema)
+            DynObj.setProperty "arc:schema note" "schema" schemaDef
+
+            let cases =
+                [
+                    InlineJavascriptRequirement inlineJs, fun requirement ->
+                        match requirement with
+                        | InlineJavascriptRequirement value -> DynObj.tryGetTypedPropertyValue<string> "arc:inline note" value
+                        | _ -> None
+                    LoadListingRequirement loadListing, fun requirement ->
+                        match requirement with
+                        | LoadListingRequirement value -> DynObj.tryGetTypedPropertyValue<string> "arc:load note" value
+                        | _ -> None
+                    WorkReuseRequirement workReuse, fun requirement ->
+                        match requirement with
+                        | WorkReuseRequirement value -> DynObj.tryGetTypedPropertyValue<string> "arc:reuse note" value
+                        | _ -> None
+                    NetworkAccessRequirement network, fun requirement ->
+                        match requirement with
+                        | NetworkAccessRequirement value -> DynObj.tryGetTypedPropertyValue<string> "arc:network note" value
+                        | _ -> None
+                    InplaceUpdateRequirement inplace, fun requirement ->
+                        match requirement with
+                        | InplaceUpdateRequirement value -> DynObj.tryGetTypedPropertyValue<string> "arc:inplace note" value
+                        | _ -> None
+                    InitialWorkDirRequirement (ResizeArray [| DirentEntry dirent |]), fun requirement ->
+                        match requirement with
+                        | InitialWorkDirRequirement listing ->
+                            match listing.[0] with
+                            | DirentEntry value -> DynObj.tryGetTypedPropertyValue<string> "arc:dirent note" value
+                            | _ -> None
+                        | _ -> None
+                    EnvVarRequirement (ResizeArray [| env |]), fun requirement ->
+                        match requirement with
+                        | EnvVarRequirement envs -> DynObj.tryGetTypedPropertyValue<string> "arc:env note" envs.[0]
+                        | _ -> None
+                    SoftwareRequirement (ResizeArray [| package |]), fun requirement ->
+                        match requirement with
+                        | SoftwareRequirement packages -> DynObj.tryGetTypedPropertyValue<string> "arc:package note" packages.[0]
+                        | _ -> None
+                    SchemaDefRequirement (ResizeArray [| schemaDef |]), fun requirement ->
+                        match requirement with
+                        | SchemaDefRequirement definitions ->
+                            match definitions.[0].Type_ with
+                            | CWLType.Record schema ->
+                                let field = schema.Fields.Value.[0]
+                                let wrapperOverflow = DynObj.tryGetTypedPropertyValue<string> "arc:schema note" definitions.[0]
+                                let schemaOverflow = DynObj.tryGetTypedPropertyValue<string> "arc:record note" schema
+                                let fieldOverflow = DynObj.tryGetTypedPropertyValue<string> "arc:field note" field
+                                if wrapperOverflow = Some "schema" && schemaOverflow = Some "record" && fieldOverflow = Some "field" then Some "schema"
+                                else None
+                            | _ -> None
+                        | _ -> None
+                ]
+
+            for requirement, getOverflow in cases do
+                let roundTripped = encodeDecodeRequirement requirement
+                Expect.isSome (getOverflow roundTripped) $"Overflow should survive for %A{requirement}."
     ]
 
 let main = 
@@ -1116,6 +1363,8 @@ let main =
         testDecodeAllRequirementSyntaxes
         testRequirementEncode
         testInitialWorkDirFileDirectoryEntries
+        testDynamicPayloadModel
+        testRequirementDynamicOverflowRoundtrip
     ]
 
 

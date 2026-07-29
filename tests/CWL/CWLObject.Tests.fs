@@ -17,18 +17,18 @@ let decodeCWLToolDescriptionMetadata: CWLToolDescription =
 
 let testCWLToolDescriptionDecode =
     testList "Decode" [
-        testCase "sanitize allows shebang and full-line comments" <| fun _ ->
+        testCase "decode allows shebang and full-line comments" <| fun _ ->
             let withShebangAndComments = TestObjects.CWL.CommandLineTool.DecodeEdgeCases.withShebangAndComments
             let decoded = Decode.decodeCommandLineTool withShebangAndComments
             Expect.equal decoded.CWLVersion "v1.2" ""
             Expect.equal decoded.Outputs.Count 0 ""
-        testCase "sanitize removes whitespace-only lines" <| fun _ ->
+        testCase "decode allows whitespace-only separator lines" <| fun _ ->
             let withWhitespaceOnlyLine = TestObjects.CWL.CommandLineTool.DecodeEdgeCases.withWhitespaceOnlyLine
             let decoded = Decode.decodeCommandLineTool withWhitespaceOnlyLine
             let inputs = Expect.wantSome decoded.Inputs "Inputs should decode when whitespace-only separator lines are present."
             Expect.equal inputs.Count 1 ""
             Expect.equal inputs.[0].Name "sample" ""
-        testCase "sanitize preserves plain multiline scalar semantics" <| fun _ ->
+        testCase "decode preserves plain multiline scalar semantics" <| fun _ ->
             let yaml = """cwlVersion: v1.2
 class: CommandLineTool
 doc: First paragraph line
@@ -45,11 +45,11 @@ outputs: {}
                 |> YAMLicious.Decode.object (fun get -> get.Required.Field "doc" YAMLicious.Decode.string)
             let decoded = Decode.decodeCommandLineTool yaml
             Expect.equal decoded.Doc (Some expectedDoc) "Plain multiline scalars should survive ARCtrl sanitization unchanged."
-        testCase "sanitize does not hide malformed yaml errors" <| fun _ ->
+        testCase "decode does not hide malformed yaml errors" <| fun _ ->
             let malformed = TestObjects.CWL.CommandLineTool.DecodeEdgeCases.malformedYaml
             let decodeMalformed () = Decode.decodeCWLProcessingUnit malformed |> ignore
             Expect.throws decodeMalformed "Malformed YAML should fail decoding"
-        testCase "sanitize propagates non-recoverable exception type" <| fun _ ->
+        testCase "decode propagates non-recoverable exception type" <| fun _ ->
             let nonRecoverableInput = "cwlVersion:\u0000 v1.2"
             let decodeInvalid () = Decode.decodeCWLProcessingUnit nonRecoverableInput |> ignore
             Expect.throws decodeInvalid "Non-recoverable parse exceptions should not be swallowed"
@@ -91,7 +91,7 @@ outputs: {}"""
             testCase "InitialWorkDirRequirement" <| fun _ ->
                 let expected =
                     InitialWorkDirRequirement (
-                        ResizeArray [| DirentEntry { Entry = SchemaSaladString.Include "script.fsx"; Entryname = Some (SchemaSaladString.Literal "script.fsx"); Writable = None } |]
+                        ResizeArray [| DirentEntry (DirentInstance(SchemaSaladString.Include "script.fsx", entryname = SchemaSaladString.Literal "script.fsx")) |]
                     )
                 let actual = requirementsItem.Value.[0]
                 match actual, expected with
@@ -99,14 +99,14 @@ outputs: {}"""
                     Expect.sequenceEqual actualType expectedType ""
                 | _ -> failwith "This test case can only be InitialWorkDirRequirement"
             testCase "EnvVarRequirement" <| fun _ ->
-                let expected = EnvVarRequirement (ResizeArray [|{EnvName = "DOTNET_NOLOGO"; EnvValue = "true"}|])
+                let expected = EnvVarRequirement (ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", "true") |])
                 let actual = requirementsItem.Value.[1]
                 match actual, expected with
                 | EnvVarRequirement actualType, EnvVarRequirement expectedType ->
                     Expect.sequenceEqual actualType expectedType ""
                 | _ -> failwith "This test case can only be EnvVarRequirement"
             testCase "NetworkAccessRequirement" <| fun _ ->
-                let expected = NetworkAccessRequirement { NetworkAccess = true }
+                let expected = NetworkAccessRequirement (NetworkAccessRequirementValue(true))
                 let actual = requirementsItem.Value.[2]
                 Expect.equal actual expected ""
         ]
@@ -127,7 +127,7 @@ outputs: {}"""
                     let actual = fileItem.Type_.Value
                     Expect.equal actual expected ""
                 testCase "InputBinding" <| fun _ ->
-                    let expected = Some {Position = Some 1; Prefix = None; ItemSeparator = None; Separate = None}
+                    let expected = Some (InputBinding.create(position = 1))
                     let actual = fileItem.InputBinding
                     Expect.equal actual expected ""
             ]
@@ -142,7 +142,7 @@ outputs: {}"""
                     let actual = stringItem.Type_.Value
                     Expect.equal actual expected ""
                 testCase "InputBinding" <| fun _ ->
-                    let expected = Some {Position = Some 2; Prefix = None; ItemSeparator = None; Separate = None}
+                    let expected = Some (InputBinding.create(position = 2))
                     let actual = stringItem.InputBinding
                     Expect.equal actual expected ""
             ]
@@ -164,7 +164,7 @@ outputs: {}"""
                     let actual = directoryItem.Type_.Value
                     Expect.equal actual expected ""
                 testCase "OutputBinding" <| fun _ ->
-                    let expected = Some {Glob = Some "$(runtime.outdir)/.nuget"}
+                    let expected = Some (OutputBinding.create(glob = "$(runtime.outdir)/.nuget"))
                     let actual = directoryItem.OutputBinding
                     Expect.equal actual expected ""
             ]
@@ -179,7 +179,7 @@ outputs: {}"""
                     let actual = fileItem.Type_.Value
                     Expect.equal actual expected ""
                 testCase "OutputBinding" <| fun _ ->
-                    let expected = Some {Glob = Some "$(runtime.outdir)/*.csv"}
+                    let expected = Some (OutputBinding.create(glob = "$(runtime.outdir)/*.csv"))
                     let actual = fileItem.OutputBinding
                     Expect.equal actual expected ""
             ]
@@ -213,7 +213,7 @@ let testCWLToolDescriptionMetadata =
             testCase "InitialWorkDirRequirement" <| fun _ ->
                 let expected =
                     InitialWorkDirRequirement (
-                        ResizeArray [| DirentEntry { Entry = SchemaSaladString.Include "script.fsx"; Entryname = Some (SchemaSaladString.Literal "script.fsx"); Writable = None } |]
+                        ResizeArray [| DirentEntry (DirentInstance(SchemaSaladString.Include "script.fsx", entryname = SchemaSaladString.Literal "script.fsx")) |]
                     )
                 let actual = requirementsItem.Value.[0]
                 match actual, expected with
@@ -221,14 +221,14 @@ let testCWLToolDescriptionMetadata =
                     Expect.sequenceEqual actualType expectedType ""
                 | _ -> failwith "This test case can only be InitialWorkDirRequirement"
             testCase "EnvVarRequirement" <| fun _ ->
-                let expected = EnvVarRequirement (ResizeArray [|{EnvName = "DOTNET_NOLOGO"; EnvValue = "true"}|])
+                let expected = EnvVarRequirement (ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", "true") |])
                 let actual = requirementsItem.Value.[1]
                 match actual, expected with
                 | EnvVarRequirement actualType, EnvVarRequirement expectedType ->
                     Expect.sequenceEqual actualType expectedType ""
                 | _ -> failwith "This test case can only be EnvVarRequirement"
             testCase "NetworkAccessRequirement" <| fun _ ->
-                let expected = NetworkAccessRequirement { NetworkAccess = true }
+                let expected = NetworkAccessRequirement (NetworkAccessRequirementValue(true))
                 let actual = requirementsItem.Value.[2]
                 Expect.equal actual expected ""
         ]
@@ -249,7 +249,7 @@ let testCWLToolDescriptionMetadata =
                     let actual = fileItem.Type_.Value
                     Expect.equal actual expected ""
                 testCase "InputBinding" <| fun _ ->
-                    let expected = Some {Position = Some 1; Prefix = None; ItemSeparator = None; Separate = None}
+                    let expected = Some (InputBinding.create(position = 1))
                     let actual = fileItem.InputBinding
                     Expect.equal actual expected ""
             ]
@@ -264,7 +264,7 @@ let testCWLToolDescriptionMetadata =
                     let actual = stringItem.Type_.Value
                     Expect.equal actual expected ""
                 testCase "InputBinding" <| fun _ ->
-                    let expected = Some {Position = Some 2; Prefix = None; ItemSeparator = None; Separate = None}
+                    let expected = Some (InputBinding.create(position = 2))
                     let actual = stringItem.InputBinding
                     Expect.equal actual expected ""
             ]
@@ -286,7 +286,7 @@ let testCWLToolDescriptionMetadata =
                     let actual = directoryItem.Type_.Value
                     Expect.equal actual expected ""
                 testCase "OutputBinding" <| fun _ ->
-                    let expected = Some {Glob = Some "$(runtime.outdir)/.nuget"}
+                    let expected = Some (OutputBinding.create(glob = "$(runtime.outdir)/.nuget"))
                     let actual = directoryItem.OutputBinding
                     Expect.equal actual expected ""
             ]
@@ -301,16 +301,39 @@ let testCWLToolDescriptionMetadata =
                     let actual = fileItem.Type_.Value
                     Expect.equal actual expected ""
                 testCase "OutputBinding" <| fun _ ->
-                    let expected = Some {Glob = Some "$(runtime.outdir)/*.csv"}
+                    let expected = Some (OutputBinding.create(glob = "$(runtime.outdir)/*.csv"))
                     let actual = fileItem.OutputBinding
                     Expect.equal actual expected ""
             ]
         ]
         testCase "Metadata" <| fun _ ->
-            Expect.isSome decodeCWLToolDescriptionMetadata.Metadata $"Expected {decodeCWLToolDescriptionMetadata.Metadata} to be Some"
-            let expected = TestObjects.CWL.CommandLineToolMetadata.expectedMetadataString.Trim().Replace("\r\n", "\n")
-            let actual = (decodeCWLToolDescriptionMetadata.Metadata.Value |> DynObj.format).Trim().Replace("\r\n", "\n")
-            Expect.equal actual expected ""
+            let metadata = Expect.wantSome decodeCWLToolDescriptionMetadata.Metadata "Metadata should decode."
+            let singletonObject fieldName (parent: DynamicObj) =
+                let values =
+                    Expect.wantSome
+                        (DynamicObjHelpers.tryGetTypedPropertyValueAsResizeArray<obj> fieldName parent)
+                        $"{fieldName} should remain a sequence."
+                Expect.equal values.Count 1 $"{fieldName} should have one value."
+                values.[0] :?> DynamicObj
+
+            let technologyType = singletonObject "arc:has technology type" metadata
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "class" technologyType) (Some "arc:technology type") ""
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:annotation value" technologyType) (Some "Fsharp Devcontainer") ""
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:technology platform" metadata) (Some ".NET") ""
+
+            let performer = singletonObject "arc:performer" metadata
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:first name" performer) (Some "Timo") ""
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:last name" performer) (Some "Mühlhaus") ""
+            let role = singletonObject "arc:has role" performer
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:annotation value" role) (Some "Formal analysis") ""
+
+            let processSequence = singletonObject "arc:has process sequence" metadata
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:name" processSequence) (Some "script.fsx") ""
+            let processInput = singletonObject "arc:has input" processSequence
+            Expect.equal
+                (DynObj.tryGetTypedPropertyValue<string> "arc:name" processInput)
+                (Some "./arc/assays/measurement1/dataset/table.csv")
+                ""
     ]
 
 let testCWLToolDescriptionEncode =
@@ -351,6 +374,24 @@ let testCWLToolDescriptionEncode =
                 let metadataText = metadata |> DynObj.format
                 Expect.stringContains encoded "arc:technology platform" "Encoded tool should keep unknown metadata keys"
                 Expect.stringContains metadataText "arc:technology platform" "Decoded metadata should still include unknown keys"
+            testCase "CommandLineTool command fields decode as typed members and roundtrip" <| fun _ ->
+                let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.DecodeEdgeCases.commandFieldsOverflowFile
+
+                Expect.isSome decoded.Arguments "arguments should decode to a typed field."
+                Expect.equal decoded.Stdin (Some "stdin.txt") "stdin should decode to a typed field."
+                Expect.equal decoded.Stdout (Some "stdout.txt") "stdout should decode to a typed field."
+                Expect.equal decoded.Stderr (Some "stderr.txt") "stderr should decode to a typed field."
+                Expect.sequenceEqual decoded.SuccessCodes.Value (ResizeArray [| 0 |]) "successCodes should decode to a typed field."
+                Expect.sequenceEqual decoded.TemporaryFailCodes.Value (ResizeArray [| 75 |]) "temporaryFailCodes should decode to a typed field."
+                Expect.sequenceEqual decoded.PermanentFailCodes.Value (ResizeArray [| 1; 2 |]) "permanentFailCodes should decode to a typed field."
+                Expect.isNone (DynObj.tryGetTypedPropertyValue<obj> "arguments" decoded) "Known fields should not be direct overflow."
+                let metadata = Expect.wantSome decoded.Metadata "Extension field should decode as metadata."
+                Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" metadata) (Some "keep overflow") "Extension field should stay in metadata."
+
+                let encoded = Encode.encodeToolDescription decoded
+                let roundTripped = Decode.decodeCommandLineTool encoded
+                Expect.isSome roundTripped.Arguments "arguments should survive roundtrip."
+                Expect.equal roundTripped.Stdout (Some "stdout.txt") "stdout should survive roundtrip."
         ]
     ]
 
@@ -388,12 +429,7 @@ let testNestedArrayDecoding =
 
 let testUnionArrayItemDecoding =
     let expectedMixedInputType =
-        Array {
-            Items = Union (ResizeArray [String; File (FileInstance())])
-            Label = None
-            Doc = None
-            Name = None
-        }
+        Array (InputArraySchema(Union (ResizeArray [String; File (FileInstance())])))
 
     let assertMixedInputType (decoded: CWLToolDescription) =
         let inputs = Expect.wantSome decoded.Inputs "Union-array-items fixture should decode inputs."
@@ -531,7 +567,7 @@ expression: $(null)"""
             Expect.stringContains roundTripped.Expression "inputs.directory_single" "directory_single input reference should survive roundtrip."
             Expect.stringContains roundTripped.Expression "inputs.file_single" "file_single input reference should survive roundtrip."
             Expect.stringContains roundTripped.Expression "inputs.newname" "newname input reference should survive roundtrip."
-            Expect.stringContains roundTripped.Expression "class: \"Directory\"" "Directory class literal should survive roundtrip."
+            Expect.stringContains roundTripped.Expression "\"Directory\"" "Directory class literal should survive roundtrip."
             Expect.stringContains roundTripped.Expression "listing: outputList" "listing assignment should survive roundtrip."
     ]
 
@@ -640,6 +676,40 @@ outputs:
             Expect.equal d1.Outputs.Count d2.Outputs.Count ""
     ]
 
+let testTopLevelDirectDynamicOverflow =
+    testList "Top-level direct DynamicObj overflow" [
+        testCase "CommandLineTool direct overflow encodes and decodes as metadata" <| fun _ ->
+            let tool = CWLToolDescription(outputs = ResizeArray())
+            DynObj.setProperty "arc:direct note" "tool note" tool
+            let encoded = Encode.encodeToolDescription tool
+            Expect.stringContains encoded "arc:direct note: tool note" "Direct DynamicObj overflow should be encoded."
+            let roundTripped = Decode.decodeCommandLineTool encoded
+            let metadata = Expect.wantSome roundTripped.Metadata "Decoded unknown top-level fields should remain available as metadata."
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:direct note" metadata) (Some "tool note") "Encoded direct overflow should decode back as top-level metadata."
+
+        testCase "ExpressionTool direct overflow encodes and decodes as metadata" <| fun _ ->
+            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)")
+            DynObj.setProperty "arc:direct note" "expression note" expressionTool
+            let encoded = Encode.encodeExpressionToolDescription expressionTool
+            Expect.stringContains encoded "arc:direct note: expression note" "Direct DynamicObj overflow should be encoded."
+            let roundTripped = Decode.decodeExpressionTool encoded
+            let metadata = Expect.wantSome roundTripped.Metadata "Decoded unknown top-level fields should remain available as metadata."
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:direct note" metadata) (Some "expression note") "Encoded direct overflow should decode back as top-level metadata."
+
+        testCase "Operation direct overflow encodes and decodes as metadata" <| fun _ ->
+            let operation =
+                CWLOperationDescription(
+                    inputs = ResizeArray [| CWLInput("input", CWLType.String) |],
+                    outputs = ResizeArray [| CWLOutput("output", CWLType.String) |]
+                )
+            DynObj.setProperty "arc:direct note" "operation note" operation
+            let encoded = Encode.encodeOperationDescription operation
+            Expect.stringContains encoded "arc:direct note: operation note" "Direct DynamicObj overflow should be encoded."
+            let roundTripped = Decode.decodeOperation encoded
+            let metadata = Expect.wantSome roundTripped.Metadata "Decoded unknown top-level fields should remain available as metadata."
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:direct note" metadata) (Some "operation note") "Encoded direct overflow should decode back as top-level metadata."
+    ]
+
 let main = 
     testList "CWLToolDescription" [
         testCWLToolDescriptionDecode
@@ -650,5 +720,6 @@ let main =
         testUnionArrayItemDecoding
         testExpressionTool
         testOperation
+        testTopLevelDirectDynamicOverflow
     ]
 

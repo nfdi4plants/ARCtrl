@@ -2833,6 +2833,10 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             persons.AddRange(a.Performers)
         for s in this.Studies do
             persons.AddRange(s.Contacts)
+        for w in this.Workflows do
+            persons.AddRange(w.Contacts)
+        for r in this.Runs do
+            persons.AddRange(r.Performers)
         persons.AddRange(this.Contacts)
         persons
         |> Array.ofSeq

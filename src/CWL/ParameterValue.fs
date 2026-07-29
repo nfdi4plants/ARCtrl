@@ -70,20 +70,12 @@ module CWLParameterValue =
         value.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
 #endif
 
-    let private tryDynamicString name (value: DynamicObj) =
-        DynObj.tryGetTypedPropertyValue<string> name value
-
     let rec private inferredTypesEqual left right =
         match left, right with
         | CWLType.File _, CWLType.File _
         | CWLType.Directory _, CWLType.Directory _ -> true
         | CWLType.Array left, CWLType.Array right -> inferredTypesEqual left.Items right.Items
         | _ -> left = right
-
-    let private getPathOrLocation (value: DynamicObj) =
-        tryDynamicString "path" value
-        |> Option.orElse (tryDynamicString "location" value)
-        |> Option.defaultValue ""
 
     let rec toFlatStrings value =
         match value with
@@ -93,8 +85,18 @@ module CWLParameterValue =
         | CWLParameterValue.Float value ->
             ResizeArray [| floatToRoundTripString value |]
         | CWLParameterValue.Boolean value -> ResizeArray [| if value then "true" else "false" |]
-        | CWLParameterValue.File file -> ResizeArray [| getPathOrLocation file |]
-        | CWLParameterValue.Directory directory -> ResizeArray [| getPathOrLocation directory |]
+        | CWLParameterValue.File file ->
+            ResizeArray [|
+                file.Path
+                |> Option.orElse file.Location
+                |> Option.defaultValue ""
+            |]
+        | CWLParameterValue.Directory directory ->
+            ResizeArray [|
+                directory.Path
+                |> Option.orElse directory.Location
+                |> Option.defaultValue ""
+            |]
         | CWLParameterValue.Array values ->
             values
             |> Seq.collect (fun value -> toFlatStrings value :> seq<string>)
@@ -131,6 +133,6 @@ module CWLParameterValue =
                      |> Array.forall (function
                          | Some itemType -> inferredTypesEqual firstType itemType
                          | None -> false) ->
-                Some (CWLType.Array { Items = firstType; Label = None; Doc = None; Name = None })
+                Some (CWLType.Array (InputArraySchema(firstType)))
             | _ -> None
         | _ -> None

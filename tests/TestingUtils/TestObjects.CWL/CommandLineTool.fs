@@ -139,3 +139,17 @@ inputs:
   sample:
     type: string
 outputs: []"""
+
+    let commandFieldsOverflowFile = """cwlVersion: v1.1
+class: CommandLineTool
+outputs: {}
+inputs: {}
+arguments:
+  - --flag
+stdin: stdin.txt
+stdout: stdout.txt
+stderr: stderr.txt
+successCodes: [0]
+temporaryFailCodes: [75]
+permanentFailCodes: [1, 2]
+arc:note: keep overflow"""

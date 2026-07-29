@@ -1,10 +1,13 @@
 namespace ARCtrl.CWL
 
+open DynamicObj
 open Fable.Core
 open System
 
 [<AttachMembers>]
 type CWLParameterReference(key : string, ?values: string ResizeArray, ?value: CWLParameterValue, ?type_: CWLType) =
+    inherit DynamicObj ()
+
     let mutable _key = key
     let mutable _value =
         value
@@ -38,6 +41,7 @@ type CWLParameterReference(key : string, ?values: string ResizeArray, ?value: CW
             HashHelpers.hash this.Key |> box
             HashHelpers.boxHashOption this.Value
             HashHelpers.boxHashOption this.Type
+            DynamicObjHelpers.hashDynamicProperties this
         |]
         |> HashHelpers.boxHashArray
         |> fun x -> x :?> int
@@ -50,7 +54,11 @@ type CWLParameterReference(key : string, ?values: string ResizeArray, ?value: CW
     member this.StructurallyEquals (other: CWLParameterReference) : bool =
         this.Key = other.Key &&
         this.Value = other.Value &&
-        this.Type = other.Type
+        this.Type = other.Type &&
+        DynamicObjHelpers.dynamicPropertiesEqual this other
 
     member this.ReferenceEquals (other: CWLParameterReference) : bool =
         System.Object.ReferenceEquals(this,other)
+
+    static member KnownFieldNames =
+        CWLKnownFieldNames.parameterReference

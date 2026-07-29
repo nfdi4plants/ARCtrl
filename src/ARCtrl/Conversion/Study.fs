@@ -21,9 +21,10 @@ type StudyConversion =
             study.Publications
             |> ResizeArray.map (fun p -> ScholarlyArticleConversion.composeScholarlyArticle p)
             |> Option.fromSeq
+        let persons = study.Investigation |> Option.map (fun i -> seq (i.GetAllPersons()))
         let creators =
             study.Contacts
-            |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
+            |> ResizeArray.map (fun c -> PersonConversion.composePerson(c, ?persons = persons))
             |> Option.fromSeq
         let processSequence = 
             ArcTables(study.Tables).GetProcesses(studyName = study.Identifier, ?fs = fs)

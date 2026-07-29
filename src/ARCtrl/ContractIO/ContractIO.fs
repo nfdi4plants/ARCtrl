@@ -54,9 +54,15 @@ let fullfillContractBatchAsyncBy
             return res
         }
 
-let fulfillWriteContractAsync basePath (c : Contract) =
+let fulfillWriteContractAsync (forceOverwrite : bool) basePath (c : Contract) =
     crossAsync {
-        try 
+        try
+            let! exists = FileSystemHelper.fileExistsAsync (ArcPathHelper.combine basePath c.Path)
+            if exists && c.Path.EndsWith(".gitkeep") then
+                return Ok (c)
+            elif exists && not forceOverwrite then
+                return Error (sprintf "Contract %s already exists and overwrite is not allowed" c.Path)
+            else
             match c.DTO with
             | Some (DTO.Text t) ->
                 let path = ArcPathHelper.combine basePath c.Path
@@ -134,11 +140,11 @@ let fullfillDeleteContractAsync basePath (c : Contract) =
     }
     |> catchWith (fun e -> Error (sprintf "Error deleting contract %s: %s" c.Path e.Message))
 
-let fullFillContract basePath (c : Contract) =
+let fullFillContract (forceOverwrite : bool) basePath (c : Contract) =
     crossAsync {
         match c.Operation with
         | Operation.READ -> return! fulfillReadContractAsync basePath c
-        | Operation.CREATE -> return! fulfillWriteContractAsync basePath c
+        | Operation.CREATE -> return! fulfillWriteContractAsync forceOverwrite basePath c
         | Operation.UPDATE -> return! fulfillUpdateContractAsync basePath c
         | Operation.DELETE -> return! fullfillDeleteContractAsync basePath c
         | Operation.RENAME -> return! fullfillRenameContractAsync basePath c
@@ -146,5 +152,5 @@ let fullFillContract basePath (c : Contract) =
     }
     |> catchWith (fun e -> Error (sprintf "Error fulfilling contract %s: %s" c.Path e.Message))
 
-let fullFillContractBatchAsync basePath (cs : Contract []) =
-    fullfillContractBatchAsyncBy fullFillContract basePath cs
+let fullFillContractBatchAsync (forceOverwrite : bool) basePath (cs : Contract []) =
+    fullfillContractBatchAsyncBy (fullFillContract forceOverwrite) basePath cs

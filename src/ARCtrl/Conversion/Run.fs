@@ -18,9 +18,18 @@ type RunConversion =
     static member private tryDynamicString name (value: DynamicObj) =
         DynObj.tryGetTypedPropertyValue<string> name value
 
-    static member private getPathOrLocation (value: DynamicObj) =
-        RunConversion.tryDynamicString "path" value
-        |> Option.orElse (RunConversion.tryDynamicString "location" value)
+    static member private getFilePathOrLocation (value: CWL.FileInstance) =
+        value.Path
+        |> Option.orElse value.Location
+        |> Option.orElseWith (fun () -> RunConversion.tryDynamicString "path" value)
+        |> Option.orElseWith (fun () -> RunConversion.tryDynamicString "location" value)
+        |> Option.defaultValue ""
+
+    static member private getDirectoryPathOrLocation (value: CWL.DirectoryInstance) =
+        value.Path
+        |> Option.orElse value.Location
+        |> Option.orElseWith (fun () -> RunConversion.tryDynamicString "path" value)
+        |> Option.orElseWith (fun () -> RunConversion.tryDynamicString "location" value)
         |> Option.defaultValue ""
 
     static member cwlTypesEqual (left : CWL.CWLType) (right : CWL.CWLType) =
@@ -141,14 +150,16 @@ type RunConversion =
         | CWL.CWLParameterValue.File file ->
             let path =
                 file
-                |> RunConversion.getPathOrLocation
+                |> RunConversion.getFilePathOrLocation
                 |> fun path -> RunConversion.composeCWLInputFilePath(path, runName)
-            let encodingFormat = RunConversion.tryDynamicString "format" file
+            let encodingFormat =
+                file.Format
+                |> Option.orElseWith (fun () -> RunConversion.tryDynamicString "format" file)
             LDFile.create(path, ?encodingFormat = encodingFormat, ?context = context) :> obj
         | CWL.CWLParameterValue.Directory directory ->
             let path =
                 directory
-                |> RunConversion.getPathOrLocation
+                |> RunConversion.getDirectoryPathOrLocation
                 |> fun path -> RunConversion.composeCWLInputFilePath(path, runName)
             LDFile.create(path, ?context = context) :> obj
         | CWL.CWLParameterValue.Array values ->
@@ -192,7 +203,8 @@ type RunConversion =
             let file = LDFile.createCWLParameter(path, exampleOfWork = exampleOfWork)
             match inputValue.Value with
             | Some (CWL.CWLParameterValue.File fileValue) ->
-                RunConversion.tryDynamicString "format" fileValue
+                fileValue.Format
+                |> Option.orElseWith (fun () -> RunConversion.tryDynamicString "format" fileValue)
                 |> Option.iter (fun format -> LDFile.setEncodingFormatAsString(file, format))
             | _ -> ()
             file
@@ -255,30 +267,23 @@ type RunConversion =
             | _ ->
                 CWL.CWLParameterValue.Array (ResizeArray [RunConversion.decomposeCWLParameterValue(value, runName, expectedType = arraySchema.Items, ?graph = graph)])
         | Some (CWL.CWLType.File _) ->
-            let file = CWL.FileInstance()
             match value with
             | :? LDNode as node when LDFile.validate(node) ->
-                DynObj.setProperty "class" "File" file
-                DynObj.setProperty "path" (RunConversion.decomposeCWLInputFilePath(node.Id, runName)) file
-                LDFile.tryGetEncodingFormatAsString node
-                |> Option.iter (fun format -> DynObj.setProperty "format" format file)
-                CWL.CWLParameterValue.File file
+                let path = RunConversion.decomposeCWLInputFilePath(node.Id, runName)
+                let format = LDFile.tryGetEncodingFormatAsString node
+                CWL.CWLParameterValue.File (CWL.FileInstance(path = path, ?format = format))
             | :? string as path ->
-                DynObj.setProperty "class" "File" file
-                DynObj.setProperty "path" (RunConversion.decomposeCWLInputFilePath(path, runName)) file
-                CWL.CWLParameterValue.File file
+                let path = RunConversion.decomposeCWLInputFilePath(path, runName)
+                CWL.CWLParameterValue.File (CWL.FileInstance(path = path))
             | _ -> CWL.CWLParameterValue.String (string value)
         | Some (CWL.CWLType.Directory _) ->
-            let directory = CWL.DirectoryInstance()
             match value with
             | :? LDNode as node when LDFile.validate(node) ->
-                DynObj.setProperty "class" "Directory" directory
-                DynObj.setProperty "path" (RunConversion.decomposeCWLInputFilePath(node.Id, runName)) directory
-                CWL.CWLParameterValue.Directory directory
+                let path = RunConversion.decomposeCWLInputFilePath(node.Id, runName)
+                CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = path))
             | :? string as path ->
-                DynObj.setProperty "class" "Directory" directory
-                DynObj.setProperty "path" (RunConversion.decomposeCWLInputFilePath(path, runName)) directory
-                CWL.CWLParameterValue.Directory directory
+                let path = RunConversion.decomposeCWLInputFilePath(path, runName)
+                CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = path))
             | _ -> CWL.CWLParameterValue.String (string value)
         | Some CWL.CWLType.String ->
             match value with
@@ -331,12 +336,9 @@ type RunConversion =
             | :? float as value -> CWL.CWLParameterValue.Float value
             | :? bool as value -> CWL.CWLParameterValue.Boolean value
             | :? LDNode as node when LDFile.validate(node) ->
-                let file = CWL.FileInstance()
-                DynObj.setProperty "class" "File" file
-                DynObj.setProperty "path" (RunConversion.decomposeCWLInputFilePath(node.Id, runName)) file
-                LDFile.tryGetEncodingFormatAsString node
-                |> Option.iter (fun format -> DynObj.setProperty "format" format file)
-                CWL.CWLParameterValue.File file
+                let path = RunConversion.decomposeCWLInputFilePath(node.Id, runName)
+                let format = LDFile.tryGetEncodingFormatAsString node
+                CWL.CWLParameterValue.File (CWL.FileInstance(path = path, ?format = format))
             | :? System.Collections.IEnumerable as values ->
                 values
                 |> Seq.cast<obj>
@@ -470,9 +472,10 @@ type RunConversion =
         let measurementMethod = run.TechnologyType |> Option.map BaseTypes.composeDefinedTerm
         let measurementTechnique = run.TechnologyPlatform |> Option.map BaseTypes.composeDefinedTerm
         let variableMeasured = run.MeasurementType |> Option.map BaseTypes.composePropertyValueFromOA
+        let persons = run.Investigation |> Option.map (fun i -> seq (i.GetAllPersons()))
         let creators = 
             run.Performers
-            |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
+            |> ResizeArray.map (fun c -> PersonConversion.composePerson(c, ?persons = persons))
             |> Option.fromSeq
         let publisher = LDOrganization.create("DataPLANT")
         let dateCreated = System.DateTime.UtcNow

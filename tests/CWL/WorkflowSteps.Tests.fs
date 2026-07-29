@@ -1,6 +1,7 @@
 module Tests.WorkflowSteps
 
 open ARCtrl.CWL
+open DynamicObj
 open YAMLicious
 open YAMLicious.YAMLiciousTypes
 open TestingUtils
@@ -17,18 +18,13 @@ let tryYamlScalarString (y: YAMLElement) =
     | _ -> None
 
 let mkStepInput id source defaultValue valueFrom linkMerge =
-    {
-        Id = id
-        Source = source
-        DefaultValue = defaultValue
-        ValueFrom = valueFrom
-        LinkMerge = linkMerge
-        PickValue = None
-        Doc = None
-        LoadContents = None
-        LoadListing = None
-        Label = None
-    }
+    StepInput.create(
+        id,
+        ?source = source,
+        ?defaultValue = defaultValue,
+        ?valueFrom = valueFrom,
+        ?linkMerge = linkMerge
+    )
 
 let testWorkflowStep =
     testList "Decode" [
@@ -179,6 +175,12 @@ let testWorkflowStep =
                 |> Decode.stepsDecoder
                 |> ignore
             Expect.throws decodeInvalid "Step output record without id should fail decoding"
+        testCase "step output parameter known fields are typed fields, not dynamic overflow" <| fun _ ->
+            let output = StepOutputParameter.create "out"
+            Expect.sequenceEqual StepOutputParameter.KnownFieldNames (Set [| "id" |]) "Step output known fields should be declared on the type."
+            Expect.isEmpty (output |> DynamicObjHelpers.dynamicPropertiesSnapshot) "Step output known fields should not be stored as dynamic properties."
+            DynObj.setProperty "arc:note" "keep overflow" output
+            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" output) (Some "keep overflow") "Unknown fields should still use DynamicObj overflow."
         testCase "tryGetTool returns None for wrong obj type" <| fun _ ->
             let run = RunCommandLineTool (box "not a tool")
             let actual = WorkflowStepRunOps.tryGetTool run
@@ -229,7 +231,10 @@ let testWorkflowStepOps =
                     runPath = "./tool.cwl"
                 )
 
-            WorkflowStep.updateInputAt 0 (fun i -> { i with Source = Some (ResizeArray [| "new" |]) }) step
+            WorkflowStep.updateInputAt 0 (fun i ->
+                i.Source <- Some (ResizeArray [| "new" |])
+                i
+            ) step
             Expect.sequenceEqual step.In.[0].Source.Value (ResizeArray [| "new" |]) "Input source should be updated."
 
         testCase "updateInputById updates only matching input" <| fun _ ->
@@ -245,7 +250,10 @@ let testWorkflowStepOps =
                     runPath = "./tool.cwl"
                 )
 
-            WorkflowStep.updateInputById "second" (fun i -> { i with ValueFrom = Some "$(self)" }) step
+            WorkflowStep.updateInputById "second" (fun i ->
+                i.ValueFrom <- Some "$(self)"
+                i
+            ) step
             Expect.isNone step.In.[0].ValueFrom "First input should remain unchanged."
             Expect.equal step.In.[1].ValueFrom (Some "$(self)") "Second input should be updated."
 
@@ -258,7 +266,10 @@ let testWorkflowStepOps =
                     runPath = "./tool.cwl"
                 )
 
-            WorkflowStep.updateInputById "missing" (fun i -> { i with ValueFrom = Some "$(self)" }) step
+            WorkflowStep.updateInputById "missing" (fun i ->
+                i.ValueFrom <- Some "$(self)"
+                i
+            ) step
             Expect.isNone step.In.[0].ValueFrom "First input should remain unchanged."
             Expect.isNone step.In.[1].ValueFrom "Second input should remain unchanged."
 
