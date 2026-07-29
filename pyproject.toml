@@ -6,7 +6,7 @@ authors = [
     { name = "Heinrich Lukas Weil", email = "weil@rptu.de" },
     { name = "Kevin Frey", email = "freymaurer@gmx.de" },
 ]
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 readme = "README.md"
 maintainers = [{ name = "Florian Wetzels" }]
 keywords = [

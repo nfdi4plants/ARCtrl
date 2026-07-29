@@ -43,7 +43,9 @@ jobs:
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        # 3.12 minimum: fable-library uses PEP 695 generics (`class FSharpList[T]`), which do not
+        # parse on 3.11. Its own metadata still claims >=3.10, but Fable tests against 3.12+ only.
+        python-version: '3.12'
     - name: Setup Virtual Environment
       run: python -m venv .venv
     - name: Setup Poetry Windows
