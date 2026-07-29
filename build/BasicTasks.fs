@@ -178,7 +178,9 @@ let build = BuildTask.create "Build" [clean] {
 }
 
 let transpileTS = BuildTask.create "TranspileTS" [clean] {
-    run dotnet $"fable ./src/ARCtrl/ARCtrl.Javascript.fsproj --lang ts --fableLib @fable-org/fable-library-js --noCache -o src/ARCtrl/ts" ""
+    // --lang ts must resolve against fable-library-ts: Fable emits imports with .ts extensions and
+    // the fable-library-js package ships compiled .js only, so those imports cannot be resolved.
+    run dotnet $"fable ./src/ARCtrl/ARCtrl.Javascript.fsproj --lang ts --fableLib @fable-org/fable-library-ts --noCache -o src/ARCtrl/ts" ""
 }
 
 let transpilePy = BuildTask.create "TranspilePy" [clean] {
