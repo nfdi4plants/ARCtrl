@@ -1,3 +1,23 @@
+### 3.2.0+8a23922a (Released 2026-7-30)
+* Additions:
+    * [[#e1c9ca0a](https://github.com/nfdi4plants/ARCtrl/commit/e1c9ca0a09ffe31debb8efb3b90aa6c734b098ca)] move cwl related functions
+    * [[#52aa4181](https://github.com/nfdi4plants/ARCtrl/commit/52aa41819a667b28258269357d31aa77d14e042e)] rename PropertyValue.fs to ScalarValue.fs
+    * [[#f97ec91a](https://github.com/nfdi4plants/ARCtrl/commit/f97ec91af8c3af738285fb4ac85d6029486330ff)] rename PropertyValue to ScalarValue
+    * [[#5316a607](https://github.com/nfdi4plants/ARCtrl/commit/5316a6072a1625866b7153e90bd0f4d1a2fc06b4)] bump node
+    * [[#8bf46184](https://github.com/nfdi4plants/ARCtrl/commit/8bf4618495ee66b7936660d171dbdd07a2a440b6)] update python min requirement
+    * [[#a0207119](https://github.com/nfdi4plants/ARCtrl/commit/a0207119c00d35665bf571a9b70c377a884e80bb)] Merge origin/main into update_fable
+    * [[#fe15b799](https://github.com/nfdi4plants/ARCtrl/commit/fe15b7999288e69a9bca3eebb960a9740dbf28d1)] access controller members as properties in python tests
+    * [[#46aed31a](https://github.com/nfdi4plants/ARCtrl/commit/46aed31a08f59175e35af0918b5ea89cd2959b40)] build typescript package against fable-library-ts
+    * [[#94b01d28](https://github.com/nfdi4plants/ARCtrl/commit/94b01d28bc886238a28b006c2555ac46b8c5d979)] type DTO.Spreadsheet as FsWorkbook instead of obj
+    * [[#05192e61](https://github.com/nfdi4plants/ARCtrl/commit/05192e6182b4dc03351dbbab058de273ccba9723)] update fable, fsspreadsheet, thoth and fsharp.core dependencies
+* Deletions:
+    * [[#7e07479a](https://github.com/nfdi4plants/ARCtrl/commit/7e07479ad848b050a8951d5ae302e40792e72e1a)] remove old dynamicobject fallback
+    * [[#3134f34f](https://github.com/nfdi4plants/ARCtrl/commit/3134f34fc0d499c34b869b456f644dc32917040f)] add Fable.Python reference to tests to remove warnings
+* Bugfixes:
+    * [[#f9cca2f3](https://github.com/nfdi4plants/ARCtrl/commit/f9cca2f30cb9a5304c1d9690279fa6c3e90a5417)] fix python comparison and hashing of OntologyAnnotation
+    * [[#57915a85](https://github.com/nfdi4plants/ARCtrl/commit/57915a85d6cbcfb0dc48d123c22c3a13457403f1)] fix python static properties, string hashing and ResizeArray type tests
+    * [[#8b8c64d8](https://github.com/nfdi4plants/ARCtrl/commit/8b8c64d89acd80f33f274878685b66aebc70b10f)] fix python ToString and RO-Crate process input decoding
+
 ### 3.1.1+3dd44f72 (Released 2026-7-22)
 * Additions:
     * [[#fba76c8b](https://github.com/nfdi4plants/ARCtrl/commit/fba76c8bb5c78e1692f88e971eebcd945eb1b6c0)] merge persons with and without orcid when writing ro-crate
