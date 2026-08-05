@@ -402,7 +402,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
         let h = this.Headers.[columnIndex]
         let cells = ResizeArray()
-        if this.RowCount <> 0 then           
+        if this.RowCount <> 0 then
             let col = _values.Columns.[columnIndex]
             match col with
             | ColumnValueRefs.Constant valueHash ->
@@ -546,7 +546,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
         match cells with
         | None ->
             Unchecked.addEmptyRow index _values
-        | Some cells ->         
+        | Some cells ->
             SanityChecks.validateRowLength cells this.ColumnCount
             for columnIndex in 0 .. this.ColumnCount-1 do
                 let h = this.Headers.[columnIndex]
@@ -761,8 +761,14 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
     member this.GetProtocolUriColumn() =
         this.GetColumnByHeader(CompositeHeader.ProtocolUri)
 
+    member this.TryGetProtocolUriColumn() =
+        this.TryGetColumnByHeader(CompositeHeader.ProtocolUri)
+
     member this.GetProtocolDescriptionColumn() =
         this.GetColumnByHeader(CompositeHeader.ProtocolDescription)
+
+    member this.TryGetProtocolDescriptionColumn() =
+        this.TryGetColumnByHeader(CompositeHeader.ProtocolDescription)
 
     member this.GetProtocolNameColumn() =
         this.GetColumnByHeader(CompositeHeader.ProtocolREF)
@@ -832,7 +838,7 @@ type ArcTable(name: string, ?headers: ResizeArray<CompositeHeader>, ?columns: Re
     /// The name of table 2 will be ignored
     static member append table1 table2 =
         let getList (t : ArcTable) =
-            
+
             [
                 for row = 0 to t.RowCount - 1 do
                     t.GetRow(row,SkipValidation = true)
