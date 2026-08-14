@@ -5,7 +5,7 @@
 # 3. Write spreadsheet to xlsx file (or bytes)
 
 # Import ARCtrl
-from arctrl.arctrl import ArcAssay, ArcTable, CompositeHeader, CompositeCell, IOType, OntologyAnnotation, XlsxController
+from arctrl import ArcAssay, ArcTable, CompositeHeader, CompositeCell, IOType, OntologyAnnotation, XlsxController
 from fsspreadsheet.xlsx import Xlsx
 
 # Create and manipulate object in datamodel
@@ -28,7 +28,7 @@ growth.AddColumn(CompositeHeader.characteristic(oa_species), [CompositeCell.term
 my_assay.AddTable(growth)
 
 # Transform object to generic spreadsheet
-spreadsheet = XlsxController.Assay().to_fs_workbook(my_assay)
+spreadsheet = XlsxController.Assay.to_fs_workbook(my_assay)
 
 # Write spreadsheet to xlsx file (or bytes)
 out_path = "./myFile.xlsx"
