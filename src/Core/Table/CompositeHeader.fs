@@ -13,6 +13,18 @@ type IOType =
     | Material
     | FreeText of string
 
+#if FABLE_COMPILER_PYTHON
+    /// Python-only replacement for the generated union hash, see `CompositeCell.GetHashCodePy`.
+    [<CompiledName("GetHashCode")>]
+    member this.GetHashCodePy() : int =
+        match this with
+        | Source -> 0
+        | Sample -> 1
+        | Data -> 2
+        | Material -> 3
+        | FreeText s -> HashCodes.mergeHashes 4 (HashCodes.hashString s)
+#endif
+
     // This is used for example in Swate to programmatically create Options for adding building blocks.
     // Having this member here, guarantees the any new IOTypes are implemented in tools.
     /// This member is used to iterate over all existing `IOType`s (excluding FreeText case).
@@ -138,7 +150,29 @@ type CompositeHeader =
     | FreeText of string
     | Comment of string
 
-    with 
+    with
+
+#if FABLE_COMPILER_PYTHON
+    /// Python-only replacement for the generated union hash, see `CompositeCell.GetHashCodePy`.
+    [<CompiledName("GetHashCode")>]
+    member this.GetHashCodePy() : int =
+        match this with
+        | Component oa -> HashCodes.mergeHashes 0 (oa.GetHashCode())
+        | Characteristic oa -> HashCodes.mergeHashes 1 (oa.GetHashCode())
+        | Factor oa -> HashCodes.mergeHashes 2 (oa.GetHashCode())
+        | Parameter oa -> HashCodes.mergeHashes 3 (oa.GetHashCode())
+        | ProtocolType -> 4
+        | ProtocolDescription -> 5
+        | ProtocolUri -> 6
+        | ProtocolVersion -> 7
+        | ProtocolREF -> 8
+        | Performer -> 9
+        | Date -> 10
+        | Input io -> HashCodes.mergeHashes 11 (io.GetHashCode())
+        | Output io -> HashCodes.mergeHashes 12 (io.GetHashCode())
+        | FreeText s -> HashCodes.mergeHashes 13 (HashCodes.hashString s)
+        | Comment s -> HashCodes.mergeHashes 14 (HashCodes.hashString s)
+#endif
 
     // Written without `|>`: Fable's Python backend fails to transform a piped static property
     // getter on an [<AttachMembers>] union and silently substitutes None for the whole property.

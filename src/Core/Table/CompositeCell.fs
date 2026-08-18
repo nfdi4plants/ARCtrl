@@ -1,6 +1,7 @@
 namespace ARCtrl
 
 open Fable.Core
+open ARCtrl.Helper
 
 [<AttachMembers>]
 [<RequireQualifiedAccess>]
@@ -16,6 +17,23 @@ type CompositeCell =
     /// https://isa-specs.readthedocs.io/en/latest/isatab.html#unit
     | Unitized of string*OntologyAnnotation
     | Data of Data
+
+#if FABLE_COMPILER_PYTHON
+    /// Fable's python runtime hashes union fields with fable-library's `string_hash`, which
+    /// accumulates djb2 in an unbounded python int and only converts to int32 on return, where the
+    /// conversion raises for strings longer than roughly 200 characters. `HashCodes.hashString`
+    /// wraps like `int` does on every other target, so route the string cases through it.
+    ///
+    /// `CompiledName` overrides the `GetHashCode` inherited from the emitted union base class,
+    /// which is what both `hash` and python's `__hash__` end up calling.
+    [<CompiledName("GetHashCode")>]
+    member this.GetHashCodePy() : int =
+        match this with
+        | Term oa -> HashCodes.mergeHashes 0 (oa.GetHashCode())
+        | FreeText s -> HashCodes.mergeHashes 1 (HashCodes.hashString s)
+        | Unitized (v, oa) -> HashCodes.mergeHashes 2 (HashCodes.mergeHashes (HashCodes.hashString v) (oa.GetHashCode()))
+        | Data d -> HashCodes.mergeHashes 3 (d.GetHashCode())
+#endif
 
     member this.isUnitized = match this with | Unitized _ -> true | _ -> false
     member this.isTerm = match this with | Term _ -> true | _ -> false
