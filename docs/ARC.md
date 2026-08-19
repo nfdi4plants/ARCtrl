@@ -34,7 +34,7 @@ let arc = new ARC()
 
 ```python
 # Python
-from arctrl.arc import ARC
+from arctrl import ARC
 
 myArc = ARC()
 ```

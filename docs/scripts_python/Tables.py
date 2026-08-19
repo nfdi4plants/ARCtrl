@@ -1,4 +1,4 @@
-from arctrl.arctrl import ArcInvestigation, ArcTable, OntologyAnnotation, CompositeHeader, CompositeCell, IOType
+from arctrl import ArcInvestigation, ArcTable, OntologyAnnotation, CompositeHeader, CompositeCell, IOType
 
 # Create investigation
 my_investigation = ArcInvestigation.init("BestInvestigation")

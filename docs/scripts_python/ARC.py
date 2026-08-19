@@ -1,5 +1,5 @@
 import os
-from arctrl.arc import ARC
+from arctrl import ARC
 from Contracts import fulfill_write_contract, fulfill_read_contract
 # Create
 
