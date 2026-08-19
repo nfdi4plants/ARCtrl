@@ -9,6 +9,9 @@ open System.Collections.Generic
 
 module DateTime =
 
+
+    let dateModifiedKey = "dateModified"
+
     let tryFromString (s : string) =
         try Json.Decode.fromJsonString Json.Decode.datetime s |> Some
         with _ -> None
@@ -16,3 +19,14 @@ module DateTime =
     let toString (d : System.DateTime) =
         Json.Encode.dateTime d
         |> Json.Encode.toJsonString 0
+
+    let compose (s : string) =
+        match tryFromString s with
+        | Some d -> box d
+        | None -> box s
+
+    let tryDecompose (d : obj) =
+        match d with
+        | :? System.DateTime as dt -> Some (toString dt)
+        | :? string as s -> Some s
+        | _ -> None

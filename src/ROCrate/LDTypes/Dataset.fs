@@ -77,25 +77,55 @@ type LDDataset =
     static member setCreators(lp : LDNode, creators : ResizeArray<LDNode>, ?context : LDContext) =
         lp.SetProperty(LDDataset.creator, creators, ?context = context)
 
+    static member tryGetDateCreated(lp : LDNode, ?context : LDContext) =
+        match lp.TryGetPropertyAsSingleton(LDDataset.dateCreated, ?context = context) with
+        | Some n -> Some n
+        | _ -> None
+
     static member tryGetDateCreatedAsDateTime(lp : LDNode, ?context : LDContext) =
         match lp.TryGetPropertyAsSingleton(LDDataset.dateCreated, ?context = context) with
         | Some (:? System.DateTime as n) -> Some n
         | _ -> None
 
+    static member tryGetDateCreatedAsString(lp : LDNode, ?context : LDContext) =
+        match lp.TryGetPropertyAsSingleton(LDDataset.dateCreated, ?context = context) with
+        | Some (:? string as n) -> Some n
+        | _ -> None
+
     static member setDateCreatedAsDateTime(lp : LDNode, dateCreated : System.DateTime, ?context : LDContext) =
         lp.SetProperty(LDDataset.dateCreated, dateCreated, ?context = context)
+
+    static member tryGetDatePublished(lp : LDNode, ?context : LDContext) =
+        match lp.TryGetPropertyAsSingleton(LDDataset.datePublished, ?context = context) with
+        | Some n -> Some n
+        | _ -> None
 
     static member tryGetDatePublishedAsDateTime(lp : LDNode, ?context : LDContext) =
         match lp.TryGetPropertyAsSingleton(LDDataset.datePublished, ?context = context) with
         | Some (:? System.DateTime as n) -> Some n
         | _ -> None
 
+    static member tryGetDatePublishedAsString(lp : LDNode, ?context : LDContext) =
+        match lp.TryGetPropertyAsSingleton(LDDataset.datePublished, ?context = context) with
+        | Some (:? string as n) -> Some n
+        | _ -> None
+
     static member setDatePublishedAsDateTime(lp : LDNode, datePublished : System.DateTime, ?context : LDContext) =
         lp.SetProperty(LDDataset.datePublished, datePublished, ?context = context)
+
+    static member tryGetSDDatePublished(lp : LDNode, ?context : LDContext) =
+        match lp.TryGetPropertyAsSingleton(LDDataset.sdDatePublished, ?context = context) with
+        | Some n -> Some n
+        | _ -> None
 
     static member tryGetSDDatePublishedAsDateTime(lp : LDNode, ?context : LDContext) =
         match lp.TryGetPropertyAsSingleton(LDDataset.sdDatePublished, ?context = context) with
         | Some (:? System.DateTime as n) -> Some n
+        | _ -> None
+
+    static member tryGetSDDatePublishedAsString(lp : LDNode, ?context : LDContext) =
+        match lp.TryGetPropertyAsSingleton(LDDataset.sdDatePublished, ?context = context) with
+        | Some (:? string as n) -> Some n
         | _ -> None
 
     static member setSDDatePublishedAsDateTime(lp : LDNode, sdDatePublished : System.DateTime, ?context : LDContext) =
@@ -117,9 +147,19 @@ type LDDataset =
     static member setLicenseAsCreativeWork(lp : LDNode, license : obj, ?context : LDContext) =
         lp.SetProperty(LDDataset.license, license, ?context = context)
 
+    static member tryGetDateModified(lp : LDNode, ?context : LDContext) =
+        match lp.TryGetPropertyAsSingleton(LDDataset.dateModified, ?context = context) with
+        | Some n -> Some n
+        | _ -> None
+
     static member tryGetDateModifiedAsDateTime(lp : LDNode, ?context : LDContext) =
         match lp.TryGetPropertyAsSingleton(LDDataset.dateModified, ?context = context) with
         | Some (:? System.DateTime as n) -> Some n
+        | _ -> None
+
+    static member tryGetDateModifiedAsString(lp : LDNode, ?context : LDContext) =
+        match lp.TryGetPropertyAsSingleton(LDDataset.dateModified, ?context = context) with
+        | Some (:? string as n) -> Some n
         | _ -> None
 
     static member setDateModifiedAsDateTime(lp : LDNode, dateModified : System.DateTime, ?context : LDContext) =
@@ -331,7 +371,7 @@ type LDDataset =
         LDDataset.validate(lp, ?context = context)
         && lp.AdditionalType.Contains("Run")
 
-    static member create(id : string, ?identier : string, ?creators : ResizeArray<LDNode>, ?dateCreated : System.DateTime, ?datePublished : System.DateTime, ?dateModified : System.DateTime, ?description : string, ?hasParts : ResizeArray<LDNode>, ?name : string, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?url : string, ?abouts : ResizeArray<LDNode>, ?measurementMethod : LDNode, ?measurementTechnique : LDNode, ?variableMeasureds : ResizeArray<LDNode>, ?context : LDContext) =
+    static member create(id : string, ?identier : string, ?creators : ResizeArray<LDNode>, ?dateCreated : obj, ?datePublished : obj, ?dateModified : obj, ?description : string, ?hasParts : ResizeArray<LDNode>, ?name : string, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?url : string, ?abouts : ResizeArray<LDNode>, ?measurementMethod : LDNode, ?measurementTechnique : LDNode, ?variableMeasureds : ResizeArray<LDNode>, ?context : LDContext) =
         let s = LDNode(id, ResizeArray [LDDataset.schemaType], ?context = context)
         s.SetOptionalProperty(LDDataset.identifier, identier, ?context = context)
         s.SetOptionalProperty(LDDataset.creator, creators, ?context = context)
@@ -351,7 +391,7 @@ type LDDataset =
         s.SetOptionalProperty(LDDataset.variableMeasured, variableMeasureds, ?context = context)
         s
 
-    static member createInvestigation(identifier : string, name : string, ?id : string, ?creators : ResizeArray<LDNode>, ?dateCreated : System.DateTime, ?datePublished : System.DateTime, ?dateModified : System.DateTime, ?description : string, ?hasParts : ResizeArray<LDNode>, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?url : string, ?context : LDContext) =
+    static member createInvestigation(identifier : string, name : string, ?id : string, ?creators : ResizeArray<LDNode>, ?dateCreated : obj, ?datePublished : obj, ?dateModified : obj, ?description : string, ?hasParts : ResizeArray<LDNode>, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?url : string, ?context : LDContext) =
         let id = match id with
                  | Some i -> i
                  | None -> LDDataset.genIDInvesigation()
@@ -359,7 +399,7 @@ type LDDataset =
         s.AdditionalType <- ResizeArray ["Investigation"]
         s
 
-    static member createStudy(identifier : string, ?id : string, ?creators : ResizeArray<LDNode>, ?dateCreated : System.DateTime, ?datePublished : System.DateTime, ?dateModified : System.DateTime, ?description : string, ?hasParts : ResizeArray<LDNode>, ?name : string, ?citations : ResizeArray<LDNode>, ?variableMeasureds : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?url : string, ?abouts : ResizeArray<LDNode>, ?context : LDContext) =
+    static member createStudy(identifier : string, ?id : string, ?creators : ResizeArray<LDNode>, ?dateCreated : obj, ?datePublished : obj, ?dateModified : obj, ?description : string, ?hasParts : ResizeArray<LDNode>, ?name : string, ?citations : ResizeArray<LDNode>, ?variableMeasureds : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?url : string, ?abouts : ResizeArray<LDNode>, ?context : LDContext) =
         let id = match id with
                  | Some i -> i
                  | None -> LDDataset.genIDStudy(identifier)

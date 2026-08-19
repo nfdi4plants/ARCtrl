@@ -2427,6 +2427,7 @@ let tests_ROCrate =
             Expect.equal arc.Title nonDeprecatedARC.Title "Investigation should have correct title"
             Expect.equal arc.Description nonDeprecatedARC.Description "Investigation should have correct description"
             Expect.equal arc.Contacts.[1] nonDeprecatedARC.Contacts.[1] "Investigation should have correct contacts"
+            nonDeprecatedARC.Studies.[1].Comments <- ResizeArray() // remove comments for comparison as dateModified is now being preserved through comments
             Expect.equal arc.Studies.[1] nonDeprecatedARC.Studies.[1] "Investigation should have correct studies"
         testCase "CanRead" <| fun _ ->
             let arc = ARC.fromROCrateJsonString(TestObjects.ROCrate.ArcPrototype.ed123499)
