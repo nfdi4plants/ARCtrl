@@ -3555,6 +3555,19 @@ let tests_Investigation =
             let datasets = LDDataset.getHasPartsAsDataset ro_Investigation
             Expect.hasLength datasets 0 "Investigation should have no sub datasets (workflows ignored)"
         )
+        testCase "ArbitraryDateTimeSurvivesReadWrite" (fun () ->
+            let submissionDate = "Hello"
+            let publicaReleaseDate = "World"
+            let dateModified = "!"
+            let mdComment = Comment("dateModified", dateModified)
+            let inv = ArcInvestigation("MyInv", title = "MyTitle", submissionDate = submissionDate, publicReleaseDate = publicaReleaseDate, comments = ResizeArray [mdComment])
+            let ro_Investigation = InvestigationConversion.composeInvestigation inv
+            let inv' = InvestigationConversion.decomposeInvestigation ro_Investigation
+            Expect.equal inv'.SubmissionDate (Some submissionDate) "SubmissionDate should match"
+            Expect.equal inv'.PublicReleaseDate (Some publicaReleaseDate) "PublicReleaseDate should match"
+            let mdComment' = Expect.wantSome (inv'.Comments |> Seq.tryFind (fun c -> c.Name = Some "dateModified")) "dateModified comment should exist"
+            Expect.equal mdComment'.Value (Some dateModified) "dateModified comment value should match"
+        )
     ]
 
 

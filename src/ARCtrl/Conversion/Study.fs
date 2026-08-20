@@ -14,9 +14,16 @@ open ARCtrl.Helper.Regex.ActivePatterns
 type StudyConversion = 
 
     static member composeStudy (study : ArcStudy, ?fs : FileSystem) =
-        let dateCreated = study.SubmissionDate |> Option.bind DateTime.tryFromString
-        let datePublished = study.PublicReleaseDate |> Option.bind DateTime.tryFromString
-        let dateModified = System.DateTime.Now
+        let dateCreated =
+            study.SubmissionDate
+            |> Option.map DateTime.compose
+        let datePublished =
+            study.PublicReleaseDate
+            |> Option.map DateTime.compose
+        let dateModified =
+            study.Comments
+            |> Seq.tryFind (fun c -> c.Name.IsSome && c.Name.Value = DateTime.dateModifiedKey)
+            |> Option.bind (fun c -> c.Value |> Option.map DateTime.compose)
         let publications = 
             study.Publications
             |> ResizeArray.map (fun p -> ScholarlyArticleConversion.composeScholarlyArticle p)
@@ -46,7 +53,7 @@ type StudyConversion =
             ?description = study.Description,
             ?dateCreated = dateCreated,
             ?datePublished = datePublished,
-            dateModified = dateModified,
+            ?dateModified = dateModified,
             ?creators = creators,
             ?citations = publications,
             ?hasParts = dataFiles,
@@ -57,11 +64,14 @@ type StudyConversion =
 
     static member decomposeStudy (study : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let dateCreated = 
-            LDDataset.tryGetDateCreatedAsDateTime(study, ?context = context)
-            |> Option.map DateTime.toString
+            LDDataset.tryGetDateCreated(study, ?context = context)
+            |> Option.bind DateTime.tryDecompose
         let datePublished = 
-            LDDataset.tryGetDatePublishedAsDateTime(study, ?context = context)
-            |> Option.map DateTime.toString
+            LDDataset.tryGetDatePublished(study, ?context = context)
+            |> Option.bind DateTime.tryDecompose
+        let dateModified = 
+            LDDataset.tryGetDateModified(study, ?context = context)
+            |> Option.bind DateTime.tryDecompose
         let publications = 
             LDDataset.getCitations(study, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun p -> ScholarlyArticleConversion.decomposeScholarlyArticle(p, ?graph = graph, ?context = context))
@@ -78,6 +88,11 @@ type StudyConversion =
         let comments =
             LDDataset.getComments(study, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
+            |> fun c ->
+                if dateModified.IsSome then
+                    let dateModifiedComment = Comment(DateTime.dateModifiedKey, dateModified.Value)
+                    ResizeArray.append c (ResizeArray [dateModifiedComment])
+                else c
         ArcStudy.create(
             identifier = LDDataset.getIdentifierAsString(study, ?context = context),
             ?title = LDDataset.tryGetNameAsString(study, ?context = context),

@@ -14,12 +14,17 @@ type InvestigationConversion =
 
     static member composeInvestigation (investigation : ArcInvestigation, ?fs : FileSystem, ?ignoreBrokenWR) =
         let name = match investigation.Title with | Some t -> t | None -> failwith "Investigation must have a title"
-        let dateCreated = investigation.SubmissionDate |> Option.bind DateTime.tryFromString
+        let dateCreated =
+            investigation.SubmissionDate
+            |> Option.map DateTime.compose
         let datePublished =
             investigation.PublicReleaseDate
-            |> Option.bind DateTime.tryFromString
+            |> Option.map DateTime.compose
             |> Option.defaultValue (System.DateTime.Now)
-        //let dateModified = System.DateTime.Now
+        let dateModified =
+            investigation.Comments
+            |> Seq.tryFind (fun c -> c.Name.IsSome && c.Name.Value = DateTime.dateModifiedKey)
+            |> Option.bind (fun c -> c.Value |> Option.map DateTime.compose)
         let publications = 
             investigation.Publications
             |> ResizeArray.map (fun p -> ScholarlyArticleConversion.composeScholarlyArticle p)
@@ -62,7 +67,7 @@ type InvestigationConversion =
             ?description = investigation.Description,
             ?dateCreated = dateCreated,
             datePublished = datePublished,
-            //dateModified = dateModified,
+            ?dateModified = dateModified,
             ?creators = creators,
             ?citations = publications,
             ?hasParts = hasParts,
@@ -76,11 +81,14 @@ type InvestigationConversion =
             | Some t -> Some t
             | None -> LDDataset.tryGetHeadlineAsString(investigation, ?context = context)
         let dateCreated = 
-            LDDataset.tryGetDateCreatedAsDateTime(investigation, ?context = context)
-            |> Option.map DateTime.toString
+            LDDataset.tryGetDateCreated(investigation, ?context = context)
+            |> Option.bind DateTime.tryDecompose
         let datePublished = 
-            LDDataset.tryGetDatePublishedAsDateTime(investigation, ?context = context)
-            |> Option.map DateTime.toString
+            LDDataset.tryGetDatePublished(investigation, ?context = context)
+            |> Option.bind DateTime.tryDecompose
+        let dateModified = 
+            LDDataset.tryGetDateModified(investigation, ?context = context)
+            |> Option.bind DateTime.tryDecompose
         let publications = 
             LDDataset.getCitations(investigation, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun p -> ScholarlyArticleConversion.decomposeScholarlyArticle(p, ?graph = graph, ?context = context))
@@ -108,6 +116,11 @@ type InvestigationConversion =
         let comments =
             LDDataset.getComments(investigation, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
+            |> fun c ->
+                if dateModified.IsSome then
+                    let dateModifiedComment = Comment(DateTime.dateModifiedKey, dateModified.Value)
+                    ResizeArray.append c (ResizeArray [dateModifiedComment])
+                else c
         ArcInvestigation.create(
             identifier = LDDataset.getIdentifierAsString(investigation, ?context = context),
             ?title = title,
