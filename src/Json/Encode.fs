@@ -84,7 +84,7 @@ module Encode =
 
     let intDictionary (valueEncoder : Encoder<'value>) (values: System.Collections.Generic.IDictionary<int, 'value>) =
         if values.Count = 0 then
-            Encode.nil
+            Encode.seq []
         else
             values
             |> Seq.map (fun (KeyValue(k, v)) ->

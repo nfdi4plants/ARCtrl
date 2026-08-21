@@ -1,3 +1,4 @@
+
 module Tests.ArcTable
 
 open ARCtrl
@@ -145,6 +146,18 @@ let private tests_commentColumns =
             Expect.arcTableEqual decoded testTable "decoded table should be equal to original table"
     ] 
 
+// https://github.com/nfdi4plants/Swate/issues/1324
+let test_core_emptySampleCol = testCase "core_emptySampleCol" <| fun _ ->
+    let t = ArcTable.init("My table")
+
+    t.AddColumn(CompositeHeader.Input IOType.Sample)
+
+    t.AddColumn(CompositeHeader.Output IOType.Data, ResizeArray [CompositeCell.emptyData])
+
+    let t' = t.ToJsonString() |> ArcTable.fromJsonString
+
+    Expect.arcTableEqual t t' "decoded table should be equal to original table"
+
 
 let main = testList "ArcTable" [
     tests_compressedExtended
@@ -154,4 +167,5 @@ let main = testList "ArcTable" [
     tests_compressedFilled
     tests_dataColumns
     tests_commentColumns
+    test_core_emptySampleCol
 ]
