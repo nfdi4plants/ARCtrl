@@ -1,3 +1,13 @@
+### 3.2.1+563634b8 (Released 2026-8-21)
+* Additions:
+    * [[#c9ad53e4](https://github.com/nfdi4plants/ARCtrl/commit/c9ad53e412a22b0ad145b9e66e6dc3aef734513a)] add TryGetProtocol* functions
+* Bugfixes:
+    * [[#e5ba7105](https://github.com/nfdi4plants/ARCtrl/commit/e5ba71053f52f02c6fe1e91358cf07ba8a768f30)] fix python public API and update docs (#631)
+    * [[#c3f8f28c](https://github.com/nfdi4plants/ARCtrl/commit/c3f8f28c7a5fac7d5fcefac90054c8d7e16cc5db)] fix python hashing of long strings in table unions (#631)
+    * [[#4802b6e5](https://github.com/nfdi4plants/ARCtrl/commit/4802b6e53496d54e917ededbf16fe62f6e8fe293)] fix cwl public API exports (#631)
+    * [[#516e4f80](https://github.com/nfdi4plants/ARCtrl/commit/516e4f80055c30fb48915c1c6d79d29fd67c77c0)] fix arbitrary date strings being lost in RO-Crate conversion
+    * [[#abbd3003](https://github.com/nfdi4plants/ARCtrl/commit/abbd3003199d1b5121e5912da927a33691d86217)] fix json io failing on empty data column
+
 ### 3.2.0+8a23922a (Released 2026-7-30)
 * Additions:
     * [[#e1c9ca0a](https://github.com/nfdi4plants/ARCtrl/commit/e1c9ca0a09ffe31debb8efb3b90aa6c734b098ca)] move cwl related functions
