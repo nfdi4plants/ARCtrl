@@ -1,3 +1,7 @@
+### 3.2.2+281b4fef (Released 2026-10-2)
+* Additions:
+    * [[#331ec704](https://github.com/nfdi4plants/ARCtrl/commit/331ec704fccabd29fdb20b8b312b5d69d513380c)] update fable dependencies
+
 ### 3.2.1+563634b8 (Released 2026-8-21)
 * Additions:
     * [[#c9ad53e4](https://github.com/nfdi4plants/ARCtrl/commit/c9ad53e412a22b0ad145b9e66e6dc3aef734513a)] add TryGetProtocol* functions
