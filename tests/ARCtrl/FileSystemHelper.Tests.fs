@@ -102,6 +102,16 @@ let readFileXlsx =
 
 let writeFileXlsx = 
     testList "WriteWorkbook" [
+        #if FABLE_COMPILER_PYTHON
+        //https://github.com/nfdi4plants/ARCtrl/issues/638
+        testCase "Int32 column index supports openpyxl divmod (#638)" (fun () ->
+            // Passing an F# int reproduces the Int32 numeric protocol used by
+            // FsSpreadsheet when openpyxl calculates worksheet dimensions.
+            let columnLetter (index: int) : string =
+                Fable.Core.PyInterop.emitPyExpr index "__import__('openpyxl').utils.cell.get_column_letter($0)"
+            Expect.equal (columnLetter 44) "AR" "Column indices must support divmod in openpyxl"
+        )
+        #endif
         testCaseCrossAsync "simple" (crossAsync {
             do! ARCtrl.FileSystemHelper.ensureDirectoryAsync TestObjects.IO.testResultsFolder
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "Workbook.xlsx"
