@@ -1348,6 +1348,24 @@ let private tests_ArcTablesProcessSeq =
             Expect.equal resultTables.Tables.[0].Name "run_20240101120000" "Table should keep the full process name"
             Expect.equal resultTables.Tables.[0].RowCount 1 "Table should have 1 row"
         )
+        testCase "NumberSuffixInt32Boundary" (fun () ->
+            Expect.equal (ProcessConversion.decomposeProcessName "x_2147483647") ("x", Some 2147483647) "Int32.MaxValue should be split off"
+            Expect.equal (ProcessConversion.decomposeProcessName "x_2147483648") ("x_2147483648", None) "A number above Int32.MaxValue should keep the full name"
+        )
+        testCase "OverflowingNumberSuffixDoesNotMergeWithRoot" (fun () ->
+            let createProcess (name : string) (id : string) (source : string) (sample : string) =
+                LDLabProcess.create(
+                    name = name,
+                    id = id,
+                    objects = ResizeArray [LDSample.createSource(name = source)],
+                    results = ResizeArray [LDSample.createSample(name = sample)]
+                )
+            let p1 = createProcess "run_20240101120000" "#Process_Run1" "Source1" "Sample1"
+            let p2 = createProcess "run_0" "#Process_Run2" "Source2" "Sample2"
+            let resultTables = ArcTables.fromProcesses [p1; p2]
+            let names = resultTables.Tables |> Seq.map (fun t -> t.Name) |> List.ofSeq
+            Expect.equal names ["run_20240101120000"; "run"] "Overflowing suffix and row index should give two tables"
+        )
     ]
 
 

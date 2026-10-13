@@ -142,7 +142,7 @@ module TableTypeExtensions =
         /// Create a collection of tables from a list of processes.
         ///
         /// For this, the processes are grouped by nameroot ("nameroot_0", "nameroot_1" ...).
-        /// A process name without a number is the group key as it is. Processes without a usable name fall back to their protocol. ProcessConversion.groupProcesses has the full order.
+        /// A process name without a number that fits in an Int32 is the group key as it is. Processes without a usable name fall back to their protocol. ProcessConversion.groupProcesses has the full order.
         ///
         /// Then each group is converted to a table with this group key as sheetname
         static member fromProcesses (ps : LDNode list, ?graph : LDGraph, ?context : LDContext) : ArcTables = 

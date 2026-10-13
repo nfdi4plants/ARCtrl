@@ -359,7 +359,7 @@ type ProcessConversion =
     /// Process names are taken from the Worksheet name and numbered from 0: SheetName_0, SheetName_1, etc. Every row has a suffix.
     ///
     /// This function decomposes the name into a root name and a number, and groups processes by root name.
-    /// A name without a number is the group key as it is, if it is not blank.
+    /// A name without a number that fits in an Int32 is the group key as it is, if it is not blank.
     /// Otherwise the key is the protocol name, then a blank name, then the protocol @id, then a new missing identifier.
     static member groupProcesses (processes : LDNode list, ?graph : LDGraph, ?context : LDContext) = 
         processes
