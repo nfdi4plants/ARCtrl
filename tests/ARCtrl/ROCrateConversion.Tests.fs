@@ -1210,6 +1210,53 @@ let private tests_ArcTablesProcessSeq =
             Expect.arcTableEqual resultTables.Tables.[0] t1 "Table 1 should be equal"
             Expect.arcTableEqual resultTables.Tables.[1] t2 "Table 2 should be equal"
         )
+        testCase "SingleProcessNameBeatsProtocolName" (fun () ->
+            let protocol = LDLabProtocol.create(id = LDLabProtocol.genId(name = "My protocol"), name = "My protocol")
+            let p =
+                LDLabProcess.create(
+                    name = "my-sheet",
+                    objects = ResizeArray [LDSample.createSource(name = "MySource")],
+                    results = ResizeArray [LDSample.createSample(name = "MySample")],
+                    executesLabProtocol = protocol
+                )
+            let resultTables = ArcTables.fromProcesses [p]
+            Expect.equal resultTables.TableCount 1 "Should have 1 table"
+            Expect.equal resultTables.Tables.[0].Name "my-sheet" "Table should be named after the process"
+            Expect.equal resultTables.Tables.[0].RowCount 1 "Table should have 1 row"
+        )
+        testCase "EmptyProcessNameFallsBackToProtocolName" (fun () ->
+            let protocol = LDLabProtocol.create(id = LDLabProtocol.genId(name = "My protocol"), name = "My protocol")
+            let createProcess (id : string) (source : string) (sample : string) =
+                LDLabProcess.create(
+                    name = "",
+                    id = id,
+                    objects = ResizeArray [LDSample.createSource(name = source)],
+                    results = ResizeArray [LDSample.createSample(name = sample)],
+                    executesLabProtocol = protocol
+                )
+            let p1 = createProcess "#Process_Empty1" "Source1" "Sample1"
+            let p2 = createProcess "#Process_Empty2" "Source2" "Sample2"
+            let resultTables = ArcTables.fromProcesses [p1; p2]
+            Expect.equal resultTables.TableCount 1 "Should have 1 table"
+            Expect.equal resultTables.Tables.[0].Name "My protocol" "Table should be named after the protocol"
+            Expect.equal resultTables.Tables.[0].RowCount 2 "Table should have 2 rows"
+        )
+        testCase "UnnamedProcessFallsBackToProtocolName" (fun () ->
+            let protocol = LDLabProtocol.create(id = LDLabProtocol.genId(name = "My protocol"), name = "My protocol")
+            let p =
+                LDLabProcess.create(
+                    name = "temporary",
+                    objects = ResizeArray [LDSample.createSource(name = "MySource")],
+                    results = ResizeArray [LDSample.createSample(name = "MySample")],
+                    executesLabProtocol = protocol
+                )
+            p.RemoveProperty(LDLabProcess.name) |> ignore
+            Expect.isNone (LDLabProcess.tryGetNameAsString p) "Process should have no name"
+            let resultTables = ArcTables.fromProcesses [p]
+            Expect.equal resultTables.TableCount 1 "Should have 1 table"
+            Expect.equal resultTables.Tables.[0].Name "My protocol" "Table should be named after the protocol"
+            Expect.equal resultTables.Tables.[0].RowCount 1 "Table should have 1 row"
+        )
     ]
 
 

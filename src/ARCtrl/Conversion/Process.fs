@@ -358,21 +358,23 @@ type ProcessConversion =
     /// Process names are taken from the Worksheet name and numbered: SheetName_1, SheetName_2, etc.
     /// 
     /// This function decomposes this name into a root name and a number, and groups processes by root name.
+    /// A name without a number is the group key as it is, unless it is empty or whitespace.
+    /// Processes without such a name fall back to the name of the protocol they execute.
     static member groupProcesses (processes : LDNode list, ?graph : LDGraph, ?context : LDContext) = 
         processes
         |> List.groupBy (fun p ->
             match LDLabProcess.tryGetNameAsString (p, ?context = context), LDLabProcess.tryGetExecutesLabProtocol(p,?graph = graph, ?context = context) with
             | Some name, _ when ProcessConversion.decomposeProcessName name |> snd |> Option.isSome ->
                 ProcessConversion.decomposeProcessName name |> fst
-            | _, Some protocol when LDLabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.isSome ->
-                LDLabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.defaultValue ""
             // Removed this case in order to fix https://github.com/nfdi4plants/ARCtrl/issues/512
             // The problem is, that through this case table-names with underscores clash, e.g. "Table_MS" and "Table_RNASeq" would be grouped together.
             //| Some name, _ when name.Contains "_" ->
             //    let lastUnderScoreIndex = name.LastIndexOf '_'
             //    name.Remove lastUnderScoreIndex
-            | Some name, _ ->
+            | Some name, _ when not (System.String.IsNullOrWhiteSpace name) ->
                 name
+            | _, Some protocol when LDLabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.isSome ->
+                LDLabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.defaultValue ""
             | _, Some protocol  ->
                 protocol.Id
             | _ ->
