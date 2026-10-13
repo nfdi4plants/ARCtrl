@@ -656,7 +656,7 @@ let private tests_ArcTableProcess =
             Expect.equal outputs.Count 1 "Process should have 1 output"
             Expect.equal outputs.[0] expectedOutput "Output value does not match"
             let name = LDLabProcess.getNameAsString p
-            Expect.equal name tableName1 "Process name should match table name"
+            Expect.equal name (ProcessConversion.composeProcessName tableName1 0) "Process name should be table name with row index"
         )
         testCase "SingleRowSingleParam GetAndFromProcesses" (fun () ->
             let t = singleRowSingleParam.Copy()
@@ -679,7 +679,7 @@ let private tests_ArcTableProcess =
             Expect.equal outputs.Count 1 "Process should have 1 output"
             Expect.equal outputs.[0] expectedOutput "Output value does not match"
             let name = LDLabProcess.getNameAsString p
-            Expect.equal name tableName1 "Process name should match table name"
+            Expect.equal name (ProcessConversion.composeProcessName tableName1 0) "Process name should be table name with row index"
         )
 
         testCase "SingleRowMixedValues GetProcesses" (fun () ->          
@@ -787,7 +787,7 @@ let private tests_ArcTableProcess =
             let protName = Expect.wantSome (LDLabProtocol.tryGetNameAsString(prot)) "Protocol should have name"
             Expect.equal protName "MyProtocol" "Protocol name should match"
             let pName = Expect.wantSome (LDLabProcess.tryGetNameAsString(p)) "Process should have name"
-            Expect.equal pName tableName1 "Process name should match table name"
+            Expect.equal pName (ProcessConversion.composeProcessName tableName1 0) "Process name should be table name with row index"
         )
 
         testCase "SingleRowWithProtocolREF GetAndFromProcesses" (fun () ->
@@ -1256,6 +1256,53 @@ let private tests_ArcTablesProcessSeq =
             Expect.equal resultTables.TableCount 1 "Should have 1 table"
             Expect.equal resultTables.Tables.[0].Name "My protocol" "Table should be named after the protocol"
             Expect.equal resultTables.Tables.[0].RowCount 1 "Table should have 1 row"
+        )
+        testCase "SingleRowTableNamesRoundTrip" (fun () ->
+            let headers =
+                ResizeArray [
+                    CompositeHeader.Input IOType.Source
+                    CompositeHeader.ProtocolREF
+                    CompositeHeader.Output IOType.Sample
+                ]
+            let createRow (source : string) (protocol : string) (sample : string) =
+                ResizeArray [
+                    CompositeCell.createFreeText source
+                    CompositeCell.createFreeText protocol
+                    CompositeCell.createFreeText sample
+                ]
+            let mySheet = ArcTable.createFromRows("my-sheet", headers, ResizeArray [createRow "source1" "My protocol" "sample1"])
+            let mySheetTwoRows =
+                ArcTable.createFromRows(
+                    "my-sheet-2rows",
+                    headers,
+                    ResizeArray [
+                        createRow "source5" "My protocol" "sample5"
+                        createRow "source6" "My protocol" "sample6"
+                    ]
+                )
+            let mySheetUnderscore = ArcTable.createFromRows("my-sheet_1", headers, ResizeArray [createRow "source7" "My protocol" "sample7"])
+            let twoRows =
+                ArcTable.createFromRows(
+                    "two-rows",
+                    headers,
+                    ResizeArray [
+                        createRow "source2" "Other protocol" "sample2"
+                        createRow "source3" "Other protocol" "sample3"
+                    ]
+                )
+            let step2 =
+                ArcTable.createFromRows(
+                    "step_2",
+                    ResizeArray [CompositeHeader.Input IOType.Source; CompositeHeader.Output IOType.Sample],
+                    ResizeArray [ResizeArray [CompositeCell.createFreeText "source4"; CompositeCell.createFreeText "sample4"]]
+                )
+            let tables = ArcTables(ResizeArray [mySheet; mySheetTwoRows; mySheetUnderscore; twoRows; step2])
+            let processes = tables.GetProcesses()
+            let resultTables = ArcTables.fromProcesses processes
+            let names = resultTables.Tables |> Seq.map (fun t -> t.Name) |> List.ofSeq
+            let rowCounts = resultTables.Tables |> Seq.map (fun t -> t.RowCount) |> List.ofSeq
+            Expect.equal names ["my-sheet"; "my-sheet-2rows"; "my-sheet_1"; "two-rows"; "step_2"] "Table names should survive the round trip"
+            Expect.equal rowCounts [1; 2; 1; 2; 1] "Row counts should survive the round trip"
         )
     ]
 

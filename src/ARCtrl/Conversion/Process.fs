@@ -308,10 +308,7 @@ type ProcessConversion =
                     ResizeArray []
         fun (table : ArcTable) i ->
 
-            let rowCount = table.RowCount
-            let pn =
-                if rowCount = 1 then processNameRoot
-                else ProcessConversion.composeProcessName processNameRoot i
+            let pn = ProcessConversion.composeProcessName processNameRoot i
 
             let paramvalues = parameterValueGetters |> List.map (fun f -> f table i) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
             //let parameters = paramvalues |> Option.map (List.map (fun pv -> pv.Category.Value))

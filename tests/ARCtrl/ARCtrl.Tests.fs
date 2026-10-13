@@ -2390,6 +2390,45 @@ let tests_RemoveStudy =
         })
     ]
 
+let private createSingleRowTableNameTables () =
+    let headers =
+        ResizeArray [
+            CompositeHeader.Input IOType.Source
+            CompositeHeader.ProtocolREF
+            CompositeHeader.Output IOType.Sample
+        ]
+    let createRow (source : string) (protocol : string) (sample : string) =
+        ResizeArray [
+            CompositeCell.createFreeText source
+            CompositeCell.createFreeText protocol
+            CompositeCell.createFreeText sample
+        ]
+    ResizeArray [
+        ArcTable.createFromRows("my-sheet", headers, ResizeArray [createRow "source1" "My protocol" "sample1"])
+        ArcTable.createFromRows(
+            "my-sheet-2rows",
+            headers,
+            ResizeArray [
+                createRow "source5" "My protocol" "sample5"
+                createRow "source6" "My protocol" "sample6"
+            ]
+        )
+        ArcTable.createFromRows("my-sheet_1", headers, ResizeArray [createRow "source7" "My protocol" "sample7"])
+        ArcTable.createFromRows(
+            "two-rows",
+            headers,
+            ResizeArray [
+                createRow "source2" "Other protocol" "sample2"
+                createRow "source3" "Other protocol" "sample3"
+            ]
+        )
+        ArcTable.createFromRows(
+            "step_2",
+            ResizeArray [CompositeHeader.Input IOType.Source; CompositeHeader.Output IOType.Sample],
+            ResizeArray [ResizeArray [CompositeCell.createFreeText "source4"; CompositeCell.createFreeText "sample4"]]
+        )
+    ]
+
 let tests_ROCrate =
     testList "RO-Crate" [
         testList "Roundtrip" [
@@ -2418,6 +2457,15 @@ let tests_ROCrate =
                 Expect.equal arcActual.Title arcExpected.Title "Title should be equal"
                 Expect.equal arcActual.Description arcExpected.Description "Description should be equal"
                 Expect.isNone arcActual.License "License should be None"
+            testCase "SingleRowTableNames" <| fun _ ->
+                let assay = ArcAssay("my-assay", tables = createSingleRowTableNameTables ())
+                let arcExpected = ARC("MyARC", title = "MyTitle", assays = ResizeArray [assay])
+                let json = arcExpected.ToROCrateJsonString()
+                let arcActual = ARC.fromROCrateJsonString(json)
+                Expect.equal arcActual.AssayCount 1 "ARC should contain 1 assay"
+                let actualAssay = arcActual.GetAssay("my-assay")
+                let names = actualAssay.Tables |> Seq.map (fun t -> t.Name) |> List.ofSeq
+                Expect.equal names ["my-sheet"; "my-sheet-2rows"; "my-sheet_1"; "two-rows"; "step_2"] "Table names should survive the round trip"
         ]
                 
         testCase "CanRead_Deprecated" <| fun _ ->
