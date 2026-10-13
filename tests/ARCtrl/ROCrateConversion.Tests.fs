@@ -1336,6 +1336,18 @@ let private tests_ArcTablesProcessSeq =
             let names = resultTables.Tables |> Seq.map (fun t -> t.Name) |> List.ofSeq
             Expect.equal names [""; " x"; "x"; "step_2"; "step"] "Table names should survive the round trip"
         )
+        testCase "OverflowingNumberSuffixKeepsFullName" (fun () ->
+            let p =
+                LDLabProcess.create(
+                    name = "run_20240101120000",
+                    objects = ResizeArray [LDSample.createSource(name = "MySource")],
+                    results = ResizeArray [LDSample.createSample(name = "MySample")]
+                )
+            let resultTables = ArcTables.fromProcesses [p]
+            Expect.equal resultTables.TableCount 1 "Should have 1 table"
+            Expect.equal resultTables.Tables.[0].Name "run_20240101120000" "Table should keep the full process name"
+            Expect.equal resultTables.Tables.[0].RowCount 1 "Table should have 1 row"
+        )
     ]
 
 

@@ -31,7 +31,11 @@ type ProcessConversion =
         // Match the untrimmed name, so leading or trailing spaces stay part of the table name.
         let m = System.Text.RegularExpressions.Regex.Match(name, pattern)
         if m.Success then
-            (m.Groups.Item "name").Value, Some ((m.Groups.Item "num").Value |> int)
+            let nameGroup = (m.Groups.Item "name").Value
+            let numGroup = (m.Groups.Item "num").Value
+            match System.Int32.TryParse numGroup with
+            | true, n -> nameGroup, Some n
+            | _ -> name, None
         else
             name, None
     // Explanation of the Getter logic:
