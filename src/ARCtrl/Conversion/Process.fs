@@ -27,12 +27,12 @@ type ProcessConversion =
         $"{processNameRoot}_{i}"
 
     static member decomposeProcessName (name : string) =
-        let pattern = """(?<name>.+)_(?<num>\d+)"""
-
-        match name with 
-        | Regex pattern r ->
-            (r.Groups.Item "name").Value, Some ((r.Groups.Item "num").Value |> int)
-        | _ ->
+        let pattern = ARCtrl.Helper.Regex.Pattern.handleGroupPatterns """^(?<name>.*)_(?<num>\d+)$"""
+        // Match the untrimmed name, so leading or trailing spaces stay part of the table name.
+        let m = System.Text.RegularExpressions.Regex.Match(name, pattern)
+        if m.Success then
+            (m.Groups.Item "name").Value, Some ((m.Groups.Item "num").Value |> int)
+        else
             name, None
     // Explanation of the Getter logic:
     // The getter logic is used to treat every value of the table only once
@@ -352,11 +352,11 @@ type ProcessConversion =
 
     /// Groups processes by their name, or by the name of the protocol they execute
     ///
-    /// Process names are taken from the Worksheet name and numbered: SheetName_1, SheetName_2, etc.
-    /// 
-    /// This function decomposes this name into a root name and a number, and groups processes by root name.
-    /// A name without a number is the group key as it is, unless it is empty or whitespace.
-    /// Processes without such a name fall back to the name of the protocol they execute.
+    /// Process names are taken from the Worksheet name and numbered from 0: SheetName_0, SheetName_1, etc. Every row has a suffix.
+    ///
+    /// This function decomposes the name into a root name and a number, and groups processes by root name.
+    /// A name without a number is the group key as it is, if it is not blank.
+    /// Otherwise the key is the protocol name, then a blank name, then the protocol @id, then a new missing identifier.
     static member groupProcesses (processes : LDNode list, ?graph : LDGraph, ?context : LDContext) = 
         processes
         |> List.groupBy (fun p ->
@@ -372,6 +372,8 @@ type ProcessConversion =
                 name
             | _, Some protocol when LDLabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.isSome ->
                 LDLabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.defaultValue ""
+            | Some name, _ ->
+                name
             | _, Some protocol  ->
                 protocol.Id
             | _ ->
