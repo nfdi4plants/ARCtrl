@@ -109,7 +109,7 @@ module TableTypeExtensions =
             if this.RowCount = 0 then
                 //let input = ResizeArray [Sample.createSample(name = $"{this.Name}_Input", additionalProperties = ResizeArray [])]
                 //let output = ResizeArray [Sample.createSample(name = $"{this.Name}_Output", additionalProperties = ResizeArray [])]
-                LDLabProcess.create(name = this.Name(*, objects = input, results = output*))
+                LDLabProcess.create(name = ProcessConversion.composeProcessName this.Name 0(*, objects = input, results = output*))
                 |> List.singleton
             else
                 let getter = ProcessConversion.getProcessGetter assayName studyName this.Name this.Headers fs        
@@ -141,9 +141,10 @@ module TableTypeExtensions =
 
         /// Create a collection of tables from a list of processes.
         ///
-        /// For this, the processes are grouped by nameroot ("nameroot_1", "nameroot_2" ...) or exectued protocol if no name exists
+        /// For this, the processes are grouped by nameroot ("nameroot_0", "nameroot_1" ...).
+        /// A process name without a number that fits in an Int32 is the group key as it is. Processes without a usable name fall back to their protocol. ProcessConversion.groupProcesses has the full order.
         ///
-        /// Then each group is converted to a table with this nameroot as sheetname
+        /// Then each group is converted to a table with this group key as sheetname
         static member fromProcesses (ps : LDNode list, ?graph : LDGraph, ?context : LDContext) : ArcTables = 
             ProcessConversion.groupProcesses(ps, ?graph = graph, ?context = context)
             |> List.map (fun (name,ps) ->

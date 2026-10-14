@@ -656,7 +656,7 @@ let private tests_ArcTableProcess =
             Expect.equal outputs.Count 1 "Process should have 1 output"
             Expect.equal outputs.[0] expectedOutput "Output value does not match"
             let name = LDLabProcess.getNameAsString p
-            Expect.equal name tableName1 "Process name should match table name"
+            Expect.equal name $"{tableName1}_0" "Process name should be table name with row index"
         )
         testCase "SingleRowSingleParam GetAndFromProcesses" (fun () ->
             let t = singleRowSingleParam.Copy()
@@ -679,7 +679,7 @@ let private tests_ArcTableProcess =
             Expect.equal outputs.Count 1 "Process should have 1 output"
             Expect.equal outputs.[0] expectedOutput "Output value does not match"
             let name = LDLabProcess.getNameAsString p
-            Expect.equal name tableName1 "Process name should match table name"
+            Expect.equal name $"{tableName1}_0" "Process name should be table name with row index"
         )
 
         testCase "SingleRowMixedValues GetProcesses" (fun () ->          
@@ -787,7 +787,7 @@ let private tests_ArcTableProcess =
             let protName = Expect.wantSome (LDLabProtocol.tryGetNameAsString(prot)) "Protocol should have name"
             Expect.equal protName "MyProtocol" "Protocol name should match"
             let pName = Expect.wantSome (LDLabProcess.tryGetNameAsString(p)) "Process should have name"
-            Expect.equal pName tableName1 "Process name should match table name"
+            Expect.equal pName $"{tableName1}_0" "Process name should be table name with row index"
         )
 
         testCase "SingleRowWithProtocolREF GetAndFromProcesses" (fun () ->
@@ -803,7 +803,7 @@ let private tests_ArcTableProcess =
             Expect.equal processes.Length 1 "Should have 1 process"
             let p = processes.[0]
             let name = LDLabProcess.getNameAsString p
-            Expect.equal name tableName1 "Process name should match table name"
+            Expect.equal name $"{tableName1}_0" "Process name should be table name with row index"
             Expect.isEmpty (LDLabProcess.getObjects(p)) "Process should have no inputs"
             Expect.isEmpty (LDLabProcess.getResults(p)) "Process should have no outputs"
             Expect.isEmpty (LDLabProcess.getParameterValues(p)) "Process should have no parameter values"
@@ -1130,7 +1130,7 @@ let private tests_ArcTablesProcessSeq =
             Expect.equal processes.Length 1 "Should have 1 process"
             let p = processes.[0]
             let name = LDLabProcess.getNameAsString p
-            Expect.equal name tableName1 "Process name should match table name"
+            Expect.equal name $"{tableName1}_0" "Process name should be table name with row index"
             Expect.isEmpty (LDLabProcess.getObjects(p)) "Process should have no inputs"
             Expect.isEmpty (LDLabProcess.getResults(p)) "Process should have no outputs"
             Expect.isEmpty (LDLabProcess.getParameterValues(p)) "Process should have no parameter values"
@@ -1209,6 +1209,162 @@ let private tests_ArcTablesProcessSeq =
             Expect.equal resultTables.Tables.[1].Name "Test_Tisch" "Table 2 name should match"
             Expect.arcTableEqual resultTables.Tables.[0] t1 "Table 1 should be equal"
             Expect.arcTableEqual resultTables.Tables.[1] t2 "Table 2 should be equal"
+        )
+        testCase "SingleProcessNameBeatsProtocolName" (fun () ->
+            let protocol = LDLabProtocol.create(id = LDLabProtocol.genId(name = "My protocol"), name = "My protocol")
+            let p =
+                LDLabProcess.create(
+                    name = "my-sheet",
+                    objects = ResizeArray [LDSample.createSource(name = "MySource")],
+                    results = ResizeArray [LDSample.createSample(name = "MySample")],
+                    executesLabProtocol = protocol
+                )
+            let resultTables = ArcTables.fromProcesses [p]
+            Expect.equal resultTables.TableCount 1 "Should have 1 table"
+            Expect.equal resultTables.Tables.[0].Name "my-sheet" "Table should be named after the process"
+            Expect.equal resultTables.Tables.[0].RowCount 1 "Table should have 1 row"
+        )
+        testCase "EmptyProcessNameFallsBackToProtocolName" (fun () ->
+            let protocol = LDLabProtocol.create(id = LDLabProtocol.genId(name = "My protocol"), name = "My protocol")
+            let createProcess (name : string) (id : string) (source : string) (sample : string) =
+                LDLabProcess.create(
+                    name = name,
+                    id = id,
+                    objects = ResizeArray [LDSample.createSource(name = source)],
+                    results = ResizeArray [LDSample.createSample(name = sample)],
+                    executesLabProtocol = protocol
+                )
+            let p1 = createProcess "" "#Process_Empty1" "Source1" "Sample1"
+            let p2 = createProcess "  " "#Process_Empty2" "Source2" "Sample2"
+            let resultTables = ArcTables.fromProcesses [p1; p2]
+            Expect.equal resultTables.TableCount 1 "Should have 1 table"
+            Expect.equal resultTables.Tables.[0].Name "My protocol" "Table should be named after the protocol"
+            Expect.equal resultTables.Tables.[0].RowCount 2 "Table should have 2 rows"
+        )
+        testCase "UnnamedProcessFallsBackToProtocolName" (fun () ->
+            let protocol = LDLabProtocol.create(id = LDLabProtocol.genId(name = "My protocol"), name = "My protocol")
+            let p =
+                LDLabProcess.create(
+                    name = "temporary",
+                    objects = ResizeArray [LDSample.createSource(name = "MySource")],
+                    results = ResizeArray [LDSample.createSample(name = "MySample")],
+                    executesLabProtocol = protocol
+                )
+            p.RemoveProperty(LDLabProcess.name) |> ignore
+            Expect.isNone (LDLabProcess.tryGetNameAsString p) "Process should have no name"
+            let resultTables = ArcTables.fromProcesses [p]
+            Expect.equal resultTables.TableCount 1 "Should have 1 table"
+            Expect.equal resultTables.Tables.[0].Name "My protocol" "Table should be named after the protocol"
+            Expect.equal resultTables.Tables.[0].RowCount 1 "Table should have 1 row"
+        )
+        testCase "SingleRowTableNamesRoundTrip" (fun () ->
+            let headers =
+                ResizeArray [
+                    CompositeHeader.Input IOType.Source
+                    CompositeHeader.ProtocolREF
+                    CompositeHeader.Output IOType.Sample
+                ]
+            let createRow (source : string) (protocol : string) (sample : string) =
+                ResizeArray [
+                    CompositeCell.createFreeText source
+                    CompositeCell.createFreeText protocol
+                    CompositeCell.createFreeText sample
+                ]
+            let mySheet = ArcTable.createFromRows("my-sheet", headers, ResizeArray [createRow "source1" "My protocol" "sample1"])
+            let mySheetTwoRows =
+                ArcTable.createFromRows(
+                    "my-sheet-2rows",
+                    headers,
+                    ResizeArray [
+                        createRow "source5" "My protocol" "sample5"
+                        createRow "source6" "My protocol" "sample6"
+                    ]
+                )
+            let mySheetUnderscore = ArcTable.createFromRows("my-sheet_1", headers, ResizeArray [createRow "source7" "My protocol" "sample7"])
+            let twoRows =
+                ArcTable.createFromRows(
+                    "two-rows",
+                    headers,
+                    ResizeArray [
+                        createRow "source2" "Other protocol" "sample2"
+                        createRow "source3" "Other protocol" "sample3"
+                    ]
+                )
+            let step2 =
+                ArcTable.createFromRows(
+                    "step_2",
+                    ResizeArray [CompositeHeader.Input IOType.Source; CompositeHeader.Output IOType.Sample],
+                    ResizeArray [ResizeArray [CompositeCell.createFreeText "source4"; CompositeCell.createFreeText "sample4"]]
+                )
+            let tables = ArcTables(ResizeArray [mySheet; mySheetTwoRows; mySheetUnderscore; twoRows; step2])
+            let processes = tables.GetProcesses()
+            let resultTables = ArcTables.fromProcesses processes
+            let names = resultTables.Tables |> Seq.map (fun t -> t.Name) |> List.ofSeq
+            let rowCounts = resultTables.Tables |> Seq.map (fun t -> t.RowCount) |> List.ofSeq
+            Expect.equal names ["my-sheet"; "my-sheet-2rows"; "my-sheet_1"; "two-rows"; "step_2"] "Table names should survive the round trip"
+            Expect.equal rowCounts [1; 2; 1; 2; 1] "Row counts should survive the round trip"
+        )
+        testCase "BlankProcessNamesWithoutProtocolStayTogether" (fun () ->
+            let createProcess (id : string) (source : string) (sample : string) =
+                LDLabProcess.create(
+                    name = "",
+                    id = id,
+                    objects = ResizeArray [LDSample.createSource(name = source)],
+                    results = ResizeArray [LDSample.createSample(name = sample)]
+                )
+            let p1 = createProcess "#Process_Blank1" "Source1" "Sample1"
+            let p2 = createProcess "#Process_Blank2" "Source2" "Sample2"
+            let resultTables = ArcTables.fromProcesses [p1; p2]
+            Expect.equal resultTables.TableCount 1 "Should have 1 table"
+            Expect.equal resultTables.Tables.[0].Name "" "Table should keep the blank name"
+            Expect.equal resultTables.Tables.[0].RowCount 2 "Table should have 2 rows"
+        )
+        testCase "UnusualTableNamesRoundTrip" (fun () ->
+            let createTable (name : string) (source : string) (sample : string) =
+                let t = ArcTable.init name
+                t.AddColumn(CompositeHeader.Input IOType.Source, ResizeArray [CompositeCell.createFreeText source])
+                t.AddColumn(CompositeHeader.Output IOType.Sample, ResizeArray [CompositeCell.createFreeText sample])
+                t
+            let emptyName = createTable "" "source1" "sample1"
+            let leadingSpace = createTable " x" "source2" "sample2"
+            let plainName = createTable "x" "source3" "sample3"
+            let zeroRows = ArcTable.init "step_2"
+            let step = createTable "step" "source4" "sample4"
+            let tables = ArcTables(ResizeArray [emptyName; leadingSpace; plainName; zeroRows; step])
+            let processes = tables.GetProcesses()
+            let resultTables = ArcTables.fromProcesses processes
+            let names = resultTables.Tables |> Seq.map (fun t -> t.Name) |> List.ofSeq
+            Expect.equal names [""; " x"; "x"; "step_2"; "step"] "Table names should survive the round trip"
+        )
+        testCase "OverflowingNumberSuffixKeepsFullName" (fun () ->
+            let p =
+                LDLabProcess.create(
+                    name = "run_20240101120000",
+                    objects = ResizeArray [LDSample.createSource(name = "MySource")],
+                    results = ResizeArray [LDSample.createSample(name = "MySample")]
+                )
+            let resultTables = ArcTables.fromProcesses [p]
+            Expect.equal resultTables.TableCount 1 "Should have 1 table"
+            Expect.equal resultTables.Tables.[0].Name "run_20240101120000" "Table should keep the full process name"
+            Expect.equal resultTables.Tables.[0].RowCount 1 "Table should have 1 row"
+        )
+        testCase "NumberSuffixInt32Boundary" (fun () ->
+            Expect.equal (ProcessConversion.decomposeProcessName "x_2147483647") ("x", Some 2147483647) "Int32.MaxValue should be split off"
+            Expect.equal (ProcessConversion.decomposeProcessName "x_2147483648") ("x_2147483648", None) "A number above Int32.MaxValue should keep the full name"
+        )
+        testCase "OverflowingNumberSuffixDoesNotMergeWithRoot" (fun () ->
+            let createProcess (name : string) (id : string) (source : string) (sample : string) =
+                LDLabProcess.create(
+                    name = name,
+                    id = id,
+                    objects = ResizeArray [LDSample.createSource(name = source)],
+                    results = ResizeArray [LDSample.createSample(name = sample)]
+                )
+            let p1 = createProcess "run_20240101120000" "#Process_Run1" "Source1" "Sample1"
+            let p2 = createProcess "run_0" "#Process_Run2" "Source2" "Sample2"
+            let resultTables = ArcTables.fromProcesses [p1; p2]
+            let names = resultTables.Tables |> Seq.map (fun t -> t.Name) |> List.ofSeq
+            Expect.equal names ["run_20240101120000"; "run"] "Overflowing suffix and row index should give two tables"
         )
     ]
 

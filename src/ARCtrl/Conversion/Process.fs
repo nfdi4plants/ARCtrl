@@ -27,12 +27,16 @@ type ProcessConversion =
         $"{processNameRoot}_{i}"
 
     static member decomposeProcessName (name : string) =
-        let pattern = """(?<name>.+)_(?<num>\d+)"""
-
-        match name with 
-        | Regex pattern r ->
-            (r.Groups.Item "name").Value, Some ((r.Groups.Item "num").Value |> int)
-        | _ ->
+        let pattern = ARCtrl.Helper.Regex.Pattern.handleGroupPatterns """^(?<name>.*)_(?<num>\d+)$"""
+        // Match the untrimmed name, so leading or trailing spaces stay part of the table name.
+        let m = System.Text.RegularExpressions.Regex.Match(name, pattern)
+        if m.Success then
+            let nameGroup = (m.Groups.Item "name").Value
+            let numGroup = (m.Groups.Item "num").Value
+            match System.Int32.TryParse numGroup with
+            | true, n -> nameGroup, Some n
+            | _ -> name, None
+        else
             name, None
     // Explanation of the Getter logic:
     // The getter logic is used to treat every value of the table only once
@@ -308,10 +312,7 @@ type ProcessConversion =
                     ResizeArray []
         fun (table : ArcTable) i ->
 
-            let rowCount = table.RowCount
-            let pn =
-                if rowCount = 1 then processNameRoot
-                else ProcessConversion.composeProcessName processNameRoot i
+            let pn = ProcessConversion.composeProcessName processNameRoot i
 
             let paramvalues = parameterValueGetters |> List.map (fun f -> f table i) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
             //let parameters = paramvalues |> Option.map (List.map (fun pv -> pv.Category.Value))
@@ -355,22 +356,26 @@ type ProcessConversion =
 
     /// Groups processes by their name, or by the name of the protocol they execute
     ///
-    /// Process names are taken from the Worksheet name and numbered: SheetName_1, SheetName_2, etc.
-    /// 
-    /// This function decomposes this name into a root name and a number, and groups processes by root name.
+    /// Process names are taken from the Worksheet name and numbered from 0: SheetName_0, SheetName_1, etc. Every row has a suffix.
+    ///
+    /// This function decomposes the name into a root name and a number, and groups processes by root name.
+    /// A name without a number that fits in an Int32 is the group key as it is, if it is not blank.
+    /// Otherwise the key is the protocol name, then a blank name, then the protocol @id, then a new missing identifier.
     static member groupProcesses (processes : LDNode list, ?graph : LDGraph, ?context : LDContext) = 
         processes
         |> List.groupBy (fun p ->
             match LDLabProcess.tryGetNameAsString (p, ?context = context), LDLabProcess.tryGetExecutesLabProtocol(p,?graph = graph, ?context = context) with
             | Some name, _ when ProcessConversion.decomposeProcessName name |> snd |> Option.isSome ->
                 ProcessConversion.decomposeProcessName name |> fst
-            | _, Some protocol when LDLabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.isSome ->
-                LDLabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.defaultValue ""
             // Removed this case in order to fix https://github.com/nfdi4plants/ARCtrl/issues/512
             // The problem is, that through this case table-names with underscores clash, e.g. "Table_MS" and "Table_RNASeq" would be grouped together.
             //| Some name, _ when name.Contains "_" ->
             //    let lastUnderScoreIndex = name.LastIndexOf '_'
             //    name.Remove lastUnderScoreIndex
+            | Some name, _ when not (System.String.IsNullOrWhiteSpace name) ->
+                name
+            | _, Some protocol when LDLabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.isSome ->
+                LDLabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.defaultValue ""
             | Some name, _ ->
                 name
             | _, Some protocol  ->
