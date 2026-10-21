@@ -1975,6 +1975,55 @@ let tests_FormalParameter =
 
 let tests_AdditionalTypeDecoding =
     testList "AdditionalTypeDecoding" [
+        testList "EveryTypeRoundTrip" [
+            let cases : (string * CWLType) list =
+                [ "File", CWLType.file()
+                  "Directory", CWLType.directory()
+                  "String", CWLType.String
+                  "Int", CWLType.Int
+                  "Long", CWLType.Long
+                  "Float", CWLType.Float
+                  "Double", CWLType.Double
+                  "Boolean", CWLType.Boolean
+                  "Null", CWLType.Null
+                  "Stdout", CWLType.Stdout
+                  "FileArray", Helper.CWL.array (CWLType.file())
+                  "NestedStringArray", Helper.CWL.array (Helper.CWL.array CWLType.String)
+                  "OptionalString", Helper.CWL.optional CWLType.String
+                  "OptionalDirectoryArray", Helper.CWL.optional (Helper.CWL.array (CWLType.directory()))
+                  "Union", CWLType.Union (ResizeArray [CWLType.String; CWLType.Int])
+                  "UnionWithNull", CWLType.Union (ResizeArray [CWLType.Null; CWLType.String; CWLType.Int])
+                  "Record", Helper.CWL.record [Helper.CWL.field "name" CWLType.String]
+                  "RecordWithNullField", Helper.CWL.record [Helper.CWL.field "nothing" CWLType.Null]
+                  "Enum", Helper.CWL.enum ["a"; "b"]
+                  "RecordArray", Helper.CWL.array (Helper.CWL.record [Helper.CWL.field "value" CWLType.String]) ]
+            for (name, original) in cases do
+                testCase name (fun () ->
+                    let encoded = WorkflowConversion.composeAdditionalType original
+                    let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                    Expect.equal decoded original (sprintf "%s should survive compose and decompose, written as %s" name encoded)
+                )
+        ]
+        testList "ScalarForms" [
+            testCase "NullIsWrittenQuoted" (fun () ->
+                Expect.equal (WorkflowConversion.composeAdditionalType CWLType.Null) "\"null\"" "The null type is quoted so that it is no YAML null."
+            )
+            testCase "DoubleQuoted" (fun () ->
+                Expect.equal (WorkflowConversion.decomposeAdditionalType "\"File\"") (CWLType.file()) "A double-quoted type name is the type."
+            )
+            testCase "SingleQuotedOptional" (fun () ->
+                Expect.equal (WorkflowConversion.decomposeAdditionalType "'string?'") (Helper.CWL.optional CWLType.String) "A single-quoted optional type is the type."
+            )
+            testCase "PlainNull" (fun () ->
+                Expect.equal (WorkflowConversion.decomposeAdditionalType "null") CWLType.Null "The plain text null is the null type."
+            )
+            testCase "TrailingComment" (fun () ->
+                Expect.equal (WorkflowConversion.decomposeAdditionalType "File[]? # an optional list") (Helper.CWL.optional (Helper.CWL.array (CWLType.file()))) "A comment behind the type is no part of it."
+            )
+            testCase "MissingValueFails" (fun () ->
+                Expect.throws (fun () -> WorkflowConversion.decomposeAdditionalType "" |> ignore) "No text is no type."
+            )
+        ]
         testList "SimpleTypes_FromYAML" [
             testCase "String" (fun () ->
                 let encoded = "string"

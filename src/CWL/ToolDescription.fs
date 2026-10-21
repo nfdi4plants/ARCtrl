@@ -2,14 +2,13 @@ namespace ARCtrl.CWL
 
 open DynamicObj
 open Fable.Core
-open YAMLicious.YAMLiciousTypes
 
 [<AttachMembers>]
 type CWLToolDescription (
         outputs: ResizeArray<CWLOutput>,
         ?cwlVersion: string,
         ?baseCommand: ResizeArray<string>,
-        ?arguments: YAMLElement,
+        ?arguments: RawYaml,
         ?stdin: string,
         ?stderr: string,
         ?stdout: string,
@@ -31,7 +30,7 @@ type CWLToolDescription (
     let mutable _cwlVersion: string = cwlVersion |> Option.defaultValue "v1.2"
     let mutable _outputs: ResizeArray<CWLOutput> = outputs
     let mutable _baseCommand: ResizeArray<string> option = baseCommand
-    let mutable _arguments: YAMLElement option = arguments
+    let mutable _arguments: RawYaml option = arguments
     let mutable _stdin: string option = stdin
     let mutable _stderr: string option = stderr
     let mutable _stdout: string option = stdout

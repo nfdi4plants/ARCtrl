@@ -7,7 +7,7 @@ open TestingUtils
 
 let decodeOutput =
     TestObjects.CWL.Outputs.outputsFileContent
-    |> Decode.read
+    |> Decode.readYaml
     |> Decode.outputsDecoder
 
 let testOutput =
@@ -150,7 +150,7 @@ let testOutputMutationApi =
         testCase "spec output fields decode as typed members regardless of order" <| fun _ ->
             let output =
                 TestObjects.CWL.Outputs.specOutputFieldsDecodeFileContent
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.outputsDecoder
                 |> fun outputs -> outputs.[0]
 

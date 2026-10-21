@@ -2,7 +2,6 @@ namespace ARCtrl.CWL
 
 open DynamicObj
 open Fable.Core
-open YAMLicious.YAMLiciousTypes
 
 [<AttachMembers>]
 type OutputBinding (?glob: string, ?loadContents: bool, ?loadListing: LoadListingEnum, ?outputEval: string) =
@@ -65,7 +64,7 @@ type CWLOutput (
     ?outputBinding: OutputBinding,
     ?outputSource: OutputSource,
     ?label: string,
-    ?secondaryFiles: YAMLElement,
+    ?secondaryFiles: RawYaml,
     ?streamable: bool,
     ?doc: string,
     ?format: string

@@ -2,7 +2,6 @@ namespace ARCtrl.CWL
 
 open DynamicObj
 open Fable.Core
-open YAMLicious.YAMLiciousTypes
 
 [<AttachMembers>]
 type DockerRequirement (
@@ -406,7 +405,7 @@ type InlineJavascriptRequirementValue (?expressionLib: ResizeArray<string>) =
         CWLKnownFieldNames.inlineJavascriptRequirementValue
 
 [<AttachMembers>]
-type HintUnknownValue (class_: string option, raw: YAMLElement) =
+type HintUnknownValue (class_: string option, raw: RawYaml) =
     inherit DynamicObj ()
 
     let mutable _class = class_

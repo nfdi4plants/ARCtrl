@@ -7,7 +7,7 @@ open TestingUtils
 
 let decodeYAMLParameterFile =
     TestObjects.CWL.YAMLParameterFile.yamlParameterFileContent
-    |> Decode.read
+    |> Decode.readYaml
     |> DecodeParameters.cwlparameterReferenceArrayDecoder
 
 let testYAMLParameterFile =
@@ -130,6 +130,128 @@ let testYAMLParameterFile =
             Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:file note" reference) (Some "keep file note") "Unknown parameter object fields should be preserved on the parameter reference."
             Expect.isNone (DynObj.tryGetTypedPropertyValue<string> "class" reference) "Known class field should not be overflow."
             Expect.isNone (DynObj.tryGetTypedPropertyValue<string> "path" reference) "Known path field should not be overflow."
+        testCase "quoted scalars decode as strings and plain scalars keep their type" <| fun _ ->
+            let yaml = """quotedBool: "true"
+plainBool: true
+quotedInt: '12'
+plainInt: 12
+quotedNull: "null"
+plainNull: null
+quotedFloat: "1.5"
+plainFloat: 1.5
+plainInfinity: .inf
+capitalBool: True
+upperBool: FALSE
+tilde: ~
+capitalNull: Null
+nanWord: NaN
+infinityWord: Infinity
+"""
+            let decoded = DecodeParameters.decodeYAMLParameterFile yaml
+            let valueOf key = (decoded |> Seq.find (fun r -> r.Key = key)).Value
+            Expect.equal (valueOf "quotedBool") (Some (CWLParameterValue.String "true")) "A quoted true is a string."
+            Expect.equal (valueOf "plainBool") (Some (CWLParameterValue.Boolean true)) "A plain true is a boolean."
+            Expect.equal (valueOf "quotedInt") (Some (CWLParameterValue.String "12")) "A quoted number is a string."
+            Expect.equal (valueOf "plainInt") (Some (CWLParameterValue.Int 12L)) "A plain number is an int."
+            Expect.equal (valueOf "quotedNull") (Some (CWLParameterValue.String "null")) "A quoted null is a string."
+            Expect.equal (valueOf "plainNull") (Some CWLParameterValue.Null) "A plain null is null."
+            Expect.equal (valueOf "quotedFloat") (Some (CWLParameterValue.String "1.5")) "A quoted float is a string."
+            Expect.equal (valueOf "plainFloat") (Some (CWLParameterValue.Float 1.5)) "A plain float is a float."
+            Expect.equal (valueOf "plainInfinity") (Some (CWLParameterValue.Float System.Double.PositiveInfinity)) "The core schema spells infinity .inf."
+            Expect.equal (valueOf "capitalBool") (Some (CWLParameterValue.Boolean true)) "The core schema reads True as a boolean."
+            Expect.equal (valueOf "upperBool") (Some (CWLParameterValue.Boolean false)) "The core schema reads FALSE as a boolean."
+            Expect.equal (valueOf "tilde") (Some CWLParameterValue.Null) "The core schema reads ~ as null."
+            Expect.equal (valueOf "capitalNull") (Some CWLParameterValue.Null) "The core schema reads Null as null."
+            Expect.equal (valueOf "nanWord") (Some (CWLParameterValue.String "NaN")) "YAML 1.2 reads NaN as a string."
+            Expect.equal (valueOf "infinityWord") (Some (CWLParameterValue.String "Infinity")) "YAML 1.2 reads Infinity as a string."
+        testCase "strings that look like another type roundtrip as strings" <| fun _ ->
+            let strings = [ "true"; "False"; "null"; "~"; "12"; "-3"; "1.5"; "1e3"; "0x1F"; ".inf"; "plain text" ]
+            let references =
+                strings
+                |> List.map (fun s -> CWLParameterReference(key = "k" + s, value = CWLParameterValue.String s))
+                |> ResizeArray
+            let encoded = Encode.encodeYAMLParameterFile references
+            let decoded = DecodeParameters.decodeYAMLParameterFile encoded
+            Expect.sequenceEqual decoded references "String parameter values must not turn into bool, number or null."
+            Expect.stringContains encoded ": \"true\"" "The string true should be written with quotes."
+            Expect.stringContains encoded ": plain text" "A string that cannot be mistaken for another type stays plain."
+        testCase "plain spellings of null and booleans keep their meaning through a roundtrip" <| fun _ ->
+            let yaml = """capitalBool: True
+upperBool: FALSE
+tilde: ~
+capitalNull: Null
+wholeFloat: 2.0
+infinity: .inf
+"""
+            let decoded = DecodeParameters.decodeYAMLParameterFile yaml
+            let reloaded = DecodeParameters.decodeYAMLParameterFile (Encode.encodeYAMLParameterFile decoded)
+            Expect.sequenceEqual reloaded decoded "The values should decode to the same types after a roundtrip."
+            let encoded = Encode.encodeYAMLParameterFile decoded
+            Expect.isFalse (encoded.Contains("\"")) "None of these values is a string, so nothing may be quoted."
+            Expect.stringContains encoded "wholeFloat: 2.0" "A whole number written as a float must not turn into an int."
+            Expect.stringContains encoded "infinity: .inf" "The core schema spells infinity .inf, and Infinity would read back as a string."
+        testCase "compact nested sequences decode as arrays of arrays" <| fun _ ->
+            let yaml = """matrix:
+  - - 1
+    - 2
+  - - 3
+next: value
+"""
+            let decoded = DecodeParameters.decodeYAMLParameterFile yaml
+            let valueOf key = (decoded |> Seq.find (fun r -> r.Key = key)).Value
+            let ints xs = CWLParameterValue.Array (ResizeArray (xs |> List.map CWLParameterValue.Int))
+            Expect.equal decoded.Count 2 "The key after the nested sequences is a separate parameter."
+            Expect.equal (valueOf "matrix") (Some (CWLParameterValue.Array (ResizeArray [ ints [ 1L; 2L ]; ints [ 3L ] ]))) "Each inner sequence should be its own array."
+            Expect.equal (valueOf "next") (Some (CWLParameterValue.String "value")) "The following key keeps its value."
+        testCase "a $namespaces block survives a roundtrip" <| fun _ ->
+            let yaml = """isSingle: true
+$namespaces:
+  edam: https://edamontology.org/
+"""
+            let decoded = DecodeParameters.decodeYAMLParameterFile yaml
+            let encoded = Encode.encodeYAMLParameterFile decoded
+            Expect.stringContains encoded "$namespaces:" "The namespaces key should be written."
+            Expect.stringContains encoded "edam: https://edamontology.org/" "The prefix should be written below the key."
+            Expect.sequenceEqual (DecodeParameters.decodeYAMLParameterFile encoded) decoded "The parameter file should decode to the same references."
+        testCase "a key without a value holds null" <| fun _ ->
+            let yaml = """present: 1
+empty:
+nested:
+  inner:
+items:
+  - 1
+  -
+  - x
+"""
+            let decoded = DecodeParameters.decodeYAMLParameterFile yaml
+            let valueOf key = (decoded |> Seq.find (fun r -> r.Key = key)).Value
+            Expect.equal (valueOf "empty") (Some CWLParameterValue.Null) "A key without a value is null, not the text Nil."
+            match valueOf "nested" with
+            | Some (CWLParameterValue.Record fields) ->
+                let inner = Expect.wantExactlyOne fields "The nested mapping has one key."
+                Expect.equal inner.Value CWLParameterValue.Null "The nested key without a value is null too."
+            | other -> failwithf "Expected a record but got %A" other
+            let expectedItems = CWLParameterValue.Array (ResizeArray [ CWLParameterValue.Int 1L; CWLParameterValue.Null; CWLParameterValue.String "x" ])
+            Expect.equal (valueOf "items") (Some expectedItems) "A sequence item without a value is null, not an empty mapping."
+            let encoded = Encode.encodeYAMLParameterFile decoded
+            Expect.isFalse (encoded.Contains("Nil")) "No node name may leak into the output."
+            Expect.isFalse (encoded.Contains("{}")) "The empty item must not turn into an empty mapping."
+            let valuesOf (references: ResizeArray<CWLParameterReference>) = references |> Seq.map (fun r -> r.Key, r.Value) |> Seq.toList
+            Expect.equal (valuesOf (DecodeParameters.decodeYAMLParameterFile encoded)) (valuesOf decoded) "The keys and values should not change."
+        testCase "a comment after a flow sequence does not hide the sequence" <| fun _ ->
+            let yaml = """xs: [a, b] # tail
+files:
+  - class: File
+    path: a.txt
+  # comment after the last item
+"""
+            let decoded = DecodeParameters.decodeYAMLParameterFile yaml
+            let valueOf key = (decoded |> Seq.find (fun r -> r.Key = key)).Value
+            Expect.equal (valueOf "xs") (Some (CWLParameterValue.Array (ResizeArray [ CWLParameterValue.String "a"; CWLParameterValue.String "b" ]))) "The flow sequence should decode as an array."
+            match valueOf "files" with
+            | Some (CWLParameterValue.Array items) ->
+                Expect.equal items.Count 1 "The trailing comment must not add an item."
+            | other -> failwithf "Expected an array of files but got %A" other
     ]
 
 let main = 

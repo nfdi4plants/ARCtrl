@@ -849,7 +849,8 @@ steps:
       outputs:
         out:
           type: File[]?
-      expression: ${ return {"out": inputs.reads ? [inputs.reads] : null}; }
+      expression: |
+        ${ return {"out": inputs.reads ? [inputs.reads] : null}; }
     in:
       reads:
         source: source_reads

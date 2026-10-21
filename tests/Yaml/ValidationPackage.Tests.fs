@@ -1,6 +1,7 @@
 module Tests.ValidationPackage
 
 open TestingUtils
+open YAMLicious
 
 open ARCtrl
 open ARCtrl.ValidationPackages
@@ -36,6 +37,33 @@ let tests_extended = testList "extended" [
             let actual = Decode.fromYamlString ValidationPackage.decoder vp_no_version_yaml_string
             let expected = vp_no_version
             Expect.equal actual expected ""
+    ]
+    testList "decoder (fromYamlString) needs a name" [
+        let decodeError (text: string) =
+            try
+                Decode.fromYamlString ValidationPackage.decoder text |> ignore
+                None
+            with YamlDecodeException error -> Some (DecodeError.pathText error, DecodeError.text error)
+        testCase "name without a value" <| fun _ ->
+            let error = Expect.wantSome (decodeError "name:\nversion: version\n") "A name without a value must fail."
+            Expect.equal (fst error) "name" "The error should name the field."
+        testCase "name null" <| fun _ ->
+            let error = Expect.wantSome (decodeError "name: null\n") "A plain null is no name."
+            Expect.equal (fst error) "name" "The error should name the field."
+        testCase "name tilde" <| fun _ ->
+            let error = Expect.wantSome (decodeError "name: ~\n") "A plain tilde is no name."
+            Expect.equal (fst error) "name" "The error should name the field."
+        testCase "name field absent" <| fun _ ->
+            Expect.isSome (decodeError "version: version\n") "A package without the field name must fail."
+        testCase "quoted empty name stays valid" <| fun _ ->
+            let actual = Decode.fromYamlString ValidationPackage.decoder "name: \"\"\n"
+            Expect.equal actual.Name "" "A quoted empty string is a string, so it is a name."
+        testCase "quoted null name stays valid" <| fun _ ->
+            let actual = Decode.fromYamlString ValidationPackage.decoder "name: \"null\"\n"
+            Expect.equal actual.Name "null" "The quoted text null is a string."
+        testCase "version without a value is no version" <| fun _ ->
+            let actual = Decode.fromYamlString ValidationPackage.decoder "name: name\nversion:\n"
+            Expect.equal actual.Version None "An optional field without a value is missing."
     ]
     testList "roundtrip (fromYamlString >> toYamlString)" [ 
         testCase "name and version" <| fun _ -> 

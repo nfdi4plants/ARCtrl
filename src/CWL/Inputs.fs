@@ -2,7 +2,6 @@ namespace ARCtrl.CWL
 
 open DynamicObj
 open Fable.Core
-open YAMLicious.YAMLiciousTypes
 
 [<AttachMembers>]
 type InputBinding (
@@ -106,13 +105,13 @@ type CWLInput (
     ?inputBinding: InputBinding,
     ?optional: bool,
     ?label: string,
-    ?secondaryFiles: YAMLElement,
+    ?secondaryFiles: RawYaml,
     ?streamable: bool,
     ?doc: string,
     ?format: string,
     ?loadContents: bool,
     ?loadListing: LoadListingEnum,
-    ?defaultValue: YAMLElement
+    ?defaultValue: RawYaml
 ) =
     inherit DynamicObj ()
 

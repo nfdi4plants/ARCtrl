@@ -2,7 +2,6 @@ namespace ARCtrl.CWL
 
 open DynamicObj
 open Fable.Core
-open YAMLicious.YAMLiciousTypes
 
 [<AttachMembers>]
 type LinkMergeMethod =
@@ -62,7 +61,7 @@ type ScatterMethod =
 type StepInput (
     id: string,
     ?source: ResizeArray<string>,
-    ?defaultValue: YAMLElement,
+    ?defaultValue: RawYaml,
     ?valueFrom: string,
     ?linkMerge: LinkMergeMethod,
     ?pickValue: PickValueMethod,
@@ -158,7 +157,7 @@ type StepInput (
     static member create(
         id: string,
         ?source: ResizeArray<string>,
-        ?defaultValue: YAMLElement,
+        ?defaultValue: RawYaml,
         ?valueFrom: string,
         ?linkMerge: LinkMergeMethod,
         ?pickValue: PickValueMethod,

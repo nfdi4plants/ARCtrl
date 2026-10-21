@@ -1,7 +1,6 @@
 namespace ARCtrl.CWL
 
 open YAMLicious
-open YAMLicious.YAMLiciousTypes
 open DynamicObj
 
 module ResizeArray =
@@ -28,7 +27,7 @@ module Decode =
     type WarningSink = ResizeArray<DecodeWarning> option
 
     /// Add a recoverable decode warning only when the caller requested warning collection.
-    let addWarning (warnings: WarningSink) (path: string) (message: string) (raw: YAMLElement option) =
+    let addWarning (warnings: WarningSink) (path: string) (message: string) (raw: YamlNode option) =
         match warnings with
         // Public non-warning APIs pass None, so tolerance paths can share this helper
         // without allocating a collection or changing old call behavior.
@@ -36,63 +35,54 @@ module Decode =
             warningList.Add({
                 Path = path
                 Message = message
-                Raw = raw |> Option.map (sprintf "%A")
+                // The warning shows the skipped entry as the YAML that it was written in.
+                Raw = raw |> Option.map (fun node -> (Writer.writeNode WriterOptions.defaults node).TrimEnd('\n'))
             })
         | None ->
             ()
 
-    /// Strip parser-level comment nodes and sequence placeholders before CWL semantic decoding.
-    let rec removeYamlComments (yamlElement: YAMLElement) : YAMLElement =
-        match yamlElement with
-        | YAMLElement.Object elements ->
-            // Object children can contain comments directly beside mapping nodes.
-            // They should not be visible to CWL field decoders.
-            elements
-            |> List.choose (fun element ->
-                match element with
-                | YAMLElement.Comment _ -> None
-                | other -> Some (removeYamlComments other)
-            )
-            |> YAMLElement.Object
-        | YAMLElement.Sequence elements ->
-            // Sequences need recursive cleanup because comments may appear as child
-            // comments or as empty object placeholders after YAMLicious parsing.
-            elements
-            |> List.choose (fun element ->
-                match removeYamlComments element with
-                | YAMLElement.Comment _ -> None
-                // YAML comments inside sequences can be represented as empty objects.
-                // Remove these placeholders to keep sequence decoders stable.
-                | YAMLElement.Object [] -> None
-                | other -> Some other
-            )
-            |> YAMLElement.Sequence
-        | YAMLElement.Mapping (key, value) ->
-            YAMLElement.Mapping (key, removeYamlComments value)
-        | other ->
-            other
+    /// An alias is an error in a CWL document. YAMLicious keeps aliases symbolic, and a raw value that kept one
+    /// would point at an anchor that the written document no longer holds.
+    let internal failAlias (name: string) (node: YamlNode) : 'T =
+        raise (
+            YamlDecodeException
+                { Message = "The alias *" + name + " is not supported, because CWL documents do not use YAML aliases."
+                  Path = []
+                  Span = node.Span }
+        )
+
+    /// Fail with the first alias in the tree.
+    let rec private rejectAliases (node: YamlNode) : unit =
+        match node.Kind with
+        | YamlNodeKind.Alias name -> failAlias name node
+        | YamlNodeKind.Scalar _ -> ()
+        | YamlNodeKind.Sequence collection ->
+            for item in collection.Items do
+                rejectAliases item.Node
+        | YamlNodeKind.Mapping collection ->
+            for entry in collection.Items do
+                rejectAliases entry.Key
+                rejectAliases entry.Value
+
+    /// Read the root node of a CWL document. The text must hold one document without aliases.
+    let readYaml (yaml: string) : YamlNode =
+        let root = Reader.readRoot yaml
+        rejectAliases root
+        root
 
     /// Determines if an exception represents a recoverable decoding error.
     /// Returns true for schema mismatches; false for system errors that should propagate.
     let isRecoverableDecodingError (ex: exn) : bool =
         match ex with
+        | YamlDecodeException _ -> true
         // Type-based matching for known exception types
         | :? System.Collections.Generic.KeyNotFoundException -> true
         | :? System.ArgumentException -> true
         | :? System.FormatException -> true
         | :? System.InvalidOperationException
             when ex.Message.Contains("decode") -> true
-        // Message-based fallback for library-specific exceptions
-        | _ when ex.Message.Contains("Expected") -> true
-        | _ when ex.Message.Contains("Required") -> true
         // All other exceptions (including system-critical) should propagate
         | _ -> false
-
-    /// Read YAML and normalize comment nodes that CWL decoders intentionally ignore.
-    let readSanitizedYaml (yaml: string) =
-        yaml
-        |> Decode.read
-        |> removeYamlComments
 
     /// Box int64 values in a way that preserves 64-bit numeric intent across Fable targets.
     let boxOverflowInt64 (value: int64) : obj =
@@ -102,109 +92,130 @@ module Decode =
         box value
 #endif
 
-    /// Decode key value pairs into a dynamic object, while preserving their tree structure.
-    let rec overflowDecoder (dynObj: DynamicObj) (dict: System.Collections.Generic.Dictionary<string,YAMLElement>) =
-        let decodeOverflowScalar (value: YAMLContent) : obj =
-            match value.Style with
-            // Quoted and block scalars are intentionally strings even when their text
-            // looks like a bool or number.
-            | Some ScalarStyle.SingleQuoted
-            | Some ScalarStyle.DoubleQuoted
-            | Some (ScalarStyle.Block _) ->
-                box value.Value
-            | _ ->
-                // Plain scalars follow YAML-ish coercion so extension metadata keeps
-                // useful numeric/bool shapes for roundtrips and downstream consumers.
-                match System.Boolean.TryParse value.Value with
-                | true, parsed -> box parsed
-                | _ ->
-                    match System.Int64.TryParse(value.Value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture) with
-                    | true, parsed -> boxOverflowInt64 parsed
-                    | _ ->
-                        match System.Double.TryParse(value.Value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture) with
-                        | true, parsed -> box parsed
-                        | _ -> box value.Value
+    /// The type that the YAML 1.2 core schema gives a scalar node. This is the rule behind the quoting of
+    /// Encode.string, so a decoder has to read the plain spellings the same way. Quoted and block scalars
+    /// are text, and an explicit tag fixes the type. A node that is no scalar counts as text.
+    let internal (|CoreNull|CoreBool|CoreInt|CoreFloat|CoreText|) (node: YamlNode) =
+        match node.Kind with
+        | YamlNodeKind.Scalar scalar ->
+            let tag = node.Properties.Tag
+            if CoreSchema.isNull tag scalar then
+                CoreNull
+            else
+                match CoreSchema.tryParseBool tag scalar with
+                | Some parsed -> CoreBool parsed
+                | None ->
+                    match CoreSchema.tryParseInt64 tag scalar with
+                    | Some parsed -> CoreInt parsed
+                    | None ->
+                        match CoreSchema.tryParseFloat tag scalar with
+                        | Some parsed -> CoreFloat parsed
+                        | None -> CoreText
+        | _ -> CoreText
 
-        let rec decodeOverflowValue (value: YAMLElement) : obj =
-            match value with
-            | YAMLElement.Value v
-            | YAMLElement.Object [YAMLElement.Value v] ->
-                // YAMLicious often wraps scalar mapping values in Object [Value].
-                decodeOverflowScalar v
-            | YAMLElement.Object [YAMLElement.Sequence items]
-            | YAMLElement.Sequence items ->
+    /// The entries of a mapping in source order. The keys must be scalars, and a key must not occur twice.
+    let mappingEntries (node: YamlNode) : MappingEntry list =
+        node |> Decode.object (fun get -> get.Entries)
+
+    /// The text of the key of an entry.
+    let entryName (entry: MappingEntry) : string =
+        Decode.string entry.Key
+
+    /// A value that CWL requires. A key without a value and a plain null are nulls in the core schema, and a null
+    /// is no value.
+    let requiredValue (node: YamlNode) : YamlNode =
+        match node with
+        | CoreNull ->
+            let found = if YamlNode.isMissingValue node then "a missing value" else "a null"
+            raise (YamlDecodeException { Message = "Expected a value, found " + found + "."; Path = []; Span = node.Span })
+        | _ -> node
+
+    /// A string that CWL requires. It fails on a missing value and on a plain null, where Decode.string reads
+    /// the text of any scalar.
+    let requiredString (node: YamlNode) : string =
+        Decode.string (requiredValue node)
+
+    /// The text of a type. The text null is the CWL type null, so only a missing value fails.
+    let typeText (node: YamlNode) : string =
+        if YamlNode.isMissingValue node then
+            requiredString node
+        else
+            Decode.string node
+
+    /// Run a decoder for the value of a map entry and put the name of the entry in the path of its error.
+    let atField (name: string) (decode: unit -> 'T) : 'T =
+        try
+            decode ()
+        with YamlDecodeException error ->
+            raise (YamlDecodeException { error with Path = name :: error.Path })
+
+    /// Decode key value pairs into a dynamic object, while preserving their tree structure.
+    let rec overflowDecoder (dynObj: DynamicObj) (entries: MappingEntry list) =
+        let decodeOverflowScalar (node: YamlNode) : obj =
+            match node with
+            | CoreBool parsed -> box parsed
+            | CoreInt parsed -> boxOverflowInt64 parsed
+            | CoreFloat parsed -> box parsed
+            | CoreNull ->
+                // A null has no value to hold in the object. The YAML node keeps the spelling and the type,
+                // and the encoder writes it back as it was.
+                box { Node = node }
+            | CoreText -> box (Decode.string node)
+
+        let rec decodeOverflowValue (node: YamlNode) : obj =
+            match node.Kind with
+            | YamlNodeKind.Scalar _ ->
+                decodeOverflowScalar node
+            | YamlNodeKind.Sequence collection ->
                 // Preserve lists recursively as ResizeArray<obj> to match the rest of
                 // the CWL object model.
-                items
-                |> List.map decodeOverflowValue
+                collection.Items
+                |> List.map (fun item -> decodeOverflowValue item.Node)
                 |> ResizeArray
                 |> box
-            | YAMLElement.Object _ ->
+            | YamlNodeKind.Mapping _ ->
                 // Nested mappings become nested DynamicObj instances instead of
                 // flattened string values.
                 let nested = DynamicObj()
-                value
-                |> Decode.object (fun get -> get.Overflow.FieldList [])
+                node
+                |> mappingEntries
                 |> overflowDecoder nested
                 |> box
-            | other ->
-                // Keep unsupported YAML nodes available rather than dropping them.
-                box other
+            | YamlNodeKind.Alias name ->
+                failAlias name node
 
-        for e in dict do
+        for entry in entries do
             // The caller already filtered known fields with FieldList, so every
-            // dictionary entry here is dynamic extension metadata.
-            DynObj.setProperty e.Key (decodeOverflowValue e.Value) dynObj
+            // entry here is dynamic extension metadata.
+            DynObj.setProperty (entryName entry) (decodeOverflowValue entry.Value) dynObj
         dynObj
 
-    /// Treat comment artifacts and empty placeholder objects as non-semantic collection items.
-    let isIgnorableYamlNoise (value: YAMLElement) =
-        match value with
-        | YAMLElement.Comment _ -> true
-        | YAMLElement.Object [] -> true
-        | _ -> false
+    /// Decode an optional field of a node that may be a scalar shorthand. A node that is no mapping has no
+    /// fields, and a field with a null value counts as missing.
+    let tryGetPresentField (fieldName: string) (decoder: YamlNode -> 'T) (node: YamlNode) : 'T option =
+        match node.Kind with
+        | YamlNodeKind.Mapping _ -> node |> Decode.object (fun get -> get.Optional.Field fieldName decoder)
+        | _ -> None
 
-    /// Decode an optional field only if the field is physically present, avoiding fallback
-    /// behavior that can blur absent fields with malformed field values.
-    let tryGetPresentField (fieldName: string) (decoder: YAMLElement -> 'T) (value: YAMLElement) : 'T option =
-        match value with
-        | YAMLElement.Object fields
-            when fields
-                 |> List.exists (function
-                     | YAMLElement.Mapping (key, _) when key.Value = fieldName -> true
-                     | _ -> false) ->
-            // Once presence is confirmed, use YAMLicious' normal optional field
-            // decoder so wrapped scalar and sequence handling remains consistent.
-            Decode.object (fun get -> get.Optional.Field fieldName decoder) value
-        | _ ->
-            // Missing fields and non-object shorthands are both represented as None.
-            None
-
-    let tryGetStringField (fieldName: string) (value: YAMLElement) =
+    let tryGetStringField (fieldName: string) (value: YamlNode) =
         tryGetPresentField fieldName Decode.string value
 
-    let tryGetBoolField (fieldName: string) (value: YAMLElement) =
+    let tryGetBoolField (fieldName: string) (value: YamlNode) =
         tryGetPresentField fieldName Decode.bool value
 
-    let tryGetYamlField (fieldName: string) (value: YAMLElement) =
-        tryGetPresentField fieldName id value
+    let tryGetYamlField (fieldName: string) (value: YamlNode) : RawYaml option =
+        tryGetPresentField fieldName (fun node -> { Node = node }) value
 
-    let tryGetIntArrayField (fieldName: string) (value: YAMLElement) =
+    let tryGetIntArrayField (fieldName: string) (value: YamlNode) =
         tryGetPresentField fieldName (Decode.resizearray Decode.int) value
 
-    /// Decode int64 fields explicitly so resource and File sizes do not narrow to int.
-    let tryGetInt64Field (fieldName: string) (value: YAMLElement) =
-        let decodeInt64 = function
-            | YAMLElement.Value scalar
-            | YAMLElement.Object [YAMLElement.Value scalar] ->
-                match System.Int64.TryParse(scalar.Value, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture) with
-                | true, parsed -> parsed
-                | false, _ -> raise (System.ArgumentException($"Invalid int64 value for {fieldName}: {scalar.Value}"))
-            | other -> raise (System.ArgumentException($"Invalid int64 value for {fieldName}: {other}"))
-        tryGetPresentField fieldName decodeInt64 value
+    /// Decode int64 fields through the core schema so File sizes do not narrow to int and a quoted size
+    /// fails like the other typed fields.
+    let tryGetInt64Field (fieldName: string) (value: YamlNode) =
+        tryGetPresentField fieldName Decode.int64 value
 
     /// Decode and validate CWL loadListing enum fields from their YAML string form.
-    let tryGetLoadListingField (fieldName: string) (value: YAMLElement) =
+    let tryGetLoadListingField (fieldName: string) (value: YamlNode) =
         tryGetStringField fieldName value
         |> Option.map (fun loadListingValue ->
             match LoadListingEnum.tryParse loadListingValue with
@@ -212,9 +223,9 @@ module Decode =
             | None -> raise (System.ArgumentException($"Invalid loadListing value '{loadListingValue}'. Expected one of: no_listing, shallow_listing, deep_listing.")))
 
     /// Preserve unknown object fields on DynamicObj-backed CWL objects.
-    let overflowIntoDynamicObj (dynObj: DynamicObj) (knownFields: string list) (value: YAMLElement) =
-        match value with
-        | YAMLElement.Object _ ->
+    let overflowIntoDynamicObj (dynObj: DynamicObj) (knownFields: string list) (value: YamlNode) =
+        match value.Kind with
+        | YamlNodeKind.Mapping _ ->
             // get.Overflow.FieldList removes fields consumed by the typed decoder;
             // overflowDecoder stores the remaining fields without flattening them.
             value
@@ -226,7 +237,7 @@ module Decode =
         dynObj
 
     /// Decode File object fields while preserving unrecognized extension metadata.
-    let decodeFileInstanceFields (element: YAMLElement) =
+    let decodeFileInstanceFields (element: YamlNode) =
         let file =
             FileInstance(
                 ?location = tryGetStringField "location" element,
@@ -245,7 +256,7 @@ module Decode =
         file
 
     /// Decode Directory object fields while preserving unrecognized extension metadata.
-    let decodeDirectoryInstanceFields (element: YAMLElement) =
+    let decodeDirectoryInstanceFields (element: YamlNode) =
         let directory =
             DirectoryInstance(
                 ?location = tryGetStringField "location" element,
@@ -259,30 +270,36 @@ module Decode =
     /// Decode scalar schema-salad string fields.
     /// Recognized directive wrappers are `$include` and `$import`.
     /// Unknown single-key mappings are intentionally coerced to a legacy literal `key: value` string.
-    let decodeSchemaSaladString (yEle:YAMLElement) : SchemaSaladString =
-        match yEle with
-        | YAMLElement.Value v
-        | YAMLElement.Object [YAMLElement.Value v] ->
-            // Common path: plain scalar values become literal schema-salad strings.
-            SchemaSaladString.Literal v.Value
-        | YAMLElement.Object [YAMLElement.Mapping (c, YAMLElement.Value v)]
-        | YAMLElement.Object [YAMLElement.Mapping (c, YAMLElement.Object [YAMLElement.Value v])] ->
-            // Directive forms keep their directive kind so encode can write them
-            // back as mappings instead of lossy literal text.
-            match c.Value with
-            | "$include" -> SchemaSaladString.Include v.Value
-            | "$import" -> SchemaSaladString.Import v.Value
-            | _ -> SchemaSaladString.Literal (sprintf "%s: %s" c.Value v.Value)
-        | _ -> raise (System.ArgumentException($"Unexpected YAMLElement format in decodeSchemaSaladString: %A{yEle}"))
+    let decodeSchemaSaladString (node: YamlNode) : SchemaSaladString =
+        let unexpected () =
+            raise (System.ArgumentException($"Unexpected YAML node in decodeSchemaSaladString: {YamlNode.show node}"))
+        match node.Kind with
+        | YamlNodeKind.Scalar _ ->
+            // Common path: scalar values become literal schema-salad strings. YAMLicious folds the
+            // line breaks of a multi-line plain scalar into spaces, as YAML 1.2.2 requires.
+            SchemaSaladString.Literal (requiredString node)
+        | YamlNodeKind.Mapping collection ->
+            match collection.Items with
+            | [ entry ] when (YamlNode.tryScalar entry.Value).IsSome ->
+                // Directive forms keep their directive kind so encode can write them
+                // back as mappings instead of lossy literal text.
+                let key = entryName entry
+                let text = requiredString entry.Value
+                match key with
+                | "$include" -> SchemaSaladString.Include text
+                | "$import" -> SchemaSaladString.Import text
+                | _ -> SchemaSaladString.Literal (sprintf "%s: %s" key text)
+            | _ -> unexpected ()
+        | _ -> unexpected ()
 
-    /// Decode a YAMLElement which is either a string or expression into a string.
+    /// Decode a YamlNode which is either a string or expression into a string.
     /// Directive objects such as {$include: path} are represented using legacy string form.
-    let decodeStringOrExpression (yEle:YAMLElement) =
-        decodeSchemaSaladString yEle
+    let decodeStringOrExpression (node: YamlNode) =
+        decodeSchemaSaladString node
         |> SchemaSaladString.toDirectiveString
 
-    /// Decode a YAMLElement into a glob search pattern for output binding
-    let outputBindingGlobDecoder: (YAMLiciousTypes.YAMLElement -> OutputBinding) =
+    /// Decode a YamlNode into a glob search pattern for output binding
+    let outputBindingGlobDecoder: (YamlNode -> OutputBinding) =
         fun value ->
             Decode.object (fun get ->
                 // Read all known outputBinding fields first; any implementation
@@ -299,32 +316,26 @@ module Decode =
                 binding
             ) value
 
-    /// Decode a YAMLElement into an OutputBinding
-    let outputBindingDecoder: (YAMLiciousTypes.YAMLElement -> OutputBinding option) =
-        Decode.object(fun get ->
-            let outputBinding = get.Optional.Field "outputBinding" outputBindingGlobDecoder
-            outputBinding
-        )
+    /// Decode a YamlNode into an OutputBinding. A port in scalar shorthand has none.
+    let outputBindingDecoder: (YamlNode -> OutputBinding option) =
+        tryGetPresentField "outputBinding" outputBindingGlobDecoder
 
     /// Decode schema-salad string-or-array fields into a uniform ResizeArray.
-    let decodeStringArrayOrScalar (value: YAMLElement) : ResizeArray<string> =
-        match value with
-        | YAMLElement.Object [YAMLElement.Sequence items]
-        | YAMLElement.Sequence items ->
-            items
-            |> List.map decodeStringOrExpression
+    let decodeStringArrayOrScalar (value: YamlNode) : ResizeArray<string> =
+        match value.Kind with
+        | YamlNodeKind.Sequence collection ->
+            collection.Items
+            |> List.map (fun item -> decodeStringOrExpression item.Node)
             |> ResizeArray
         | _ ->
             ResizeArray [| decodeStringOrExpression value |]
 
     /// Decode CWL outputSource in either scalar or list form.
-    let outputSourceDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<string> option) =
-        Decode.object(fun get ->
-            get.Optional.Field "outputSource" decodeStringArrayOrScalar
-        )
+    let outputSourceDecoder: (YamlNode -> ResizeArray<string> option) =
+        tryGetPresentField "outputSource" decodeStringArrayOrScalar
 
-    /// Decode a YAMLElement into a Dirent
-    let direntDecoder: (YAMLiciousTypes.YAMLElement -> CWLType) =
+    /// Decode a YamlNode into a Dirent
+    let direntDecoder: (YamlNode -> CWLType) =
         fun value ->
             Decode.object (fun get ->
                 let dirent =
@@ -339,26 +350,15 @@ module Decode =
 
     /// Decode a listing entry of InitialWorkDirRequirement.
     /// Supports both Dirent object form and string/expression form.
-    let initialWorkDirEntryDecoder: (YAMLiciousTypes.YAMLElement -> InitialWorkDirEntry) =
+    let initialWorkDirEntryDecoder: (YamlNode -> InitialWorkDirEntry) =
         fun value ->
-            // File and Directory object decoding is shared with CWL type decoding so
-            // listing entries preserve the same extension metadata.
-            let decodeFileInstance (element: YAMLElement) =
-                decodeFileInstanceFields element
-
-            let decodeDirectoryInstance (element: YAMLElement) =
-                decodeDirectoryInstanceFields element
-
-            match value with
-            | YAMLElement.Object mappings ->
+            match value.Kind with
+            | YamlNodeKind.Mapping collection ->
                 // Objects with entry are Dirent entries even if they also contain
                 // optional entryname/writable fields.
                 let hasEntryField =
-                    mappings
-                    |> List.exists (function
-                        | YAMLElement.Mapping (k, _) when k.Value = "entry" -> true
-                        | _ -> false
-                    )
+                    collection.Items
+                    |> List.exists (fun entry -> entryName entry = "entry")
 
                 if hasEntryField then
                     match direntDecoder value with
@@ -367,27 +367,21 @@ module Decode =
                 else
                     // File and Directory entries are discriminated by their class field;
                     // all other objects are treated as schema-salad string directives.
-                    let classValue =
-                        mappings
-                        |> List.tryPick (function
-                            | YAMLElement.Mapping (k, YAMLElement.Object [YAMLElement.Value v]) when k.Value = "class" -> Some v.Value
-                            | YAMLElement.Mapping (k, YAMLElement.Value v) when k.Value = "class" -> Some v.Value
-                            | _ -> None
-                        )
-                    match classValue with
+                    match tryGetStringField "class" value with
                     | Some "File" ->
-                        FileEntry (decodeFileInstance value)
+                        // File and Directory object decoding is shared with CWL type decoding so
+                        // listing entries preserve the same extension metadata.
+                        FileEntry (decodeFileInstanceFields value)
                     | Some "Directory" ->
-                        DirectoryEntry (decodeDirectoryInstance value)
+                        DirectoryEntry (decodeDirectoryInstanceFields value)
                     | _ ->
                         StringEntry (decodeSchemaSaladString value)
-            | YAMLElement.Value _
-            | YAMLElement.Object [YAMLElement.Value _] ->
+            | YamlNodeKind.Scalar _ ->
                 // Scalar listing entries are allowed by CWL and represent generated
                 // file content or expressions.
                 StringEntry (decodeSchemaSaladString value)
             | _ ->
-                raise (System.ArgumentException($"Invalid InitialWorkDir listing entry: %A{value}"))
+                raise (System.ArgumentException($"Invalid InitialWorkDir listing entry: {YamlNode.show value}"))
 
     /// Decode the contained type of a CWL Array
     let rec cwlSimpleTypeFromString (s: string) =
@@ -425,14 +419,14 @@ module Decode =
         else
             None
 
-    /// Decode an InputArraySchema from a YAMLElement
-    let rec inputArraySchemaDecoder: (YAMLiciousTypes.YAMLElement -> InputArraySchema) =
+    /// Decode an InputArraySchema from a YamlNode
+    let rec inputArraySchemaDecoder: (YamlNode -> InputArraySchema) =
         fun value ->
         Decode.object (fun get ->
             // Decode items - can be string or complex type
-            let itemsValue = get.Required.Field "items" id
+            let itemsValue = get.Required.Field "items" Decode.node
             let decodedItems = cwlTypeDecoder' itemsValue
-            
+
             // Array schema metadata is optional, but unknown fields still need to
             // remain on the schema object for lossless roundtrips.
             let schema =
@@ -445,17 +439,17 @@ module Decode =
             overflowIntoDynamicObj schema (InputArraySchema.KnownFieldNames |> Seq.toList) value |> ignore
             schema
         ) value
-    /// Decode an InputRecordField from a YAMLElement
-    and inputRecordFieldDecoder: (YAMLiciousTypes.YAMLElement -> InputRecordField) =
+    /// Decode an InputRecordField from a YamlNode
+    and inputRecordFieldDecoder: (YamlNode -> InputRecordField) =
         fun value ->
         Decode.object (fun get ->
             // Array-style record fields carry their own name field.
-            let name = get.Required.Field "name" Decode.string
-            
+            let name = get.Required.Field "name" requiredString
+
             // Decode the type field (can be string or complex type)
-            let typeValue = get.Required.Field "type" id
+            let typeValue = get.Required.Field "type" Decode.node
             let decodedType = cwlTypeDecoder' typeValue
-            
+
             let field =
                 InputRecordField(
                     name,
@@ -468,43 +462,42 @@ module Decode =
         ) value
 
     /// Attempt to decode fields as flow-style array: [{name: x, type: y}]
-    and tryDecodeFieldsAsArray (element: YAMLElement) : ResizeArray<InputRecordField> option =
+    and tryDecodeFieldsAsArray (element: YamlNode) : ResizeArray<InputRecordField> option =
         try
             Decode.resizearray inputRecordFieldDecoder element |> Some
         with ex when isRecoverableDecodingError ex -> None
 
     /// Attempt to decode fields as map-style: {fieldName: type}
-    and tryDecodeFieldsAsMap (element: YAMLElement) : ResizeArray<InputRecordField> option =
+    and tryDecodeFieldsAsMap (element: YamlNode) : ResizeArray<InputRecordField> option =
         try
-            let dict = Decode.object (fun get2 -> get2.Overflow.FieldList []) element
             let fields = ResizeArray<InputRecordField>()
-            for kvp in dict do
+            for entry in mappingEntries element do
                 // Map-style record fields use the mapping key as the field name.
-                let fieldType = cwlTypeDecoder' kvp.Value
+                let fieldType = cwlTypeDecoder' entry.Value
                 let field =
                     InputRecordField(
-                        kvp.Key,
+                        entryName entry,
                         fieldType,
-                        ?doc = tryGetStringField "doc" kvp.Value,
-                        ?label = tryGetStringField "label" kvp.Value
+                        ?doc = tryGetStringField "doc" entry.Value,
+                        ?label = tryGetStringField "label" entry.Value
                     )
-                overflowIntoDynamicObj field (InputRecordField.KnownFieldNames |> Seq.toList) kvp.Value |> ignore
+                overflowIntoDynamicObj field (InputRecordField.KnownFieldNames |> Seq.toList) entry.Value |> ignore
                 fields.Add(field)
             Some fields
         with ex when isRecoverableDecodingError ex -> None
 
-    /// Decode an InputRecordSchema from a YAMLElement
-    and inputRecordSchemaDecoder: (YAMLiciousTypes.YAMLElement -> InputRecordSchema) =
+    /// Decode an InputRecordSchema from a YamlNode
+    and inputRecordSchemaDecoder: (YamlNode -> InputRecordSchema) =
         fun value ->
         Decode.object (fun get ->
             // Try to decode fields as an array (flow-style) or as a map (block-style)
             let decodedFields =
                 // Get the fields element directly
-                let fieldsElement = get.Optional.Field "fields" id
-                
+                let fieldsElement = get.Optional.Field "fields" Decode.node
+
                 match fieldsElement with
-                | Some (YAMLElement.Object []) ->
-                    // Empty array case: fields: []
+                | Some element when (YamlNode.tryMapping element |> Option.exists (fun mapping -> mapping.Items.IsEmpty)) ->
+                    // An empty mapping, fields: {}, has no fields. An empty list, fields: [], takes the array path below.
                     Some (ResizeArray<InputRecordField>())
                 | Some element ->
                     // Try flow-style first, then fall back to map-style
@@ -512,7 +505,7 @@ module Decode =
                     | Some fields -> Some fields
                     | None -> tryDecodeFieldsAsMap element
                 | None -> None
-            
+
             // A record schema may be incomplete in some authoring contexts; keep
             // whatever fields were available and preserve additional schema keys.
             let schema =
@@ -526,12 +519,12 @@ module Decode =
             schema
         ) value
 
-    /// Decode an InputEnumSchema from a YAMLElement
-    and inputEnumSchemaDecoder: (YAMLiciousTypes.YAMLElement -> InputEnumSchema) =
+    /// Decode an InputEnumSchema from a YamlNode
+    and inputEnumSchemaDecoder: (YamlNode -> InputEnumSchema) =
         fun value ->
         Decode.object (fun get ->
-            let symbols = get.Required.Field "symbols" (Decode.resizearray Decode.string)
-            
+            let symbols = get.Required.Field "symbols" (Decode.resizearray requiredString)
+
             let schema =
                 InputEnumSchema(
                     symbols,
@@ -543,23 +536,23 @@ module Decode =
             schema
         ) value
 
-    /// Decode a CWLType from a YAMLElement (handles all types including complex schemas)
-    and cwlTypeDecoder' (element: YAMLiciousTypes.YAMLElement): CWLType =
+    /// Decode a CWLType from a YamlNode (handles all types including complex schemas)
+    and cwlTypeDecoder' (element: YamlNode): CWLType =
         let parseTypeString (typeStr: string) =
             // Split schema-salad shorthand like File[]? into the base type text and
             // an optional wrapper flag before parsing the base type.
-            let stripped, isOptional = 
+            let stripped, isOptional =
                 if typeStr.EndsWith("?") then
                     typeStr.Replace("?", ""), true
                 else
                     typeStr, false
-            
+
             // Try to parse as array shorthand (handles arbitrary nesting recursively)
-            let baseType = 
+            let baseType =
                 match parseArrayShorthand stripped with
                 | Some arrayType -> arrayType
                 | None -> cwlSimpleTypeFromString stripped
-            
+
             // Wrap in Union if optional
             if isOptional then
                 Union (ResizeArray [Null; baseType])
@@ -585,38 +578,42 @@ module Decode =
                 let baseType = Directory directory
                 if isOptional then Union (ResizeArray [Null; baseType]) else baseType
             | _ -> parseTypeString typeStr
-        
-        match element with
-        | YAMLElement.Value v | YAMLElement.Object [YAMLElement.Value v] ->
+
+        match element.Kind with
+        | YamlNodeKind.Scalar _ ->
             // Simple type string
-            parseTypeString v.Value
-        | YAMLElement.Sequence items
-        | YAMLElement.Object [YAMLElement.Sequence items] ->
-            // Union type. Mapping values may arrive wrapped as Object [Sequence ...].
-            // Each member can itself be shorthand, an array schema, a record, or enum.
-            let types = items |> List.map cwlTypeDecoder' |> ResizeArray
+            parseTypeString (typeText element)
+        | YamlNodeKind.Sequence collection ->
+            // Union type. Each member can itself be shorthand, an array schema, a record, or enum.
+            let types =
+                collection.Items
+                |> List.mapi (fun index item -> atField $"[{index}]" (fun () -> cwlTypeDecoder' item.Node))
+                |> ResizeArray
             Union types
-        | YAMLElement.Object _ ->
+        | YamlNodeKind.Mapping _ ->
             // Complex type - check for type field
             Decode.object (fun get ->
-                let typeField = get.Optional.Field "type" id
-                match typeField with
-                | Some (YAMLElement.Object [YAMLElement.Value v]) ->
-                    // Schema objects advertise their kind in the type field; simple
-                    // File/Directory object types are handled separately to keep metadata.
-                    match v.Value with
-                    | "record" -> Record (inputRecordSchemaDecoder element)
-                    | "enum" -> Enum (inputEnumSchemaDecoder element)
-                    | "array" -> Array (inputArraySchemaDecoder element)
-                    | simpleType -> parseTypeObjectString simpleType
-                | Some (YAMLElement.Object _) ->
-                    // Nested complex type, for example type: { type: array, ... }.
-                    cwlTypeDecoder' (get.Required.Field "type" id)
-                | _ -> raise (System.ArgumentException("Unexpected type format in cwlTypeDecoder'"))
+                match get.Optional.Field "type" Decode.node with
+                | Some typeNode ->
+                    match typeNode.Kind with
+                    | YamlNodeKind.Scalar _ ->
+                        // Schema objects advertise their kind in the type field. Simple
+                        // File/Directory object types are handled separately to keep metadata.
+                        match Decode.string typeNode with
+                        | "record" -> Record (inputRecordSchemaDecoder element)
+                        | "enum" -> Enum (inputEnumSchemaDecoder element)
+                        | "array" -> Array (inputArraySchemaDecoder element)
+                        | simpleType -> parseTypeObjectString simpleType
+                    | _ ->
+                        // Nested complex type, for example type: { type: array, ... }, or a union list.
+                        cwlTypeDecoder' typeNode
+                | None -> raise (System.ArgumentException("Unexpected type format in cwlTypeDecoder'"))
             ) element
-        | _ -> raise (System.ArgumentException("Unexpected YAMLElement in cwlTypeDecoder'"))
-    /// Match the input string to the possible CWL types and checks if it is optional
-    let cwlTypeStringMatcher (t: string) (get: Decode.IGetters) =
+        | YamlNodeKind.Alias _ -> raise (System.ArgumentException($"Unexpected YAML node in cwlTypeDecoder': {YamlNode.show element}"))
+
+    /// Match the type shorthand string to the possible CWL types and checks if it is optional. The Dirent
+    /// type needs the listing field of the surrounding mapping, so the caller passes the getters for it.
+    let cwlTypeFromShorthand (t: string) (direntListing: unit -> CWLType) =
         // This helper is used for legacy simple type string paths that also need
         // to report whether `?` was present for CWLInput.Optional.
         let optional, newT =
@@ -624,7 +621,7 @@ module Decode =
                 true, t.Replace("?", "")
             else
                 false, t
-        
+
         // Try to parse as array shorthand (handles arbitrary nesting recursively)
         let cwlType =
             match parseArrayShorthand newT with
@@ -634,7 +631,7 @@ module Decode =
                 match newT with
                 | "File" -> File (FileInstance ())
                 | "Directory" -> Directory (DirectoryInstance ())
-                | "Dirent" -> (get.Required.Field "listing" direntDecoder)
+                | "Dirent" -> direntListing ()
                 | "string" -> String
                 | "int" -> Int
                 | "long" -> Long
@@ -644,51 +641,66 @@ module Decode =
                 | "stdout" -> Stdout
                 | "null" -> Null
                 | _ -> failwith "Invalid CWL type"
-        
+
         // Wrap in Union if optional
-        let finalType = 
+        let finalType =
             if optional then
                 Union (ResizeArray [Null; cwlType])
             else
                 cwlType
         finalType, optional
 
-    /// Access the type field and decode a YAMLElement into a CWLType
-    let cwlTypeDecoder: (YAMLiciousTypes.YAMLElement -> CWLType*bool) =
+    /// Match the type shorthand string of a type that stands without a surrounding mapping. Such a type has no
+    /// listing field, so the Dirent shorthand is an error.
+    let cwlTypeStringDecoder (t: string) =
+        cwlTypeFromShorthand t (fun () -> failwith "The Dirent type needs a listing field.")
+
+    /// Match the type shorthand string of the type field of a mapping and checks if it is optional.
+    let cwlTypeStringMatcher (t: string) (get: Decode.IGetters) =
+        cwlTypeFromShorthand t (fun () -> get.Required.Field "listing" direntDecoder)
+
+    /// Access the type field and decode a YamlNode into a CWLType
+    let cwlTypeDecoder: (YamlNode -> CWLType*bool) =
         Decode.object (fun get ->
-            let cwlType = 
-                get.Required.Field 
-                    "type" 
+            let cwlType =
+                get.Required.Field
+                    "type"
                     (
                         fun value ->
-                            match value with
+                            match value.Kind with
                             // Return Some only for scalar type fields; object and
                             // sequence type fields are delegated to cwlTypeDecoder'.
-                            | YAMLElement.Value v | YAMLElement.Object [YAMLElement.Value v] -> Some v.Value
-                            | YAMLElement.Object o -> None
-                            | YAMLElement.Sequence _ -> None
-                            | _ -> raise (System.ArgumentException("Unexpected YAMLElement in cwlTypeDecoder"))
+                            | YamlNodeKind.Scalar _ -> Some (typeText value)
+                            | _ -> None
                     )
             match cwlType with
             | Some t ->
                 // Scalar type field, including shorthand such as File[]?.
                 cwlTypeStringMatcher t get
-            | None -> 
+            | None ->
                 // Complex type field, for example inline record/enum/array schema.
                 let cwlType = get.Required.Field "type" cwlTypeDecoder'
                 cwlType, false
         )
 
+    /// Decode the type of a port. CWL lets a map entry hold just the type, written as a type string
+    /// (File?) or as a list of types (a union such as [null, File]). Any other value is the port object.
+    let portTypeDecoder (value: YamlNode) : CWLType * bool =
+        match value.Kind with
+        | YamlNodeKind.Scalar _ ->
+            cwlTypeStringDecoder (typeText value)
+        | YamlNodeKind.Sequence _ ->
+            // A union lists its members itself, so the optional flag stays false as in the object form.
+            cwlTypeDecoder' value, false
+        | _ -> cwlTypeDecoder value
+
     /// Decode a named output from either map shorthand or full object form.
-    let decodeNamedOutput (name: string) (value: YAMLElement) =
+    let decodeNamedOutput (name: string) (value: YamlNode) =
         // Decode dependent fields before constructing the output so both shorthand
         // and object forms share the same object initialization path.
         let outputBinding = outputBindingDecoder value
         let outputSourceValues = outputSourceDecoder value
-        let cwlType =
-            match value with
-            | YAMLElement.Object [YAMLElement.Value v] -> cwlTypeStringMatcher v.Value (Unchecked.defaultof<Decode.IGetters>) |> fst
-            | _ -> cwlTypeDecoder value |> fst
+        let cwlType = portTypeDecoder value |> fst
         // Optional presentation and behavior fields are read directly from the
         // object form; shorthand values simply leave them absent.
         let output =
@@ -711,48 +723,50 @@ module Decode =
         output
 
     /// Decode one sequence-form output, warning only for malformed unnamed entries.
-    let decodeOutputSequenceItem (warnings: WarningSink) (path: string) (index: int) (item: YAMLElement) =
+    let decodeOutputSequenceItem (warnings: WarningSink) (path: string) (index: int) (item: YamlNode) =
         match tryGetStringField "id" item with
-        | Some id -> Some (decodeNamedOutput id item)
-        | None when isIgnorableYamlNoise item -> None
+        | Some id -> Some (atField id (fun () -> decodeNamedOutput id item))
         | None ->
             addWarning warnings $"{path}[{index}]" "Skipped malformed unnamed CWL output entry." (Some item)
             None
 
-    /// Decode a YAMLElement into an Output Array
-    let outputArrayDecoderWithWarnings (warnings: WarningSink) (path: string) : (YAMLiciousTypes.YAMLElement -> ResizeArray<CWLOutput>) =
+    /// Decode a YamlNode into an Output Array
+    let outputArrayDecoderWithWarnings (warnings: WarningSink) (path: string) : (YamlNode -> ResizeArray<CWLOutput>) =
         fun value ->
-            match value with
-            | YAMLElement.Object [YAMLElement.Sequence items]
-            | YAMLElement.Sequence items ->
+            match value.Kind with
+            | YamlNodeKind.Sequence collection ->
                 // Sequence-form ports must declare id on each item. Unnamed malformed
                 // items are the tolerant path and produce warnings.
-                items
-                |> List.mapi (decodeOutputSequenceItem warnings path)
+                collection.Items
+                |> List.mapi (fun index item -> decodeOutputSequenceItem warnings path index item.Node)
                 |> List.choose id
                 |> ResizeArray
             | _ ->
                 // Map-form ports use the map key as the port name.
-                let dict = Decode.object (fun get -> get.Overflow.FieldList []) value
-                [| for key in dict.Keys do decodeNamedOutput key dict.[key] |] |> ResizeArray
+                [|
+                    for entry in mappingEntries value do
+                        let name = entryName entry
+                        atField name (fun () -> decodeNamedOutput name entry.Value)
+                |]
+                |> ResizeArray
 
-    let outputArrayDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<CWLOutput>) =
+    let outputArrayDecoder: (YamlNode -> ResizeArray<CWLOutput>) =
         outputArrayDecoderWithWarnings None "outputs"
 
-    /// Access the outputs field and decode a YAMLElement into an Output Array
-    let outputsDecoderWithWarnings (warnings: WarningSink) : (YAMLiciousTypes.YAMLElement -> ResizeArray<CWLOutput>) =
+    /// Access the outputs field and decode a YamlNode into an Output Array
+    let outputsDecoderWithWarnings (warnings: WarningSink) : (YamlNode -> ResizeArray<CWLOutput>) =
         Decode.object (fun get ->
             get.Required.Field "outputs" (outputArrayDecoderWithWarnings warnings "outputs")
         )
 
-    let outputsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<CWLOutput>) =
+    let outputsDecoder: (YamlNode -> ResizeArray<CWLOutput>) =
         outputsDecoderWithWarnings None
 
-    /// Decode a YAMLElement into a DockerRequirement
+    /// Decode a YamlNode into a DockerRequirement
     let dockerRequirementDecoder (get: Decode.IGetters): DockerRequirement =
         // dockerFile can be a plain string or schema-salad include/import directive.
         let dockerFile =
-            get.Optional.Field "dockerFile" id
+            get.Optional.Field "dockerFile" Decode.node
             |> Option.map decodeSchemaSaladString
 
         // Constructor normalization gives dockerFileReference precedence over the
@@ -767,135 +781,108 @@ module Decode =
             ?dockerRunOptions = get.Optional.Field "cwltool:dockerRunOptions" decodeStringArrayOrScalar
         )
 
-    /// Decode a YAMLElement into an EnvVarRequirement array.
+    /// Decode a YamlNode into an EnvVarRequirement array.
     /// Supports both array form and map shorthand form (envName -> envValue).
     let envVarRequirementDecoder (get: Decode.IGetters): ResizeArray<EnvironmentDef> =
-        let normalizeCollectionElement = function
-            // YAMLicious may wrap the collection under Object; normalize before
-            // choosing array-style or map-style decoding.
-            | YAMLElement.Object [YAMLElement.Sequence sequence] -> YAMLElement.Sequence sequence
-            | YAMLElement.Object [YAMLElement.Object mappings] -> YAMLElement.Object mappings
-            | other -> other
+        // Env var values are strings by CWL semantics. The scalar text is already unquoted, so
+        // a quoted "true" and a plain true both decode to the string true.
+        let decodeEnvValue = decodeStringOrExpression
 
-        let decodeEnvValue = function
-            | YAMLElement.Value value
-            | YAMLElement.Object [YAMLElement.Value value] ->
-                // Env var values are strings by CWL semantics; trim protective quotes
-                // added by the encoder around boolean-looking strings.
-                value.Value.Trim('"')
-            | other ->
-                decodeStringOrExpression other
+        get.Required.Field "envDef" (fun envDefElement ->
+            match envDefElement.Kind with
+            | YamlNodeKind.Sequence _ ->
+                // Standard CWL form: envDef is an array of {envName, envValue} objects.
+                Decode.resizearray
+                    (fun value ->
+                        Decode.object (fun get2 ->
+                            let env =
+                                EnvironmentDef(
+                                    get2.Required.Field "envName" requiredString,
+                                    get2.Required.Field "envValue" requiredString
+                                )
+                            overflowIntoDynamicObj env (EnvironmentDef.KnownFieldNames |> Seq.toList) value |> ignore
+                            env
+                        ) value)
+                    envDefElement
+            | YamlNodeKind.Mapping _ ->
+                // Shorthand form: envDef is a map from variable name to value.
+                mappingEntries envDefElement
+                |> List.map (fun entry ->
+                    let name = entryName entry
+                    EnvironmentDef(name, atField name (fun () -> decodeEnvValue entry.Value)))
+                |> ResizeArray
+            | _ ->
+                raise (System.ArgumentException("Invalid envDef format. Expected array or map.")))
 
-        let envDefElement = get.Required.Field "envDef" id |> normalizeCollectionElement
-
-        match envDefElement with
-        | YAMLElement.Sequence _ ->
-            // Standard CWL form: envDef is an array of {envName, envValue} objects.
-            Decode.resizearray
-                (fun value ->
-                    Decode.object (fun get2 ->
-                        let env =
-                            EnvironmentDef(
-                                get2.Required.Field "envName" Decode.string,
-                                get2.Required.Field "envValue" Decode.string
-                            )
-                        overflowIntoDynamicObj env (EnvironmentDef.KnownFieldNames |> Seq.toList) value |> ignore
-                        env
-                    ) value)
-                envDefElement
-        | YAMLElement.Object mappings ->
-            // Shorthand form: envDef is a map from variable name to value.
-            mappings
-            |> List.choose (function
-                | YAMLElement.Mapping (key, value) ->
-                    Some (EnvironmentDef(key.Value, decodeEnvValue value))
-                | _ -> None)
-            |> ResizeArray
-        | _ ->
-            raise (System.ArgumentException("Invalid envDef format. Expected array or map."))
-
-    /// Decode a YAMLElement into a SoftwareRequirement array.
+    /// Decode a YamlNode into a SoftwareRequirement array.
     /// Supports both array form and map shorthand form.
     let softwareRequirementDecoder (get: Decode.IGetters): ResizeArray<SoftwarePackage> =
-        let normalizeCollectionElement = function
-            // Accept wrapped sequence/object values produced by the YAML parser.
-            | YAMLElement.Object [YAMLElement.Sequence sequence] -> YAMLElement.Sequence sequence
-            | YAMLElement.Object [YAMLElement.Object mappings] -> YAMLElement.Object mappings
-            | other -> other
-
-        let packagesElement = get.Required.Field "packages" id |> normalizeCollectionElement
-
-        let decodeSpecsArray (element: YAMLElement) =
+        let decodeSpecsArray (element: YamlNode) =
             // Version and specs can be scalar-or-array schema-salad strings.
-            let normalized = normalizeCollectionElement element
-            Decode.resizearray decodeStringOrExpression normalized
+            Decode.resizearray decodeStringOrExpression element
 
-        let decodePackageFromMapEntry packageName packageValue =
-            let normalizedPackageValue = normalizeCollectionElement packageValue
-            match normalizedPackageValue with
-            | YAMLElement.Object [] ->
-                // packages: { samtools: {} }
+        let decodePackageFromMapEntry packageName (packageValue: YamlNode) =
+            // packages: { samtools: {} } and packages: { samtools: } both name a package without specs.
+            match Decode.option Decode.node packageValue with
+            | None ->
                 SoftwarePackage(packageName)
-            | YAMLElement.Sequence _ ->
-                // packages: { samtools: [spec1, spec2] } means specs shorthand.
-                SoftwarePackage(packageName, specs = decodeSpecsArray normalizedPackageValue)
-            | YAMLElement.Object mappings ->
-                // Full map shorthand can include version/specs plus extension fields.
-                let version =
-                    mappings
-                    |> List.tryPick (function
-                        | YAMLElement.Mapping (k, v) when k.Value = "version" -> Some (decodeSpecsArray v)
-                        | _ -> None)
-                let specs =
-                    mappings
-                    |> List.tryPick (function
-                        | YAMLElement.Mapping (k, v) when k.Value = "specs" -> Some (decodeSpecsArray v)
-                        | _ -> None)
-                let package = SoftwarePackage(packageName, ?version = version, ?specs = specs)
-                overflowIntoDynamicObj package (SoftwarePackage.KnownFieldNames |> Seq.toList) normalizedPackageValue |> ignore
-                package
+            | Some value ->
+                match value.Kind with
+                | YamlNodeKind.Sequence _ ->
+                    // packages: { samtools: [spec1, spec2] } means specs shorthand.
+                    SoftwarePackage(packageName, specs = decodeSpecsArray value)
+                | YamlNodeKind.Mapping collection when collection.Items.IsEmpty ->
+                    SoftwarePackage(packageName)
+                | YamlNodeKind.Mapping _ ->
+                    // Full map shorthand can include version/specs plus extension fields.
+                    let version = tryGetPresentField "version" decodeSpecsArray value
+                    let specs = tryGetPresentField "specs" decodeSpecsArray value
+                    let package = SoftwarePackage(packageName, ?version = version, ?specs = specs)
+                    overflowIntoDynamicObj package (SoftwarePackage.KnownFieldNames |> Seq.toList) value |> ignore
+                    package
+                | _ ->
+                    // Scalar map value is treated as one specs entry.
+                    SoftwarePackage(packageName, specs = ResizeArray [| decodeStringOrExpression value |])
+
+        get.Required.Field "packages" (fun packagesElement ->
+            match packagesElement.Kind with
+            | YamlNodeKind.Sequence _ ->
+                // Standard CWL form: packages is an array of package objects.
+                Decode.resizearray
+                    (fun value ->
+                        Decode.object (fun get2 ->
+                            let package =
+                                SoftwarePackage(
+                                    get2.Required.Field "package" requiredString,
+                                    ?version = get2.Optional.Field "version" (Decode.resizearray requiredString),
+                                    ?specs = get2.Optional.Field "specs" (Decode.resizearray requiredString)
+                                )
+                            overflowIntoDynamicObj package (SoftwarePackage.KnownFieldNames |> Seq.toList) value |> ignore
+                            package
+                        ) value)
+                    packagesElement
+            | YamlNodeKind.Mapping _ ->
+                // Compact CWL form: package names are map keys.
+                mappingEntries packagesElement
+                |> List.map (fun entry ->
+                    let name = entryName entry
+                    atField name (fun () -> decodePackageFromMapEntry name entry.Value))
+                |> ResizeArray
             | _ ->
-                // Scalar map value is treated as one specs entry.
-                SoftwarePackage(packageName, specs = ResizeArray [| decodeStringOrExpression packageValue |])
+                raise (System.ArgumentException("Invalid packages format. Expected array or map.")))
 
-        match packagesElement with
-        | YAMLElement.Sequence _ ->
-            // Standard CWL form: packages is an array of package objects.
-            Decode.resizearray
-                (fun value ->
-                    Decode.object (fun get2 ->
-                        let package =
-                            SoftwarePackage(
-                                get2.Required.Field "package" Decode.string,
-                                ?version = get2.Optional.Field "version" (Decode.resizearray Decode.string),
-                                ?specs = get2.Optional.Field "specs" (Decode.resizearray Decode.string)
-                            )
-                        overflowIntoDynamicObj package (SoftwarePackage.KnownFieldNames |> Seq.toList) value |> ignore
-                        package
-                    ) value)
-                packagesElement
-        | YAMLElement.Object mappings ->
-            // Compact CWL form: package names are map keys.
-            mappings
-            |> List.choose (function
-                | YAMLElement.Mapping (key, value) -> Some (decodePackageFromMapEntry key.Value value)
-                | _ -> None)
-            |> ResizeArray
-        | _ ->
-            raise (System.ArgumentException("Invalid packages format. Expected array or map."))
-
-    /// Decode a YAMLElement into an InitialWorkDirRequirement array.
+    /// Decode a YamlNode into an InitialWorkDirRequirement array.
     /// Supports both string/expression and Dirent listing items.
     let initialWorkDirRequirementDecoder (get: Decode.IGetters): ResizeArray<InitialWorkDirEntry> =
-        let listingElement = get.Required.Field "listing" id
-        match listingElement with
-        | YAMLElement.Object [YAMLElement.Sequence _]
-        | YAMLElement.Sequence _ ->
-            // Normal case: listing is a sequence of entries.
-            Decode.resizearray initialWorkDirEntryDecoder listingElement
-        | _ ->
-            // CWL also permits a single listing entry without an enclosing array.
-            ResizeArray [| initialWorkDirEntryDecoder listingElement |]
+        get.Required.Field "listing" (fun element ->
+            let listingElement = requiredValue element
+            match listingElement.Kind with
+            | YamlNodeKind.Sequence _ ->
+                // Normal case: listing is a sequence of entries.
+                Decode.resizearray initialWorkDirEntryDecoder listingElement
+            | _ ->
+                // CWL also permits a single listing entry without an enclosing array.
+                ResizeArray [| initialWorkDirEntryDecoder listingElement |])
 
     /// Decode LoadListingRequirement, applying CWL's default no_listing behavior.
     let loadListingRequirementDecoder (get: Decode.IGetters): LoadListingRequirementValue =
@@ -909,31 +896,20 @@ module Decode =
         LoadListingRequirementValue(loadListing)
 
     /// Decode resource scalar fields as int64, float, or expression string without losing numeric shape.
-    let decodeResourceScalar (element: YAMLElement) : obj =
-        let tryGetScalarString = function
-            | YAMLElement.Value value
-            | YAMLElement.Object [YAMLElement.Value value] ->
-                Some value.Value
-            | _ ->
-                None
-
-        match tryGetScalarString element with
-        | Some scalarValue ->
-            match System.Int64.TryParse(scalarValue, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture) with
-            | true, intValue -> box intValue
-            | false, _ ->
-                match System.Double.TryParse(scalarValue, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture) with
-                | true, floatValue -> box floatValue
-                | false, _ -> box (decodeStringOrExpression element)
-        | None ->
-            box (decodeStringOrExpression element)
+    /// CWL types these fields as long, float or string, so the core schema decides. A plain number keeps its
+    /// numeric shape and a quoted number is a string.
+    let decodeResourceScalar (element: YamlNode) : obj =
+        match element with
+        | CoreInt parsed -> box parsed
+        | CoreFloat parsed -> box parsed
+        | _ -> box (decodeStringOrExpression element)
 
     /// Decode an optional resource field through the resource scalar coercion rules.
     let optionalResourceField (get: Decode.IGetters) (fieldName: string) : obj option =
-        get.Optional.Field fieldName id
+        get.Optional.Field fieldName Decode.node
         |> Option.map decodeResourceScalar
 
-    /// Decode a YAMLElement into a ResourceRequirementInstance
+    /// Decode a YamlNode into a ResourceRequirementInstance
     let resourceRequirementDecoder (get: Decode.IGetters): ResourceRequirementInstance =
         // Resource fields may be integer, float, or expression string. Keep them as
         // obj so the original scalar category can be re-encoded.
@@ -947,10 +923,10 @@ module Decode =
             ?outdirMin = optionalResourceField get "outdirMin",
             ?outdirMax = optionalResourceField get "outdirMax"
         )
-        
+
     /// Decode schema definition entries in either named object or map-entry shorthand form.
-    let schemaDefRequirementTypeDecoder (value: YAMLElement) : SchemaDefRequirementType =
-        let dict = Decode.object (fun get -> get.Overflow.FieldList []) value
+    let schemaDefRequirementTypeDecoder (value: YamlNode) : SchemaDefRequirementType =
+        let entries = mappingEntries value
         let schemaDefKnownFields =
             // SchemaDefRequirement entries combine the wrapper fields with the
             // schema fields of the referenced record/array/enum definition.
@@ -962,30 +938,32 @@ module Decode =
                     InputEnumSchema.KnownFieldNames
                 ]
             |> Seq.toList
-        if dict.ContainsKey "name" then
+        match entries |> List.tryFind (fun entry -> entryName entry = "name") with
+        | Some nameEntry ->
             // Explicit object form: {name: X, type: ...}
-            let schema = SchemaDefRequirementType(decodeStringOrExpression dict.["name"], cwlTypeDecoder' value)
+            let schema = SchemaDefRequirementType(decodeStringOrExpression nameEntry.Value, cwlTypeDecoder' value)
             overflowIntoDynamicObj schema schemaDefKnownFields value |> ignore
             schema
-        else
-            if dict.Count = 0 then
+        | None ->
+            match entries with
+            | [] ->
                 raise (System.ArgumentException("SchemaDefRequirement entry cannot be empty."))
-            // Map shorthand form: {X: {type: record, ...}}
-            let kv = dict |> Seq.head
-            let schema = SchemaDefRequirementType(kv.Key, cwlTypeDecoder' kv.Value)
-            overflowIntoDynamicObj schema (kv.Key :: schemaDefKnownFields) value |> ignore
-            schema
+            | first :: _ ->
+                // Map shorthand form: {X: {type: record, ...}}
+                let firstName = entryName first
+                let schema = SchemaDefRequirementType(firstName, cwlTypeDecoder' first.Value)
+                overflowIntoDynamicObj schema (firstName :: schemaDefKnownFields) value |> ignore
+                schema
 
-    /// Decode a YAMLElement into a SchemaDefRequirementType array
+    /// Decode a YamlNode into a SchemaDefRequirementType array
     let schemaDefRequirementDecoder (get: Decode.IGetters): ResizeArray<SchemaDefRequirementType> =
         get.Required.Field "types" (Decode.resizearray schemaDefRequirementTypeDecoder)
 
     /// Decode only literal boolean scalars, leaving expressions for requirement-specific handling.
-    let tryDecodeBoolScalar (element: YAMLElement) : bool option =
-        match element with
-        | YAMLElement.Value value
-        | YAMLElement.Object [YAMLElement.Value value] ->
-            match value.Value.Trim().ToLowerInvariant() with
+    let tryDecodeBoolScalar (element: YamlNode) : bool option =
+        match element.Kind with
+        | YamlNodeKind.Scalar _ ->
+            match (Decode.string element).Trim().ToLowerInvariant() with
             | "true" -> Some true
             | "false" -> Some false
             | _ -> None
@@ -994,7 +972,7 @@ module Decode =
 
     /// Decode WorkReuse as either a concrete bool requirement or an expression payload.
     let workReuseRequirementDecoder (get: Decode.IGetters): Requirement =
-        match get.Optional.Field "enableReuse" id with
+        match get.Optional.Field "enableReuse" Decode.node with
         | None ->
             WorkReuseRequirement (WorkReuseRequirementValue(true))
         | Some value ->
@@ -1006,7 +984,7 @@ module Decode =
 
     /// Decode NetworkAccess as either a concrete bool requirement or an expression payload.
     let networkAccessRequirementDecoder (get: Decode.IGetters): Requirement =
-        match get.Optional.Field "networkAccess" id with
+        match get.Optional.Field "networkAccess" Decode.node with
         | None ->
             NetworkAccessRequirement (NetworkAccessRequirementValue(true))
         | Some value ->
@@ -1023,28 +1001,15 @@ module Decode =
             |> Option.defaultValue true
         )
 
-    /// Decode a YAMLElement into a ToolTimeLimitRequirement value
+    /// Decode a YamlNode into a ToolTimeLimitRequirement value
     let toolTimeLimitRequirementDecoder (get: Decode.IGetters): ToolTimeLimitValue =
-        let timeLimitElement = get.Required.Field "timelimit" id
-        let tryGetScalarString =
-            // Numeric timelimits and expression timelimits both arrive as scalars;
-            // parsing decides the typed union case below.
-            match timeLimitElement with
-            | YAMLElement.Value value
-            | YAMLElement.Object [YAMLElement.Value value] ->
-                Some value.Value
-            | _ ->
-                None
-
-        match tryGetScalarString with
-        | Some scalarValue ->
-            match System.Int64.TryParse(scalarValue, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture) with
-            | true, intValue when intValue >= 0L -> ToolTimeLimitSeconds intValue
-            | true, _ -> raise (System.ArgumentException("ToolTimeLimit timelimit must be non-negative."))
-            | false, _ -> ToolTimeLimitExpression (decodeStringOrExpression timeLimitElement)
-        | None ->
-            // Non-scalar values can only be represented as expression-like strings here.
-            ToolTimeLimitExpression (decodeStringOrExpression timeLimitElement)
+        let timeLimitElement = get.Required.Field "timelimit" requiredValue
+        // CWL types the time limit as long or string, so a plain int is the number of seconds and
+        // every other value is an expression.
+        match timeLimitElement with
+        | CoreInt seconds when seconds >= 0L -> ToolTimeLimitSeconds seconds
+        | CoreInt _ -> raise (System.ArgumentException("ToolTimeLimit timelimit must be non-negative."))
+        | _ -> ToolTimeLimitExpression (decodeStringOrExpression timeLimitElement)
 
     /// Decode InlineJavascriptRequirement expressionLib in scalar or array form.
     let inlineJavascriptRequirementDecoder (get: Decode.IGetters): InlineJavascriptRequirementValue =
@@ -1077,7 +1042,7 @@ module Decode =
         | _ -> raise (System.ArgumentException($"Invalid or unsupported requirement class: {cls}"))
 
     /// Attach unknown payload fields to DynamicObj-backed requirement values after class dispatch.
-    let addRequirementPayloadOverflow (element: YAMLElement) (requirement: Requirement) =
+    let addRequirementPayloadOverflow (element: YamlNode) (requirement: Requirement) =
         let knownWithClass knownFields = "class" :: (knownFields |> Seq.toList)
         match requirement with
         // Only payload records/classes that inherit DynamicObj can receive overflow.
@@ -1105,48 +1070,48 @@ module Decode =
         requirement
 
     /// Decode requirements from either sequence syntax or class-name map syntax.
-    let requirementArrayDecoder : YAMLElement -> ResizeArray<Requirement> =
+    let requirementArrayDecoder : YamlNode -> ResizeArray<Requirement> =
         fun yEle ->
             // helper: decode a single requirement object that contain 'class' field
-            let decodeSingleRequirementObject (ele: YAMLElement) : Requirement =
+            let decodeSingleRequirementObject (ele: YamlNode) : Requirement =
                 Decode.object (fun get ->
                     // Sequence syntax carries class inside each item.
-                    let cls = get.Required.Field "class" Decode.string
+                    let cls = get.Required.Field "class" requiredString
                     requirementFromTypeName cls get
                     |> addRequirementPayloadOverflow ele
                 ) ele
 
-            match yEle with
+            match yEle.Kind with
             // I: ARRAY SYNTAX
                 // requirements:
                 //   - class: DockerRequirement
-            | YAMLElement.Object [YAMLElement.Sequence items] ->
-                items
-                |> List.map decodeSingleRequirementObject
+            | YamlNodeKind.Sequence collection ->
+                collection.Items
+                |> List.mapi (fun index item -> atField $"[{index}]" (fun () -> decodeSingleRequirementObject item.Node))
                 |> ResizeArray
 
             // II:  OBJECT/MAP SYNTAX (also covers flow/JSON-style mapping)
                 // requirements:
                 //   DockerRequirement: { ... }
-            | YAMLElement.Object _ ->
-                Decode.object (fun get ->
-                    get.Overflow.FieldList []
-                    |> Seq.map (fun kv ->
-                        // Map syntax uses the mapping key as the requirement class
-                        // and the mapping value as that requirement's payload.
-                        Decode.object (requirementFromTypeName kv.Key) kv.Value
-                        |> addRequirementPayloadOverflow kv.Value
-                    )
-                    |> ResizeArray
-                ) yEle
-            // INVALID CWL REQUIREMENTS  
-            | other -> raise (System.ArgumentException($"Invalid CWL requirements syntax: {other}"))
+            | YamlNodeKind.Mapping _ ->
+                mappingEntries yEle
+                |> List.map (fun entry ->
+                    // Map syntax uses the mapping key as the requirement class
+                    // and the mapping value as that requirement's payload.
+                    let name = entryName entry
+                    atField name (fun () ->
+                        Decode.object (requirementFromTypeName name) entry.Value
+                        |> addRequirementPayloadOverflow entry.Value)
+                )
+                |> ResizeArray
+            // INVALID CWL REQUIREMENTS
+            | _ -> raise (System.ArgumentException($"Invalid CWL requirements syntax: {YamlNode.show yEle}"))
 
     /// Try known requirement decoding for hints, falling back to UnknownHint on decode failure.
-    let tryDecodeKnownRequirementFromElement (element: YAMLElement) : Requirement option =
+    let tryDecodeKnownRequirementFromElement (element: YamlNode) : Requirement option =
         try
             Some (Decode.object (fun get ->
-                let cls = get.Required.Field "class" Decode.string
+                let cls = get.Required.Field "class" requiredString
                 requirementFromTypeName cls get
                 |> addRequirementPayloadOverflow element
             ) element)
@@ -1164,7 +1129,7 @@ module Decode =
             None
 
     /// Decode one hint as a known requirement when possible, otherwise preserve the raw hint.
-    let decodeHintElement (element: YAMLElement) : HintEntry =
+    let decodeHintElement (element: YamlNode) : HintEntry =
         match tryDecodeKnownRequirementFromElement element with
         | Some requirement -> KnownHint requirement
         | None ->
@@ -1173,109 +1138,88 @@ module Decode =
                     Decode.object (fun get -> get.Optional.Field "class" Decode.string) element
                 with _ ->
                     None
-            UnknownHint (HintUnknownValue(hintClass, element))
+            UnknownHint (HintUnknownValue(hintClass, { Node = element }))
 
     /// Decode hints from sequence syntax or class-name map syntax while preserving unknown hints.
-    let hintArrayDecoder : YAMLElement -> ResizeArray<HintEntry> =
+    let hintArrayDecoder : YamlNode -> ResizeArray<HintEntry> =
         fun yEle ->
-            match yEle with
-            | YAMLElement.Object [YAMLElement.Sequence items]
-            | YAMLElement.Sequence items ->
+            match yEle.Kind with
+            | YamlNodeKind.Sequence collection ->
                 // Sequence hints can be known requirement payloads or arbitrary
                 // extension hints.
-                items
-                |> List.map decodeHintElement
+                collection.Items
+                |> List.map (fun item -> decodeHintElement item.Node)
                 |> ResizeArray
-            | YAMLElement.Object _ ->
-                Decode.object (fun get ->
-                    get.Overflow.FieldList []
-                    |> Seq.map (fun kv ->
-                        let valueWithClass =
-                            match kv.Value with
-                            | YAMLElement.Object mappings ->
-                                let hasClass =
-                                    // If map-style hint payload already has class,
-                                    // preserve it instead of overwriting with the key.
-                                    mappings
-                                    |> List.exists (function
-                                        | YAMLElement.Mapping (k, _) when k.Value = "class" -> true
-                                        | _ -> false
-                                    )
-                                if hasClass then kv.Value
-                                else
-                                    // Map-style hints use the key as synthetic class
-                                    // for compatibility with sequence-form decoding.
-                                    let clsKey = YAMLContent.create "class"
-                                    let clsValue = YAMLElement.Object [YAMLElement.Value (YAMLContent.create kv.Key)]
-                                    YAMLElement.Object (YAMLElement.Mapping (clsKey, clsValue) :: mappings)
-                            | other ->
-                                // Scalar map-style hints are wrapped as {class, value}
-                                // so decodeHintElement can still classify them.
-                                let clsKey = YAMLContent.create "class"
-                                let clsValue = YAMLElement.Object [YAMLElement.Value (YAMLContent.create kv.Key)]
-                                let valueKey = YAMLContent.create "value"
-                                YAMLElement.Object [
-                                    YAMLElement.Mapping (clsKey, clsValue)
-                                    YAMLElement.Mapping (valueKey, other)
-                                ]
-                        decodeHintElement valueWithClass
-                    )
-                    |> ResizeArray
-                ) yEle
-            | other ->
-                raise (System.ArgumentException($"Invalid CWL hints syntax: {other}"))
+            | YamlNodeKind.Mapping _ ->
+                mappingEntries yEle
+                |> List.map (fun entry ->
+                    let hintName = entryName entry
+                    let classEntry = YamlNode.entry (YamlNode.plain "class") (Encode.string hintName)
+                    let valueWithClass =
+                        match entry.Value.Kind with
+                        | YamlNodeKind.Mapping collection ->
+                            let hasClass =
+                                // If map-style hint payload already has class,
+                                // preserve it instead of overwriting with the key.
+                                collection.Items
+                                |> List.exists (fun payloadEntry -> entryName payloadEntry = "class")
+                            if hasClass then entry.Value
+                            else
+                                // Map-style hints use the key as synthetic class
+                                // for compatibility with sequence-form decoding.
+                                { entry.Value with Kind = YamlNodeKind.Mapping { collection with Items = classEntry :: collection.Items } }
+                        | _ ->
+                            // Scalar map-style hints are wrapped as {class, value}
+                            // so decodeHintElement can still classify them.
+                            YamlNode.mapping [ classEntry; YamlNode.entry (YamlNode.plain "value") entry.Value ]
+                    decodeHintElement valueWithClass
+                )
+                |> ResizeArray
+            | _ ->
+                raise (System.ArgumentException($"Invalid CWL hints syntax: {YamlNode.show yEle}"))
 
-    /// Access the requirements field and decode the YAMLElements into a Requirement array
-    let requirementsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<Requirement> option) =
+    /// Access the requirements field and decode the YamlNodes into a Requirement array
+    let requirementsDecoder: (YamlNode -> ResizeArray<Requirement> option) =
         Decode.object (fun get ->
             let requirements = get.Optional.Field "requirements" requirementArrayDecoder
             requirements
         )
 
-    /// Access the hints field and decode the YAMLElements into a HintEntry array
-    let hintsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<HintEntry> option) =
+    /// Access the hints field and decode the YamlNodes into a HintEntry array
+    let hintsDecoder: (YamlNode -> ResizeArray<HintEntry> option) =
         Decode.object (fun get ->
             let hints = get.Optional.Field "hints" hintArrayDecoder
             hints
         )
 
-    /// Decode a YAMLElement into an InputBinding
-    let inputBindingDecoder: (YAMLiciousTypes.YAMLElement -> InputBinding option) =
-        Decode.object(fun get ->
-            let outputBinding = 
-                get.Optional.Field 
-                    "inputBinding" 
-                    (
-                        fun value ->
-                            Decode.object (fun get' ->
-                                // InputBinding has several optional command-line
-                                // behavior fields; absent fields remain None.
-                                let binding =
-                                    InputBinding(
-                                        ?prefix = get'.Optional.Field "prefix" Decode.string,
-                                        ?position = get'.Optional.Field "position" Decode.int,
-                                        ?itemSeparator = get'.Optional.Field "itemSeparator" Decode.string,
-                                        ?separate = get'.Optional.Field "separate" Decode.bool,
-                                        ?loadContents = get'.Optional.Field "loadContents" Decode.bool,
-                                        ?valueFrom = get'.Optional.Field "valueFrom" Decode.string,
-                                        ?shellQuote = get'.Optional.Field "shellQuote" Decode.bool
-                                    )
-                                overflowIntoDynamicObj binding (InputBinding.KnownFieldNames |> Seq.toList) value |> ignore
-                                binding
-                            ) value
+    /// Decode a YamlNode into an InputBinding
+    let inputBindingDecoder: (YamlNode -> InputBinding option) =
+        let decodeBinding (value: YamlNode) =
+            Decode.object (fun get' ->
+                // InputBinding has several optional command-line
+                // behavior fields. Absent fields remain None.
+                let binding =
+                    InputBinding(
+                        ?prefix = get'.Optional.Field "prefix" Decode.string,
+                        ?position = get'.Optional.Field "position" Decode.int,
+                        ?itemSeparator = get'.Optional.Field "itemSeparator" Decode.string,
+                        ?separate = get'.Optional.Field "separate" Decode.bool,
+                        ?loadContents = get'.Optional.Field "loadContents" Decode.bool,
+                        ?valueFrom = get'.Optional.Field "valueFrom" Decode.string,
+                        ?shellQuote = get'.Optional.Field "shellQuote" Decode.bool
                     )
-            outputBinding
-        )
+                overflowIntoDynamicObj binding (InputBinding.KnownFieldNames |> Seq.toList) value |> ignore
+                binding
+            ) value
+        // A port in scalar shorthand has no input binding.
+        tryGetPresentField "inputBinding" decodeBinding
 
     /// Decode a named input from map shorthand or full object form, preserving optionality and extensions.
-    let decodeNamedInput (name: string) (value: YAMLElement) =
+    let decodeNamedInput (name: string) (value: YamlNode) =
         // inputBinding is nested and decoded separately so both shorthand and object
         // input definitions can share the same construction flow.
         let inputBinding = inputBindingDecoder value
-        let cwlType, optional =
-            match value with
-            | YAMLElement.Object [YAMLElement.Value v] -> cwlTypeStringMatcher v.Value (Unchecked.defaultof<Decode.IGetters>)
-            | _ -> cwlTypeDecoder value
+        let cwlType, optional = portTypeDecoder value
         // Known optional fields are copied into typed properties; unrecognized fields
         // are attached below as DynamicObj overflow.
         let input =
@@ -1297,169 +1241,146 @@ module Decode =
         input
 
     /// Decode one sequence-form input, warning only for malformed unnamed entries.
-    let decodeInputSequenceItem (warnings: WarningSink) (path: string) (index: int) (item: YAMLElement) =
+    let decodeInputSequenceItem (warnings: WarningSink) (path: string) (index: int) (item: YamlNode) =
         match tryGetStringField "id" item with
-        | Some id -> Some (decodeNamedInput id item)
-        | None when isIgnorableYamlNoise item -> None
+        | Some id -> Some (atField id (fun () -> decodeNamedInput id item))
         | None ->
             addWarning warnings $"{path}[{index}]" "Skipped malformed unnamed CWL input entry." (Some item)
             None
 
-    /// Decode a YAMLElement into an Input array
-    let inputArrayDecoderWithWarnings (warnings: WarningSink) (path: string) : (YAMLiciousTypes.YAMLElement -> ResizeArray<CWLInput>) =
+    /// Decode a YamlNode into an Input array
+    let inputArrayDecoderWithWarnings (warnings: WarningSink) (path: string) : (YamlNode -> ResizeArray<CWLInput>) =
         fun value ->
-            match value with
-            | YAMLElement.Object [YAMLElement.Sequence items]
-            | YAMLElement.Sequence items ->
+            match value.Kind with
+            | YamlNodeKind.Sequence collection ->
                 // Sequence-form inputs must carry an id on each object item.
-                items
-                |> List.mapi (decodeInputSequenceItem warnings path)
+                collection.Items
+                |> List.mapi (fun index item -> decodeInputSequenceItem warnings path index item.Node)
                 |> List.choose id
                 |> ResizeArray
             | _ ->
                 // Map-form inputs use the map key as the input name.
-                let dict = Decode.object (fun get -> get.Overflow.FieldList []) value
-                [| for key in dict.Keys do decodeNamedInput key dict.[key] |] |> ResizeArray
+                [|
+                    for entry in mappingEntries value do
+                        let name = entryName entry
+                        atField name (fun () -> decodeNamedInput name entry.Value)
+                |]
+                |> ResizeArray
 
-    let inputArrayDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<CWLInput>) =
+    let inputArrayDecoder: (YamlNode -> ResizeArray<CWLInput>) =
         inputArrayDecoderWithWarnings None "inputs"
 
-    /// Access the inputs field and decode the YAMLElements into an Input array
-    let inputsDecoderWithWarnings (warnings: WarningSink) : (YAMLiciousTypes.YAMLElement -> ResizeArray<CWLInput> option) =
+    /// Access the inputs field and decode the YamlNodes into an Input array
+    let inputsDecoderWithWarnings (warnings: WarningSink) : (YamlNode -> ResizeArray<CWLInput> option) =
         Decode.object (fun get ->
             get.Optional.Field "inputs" (inputArrayDecoderWithWarnings warnings "inputs")
         )
 
-    let inputsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<CWLInput> option) =
+    let inputsDecoder: (YamlNode -> ResizeArray<CWLInput> option) =
         inputsDecoderWithWarnings None
 
     /// Decode baseCommand from CWL's scalar or array forms.
-    let baseCommandDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<string> option) =
+    let baseCommandDecoder: (YamlNode -> ResizeArray<string> option) =
         Decode.object (fun get ->
-            let baseCommandField = get.Optional.Field "baseCommand" id
-            match baseCommandField with
-            | Some (YAMLElement.Object [YAMLElement.Value v]) ->
-                // Single string value
-                Some (ResizeArray([v.Value]))
-            | Some (YAMLElement.Value v) ->
-                // Single string value (unwrapped)
-                Some (ResizeArray([v.Value]))
-            | Some (YAMLElement.Object [YAMLElement.Sequence s]) ->
-                // Array of strings wrapped
-                Some (Decode.resizearray Decode.string (YAMLElement.Sequence s))
-            | Some (YAMLElement.Sequence s) ->
-                // Array of strings unwrapped
-                Some (Decode.resizearray Decode.string (YAMLElement.Sequence s))
+            match get.Optional.Field "baseCommand" Decode.node with
+            | Some baseCommandField ->
+                match baseCommandField.Kind with
+                | YamlNodeKind.Scalar _ ->
+                    // Single string value
+                    Some (ResizeArray([Decode.string baseCommandField]))
+                | YamlNodeKind.Sequence _ ->
+                    // Array of strings
+                    Some (atField "baseCommand" (fun () -> Decode.resizearray requiredString baseCommandField))
+                | _ ->
+                    // Malformed baseCommand is ignored for backward compatibility with
+                    // the previous permissive decoder.
+                    None
             | None -> None
-            | _ ->
-                // Malformed baseCommand is ignored for backward compatibility with
-                // the previous permissive decoder.
-                None
         )
 
-    let versionDecoder: (YAMLiciousTypes.YAMLElement -> string) =
-        Decode.object (fun get -> get.Required.Field "cwlVersion" Decode.string)
+    let versionDecoder: (YamlNode -> string) =
+        Decode.object (fun get -> get.Required.Field "cwlVersion" requiredString)
 
-    let classDecoder: (YAMLiciousTypes.YAMLElement -> string) =
+    let classDecoder: (YamlNode -> string) =
         Decode.object (fun get ->
-            get.Required.Field "class" Decode.string 
+            get.Required.Field "class" requiredString
         )
-    let stringOptionFieldDecoder field : (YAMLiciousTypes.YAMLElement -> string option) =
+    let stringOptionFieldDecoder field : (YamlNode -> string option) =
+        tryGetPresentField field Decode.string
+
+    let boolOptionFieldDecoder field : (YamlNode -> bool option) =
+        tryGetPresentField field Decode.bool
+
+    let rawYamlOptionFieldDecoder field : (YamlNode -> RawYaml option) =
+        tryGetPresentField field (fun node -> { Node = node })
+
+    let stringFieldDecoder field : (YamlNode -> string) =
         Decode.object(fun get ->
-            let fieldValue = get.Optional.Field field Decode.string
+            let fieldValue = get.Required.Field field requiredString
             fieldValue
         )
 
-    let boolOptionFieldDecoder field : (YAMLiciousTypes.YAMLElement -> bool option) =
-        Decode.object(fun get ->
-            let fieldValue = get.Optional.Field field Decode.bool
-            fieldValue
-        )
-
-    let yamlElementOptionFieldDecoder field : (YAMLiciousTypes.YAMLElement -> YAMLElement option) =
-        Decode.object(fun get ->
-            let fieldValue = get.Optional.Field field id
-            fieldValue
-        )
-
-    let stringFieldDecoder field : (YAMLiciousTypes.YAMLElement -> string) =
-        Decode.object(fun get ->
-            let fieldValue = get.Required.Field field Decode.string
-            fieldValue
-        )
-
-    /// Decode a YAMLElement that may be a single string or an array of strings.
-    let stringOrStringArrayDecoder (value: YAMLElement) : ResizeArray<string> option =
-        match value with
-        | YAMLElement.Object [YAMLElement.Value v]
-        | YAMLElement.Value v ->
+    /// Decode a YamlNode that may be a single string or an array of strings.
+    let stringOrStringArrayDecoder (value: YamlNode) : ResizeArray<string> option =
+        match value.Kind with
+        | YamlNodeKind.Scalar _ ->
             // CWL shorthand: source: input_id
-            Some (ResizeArray [ v.Value ])
-        | YAMLElement.Object [YAMLElement.Sequence s]
-        | YAMLElement.Sequence s ->
+            Some (ResizeArray [ requiredString value ])
+        | YamlNodeKind.Sequence _ ->
             // Full form: source: [a, b]
-            Some (Decode.resizearray Decode.string (YAMLElement.Sequence s))
+            Some (Decode.resizearray requiredString value)
         | _ -> None
 
-    /// Decode a YAMLElement into a ResizeArray<string> option for the source field
+    /// Decode a YamlNode into a ResizeArray<string> option for the source field
     /// Handles both single string values and arrays of strings
-    let sourceArrayFieldDecoder field : (YAMLiciousTypes.YAMLElement -> ResizeArray<string> option) =
-        Decode.object(fun get ->
-            get.Optional.Field field id
+    let sourceArrayFieldDecoder field : (YamlNode -> ResizeArray<string> option) =
+        fun value ->
+            tryGetPresentField field Decode.node value
             |> Option.bind stringOrStringArrayDecoder
-        )
 
     /// Decode and validate linkMerge enum fields.
-    let linkMergeFieldDecoder field : (YAMLiciousTypes.YAMLElement -> LinkMergeMethod option) =
-        Decode.object(fun get ->
-            let linkMergeField = get.Optional.Field field Decode.string
-            match linkMergeField with
+    let linkMergeFieldDecoder field : (YamlNode -> LinkMergeMethod option) =
+        fun value ->
+            match tryGetPresentField field Decode.string value with
             | Some linkMergeString ->
                 match LinkMergeMethod.tryParse linkMergeString with
                 | Some linkMerge -> Some linkMerge
                 | None -> raise (System.ArgumentException($"Invalid linkMerge value: {linkMergeString}"))
             | None -> None
-        )
 
     /// Decode and validate pickValue enum fields.
-    let pickValueFieldDecoder field : (YAMLiciousTypes.YAMLElement -> PickValueMethod option) =
-        Decode.object(fun get ->
-            let pickValueField = get.Optional.Field field Decode.string
-            match pickValueField with
+    let pickValueFieldDecoder field : (YamlNode -> PickValueMethod option) =
+        fun value ->
+            match tryGetPresentField field Decode.string value with
             | Some pickValueString ->
                 match PickValueMethod.tryParse pickValueString with
                 | Some pickValue -> Some pickValue
                 | None -> raise (System.ArgumentException($"Invalid pickValue value: {pickValueString}"))
             | None -> None
-        )
 
-    let scatterFieldDecoder field : (YAMLiciousTypes.YAMLElement -> ResizeArray<string> option) =
-        Decode.object(fun get ->
-            get.Optional.Field field id
+    let scatterFieldDecoder field : (YamlNode -> ResizeArray<string> option) =
+        fun value ->
+            tryGetPresentField field Decode.node value
             |> Option.bind stringOrStringArrayDecoder
-        )
 
     /// Decode and validate scatterMethod enum fields.
-    let scatterMethodFieldDecoder field : (YAMLiciousTypes.YAMLElement -> ScatterMethod option) =
-        Decode.object(fun get ->
-            let scatterMethodField = get.Optional.Field field Decode.string
-            match scatterMethodField with
+    let scatterMethodFieldDecoder field : (YamlNode -> ScatterMethod option) =
+        fun value ->
+            match tryGetPresentField field Decode.string value with
             | Some scatterMethodString ->
                 match ScatterMethod.tryParse scatterMethodString with
                 | Some scatterMethod -> Some scatterMethod
                 | None -> raise (System.ArgumentException($"Invalid scatterMethod value: {scatterMethodString}"))
             | None -> None
-        )
 
     /// Decode optional expression-like fields, including schema-salad directive wrappers.
-    let expressionStringOptionFieldDecoder field : (YAMLiciousTypes.YAMLElement -> string option) =
-        Decode.object(fun get ->
-            get.Optional.Field field id
+    let expressionStringOptionFieldDecoder field : (YamlNode -> string option) =
+        fun value ->
+            tryGetPresentField field Decode.node value
             |> Option.map decodeStringOrExpression
-        )
 
     /// Decode a step input from map or scalar shorthand and preserve unknown step-input fields.
-    let decodeStepInputFromValue (id: string) (value: YAMLElement) (allowScalarSource: bool) : StepInput =
+    let decodeStepInputFromValue (id: string) (value: YamlNode) (allowScalarSource: bool) : StepInput =
         let scalarSource =
             if allowScalarSource then
                 // Map-form step inputs may be `in: { target: source }`, where the
@@ -1481,7 +1402,7 @@ module Decode =
             StepInput.create(
                 id,
                 ?source = source,
-                ?defaultValue = yamlElementOptionFieldDecoder "default" value,
+                ?defaultValue = rawYamlOptionFieldDecoder "default" value,
                 ?valueFrom = stringOptionFieldDecoder "valueFrom" value,
                 ?linkMerge = linkMergeFieldDecoder "linkMerge" value,
                 ?pickValue = pickValueFieldDecoder "pickValue" value,
@@ -1498,27 +1419,27 @@ module Decode =
         stepInput
 
     /// Decode map-form step inputs where the map key supplies the step input id.
-    let decodeStepInputsFromMap (value: YAMLElement) : ResizeArray<StepInput> =
-        let dict = Decode.object (fun get -> get.Overflow.FieldList []) value
+    let decodeStepInputsFromMap (value: YamlNode) : ResizeArray<StepInput> =
         [|
-            for key in dict.Keys do
-                decodeStepInputFromValue key dict.[key] true
+            for entry in mappingEntries value do
+                // A step input in map form needs a source or a mapping, a key without a value has neither.
+                let name = entryName entry
+                atField name (fun () -> decodeStepInputFromValue name (requiredValue entry.Value) true)
         |]
         |> ResizeArray
 
     /// Decode sequence-form step inputs where the id must be present in the item.
-    let decodeStepInputFromArrayItem (item: YAMLElement) : StepInput =
+    let decodeStepInputFromArrayItem (item: YamlNode) : StepInput =
         let id = stringFieldDecoder "id" item
         decodeStepInputFromValue id item false
 
     /// Decode sequence-form step inputs, warning and skipping only malformed unnamed entries.
-    let decodeStepInputsFromArrayWithWarnings (warnings: WarningSink) (path: string) (items: YAMLElement list) : ResizeArray<StepInput> =
+    let decodeStepInputsFromArrayWithWarnings (warnings: WarningSink) (path: string) (items: YamlNode list) : ResizeArray<StepInput> =
         items
         |> List.mapi (fun index item ->
             match tryGetStringField "id" item with
             // Items with ids are considered intended CWL step inputs and decode strictly.
-            | Some _ -> Some (decodeStepInputFromArrayItem item)
-            | None when isIgnorableYamlNoise item -> None
+            | Some id -> Some (atField id (fun () -> decodeStepInputFromArrayItem item))
             | None ->
                 // Unnamed malformed entries are public-workflow tolerance cases.
                 addWarning warnings $"{path}[{index}]" "Skipped malformed unnamed CWL step input entry." (Some item)
@@ -1526,28 +1447,26 @@ module Decode =
         |> List.choose id
         |> ResizeArray
 
-    let decodeStepInputsFromArray (items: YAMLElement list) : ResizeArray<StepInput> =
+    let decodeStepInputsFromArray (items: YamlNode list) : ResizeArray<StepInput> =
         decodeStepInputsFromArrayWithWarnings None "in" items
 
     /// Select the step input decoder based on CWL map-form versus sequence-form syntax.
-    let inputStepDecoderWithWarnings (warnings: WarningSink) (path: string) : (YAMLiciousTypes.YAMLElement -> ResizeArray<StepInput>) =
+    let inputStepDecoderWithWarnings (warnings: WarningSink) (path: string) : (YamlNode -> ResizeArray<StepInput>) =
         fun value ->
-            match value with
-            | YAMLElement.Object [YAMLElement.Sequence items]
-            | YAMLElement.Sequence items ->
-                decodeStepInputsFromArrayWithWarnings warnings path items
+            match value.Kind with
+            | YamlNodeKind.Sequence collection ->
+                decodeStepInputsFromArrayWithWarnings warnings path (collection.Items |> List.map (fun item -> item.Node))
             | _ ->
                 decodeStepInputsFromMap value
 
-    let inputStepDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<StepInput>) =
+    let inputStepDecoder: (YamlNode -> ResizeArray<StepInput>) =
         inputStepDecoderWithWarnings None "in"
 
     /// Decode step outputs from scalar shorthand or record form with extension fields.
-    let decodeStepOutputItem (value: YAMLElement) : StepOutput =
-        match value with
-        | YAMLElement.Object [YAMLElement.Value v]
-        | YAMLElement.Value v ->
-            StepOutputString v.Value
+    let decodeStepOutputItem (value: YamlNode) : StepOutput =
+        match value.Kind with
+        | YamlNodeKind.Scalar _ ->
+            StepOutputString (requiredString value)
         | _ ->
             let id = stringFieldDecoder "id" value
             let output = StepOutputParameter.create id
@@ -1555,78 +1474,68 @@ module Decode =
             StepOutputRecord output
 
     /// Decode workflow step out values, treating CWL empty forms as an empty output list.
-    let outputStepsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<StepOutput>) =
+    let outputStepsDecoder: (YamlNode -> ResizeArray<StepOutput>) =
         Decode.object (fun get ->
-            let outField = get.Required.Field "out" id
-            match outField with
-            | YAMLElement.Object [] ->
-                // Empty YAML object is how an empty flow sequence can surface.
-                ResizeArray()
-            | YAMLElement.Object [YAMLElement.Value v] when v.Value = "[]" ->
-                ResizeArray()
-            | YAMLElement.Object [YAMLElement.Sequence []] | YAMLElement.Sequence [] ->
-                ResizeArray()
-            | YAMLElement.Object [YAMLElement.Sequence outputs]
-            | YAMLElement.Sequence outputs ->
-                // Normal multi-output sequence.
-                outputs
-                |> List.map decodeStepOutputItem
-                |> ResizeArray
-            | value ->
-                // Single scalar or single record output.
-                ResizeArray [ decodeStepOutputItem value ]
+            // CWL requires out. `out: []` and `out: {}` are empty lists, and a key without a value is an error.
+            let outField = get.Required.Field "out" requiredValue
+            atField "out" (fun () ->
+                match outField.Kind with
+                | YamlNodeKind.Mapping collection when collection.Items.IsEmpty ->
+                    // An empty flow mapping, out: {}, has no outputs either.
+                    ResizeArray()
+                | YamlNodeKind.Sequence collection ->
+                    // Normal multi-output sequence. An empty sequence has no outputs.
+                    collection.Items
+                    |> List.mapi (fun index item -> atField $"[{index}]" (fun () -> decodeStepOutputItem item.Node))
+                    |> ResizeArray
+                | _ ->
+                    // Single scalar or single record output.
+                    ResizeArray [ decodeStepOutputItem outField ])
         )
 
     let docDecoder =
         Decode.object (fun get -> get.Optional.Field "doc" Decode.string)
 
-    let labelDecoder: (YAMLiciousTypes.YAMLElement -> string option) =
+    let labelDecoder: (YamlNode -> string option) =
         Decode.object (fun get -> get.Optional.Field "label" Decode.string)
 
-    let idDecoder: (YAMLiciousTypes.YAMLElement -> string option) =
+    let idDecoder: (YamlNode -> string option) =
         Decode.object (fun get -> get.Optional.Field "id" Decode.string)
 
-    let intentDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<string> option) =
+    let intentDecoder: (YamlNode -> ResizeArray<string> option) =
         Decode.object (fun get ->
-            get.Optional.Field "intent" id
+            get.Optional.Field "intent" Decode.node
             |> Option.bind stringOrStringArrayDecoder
         )
-    
+
     /// Test object mappings for an explicit field without invoking a typed decoder.
-    let hasField (fieldName: string) (yamlElement: YAMLElement) : bool =
-        match yamlElement with
-        | YAMLElement.Object fields ->
-            fields
-            |> List.exists (function
-                | YAMLElement.Mapping (k, _) when k.Value = fieldName -> true
-                | _ -> false
-            )
+    let hasField (fieldName: string) (node: YamlNode) : bool =
+        match node.Kind with
+        | YamlNodeKind.Mapping collection ->
+            collection.Items
+            |> List.exists (fun entry -> entryName entry = fieldName)
         | _ -> false
 
     /// Inject the parent workflow cwlVersion into inline run objects that omit it.
-    let withDefaultCwlVersion (defaultCwlVersion: string) (yamlElement: YAMLElement) : YAMLElement =
-        match yamlElement with
-        | YAMLElement.Object fields when hasField "cwlVersion" yamlElement ->
-            // Inline tools can declare their own version; do not override it.
-            yamlElement
-        | YAMLElement.Object fields ->
+    let withDefaultCwlVersion (defaultCwlVersion: string) (node: YamlNode) : YamlNode =
+        match node.Kind with
+        | YamlNodeKind.Mapping collection when not (hasField "cwlVersion" node) ->
             // Inline run objects commonly omit cwlVersion and inherit the workflow's
             // version for decoding purposes.
-            let key = YAMLContent.create "cwlVersion"
-            let value = YAMLElement.Object [YAMLElement.Value (YAMLContent.create defaultCwlVersion)]
-            YAMLElement.Object (YAMLElement.Mapping (key, value) :: fields)
+            let versionEntry = YamlNode.entry (YamlNode.plain "cwlVersion") (Encode.string defaultCwlVersion)
+            { node with Kind = YamlNodeKind.Mapping { collection with Items = versionEntry :: collection.Items } }
         | _ ->
-            // Non-object run values are path strings and need no version injection.
-            yamlElement
+            // Inline tools can declare their own version, and non-object run values are path strings.
+            // Neither needs a version injection.
+            node
 
     /// Decode a workflow step run as either a path string or an inline CWL processing unit.
-    let rec workflowStepRunDecoder (warnings: WarningSink) (defaultCwlVersion: string) (runValue: YAMLElement) : WorkflowStepRun =
-        match runValue with
-        | YAMLElement.Object [YAMLElement.Value v]
-        | YAMLElement.Value v ->
+    let rec workflowStepRunDecoder (warnings: WarningSink) (defaultCwlVersion: string) (runValue: YamlNode) : WorkflowStepRun =
+        match runValue.Kind with
+        | YamlNodeKind.Scalar _ ->
             // Most workflow steps reference an external CWL file by path.
-            RunString v.Value
-        | YAMLElement.Object _ ->
+            RunString (requiredString runValue)
+        | YamlNodeKind.Mapping _ ->
             let normalizedRun = withDefaultCwlVersion defaultCwlVersion runValue
             // Inline run objects are full CWL processing units and can themselves
             // contain tolerant ports/steps, so the same warning sink is threaded in.
@@ -1636,12 +1545,12 @@ module Decode =
             | ExpressionTool expressionTool -> WorkflowStepRunOps.fromExpressionTool expressionTool
             | Operation operation -> WorkflowStepRunOps.fromOperation operation
         | _ ->
-            raise (System.ArgumentException($"Unsupported run value for workflow step: %A{runValue}"))
+            raise (System.ArgumentException($"Unsupported run value for workflow step: {YamlNode.show runValue}"))
 
     /// Decode a named workflow step and thread warnings into nested step inputs and inline runs.
-    and decodeWorkflowStepFromValueWithId (warnings: WarningSink) (defaultCwlVersion: string) (path: string) (stepId: string) (value: YAMLElement) : WorkflowStep =
+    and decodeWorkflowStepFromValueWithId (warnings: WarningSink) (defaultCwlVersion: string) (path: string) (stepId: string) (value: YamlNode) : WorkflowStep =
         // Required fields are decoded strictly because the step has an explicit id.
-        let runValue = Decode.object (fun get' -> get'.Required.Field "run" id) value
+        let runValue = Decode.object (fun get' -> get'.Required.Field "run" requiredValue) value
         let run = workflowStepRunDecoder warnings defaultCwlVersion runValue
         let inputs =
             Decode.object (fun get' ->
@@ -1681,49 +1590,47 @@ module Decode =
         |> ignore
         wfStep
 
-    and decodeWorkflowStepFromArrayItem (defaultCwlVersion: string) (item: YAMLElement) : WorkflowStep =
+    and decodeWorkflowStepFromArrayItem (defaultCwlVersion: string) (item: YamlNode) : WorkflowStep =
         let stepId = stringFieldDecoder "id" item
         decodeWorkflowStepFromValueWithId None defaultCwlVersion "steps[]" stepId item
 
     /// Decode one sequence-form workflow step, warning only for malformed unnamed entries.
-    and decodeWorkflowStepFromArrayItemWithWarnings (warnings: WarningSink) (defaultCwlVersion: string) (index: int) (item: YAMLElement) =
+    and decodeWorkflowStepFromArrayItemWithWarnings (warnings: WarningSink) (defaultCwlVersion: string) (index: int) (item: YamlNode) =
         match tryGetStringField "id" item with
         // An id marks the item as an intended step, so malformed required fields
         // should still fail instead of becoming warnings.
-        | Some stepId -> Some (decodeWorkflowStepFromValueWithId warnings defaultCwlVersion $"steps[{index}]" stepId item)
-        | None when isIgnorableYamlNoise item -> None
+        | Some stepId -> Some (atField stepId (fun () -> decodeWorkflowStepFromValueWithId warnings defaultCwlVersion $"steps[{index}]" stepId item))
         | None ->
             // Unnamed malformed sequence entries are skipped with location-aware warnings.
             addWarning warnings $"steps[{index}]" "Skipped malformed unnamed CWL workflow step entry." (Some item)
             None
 
     /// Decode workflow steps from sequence-form or map-form syntax with version-aware inline runs.
-    and stepArrayDecoderWithVersion (warnings: WarningSink) (defaultCwlVersion: string) : (YAMLiciousTypes.YAMLElement -> ResizeArray<WorkflowStep>) =
+    and stepArrayDecoderWithVersion (warnings: WarningSink) (defaultCwlVersion: string) : (YamlNode -> ResizeArray<WorkflowStep>) =
         fun value ->
-            match value with
-            | YAMLElement.Object [YAMLElement.Sequence items]
-            | YAMLElement.Sequence items ->
+            match value.Kind with
+            | YamlNodeKind.Sequence collection ->
                 // Sequence-form steps carry id in each item.
-                items
-                |> List.mapi (decodeWorkflowStepFromArrayItemWithWarnings warnings defaultCwlVersion)
+                collection.Items
+                |> List.mapi (fun index item -> decodeWorkflowStepFromArrayItemWithWarnings warnings defaultCwlVersion index item.Node)
                 |> List.choose id
                 |> ResizeArray
             | _ ->
                 // Map-form steps use the map key as the step id.
-                let dict = Decode.object (fun get -> get.Overflow.FieldList []) value
                 [|
-                    for key in dict.Keys do
-                        decodeWorkflowStepFromValueWithId warnings defaultCwlVersion $"steps.{key}" key dict.[key]
+                    for entry in mappingEntries value do
+                        let key = entryName entry
+                        atField key (fun () -> decodeWorkflowStepFromValueWithId warnings defaultCwlVersion $"steps.{key}" key entry.Value)
                 |]
                 |> ResizeArray
 
-    and stepsDecoderWithVersion (warnings: WarningSink) (defaultCwlVersion: string) : (YAMLiciousTypes.YAMLElement -> ResizeArray<WorkflowStep>) =
+    and stepsDecoderWithVersion (warnings: WarningSink) (defaultCwlVersion: string) : (YamlNode -> ResizeArray<WorkflowStep>) =
         Decode.object (fun get ->
             get.Required.Field "steps" (stepArrayDecoderWithVersion warnings defaultCwlVersion)
         )
 
     /// Decode a CommandLineTool and preserve unknown top-level metadata fields.
-    and commandLineToolDecoder (warnings: WarningSink) (yamlCWL : YAMLElement) =
+    and commandLineToolDecoder (warnings: WarningSink) (yamlCWL : YamlNode) =
         // Decode standard sections first. Inputs are optional for CommandLineTool,
         // outputs are required by the current model.
         let cwlVersion = versionDecoder yamlCWL
@@ -1780,7 +1687,7 @@ module Decode =
         description
 
     /// Decode an ExpressionTool and preserve unknown top-level metadata fields.
-    and expressionToolDecoder (warnings: WarningSink) (yamlCWL: YAMLElement) =
+    and expressionToolDecoder (warnings: WarningSink) (yamlCWL: YamlNode) =
         // ExpressionTool shares port/requirement metadata decoding with other
         // processing units, then decodes its required expression body.
         let cwlVersion = versionDecoder yamlCWL
@@ -1827,7 +1734,7 @@ module Decode =
         description
 
     /// Decode an Operation and enforce its required inputs collection.
-    and operationDecoder (warnings: WarningSink) (yamlCWL: YAMLElement) =
+    and operationDecoder (warnings: WarningSink) (yamlCWL: YamlNode) =
         // Operation inputs are required, unlike CommandLineTool and ExpressionTool.
         let cwlVersion = versionDecoder yamlCWL
         let outputs = outputsDecoderWithWarnings warnings yamlCWL
@@ -1872,7 +1779,7 @@ module Decode =
         description
 
     /// Decode a Workflow, including version-aware steps and preserved metadata fields.
-    and workflowDecoder (warnings: WarningSink) (yamlCWL: YAMLElement) =
+    and workflowDecoder (warnings: WarningSink) (yamlCWL: YamlNode) =
         // Workflow inputs and steps are required by this model; outputs and steps
         // can still use tolerant collection decoders internally.
         let cwlVersion = versionDecoder yamlCWL
@@ -1920,7 +1827,7 @@ module Decode =
         description
 
     /// Dispatch a parsed CWL document to the processing-unit decoder declared by its class field.
-    and decodeCWLProcessingUnitElementWithWarnings (warnings: WarningSink) (yamlCWL: YAMLElement) =
+    and decodeCWLProcessingUnitElementWithWarnings (warnings: WarningSink) (yamlCWL: YamlNode) =
         let cls = classDecoder yamlCWL
         match cls with
         // The class field is the only discriminator at this layer; individual
@@ -1932,7 +1839,7 @@ module Decode =
         | _ -> raise (System.ArgumentException($"Invalid or unsupported CWL class: {cls}"))
 
     /// Decode an already-parsed CWL element without warning collection.
-    let decodeCWLProcessingUnitElement (yamlCWL: YAMLElement) =
+    let decodeCWLProcessingUnitElement (yamlCWL: YamlNode) =
         decodeCWLProcessingUnitElementWithWarnings None yamlCWL
 
     let stepArrayDecoder = stepArrayDecoderWithVersion None "v1.2"
@@ -1942,7 +1849,7 @@ module Decode =
     /// Decode a CWL CommandLineTool YAML string and return recoverable warnings.
     let decodeCommandLineToolWithWarnings (cwl: string) =
         let warnings = ResizeArray<DecodeWarning>()
-        let yamlCWL = readSanitizedYaml cwl
+        let yamlCWL = readYaml cwl
         { Value = commandLineToolDecoder (Some warnings) yamlCWL; Warnings = warnings }
 
     /// Decode a CWL CommandLineTool and discard recoverable warnings.
@@ -1952,7 +1859,7 @@ module Decode =
     /// Decode a CWL Workflow YAML string and return recoverable warnings.
     let decodeWorkflowWithWarnings (cwl: string) =
         let warnings = ResizeArray<DecodeWarning>()
-        let yamlCWL = readSanitizedYaml cwl
+        let yamlCWL = readYaml cwl
         { Value = workflowDecoder (Some warnings) yamlCWL; Warnings = warnings }
 
     /// Decode a CWL Workflow and discard recoverable warnings.
@@ -1962,7 +1869,7 @@ module Decode =
     /// Decode a CWL ExpressionTool YAML string and return recoverable warnings.
     let decodeExpressionToolWithWarnings (cwl: string) =
         let warnings = ResizeArray<DecodeWarning>()
-        let yamlCWL = readSanitizedYaml cwl
+        let yamlCWL = readYaml cwl
         { Value = expressionToolDecoder (Some warnings) yamlCWL; Warnings = warnings }
 
     /// Decode a CWL ExpressionTool and discard recoverable warnings.
@@ -1972,7 +1879,7 @@ module Decode =
     /// Decode a CWL Operation YAML string and return recoverable warnings.
     let decodeOperationWithWarnings (cwl: string) =
         let warnings = ResizeArray<DecodeWarning>()
-        let yamlCWL = readSanitizedYaml cwl
+        let yamlCWL = readYaml cwl
         { Value = operationDecoder (Some warnings) yamlCWL; Warnings = warnings }
 
     /// Decode a CWL Operation and discard recoverable warnings.
@@ -1982,7 +1889,7 @@ module Decode =
     /// Decode any CWL processing unit from a YAML string and return recoverable warnings.
     let decodeCWLProcessingUnitWithWarnings (cwl:string) =
         let warnings = ResizeArray<DecodeWarning>()
-        let yamlCWL = readSanitizedYaml cwl
+        let yamlCWL = readYaml cwl
         { Value = decodeCWLProcessingUnitElementWithWarnings (Some warnings) yamlCWL; Warnings = warnings }
 
     /// Decode any CWL processing unit and discard recoverable warnings.
@@ -1991,81 +1898,56 @@ module Decode =
 
 module DecodeParameters =
 
-    let private tryField (fieldName: string) (yEle: YAMLElement) =
-        match yEle with
-        | YAMLElement.Object fields ->
-            fields
-            |> List.tryPick (function
-                | YAMLElement.Mapping (key, value) when key.Value = fieldName -> Some value
-                | _ -> None
+    let private tryField (fieldName: string) (node: YamlNode) =
+        match node.Kind with
+        | YamlNodeKind.Mapping _ ->
+            Decode.mappingEntries node
+            |> List.tryPick (fun entry ->
+                if Decode.entryName entry = fieldName then Some entry.Value else None
             )
         | _ -> None
 
-    let private tryScalarString (yEle: YAMLElement) =
-        match yEle with
-        | YAMLElement.Value value
-        | YAMLElement.Object [YAMLElement.Value value] -> Some value.Value
+    let private tryScalarString (node: YamlNode) =
+        match node.Kind with
+        | YamlNodeKind.Scalar _ -> Some (YAMLicious.Decode.string node)
         | _ -> None
 
-    let private decodeFileInstance (yEle: YAMLElement) =
-        Decode.decodeFileInstanceFields yEle
+    let private decodeFileInstance (node: YamlNode) =
+        Decode.decodeFileInstanceFields node
 
-    let private decodeDirectoryInstance (yEle: YAMLElement) =
-        Decode.decodeDirectoryInstanceFields yEle
+    let private decodeDirectoryInstance (node: YamlNode) =
+        Decode.decodeDirectoryInstanceFields node
 
-    let rec decodeParameterValue (value: YAMLElement) : CWLParameterValue =
-        match value with
-        | YAMLElement.Value scalar
-        | YAMLElement.Object [YAMLElement.Value scalar] ->
-            match scalar.Value with
-            | "null" -> CWLParameterValue.Null
-            | "true" -> CWLParameterValue.Boolean true
-            | "false" -> CWLParameterValue.Boolean false
-            | text ->
-                match System.Int64.TryParse(text, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture) with
-                | true, parsed -> CWLParameterValue.Int parsed
-                | false, _ ->
-                    match System.Double.TryParse(text, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture) with
-                    | true, parsed -> CWLParameterValue.Float parsed
-                    | false, _ -> CWLParameterValue.String text
-        | YAMLElement.Object [YAMLElement.Sequence items]
-        | YAMLElement.Sequence items ->
-            items
-            |> List.filter (Decode.isIgnorableYamlNoise >> not)
-            |> List.map decodeParameterValue
+    let rec decodeParameterValue (value: YamlNode) : CWLParameterValue =
+        match value.Kind with
+        | YamlNodeKind.Scalar _ ->
+            // The core schema decides the type, so a quoted "true" is a string and a plain true is a boolean.
+            // Encode.string relies on this to write the string "true" as a quoted scalar. A key or a sequence
+            // item without a value, as in `k:` or `-`, holds null.
+            match value with
+            | Decode.CoreNull -> CWLParameterValue.Null
+            | Decode.CoreBool parsed -> CWLParameterValue.Boolean parsed
+            | Decode.CoreInt parsed -> CWLParameterValue.Int parsed
+            | Decode.CoreFloat parsed -> CWLParameterValue.Float parsed
+            | Decode.CoreText -> CWLParameterValue.String (YAMLicious.Decode.string value)
+        | YamlNodeKind.Sequence collection ->
+            collection.Items
+            |> List.map (fun item -> decodeParameterValue item.Node)
             |> ResizeArray
             |> CWLParameterValue.Array
-        | YAMLElement.Object (YAMLElement.Sequence items :: trailingMappings)
-            when trailingMappings
-                 |> List.exists (function
-                     | YAMLElement.Mapping _ -> true
-                     | _ -> false) ->
-            items
-            |> List.map (fun item ->
-                match item with
-                | YAMLElement.Object itemFields -> YAMLElement.Object (itemFields @ trailingMappings)
-                | other -> YAMLElement.Object (other :: trailingMappings)
-            )
-            |> List.map decodeParameterValue
-            |> ResizeArray
-            |> CWLParameterValue.Array
-        | YAMLElement.Object fields ->
+        | YamlNodeKind.Mapping _ ->
             match tryField "class" value |> Option.bind tryScalarString with
             | Some "File" -> decodeFileInstance value |> CWLParameterValue.File
             | Some "Directory" -> decodeDirectoryInstance value |> CWLParameterValue.Directory
             | _ ->
-                fields
-                |> List.choose (function
-                    | YAMLElement.Mapping (key, value) ->
-                        Some (CWLParameterRecordField(key.Value, decodeParameterValue value))
-                    | _ -> None
-                )
+                Decode.mappingEntries value
+                |> List.map (fun entry -> CWLParameterRecordField(Decode.entryName entry, decodeParameterValue entry.Value))
                 |> ResizeArray
                 |> CWLParameterValue.Record
-        | other ->
-            CWLParameterValue.String (sprintf "%A" other)
+        | YamlNodeKind.Alias name ->
+            Decode.failAlias name value
 
-    let cwlParameterReferenceDecoder (get : Decode.IGetters) (key: string) (yEle: YAMLElement): CWLParameterReference =
+    let cwlParameterReferenceDecoder (key: string) (yEle: YamlNode): CWLParameterReference =
         let makeReference (value: CWLParameterValue) (explicitType: CWLType option) =
             let type_ =
                 explicitType
@@ -2081,42 +1963,42 @@ module DecodeParameters =
             |> ignore
             reference
 
+        let decodeType (typeElement: YamlNode) =
+            match tryScalarString typeElement with
+            | Some typeName -> Decode.cwlTypeStringDecoder typeName |> fst
+            | None -> Decode.cwlTypeDecoder' typeElement
+
         match tryField "type" yEle, tryField "value" yEle with
         | Some typeElement, Some valueElement ->
-            let type_ =
-                match tryScalarString typeElement with
-                | Some typeName -> Decode.cwlTypeStringMatcher typeName get |> fst
-                | None -> Decode.cwlTypeDecoder' typeElement
-
-            makeReference (decodeParameterValue valueElement) (Some type_)
+            makeReference (decodeParameterValue valueElement) (Some (decodeType typeElement))
             |> withOverflow
         | None, Some valueElement ->
             makeReference (decodeParameterValue valueElement) None
             |> withOverflow
         | Some typeElement, None ->
-            let type_ =
-                match tryScalarString typeElement with
-                | Some typeName -> Decode.cwlTypeStringMatcher typeName get |> fst
-                | None -> Decode.cwlTypeDecoder' typeElement
-
-            makeReference CWLParameterValue.Null (Some type_)
+            makeReference CWLParameterValue.Null (Some (decodeType typeElement))
             |> withOverflow
         | _ ->
             makeReference (decodeParameterValue yEle) None
             |> withOverflow
 
     /// Decode every top-level parameter entry into CWLParameterReference values.
-    let cwlparameterReferenceArrayDecoder: YAMLElement -> ResizeArray<CWLParameterReference> =
-        Decode.object (fun get ->
-            let dict = get.Overflow.FieldList []
-            [|
-                for ele in dict do
-                    cwlParameterReferenceDecoder get ele.Key ele.Value
-            |]
-            |> ResizeArray
-        )
+    let cwlparameterReferenceArrayDecoder: YamlNode -> ResizeArray<CWLParameterReference> =
+        let decodeReferences =
+            Decode.object (fun get ->
+                [|
+                    for entry in get.Entries do
+                        cwlParameterReferenceDecoder (Decode.entryName entry) entry.Value
+                |]
+                |> ResizeArray
+            )
+        fun root ->
+            // A parameter file without content, such as an empty file or a file with comments only, holds no references.
+            match Decode.option decodeReferences root with
+            | Some references -> references
+            | None -> ResizeArray()
 
     /// Decode a YAML parameter file string into parameter references.
     let decodeYAMLParameterFile (yaml: string) =
-        let yEle = Decode.read yaml
+        let yEle = Decode.readYaml yaml
         cwlparameterReferenceArrayDecoder yEle

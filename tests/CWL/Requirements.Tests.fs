@@ -2,7 +2,7 @@ module Tests.Requirements
 
 open ARCtrl.CWL
 open YAMLicious
-open YAMLicious.YAMLiciousTypes
+open YAMLicious
 open DynamicObj
 open TestingUtils
 open TestingUtils.CWL
@@ -12,13 +12,13 @@ open TestObjects.CWL
 
 let decodeRequirements (cwl: string) =
     cwl
-    |> Decode.read
+    |> Decode.readYaml
     |> Decode.requirementsDecoder
     |> fun r -> r.Value
 
 let decodeHints (cwl: string) =
     cwl
-    |> Decode.read
+    |> Decode.readYaml
     |> Decode.hintsDecoder
     |> fun h -> h.Value
 
@@ -232,7 +232,7 @@ outputs: {}"""
                     let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
                     let document = "requirements:\n  - " + encoded.Replace("\n", "\n    ")
                     let roundTripped =
-                        Decode.read document
+                        Decode.readYaml document
                         |> Decode.requirementsDecoder
                         |> Option.get
                         |> fun reqs -> findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
@@ -426,7 +426,8 @@ outputs: {}"""
   - class: EnvVarRequirement
     envDef:
       DOTNET_NOLOGO: "true"
-      TEST: "false"""
+      TEST: "false"
+"""
                 let reqs = decodeRequirements yaml
                 let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
                 match envVarItem with
@@ -456,13 +457,47 @@ outputs: {}"""
   - class: EnvVarRequirement
     envDef:
       DOTNET_NOLOGO: "true"
-      TEST: "false"""
+      TEST: "false"
+"""
                 let reqs = decodeRequirements yaml
                 let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
                 let encoded = Encode.encodeRequirement envVarItem |> Encode.writeYaml
                 Expect.stringContains encoded "envDef:" "Encoded requirement should include envDef"
                 Expect.stringContains encoded "envName: DOTNET_NOLOGO" "Default encoder should emit array-form envDef entries"
                 Expect.stringContains encoded "envValue: \"true\"" "Boolean-like strings should remain quoted in default array encoder"
+                Expect.stringContains encoded "envValue: \"false\"" "The second value is a string too and must stay quoted"
+                Expect.isFalse (encoded.Contains("\\\"")) "The quotes belong to the YAML style, so no escaped quote may appear in the output"
+
+            testCase "Array form roundtrips values that look like another type" <| fun _ ->
+                let envs =
+                    ResizeArray [|
+                        EnvironmentDef("A", "true")
+                        EnvironmentDef("B", "1.0")
+                        EnvironmentDef("C", "null")
+                        EnvironmentDef("D", "0x1F")
+                        EnvironmentDef("E", "plain")
+                        EnvironmentDef("F", "\"inner quotes\"")
+                    |]
+                let yaml =
+                    YAMLicious.Encode.object [ "requirements", YamlNode.sequence [ YamlNode.item (Encode.encodeRequirement (EnvVarRequirement envs)) ] ]
+                    |> Encode.writeYaml
+                Expect.stringContains yaml "envValue: \"1.0\"" "A string that reads as a float needs quotes."
+                Expect.stringContains yaml "envValue: \"null\"" "A string that reads as null needs quotes."
+                Expect.stringContains yaml "envValue: \"0x1F\"" "A string that reads as a hex int needs quotes."
+                Expect.stringContains yaml "envValue: plain" "A string that cannot be mistaken for another type stays plain."
+                let reqs = decodeRequirements yaml
+                match findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false) with
+                | EnvVarRequirement decoded ->
+                    Expect.sequenceEqual decoded envs "Env values must survive the roundtrip unchanged, including literal quote characters."
+                | _ ->
+                    failwith "Wrong requirement type: expected EnvVarRequirement"
+
+            testCase "Compact map encode helper quotes values that look like another type" <| fun _ ->
+                let envs = ResizeArray [| EnvironmentDef("FLAG", "true"); EnvironmentDef("COUNT", "12"); EnvironmentDef("NAME", "worker") |]
+                let encoded = Encode.encodeEnvVarRequirementCompactMap envs |> Encode.writeYaml
+                Expect.stringContains encoded "FLAG: \"true\"" "A string true needs quotes in the compact map."
+                Expect.stringContains encoded "COUNT: \"12\"" "A string number needs quotes in the compact map."
+                Expect.stringContains encoded "NAME: worker" "Other strings stay plain."
 
             testCase "Compact map encode helper emits envDef map" <| fun _ ->
                 let envs = ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", "true"); EnvironmentDef("TEST", "false") |]
@@ -825,6 +860,31 @@ outputs: {}"""
                 | _ ->
                     failwith "Expected ResourceRequirement"
 
+            testCase "resource scalars and time limits follow the core schema" <| fun _ ->
+                let resource = """requirements:
+  - class: ResourceRequirement
+    coresMin: 0x10
+    ramMin: "1024"
+    ramMax: 1024
+    tmpdirMin: .inf
+    outdirMin: 1e3"""
+                match findRequirement (decodeRequirements resource) (function ResourceRequirement _ -> true | _ -> false) with
+                | ResourceRequirement resourceRequirement ->
+                    Expect.equal (resourceRequirement.TryGetInt64("coresMin")) (Some 16L) "A plain hexadecimal number is an int."
+                    Expect.equal (resourceRequirement.TryGetExpression("ramMin")) (Some "1024") "A quoted number is a string."
+                    Expect.equal (resourceRequirement.TryGetInt64("ramMax")) (Some 1024L) "A plain number is an int."
+                    Expect.equal (resourceRequirement.TryGetFloat("tmpdirMin")) (Some System.Double.PositiveInfinity) "The core schema spells infinity .inf."
+                    Expect.equal (resourceRequirement.TryGetFloat("outdirMin")) (Some 1000.0) "An exponent number is a float."
+                | _ ->
+                    failwith "Expected ResourceRequirement"
+                let limit (value: string) =
+                    let yaml = "requirements:\n  - class: ToolTimeLimit\n    timelimit: " + value
+                    findRequirement (decodeRequirements yaml) (function ToolTimeLimitRequirement _ -> true | _ -> false)
+                Expect.equal (limit "0x3C") (ToolTimeLimitRequirement (ToolTimeLimitSeconds 60L)) "A plain hexadecimal number is the number of seconds."
+                Expect.equal (limit "\"60\"") (ToolTimeLimitRequirement (ToolTimeLimitExpression "60")) "A quoted number is a string and stays an expression."
+                let encoded = Encode.encodeRequirement (limit "\"60\"") |> Encode.writeYaml
+                Expect.stringContains encoded "timelimit: \"60\"" "The string must stay quoted so that it does not read back as a number."
+
             testCase "known fields are typed fields, not dynamic overflow" <| fun _ ->
                 let resourceRequirement =
                     ResourceRequirementInstance(coresMin = 2L, ramMin = 4.5, outdirMin = "$(inputs.outdir_min)")
@@ -867,7 +927,7 @@ outputs: {}"""
                 let requirement = ResourceRequirement resourceRequirement
                 let encodedElement = Encode.encodeRequirement requirement
                 let roundtripped =
-                    Decode.requirementArrayDecoder (YAMLElement.Object [ YAMLElement.Sequence [ encodedElement ] ])
+                    Decode.requirementArrayDecoder (YamlNode.sequence [ YamlNode.item encodedElement ])
                     |> Seq.head
 
                 match requirement, roundtripped with
@@ -971,7 +1031,7 @@ let testRequirementEncode =
                 let indented = yaml.Replace("\n", "\n    ")
                 let document = "requirements:\n  - " + indented
                 let decoded =
-                    Decode.read document
+                    Decode.readYaml document
                     |> Decode.requirementsDecoder
                     |> Option.get
                 match decoded.[0] with
@@ -995,7 +1055,7 @@ let testRequirementEncode =
                 let indented = yaml.Replace("\n", "\n    ")
                 let document = "requirements:\n  - " + indented
                 let decoded =
-                    Decode.read document
+                    Decode.readYaml document
                     |> Decode.requirementsDecoder
                     |> Option.get
                 match decoded.[0] with
@@ -1019,7 +1079,7 @@ let testRequirementEncode =
                 Expect.stringContains encoded "class: Directory" "Directory entries should encode with explicit class"
                 let document = "requirements:\n  - " + encoded.Replace("\n", "\n    ")
                 let secondDecode =
-                    Decode.read document
+                    Decode.readYaml document
                     |> Decode.requirementsDecoder
                     |> Option.get
                     |> fun reqs -> findRequirement reqs (function InitialWorkDirRequirement _ -> true | _ -> false)
@@ -1069,7 +1129,7 @@ let testRequirementEncode =
                 Expect.stringContains yaml "$import: ./Dockerfile" "dockerFile should preserve $import directive during encode."
                 let document = "requirements:\n  - " + yaml.Replace("\n", "\n    ")
                 let decoded =
-                    Decode.read document
+                    Decode.readYaml document
                     |> Decode.requirementsDecoder
                     |> Option.get
                 Expect.equal decoded.[0] requirement "dockerFile $import directive should roundtrip."
@@ -1078,7 +1138,7 @@ let testRequirementEncode =
                 let yaml = Encode.encodeRequirement requirement |> Encode.writeYaml
                 let document = "requirements:\n  - " + yaml.Replace("\n", "\n    ")
                 let decoded =
-                    Decode.read document
+                    Decode.readYaml document
                     |> Decode.requirementsDecoder
                     |> Option.get
                 Expect.equal decoded.[0] requirement "LoadListingRequirement should roundtrip through encode/decode."
@@ -1095,7 +1155,7 @@ let testRequirementEncode =
                     |> String.concat "\n"
                 let document = "requirements:\n" + encodedLines
                 let decoded =
-                    Decode.read document
+                    Decode.readYaml document
                     |> Decode.requirementsDecoder
                     |> Option.get
                 Expect.sequenceEqual decoded requirements "Payload-bearing requirements should roundtrip."
@@ -1104,7 +1164,7 @@ let testRequirementEncode =
                 let yaml = Encode.encodeRequirement requirement |> Encode.writeYaml
                 let document = "requirements:\n  - " + yaml.Replace("\n", "\n    ")
                 let decoded =
-                    Decode.read document
+                    Decode.readYaml document
                     |> Decode.requirementsDecoder
                     |> Option.get
                 Expect.equal decoded.[0] requirement "Expression timelimit should roundtrip."
@@ -1117,7 +1177,7 @@ let testRequirementEncode =
                 Expect.isFalse (yaml.Contains("SampleId: string")) "Canonical encoding should avoid legacy map-style schema entries."
                 let document = "requirements:\n  - " + yaml.Replace("\n", "\n    ")
                 let decoded =
-                    Decode.read document
+                    Decode.readYaml document
                     |> Decode.requirementsDecoder
                     |> Option.get
                 match decoded.[0] with
@@ -1231,7 +1291,7 @@ let testDynamicPayloadModel =
             let network = NetworkAccessRequirementValue(false)
             let inplace = InplaceUpdateRequirementValue(false)
             let inlineJs = InlineJavascriptRequirementValue(expressionLib = ResizeArray [| "helper.js" |])
-            let unknownHint = HintUnknownValue(Some "acme:Hint", Decode.read "class: acme:Hint")
+            let unknownHint = HintUnknownValue(Some "acme:Hint", { Node = Decode.readYaml "class: acme:Hint" })
 
             Expect.sequenceEqual DockerRequirement.KnownFieldNames (Set [| "class"; "dockerPull"; "dockerFile"; "dockerImageId"; "dockerLoad"; "dockerImport"; "dockerOutputDirectory"; "cwltool:dockerRunOptions" |]) ""
             Expect.sequenceEqual EnvironmentDef.KnownFieldNames (Set [| "envName"; "envValue" |]) ""
@@ -1262,7 +1322,7 @@ let testRequirementDynamicOverflowRoundtrip =
         let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
         let document = "requirements:\n  - " + encoded.Replace("\n", "\n    ")
         let decoded =
-            Decode.read document
+            Decode.readYaml document
             |> Decode.requirementsDecoder
             |> Option.get
         decoded.[0]

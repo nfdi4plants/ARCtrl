@@ -4,38 +4,34 @@ open ARCtrl.CWL
 open DynamicObj
 open TestingUtils
 open TestingUtils.CWL
-open YAMLicious.YAMLiciousTypes
+open YAMLicious
 
 let decodeCWLWorkflowDescription: CWLWorkflowDescription =
     TestObjects.CWL.Workflow.workflowFile
     |> Decode.decodeWorkflow
 
-let tryYamlScalarString (y: YAMLElement) =
-    match y with
-    | YAMLElement.Object [YAMLElement.Value v]
-    | YAMLElement.Value v -> Some v.Value
+let tryYamlScalarString (y: RawYaml) =
+    match y.Node.Kind with
+    | YamlNodeKind.Scalar scalar -> Some scalar.Value
     | _ -> None
 
-let tryYamlScalarSequence (y: YAMLElement) =
-    let tryScalarValue element =
-        match element with
-        | YAMLElement.Object [YAMLElement.Value v]
-        | YAMLElement.Value v -> Some v.Value
-        | _ -> None
-    match y with
-    | YAMLElement.Object [YAMLElement.Sequence values]
-    | YAMLElement.Sequence values ->
-        values
-        |> List.choose tryScalarValue
+let tryYamlScalarSequence (y: RawYaml) =
+    match y.Node.Kind with
+    | YamlNodeKind.Sequence collection ->
+        collection.Items
+        |> List.choose (fun item ->
+            match item.Node.Kind with
+            | YamlNodeKind.Scalar scalar -> Some scalar.Value
+            | _ -> None)
         |> ResizeArray
         |> Some
     | _ -> None
 
-let renderYamlElement (element: YAMLElement) =
+let renderYamlElement (element: YamlNode) =
     Encode.writeYaml element
 
 let renderYamlPair pair =
-    Encode.yMap [ pair ]
+    YAMLicious.Encode.object [ pair ]
     |> Encode.writeYaml
 
 let mkStepInput id source linkMerge =
@@ -660,12 +656,12 @@ let testCWLWorkflowDescriptionEncode =
                 Expect.equal stepInput.Doc (Some "Input docs") ""
                 let defaultEntry =
                     Expect.wantSome stepInput.DefaultValue "Step input default should remain present as structured YAML"
-                match defaultEntry with
-                | YAMLElement.Object _
-                | YAMLElement.Sequence _ ->
+                match defaultEntry.Node.Kind with
+                | YamlNodeKind.Mapping _
+                | YamlNodeKind.Sequence _ ->
                     Expect.isTrue true ""
                 | _ ->
-                    Expect.isTrue false (sprintf "Expected structured default, got %A" defaultEntry)
+                    Expect.isTrue false (sprintf "Expected structured default, got %s" (YamlNode.show defaultEntry.Node))
             testCase "workflow hints are encoded and preserved" <| fun _ ->
                 let original = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowFile
                 original.Hints <- Some (ResizeArray [KnownHint StepInputExpressionRequirement])
@@ -890,8 +886,200 @@ steps:
         ]
     ]
 
+/// Workflow with unions of null and an enum or a record,
+/// written as a type list, plus an inline ExpressionTool step whose input is such a union.
+let typeListUnionWorkflow = """cwlVersion: v1.2
+class: Workflow
+requirements:
+  InlineJavascriptRequirement: {}
+  StepInputExpressionRequirement: {}
+inputs:
+  mode_choice:
+    type:
+      - "null"
+      - type: enum
+        symbols: ["alpha", "beta", "gamma", "delta"]
+    label: Mode choice
+    doc: |
+      Choice of the mode. Optional.
+  reference_dbs:
+    type:
+      - 'null'
+      - type: record
+        name: reference_dbs
+        fields:
+          data_folder:
+            type: Directory?
+            doc: Folder with the data files of the reference database.
+          db_file:
+            type: File?
+            doc: Reference database file
+    label: Reference databases
+  annotation_directory:
+    type: Directory?
+    label: Annotation directory
+  sample_files:
+    type:
+      - "null"
+      - type: array
+        items: File
+  threshold:
+    type: [int, float]
+  first_result: File?
+steps:
+  select_result:
+    label: Mode choice
+    run:
+      class: ExpressionTool
+      requirements:
+        InlineJavascriptRequirement: {}
+      inputs:
+        mode_string:
+          type:
+            - "null"
+            - type: enum
+              symbols: ["alpha", "delta", "beta", "gamma"]
+        first_result: File?
+      outputs:
+        result: File
+      expression: |
+        ${ return {"result": inputs.first_result}; }
+    in:
+      mode_string: mode_choice
+      first_result: first_result
+    out: [result]
+outputs:
+  chosen:
+    type:
+      - "null"
+      - File
+    outputSource: select_result/result
+  summary: [File, Directory]
+"""
+
+/// Workflow in array form: ports carry an id field and a doc.
+let arrayFormUnionWorkflow = """cwlVersion: v1.2
+class: Workflow
+id: array_form_ports
+inputs:
+  - id: NAME_PATTERN
+    label: "name pattern"
+    doc: "pattern for the input files, default *.txt"
+    type: string
+    default: "*.txt"
+  - id: INDEX_FILES
+    label: "index files"
+    type:
+      - "null"
+      - File
+    secondaryFiles:
+      - .idx
+      - .meta
+  - id: LIMITS
+    type: float[]?
+  - id: CHOICE
+    type: [string, int, boolean]
+  - id: MAYBE_LIST
+    type: [null, File]
+steps:
+  - id: run_tool
+    run: tool.cwl
+    in:
+      pattern: NAME_PATTERN
+    out: [result]
+outputs:
+  - id: RESULT_LIST
+    type: File
+    outputSource: run_tool/result
+  - id: OPTIONAL_RESULT
+    type:
+      - "null"
+      - File
+    outputSource: run_tool/result
+"""
+
+let testWorkflowUnionPortRoundTrip =
+    let optionalOf (inner: CWLType) = Union (ResizeArray [ Null; inner ])
+
+    let assertTypesEqual (expected: CWLType) (actual: CWLType) (message: string) =
+        Expect.isTrue (CWLType.typesEqual expected actual) $"{message}: expected %A{expected} but got %A{actual}"
+
+    let inputTypeOf (workflow: CWLWorkflowDescription) (name: string) =
+        let input = CWLWorkflowDescription.getInputs workflow |> Seq.find (fun i -> i.Name = name)
+        Expect.wantSome input.Type_ $"Input {name} should have a type."
+
+    let outputTypeOf (workflow: CWLWorkflowDescription) (name: string) =
+        let output = CWLWorkflowDescription.getOutputs workflow |> Seq.find (fun o -> o.Name = name)
+        Expect.wantSome output.Type_ $"Output {name} should have a type."
+
+    let enumOf (symbols: string list) = Enum (InputEnumSchema(ResizeArray symbols))
+
+    testList "Union port types roundtrip" [
+        testCase "unions of null with an enum, a record or an array decode, encode and decode again" <| fun _ ->
+            let check (workflow: CWLWorkflowDescription) =
+                assertTypesEqual (optionalOf (enumOf [ "alpha"; "beta"; "gamma"; "delta" ])) (inputTypeOf workflow "mode_choice") "mode_choice"
+                assertTypesEqual (optionalOf (CWLType.directory ())) (inputTypeOf workflow "annotation_directory") "annotation_directory"
+                assertTypesEqual (optionalOf (Array (InputArraySchema(CWLType.file ())))) (inputTypeOf workflow "sample_files") "sample_files"
+                assertTypesEqual (Union (ResizeArray [ Int; Float ])) (inputTypeOf workflow "threshold") "threshold"
+                match inputTypeOf workflow "reference_dbs" with
+                | Union members ->
+                    Expect.equal members.Count 2 "reference_dbs should be a two member union."
+                    Expect.equal members.[0] Null "The first member should be null."
+                    match members.[1] with
+                    | Record schema ->
+                        let fields = Expect.wantSome schema.Fields "The record should keep its fields."
+                        Expect.sequenceEqual (fields |> Seq.map (fun f -> f.Name)) [ "data_folder"; "db_file" ] "Record fields should keep their order."
+                    | other -> failwithf "Expected a record member but got %A" other
+                | other -> failwithf "Expected a union but got %A" other
+                assertTypesEqual (optionalOf (CWLType.file ())) (outputTypeOf workflow "chosen") "chosen"
+                assertTypesEqual (Union (ResizeArray [ CWLType.file (); CWLType.directory () ])) (outputTypeOf workflow "summary") "summary"
+                let expressionTool = Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool workflow.Steps.[0].Run) "The inline ExpressionTool should decode."
+                let toolInput = (Expect.wantSome expressionTool.Inputs "The inline tool should keep its inputs.") |> Seq.find (fun i -> i.Name = "mode_string")
+                assertTypesEqual (optionalOf (enumOf [ "alpha"; "delta"; "beta"; "gamma" ])) (Expect.wantSome toolInput.Type_ "Inline input type") "inline mode_string"
+            let decoded = Decode.decodeWorkflow typeListUnionWorkflow
+            check decoded
+            let encoded = Encode.encodeWorkflowDescription decoded
+            check (Decode.decodeWorkflow encoded)
+
+        testCase "the encoder writes the null type as a quoted string" <| fun _ ->
+            let encoded = Encode.encodeWorkflowDescription (Decode.decodeWorkflow typeListUnionWorkflow)
+            Expect.stringContains encoded "\"null\"" "A plain null would read as a YAML null, so the null type must be quoted."
+            Expect.isFalse (encoded.Contains("[null") || encoded.Contains("- null") || encoded.Contains(", null")) "No union may contain an unquoted null."
+
+        testCase "array form ports with unions roundtrip" <| fun _ ->
+            let check (workflow: CWLWorkflowDescription) =
+                assertTypesEqual CWLType.String (inputTypeOf workflow "NAME_PATTERN") "NAME_PATTERN"
+                assertTypesEqual (optionalOf (CWLType.file ())) (inputTypeOf workflow "INDEX_FILES") "INDEX_FILES"
+                assertTypesEqual (optionalOf (Array (InputArraySchema(Float)))) (inputTypeOf workflow "LIMITS") "LIMITS"
+                assertTypesEqual (Union (ResizeArray [ String; Int; Boolean ])) (inputTypeOf workflow "CHOICE") "CHOICE"
+                assertTypesEqual (optionalOf (CWLType.file ())) (inputTypeOf workflow "MAYBE_LIST") "MAYBE_LIST"
+                assertTypesEqual (CWLType.file ()) (outputTypeOf workflow "RESULT_LIST") "RESULT_LIST"
+                assertTypesEqual (optionalOf (CWLType.file ())) (outputTypeOf workflow "OPTIONAL_RESULT") "OPTIONAL_RESULT"
+            let decoded = Decode.decodeWorkflow arrayFormUnionWorkflow
+            check decoded
+            check (Decode.decodeWorkflow (Encode.encodeWorkflowDescription decoded))
+
+        testCase "a port written as a bare type list decodes as a union" <| fun _ ->
+            let yaml = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  flow_style: [null, File]
+  block_style:
+    - string
+    - int
+steps: []
+outputs:
+  result: ["null", File]
+"""
+            let workflow = Decode.decodeWorkflow yaml
+            assertTypesEqual (optionalOf (CWLType.file ())) (inputTypeOf workflow "flow_style") "flow_style"
+            assertTypesEqual (Union (ResizeArray [ String; Int ])) (inputTypeOf workflow "block_style") "block_style"
+            assertTypesEqual (optionalOf (CWLType.file ())) (outputTypeOf workflow "result") "result"
+    ]
+
 let main = 
     testList "CWLWorkflowDescription" [
         testCWLWorkflowDescriptionDecode
         testCWLWorkflowDescriptionEncode
+        testWorkflowUnionPortRoundTrip
     ]

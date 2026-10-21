@@ -2,7 +2,6 @@ namespace ARCtrl.Yaml
 
 open ARCtrl.ValidationPackages
 open YAMLicious
-open YAMLicious.YAMLiciousTypes
 
 module ValidationPackage = 
 
@@ -11,16 +10,16 @@ module ValidationPackage =
 
     let encoder (validationpackage : ValidationPackage) = 
         [
-            NAME_KEY, Encode.string validationpackage.Name
-            Encode.tryInclude VERSION_KEY Encode.string (validationpackage.Version)
+            Some (NAME_KEY, Encode.string validationpackage.Name)
+            Encode.optionalField VERSION_KEY Encode.string validationpackage.Version
         ]
-        |> Encode.choose
+        |> List.choose id
         |> Encode.object
 
-    let decoder : (YAMLElement -> ValidationPackage) = 
+    let decoder : (YamlNode -> ValidationPackage) = 
         Decode.object (fun get ->
             ValidationPackage(
-                name = get.Required.Field NAME_KEY Decode.string,
+                name = get.Required.Field NAME_KEY ARCtrl.CWL.Decode.requiredString,
                 ?version = get.Optional.Field VERSION_KEY Decode.string
             )
         )

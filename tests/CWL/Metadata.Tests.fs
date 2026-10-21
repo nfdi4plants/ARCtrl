@@ -8,20 +8,20 @@ open TestingUtils
 
 let decodeMetadata =
     TestObjects.CWL.Metadata.metadataFileContent
-    |> Decode.read
+    |> Decode.readYaml
 
-let overflowDictionary =
+let overflowEntries =
     decodeMetadata
     |> Decode.object (fun get -> get.Overflow.FieldList [])
 
 let dynObj =
-    overflowDecoder (new DynamicObj()) overflowDictionary
+    overflowDecoder (new DynamicObj()) overflowEntries
 
 let testMetadata =
     testList "Decode" [
-        testCase "Overflow Dictionary Keys" <| fun _ ->
+        testCase "Overflow Entry Keys" <| fun _ ->
             let expected = ["arc:has technology type"; "arc:technology platform"; "arc:performer"; "arc:has process sequence"]
-            let actual = overflowDictionary.Keys |> List.ofSeq
+            let actual = overflowEntries |> List.map entryName
             Expect.equal actual expected ""
         testCase "DynObj Keys" <| fun _ ->
             let expected = ["arc:has process sequence"; "arc:has technology type"; "arc:performer"; "arc:technology platform"]
@@ -39,7 +39,7 @@ let testMetadata =
     arc:name: two"""
             let decoded =
                 yaml
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.object (fun get -> get.Overflow.FieldList [])
                 |> overflowDecoder (DynamicObj())
             let items = Expect.wantSome (DynamicObjHelpers.tryGetTypedPropertyValueAsResizeArray<obj> "arc:items" decoded) "Sequence overflow should decode as a collection."
@@ -54,7 +54,7 @@ let testMetadata =
             let yaml = "arc:list: [only]"
             let decoded =
                 yaml
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.object (fun get -> get.Overflow.FieldList [])
                 |> overflowDecoder (DynamicObj())
             let items = Expect.wantSome (DynamicObjHelpers.tryGetTypedPropertyValueAsResizeArray<obj> "arc:list" decoded) "Singleton sequence overflow should remain a collection."
@@ -68,7 +68,7 @@ let testMetadata =
   quotedFlag: 'true'"""
             let decoded =
                 yaml
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.object (fun get -> get.Overflow.FieldList [])
                 |> overflowDecoder (DynamicObj())
             let nested = Expect.wantSome (DynObj.tryGetTypedPropertyValue<DynamicObj> "arc:nested" decoded) "Nested overflow should decode as an object."

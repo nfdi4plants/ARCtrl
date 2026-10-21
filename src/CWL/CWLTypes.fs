@@ -2,7 +2,23 @@ namespace ARCtrl.CWL
 
 open DynamicObj
 open Fable.Core
-open YAMLicious.YAMLiciousTypes
+open YAMLicious
+
+/// A YAML value that a CWL object keeps as it was written, such as the default value of an input or the
+/// secondaryFiles of a port. YamlNode has no structural equality. DynamicObj compares and hashes the properties
+/// of an object through the objects that it holds, so the value carries its own equality: two values are equal
+/// when their nodes hold the same data, whatever their comments and styles.
+[<CustomEquality; NoComparison>]
+type RawYaml =
+    { Node: YamlNode }
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? RawYaml as other -> HashHelpers.yamlNodeEqual this.Node other.Node
+        | _ -> false
+
+    override this.GetHashCode() =
+        HashHelpers.hashYamlNode this.Node
 
 type SchemaSaladString =
     | Literal of string
@@ -43,7 +59,7 @@ type FileInstance (
     ?nameext: string,
     ?checksum: string,
     ?size: int64,
-    ?secondaryFiles: YAMLElement,
+    ?secondaryFiles: RawYaml,
     ?format: string,
     ?contents: string
 ) =
@@ -146,7 +162,7 @@ type DirectoryInstance (
     ?location: string,
     ?path: string,
     ?basename: string,
-    ?listing: YAMLElement
+    ?listing: RawYaml
 ) =
     inherit DynamicObj ()
 

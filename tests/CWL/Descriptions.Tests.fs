@@ -36,20 +36,20 @@ let decodeTests =
         testCase "label" <| fun _ ->
             let actual =
                 TestObjects.CWL.Descriptions.label
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.labelDecoder
             Expect.equal actual (Some "An example tool demonstrating metadata.") ""
         testCase "doc simple" <| fun _ ->
             let actual =
                 TestObjects.CWL.Descriptions.docSimple
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.docDecoder
             let expected = "Note that this is an example and the metadata is not necessarily consistent."
             Expect.equal actual (Some expected) ""
         testCase "doc block" <| fun _ ->
             let actual =
                 TestObjects.CWL.Descriptions.descriptionFileContentComplex
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.docDecoder
                 |> Option.map normalizeDocBlockContent
             let expected =
@@ -59,7 +59,7 @@ let decodeTests =
         testCase "intent" <| fun _ ->
             let actual =
                 TestObjects.CWL.Descriptions.intent
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.intentDecoder
             let expected = ResizeArray [|"classification"; "quality-control"|]
             let parsed = Expect.wantSome actual "Intent should decode as string array."
@@ -68,7 +68,7 @@ let decodeTests =
 
 let encodeToString pair =
     [pair]
-    |> Encode.yMap
+    |> YAMLicious.Encode.object
     |> Encode.writeYaml
     |> normalizeNewLines
 
@@ -87,7 +87,7 @@ let encodeTests =
             let actual = Encode.encodeDoc complexDoc |> encodeToString
             let decoded =
                 actual
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.docDecoder
                 |> Option.map normalizeDocBlockContent
             let expected = normalizeDocBlockContent complexDoc
@@ -100,7 +100,7 @@ let encodeTests =
                 |> encodeToString
             let decoded =
                 encoded
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.intentDecoder
             let parsed = Expect.wantSome decoded "Intent should decode after encode."
             Expect.sequenceEqual parsed (ResizeArray [|"classification"; "quality-control"|]) ""

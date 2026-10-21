@@ -3,18 +3,17 @@ module Tests.WorkflowSteps
 open ARCtrl.CWL
 open DynamicObj
 open YAMLicious
-open YAMLicious.YAMLiciousTypes
+open YAMLicious
 open TestingUtils
 
 let decodeWorkflowStep =
     TestObjects.CWL.WorkflowSteps.workflowStepsFileContent
-    |> Decode.read
+    |> Decode.readYaml
     |> Decode.stepsDecoder
 
-let tryYamlScalarString (y: YAMLElement) =
-    match y with
-    | YAMLElement.Object [YAMLElement.Value v]
-    | YAMLElement.Value v -> Some v.Value
+let tryYamlScalarString (y: RawYaml) =
+    match y.Node.Kind with
+    | YamlNodeKind.Scalar scalar -> Some scalar.Value
     | _ -> None
 
 let mkStepInput id source defaultValue valueFrom linkMerge =
@@ -81,7 +80,7 @@ let testWorkflowStep =
                     ResizeArray [|
                         mkStepInput "stageDirectory" (Some (ResizeArray [|"stage"|])) None None None
                         mkStepInput "inputDirectory" (Some (ResizeArray [|"MzMLToMzlite/dir1"; "MzMLToMzlite/dir2"|])) None None (Some MergeFlattened)
-                        mkStepInput "parallelismLevel" None (Some (YAMLElement.Object [YAMLElement.Value (YAMLContent.create "8")])) None None
+                        mkStepInput "parallelismLevel" None (Some { Node = YamlNode.plain "8" }) None None
                         mkStepInput "outputDirectory" None None (Some "output") None
                     |]
                 let actual = decodeWorkflowStep.[1].In
@@ -120,7 +119,7 @@ let testWorkflowStep =
     out: []"""
             let decoded =
                 validSteps
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.stepsDecoder
             let step = decoded.[0]
             Expect.equal step.In.Count 0 "Explicit empty object for `in` should decode to an empty input collection."
@@ -132,7 +131,7 @@ let testWorkflowStep =
     out: [out]"""
             let decodeInvalid () =
                 invalidSteps
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.stepsDecoder
                 |> ignore
             Expect.throws decodeInvalid "Missing required `in` field should fail decoding."
@@ -143,7 +142,7 @@ let testWorkflowStep =
     in: {}"""
             let decodeInvalid () =
                 invalidSteps
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.stepsDecoder
                 |> ignore
             Expect.throws decodeInvalid "Missing required `out` field should fail decoding."
@@ -158,7 +157,7 @@ let testWorkflowStep =
     out: [out]"""
             let decodeInvalid () =
                 invalidSteps
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.stepsDecoder
                 |> ignore
             Expect.throws decodeInvalid "Invalid linkMerge should fail decoding"
@@ -171,7 +170,7 @@ let testWorkflowStep =
       - type: string"""
             let decodeInvalid () =
                 invalidSteps
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.stepsDecoder
                 |> ignore
             Expect.throws decodeInvalid "Step output record without id should fail decoding"

@@ -7,7 +7,7 @@ open TestingUtils
 
 let decodeInput =
     TestObjects.CWL.Inputs.inputsFileContent
-    |> Decode.read
+    |> Decode.readYaml
     |> Decode.inputsDecoder
     |>fun i ->i.Value
 
@@ -128,7 +128,7 @@ let testInputMutationApi =
         testCase "spec input fields decode as typed members regardless of order" <| fun _ ->
             let input =
                 TestObjects.CWL.Inputs.specInputFieldsDecodeFileContent
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.inputsDecoder
                 |> Option.get
                 |> fun inputs -> inputs.[0]
@@ -335,7 +335,7 @@ let testProcessingUnitHintOps =
             let operationHints = CWLOperationDescription.getOrCreateHints operation
 
             toolHints.Add(KnownHint Requirement.defaultInlineJavascriptRequirement)
-            workflowHints.Add(UnknownHint (HintUnknownValue(Some "acme:Hint", Decode.read "class: acme:Hint")))
+            workflowHints.Add(UnknownHint (HintUnknownValue(Some "acme:Hint", { Node = Decode.readYaml "class: acme:Hint" })))
             expressionHints.Add(KnownHint (NetworkAccessRequirement (NetworkAccessRequirementValue(true))))
             operationHints.Add(KnownHint Requirement.defaultInlineJavascriptRequirement)
 
@@ -348,7 +348,7 @@ let testProcessingUnitHintOps =
             let hints =
                 ResizeArray [|
                     KnownHint Requirement.defaultInlineJavascriptRequirement
-                    UnknownHint (HintUnknownValue(Some "acme:Hint", Decode.read "class: acme:Hint"))
+                    UnknownHint (HintUnknownValue(Some "acme:Hint", { Node = Decode.readYaml "class: acme:Hint" }))
                     KnownHint (WorkReuseRequirement (WorkReuseRequirementValue(true)))
                 |]
 

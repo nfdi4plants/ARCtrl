@@ -15,19 +15,15 @@ let tests_extended = testList "extended" [
 
     let vpc_yaml_string = $"""{ValidationPackagesConfig.ARC_SPECIFICATION_KEY}: arc_specification
 {ValidationPackagesConfig.VALIDATION_PACKAGES_KEY}:
-  -
-    {ValidationPackage.NAME_KEY}: name
+  - {ValidationPackage.NAME_KEY}: name
     {ValidationPackage.VERSION_KEY}: version
-  -
-    {ValidationPackage.NAME_KEY}: name
+  - {ValidationPackage.NAME_KEY}: name
 """
 
     let vpc_no_specs_yaml_string = $"""validation_packages:
-  -
-    {ValidationPackage.NAME_KEY}: name
+  - {ValidationPackage.NAME_KEY}: name
     {ValidationPackage.VERSION_KEY}: version
-  -
-    {ValidationPackage.NAME_KEY}: name
+  - {ValidationPackage.NAME_KEY}: name
 """
 
     testList "encoder (toYamlString)" [
@@ -67,6 +63,14 @@ let tests_extended = testList "extended" [
                 |> Encode.toYamlString 2
             let expected = vpc_no_specs_yaml_string
             Expect.trimEqual actual expected ""
+    ]
+    testList "decoder (fromYamlString) needs a name for every package" [
+        testCase "package without a name value" <| fun _ ->
+            let text = "validation_packages:\n  - name:\n"
+            Expect.throws (fun () -> Decode.fromYamlString ValidationPackagesConfig.decoder text |> ignore) "A package name without a value must fail."
+        testCase "package with a plain null name" <| fun _ ->
+            let text = "validation_packages:\n  - name: null\n"
+            Expect.throws (fun () -> Decode.fromYamlString ValidationPackagesConfig.decoder text |> ignore) "A plain null is no name."
     ]
     testList "roundtrip (toYamlString >> fromYamlString)" [
         testCase "name and version" <| fun _ -> 
