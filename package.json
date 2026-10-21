@@ -39,8 +39,8 @@
     "build": "vite build"
   },
   "dependencies": {
-    "@fable-org/fable-library-js": "^2.8.0",
-    "@fable-org/fable-library-ts": "^2.8.0",
+    "@fable-org/fable-library-js": "^2.9.0",
+    "@fable-org/fable-library-ts": "^2.9.0",
     "@nfdi4plants/exceljs": "^0.5.0",
     "isomorphic-fetch": "^3.0.0"
   },
