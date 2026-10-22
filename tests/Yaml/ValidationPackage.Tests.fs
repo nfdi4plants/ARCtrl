@@ -45,27 +45,43 @@ let tests_extended = testList "extended" [
                 None
             with YamlDecodeException error -> Some (DecodeError.pathText error, DecodeError.text error)
         testCase "name without a value" <| fun _ ->
-            let error = Expect.wantSome (decodeError "name:\nversion: version\n") "A name without a value must fail."
+            let yaml = """name:
+version: version
+"""
+            let error = Expect.wantSome (decodeError yaml) "A name without a value must fail."
             Expect.equal (fst error) "name" "The error should name the field."
             Expect.stringContains (snd error) "Expected a value, found a missing value" "The error should say what it found."
         testCase "name null" <| fun _ ->
-            let error = Expect.wantSome (decodeError "name: null\n") "A plain null is no name."
+            let yaml = """name: null
+"""
+            let error = Expect.wantSome (decodeError yaml) "A plain null is no name."
             Expect.equal (fst error) "name" "The error should name the field."
             Expect.stringContains (snd error) "Expected a value, found the null \"null\"" "The error should say what it found."
         testCase "name tilde" <| fun _ ->
-            let error = Expect.wantSome (decodeError "name: ~\n") "A plain tilde is no name."
+            let yaml = """name: ~
+"""
+            let error = Expect.wantSome (decodeError yaml) "A plain tilde is no name."
             Expect.equal (fst error) "name" "The error should name the field."
             Expect.stringContains (snd error) "Expected a value, found the null \"~\"" "The error should say what it found."
         testCase "name field absent" <| fun _ ->
-            Expect.isSome (decodeError "version: version\n") "A package without the field name must fail."
+            let yaml = """version: version
+"""
+            Expect.isSome (decodeError yaml) "A package without the field name must fail."
         testCase "quoted empty name stays valid" <| fun _ ->
-            let actual = Decode.fromYamlString ValidationPackage.decoder "name: \"\"\n"
+            let yaml = """name: ""
+"""
+            let actual = Decode.fromYamlString ValidationPackage.decoder yaml
             Expect.equal actual.Name "" "A quoted empty string is a string, so it is a name."
         testCase "quoted null name stays valid" <| fun _ ->
-            let actual = Decode.fromYamlString ValidationPackage.decoder "name: \"null\"\n"
+            let yaml = """name: "null"
+"""
+            let actual = Decode.fromYamlString ValidationPackage.decoder yaml
             Expect.equal actual.Name "null" "The quoted text null is a string."
         testCase "version without a value is no version" <| fun _ ->
-            let actual = Decode.fromYamlString ValidationPackage.decoder "name: name\nversion:\n"
+            let yaml = """name: name
+version:
+"""
+            let actual = Decode.fromYamlString ValidationPackage.decoder yaml
             Expect.equal actual.Version None "An optional field without a value is missing."
     ]
     testList "roundtrip (fromYamlString >> toYamlString)" [ 

@@ -66,10 +66,14 @@ let tests_extended = testList "extended" [
     ]
     testList "decoder (fromYamlString) needs a name for every package" [
         testCase "package without a name value" <| fun _ ->
-            let text = "validation_packages:\n  - name:\n"
+            let text = """validation_packages:
+  - name:
+"""
             Expect.throws (fun () -> Decode.fromYamlString ValidationPackagesConfig.decoder text |> ignore) "A package name without a value must fail."
         testCase "package with a plain null name" <| fun _ ->
-            let text = "validation_packages:\n  - name: null\n"
+            let text = """validation_packages:
+  - name: null
+"""
             Expect.throws (fun () -> Decode.fromYamlString ValidationPackagesConfig.decoder text |> ignore) "A plain null is no name."
     ]
     testList "roundtrip (toYamlString >> fromYamlString)" [

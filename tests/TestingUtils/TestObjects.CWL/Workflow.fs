@@ -960,3 +960,179 @@ steps:
       arc:step input note: keep step input note
   out: [out]"""
 
+module TrailingComments =
+
+    let stepInputDefaultInMapForm = """cwlVersion: v1.2
+class: Workflow
+inputs: []
+outputs: []
+steps:
+  s:
+    run: t.cwl
+    out: []
+    in:
+      x:
+        default:
+          k: v
+          # tail
+"""
+
+    let stepInputDefaultInSequenceForm = """cwlVersion: v1.2
+class: Workflow
+inputs: []
+outputs: []
+steps:
+  - id: s
+    run: t.cwl
+    out: []
+    in:
+      - id: x
+        default:
+          - 1
+          - 2
+          # tail
+"""
+
+module WithoutInputs =
+
+    let toolInStepMapForm = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs: []
+steps:
+  s:
+    run:
+      class: CommandLineTool
+      baseCommand: echo
+      outputs: []
+    in: {}
+    out: []
+"""
+
+    let toolInStepListForm = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs: []
+steps:
+  - id: s
+    run:
+      class: CommandLineTool
+      baseCommand: echo
+      outputs: []
+    in: {}
+    out: []
+"""
+
+module UnionPorts =
+
+    /// Workflow with unions of null and an enum or a record,
+    /// written as a type list, plus an inline ExpressionTool step whose input is such a union.
+    let typeListWorkflow = """cwlVersion: v1.2
+class: Workflow
+requirements:
+  InlineJavascriptRequirement: {}
+  StepInputExpressionRequirement: {}
+inputs:
+  mode_choice:
+    type:
+      - "null"
+      - type: enum
+        symbols: ["alpha", "beta", "gamma", "delta"]
+    label: Mode choice
+    doc: |
+      Choice of the mode. Optional.
+  reference_dbs:
+    type:
+      - 'null'
+      - type: record
+        name: reference_dbs
+        fields:
+          data_folder:
+            type: Directory?
+            doc: Folder with the data files of the reference database.
+          db_file:
+            type: File?
+            doc: Reference database file
+    label: Reference databases
+  annotation_directory:
+    type: Directory?
+    label: Annotation directory
+  sample_files:
+    type:
+      - "null"
+      - type: array
+        items: File
+  threshold:
+    type: [int, float]
+  first_result: File?
+steps:
+  select_result:
+    label: Mode choice
+    run:
+      class: ExpressionTool
+      requirements:
+        InlineJavascriptRequirement: {}
+      inputs:
+        mode_string:
+          type:
+            - "null"
+            - type: enum
+              symbols: ["alpha", "delta", "beta", "gamma"]
+        first_result: File?
+      outputs:
+        result: File
+      expression: |
+        ${ return {"result": inputs.first_result}; }
+    in:
+      mode_string: mode_choice
+      first_result: first_result
+    out: [result]
+outputs:
+  chosen:
+    type:
+      - "null"
+      - File
+    outputSource: select_result/result
+  summary: [File, Directory]
+"""
+
+    /// Workflow in array form: ports carry an id field and a doc.
+    let arrayFormWorkflow = """cwlVersion: v1.2
+class: Workflow
+id: array_form_ports
+inputs:
+  - id: NAME_PATTERN
+    label: "name pattern"
+    doc: "pattern for the input files, default *.txt"
+    type: string
+    default: "*.txt"
+  - id: INDEX_FILES
+    label: "index files"
+    type:
+      - "null"
+      - File
+    secondaryFiles:
+      - .idx
+      - .meta
+  - id: LIMITS
+    type: float[]?
+  - id: CHOICE
+    type: [string, int, boolean]
+  - id: MAYBE_LIST
+    type: [null, File]
+steps:
+  - id: run_tool
+    run: tool.cwl
+    in:
+      pattern: NAME_PATTERN
+    out: [result]
+outputs:
+  - id: RESULT_LIST
+    type: File
+    outputSource: run_tool/result
+  - id: OPTIONAL_RESULT
+    type:
+      - "null"
+      - File
+    outputSource: run_tool/result
+"""

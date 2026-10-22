@@ -315,7 +315,14 @@ let testCWLWorkflowDescriptionDecode =
             Expect.equal (rawOf "outputs[1]") (Some "[not, a, cwl, output]") "A skipped flow sequence keeps its flow style."
             Expect.equal (rawOf "steps[0]") (Some "\"not a workflow step\"") "A skipped scalar keeps its quotes."
             Expect.equal (rawOf "steps[1].in[1]") (Some "not_a_step_input: true") "A skipped step input shows its entries."
-            let withComment = "cwlVersion: v1.2\nclass: Workflow\ninputs:\n- not_a_port: true # about it\n  other: [1, 2]\noutputs: {}\nsteps: {}\n"
+            let withComment = """cwlVersion: v1.2
+class: Workflow
+inputs:
+- not_a_port: true # about it
+  other: [1, 2]
+outputs: {}
+steps: {}
+"""
             let commented = Decode.decodeWorkflowWithWarnings withComment
             Expect.equal commented.Warnings.[0].Raw (Some "not_a_port: true # about it\nother: [1, 2]") "A skipped entry keeps its comment and its flow sequence."
         testCase "malformed named input still fails" <| fun _ ->
@@ -896,118 +903,6 @@ steps:
         ]
     ]
 
-/// Workflow with unions of null and an enum or a record,
-/// written as a type list, plus an inline ExpressionTool step whose input is such a union.
-let typeListUnionWorkflow = """cwlVersion: v1.2
-class: Workflow
-requirements:
-  InlineJavascriptRequirement: {}
-  StepInputExpressionRequirement: {}
-inputs:
-  mode_choice:
-    type:
-      - "null"
-      - type: enum
-        symbols: ["alpha", "beta", "gamma", "delta"]
-    label: Mode choice
-    doc: |
-      Choice of the mode. Optional.
-  reference_dbs:
-    type:
-      - 'null'
-      - type: record
-        name: reference_dbs
-        fields:
-          data_folder:
-            type: Directory?
-            doc: Folder with the data files of the reference database.
-          db_file:
-            type: File?
-            doc: Reference database file
-    label: Reference databases
-  annotation_directory:
-    type: Directory?
-    label: Annotation directory
-  sample_files:
-    type:
-      - "null"
-      - type: array
-        items: File
-  threshold:
-    type: [int, float]
-  first_result: File?
-steps:
-  select_result:
-    label: Mode choice
-    run:
-      class: ExpressionTool
-      requirements:
-        InlineJavascriptRequirement: {}
-      inputs:
-        mode_string:
-          type:
-            - "null"
-            - type: enum
-              symbols: ["alpha", "delta", "beta", "gamma"]
-        first_result: File?
-      outputs:
-        result: File
-      expression: |
-        ${ return {"result": inputs.first_result}; }
-    in:
-      mode_string: mode_choice
-      first_result: first_result
-    out: [result]
-outputs:
-  chosen:
-    type:
-      - "null"
-      - File
-    outputSource: select_result/result
-  summary: [File, Directory]
-"""
-
-/// Workflow in array form: ports carry an id field and a doc.
-let arrayFormUnionWorkflow = """cwlVersion: v1.2
-class: Workflow
-id: array_form_ports
-inputs:
-  - id: NAME_PATTERN
-    label: "name pattern"
-    doc: "pattern for the input files, default *.txt"
-    type: string
-    default: "*.txt"
-  - id: INDEX_FILES
-    label: "index files"
-    type:
-      - "null"
-      - File
-    secondaryFiles:
-      - .idx
-      - .meta
-  - id: LIMITS
-    type: float[]?
-  - id: CHOICE
-    type: [string, int, boolean]
-  - id: MAYBE_LIST
-    type: [null, File]
-steps:
-  - id: run_tool
-    run: tool.cwl
-    in:
-      pattern: NAME_PATTERN
-    out: [result]
-outputs:
-  - id: RESULT_LIST
-    type: File
-    outputSource: run_tool/result
-  - id: OPTIONAL_RESULT
-    type:
-      - "null"
-      - File
-    outputSource: run_tool/result
-"""
-
 let testWorkflowUnionPortRoundTrip =
     let optionalOf (inner: CWLType) = Union (ResizeArray [ Null; inner ])
 
@@ -1050,13 +945,13 @@ let testWorkflowUnionPortRoundTrip =
                 let expressionTool = Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool workflow.Steps.[0].Run) "The inline ExpressionTool should decode."
                 let toolInput = (Expect.wantSome expressionTool.Inputs "The inline tool should keep its inputs.") |> Seq.find (fun i -> i.Name = "mode_string")
                 assertTypesEqual (optionalOf (enumOf [ "alpha"; "delta"; "beta"; "gamma" ])) (Expect.wantSome toolInput.Type_ "Inline input type") "inline mode_string"
-            let decoded = Decode.decodeWorkflow typeListUnionWorkflow
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.UnionPorts.typeListWorkflow
             check decoded
             let encoded = Encode.encodeWorkflowDescription decoded
             check (Decode.decodeWorkflow encoded)
 
         testCase "the encoder writes the null type as a quoted string" <| fun _ ->
-            let encoded = Encode.encodeWorkflowDescription (Decode.decodeWorkflow typeListUnionWorkflow)
+            let encoded = Encode.encodeWorkflowDescription (Decode.decodeWorkflow TestObjects.CWL.Workflow.UnionPorts.typeListWorkflow)
             Expect.stringContains encoded "\"null\"" "A plain null would read as a YAML null, so the null type must be quoted."
             Expect.isFalse (encoded.Contains("[null") || encoded.Contains("- null") || encoded.Contains(", null")) "No union may contain an unquoted null."
 
@@ -1069,7 +964,7 @@ let testWorkflowUnionPortRoundTrip =
                 assertTypesEqual (optionalOf (CWLType.file ())) (inputTypeOf workflow "MAYBE_LIST") "MAYBE_LIST"
                 assertTypesEqual (CWLType.file ()) (outputTypeOf workflow "RESULT_LIST") "RESULT_LIST"
                 assertTypesEqual (optionalOf (CWLType.file ())) (outputTypeOf workflow "OPTIONAL_RESULT") "OPTIONAL_RESULT"
-            let decoded = Decode.decodeWorkflow arrayFormUnionWorkflow
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.UnionPorts.arrayFormWorkflow
             check decoded
             check (Decode.decodeWorkflow (Encode.encodeWorkflowDescription decoded))
 

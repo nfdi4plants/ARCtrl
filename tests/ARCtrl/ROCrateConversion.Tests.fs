@@ -2615,8 +2615,15 @@ let tests_ToolDescription =
         testCase "The layout of the doc and the label of a tool stays out of the RO-Crate" (fun () ->
             let tool (texts: string) =
                 CWL.Decode.decodeCommandLineTool ("cwlVersion: v1.2\nclass: CommandLineTool\n" + texts + "baseCommand: [echo]\ninputs:\n  x:\n    type: string\noutputs: {}\n")
-            let folded = tool "label: first part of the name\n  second part of the name\ndoc: >-\n  first line of the text\n  second line of the text\n"
-            let oneLine = tool "label: first part of the name second part of the name\ndoc: first line of the text second line of the text\n"
+            let folded = tool """label: first part of the name
+  second part of the name
+doc: >-
+  first line of the text
+  second line of the text
+"""
+            let oneLine = tool """label: first part of the name second part of the name
+doc: first line of the text second line of the text
+"""
             Expect.equal folded oneLine "The tools should be equal whatever the layout of their texts."
             let json (tool: CWL.CWLToolDescription) =
                 WorkflowConversion.composeWorkflowProtocolFromToolDescription("tools/echo.cwl", tool, workflowName = "workflow", runName = "run")

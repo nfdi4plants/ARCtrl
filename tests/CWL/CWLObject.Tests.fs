@@ -611,18 +611,7 @@ let testEncodeNormalizeEdgeCases =
             Expect.equal decodedSteps.[0].In.Count 0 "Empty `in` should survive encode/decode as an empty mapping."
 
         testCase "aliases are rejected with a clear error" <| fun _ ->
-            let yaml = """cwlVersion: v1.2
-class: CommandLineTool
-baseCommand: echo
-inputs:
-  x:
-    type: string
-    default: &a value
-  y:
-    type: string
-    default: *a
-outputs: {}
-"""
+            let yaml = TestObjects.CWL.CommandLineTool.DecodeEdgeCases.withAliases
             let decode () = Decode.decodeCommandLineTool yaml |> ignore
             match (try decode (); None with YamlDecodeException error -> Some error) with
             | Some error -> Expect.stringContains (DecodeError.text error) "alias *a" "The error should name the alias."
@@ -756,22 +745,7 @@ outputs: {}
             Expect.equal roundTripped.Doc (Some "null") "The doc should stay a string."
 
         testCase "dynamic string values keep their type through a roundtrip" <| fun _ ->
-            let yaml = """cwlVersion: v1.2
-class: CommandLineTool
-baseCommand: echo
-inputs: {}
-outputs: {}
-arc:quoted: "true"
-arc:plain: true
-arc:number string: '12'
-arc:number: 12
-arc:null: null
-arc:tilde: ~
-arc:capital bool: True
-arc:hex: 0x1F
-arc:word: NaN
-arc:whole float: 2.0
-"""
+            let yaml = TestObjects.CWL.CommandLineTool.StringScalars.withDynamicStringValues
             let decoded = Decode.decodeCommandLineTool yaml
             let encoded = Encode.encodeToolDescription decoded
             Expect.stringContains encoded "arc:quoted: \"true\"" "A quoted true is a string and must stay quoted."
@@ -804,20 +778,7 @@ arc:whole float: 2.0
             Expect.isTrue (CWLType.typesEqual recordType (recordText |> YAMLicious.Reader.readRoot |> Decode.cwlTypeDecoder')) "The flow text should decode to the same record."
 
         testCase "mapping keys that look like another type are quoted" <| fun _ ->
-            let yaml = """cwlVersion: v1.2
-class: CommandLineTool
-baseCommand: echo
-inputs:
-  "1":
-    type: string
-  "true":
-    type: int
-  plain:
-    type: File
-outputs:
-  "null":
-    type: File
-"""
+            let yaml = TestObjects.CWL.CommandLineTool.StringScalars.withLookalikeKeys
             let encoded = Encode.encodeToolDescription (Decode.decodeCommandLineTool yaml)
             Expect.stringContains encoded "\"1\": string" "A key that reads as a number needs quotes."
             Expect.stringContains encoded "\"true\": int" "A key that reads as a bool needs quotes."
@@ -832,34 +793,7 @@ outputs:
     ]
 
 let testToolUnionPorts =
-    let tool = """cwlVersion: v1.2
-class: CommandLineTool
-baseCommand: echo
-inputs:
-  mode_choice:
-    type:
-      - "null"
-      - type: enum
-        symbols: ["alpha", "beta"]
-    label: Mode choice
-  optional_dir:
-    type: Directory?
-  flow_union: [null, File]
-  block_union:
-    - string
-    - int
-  array_or_null:
-    type:
-      - "null"
-      - type: array
-        items: [string, File]
-outputs:
-  result:
-    type: [File, Directory]
-    outputBinding:
-      glob: "*.out"
-  maybe: ["null", File]
-"""
+    let tool = TestObjects.CWL.CommandLineTool.UnionPorts.cwlFile
 
     let assertTypesEqual (expected: CWLType) (actual: CWLType) (message: string) =
         Expect.isTrue (CWLType.typesEqual expected actual) $"{message}: expected %A{expected} but got %A{actual}"
@@ -888,7 +822,16 @@ outputs:
             let encoded = Encode.encodeToolDescription (Decode.decodeCommandLineTool tool)
             check (Decode.decodeCommandLineTool encoded)
         testCase "a port with a null and a file in a type list is the same port after a round trip" <| fun _ ->
-            let yaml = "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n  x: [\"null\", File]\n  y:\n    type: [\"null\", File]\n    label: y\noutputs: []\n"
+            let yaml = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs:
+  x: ["null", File]
+  y:
+    type: ["null", File]
+    label: y
+outputs: []
+"""
             let decoded = Decode.decodeCommandLineTool yaml
             for name in [ "x"; "y" ] do
                 Expect.equal (decoded.Inputs.Value |> Seq.find (fun i -> i.Name = name)).Optional (Some true) (sprintf "%s should be optional." name)
@@ -907,18 +850,7 @@ outputs: {}
 """
     testList "YAMLicious Reader and Writer" [
         testCase "multi-line plain scalars fold into one line in schema-salad strings" <| fun _ ->
-            let yaml = """cwlVersion: v1.2
-class: CommandLineTool
-baseCommand: echo
-requirements:
-  - class: InitialWorkDirRequirement
-    listing:
-      - entryname: notes.txt
-        entry: first line
-          second line
-inputs: {}
-outputs: {}
-"""
+            let yaml = TestObjects.CWL.CommandLineTool.ReaderAndWriter.withMultiLinePlainScalar
             let decoded = Decode.decodeCommandLineTool yaml
             let listing =
                 decoded.Requirements
@@ -945,18 +877,7 @@ outputs: {}
                 Expect.equal roundTripped.Label (Some text) (sprintf "The label %A should keep its line breaks." text)
 
         testCase "a keep-chomped block at the end of a section is not extended by the section separator" <| fun _ ->
-            let yaml = """cwlVersion: v1.2
-class: CommandLineTool
-baseCommand: echo
-inputs:
-  x:
-    type: string
-    inputBinding:
-      valueFrom: |+
-        $(self)
-
-outputs: {}
-"""
+            let yaml = TestObjects.CWL.CommandLineTool.ReaderAndWriter.withKeptBlockBeforeSection
             let valueFrom (tool: CWLToolDescription) =
                 tool.Inputs |> Option.bind Seq.tryHead |> Option.bind (fun i -> i.InputBinding) |> Option.bind (fun b -> b.ValueFrom)
             let decoded = Decode.decodeCommandLineTool yaml
@@ -989,18 +910,7 @@ arguments:
             Expect.isTrue (List.contains "$(self)\n\n" (argumentScalars (Decode.decodeCommandLineTool encoded))) "The scalar should read back unchanged."
 
         testCase "empty values in extension fields are written back as they were" <| fun _ ->
-            let yaml = """cwlVersion: v1.2
-class: CommandLineTool
-baseCommand: echo
-inputs: {}
-outputs: {}
-arc:note:
-arc:list:
-  - a
-  -
-  - b
-arc:flow: {}
-"""
+            let yaml = TestObjects.CWL.CommandLineTool.ReaderAndWriter.withEmptyExtensionValues
             let encoded = Encode.encodeToolDescription (Decode.decodeCommandLineTool yaml)
             let lines = encoded.Replace("\r", "").Split('\n') |> Array.map (fun line -> line.TrimEnd())
             Expect.isTrue (Array.contains "arc:note:" lines) "A key without a value stays without a value."
@@ -1043,6 +953,16 @@ outputs: {}
             let decodeTool (yaml: string) = Decode.decodeCommandLineTool yaml |> ignore
             let decodeWorkflow (yaml: string) = Decode.decodeWorkflow yaml |> ignore
             let decodeParameters (yaml: string) = DecodeParameters.decodeYAMLParameterFile yaml |> ignore
+            let fileWithSize = """f:
+  class: File
+  path: a.txt
+  size: 42
+"""
+            let fileWithQuotedSize = """f:
+  class: File
+  path: a.txt
+  size: "42"
+"""
             let cases =
                 [ "inputBinding position", decodeTool, inputBinding "position: 1", inputBinding "position: \"1\""
                   "inputBinding separate", decodeTool, inputBinding "separate: false", inputBinding "separate: \"false\""
@@ -1055,7 +975,7 @@ outputs: {}
                   "inplaceUpdate", decodeTool, inplaceUpdate "inplaceUpdate: true", inplaceUpdate "inplaceUpdate: \"true\""
                   "successCodes", decodeTool, exitCodes "successCodes: [0, 1]", exitCodes "successCodes: [\"0\", \"1\"]"
                   "step input loadContents", decodeWorkflow, workflowStep "loadContents: true", workflowStep "loadContents: \"true\""
-                  "File size", decodeParameters, "f:\n  class: File\n  path: a.txt\n  size: 42\n", "f:\n  class: File\n  path: a.txt\n  size: \"42\"\n" ]
+                  "File size", decodeParameters, fileWithSize, fileWithQuotedSize ]
             for (name, decode, plain, quoted) in cases do
                 decode plain
                 Expect.throws (fun () -> decode quoted) (sprintf "A quoted value for %s is a string and must fail." name)
@@ -1064,18 +984,7 @@ outputs: {}
             decodeTool (inputBinding "position: 0x2")
 
         testCase "$namespaces and $schemas are kept as mapping and list through decode and encode" <| fun _ ->
-            let yaml = """cwlVersion: v1.2
-class: CommandLineTool
-baseCommand: echo
-$namespaces:
-  cwltool: "http://commonwl.org/cwltool#"
-  arc: "https://github.com/nfdi4plants/ARC_ontology"
-$schemas:
-  - "https://example.org/a.owl"
-  - "https://example.org/b.yml"
-inputs: {}
-outputs: {}
-"""
+            let yaml = TestObjects.CWL.CommandLineTool.ReaderAndWriter.withNamespacesAndSchemas
             let check (tool: CWLToolDescription) =
                 let metadata = Expect.wantSome tool.Metadata "The extension fields should be kept."
                 let namespaces = Expect.wantSome (DynObj.tryGetTypedPropertyValue<DynamicObj> "$namespaces" metadata) "$namespaces should be a mapping."
@@ -1103,7 +1012,10 @@ outputs: {}
             let error = decodeError (fun () -> Decode.decodeCommandLineTool yaml |> ignore)
             Expect.isSome error "A mapping with the field label twice must fail."
             Expect.stringContains (DecodeError.text error.Value) "label" "The error should name the field."
-            let parameterError = decodeError (fun () -> DecodeParameters.decodeYAMLParameterFile "a: 1\na: 2\n" |> ignore)
+            let repeatedKey = """a: 1
+a: 2
+"""
+            let parameterError = decodeError (fun () -> DecodeParameters.decodeYAMLParameterFile repeatedKey |> ignore)
             Expect.isSome parameterError "A parameter file with the key a twice must fail."
 
         testCase "a text with two documents is a parse error" <| fun _ ->
@@ -1116,7 +1028,11 @@ outputs: {}
             Expect.isSome parseError "A CWL file holds one document."
 
         testCase "a parameter file without content has no references" <| fun _ ->
-            for text in [ ""; "# only a comment\n"; "---\n" ] do
+            let onlyAComment = """# only a comment
+"""
+            let onlyADocumentMarker = """---
+"""
+            for text in [ ""; onlyAComment; onlyADocumentMarker ] do
                 let references = DecodeParameters.decodeYAMLParameterFile text
                 Expect.equal references.Count 0 (sprintf "The text %A holds no parameter." text)
 
@@ -1141,11 +1057,46 @@ outputs: {}
                     decode ()
                     None
                 with YamlDecodeException error -> Some error
+            let emptyCwlVersion = """cwlVersion:
+class: CommandLineTool
+baseCommand: echo
+inputs: {}
+outputs: {}
+"""
+            let emptyClass = """cwlVersion: v1.2
+class:
+inputs: {}
+outputs: {}
+"""
+            let emptyBaseCommandItem = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand:
+  - echo
+  -
+inputs: {}
+outputs: {}
+"""
+            let emptyExpression = """cwlVersion: v1.2
+class: ExpressionTool
+inputs: {}
+outputs: {}
+expression:
+"""
+            let emptyStepRun = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs: {}
+steps:
+  - id: s
+    run:
+    in: {}
+    out: []
+"""
             // the path that the error must show, and a document that holds an empty value there
             let cases =
-                [ "cwlVersion", "cwlVersion:\nclass: CommandLineTool\nbaseCommand: echo\ninputs: {}\noutputs: {}\n"
-                  "class", "cwlVersion: v1.2\nclass:\ninputs: {}\noutputs: {}\n"
-                  "baseCommand[1]", "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand:\n  - echo\n  -\ninputs: {}\noutputs: {}\n"
+                [ "cwlVersion", emptyCwlVersion
+                  "class", emptyClass
+                  "baseCommand[1]", emptyBaseCommandItem
                   // ports in map form and in sequence form
                   "inputs.x", tool [ "inputs:"; "  x:"; "outputs: {}" ]
                   "outputs.o", tool [ "inputs: {}"; "outputs:"; "  o:" ]
@@ -1168,13 +1119,13 @@ outputs: {}
                   "requirements[0].listing[0].entry", requirement [ "  - class: InitialWorkDirRequirement"; "    listing:"; "      - entryname: a"; "        entry:" ]
                   "requirements[0].timelimit", requirement [ "  - class: ToolTimeLimit"; "    timelimit:" ]
                   "requirements[0].class", requirement [ "  - class:" ]
-                  "expression", "cwlVersion: v1.2\nclass: ExpressionTool\ninputs: {}\noutputs: {}\nexpression:\n"
+                  "expression", emptyExpression
                   // steps in map form and in sequence form
                   "steps.s.run", workflow [ "    run:"; "    in: {}"; "    out: []" ]
                   "steps.s.in.x", workflow [ "    run: t.cwl"; "    in:"; "      x:"; "    out: []" ]
                   "steps.s.out", workflow [ "    run: t.cwl"; "    in: {}"; "    out:" ]
                   "steps.s.out[1]", workflow [ "    run: t.cwl"; "    in: {}"; "    out:"; "      - a"; "      -" ]
-                  "steps.s.run", "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  - id: s\n    run:\n    in: {}\n    out: []\n"
+                  "steps.s.run", emptyStepRun
                   "steps.s.out", steps [ "    in: {}"; "    out:" ]
                   "steps.s.in.x", steps [ "    in:"; "      x:"; "    out: []" ]
                   "steps.s.in.x[1]", steps [ "    in:"; "      - id: x"; "        source:"; "          - a"; "          -"; "    out: []" ]
@@ -1210,20 +1161,7 @@ outputs: {}
             Expect.isFalse (encoded.Contains "\r") "The writer ends every line with a line feed."
 
         testCase "raw YAML kept in a CWL object compares and hashes by value" <| fun _ ->
-            let yaml = """cwlVersion: v1.2
-class: CommandLineTool
-baseCommand: echo
-inputs:
-  x:
-    type: File
-    secondaryFiles: [.bai, ^.idx]
-    default: {class: File, path: a.txt}
-  y:
-    type: string
-    default: one
-outputs: {}
-arc:note:
-"""
+            let yaml = TestObjects.CWL.CommandLineTool.RawValues.withDefaultsAndExtensionField
             let first = Decode.decodeCommandLineTool yaml
             let second = Decode.decodeCommandLineTool yaml
             Expect.equal first.Inputs.Value.[0] second.Inputs.Value.[0] "Two decodes of the same port are equal."
@@ -1236,26 +1174,7 @@ arc:note:
             Expect.notEqual first changed "A different default value is a different tool."
 
         testCase "raw YAML with comments is equal after a roundtrip" <| fun _ ->
-            let yaml = """cwlVersion: v1.2
-class: CommandLineTool
-baseCommand: echo
-hints:
-  - class: acme:Hint # trailing comment
-    # leading comment
-    list:
-      - a # first
-      - b
-inputs:
-  x:
-    type: File
-    secondaryFiles:
-      # about files
-      - .bai # index
-    default:
-      class: File # the class
-      path: a.txt
-outputs: {}
-"""
+            let yaml = TestObjects.CWL.CommandLineTool.RawValues.withComments
             let decoded = Decode.decodeCommandLineTool yaml
             let roundTripped = Decode.decodeCommandLineTool (Encode.encodeToolDescription decoded)
             Expect.equal roundTripped decoded "The data of the raw values survives a write and a read."
@@ -1290,30 +1209,7 @@ outputs: {}
                         Expect.equal between.Length (max 2 keptLineFeeds) "One blank line separates the sections, and a kept blank line is that separator."
 
         testCase "raw YAML values keep the comments and the blank lines of their source" <| fun _ ->
-            let yaml = """cwlVersion: v1.2
-class: CommandLineTool
-baseCommand: echo
-hints:
-  - class: acme:Hint # hint comment
-    # leading comment of a field
-    list:
-      - a # item comment
-inputs:
-  x:
-    type: File
-    secondaryFiles:
-      # about files
-      - .bai # index
-    default:
-      class: File # class comment
-      path: a.txt
-arguments:
-  # inside arguments
-  - valueFrom: x # trailing
-
-  - y
-outputs: {}
-"""
+            let yaml = TestObjects.CWL.CommandLineTool.RawValues.withCommentsAndBlankLines
             let encoded = Encode.encodeToolDescription (Decode.decodeCommandLineTool yaml)
             for comment in [ "# hint comment"; "# leading comment of a field"; "# item comment"; "# about files"; "# index"; "# class comment"; "# inside arguments"; "# trailing" ] do
                 Expect.stringContains encoded comment (sprintf "The comment %s belongs to a raw value and should be written back." comment)
@@ -1411,10 +1307,10 @@ outputs: {}
                   header + "outputs: []\ninputs:\n  x:\n    type: File\n    secondaryFiles:\n      - pattern: .bai\n        # tail\n",
                   "      -\n        # tail\n        pattern: .bai\n\noutputs: {}\n"
                   "default of a step input in map form",
-                  "cwlVersion: v1.2\nclass: Workflow\ninputs: []\noutputs: []\nsteps:\n  s:\n    run: t.cwl\n    out: []\n    in:\n      x:\n        default:\n          k: v\n          # tail\n",
+                  TestObjects.CWL.Workflow.TrailingComments.stepInputDefaultInMapForm,
                   "          # tail\n          k: v\n    out: []\n"
                   "default of a step input in sequence form",
-                  "cwlVersion: v1.2\nclass: Workflow\ninputs: []\noutputs: []\nsteps:\n  - id: s\n    run: t.cwl\n    out: []\n    in:\n      - id: x\n        default:\n          - 1\n          - 2\n          # tail\n",
+                  TestObjects.CWL.Workflow.TrailingComments.stepInputDefaultInSequenceForm,
                   "          - 1\n          # tail\n          - 2\n    out: []\n"
                   "a kept block scalar before the comment",
                   header + "outputs: []\ninputs:\n  x:\n    type: string\n    default:\n      a: |+\n        abc\n\n      # tail\n",
@@ -1609,7 +1505,13 @@ outputs: {}
                     Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
                     Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
                 | None -> failwith (sprintf "%s must fail" name)
-            let output = "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs: []\noutputs:\n  o: foo\n"
+            let output = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs: []
+outputs:
+  o: foo
+"""
             match decodeError output with
             | Some error -> Expect.equal (DecodeError.pathText error) "outputs.o" "The error of an output type should show the output."
             | None -> failwith "An invalid output type must fail"
@@ -1688,38 +1590,7 @@ outputs: {}
             Expect.isNone (decodeError valid) "A schema under type is valid."
 
         testCase "a union of null and records keeps the order of the fields and the binding of each field" <| fun _ ->
-            let yaml = String.concat "\n" [
-                "cwlVersion: v1.2"
-                "class: CommandLineTool"
-                "baseCommand: [run]"
-                "inputs:"
-                "  choice:"
-                "    type:"
-                "      - \"null\""
-                "      - type: record"
-                "        name: with_file"
-                "        fields:"
-                "          source:"
-                "            type: File"
-                "            inputBinding:"
-                "              prefix: --source"
-                "          title:"
-                "            type: string"
-                "            inputBinding:"
-                "              prefix: --title"
-                "      - type: record"
-                "        name: with_flags"
-                "        fields:"
-                "          verbose:"
-                "            type: boolean"
-                "            inputBinding:"
-                "              prefix: --verbose"
-                "          quiet:"
-                "            type: boolean"
-                "            inputBinding:"
-                "              prefix: --quiet"
-                "outputs: []"
-                "" ]
+            let yaml = TestObjects.CWL.CommandLineTool.UnionPorts.withRecordMembers
             let decoded = Decode.decodeCommandLineTool yaml
             let recordFields (index: int) =
                 match decoded.Inputs.Value.[0].Type_ with
@@ -1859,14 +1730,33 @@ outputs: {}
             Expect.stringContains workflowText "    in: {}\n    out: []\n" "The step writes in and out."
 
         testCase "a document without inputs is a decode error at the place of the process for every class" <| fun _ ->
-            let step = "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: []\nsteps:\n  s:\n    run:\n      class: CommandLineTool\n      baseCommand: echo\n      outputs: []\n    in: {}\n    out: []\n"
-            let stepList = "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: []\nsteps:\n  - id: s\n    run:\n      class: CommandLineTool\n      baseCommand: echo\n      outputs: []\n    in: {}\n    out: []\n"
+            let step = TestObjects.CWL.Workflow.WithoutInputs.toolInStepMapForm
+            let stepList = TestObjects.CWL.Workflow.WithoutInputs.toolInStepListForm
+            let toolWithoutInputs = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+outputs: []
+"""
+            let expressionToolWithoutInputs = """cwlVersion: v1.2
+class: ExpressionTool
+outputs: []
+expression: "${ return {}; }"
+"""
+            let operationWithoutInputs = """cwlVersion: v1.2
+class: Operation
+outputs: []
+"""
+            let workflowWithoutInputs = """cwlVersion: v1.2
+class: Workflow
+outputs: []
+steps: []
+"""
             // the document, the process that needs inputs, the path of the error and the line where the process starts
             let documents =
-                [ "a tool", "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\noutputs: []\n", "a command line tool", "", 1
-                  "an expression tool", "cwlVersion: v1.2\nclass: ExpressionTool\noutputs: []\nexpression: \"${ return {}; }\"\n", "an expression tool", "", 1
-                  "an operation", "cwlVersion: v1.2\nclass: Operation\noutputs: []\n", "an operation", "", 1
-                  "a workflow", "cwlVersion: v1.2\nclass: Workflow\noutputs: []\nsteps: []\n", "a workflow", "", 1
+                [ "a tool", toolWithoutInputs, "a command line tool", "", 1
+                  "an expression tool", expressionToolWithoutInputs, "an expression tool", "", 1
+                  "an operation", operationWithoutInputs, "an operation", "", 1
+                  "a workflow", workflowWithoutInputs, "a workflow", "", 1
                   "a tool inside a step in map form", step, "a command line tool", "steps.s.run", 8
                   "a tool inside a step in list form", stepList, "a command line tool", "steps.s.run", 8 ]
             for (name, yaml, what, path, line) in documents do
@@ -2212,7 +2102,17 @@ let testDocAndLabelLayout =
                     let decoded = Decode.decodeCommandLineTool (tool [ key + ": " + text; "inputs: {}"; "outputs: {}" ])
                     let value = if key = "doc" then decoded.Doc else decoded.Label
                     Expect.isSome value (sprintf "The spelling %s is a string." (text.Replace("\n", "\\n")))
-            let step = String.concat "\n" [ "cwlVersion: v1.2"; "class: Workflow"; "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run: t.cwl"; "    in: {}"; "    out: []"; "    label: 42"; "" ]
+            let step = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs: {}
+steps:
+  s:
+    run: t.cwl
+    in: {}
+    out: []
+    label: 42
+"""
             match (try Decode.decodeWorkflow step |> ignore; None with YamlDecodeException error -> Some error) with
             | Some error -> Expect.equal (DecodeError.pathText error) "steps.s.label" "The error should show the label of the step."
             | None -> failwith "A plain int as the label of a step must fail."
@@ -2278,7 +2178,15 @@ let testDocAndLabelLayout =
             Expect.equal (Decode.decodeCommandLineTool (tool "doc: [\"42\", 'true']\n")).Doc (Some "42true") "Quoted items are strings."
 
         testCase "an edit that keeps the length of every line keeps the lines and a longer edit writes the new text" <| fun _ ->
-            let yaml = "cwlVersion: v1.2\nclass: CommandLineTool\ndoc: >\n  first line of the text\n  second line of the text\nbaseCommand: [echo]\ninputs: {}\noutputs: {}\n"
+            let yaml = """cwlVersion: v1.2
+class: CommandLineTool
+doc: >
+  first line of the text
+  second line of the text
+baseCommand: [echo]
+inputs: {}
+outputs: {}
+"""
             let tool = Decode.decodeCommandLineTool yaml
             tool.Doc <- Some "other line of the text second line of the text\n"
             let sameLengths = Encode.encodeToolDescription tool
@@ -2289,7 +2197,17 @@ let testDocAndLabelLayout =
             Expect.isFalse (longer.Contains "first line of the text\n") "The old line should be gone."
 
         testCase "a tool that is built from the texts of a decoded one writes them in the plain spelling" <| fun _ ->
-            let yaml = "cwlVersion: v1.2\nclass: CommandLineTool\nlabel: first part of the name\n  second part of the name\ndoc: >\n  first line of the text\n  second line of the text\nbaseCommand: [echo]\ninputs: {}\noutputs: {}\n"
+            let yaml = """cwlVersion: v1.2
+class: CommandLineTool
+label: first part of the name
+  second part of the name
+doc: >
+  first line of the text
+  second line of the text
+baseCommand: [echo]
+inputs: {}
+outputs: {}
+"""
             let decoded = Decode.decodeCommandLineTool yaml
             let rebuilt =
                 CWLToolDescription(

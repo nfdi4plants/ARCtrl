@@ -153,3 +153,230 @@ successCodes: [0]
 temporaryFailCodes: [75]
 permanentFailCodes: [1, 2]
 arc:note: keep overflow"""
+
+    let withAliases = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs:
+  x:
+    type: string
+    default: &a value
+  y:
+    type: string
+    default: *a
+outputs: {}
+"""
+
+module StringScalars =
+
+    let withDynamicStringValues = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs: {}
+outputs: {}
+arc:quoted: "true"
+arc:plain: true
+arc:number string: '12'
+arc:number: 12
+arc:null: null
+arc:tilde: ~
+arc:capital bool: True
+arc:hex: 0x1F
+arc:word: NaN
+arc:whole float: 2.0
+"""
+
+    let withLookalikeKeys = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs:
+  "1":
+    type: string
+  "true":
+    type: int
+  plain:
+    type: File
+outputs:
+  "null":
+    type: File
+"""
+
+module UnionPorts =
+
+    let cwlFile = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs:
+  mode_choice:
+    type:
+      - "null"
+      - type: enum
+        symbols: ["alpha", "beta"]
+    label: Mode choice
+  optional_dir:
+    type: Directory?
+  flow_union: [null, File]
+  block_union:
+    - string
+    - int
+  array_or_null:
+    type:
+      - "null"
+      - type: array
+        items: [string, File]
+outputs:
+  result:
+    type: [File, Directory]
+    outputBinding:
+      glob: "*.out"
+  maybe: ["null", File]
+"""
+
+    let withRecordMembers = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: [run]
+inputs:
+  choice:
+    type:
+      - "null"
+      - type: record
+        name: with_file
+        fields:
+          source:
+            type: File
+            inputBinding:
+              prefix: --source
+          title:
+            type: string
+            inputBinding:
+              prefix: --title
+      - type: record
+        name: with_flags
+        fields:
+          verbose:
+            type: boolean
+            inputBinding:
+              prefix: --verbose
+          quiet:
+            type: boolean
+            inputBinding:
+              prefix: --quiet
+outputs: []
+"""
+
+module ReaderAndWriter =
+
+    let withMultiLinePlainScalar = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+requirements:
+  - class: InitialWorkDirRequirement
+    listing:
+      - entryname: notes.txt
+        entry: first line
+          second line
+inputs: {}
+outputs: {}
+"""
+
+    let withKeptBlockBeforeSection = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs:
+  x:
+    type: string
+    inputBinding:
+      valueFrom: |+
+        $(self)
+
+outputs: {}
+"""
+
+    let withEmptyExtensionValues = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs: {}
+outputs: {}
+arc:note:
+arc:list:
+  - a
+  -
+  - b
+arc:flow: {}
+"""
+
+    let withNamespacesAndSchemas = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+$namespaces:
+  cwltool: "http://commonwl.org/cwltool#"
+  arc: "https://github.com/nfdi4plants/ARC_ontology"
+$schemas:
+  - "https://example.org/a.owl"
+  - "https://example.org/b.yml"
+inputs: {}
+outputs: {}
+"""
+
+module RawValues =
+
+    let withDefaultsAndExtensionField = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs:
+  x:
+    type: File
+    secondaryFiles: [.bai, ^.idx]
+    default: {class: File, path: a.txt}
+  y:
+    type: string
+    default: one
+outputs: {}
+arc:note:
+"""
+
+    let withComments = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+hints:
+  - class: acme:Hint # trailing comment
+    # leading comment
+    list:
+      - a # first
+      - b
+inputs:
+  x:
+    type: File
+    secondaryFiles:
+      # about files
+      - .bai # index
+    default:
+      class: File # the class
+      path: a.txt
+outputs: {}
+"""
+
+    let withCommentsAndBlankLines = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+hints:
+  - class: acme:Hint # hint comment
+    # leading comment of a field
+    list:
+      - a # item comment
+inputs:
+  x:
+    type: File
+    secondaryFiles:
+      # about files
+      - .bai # index
+    default:
+      class: File # class comment
+      path: a.txt
+arguments:
+  # inside arguments
+  - valueFrom: x # trailing
+
+  - y
+outputs: {}
+"""

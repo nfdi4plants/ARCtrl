@@ -131,22 +131,7 @@ let testYAMLParameterFile =
             Expect.isNone (DynObj.tryGetTypedPropertyValue<string> "class" reference) "Known class field should not be overflow."
             Expect.isNone (DynObj.tryGetTypedPropertyValue<string> "path" reference) "Known path field should not be overflow."
         testCase "quoted scalars decode as strings and plain scalars keep their type" <| fun _ ->
-            let yaml = """quotedBool: "true"
-plainBool: true
-quotedInt: '12'
-plainInt: 12
-quotedNull: "null"
-plainNull: null
-quotedFloat: "1.5"
-plainFloat: 1.5
-plainInfinity: .inf
-capitalBool: True
-upperBool: FALSE
-tilde: ~
-capitalNull: Null
-nanWord: NaN
-infinityWord: Infinity
-"""
+            let yaml = TestObjects.CWL.YAMLParameterFile.CoreSchemaScalars.quotedAndPlainScalars
             let decoded = DecodeParameters.decodeYAMLParameterFile yaml
             let valueOf key = (decoded |> Seq.find (fun r -> r.Key = key)).Value
             Expect.equal (valueOf "quotedBool") (Some (CWLParameterValue.String "true")) "A quoted true is a string."
