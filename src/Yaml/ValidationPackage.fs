@@ -19,7 +19,7 @@ module ValidationPackage =
     let decoder : (YamlNode -> ValidationPackage) = 
         Decode.object (fun get ->
             ValidationPackage(
-                name = get.Required.Field NAME_KEY ARCtrl.CWL.Decode.requiredString,
+                name = get.Required.Field NAME_KEY (Decode.nonNull Decode.string),
                 ?version = get.Optional.Field VERSION_KEY Decode.string
             )
         )

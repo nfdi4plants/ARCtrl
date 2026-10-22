@@ -5,9 +5,12 @@ open Fable.Core
 open YAMLicious
 
 /// A YAML value that a CWL object keeps as it was written, such as the default value of an input or the
-/// secondaryFiles of a port. YamlNode has no structural equality. DynamicObj compares and hashes the properties
-/// of an object through the objects that it holds, so the value carries its own equality: two values are equal
-/// when their nodes hold the same data, whatever their comments and styles.
+/// secondaryFiles of a port. The node keeps its comments, blank lines, scalar styles and collection styles, and the
+/// encoder writes them back. A comment behind the last entry of a raw value moves in front of that entry when the
+/// encoder writes the value in front of other entries. YamlNode has no structural equality. DynamicObj compares and
+/// hashes the properties of an object through the objects that it holds, so the value carries its own equality. Two
+/// values are equal when their nodes have the same shape, tags, keys and scalar texts, and when each scalar is plain
+/// in both or quoted in both. Comments, blank lines, anchors, collection styles and the kind of quote do not count.
 [<CustomEquality; NoComparison>]
 type RawYaml =
     { Node: YamlNode }

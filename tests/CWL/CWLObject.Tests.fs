@@ -873,6 +873,10 @@ outputs:
         assertTypesEqual (optionalOf (CWLType.file ())) (typeOf "flow_union") "flow_union"
         assertTypesEqual (Union (ResizeArray [ String; Int ])) (typeOf "block_union") "block_union"
         assertTypesEqual (optionalOf (Array (InputArraySchema(Union (ResizeArray [ String; CWLType.file () ]))))) (typeOf "array_or_null") "array_or_null"
+        let flagOf name = (inputs |> Seq.find (fun i -> i.Name = name)).Optional
+        for name in [ "mode_choice"; "optional_dir"; "flow_union"; "array_or_null" ] do
+            Expect.equal (flagOf name) (Some true) (sprintf "%s is a union of null and one type, so it is optional." name)
+        Expect.equal (flagOf "block_union") None "A union without null is not optional."
         let outputTypeOf name = Expect.wantSome (decoded.Outputs |> Seq.find (fun o -> o.Name = name)).Type_ $"{name} should have a type"
         assertTypesEqual (Union (ResizeArray [ CWLType.file (); CWLType.directory () ])) (outputTypeOf "result") "result"
         assertTypesEqual (optionalOf (CWLType.file ())) (outputTypeOf "maybe") "maybe"
@@ -883,6 +887,12 @@ outputs:
         testCase "unions roundtrip through the encoder" <| fun _ ->
             let encoded = Encode.encodeToolDescription (Decode.decodeCommandLineTool tool)
             check (Decode.decodeCommandLineTool encoded)
+        testCase "a port with a null and a file in a type list is the same port after a round trip" <| fun _ ->
+            let yaml = "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n  x: [\"null\", File]\n  y:\n    type: [\"null\", File]\n    label: y\noutputs: []\n"
+            let decoded = Decode.decodeCommandLineTool yaml
+            for name in [ "x"; "y" ] do
+                Expect.equal (decoded.Inputs.Value |> Seq.find (fun i -> i.Name = name)).Optional (Some true) (sprintf "%s should be optional." name)
+            Expect.equal (Decode.decodeCommandLineTool (Encode.encodeToolDescription decoded)) decoded "A round trip should keep the optional flag."
         testCase "unions in the encoder output use only quoted null members" <| fun _ ->
             let encoded = Encode.encodeToolDescription (Decode.decodeCommandLineTool tool)
             Expect.isFalse (encoded.Contains("[null") || encoded.Contains("- null") || encoded.Contains(", null")) "A plain null member reads as a YAML null, which CWL rejects."
@@ -1278,6 +1288,208 @@ outputs: {}
                         let keptLineFeeds = expected.Length - expected.TrimEnd('\n').Length
                         Expect.isTrue (between |> Seq.forall (fun c -> c = '\n')) "Only line feeds stand between the sections."
                         Expect.equal between.Length (max 2 keptLineFeeds) "One blank line separates the sections, and a kept blank line is that separator."
+
+        testCase "raw YAML values keep the comments and the blank lines of their source" <| fun _ ->
+            let yaml = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+hints:
+  - class: acme:Hint # hint comment
+    # leading comment of a field
+    list:
+      - a # item comment
+inputs:
+  x:
+    type: File
+    secondaryFiles:
+      # about files
+      - .bai # index
+    default:
+      class: File # class comment
+      path: a.txt
+arguments:
+  # inside arguments
+  - valueFrom: x # trailing
+
+  - y
+outputs: {}
+"""
+            let encoded = Encode.encodeToolDescription (Decode.decodeCommandLineTool yaml)
+            for comment in [ "# hint comment"; "# leading comment of a field"; "# item comment"; "# about files"; "# index"; "# class comment"; "# inside arguments"; "# trailing" ] do
+                Expect.stringContains encoded comment (sprintf "The comment %s belongs to a raw value and should be written back." comment)
+            Expect.stringContains encoded "# trailing\n\n  - y" "The blank line between the two arguments should be written back."
+
+        testCase "a deeply nested raw value decodes, compares, hashes and writes without a stack overflow" <| fun _ ->
+            let depth = 100000
+            let tool (value: string) =
+                "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n  x:\n    type: string\n    default: " + value + "\noutputs: {}\n"
+            let flow = String.replicate depth "[" + "x" + String.replicate depth "]"
+            let block = "\n      " + String.replicate depth "- " + "x"
+            for value in [ flow; block ] do
+                let first = Decode.decodeCommandLineTool (tool value)
+                let second = Decode.decodeCommandLineTool (tool value)
+                Expect.equal first second "Two decodes of the same text should be equal."
+                Expect.equal (first.GetHashCode()) (second.GetHashCode()) "Two decodes of the same text should have the same hash."
+                let encoded = Encode.encodeToolDescription first
+                Expect.equal (Decode.decodeCommandLineTool encoded) first "The written text should decode to the same tool."
+
+        testCase "a key that occurs twice, in a raw value or anywhere else, is a decode error with the path of the key" <| fun _ ->
+            let tool (lines: string list) =
+                String.concat "\n" ([ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo" ] @ lines) + "\n"
+            let decodeError (yaml: string) =
+                try
+                    Decode.decodeCommandLineTool yaml |> ignore
+                    None
+                with YamlDecodeException error -> Some error
+            let cases =
+                [ "inputs.x.default.a", tool [ "inputs:"; "  x:"; "    type: string"; "    default: {a: 1, a: 2}"; "outputs: []" ]
+                  "inputs.x.default.a", tool [ "inputs:"; "  x:"; "    type: string"; "    default:"; "      a: 1"; "      a: 2"; "outputs: []" ]
+                  "inputs.x.default.b[1].k", tool [ "inputs:"; "  x:"; "    type: string"; "    default:"; "      b:"; "        - {k: 1}"; "        - {k: 1, k: 2}"; "outputs: []" ]
+                  "hints[0].list[0].k", tool [ "hints:"; "  - class: acme:Hint"; "    list:"; "      - {k: 1, \"k\": 2}"; "inputs: []"; "outputs: []" ]
+                  "outputs.o.secondaryFiles[0].k", tool [ "inputs: []"; "outputs:"; "  o:"; "    type: File"; "    secondaryFiles:"; "      - {k: 1, k: 2}" ]
+                  "baseCommand", tool [ "baseCommand: ls"; "inputs: []"; "outputs: []" ] ]
+            for (path, yaml) in cases do
+                match decodeError yaml with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path (sprintf "The error should show this path:\n%s" yaml)
+                    Expect.stringContains error.Message "occurs twice" "The error should say that the key occurs twice."
+                | None -> failwith (sprintf "A key that occurs twice at %s must fail:\n%s" path yaml)
+            let sameKeyApart = tool [ "inputs:"; "  x:"; "    type: string"; "    default: {a: {a: 1}, b: {a: 2}}"; "outputs: []" ]
+            Expect.isNone (decodeError sameKeyApart) "The same key in different mappings is no repeated key."
+
+        testCase "a raw hint that starts with a comment or a blank line keeps it in the hint and is written behind a dash with a line break" <| fun _ ->
+            let tool (hints: string list) =
+                String.concat "\n" ([ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo"; "inputs: []"; "outputs: []"; "hints:" ] @ hints) + "\n"
+            let commentLines (text: string) = text.Split('\n') |> Array.filter (fun line -> line.TrimStart().StartsWith "#") |> Array.length
+            let cases =
+                [ "array form, comment in front of the first field",
+                  tool [ "  -"; "    # about the hint"; "    class: acme:Hint"; "    a: 1" ],
+                  "hints:\n  -\n    # about the hint\n    class: acme:Hint\n    a: 1\n"
+                  "array form, blank line and comment in front of the first field",
+                  tool [ "  - class: acme:Other"; "  -"; ""; "    # about the hint"; "    class: acme:Hint"; "    a: 1" ],
+                  "  - class: acme:Other\n  -\n\n    # about the hint\n    class: acme:Hint\n    a: 1\n"
+                  "map form with the class in the payload",
+                  tool [ "  acme:Hint:"; "    # about the hint"; "    class: acme:Hint"; "    a: 1" ],
+                  "hints:\n  -\n    # about the hint\n    class: acme:Hint\n    a: 1\n"
+                  "map form without the class in the payload",
+                  tool [ "  acme:Hint:"; "    # about the hint"; "    a: 1" ],
+                  "hints:\n  - class: acme:Hint\n    # about the hint\n    a: 1\n" ]
+            for (name, yaml, expected) in cases do
+                let decoded = Decode.decodeCommandLineTool yaml
+                let encoded = Encode.encodeToolDescription decoded
+                Expect.stringContains encoded expected (sprintf "%s: the comment should stay in front of the first field." name)
+                Expect.equal (commentLines encoded) (commentLines yaml) (sprintf "%s: the comment should be written once." name)
+                Expect.equal (Decode.decodeCommandLineTool encoded) decoded (sprintf "%s: the written text should decode to the same tool." name)
+                Expect.equal (Encode.encodeToolDescription (Decode.decodeCommandLineTool encoded)) encoded (sprintf "%s: a second pass should write the same text." name)
+
+        testCase "a comment at the end of a raw value moves in front of its last entry when the value is no longer the last node of the document" <| fun _ ->
+            let header = "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\n"
+            let cases =
+                [ // the name, the document and the text that the written document holds
+                  "hints in array form, with blank lines at the end of the document",
+                  header + "inputs: []\noutputs: []\nhints:\n  - class: acme:Unknown\n    foo: bar\n    # baz: qux\n\n\n",
+                  "  - class: acme:Unknown\n    # baz: qux\n    foo: bar\n\nbaseCommand: [echo]\n"
+                  "hints in map form",
+                  header + "inputs: []\noutputs: []\nhints:\n  acme:Unknown:\n    foo: bar\n    # baz: qux\n",
+                  "  - class: acme:Unknown\n    # baz: qux\n    foo: bar\n\nbaseCommand: [echo]\n"
+                  "arguments in front of extension metadata",
+                  header + "inputs: []\noutputs: []\ns:author: me\narguments:\n  - valueFrom: x\n    # tail\n",
+                  "  -\n    # tail\n    valueFrom: x\ns:author: me\n"
+                  "input default as a mapping",
+                  header + "outputs: []\ninputs:\n  x:\n    type: string\n    default:\n      a: 1\n      # tail\n",
+                  "      # tail\n      a: 1\n\noutputs: {}\n"
+                  "input default as a sequence",
+                  header + "outputs: []\ninputs:\n  x:\n    type: string\n    default:\n      - a\n      - b\n      # tail\n",
+                  "      - a\n      # tail\n      - b\n\noutputs: {}\n"
+                  "input default in front of a field of the same input",
+                  header + "outputs: []\ninputs:\n  x:\n    type: string\n    inputBinding:\n      prefix: -x\n    default:\n      a: 1\n      # tail\n",
+                  "      # tail\n      a: 1\n    inputBinding:\n"
+                  "nested collections that each end with a comment",
+                  header + "outputs: []\ninputs:\n  x:\n    type: string\n    default:\n      a:\n        b:\n          - 1\n          # deep\n        # middle\n      # outer\n",
+                  "      # outer\n      a:\n        # middle\n        b:\n          # deep\n          - 1\n\noutputs: {}\n"
+                  "secondaryFiles of an input",
+                  header + "outputs: []\ninputs:\n  x:\n    type: File\n    secondaryFiles:\n      - pattern: .bai\n        # tail\n",
+                  "      -\n        # tail\n        pattern: .bai\n\noutputs: {}\n"
+                  "default of a step input in map form",
+                  "cwlVersion: v1.2\nclass: Workflow\ninputs: []\noutputs: []\nsteps:\n  s:\n    run: t.cwl\n    out: []\n    in:\n      x:\n        default:\n          k: v\n          # tail\n",
+                  "          # tail\n          k: v\n    out: []\n"
+                  "default of a step input in sequence form",
+                  "cwlVersion: v1.2\nclass: Workflow\ninputs: []\noutputs: []\nsteps:\n  - id: s\n    run: t.cwl\n    out: []\n    in:\n      - id: x\n        default:\n          - 1\n          - 2\n          # tail\n",
+                  "          - 1\n          # tail\n          - 2\n    out: []\n"
+                  "a kept block scalar before the comment",
+                  header + "outputs: []\ninputs:\n  x:\n    type: string\n    default:\n      a: |+\n        abc\n\n      # tail\n",
+                  "      # tail\n      a: |+\n        abc\n\noutputs: {}\n" ]
+            let commentLines (text: string) = text.Split('\n') |> Array.filter (fun line -> line.TrimStart().StartsWith "#") |> Array.length
+            for (name, yaml, expected) in cases do
+                let decoded = Decode.decodeCWLProcessingUnit yaml
+                let encoded = Encode.encodeProcessingUnit decoded
+                Expect.stringContains encoded expected (sprintf "%s: the comment should stand in front of the last entry." name)
+                Expect.equal (commentLines encoded) (commentLines yaml) (sprintf "%s: every comment should be written once." name)
+                Expect.equal (Decode.decodeCWLProcessingUnit encoded) decoded (sprintf "%s: the written text should decode to the same document." name)
+                Expect.equal (Encode.encodeProcessingUnit (Decode.decodeCWLProcessingUnit encoded)) encoded (sprintf "%s: a second pass should write the same text." name)
+
+        testCase "a comment at the end of a raw value of depth 100000 moves without a stack overflow" <| fun _ ->
+            let depth = 100000
+            let yaml =
+                "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\noutputs: []\ninputs:\n  x:\n    type: string\n    default:\n      "
+                + String.replicate depth "- " + "x\n      # tail\n"
+            let decoded = Decode.decodeCommandLineTool yaml
+            let encoded = Encode.encodeToolDescription decoded
+            Expect.stringContains encoded "# tail\n" "The comment should be written."
+            Expect.equal (encoded.Split("# tail").Length) 2 "The comment should be written once."
+            Expect.equal (Decode.decodeCommandLineTool encoded) decoded "The written text should decode to the same tool."
+            Expect.equal (Encode.encodeToolDescription (Decode.decodeCommandLineTool encoded)) encoded "A second pass should write the same text."
+
+        testCase "a map-form hint without a payload is the hint with an empty payload" <| fun _ ->
+            let tool (hints: string list) =
+                String.concat "\n" ([ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo"; "inputs: []"; "outputs: []"; "hints:" ] @ hints) + "\n"
+            for hint in [ "acme:Hint"; "NetworkAccess"; "WorkReuse" ] do
+                let withoutPayload = Decode.decodeCommandLineTool (tool [ "  " + hint + ":" ])
+                let emptyPayload = Decode.decodeCommandLineTool (tool [ "  " + hint + ": {}" ])
+                Expect.equal withoutPayload emptyPayload (sprintf "%s without a payload should equal %s with {}." hint hint)
+                let encoded = Encode.encodeToolDescription withoutPayload
+                Expect.isFalse (encoded.Contains "value:") (sprintf "%s: the hint has no value field.\n%s" hint encoded)
+                Expect.equal (Decode.decodeCommandLineTool encoded) withoutPayload (sprintf "%s: a round trip should keep the hint." hint)
+            let encoded = Encode.encodeToolDescription (Decode.decodeCommandLineTool (tool [ "  acme:Hint:" ]))
+            Expect.stringContains encoded "class: acme:Hint" "The unknown hint should keep its class."
+
+        testCase "a raw block scalar that keeps its line feeds is written back with them in front of a section" <| fun _ ->
+            let tool (scalar: string) =
+                "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n  x:\n    type: string\n    default: " + scalar + "outputs: []\n"
+            let cases =
+                [ // the source, the text that follows default: in the written document
+                  "|+\n", "|+\noutputs: {}\n"
+                  "|+\n      abc\n", "|+\n      abc\noutputs: {}\n"
+                  "|+\n      abc\n\n", "|+\n      abc\n\noutputs: {}\n"
+                  "|+\n      abc\n\n\n", "|+\n      abc\n\n\noutputs: {}\n"
+                  "|\n      abc\n", "|\n      abc\n\noutputs: {}\n"
+                  "|\n", "|\n\noutputs: {}\n"
+                  "|-\n      abc\n", "|-\n      abc\n\noutputs: {}\n"
+                  "|-\n", "|-\n\noutputs: {}\n" ]
+            for (source, expected) in cases do
+                let decoded = Decode.decodeCommandLineTool (tool source)
+                let encoded = Encode.encodeToolDescription decoded
+                Expect.stringContains encoded expected (sprintf "The scalar %s should be written back with its line feeds." (source.Replace("\n", "\\n")))
+                Expect.equal (Decode.decodeCommandLineTool encoded) decoded (sprintf "The scalar %s should read back as the same tool." (source.Replace("\n", "\\n")))
+
+        testCase "kept block scalars inside a raw value stay in front of the next section and of a comment" <| fun _ ->
+            let header = "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\n"
+            let cases =
+                [ // the document and the text that follows the raw value in the written document
+                  "a kept scalar, then a comment at the end of the document",
+                  header + "outputs: []\ninputs:\n  x:\n    type: string\n    default:\n      a: |+\n        abc\n\n      # tail\n",
+                  "      # tail\n      a: |+\n        abc\n\noutputs: {}\n"
+                  "kept scalars at the end of nested mappings",
+                  header + "inputs:\n  x:\n    type: string\n    default:\n      a: |+\n        abc\n\n      b:\n        c: |+\n          q\n\noutputs: []\n",
+                  "          q\n\noutputs: {}\n"
+                  "a kept scalar as the last item of a sequence",
+                  header + "inputs:\n  x:\n    type: string\n    default:\n      - a\n      - |+\n        abc\n\noutputs: []\n",
+                  "        abc\n\noutputs: {}\n" ]
+            for (name, yaml, expected) in cases do
+                let decoded = Decode.decodeCommandLineTool yaml
+                let encoded = Encode.encodeToolDescription decoded
+                Expect.stringContains encoded expected (sprintf "%s: the lines of the scalar should come first." name)
+                Expect.equal (Decode.decodeCommandLineTool encoded) decoded (sprintf "%s: the written text should read back as the same tool." name)
     ]
 
 let main =

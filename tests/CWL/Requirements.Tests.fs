@@ -787,6 +787,30 @@ outputs: {}"""
                     |> String.concat "\n"
                 Expect.stringContains encoded "$(inputs.enable_reuse)" "WorkReuse expression payload should survive decode/encode."
                 Expect.stringContains encoded "$(inputs.enable_network)" "NetworkAccess expression payload should survive decode/encode."
+            testCase "A quoted bool of WorkReuse and NetworkAccess is a string and stays quoted" <| fun _ ->
+                let yaml = """requirements:
+  - class: WorkReuse
+    enableReuse: "false"
+  - class: NetworkAccess
+    networkAccess: 'true'"""
+                let reqs = decodeRequirements yaml
+                let workReuse = findRequirement reqs (function WorkReuseExpressionRequirement _ -> true | _ -> false)
+                let network = findRequirement reqs (function NetworkAccessExpressionRequirement _ -> true | _ -> false)
+                Expect.equal workReuse (WorkReuseExpressionRequirement "false") "A quoted false is the text false."
+                Expect.equal network (NetworkAccessExpressionRequirement "true") "A quoted true is the text true."
+                let encoded = Encode.encodeRequirement workReuse |> Encode.writeYaml
+                Expect.stringContains encoded "enableReuse: \"false\"" "The text should be written quoted, so that it reads back as the same text."
+            testCase "WorkReuse and NetworkAccess decode every core schema spelling of a bool" <| fun _ ->
+                let yaml = """requirements:
+  - class: WorkReuse
+    enableReuse: False
+  - class: NetworkAccess
+    networkAccess: TRUE"""
+                let reqs = decodeRequirements yaml
+                let workReuse = findRequirement reqs (function WorkReuseRequirement _ -> true | _ -> false)
+                let network = findRequirement reqs (function NetworkAccessRequirement _ -> true | _ -> false)
+                Expect.equal workReuse (WorkReuseRequirement (WorkReuseRequirementValue(false))) "False is a bool in the core schema."
+                Expect.equal network (NetworkAccessRequirement (NetworkAccessRequirementValue(true))) "TRUE is a bool in the core schema."
         ]
         testList "ToolTimeLimitRequirement" [
             testCase "Decode numeric timelimit" <| fun _ ->
@@ -826,6 +850,15 @@ outputs: {}"""
                 let requirement = findRequirement reqs (function ToolTimeLimitRequirement _ -> true | _ -> false)
                 let expected = ToolTimeLimitRequirement (ToolTimeLimitExpression "3.5")
                 Expect.equal requirement expected "Float timelimit should decode via expression fallback."
+            testCase "A float timelimit is written as the number and a quoted number stays a string" <| fun _ ->
+                for (text, expected) in [ "3.5", "timelimit: 3.5"; "\"5\"", "timelimit: \"5\""; "\"3.5\"", "timelimit: 3.5" ] do
+                    let yaml = "requirements:\n  - class: ToolTimeLimit\n    timelimit: " + text
+                    let requirement = findRequirement (decodeRequirements yaml) (function ToolTimeLimitRequirement _ -> true | _ -> false)
+                    let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
+                    Expect.stringContains encoded expected (sprintf "The time limit %s should be written as %s." text expected)
+                    let writtenLine = encoded.Split('\n') |> Array.find (fun line -> line.StartsWith "timelimit:")
+                    let again = findRequirement (decodeRequirements ("requirements:\n  - class: ToolTimeLimit\n    " + writtenLine)) (function ToolTimeLimitRequirement _ -> true | _ -> false)
+                    Expect.equal again requirement (sprintf "The time limit %s should read back as the same requirement." text)
             testCase "Decode negative numeric timelimit fails" <| fun _ ->
                 let yaml = """requirements:
   - class: ToolTimeLimit

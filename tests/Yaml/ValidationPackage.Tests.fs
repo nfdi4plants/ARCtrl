@@ -47,12 +47,15 @@ let tests_extended = testList "extended" [
         testCase "name without a value" <| fun _ ->
             let error = Expect.wantSome (decodeError "name:\nversion: version\n") "A name without a value must fail."
             Expect.equal (fst error) "name" "The error should name the field."
+            Expect.stringContains (snd error) "Expected a value, found a missing value" "The error should say what it found."
         testCase "name null" <| fun _ ->
             let error = Expect.wantSome (decodeError "name: null\n") "A plain null is no name."
             Expect.equal (fst error) "name" "The error should name the field."
+            Expect.stringContains (snd error) "Expected a value, found the null \"null\"" "The error should say what it found."
         testCase "name tilde" <| fun _ ->
             let error = Expect.wantSome (decodeError "name: ~\n") "A plain tilde is no name."
             Expect.equal (fst error) "name" "The error should name the field."
+            Expect.stringContains (snd error) "Expected a value, found the null \"~\"" "The error should say what it found."
         testCase "name field absent" <| fun _ ->
             Expect.isSome (decodeError "version: version\n") "A package without the field name must fail."
         testCase "quoted empty name stays valid" <| fun _ ->

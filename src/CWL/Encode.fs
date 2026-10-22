@@ -67,9 +67,9 @@ module Encode =
     // Layout helpers for strings and lists
     // ------------------------------
 
-    /// A literal block scalar. The stored chomping is a preference for a value without a final line feed. The
-    /// writer takes the chomping that reads the text back as the value whenever the value ends in line feeds,
-    /// so nothing here derives it.
+    /// A literal block scalar. The writer keeps a stored chomping that fits the value. Otherwise it takes the
+    /// chomping that reads the value back, Clip for one final line feed and Keep for several, so nothing here
+    /// derives it.
     let private literalBlock (value: string) : YamlNode =
         YamlNode.scalar (ScalarStyle.Block(BlockScalarStyle.Literal, ChompingMode.Strip, None)) value
 
@@ -81,6 +81,36 @@ module Encode =
             literalBlock value
         else
             Encode.string value
+
+    /// True when the node is a block collection without properties and the trivia stand in front of its first entry
+    /// or item. Behind an inline dash such a collection continues the line of the dash, and the trivia would stand in
+    /// front of the dash.
+    let private startsWithTrivia (node: YamlNode) : bool =
+        let hasProperties = node.Properties.Tag.IsSome || node.Properties.Anchor.IsSome
+        if hasProperties then
+            false
+        else
+            match node.Kind with
+            | YamlNodeKind.Mapping collection when collection.Style = CollectionStyle.Block ->
+                match collection.Items with
+                | first :: _ -> not first.Before.IsEmpty
+                | [] -> false
+            | YamlNodeKind.Sequence collection when collection.Style = CollectionStyle.Block ->
+                match collection.Items with
+                | first :: _ -> not first.Before.IsEmpty
+                | [] -> false
+            | _ -> false
+
+    /// The dash of an item whose collection starts with trivia. The first entry stands on the next line, behind the
+    /// trivia, which stay in the raw value.
+    let private lineBreakDash : Separation =
+        Separation.NewLine ({ Comment = None; Following = [] } : LineBreak)
+
+    /// An item of a block sequence. The dash is inline, as in `- class: x`, unless the collection of the item
+    /// starts with trivia.
+    let private blockItem (node: YamlNode) : SequenceItem =
+        let item = YamlNode.item node
+        if startsWithTrivia node then { item with Dash = Some lineBreakDash } else item
 
     /// A list of single-line scalars is written inline, as in `baseCommand: [dotnet, fsi]`. Any other list is
     /// a block sequence. An empty list is `[]`.
@@ -96,11 +126,10 @@ module Encode =
                     && node.TrailingComment.IsNone
                     && not (YamlNode.isMissingValue node)
             | _ -> false
-        let sequenceItems = items |> List.map YamlNode.item
         if items |> List.forall isInlineScalar then
-            YamlNode.flowSequence sequenceItems
+            YamlNode.flowSequence (items |> List.map YamlNode.item)
         else
-            YamlNode.sequence sequenceItems
+            YamlNode.sequence (items |> List.map blockItem)
 
     // ------------------------------
     // Helper append functions for ordered construction
@@ -756,7 +785,12 @@ module Encode =
             let timelimit =
                 match tl with
                 | ToolTimeLimitSeconds seconds -> Encode.int64 seconds
-                | ToolTimeLimitExpression expression -> encodeString expression
+                | ToolTimeLimitExpression expression ->
+                    // The decoder takes a float as an expression, because the time limit is a long or a string. A float
+                    // that stays a plain scalar is the number that the file held. Every other text is a string.
+                    match YamlNode.plain expression with
+                    | Decode.CoreFloat _ -> YamlNode.plain expression
+                    | _ -> encodeString expression
             [ "class", encodeString "ToolTimeLimit"; "timelimit", timelimit ] |> Encode.object
         | SubworkflowFeatureRequirement -> [ "class", encodeString "SubworkflowFeatureRequirement" ] |> Encode.object
         | ScatterFeatureRequirement -> [ "class", encodeString "ScatterFeatureRequirement" ] |> Encode.object
@@ -1089,9 +1123,124 @@ module Encode =
     // Top-level encoders
     // ------------------------------
 
+    /// A block collection under rebuild by moveEndTrivia.
+    type private OpenBlock =
+        { Source: YamlNode
+          /// True while the collection is on the chain of last nodes of the document.
+          IsLast: bool
+          Children: YamlNode[]
+          Before: Trivia list[]
+          Rebuilt: YamlNode[]
+          mutable Next: int }
+
+    let private isBlockWithItems (node: YamlNode) : bool =
+        match node.Kind with
+        | YamlNodeKind.Mapping collection -> collection.Style = CollectionStyle.Block && not collection.Items.IsEmpty
+        | YamlNodeKind.Sequence collection -> collection.Style = CollectionStyle.Block && not collection.Items.IsEmpty
+        | _ -> false
+
+    /// The values or items of a block collection with the trivia in front of each one.
+    let private childrenOf (node: YamlNode) : YamlNode[] * Trivia list[] =
+        match node.Kind with
+        | YamlNodeKind.Mapping collection ->
+            [| for entry in collection.Items -> entry.Value |], [| for entry in collection.Items -> entry.Before |]
+        | YamlNodeKind.Sequence collection ->
+            [| for item in collection.Items -> item.Node |], [| for item in collection.Items -> item.Before |]
+        | _ -> [||], [||]
+
+    let private endOf (node: YamlNode) : Trivia list =
+        match node.Kind with
+        | YamlNodeKind.Mapping collection -> collection.End
+        | YamlNodeKind.Sequence collection -> collection.End
+        | _ -> []
+
+    /// The collection with new trivia in front of its children, new children and a new End. An item with an inline
+    /// dash gets a dash with a line break when its collection now starts with trivia.
+    let private rebuildBlock (node: YamlNode) (before: Trivia list[]) (children: YamlNode[]) (collectionEnd: Trivia list) : YamlNode =
+        match node.Kind with
+        | YamlNodeKind.Mapping collection ->
+            let entries = collection.Items |> List.mapi (fun index entry -> { entry with Before = before.[index]; Value = children.[index] })
+            { node with Kind = YamlNodeKind.Mapping { collection with Items = entries; End = collectionEnd } }
+        | YamlNodeKind.Sequence collection ->
+            let items =
+                collection.Items
+                |> List.mapi (fun index item ->
+                    let dash =
+                        match item.Dash with
+                        | Some Separation.Inline when startsWithTrivia children.[index] -> Some lineBreakDash
+                        | other -> other
+                    { item with Before = before.[index]; Dash = dash; Node = children.[index] })
+            { node with Kind = YamlNodeKind.Sequence { collection with Items = items; End = collectionEnd } }
+        | _ -> node
+
+    /// True when a block collection that is not on the chain of last nodes has trivia in its End. The flag tells
+    /// whether the root is the last node of the document.
+    let private hasMisplacedEnd (rootIsLast: bool) (root: YamlNode) : bool =
+        let pending = ResizeArray<YamlNode * bool>()
+        pending.Add((root, rootIsLast))
+        let mutable found = false
+        while not found && pending.Count > 0 do
+            let (node, isLast) = pending.[pending.Count - 1]
+            pending.RemoveAt(pending.Count - 1)
+            if isBlockWithItems node then
+                if not isLast && not (endOf node).IsEmpty then
+                    found <- true
+                else
+                    let children = fst (childrenOf node)
+                    children |> Array.iteri (fun index child -> pending.Add((child, isLast && index = children.Length - 1)))
+        found
+
+    /// A comment line behind the last entry of a document belongs to the End of the deepest open block collection
+    /// (rule R4). A raw value keeps that End. When the encoder puts the value in front of other entries, the End
+    /// is no longer at the end of the document, and the writer refuses it. The trivia move in front of the last entry
+    /// or item of the same collection. They stay in the raw value, and the next read finds them in the same place.
+    /// The blank lines at either end of the moved trivia are dropped, because the comments now stand against the
+    /// entry. The flag tells whether the root is the last node of the document. The walk keeps its own stack, so a
+    /// value of any depth is safe.
+    let private moveEndTrivia (rootIsLast: bool) (root: YamlNode) : YamlNode =
+        if not (hasMisplacedEnd rootIsLast root) then
+            root
+        else
+            let unfinished = ResizeArray<OpenBlock>()
+            let mutable result = root
+            let enter (node: YamlNode) (isLast: bool) =
+                let (children, before) = childrenOf node
+                unfinished.Add ({ Source = node; IsLast = isLast; Children = children; Before = Array.copy before; Rebuilt = Array.copy children; Next = 0 } : OpenBlock)
+            let isBlankLine (line: Trivia) = match line with BlankLine _ -> true | FullLineComment _ -> false
+            enter root rootIsLast
+            while unfinished.Count > 0 do
+                let top = unfinished.[unfinished.Count - 1]
+                if top.Next < top.Children.Length then
+                    let index = top.Next
+                    top.Next <- index + 1
+                    let child = top.Children.[index]
+                    if isBlockWithItems child then
+                        enter child (top.IsLast && index = top.Children.Length - 1)
+                else
+                    unfinished.RemoveAt(unfinished.Count - 1)
+                    let collectionEnd =
+                        let trivia = endOf top.Source
+                        if top.IsLast || trivia.IsEmpty then
+                            trivia
+                        else
+                            let moved = trivia |> List.skipWhile isBlankLine |> List.rev |> List.skipWhile isBlankLine |> List.rev
+                            let last = top.Before.Length - 1
+                            top.Before.[last] <- top.Before.[last] @ moved
+                            []
+                    let rebuilt = rebuildBlock top.Source top.Before top.Rebuilt collectionEnd
+                    if unfinished.Count = 0 then
+                        result <- rebuilt
+                    else
+                        let parent = unfinished.[unfinished.Count - 1]
+                        parent.Rebuilt.[parent.Next - 1] <- rebuilt
+            result
+
+    /// The options of every write. The default options indent by two spaces, which matches the fixtures.
+    /// renderTopLevelElement asks the writer about the same options, because they decide the chomping.
+    let private writerOptions : WriterOptions = WriterOptions.defaults
+
     let writeYaml (element: YamlNode) =
-        // Two spaces match the fixtures.
-        Writer.writeNode { WriterOptions.defaults with Indent = 2 } element
+        Writer.writeNode writerOptions (moveEndTrivia true element)
 
     let encodeCWLParameterReference (reference: CWLParameterReference) =
         let encodedValue =
@@ -1149,26 +1298,11 @@ module Encode =
         |> Encode.object
         |> writeYaml
 
-    /// True when the last thing that the writer prints for the node is a block scalar that ends in a blank line.
-    /// A block scalar with the chomping keep reads every blank line behind its body as part of its value, and a
-    /// value that ends in a blank line is written with keep. A blank line may therefore not follow such a node.
-    let rec private endsInBlankLine (node: YamlNode) : bool =
-        match node.Kind with
-        | YamlNodeKind.Scalar scalar ->
-            match scalar.Style with
-            | ScalarStyle.Block (_, chomping, _) ->
-                scalar.Value.EndsWith("\n")
-                && (chomping = ChompingMode.Keep || scalar.Value = "\n" || scalar.Value.EndsWith("\n\n"))
-            | _ -> false
-        | YamlNodeKind.Mapping collection when collection.Style = CollectionStyle.Block ->
-            collection.Items |> List.tryLast |> Option.exists (fun entry -> endsInBlankLine entry.Value)
-        | YamlNodeKind.Sequence collection when collection.Style = CollectionStyle.Block ->
-            collection.Items |> List.tryLast |> Option.exists (fun item -> endsInBlankLine item.Node)
-        | _ -> false
-
     /// Render top-level CWL sections in a stable order while keeping metadata as a final block. The document is
-    /// one mapping, and a blank line separates the sections. The writer prints it once, so only the end of the
-    /// document ends a text, and the end of a section is no end of a scalar.
+    /// one mapping, and a blank line separates the sections, except behind a section that ends in a block scalar
+    /// with the chomping Keep. The empty lines behind such a scalar are part of its value, and the writer says
+    /// which scalars it writes that way. The writer prints the document once, so only the end of the document
+    /// ends a text, and the end of a section is no end of a scalar.
     let renderTopLevelElement (baseKeys: string list) (orderedSectionKeys: string list) (element: YamlNode) : string =
         let entries =
             match element.Kind with
@@ -1208,13 +1342,24 @@ module Encode =
             |> List.map (List.map snd)
             |> List.toArray
 
+        // Another section follows the last value of a section, so the End trivia of a raw value stand in the middle of
+        // the document. They move first, because the writer answers from the tree whether the value ends in kept lines.
+        let sections =
+            sections
+            |> Array.mapi (fun index section ->
+                if index < sections.Length - 1 then
+                    let last = List.last section
+                    List.take (section.Length - 1) section @ [ { last with Value = moveEndTrivia false last.Value } ]
+                else
+                    section)
+
         let separated =
             sections
             |> Array.mapi (fun index section ->
                 match section with
-                | first :: rest when index > 0 && not (endsInBlankLine (List.last sections.[index - 1]).Value) ->
-                    // The first key of a section follows a blank line. After a block scalar that keeps its blank
-                    // lines, the lines of the scalar are that separator.
+                | first :: rest when index > 0 && not (Writer.endsWithKeptLines writerOptions (List.last sections.[index - 1]).Value) ->
+                    // The first key of a section follows a blank line. Behind a block scalar that keeps its empty
+                    // lines, a blank line would become part of the value, so the lines of the scalar stand in its place.
                     { first with Before = Trivia.BlankLine None :: first.Before } :: rest
                 | _ -> section)
             |> List.concat

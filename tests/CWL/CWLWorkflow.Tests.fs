@@ -308,6 +308,16 @@ let testCWLWorkflowDescriptionDecode =
                 (result.Warnings |> Seq.map (fun w -> w.Path) |> Seq.sort |> ResizeArray)
                 (ResizeArray [| "inputs[1]"; "outputs[1]"; "steps[0]"; "steps[1].in[1]" |] |> Seq.sort |> ResizeArray)
                 "Warning paths should identify skipped entries."
+        testCase "the warning of a skipped entry holds the YAML that the entry was written in" <| fun _ ->
+            let result = Decode.decodeWorkflowWithWarnings TestObjects.CWL.Workflow.workflowWithUnnamedMalformedEntriesFile
+            let rawOf (path: string) = (result.Warnings |> Seq.find (fun w -> w.Path = path)).Raw
+            Expect.equal (rawOf "inputs[1]") (Some "not_a_cwl_port: true") "A skipped mapping shows its entries."
+            Expect.equal (rawOf "outputs[1]") (Some "[not, a, cwl, output]") "A skipped flow sequence keeps its flow style."
+            Expect.equal (rawOf "steps[0]") (Some "\"not a workflow step\"") "A skipped scalar keeps its quotes."
+            Expect.equal (rawOf "steps[1].in[1]") (Some "not_a_step_input: true") "A skipped step input shows its entries."
+            let withComment = "cwlVersion: v1.2\nclass: Workflow\ninputs:\n- not_a_port: true # about it\n  other: [1, 2]\noutputs: {}\nsteps: {}\n"
+            let commented = Decode.decodeWorkflowWithWarnings withComment
+            Expect.equal commented.Warnings.[0].Raw (Some "not_a_port: true # about it\nother: [1, 2]") "A skipped entry keeps its comment and its flow sequence."
         testCase "malformed named input still fails" <| fun _ ->
             Expect.throws
                 (fun _ -> Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithMalformedNamedInputFile |> ignore)
@@ -1031,6 +1041,10 @@ let testWorkflowUnionPortRoundTrip =
                         Expect.sequenceEqual (fields |> Seq.map (fun f -> f.Name)) [ "data_folder"; "db_file" ] "Record fields should keep their order."
                     | other -> failwithf "Expected a record member but got %A" other
                 | other -> failwithf "Expected a union but got %A" other
+                let flagOf name = (CWLWorkflowDescription.getInputs workflow |> Seq.find (fun i -> i.Name = name)).Optional
+                for name in [ "mode_choice"; "annotation_directory"; "sample_files"; "reference_dbs" ] do
+                    Expect.equal (flagOf name) (Some true) (sprintf "%s is a union of null and one type, so it is optional." name)
+                Expect.equal (flagOf "threshold") None "A union without null is not optional."
                 assertTypesEqual (optionalOf (CWLType.file ())) (outputTypeOf workflow "chosen") "chosen"
                 assertTypesEqual (Union (ResizeArray [ CWLType.file (); CWLType.directory () ])) (outputTypeOf workflow "summary") "summary"
                 let expressionTool = Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool workflow.Steps.[0].Run) "The inline ExpressionTool should decode."
@@ -1074,6 +1088,9 @@ outputs:
             let workflow = Decode.decodeWorkflow yaml
             assertTypesEqual (optionalOf (CWLType.file ())) (inputTypeOf workflow "flow_style") "flow_style"
             assertTypesEqual (Union (ResizeArray [ String; Int ])) (inputTypeOf workflow "block_style") "block_style"
+            let flagOf name = (CWLWorkflowDescription.getInputs workflow |> Seq.find (fun i -> i.Name = name)).Optional
+            Expect.equal (flagOf "flow_style") (Some true) "A bare list of null and a file is optional."
+            Expect.equal (flagOf "block_style") None "A bare list of two types without null is not optional."
             assertTypesEqual (optionalOf (CWLType.file ())) (outputTypeOf workflow "result") "result"
     ]
 
