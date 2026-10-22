@@ -78,6 +78,64 @@ let private tests_AbsoluteFilePath = testList "AbsoluteFilePath" [
         let absolute = d.GetAbsolutePathForAssay(assayName)
         let expected = $"assays/{assayName}/dataset/MyFile"
         Expect.equal absolute expected "Absolute path should match expected path"
+    // https://github.com/nfdi4plants/ARCtrl/issues/629
+    testCase "Workflow_Relative" <| fun _ ->
+        let fileName = "MyFile"
+        let workflowName = "MyWorkflow"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForWorkflow(workflowName)
+        let expected = $"workflows/{workflowName}/{fileName}"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Workflow_Absolute" <| fun _ ->
+        let fileName = "workflows/MyWorkflow/MyFile"
+        let workflowName = "MyWorkflow"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForWorkflow(workflowName)
+        let expected = $"workflows/{workflowName}/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Workflow_Absolute_/" <| fun _ ->
+        let fileName = "/workflows/MyWorkflow/MyFile"
+        let workflowName = "MyWorkflow"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForWorkflow(workflowName)
+        let expected = $"workflows/{workflowName}/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Workflow_Absolute_./" <| fun _ ->
+        let fileName = "./workflows/MyWorkflow/MyFile"
+        let workflowName = "MyWorkflow"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForWorkflow(workflowName)
+        let expected = $"workflows/{workflowName}/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    // https://github.com/nfdi4plants/ARCtrl/issues/629
+    testCase "Run_Relative" <| fun _ ->
+        let fileName = "MyFile"
+        let runName = "MyRun"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForRun(runName)
+        let expected = $"runs/{runName}/{fileName}"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Run_Absolute" <| fun _ ->
+        let fileName = "runs/MyRun/MyFile"
+        let runName = "MyRun"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForRun(runName)
+        let expected = $"runs/{runName}/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Run_Absolute_/" <| fun _ ->
+        let fileName = "/runs/MyRun/MyFile"
+        let runName = "MyRun"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForRun(runName)
+        let expected = $"runs/{runName}/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Run_Absolute_./" <| fun _ ->
+        let fileName = "./runs/MyRun/MyFile"
+        let runName = "MyRun"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForRun(runName)
+        let expected = $"runs/{runName}/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
     ]
 
 

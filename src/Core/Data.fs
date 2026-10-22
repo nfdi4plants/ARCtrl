@@ -119,15 +119,15 @@ type Data(?id,?name : string,?dataType,?format,?selectorFormat,?comments) =
         let f (p : string) = folderPath + p.TrimStart('/')
         this.GetAbsolutePathBy(f,?checkExistenceFromRoot = checkExistenceFromRoot)
 
-    //member this.GetAbsolutePathForWorkflow(workflowIdentifier : string, ?checkExistenceFromRoot : string -> bool) =
-    //    let folderPath = $"workflows/{workflowIdentifier}/"
-    //    let f (p : string) = folderPath + p.TrimStart('/')
-    //    this.GetAbsolutePathBy(f,?checkExistenceFromRoot = checkExistenceFromRoot)
+    member this.GetAbsolutePathForWorkflow(workflowIdentifier : string, ?checkExistenceFromRoot : string -> bool) =
+        let folderPath = $"workflows/{workflowIdentifier}/"
+        let f (p : string) = folderPath + p.TrimStart('/')
+        this.GetAbsolutePathBy(f,?checkExistenceFromRoot = checkExistenceFromRoot)
 
-    //member this.GetAbsolutePathForRun(runIdentifier : string, ?checkExistenceFromRoot : string -> bool) =
-    //    let folderPath = $"runs/{runIdentifier}/"
-    //    let f (p : string) = folderPath + p.TrimStart('/')
-    //    this.GetAbsolutePathBy(f,?checkExistenceFromRoot = checkExistenceFromRoot)
+    member this.GetAbsolutePathForRun(runIdentifier : string, ?checkExistenceFromRoot : string -> bool) =
+        let folderPath = $"runs/{runIdentifier}/"
+        let f (p : string) = folderPath + p.TrimStart('/')
+        this.GetAbsolutePathBy(f,?checkExistenceFromRoot = checkExistenceFromRoot)
 
     member this.Copy() =
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
