@@ -134,6 +134,7 @@ module JsonTypes =
         let value = value |> Option.defaultValue (ScalarValue.Name "")
         match value,unit with
         | ScalarValue.Ontology oa, None -> CompositeCell.Term oa
+        | ScalarValue.Ontology oa, Some u when u.isEmpty() -> CompositeCell.Term oa
         | ScalarValue.Name "", None -> CompositeCell.Term (OntologyAnnotation())
         | ScalarValue.Name text, None -> CompositeCell.Term (OntologyAnnotation(text))
         | ScalarValue.Name name, Some u -> CompositeCell.Unitized (name,u)

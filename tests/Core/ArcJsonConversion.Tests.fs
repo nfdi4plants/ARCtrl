@@ -442,6 +442,28 @@ let private tests_ArcTableProcess =
             let t' = ArcTable.fromProcesses tableName1 processes
             Expect.arcTableEqual t' t "Table should be equal"
         )
+        // https://github.com/nfdi4plants/ARCtrl/issues/640
+        testCase "CharacteristicTermEmptyUnit FromProcesses" (fun () ->
+            // ISA-JSON files written by other tools can contain an empty unit next to an ontology term value
+            let characteristic =
+                MaterialAttributeValue.create(
+                    Category = MaterialAttribute.create(CharacteristicType = oa_species),
+                    Value = ScalarValue.Ontology oa_chlamy,
+                    Unit = OntologyAnnotation()
+                )
+            let p =
+                Process.create(
+                    Name = tableName1,
+                    Inputs = [ProcessInput.createSource("Source", characteristics = [characteristic])],
+                    Outputs = [ProcessOutput.createSample "Sample"]
+                )
+            let t = ArcTable.fromProcesses tableName1 [p]
+            let expectedTable = ArcTable.init tableName1
+            expectedTable.AddColumn(CompositeHeader.Input(IOType.Source),ResizeArray [|CompositeCell.createFreeText "Source"|])
+            expectedTable.AddColumn(CompositeHeader.Characteristic oa_species,ResizeArray [|CompositeCell.createTerm oa_chlamy|])
+            expectedTable.AddColumn(CompositeHeader.Output(IOType.Sample),ResizeArray [|CompositeCell.createFreeText "Sample"|])
+            Expect.arcTableEqual t expectedTable "Table should be equal"
+        )
         testCase "SingleRowIOAndComment GetAndFromProcesses" (fun () ->
             let t = ArcTable.init(tableName1)
             let commentKey = "MyCommentKey"
