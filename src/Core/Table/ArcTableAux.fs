@@ -707,6 +707,9 @@ module Unchecked =
         //
         if not onlyHeaders then
             setNewCells()
+        elif hasDuplicateUnique.IsNone then
+            // A new header-only column still needs an empty entry, otherwise its cells cannot be accessed.
+            IntDictionary.addOrUpdate index (ColumnValueRefs.Sparse (Dictionary())) values.Columns
         ()
 
     let addColumn (newHeader: CompositeHeader) (newCells: #seq<CompositeCell>) (index: int) (forceReplace: bool) (onlyHeaders: bool) (headers: ResizeArray<CompositeHeader>) (values:ArcTableValues) =

@@ -108,5 +108,5 @@ You can run the tests using the following commands:
 - `build.cmd runtestsjs` (Windows) or `bash build.sh runtestsjs` (Linux/macOS).  This will transpile the F# code to JavaScript and run the JavaScript tests.
 - `build.cmd runtestsdotnet` (Windows) or `bash build.sh runtestsdotnet` (Linux/macOS). This will run the F# tests using the .NET runtime.
 
-You can set tests to focused mode by renaming the testfunction from `testCase` to `pTestCase`. This will only run the focused tests. 
+You can set tests to focused mode by renaming the testfunction from `testCase` to `ftestCase`. This will only run the focused tests. 
 Please remember to rename the testfunction back to `testCase` before committing your changes, so that all tests are run in the CI/CD pipeline.
