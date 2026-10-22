@@ -167,6 +167,27 @@ let getAllFilePaths =
             Expect.pathSequenceEqual result expected "File Paths were not found correctly."
             
         })
+        // https://github.com/nfdi4plants/ARCtrl/issues/619
+        testCaseCrossAsync "skipsGitFolders" (crossAsync {
+            let p = combine TestObjects.IO.testResultsFolder "GitFolderArc"
+            do! FileSystemHelper.deleteFileOrDirectoryAsync p
+            do! FileSystemHelper.ensureDirectoryAsync (combine p ".git")
+            do! FileSystemHelper.ensureDirectoryAsync (combine p "SubFolder/.git")
+            do! FileSystemHelper.ensureDirectoryAsync (combine p "my.git")
+            do! FileSystemHelper.writeFileTextAsync (combine p ".git/HEAD") "Hello"
+            do! FileSystemHelper.writeFileTextAsync (combine p "SubFolder/.git/HEAD") "Hello"
+            do! FileSystemHelper.writeFileTextAsync (combine p ".gitignore") "Hello"
+            do! FileSystemHelper.writeFileTextAsync (combine p "my.git/File.txt") "Hello"
+            let! result =
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
+            let expected =
+                [
+                    $"/.gitignore"
+                    $"/my.git/File.txt" |> FileSystemHelper.standardizeSlashes
+                ]
+            Expect.pathSequenceEqual result expected "Files inside .git folders should be skipped, other files should be kept."
+        })
     ]
 
 let rename = 

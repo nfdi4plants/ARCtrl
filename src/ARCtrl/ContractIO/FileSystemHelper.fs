@@ -425,6 +425,8 @@ let getAllFilePathsAsync (directoryPath : string) : CrossAsync<string []> =
                 let! subFiles = dirs |> Seq.map getSubFilesAsync |> CrossAsync.all
                 let subFiles = subFiles |> Seq.concat
                 let! subDirs = dirs |> Seq.map getSubDirectoriesAsync |> CrossAsync.all
+                // Git metadata is not part of the ARC and can contain locked files, so it is not entered
+                let subDirs = subDirs |> Seq.map (Array.filter (fun d -> ArcPathHelper.getFileName d <> ".git"))
                 let! subDirContents = subDirs |> Seq.map allFiles |> CrossAsync.all
                 let subDirContents = subDirContents |> Seq.concat
                 return subFiles |> Seq.append subDirContents
