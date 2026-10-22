@@ -3724,6 +3724,17 @@ let tests_Investigation =
             let mdComment' = Expect.wantSome (inv'.Comments |> Seq.tryFind (fun c -> c.Name = Some "dateModified")) "dateModified comment should exist"
             Expect.equal mdComment'.Value (Some dateModified) "dateModified comment value should match"
         )
+        // https://github.com/nfdi4plants/ARCtrl/issues/642
+        testCase "DateModifiedCommentNotDuplicated" (fun () ->
+            let dateModified = "2020-05-06"
+            let mdComment = Comment("dateModified", dateModified)
+            let inv = ArcInvestigation("MyInv", title = "MyTitle", comments = ResizeArray [mdComment])
+            let ro_Investigation = InvestigationConversion.composeInvestigation inv
+            let inv' = InvestigationConversion.decomposeInvestigation ro_Investigation
+            let mdComments = inv'.Comments |> Seq.filter (fun c -> c.Name = Some "dateModified") |> Seq.toList
+            Expect.hasLength mdComments 1 "There should be exactly one dateModified comment"
+            Expect.equal mdComments.[0].Value (Some dateModified) "dateModified comment value should match"
+        )
     ]
 
 
