@@ -745,10 +745,11 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     member this.GetWriteContracts (?skipUpdateFS : bool) =
         if not (defaultArg skipUpdateFS false) then
             this.UpdateFileSystem()
-
+        this.StaticHash <- this.GetLightHashCode()
+        // Create outside of the array expression, as fable-library-py hides exceptions thrown when such an expression starts
+        let investigationContract = this.ToCreateContract()
         [|
-            this.StaticHash <- this.GetLightHashCode()
-            yield this.ToCreateContract()
+            yield investigationContract
             for s in this.Studies do
                 s.StaticHash <- s.GetLightHashCode()
                 yield! s.ToCreateContract(WithFolder = true)

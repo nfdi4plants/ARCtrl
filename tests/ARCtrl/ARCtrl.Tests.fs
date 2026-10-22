@@ -1005,6 +1005,19 @@ let private tests_writeContracts = testList "write_contracts" [
         let expectedContract = Contract.createCreate(p, DTOType.PlainText, DTO.Text licenseFullText)
         Expect.equal actualContract expectedContract "should be equal"
     )
+    // https://github.com/nfdi4plants/ARCtrl/issues/641
+    testCase "duplicateCommentNames_ErrorSurfaces" (fun _ ->
+        let inv = ArcInvestigation("MyInvestigation", "BestTitle", comments = ResizeArray [Comment("note", "first"); Comment("note", "second")])
+        let arc = ARC.fromArcInvestigation(isa = inv)
+        let writingResult =
+            try
+                arc.GetWriteContracts() |> ignore
+                Result.Ok "DidRun"
+            with
+            | err -> Result.Error err.Message
+        let message = Expect.wantError writingResult "Getting write contracts for an investigation with duplicate comment names should fail"
+        Expect.stringContains message "Comment[note]" "Error should name the duplicate comment"
+    )
 ]
 
 let private tests_updateContracts = testList "update_contracts" [
