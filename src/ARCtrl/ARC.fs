@@ -163,8 +163,9 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     static member fromArcInvestigation (isa : ArcInvestigation, ?fs : FileSystem, ?license: License) = 
         ARC(identifier = isa.Identifier, ?title = isa.Title, ?description = isa.Description, ?submissionDate = isa.SubmissionDate, ?publicReleaseDate = isa.PublicReleaseDate, ontologySourceReferences = isa.OntologySourceReferences, publications = isa.Publications, contacts = isa.Contacts, assays = isa.Assays, studies = isa.Studies, workflows = isa.Workflows, runs = isa.Runs, registeredStudyIdentifiers = isa.RegisteredStudyIdentifiers, comments = isa.Comments, remarks = isa.Remarks, ?fs = fs, ?license = license) 
 
-    member this.TryWriteAsync(arcPath, ?forceOverwrite) =
-        this.GetWriteContracts()
+    member this.TryWriteAsync(arcPath, ?forceOverwrite, ?additionalContracts : Contract []) =
+        // Additional contracts are fulfilled after the ARC contracts, so they are not overwritten by them
+        Array.append (this.GetWriteContracts()) (defaultArg additionalContracts [||])
         |> fullFillContractBatchAsync (defaultArg forceOverwrite false) arcPath
 
     member this.TryUpdateAsync(arcPath, ?forceOverwrite) =
@@ -408,9 +409,9 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         |> fullFillContractBatchAsync false arcPath
 
 
-    member this.WriteAsync(arcPath) =
+    member this.WriteAsync(arcPath, ?additionalContracts : Contract []) =
         crossAsync {
-            let! result = this.TryWriteAsync(arcPath)
+            let! result = this.TryWriteAsync(arcPath, ?additionalContracts = additionalContracts)
             match result with
             | Ok _ -> ()
             | Error errors ->
@@ -480,8 +481,8 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         }
     
     #if FABLE_COMPILER_PYTHON || !FABLE_COMPILER
-    member this.Write(arcPath) =
-        Async.RunSynchronously (this.WriteAsync(arcPath))
+    member this.Write(arcPath, ?additionalContracts : Contract []) =
+        Async.RunSynchronously (this.WriteAsync(arcPath, ?additionalContracts = additionalContracts))
 
     member this.Update(arcPath) =
         Async.RunSynchronously (this.UpdateAsync(arcPath))

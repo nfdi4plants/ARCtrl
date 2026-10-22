@@ -2052,6 +2052,54 @@ let tests_write =
 
             Expect.sequenceEqual paths expectedPaths "Files were not created correctly."                  
         })
+        // https://github.com/nfdi4plants/ARCtrl/issues/622
+        testCaseCrossAsync "empty_AdditionalContracts" (crossAsync {
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_AdditionalContracts"
+            do! FileSystemHelper.deleteFileOrDirectoryAsync p
+            let a = ARC("MyInvestigation")
+            let additionalContracts = [|
+                Contract.createCreate(".gitignore", DTOType.PlainText, DTO.Text "*.tmp")
+                Contract.createCreate("notes/.gitkeep", DTOType.PlainText)
+            |]
+
+            let! result = a.TryWriteAsync(p, additionalContracts = additionalContracts)
+
+            Expect.wantOk result "ARC should write successfully" |> ignore
+
+            let expectedPaths =
+                [
+                    "/isa.investigation.xlsx";
+                    "/assays/.gitkeep";
+                    "/studies/.gitkeep";
+                    "/runs/.gitkeep";
+                    "/workflows/.gitkeep";
+                    "/.gitignore";
+                    "/notes/.gitkeep"
+                ]
+                |> List.sort
+
+            let! paths =
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
+
+            Expect.sequenceEqual paths expectedPaths "Additional files were not created correctly."
+            let! gitignore = FileSystemHelper.readFileTextAsync (ArcPathHelper.combine p ".gitignore")
+            Expect.equal gitignore "*.tmp" "Additional file content was not written correctly."
+        })
+        // https://github.com/nfdi4plants/ARCtrl/issues/622
+        testCaseCrossAsync "empty_AdditionalContracts_WriteAsync" (crossAsync {
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_AdditionalContracts_WriteAsync"
+            do! FileSystemHelper.deleteFileOrDirectoryAsync p
+            let a = ARC("MyInvestigation")
+            let additionalContracts = [|
+                Contract.createCreate(".gitignore", DTOType.PlainText, DTO.Text "*.tmp")
+            |]
+
+            do! a.WriteAsync(p, additionalContracts = additionalContracts)
+
+            let! gitignoreExists = FileSystemHelper.fileExistsAsync (ArcPathHelper.combine p ".gitignore")
+            Expect.isTrue gitignoreExists "Additional file was not created."
+        })
         testCaseCrossAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARC"
             let arc = ARC("MyInvestigation")
