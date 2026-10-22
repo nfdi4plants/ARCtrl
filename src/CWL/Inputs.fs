@@ -123,6 +123,7 @@ type CWLInput (
     let mutable _secondaryFiles = secondaryFiles
     let mutable _streamable = streamable
     let mutable _doc = doc
+    let mutable _sourceNodes = SourceNodes.Empty
     let mutable _format = format
     let mutable _loadContents = loadContents
     let mutable _loadListing = loadListing
@@ -159,6 +160,12 @@ type CWLInput (
     member this.Doc
         with get() = _doc
         and set(value) = _doc <- value
+
+    /// The nodes that the doc and the label were read from. The encoder writes the layout of the author from them.
+    /// They stay out of the equality and the hash of the object.
+    member internal this.SourceNodes
+        with get() = _sourceNodes
+        and set(value) = _sourceNodes <- value
 
     member this.Format
         with get() = _format

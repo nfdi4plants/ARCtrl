@@ -241,6 +241,28 @@ type DirentInstance (entry: SchemaSaladString, ?entryname: SchemaSaladString, ?w
     static member KnownFieldNames =
         CWLKnownFieldNames.direntInstance
 
+/// The nodes that the doc and the label of a CWL object were read from. A node holds the layout of the author, such as
+/// the lines of a folded doc. The encoder writes the current text of the property into the node. The node gives the
+/// lines of the document back while the text is unchanged, and an edited text keeps the style of the node and the lines
+/// that still fit.
+///
+/// The layout is no part of the value of an object, so every SourceNodes is equal to every other one and hashes to 0.
+/// DynamicObj compares and hashes all properties of an object on JavaScript and Python, whatever their visibility, and
+/// the objects without an Equals of their own rely on that. YamlNode has no structural equality either.
+[<CustomEquality; NoComparison>]
+type internal SourceNodes =
+    { Doc: YamlNode option
+      Label: YamlNode option }
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? SourceNodes -> true
+        | _ -> false
+
+    override this.GetHashCode() = 0
+
+    static member Empty : SourceNodes = { Doc = None; Label = None }
+
 /// Represents an enumeration type with a defined set of valid symbol values.
 /// Per the CWL specification, symbol order is semantically significant and preserved during serialization.
 [<AttachMembers>]
@@ -251,6 +273,7 @@ type InputEnumSchema (symbols: ResizeArray<string>, ?label: string, ?doc: string
     let mutable _label = label
     let mutable _doc = doc
     let mutable _name = name
+    let mutable _sourceNodes = SourceNodes.Empty
 
     member this.Symbols
         with get() = _symbols
@@ -267,6 +290,12 @@ type InputEnumSchema (symbols: ResizeArray<string>, ?label: string, ?doc: string
     member this.Name
         with get() = _name
         and set(value) = _name <- value
+
+    /// The nodes that the doc and the label were read from. The encoder writes the layout of the author from them.
+    /// They stay out of the equality and the hash of the object.
+    member internal this.SourceNodes
+        with get() = _sourceNodes
+        and set(value) = _sourceNodes <- value
 
     /// Equality comparison that treats symbol order as significant.
     /// Two enums are equal only if their symbols appear in the same order.
@@ -297,6 +326,7 @@ type InputRecordField (name: string, type_: CWLType, ?doc: string, ?label: strin
     let mutable _type = type_
     let mutable _doc = doc
     let mutable _label = label
+    let mutable _sourceNodes = SourceNodes.Empty
 
     member this.Name
         with get() = _name
@@ -313,6 +343,12 @@ type InputRecordField (name: string, type_: CWLType, ?doc: string, ?label: strin
     member this.Label
         with get() = _label
         and set(value) = _label <- value
+
+    /// The nodes that the doc and the label were read from. The encoder writes the layout of the author from them.
+    /// They stay out of the equality and the hash of the object.
+    member internal this.SourceNodes
+        with get() = _sourceNodes
+        and set(value) = _sourceNodes <- value
 
     override this.Equals(o: obj): bool =
         match o with
@@ -338,6 +374,7 @@ and [<AttachMembers>] InputRecordSchema (?fields: ResizeArray<InputRecordField>,
     let mutable _label = label
     let mutable _doc = doc
     let mutable _name = name
+    let mutable _sourceNodes = SourceNodes.Empty
 
     member this.Fields
         with get() = _fields
@@ -354,6 +391,12 @@ and [<AttachMembers>] InputRecordSchema (?fields: ResizeArray<InputRecordField>,
     member this.Name
         with get() = _name
         and set(value) = _name <- value
+
+    /// The nodes that the doc and the label were read from. The encoder writes the layout of the author from them.
+    /// They stay out of the equality and the hash of the object.
+    member internal this.SourceNodes
+        with get() = _sourceNodes
+        and set(value) = _sourceNodes <- value
 
     override this.Equals(o: obj): bool =
         match o with
@@ -389,6 +432,7 @@ and [<AttachMembers>] InputArraySchema (items: CWLType, ?label: string, ?doc: st
     let mutable _label = label
     let mutable _doc = doc
     let mutable _name = name
+    let mutable _sourceNodes = SourceNodes.Empty
 
     member this.Items
         with get() = _items
@@ -405,6 +449,12 @@ and [<AttachMembers>] InputArraySchema (items: CWLType, ?label: string, ?doc: st
     member this.Name
         with get() = _name
         and set(value) = _name <- value
+
+    /// The nodes that the doc and the label were read from. The encoder writes the layout of the author from them.
+    /// They stay out of the equality and the hash of the object.
+    member internal this.SourceNodes
+        with get() = _sourceNodes
+        and set(value) = _sourceNodes <- value
 
     override this.Equals(o: obj): bool =
         match o with
@@ -544,13 +594,13 @@ type SoftwarePackage (package: string, ?version: ResizeArray<string>, ?specs: Re
         match o with
         | :? SoftwarePackage as other ->
             this.Package = other.Package &&
-            this.Version = other.Version &&
-            this.Specs = other.Specs &&
+            HashHelpers.optionSeqEqual this.Version other.Version &&
+            HashHelpers.optionSeqEqual this.Specs other.Specs &&
             DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
-        hash (this.Package, this.Version, this.Specs, DynamicObjHelpers.hashDynamicProperties this)
+        hash (this.Package, HashHelpers.hashOptionSeq this.Version, HashHelpers.hashOptionSeq this.Specs, DynamicObjHelpers.hashDynamicProperties this)
 
     static member KnownFieldNames =
         CWLKnownFieldNames.softwarePackage

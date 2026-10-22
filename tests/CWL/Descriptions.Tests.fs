@@ -31,26 +31,22 @@ let stripDocContent (docBlock:string) =
             |> fun s -> s.TrimEnd()
     | _ -> normalized
 
+/// The tool that a top-level field of a document belongs to.
+let toolWith (fields: string) : CWLToolDescription =
+    Decode.decodeCommandLineTool ("cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs: []\noutputs: []\n" + fields + "\n")
+
 let decodeTests =
     testList "Decode" [
         testCase "label" <| fun _ ->
-            let actual =
-                TestObjects.CWL.Descriptions.label
-                |> Decode.readYaml
-                |> Decode.labelDecoder
+            let actual = (toolWith TestObjects.CWL.Descriptions.label).Label
             Expect.equal actual (Some "An example tool demonstrating metadata.") ""
         testCase "doc simple" <| fun _ ->
-            let actual =
-                TestObjects.CWL.Descriptions.docSimple
-                |> Decode.readYaml
-                |> Decode.docDecoder
+            let actual = (toolWith TestObjects.CWL.Descriptions.docSimple).Doc
             let expected = "Note that this is an example and the metadata is not necessarily consistent."
             Expect.equal actual (Some expected) ""
         testCase "doc block" <| fun _ ->
             let actual =
-                TestObjects.CWL.Descriptions.descriptionFileContentComplex
-                |> Decode.readYaml
-                |> Decode.docDecoder
+                (toolWith TestObjects.CWL.Descriptions.descriptionFileContentComplex).Doc
                 |> Option.map normalizeDocBlockContent
             let expected =
                 TestObjects.CWL.Descriptions.descriptionFileContentComplexDecoded
@@ -86,9 +82,7 @@ let encodeTests =
             let complexDoc = stripDocContent TestObjects.CWL.Descriptions.descriptionFileContentComplex
             let actual = Encode.encodeDoc complexDoc |> encodeToString
             let decoded =
-                actual
-                |> Decode.readYaml
-                |> Decode.docDecoder
+                (toolWith actual).Doc
                 |> Option.map normalizeDocBlockContent
             let expected = normalizeDocBlockContent complexDoc
             Expect.equal decoded (Some expected) "Encoded block doc should decode back to original content."

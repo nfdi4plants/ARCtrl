@@ -47,7 +47,10 @@ type OutputBinding (?glob: string, ?loadContents: bool, ?loadListing: LoadListin
     static member create(?glob: string, ?loadContents: bool, ?loadListing: LoadListingEnum, ?outputEval: string) =
         OutputBinding(?glob = glob, ?loadContents = loadContents, ?loadListing = loadListing, ?outputEval = outputEval)
 
-[<AttachMembers>]
+/// The source of an output, as a single name or as a list of names. A single name differs from a list of one name,
+/// because CWL keeps the two spellings apart. The lists compare by their elements, because a ResizeArray compares
+/// references.
+[<CustomEquality; NoComparison; AttachMembers>]
 type OutputSource =
     | Single of string
     | Multiple of ResizeArray<string>
@@ -56,6 +59,20 @@ type OutputSource =
         match this with
         | Single value -> ResizeArray [| value |]
         | Multiple values -> values
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? OutputSource as other ->
+            match this, other with
+            | Single left, Single right -> left = right
+            | Multiple left, Multiple right -> HashHelpers.seqEqual left right
+            | _ -> false
+        | _ -> false
+
+    override this.GetHashCode() =
+        match this with
+        | Single value -> HashHelpers.mergeHashes 1 (hash value)
+        | Multiple values -> HashHelpers.mergeHashes 2 (HashHelpers.hashSeq values)
 
 [<AttachMembers>]
 type CWLOutput (
@@ -83,6 +100,7 @@ type CWLOutput (
     let mutable _secondaryFiles = secondaryFiles
     let mutable _streamable = streamable
     let mutable _doc = doc
+    let mutable _sourceNodes = SourceNodes.Empty
     let mutable _format = format
 
     member this.Name
@@ -117,6 +135,12 @@ type CWLOutput (
     member this.Doc
         with get() = _doc
         and set(value) = _doc <- value
+
+    /// The nodes that the doc and the label were read from. The encoder writes the layout of the author from them.
+    /// They stay out of the equality and the hash of the object.
+    member internal this.SourceNodes
+        with get() = _sourceNodes
+        and set(value) = _sourceNodes <- value
 
     member this.Format
         with get() = _format

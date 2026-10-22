@@ -40,6 +40,30 @@ let boxHashSeq (a: seq<'a>) : obj =
     |> box
 
 
+/// Two sequences are equal when they have the same length and equal elements in the same order. The equality of a
+/// ResizeArray compares references, so the objects of the CWL model compare their lists with this.
+let seqEqual (left: seq<'a>) (right: seq<'a>) : bool when 'a : equality =
+    let leftItems = Seq.toArray left
+    let rightItems = Seq.toArray right
+    leftItems.Length = rightItems.Length && Array.forall2 (=) leftItems rightItems
+
+/// Two optional lists are equal when both are missing or both hold equal elements in the same order.
+let optionSeqEqual (left: ResizeArray<'a> option) (right: ResizeArray<'a> option) : bool when 'a : equality =
+    match left, right with
+    | None, None -> true
+    | Some leftItems, Some rightItems -> seqEqual leftItems rightItems
+    | _ -> false
+
+/// A hash of the elements in order, to go with seqEqual.
+let hashSeq (items: seq<'a>) : int =
+    items |> Seq.fold (fun acc item -> mergeHashes acc (hash item)) 0
+
+/// A hash of an optional list, to go with optionSeqEqual.
+let hashOptionSeq (items: ResizeArray<'a> option) : int =
+    match items with
+    | Some items -> mergeHashes 1 (hashSeq items)
+    | None -> 0
+
 /// Two raw YAML nodes of a CWL object are equal when they hold the same data. They have the same shape and the same
 /// tags, and their keys and scalar texts agree in order. A plain scalar differs from a quoted one, because the core
 /// schema reads only the plain one as a number, a bool or null. Comments, blank lines, anchors, collection styles,

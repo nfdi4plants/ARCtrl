@@ -47,6 +47,13 @@ module Encode =
             tryGetArrayShorthand arraySchema.Items |> Option.map (fun s -> s + "[]")
         | _ -> None
 
+    /// The shorthand of the items of a one-level array in a CWL document, as in File[]. CWL reads one [] after a name,
+    /// so an array of arrays has none.
+    let private tryGetItemShorthand (items: CWLType) : string option =
+        match items with
+        | PrimitiveType name when name <> "array" -> Some name
+        | _ -> None
+
     /// Determine if a type requires full YAML serialization (complex type)
     let rec isComplexType (t: CWLType) : bool =
         match t with
@@ -81,6 +88,28 @@ module Encode =
             literalBlock value
         else
             Encode.string value
+
+    /// The text of a doc or a label. The node that the text was read from, when there is one, takes the current text
+    /// with YamlNode.withScalarValue. It comes back unchanged while the text is the same, and an edited text keeps the
+    /// style of the node and the lines that still fit. withScalarValue quotes an edited text that a core schema reader
+    /// would take for another type than a string, so the text stays a string. The node of a doc may be a list of
+    /// strings, which comes back unchanged while the text is the concatenation of its items and is a string after an
+    /// edit. A text without a node is spelled by encodeString.
+    let encodeSourceText (source: YamlNode option) (text: string) : YamlNode =
+        match source with
+        | Some node ->
+            match node.Kind with
+            | YamlNodeKind.Sequence collection ->
+                let concatenated =
+                    collection.Items
+                    |> List.map (fun item ->
+                        match item.Node.Kind with
+                        | YamlNodeKind.Scalar scalar -> scalar.Value
+                        | _ -> "")
+                    |> String.concat ""
+                if concatenated = text then node else encodeString text
+            | _ -> YamlNode.withScalarValue text node
+        | None -> encodeString text
 
     /// True when the node is a block collection without properties and the trivia stand in front of its first entry
     /// or item. Behind an inline dash such a collection continues the line of the dash, and the trivia would stand in
@@ -187,9 +216,10 @@ module Encode =
     let appendDynamicProperties (dynObj: DynamicObj) acc =
         appendDynamicPropertiesExcept Set.empty dynObj acc
 
-    /// Normalize documentation line endings and trim only trailing newline markers.
+    /// Normalize documentation line endings. The doc keeps its final line feed, because a block scalar that ends
+    /// in one reads back with it.
     let normalizeDocString (doc:string) =
-        doc.Replace("\r\n","\n").TrimEnd('\n').TrimEnd('\r')
+        doc.Replace("\r\n","\n")
 
     /// Encode expression payloads with style-aware scalars.
     /// Single-line expressions are double-quoted to protect JS token syntax.
@@ -255,8 +285,12 @@ module Encode =
     let encodeLabel (label:string) : (string * YamlNode) =
         "label", encodeString label
 
+    /// The text of a doc. The line breaks are line feeds, and the node that the text was read from keeps its layout.
+    let encodeDocText (source: YamlNode option) (doc: string) : YamlNode =
+        encodeSourceText source (normalizeDocString doc)
+
     let encodeDoc (doc:string) : (string * YamlNode) =
-        "doc", encodeString (normalizeDocString doc)
+        "doc", encodeDocText None doc
 
     let encodeIntent (intent: ResizeArray<string>) : (string * YamlNode) =
         "intent", (intent |> Seq.map encodeString |> List.ofSeq |> encodeSequence)
@@ -294,8 +328,21 @@ module Encode =
         |> appendOpt "listing" rawYamlNode directory.Listing
         |> appendDynamicPropertiesExcept DirectoryInstance.KnownFieldNames directory
 
-    /// Encode CWL types using shorthand when possible and full schema objects when required.
+    /// Encode a CWL type for a CWL document. A name, a one-level array of a name and an optional of those are written
+    /// as the shorthand (File, File[], File[]?). Every other type is a schema object or a list.
     let rec encodeCWLType (t:CWLType) : YamlNode =
+        encodeTypeWith true t
+
+    /// Encode a CWL type as the text of the additional type of an RO-Crate entity. The shorthand nests arrays there
+    /// (File[][]), which ARCtrl reads and a CWL document does not.
+    and encodeCWLTypeShorthand (t:CWLType) : YamlNode =
+        encodeTypeWith false t
+
+    /// Encode a CWL type, as a CWL document when the flag is set.
+    and encodeTypeWith (cwlDocument: bool) (t:CWLType) : YamlNode =
+        let arrayShorthand = if cwlDocument then tryGetItemShorthand else tryGetArrayShorthand
+        // A member of a type list reads the shorthand of a type field, in a CWL document as in the RO-Crate text.
+        let encodeMember = encodeTypeWith cwlDocument
         let hasFileFields (file: FileInstance) =
             // encodeFilePairs always includes the discriminator, so more than one
             // pair means metadata is present and scalar File shorthand would lose it.
@@ -347,26 +394,33 @@ module Encode =
                 | Double -> encodeString "double?"
                 | Boolean -> encodeString "boolean?"
                 | Array arraySchema ->
-                    // Optional array - use recursive shorthand detection
-                    match tryGetArrayShorthand arraySchema.Items with
+                    // Optional array - use shorthand detection
+                    match arrayShorthand arraySchema.Items with
                     | Some shorthand -> encodeString (shorthand + "[]?")
                     | None ->
                         // Complex optional array - use full form
                         encodeSequence [ encodeString "null"; encodeInputArraySchema arraySchema ]
                 | _ ->
                     // Complex optional type - use array form [null, type]
-                    typesList |> List.map encodeCWLType |> encodeSequence
+                    typesList |> List.map encodeMember |> encodeSequence
             | _ ->
                 // General union - use array form
-                typesList |> List.map encodeCWLType |> encodeSequence
+                typesList |> List.map encodeMember |> encodeSequence
         | Array arraySchema ->
-            // Try to use short form for arrays (handles arbitrary nesting depth
-            // recursively); fall back to schema object for complex item types.
-            match tryGetArrayShorthand arraySchema.Items with
+            // Try to use short form for arrays; fall back to schema object for complex item types.
+            match arrayShorthand arraySchema.Items with
             | Some shorthand -> encodeString (shorthand + "[]")
             | None -> encodeInputArraySchema arraySchema
         | Record recordSchema -> encodeInputRecordSchema recordSchema
         | Enum enumSchema -> encodeInputEnumSchema enumSchema
+
+    /// Encode the type under items. CWL reads the shorthand File[] and File? as the whole value of a type field and as
+    /// a member of a type list, so under items an array is a schema and an optional type is a list.
+    and encodeSchemaType (t:CWLType) : YamlNode =
+        match t with
+        | Array arraySchema -> encodeInputArraySchema arraySchema
+        | Union types -> types |> Seq.map encodeSchemaType |> List.ofSeq |> encodeSequence
+        | other -> encodeTypeWith true other
 
     // ------------------------------
     // InputRecordSchema encoders
@@ -378,8 +432,8 @@ module Encode =
             // The field name is emitted as the mapping key, so the nested value only
             // contains field payload such as type/doc/label/extensions.
             [ "type", encodeCWLType field.Type ]
-            |> appendOpt "doc" encodeString field.Doc
-            |> appendOpt "label" encodeString field.Label
+            |> appendOpt "doc" (encodeSourceText field.SourceNodes.Doc) field.Doc
+            |> appendOpt "label" (encodeSourceText field.SourceNodes.Label) field.Label
             |> appendDynamicPropertiesExcept InputRecordField.KnownFieldNames field
         field.Name, Encode.object pairs
 
@@ -395,8 +449,8 @@ module Encode =
                 // Missing fields are emitted as an empty map to keep the schema object valid.
                 Encode.object []
         [ "type", encodeString "record"; "fields", fieldsElement ]
-        |> appendOpt "label" encodeString schema.Label
-        |> appendOpt "doc" encodeString schema.Doc
+        |> appendOpt "label" (encodeSourceText schema.SourceNodes.Label) schema.Label
+        |> appendOpt "doc" (encodeSourceText schema.SourceNodes.Doc) schema.Doc
         |> appendOpt "name" encodeString schema.Name
         |> appendDynamicPropertiesExcept InputRecordSchema.KnownFieldNames schema
         |> Encode.object
@@ -409,17 +463,17 @@ module Encode =
             @ [ "symbols", (schema.Symbols |> Seq.map encodeString |> List.ofSeq |> encodeSequence) ]
 
         pairs
-        |> appendOpt "label" encodeString schema.Label
-        |> appendOpt "doc" encodeString schema.Doc
+        |> appendOpt "label" (encodeSourceText schema.SourceNodes.Label) schema.Label
+        |> appendOpt "doc" (encodeSourceText schema.SourceNodes.Doc) schema.Doc
         |> appendOpt "name" encodeString schema.Name
         |> appendDynamicPropertiesExcept InputEnumSchema.KnownFieldNames schema
         |> Encode.object
 
     /// Encode array schemas with their item type and preserved schema metadata.
     and encodeInputArraySchema (schema:InputArraySchema) : YamlNode =
-        [ "type", encodeString "array"; "items", encodeCWLType schema.Items ]
-        |> appendOpt "label" encodeString schema.Label
-        |> appendOpt "doc" encodeString schema.Doc
+        [ "type", encodeString "array"; "items", encodeSchemaType schema.Items ]
+        |> appendOpt "label" (encodeSourceText schema.SourceNodes.Label) schema.Label
+        |> appendOpt "doc" (encodeSourceText schema.SourceNodes.Doc) schema.Doc
         |> appendOpt "name" encodeString schema.Name
         |> appendDynamicPropertiesExcept InputArraySchema.KnownFieldNames schema
         |> Encode.object
@@ -531,10 +585,10 @@ module Encode =
             // Build object-form fields in CWL's conventional order.
             []
             |> appendOpt "type" id typeElement
-            |> appendOpt "label" encodeString o.Label
+            |> appendOpt "label" (encodeSourceText o.SourceNodes.Label) o.Label
             |> appendOpt "secondaryFiles" rawYamlNode o.SecondaryFiles
             |> appendOpt "streamable" Encode.bool o.Streamable
-            |> appendOpt "doc" encodeString o.Doc
+            |> appendOpt "doc" (encodeSourceText o.SourceNodes.Doc) o.Doc
             |> appendOpt "format" encodeString o.Format
             |> appendOpt "outputBinding" encodeOutputBinding o.OutputBinding
             |> appendOpt "outputSource" id outputSourceElement
@@ -612,10 +666,10 @@ module Encode =
             // encoded through the type union shorthand rather than as a separate field.
             []
             |> appendOpt "type" id typeElement
-            |> appendOpt "label" encodeString i.Label
+            |> appendOpt "label" (encodeSourceText i.SourceNodes.Label) i.Label
             |> appendOpt "secondaryFiles" rawYamlNode i.SecondaryFiles
             |> appendOpt "streamable" Encode.bool i.Streamable
-            |> appendOpt "doc" encodeString i.Doc
+            |> appendOpt "doc" (encodeSourceText i.SourceNodes.Doc) i.Doc
             |> appendOpt "format" encodeString i.Format
             |> appendOpt "loadContents" Encode.bool i.LoadContents
             |> appendOpt "loadListing" (LoadListingEnum.toCwlString >> encodeString) i.LoadListing
@@ -838,10 +892,10 @@ module Encode =
             |> appendOpt "valueFrom" encodeString si.ValueFrom
             |> appendOpt "linkMerge" encodeLinkMergeMethod si.LinkMerge
             |> appendOpt "pickValue" encodePickValueMethod si.PickValue
-            |> appendOpt "doc" encodeString si.Doc
+            |> appendOpt "doc" (encodeSourceText si.SourceNodes.Doc) si.Doc
             |> appendOpt "loadContents" Encode.bool si.LoadContents
             |> appendOpt "loadListing" encodeString si.LoadListing
-            |> appendOpt "label" encodeString si.Label
+            |> appendOpt "label" (encodeSourceText si.SourceNodes.Label) si.Label
             |> appendDynamicPropertiesExcept StepInput.KnownFieldNames si
         match pairs with
         | [ ("source", s) ]
@@ -925,8 +979,8 @@ module Encode =
             [ "cwlVersion", encodeString td.CWLVersion
               "class", encodeString "CommandLineTool" ]
             |> appendOptPair (td.Id |> Option.map (fun id -> "id", encodeString id))
-            |> appendOptPair (td.Label |> Option.map encodeLabel)
-            |> appendOptPair (td.Doc |> Option.map encodeDoc)
+            |> appendOpt "label" (encodeSourceText td.SourceNodes.Label) td.Label
+            |> appendOpt "doc" (encodeDocText td.SourceNodes.Doc) td.Doc
             |> appendOptPair (td.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
         let withHints =
             match td.Hints with
@@ -957,11 +1011,9 @@ module Encode =
             |> appendOpt "temporaryFailCodes" (fun codes -> codes |> Seq.map Encode.int |> List.ofSeq |> encodeSequence) td.TemporaryFailCodes
             |> appendOpt "permanentFailCodes" (fun codes -> codes |> Seq.map Encode.int |> List.ofSeq |> encodeSequence) td.PermanentFailCodes
         let withInputs =
-            match td.Inputs with
-            | Some i when i.Count > 0 ->
-                // Inputs are optional for CommandLineTool.
-                withCommandFields @ [ "inputs", (i |> Seq.map encodeCWLInput |> Seq.toList |> Encode.object) ]
-            | _ -> withCommandFields
+            // CWL requires inputs, so a tool without inputs writes the empty map, as outputs do.
+            let inputs = td.Inputs |> Option.defaultValue (ResizeArray<CWLInput>())
+            withCommandFields @ [ "inputs", (inputs |> Seq.map encodeCWLInput |> Seq.toList |> Encode.object) ]
         let withOutputs =
             // Outputs are required by the model and always emitted.
             withInputs @ [ "outputs", (td.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> Encode.object) ]
@@ -983,8 +1035,8 @@ module Encode =
             [ "cwlVersion", encodeString et.CWLVersion
               "class", encodeString "ExpressionTool" ]
             |> appendOptPair (et.Id |> Option.map (fun id -> "id", encodeString id))
-            |> appendOptPair (et.Label |> Option.map encodeLabel)
-            |> appendOptPair (et.Doc |> Option.map encodeDoc)
+            |> appendOpt "label" (encodeSourceText et.SourceNodes.Label) et.Label
+            |> appendOpt "doc" (encodeDocText et.SourceNodes.Doc) et.Doc
             |> appendOptPair (et.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
         let withHints =
             match et.Hints with
@@ -997,10 +1049,9 @@ module Encode =
                 withHints @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> encodeSequence) ]
             | _ -> withHints
         let withInputs =
-            match et.Inputs with
-            | Some i when i.Count > 0 ->
-                withRequirements @ [ "inputs", (i |> Seq.map encodeCWLInput |> Seq.toList |> Encode.object) ]
-            | _ -> withRequirements
+            // CWL requires inputs, so a tool without inputs writes the empty map, as outputs do.
+            let inputs = et.Inputs |> Option.defaultValue (ResizeArray<CWLInput>())
+            withRequirements @ [ "inputs", (inputs |> Seq.map encodeCWLInput |> Seq.toList |> Encode.object) ]
         let withOutputs =
             withInputs @ [ "outputs", (et.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> Encode.object) ]
         let withExpression =
@@ -1024,8 +1075,8 @@ module Encode =
             [ "cwlVersion", encodeString op.CWLVersion
               "class", encodeString "Operation" ]
             |> appendOptPair (op.Id |> Option.map (fun id -> "id", encodeString id))
-            |> appendOptPair (op.Label |> Option.map encodeLabel)
-            |> appendOptPair (op.Doc |> Option.map encodeDoc)
+            |> appendOpt "label" (encodeSourceText op.SourceNodes.Label) op.Label
+            |> appendOpt "doc" (encodeDocText op.SourceNodes.Doc) op.Doc
             |> appendOptPair (op.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
         let withHints =
             match op.Hints with
@@ -1061,8 +1112,8 @@ module Encode =
             [ "cwlVersion", encodeString wd.CWLVersion
               "class", encodeString "Workflow" ]
             |> appendOptPair (wd.Id |> Option.map (fun id -> "id", encodeString id))
-            |> appendOptPair (wd.Label |> Option.map encodeLabel)
-            |> appendOptPair (wd.Doc |> Option.map encodeDoc)
+            |> appendOpt "label" (encodeSourceText wd.SourceNodes.Label) wd.Label
+            |> appendOpt "doc" (encodeDocText wd.SourceNodes.Doc) wd.Doc
             |> appendOptPair (wd.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
         let withHints =
             match wd.Hints with
@@ -1101,8 +1152,8 @@ module Encode =
             [ "run", encodeWorkflowStepRun ws.Run
               "in", encodeStepInputs ws.In
               "out", encodeStepOutputs ws.Out ]
-            |> appendOpt "label" encodeString ws.Label
-            |> appendOpt "doc" encodeString ws.Doc
+            |> appendOpt "label" (encodeSourceText ws.SourceNodes.Label) ws.Label
+            |> appendOpt "doc" (encodeSourceText ws.SourceNodes.Doc) ws.Doc
             |> appendOpt "scatter" encodeScatter ws.Scatter
             |> appendOpt "scatterMethod" encodeScatterMethod ws.ScatterMethod
             |> appendOpt "when" encodeString ws.When_

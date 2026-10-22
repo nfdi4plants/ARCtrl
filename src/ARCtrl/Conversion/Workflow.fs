@@ -17,15 +17,13 @@ type WorkflowConversion =
         if CWL.Encode.isComplexType t then
             CWL.Encode.cwlTypeToYamlString t
         else
-            CWL.Encode.encodeCWLType t
+            CWL.Encode.encodeCWLTypeShorthand t
             |> CWL.Encode.writeYaml
             |> fun s -> s.Trim()
 
     static member decomposeAdditionalType (t : string) : CWL.CWLType =
-        // The text is YAML. A scalar is a type name such as File[]? and may be quoted, as the null type is
-        // written ("null"), or carry a comment. Anything else is a schema or a list of types.
-        CWL.Decode.readYaml t
-        |> CWL.Decode.cwlTypeDecoder'
+        // The shorthand of the text nests arrays (File[][]), which a CWL document does not read.
+        CWL.Decode.cwlTypeFromAdditionalType t
 
     static member composeFormalParamInputIdentifiers (prefix : string option) (position : int option) =
         match prefix, position with

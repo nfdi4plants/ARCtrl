@@ -60,7 +60,7 @@ type DockerRequirement (
             this.DockerLoad = other.DockerLoad &&
             this.DockerImport = other.DockerImport &&
             this.DockerOutputDirectory = other.DockerOutputDirectory &&
-            this.DockerRunOptions = other.DockerRunOptions &&
+            HashHelpers.optionSeqEqual this.DockerRunOptions other.DockerRunOptions &&
             DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
@@ -72,7 +72,7 @@ type DockerRequirement (
             this.DockerLoad,
             this.DockerImport,
             this.DockerOutputDirectory,
-            this.DockerRunOptions,
+            HashHelpers.hashOptionSeq this.DockerRunOptions,
             DynamicObjHelpers.hashDynamicProperties this
         )
 
@@ -391,12 +391,12 @@ type InlineJavascriptRequirementValue (?expressionLib: ResizeArray<string>) =
     override this.Equals(o: obj) =
         match o with
         | :? InlineJavascriptRequirementValue as other ->
-            this.ExpressionLib = other.ExpressionLib &&
+            HashHelpers.optionSeqEqual this.ExpressionLib other.ExpressionLib &&
             DynamicObjHelpers.dynamicPropertiesEqual this other
         | _ -> false
 
     override this.GetHashCode() =
-        hash (this.ExpressionLib, DynamicObjHelpers.hashDynamicProperties this)
+        hash (HashHelpers.hashOptionSeq this.ExpressionLib, DynamicObjHelpers.hashDynamicProperties this)
 
     static member defaultEmpty =
         InlineJavascriptRequirementValue()
@@ -433,6 +433,9 @@ type HintUnknownValue (class_: string option, raw: RawYaml) =
     static member KnownFieldNames =
         CWLKnownFieldNames.hintUnknownValue
 
+/// The equality of a requirement compares the lists of its payload by their elements, and the objects of the payload by
+/// their own equality.
+[<CustomEquality; NoComparison>]
 type Requirement =
     /// Indicates that the workflow platform must support inline Javascript expressions.
     | InlineJavascriptRequirement of InlineJavascriptRequirementValue
@@ -475,6 +478,54 @@ type Requirement =
     | StepInputExpressionRequirement
 
     with
+    override this.Equals(o: obj) =
+        match o with
+        | :? Requirement as other ->
+            match this, other with
+            | InlineJavascriptRequirement left, InlineJavascriptRequirement right -> left.Equals right
+            | SchemaDefRequirement left, SchemaDefRequirement right -> HashHelpers.seqEqual left right
+            | DockerRequirement left, DockerRequirement right -> left.Equals right
+            | SoftwareRequirement left, SoftwareRequirement right -> HashHelpers.seqEqual left right
+            | LoadListingRequirement left, LoadListingRequirement right -> left.Equals right
+            | InitialWorkDirRequirement left, InitialWorkDirRequirement right -> HashHelpers.seqEqual left right
+            | EnvVarRequirement left, EnvVarRequirement right -> HashHelpers.seqEqual left right
+            | ShellCommandRequirement, ShellCommandRequirement -> true
+            | ResourceRequirement left, ResourceRequirement right -> left.Equals right
+            | WorkReuseRequirement left, WorkReuseRequirement right -> left.Equals right
+            | WorkReuseExpressionRequirement left, WorkReuseExpressionRequirement right -> left = right
+            | NetworkAccessRequirement left, NetworkAccessRequirement right -> left.Equals right
+            | NetworkAccessExpressionRequirement left, NetworkAccessExpressionRequirement right -> left = right
+            | InplaceUpdateRequirement left, InplaceUpdateRequirement right -> left.Equals right
+            | ToolTimeLimitRequirement left, ToolTimeLimitRequirement right -> left = right
+            | SubworkflowFeatureRequirement, SubworkflowFeatureRequirement -> true
+            | ScatterFeatureRequirement, ScatterFeatureRequirement -> true
+            | MultipleInputFeatureRequirement, MultipleInputFeatureRequirement -> true
+            | StepInputExpressionRequirement, StepInputExpressionRequirement -> true
+            | _ -> false
+        | _ -> false
+
+    override this.GetHashCode() =
+        match this with
+        | InlineJavascriptRequirement value -> HashHelpers.mergeHashes 1 (hash value)
+        | SchemaDefRequirement values -> HashHelpers.mergeHashes 2 (HashHelpers.hashSeq values)
+        | DockerRequirement value -> HashHelpers.mergeHashes 3 (hash value)
+        | SoftwareRequirement values -> HashHelpers.mergeHashes 4 (HashHelpers.hashSeq values)
+        | LoadListingRequirement value -> HashHelpers.mergeHashes 5 (hash value)
+        | InitialWorkDirRequirement values -> HashHelpers.mergeHashes 6 (HashHelpers.hashSeq values)
+        | EnvVarRequirement values -> HashHelpers.mergeHashes 7 (HashHelpers.hashSeq values)
+        | ShellCommandRequirement -> 8
+        | ResourceRequirement value -> HashHelpers.mergeHashes 9 (hash value)
+        | WorkReuseRequirement value -> HashHelpers.mergeHashes 10 (hash value)
+        | WorkReuseExpressionRequirement value -> HashHelpers.mergeHashes 11 (hash value)
+        | NetworkAccessRequirement value -> HashHelpers.mergeHashes 12 (hash value)
+        | NetworkAccessExpressionRequirement value -> HashHelpers.mergeHashes 13 (hash value)
+        | InplaceUpdateRequirement value -> HashHelpers.mergeHashes 14 (hash value)
+        | ToolTimeLimitRequirement value -> HashHelpers.mergeHashes 15 (hash value)
+        | SubworkflowFeatureRequirement -> 16
+        | ScatterFeatureRequirement -> 17
+        | MultipleInputFeatureRequirement -> 18
+        | StepInputExpressionRequirement -> 19
+
     static member defaultInlineJavascriptRequirement =
         InlineJavascriptRequirement InlineJavascriptRequirementValue.defaultEmpty
 

@@ -82,6 +82,7 @@ type StepInput (
     let mutable _loadContents = loadContents
     let mutable _loadListing = loadListing
     let mutable _label = label
+    let mutable _sourceNodes = SourceNodes.Empty
 
     member this.Id
         with get() = _id
@@ -123,11 +124,17 @@ type StepInput (
         with get() = _label
         and set(value) = _label <- value
 
+    /// The nodes that the doc and the label were read from. The encoder writes the layout of the author from them.
+    /// They stay out of the equality and the hash of the object.
+    member internal this.SourceNodes
+        with get() = _sourceNodes
+        and set(value) = _sourceNodes <- value
+
     override this.Equals(o: obj) =
         match o with
         | :? StepInput as other ->
             this.Id = other.Id &&
-            this.Source = other.Source &&
+            HashHelpers.optionSeqEqual this.Source other.Source &&
             this.DefaultValue = other.DefaultValue &&
             this.ValueFrom = other.ValueFrom &&
             this.LinkMerge = other.LinkMerge &&
@@ -142,7 +149,7 @@ type StepInput (
     override this.GetHashCode() =
         hash (
             this.Id,
-            this.Source,
+            HashHelpers.hashOptionSeq this.Source,
             this.DefaultValue,
             this.ValueFrom,
             this.LinkMerge,
@@ -254,6 +261,7 @@ type WorkflowStep (
     let mutable _when: string option = when_
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<HintEntry> option = hints
+    let mutable _sourceNodes = SourceNodes.Empty
 
     member this.Id
         with get() = _id
@@ -278,6 +286,12 @@ type WorkflowStep (
     member this.Doc
         with get() = _doc
         and set(doc) = _doc <- doc
+
+    /// The nodes that the doc and the label were read from. The encoder writes the layout of the author from them.
+    /// They stay out of the equality and the hash of the object.
+    member internal this.SourceNodes
+        with get() = _sourceNodes
+        and set(value) = _sourceNodes <- value
 
     member this.Scatter
         with get() = _scatter
