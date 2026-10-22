@@ -89,6 +89,15 @@ type Data(?id,?name : string,?dataType,?format,?selectorFormat,?comments) =
         this.Name
         |> Option.defaultValue ""
 
+    /// <summary>
+    /// Returns true if the data contains no information. A file path consisting only of whitespace counts as empty.
+    /// </summary>
+    member this.isEmpty() =
+        this.ID.IsNone
+        && (this.FilePath.IsNone || System.String.IsNullOrWhiteSpace this.FilePath.Value)
+        && this.Selector.IsNone && this.DataType.IsNone && this.Format.IsNone && this.SelectorFormat.IsNone
+        && this.Comments.Count = 0
+
     member this.GetAbsolutePathBy(f : string -> string, ?checkExistenceFromRoot : string -> bool) =
         let trimStart (subString : string) (s : string) =
             if s.StartsWith(subString) then

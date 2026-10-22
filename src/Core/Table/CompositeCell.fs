@@ -41,6 +41,19 @@ type CompositeCell =
     member this.isData = match this with | Data _ -> true | _ -> false
 
     /// <summary>
+    /// Returns true if the cell contains no information. Values consisting only of whitespace count as empty.
+    /// </summary>
+    member this.isEmpty() =
+        let isBlank (s : string option) = s.IsNone || System.String.IsNullOrWhiteSpace s.Value
+        let isEmptyOA (oa : OntologyAnnotation) =
+            isBlank oa.Name && isBlank oa.TermSourceREF && isBlank oa.TermAccessionNumber && oa.Comments.Count = 0
+        match this with
+        | CompositeCell.Term oa -> isEmptyOA oa
+        | CompositeCell.FreeText s -> System.String.IsNullOrWhiteSpace s
+        | CompositeCell.Unitized (v, oa) -> System.String.IsNullOrWhiteSpace v && isEmptyOA oa
+        | CompositeCell.Data d -> d.isEmpty()
+
+    /// <summary>
     /// This returns the default empty cell from an existing CompositeCell.
     /// </summary>
     member this.GetEmptyCell() =

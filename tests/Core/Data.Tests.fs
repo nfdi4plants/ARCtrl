@@ -139,8 +139,31 @@ let private tests_AbsoluteFilePath = testList "AbsoluteFilePath" [
     ]
 
 
+// https://github.com/nfdi4plants/ARCtrl/issues/630
+let private tests_isEmpty = testList "isEmpty" [
+    testCase "NoName" <| fun _ ->
+        let d = Data()
+        Expect.isTrue (d.isEmpty()) "Data without any values should be empty"
+    testCase "EmptyName" <| fun _ ->
+        let d = Data(name = "")
+        Expect.isTrue (d.isEmpty()) "Data with empty name should be empty"
+    testCase "BlankName" <| fun _ ->
+        let d = Data(name = "  ")
+        Expect.isTrue (d.isEmpty()) "Data with blank name should be empty"
+    testCase "BlankNameWithSelector" <| fun _ ->
+        let d = Data(name = "  #row=1")
+        Expect.isFalse (d.isEmpty()) "Data with selector should not be empty"
+    testCase "Name" <| fun _ ->
+        let d = Data(name = "MyFile.csv")
+        Expect.isFalse (d.isEmpty()) "Data with name should not be empty"
+    testCase "OnlyComment" <| fun _ ->
+        let d = Data(comments = ResizeArray [Comment.create("MyKey","MyValue")])
+        Expect.isFalse (d.isEmpty()) "Data with comment should not be empty"
+    ]
+
 let main = 
     testList "Data" [
         tests_GetHashCode
         tests_AbsoluteFilePath
+        tests_isEmpty
     ]

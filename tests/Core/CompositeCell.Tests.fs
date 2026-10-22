@@ -204,6 +204,38 @@ let private tests_GetHashCode = testList "GetHashCode" [
     ]
 ]
 
+// https://github.com/nfdi4plants/ARCtrl/issues/531
+let private tests_isEmpty = testList "isEmpty" [
+    testCase "FreeText" <| fun _ ->
+        Expect.isTrue ((CompositeCell.createFreeText "").isEmpty()) "Empty free text should be empty"
+        Expect.isTrue ((CompositeCell.createFreeText "  ").isEmpty()) "Blank free text should be empty"
+        Expect.isFalse ((CompositeCell.createFreeText "Any Text").isEmpty()) "Free text with value should not be empty"
+    testCase "Term" <| fun _ ->
+        Expect.isTrue (CompositeCell.emptyTerm.isEmpty()) "Empty term should be empty"
+        Expect.isTrue ((CompositeCell.createTerm (OntologyAnnotation("  "))).isEmpty()) "Term with blank name should be empty"
+        Expect.isFalse ((CompositeCell.createTerm (OntologyAnnotation("My OA Name"))).isEmpty()) "Term with name should not be empty"
+        Expect.isFalse ((CompositeCell.createTermFromString(tan = "TEST:00001")).isEmpty()) "Term with only accession should not be empty"
+    testCase "Unitized" <| fun _ ->
+        Expect.isTrue (CompositeCell.emptyUnitized.isEmpty()) "Empty unitized should be empty"
+        Expect.isTrue ((CompositeCell.createUnitized "  ").isEmpty()) "Unitized with blank value and no unit should be empty"
+        Expect.isFalse ((CompositeCell.createUnitized "12").isEmpty()) "Unitized with value should not be empty"
+        Expect.isFalse ((CompositeCell.createUnitized ("", OntologyAnnotation("My Unit Name"))).isEmpty()) "Unitized with unit should not be empty"
+    testCase "Data" <| fun _ ->
+        Expect.isTrue (CompositeCell.emptyData.isEmpty()) "Empty data should be empty"
+        Expect.isTrue ((CompositeCell.createData (Data(name = "  "))).isEmpty()) "Data with blank name should be empty"
+        Expect.isFalse ((CompositeCell.createData (Data(name = "MyData#row=1"))).isEmpty()) "Data with name should not be empty"
+        Expect.isFalse ((CompositeCell.createData (Data(format = "text/csv"))).isEmpty()) "Data with only format should not be empty"
+    // https://github.com/nfdi4plants/ARCtrl/issues/630
+    testCase "SampleAndDataColumns" <| fun _ ->
+        let t = ArcTable.init "MyTable"
+        t.AddColumn(CompositeHeader.Input IOType.Sample, ResizeArray [CompositeCell.createFreeText "Sample1"; CompositeCell.createFreeText ""; CompositeCell.createFreeText "  "])
+        t.AddColumn(CompositeHeader.Output IOType.Data, ResizeArray [CompositeCell.createData (Data(name = "MyData.csv")); CompositeCell.createData (Data(name = "")); CompositeCell.createData (Data(name = "  "))])
+        let inputsEmpty = t.GetInputColumn().Cells |> Seq.map (fun c -> c.isEmpty()) |> List.ofSeq
+        Expect.equal inputsEmpty [false; true; true] "Blank sample names should be empty"
+        let outputsEmpty = t.GetOutputColumn().Cells |> Seq.map (fun c -> c.isEmpty()) |> List.ofSeq
+        Expect.equal outputsEmpty [false; true; true] "Blank data names should be empty"
+]
+
 let main = 
     testList "CompositeCell" [
         tests_cellConverter
@@ -211,4 +243,5 @@ let main =
         tests_ToString
         tests_GetContent
         tests_GetHashCode
+        tests_isEmpty
     ]
