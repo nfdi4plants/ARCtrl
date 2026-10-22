@@ -1973,6 +1973,54 @@ let tests_load =
             Expect.hasLength r.Performers 2 "Run should have 2 performers"
             }          
         )
+        // https://github.com/nfdi4plants/ARCtrl/issues/620
+        testCaseCrossAsync "zeroByteWorkbooks" (crossAsync {
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Load_ZeroByteWorkbooks"
+            do! FileSystemHelper.deleteFileOrDirectoryAsync p
+            let inv = ArcInvestigation("MyInvestigation", "BestTitle")
+            inv.InitAssay("MyAssay") |> ignore
+            inv.InitStudy("MyStudy") |> ignore
+            inv.InitWorkflow("MyWorkflow") |> ignore
+            inv.InitRun("MyRun") |> ignore
+            let! writeResult = ARC.fromArcInvestigation(isa = inv).TryWriteAsync(p)
+            Expect.wantOk writeResult "ARC should write successfully" |> ignore
+            // Simulate interrupted entity creations, which leave zero-byte workbooks behind
+            do! FileSystemHelper.writeFileTextAsync (ArcPathHelper.combine p "assays/MyAssay/isa.assay.xlsx") ""
+            do! FileSystemHelper.writeFileTextAsync (ArcPathHelper.combine p "studies/MyStudy/isa.study.xlsx") ""
+            do! FileSystemHelper.writeFileTextAsync (ArcPathHelper.combine p "workflows/MyWorkflow/isa.workflow.xlsx") ""
+            do! FileSystemHelper.writeFileTextAsync (ArcPathHelper.combine p "runs/MyRun/isa.run.xlsx") ""
+
+            let! result = ARC.tryLoadAsync(p)
+            let result = Expect.wantOk result "ARC with zero-byte workbooks should load successfully"
+            Expect.sequenceEqual result.AssayIdentifiers ["MyAssay"] "Assay should be recovered from its folder"
+            Expect.sequenceEqual result.StudyIdentifiers ["MyStudy"] "Study should be recovered from its folder"
+            Expect.sequenceEqual result.WorkflowIdentifiers ["MyWorkflow"] "Workflow should be recovered from its folder"
+            Expect.sequenceEqual result.RunIdentifiers ["MyRun"] "Run should be recovered from its folder"
+
+            // Updating the ARC should write the recovered workbooks to disk
+            let! updateResult = result.TryUpdateAsync(p)
+            Expect.wantOk updateResult "ARC should update successfully" |> ignore
+            let! _ = FileSystemHelper.readFileXlsxAsync (ArcPathHelper.combine p "assays/MyAssay/isa.assay.xlsx")
+            let! _ = FileSystemHelper.readFileXlsxAsync (ArcPathHelper.combine p "studies/MyStudy/isa.study.xlsx")
+            let! _ = FileSystemHelper.readFileXlsxAsync (ArcPathHelper.combine p "workflows/MyWorkflow/isa.workflow.xlsx")
+            let! _ = FileSystemHelper.readFileXlsxAsync (ArcPathHelper.combine p "runs/MyRun/isa.run.xlsx")
+            ()
+            }
+        )
+        // https://github.com/nfdi4plants/ARCtrl/issues/620
+        testCaseCrossAsync "nonEmptyCorruptWorkbookFails" (crossAsync {
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Load_CorruptWorkbook"
+            do! FileSystemHelper.deleteFileOrDirectoryAsync p
+            let inv = ArcInvestigation("MyInvestigation", "BestTitle")
+            inv.InitAssay("MyAssay") |> ignore
+            let! writeResult = ARC.fromArcInvestigation(isa = inv).TryWriteAsync(p)
+            Expect.wantOk writeResult "ARC should write successfully" |> ignore
+            do! FileSystemHelper.writeFileTextAsync (ArcPathHelper.combine p "assays/MyAssay/isa.assay.xlsx") "This is not a workbook"
+
+            let! result = ARC.tryLoadAsync(p)
+            Expect.isError result "Loading should fail for a non-empty corrupt workbook"
+            }
+        )
     ]
 
 

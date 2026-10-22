@@ -189,6 +189,13 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             let arc = ARC.fromFilePaths (paths |> Seq.toArray)
 
             let contracts = arc.GetReadContracts()
+
+            let! recoveredContracts =
+                contracts
+                |> Array.map (tryFulfillEmptyEntityContractAsync arcPath)
+                |> CrossAsync.all
+            let recoveredContracts = recoveredContracts |> Array.choose id
+            let contracts = contracts |> Array.filter (fun c -> recoveredContracts |> Array.exists (fun rc -> rc.Path = c.Path) |> not)
       
             let! fulFilledContracts = 
                 contracts 
@@ -196,7 +203,18 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
 
             match fulFilledContracts with
             | Ok c -> 
-                arc.SetISAFromContracts(c)
+                arc.SetISAFromContracts(Array.append c recoveredContracts)
+                // Recovered entities only exist in memory, so they are marked as changed to be written on the next update
+                recoveredContracts
+                |> Array.iter (fun rc ->
+                    let identifier = (ArcPathHelper.split rc.Path).[1]
+                    match rc.DTOType with
+                    | Some DTOType.ISA_Assay -> let a = arc.GetAssay identifier in a.StaticHash <- a.GetLightHashCode() + 1
+                    | Some DTOType.ISA_Study -> let s = arc.GetStudy identifier in s.StaticHash <- s.GetLightHashCode() + 1
+                    | Some DTOType.ISA_Workflow -> let w = arc.GetWorkflow identifier in w.StaticHash <- w.GetLightHashCode() + 1
+                    | Some DTOType.ISA_Run -> let r = arc.GetRun identifier in r.StaticHash <- r.GetLightHashCode() + 1
+                    | _ -> ()
+                )
                 return Ok arc
             | Error e -> return Error e
         }      
