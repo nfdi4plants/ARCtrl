@@ -11,27 +11,72 @@ type RunResolutionState = {
     mutable Cache: Map<string, CWL.CWLProcessingUnit>
 }
 
-/// Generates candidate lookup paths for a .cwl run reference relative to a workflow file.
+/// The path of a CWL file without the fragment of a reference to one of its processes, as in runs/r/run.cwl#shout.
+let private documentPathOf (filePath: string) : string =
+    let hash = filePath.IndexOf '#'
+    if hash >= 0 then filePath.Substring(0, hash) else filePath
+
+/// The lookup path of a process of a packed document: the path of the file and the id of the process as its fragment,
+/// as in runs/r/run.cwl#shout. The id may start with a #.
+let packedProcessPath (documentPath: string) (id: string) : string =
+    let name = if id.StartsWith "#" then id.Substring 1 else id
+    documentPathOf documentPath + "#" + name
+
+/// The entries that a CWL file adds to the lookup of run references. A document with one process adds it under the path
+/// of the file. A packed document adds its process main under the path of the file, and each of its processes under the
+/// path with its id as the fragment. A step with run: "#shout" refers to the document that holds it, so the path in
+/// the lookup keeps two documents with a process of the same id apart.
+let lookupEntriesOfDocument (path: string) (document: CWL.CWLDocument) : (string * CWL.CWLProcessingUnit) list =
+    match document with
+    | CWL.CWLDocument.Process processingUnit ->
+        [ pathKey path, processingUnit ]
+    | CWL.CWLDocument.Graph graph ->
+        [
+            match CWL.CWLGraph.tryFindProcess "main" graph with
+            | Some main -> yield pathKey path, main
+            | None -> ()
+            for processingUnit in graph.Processes do
+                match CWL.CWLProcessingUnit.tryGetId processingUnit with
+                | Some id -> yield pathKey (packedProcessPath path id), processingUnit
+                | None -> ()
+        ]
+
+/// Generates candidate lookup paths for a run reference relative to a workflow file. A reference is a path that ends in
+/// .cwl, optionally followed by a fragment as in tools.cwl#shout, or a bare fragment #id. A bare fragment refers to a
+/// process of the packed document that holds the workflow, and the lookup holds that process under the path of the
+/// document and the fragment. A path with a fragment refers to a process of another packed document, so the fragment
+/// stays behind each candidate path.
 let getRunNodeCandidates (workflowFilePath: string) (runPath: string) : string [] =
     if System.String.IsNullOrWhiteSpace runPath then
         [||]
     else
         let trimmedRunPath = runPath.Trim()
-        if not (trimmedRunPath.EndsWith(".cwl", System.StringComparison.OrdinalIgnoreCase)) then
-            [||]
-        else
-            let normalizedRunPath = ArcPathHelper.normalize trimmedRunPath
-            let runPathInWorkflowDirectory = ArcPathHelper.resolvePathFromFile workflowFilePath trimmedRunPath
-            let normalizedRunPathInWorkflowDirectory = ArcPathHelper.normalize runPathInWorkflowDirectory
-
+        if trimmedRunPath.StartsWith "#" && trimmedRunPath.Length > 1 then
             [|
+                documentPathOf workflowFilePath + trimmedRunPath
                 trimmedRunPath
-                normalizedRunPath
-                runPathInWorkflowDirectory
-                normalizedRunPathInWorkflowDirectory
             |]
             |> Array.filter (fun p -> not (System.String.IsNullOrWhiteSpace p))
             |> Array.distinct
+        else
+            let documentPath = documentPathOf trimmedRunPath
+            let fragment = trimmedRunPath.Substring documentPath.Length
+            if not (documentPath.EndsWith(".cwl", System.StringComparison.OrdinalIgnoreCase)) then
+                [||]
+            else
+                let normalizedRunPath = ArcPathHelper.normalize documentPath
+                let runPathInWorkflowDirectory = ArcPathHelper.resolvePathFromFile workflowFilePath documentPath
+                let normalizedRunPathInWorkflowDirectory = ArcPathHelper.normalize runPathInWorkflowDirectory
+
+                [|
+                    documentPath
+                    normalizedRunPath
+                    runPathInWorkflowDirectory
+                    normalizedRunPathInWorkflowDirectory
+                |]
+                |> Array.filter (fun p -> not (System.String.IsNullOrWhiteSpace p))
+                |> Array.distinct
+                |> Array.map (fun path -> path + fragment)
 
 let cacheResolvedProcessingUnit (state: RunResolutionState) (candidateKeys: string []) (processingUnit: CWL.CWLProcessingUnit) =
     for key in candidateKeys do
@@ -121,7 +166,10 @@ let resolveRunReferencesFromLookup (workflowFilePath: string) (processingUnit: C
     match processingUnit with
     | CWL.Workflow workflow ->
         let state = { Cache = Map.empty }
-        resolveWorkflowRunsRecursiveWithResolver workflowFilePath Set.empty state workflow tryResolveRunPath
+        // The workflow is active from the start. A run that leads back to its file, or to its process main, stays a
+        // reference, so no resolution puts a process inside itself.
+        let activePathKeys = Set.ofList [ pathKey workflowFilePath; pathKey (packedProcessPath workflowFilePath "main") ]
+        resolveWorkflowRunsRecursiveWithResolver workflowFilePath activePathKeys state workflow tryResolveRunPath
         CWL.Workflow workflow
     | CWL.CommandLineTool _ ->
         processingUnit
@@ -129,6 +177,34 @@ let resolveRunReferencesFromLookup (workflowFilePath: string) (processingUnit: C
         processingUnit
     | CWL.Operation _ ->
         processingUnit
+
+/// <summary>
+/// Resolves the run references of the CWL file of a run or a workflow. A file with one process resolves like
+/// resolveRunReferencesFromLookup and has no graph. A packed document starts with its process main. The run references
+/// of the form #id resolve to the processes of this document, which the resolver takes from the graph itself, so the
+/// steps of main and of the other processes hold the objects of the graph. The graph writes a step that holds one of
+/// its processes as a reference again, and the inlined runs do not end up in the written file. Every other reference
+/// resolves through the lookup.
+/// </summary>
+/// <param name="filePath">The file path of the CWL file, used for resolving relative paths.</param>
+/// <param name="document">The decoded CWL file.</param>
+/// <param name="tryResolveRunPath">A function that maps a path string to an optional CWLProcessingUnit.</param>
+/// <returns>The process that the file starts with, and the graph of a packed document.</returns>
+let resolveRunReferencesOfDocument (filePath: string) (document: CWL.CWLDocument) (tryResolveRunPath: string -> CWL.CWLProcessingUnit option) : CWL.CWLProcessingUnit * CWL.CWLGraph option =
+    match document with
+    | CWL.CWLDocument.Process processingUnit ->
+        resolveRunReferencesFromLookup filePath processingUnit tryResolveRunPath, None
+    | CWL.CWLDocument.Graph graph ->
+        match CWL.CWLGraph.tryFindProcess "main" graph with
+        | None ->
+            failwith $"The packed CWL document {filePath} has no process with the id main."
+        | Some main ->
+            let processesOfDocument = lookupEntriesOfDocument filePath document |> Map.ofList
+            let tryResolveInDocument (path: string) =
+                match processesOfDocument.TryFind (pathKey path) with
+                | Some processingUnit -> Some processingUnit
+                | None -> tryResolveRunPath path
+            resolveRunReferencesFromLookup filePath main tryResolveInDocument, Some graph
 
 /// <summary>
 /// Resolves a single workflow step run value by looking up the run path string

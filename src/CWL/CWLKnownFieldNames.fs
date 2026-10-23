@@ -42,9 +42,6 @@ module internal CWLKnownFieldNames =
     let inputArraySchema =
         Set [ "type"; "items"; "label"; "doc"; "name" ]
 
-    let schemaDefRequirementType =
-        Set [ "name"; "type" ]
-
     let softwarePackage =
         Set [ "package"; "version"; "specs" ]
 
@@ -129,6 +126,9 @@ module internal CWLKnownFieldNames =
 
     let workflowDescription =
         Set [ "inputs"; "outputs"; "label"; "doc"; "intent"; "class"; "steps"; "id"; "requirements"; "hints"; "cwlVersion" ]
+
+    let graph =
+        Set [ "cwlVersion"; "$graph" ]
 
     let stepInput =
         Set [ "id"; "source"; "default"; "valueFrom"; "linkMerge"; "pickValue"; "doc"; "loadContents"; "loadListing"; "label" ]

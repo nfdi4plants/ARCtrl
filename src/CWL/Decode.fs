@@ -54,6 +54,14 @@ module Decode =
     let internal failAlias (name: string) (node: YamlNode) : 'T =
         failAliasAt [] name node
 
+    /// What a node is, as it stands in the message of an error: the text of a scalar or the kind of any other node.
+    let private describeNode (node: YamlNode) : string =
+        match node.Kind with
+        | YamlNodeKind.Scalar scalar -> "the text \"" + scalar.Value + "\""
+        | YamlNodeKind.Sequence _ -> "a list"
+        | YamlNodeKind.Mapping _ -> "a mapping"
+        | YamlNodeKind.Alias name -> "the alias *" + name
+
     /// The place of a node in the text, as it stands in the message of an error.
     let private placeOf (node: YamlNode) : string =
         match node.Span with
@@ -457,8 +465,37 @@ module Decode =
         | OutputStreams
         /// As the whole type of an input of a command line tool, which admits stdin.
         | InputStreams
-        /// At every place. The type text of an RO-Crate entity has no position, and ARCtrl wrote it itself.
+        /// As the whole type, for any kind of port. A type text has no port around it, so it may be any of the three.
         | AnyStreams
+
+    /// Which names a type may use for a type that a SchemaDefRequirement defines.
+    type ReferenceNames =
+        /// The names that the scope lists, and the names in the files that it lists as imported.
+        | DefinedNames
+        /// Every well-formed name that is no builtin type. A name is well-formed when it is not empty and holds no
+        /// whitespace and none of the characters [ ] ?. A type text has no SchemaDefRequirement around it that could
+        /// say which names exist.
+        | AnyNames
+
+    /// The types that one SchemaDefRequirement defines: their ids and the paths of the files that it imports.
+    type DefinedTypes =
+        { /// The ids of the types, without the leading #.
+          Ids: Set<string>
+          /// The paths of the imported files, with the . and .. segments resolved.
+          Imports: Set<string> }
+
+    /// The SchemaDefRequirements that one chain of enclosing processes and steps leaves at a place. A process that a step
+    /// runs by #id has the chain of that step.
+    type SchemaDefChain =
+        { /// The types of the innermost SchemaDefRequirement in the requirements of the chain.
+          Required: DefinedTypes option
+          /// The types of the innermost SchemaDefRequirement in the hints of the chain. A hint applies only where no
+          /// requirement of the chain defines a SchemaDefRequirement, because a requirement overrides a hint.
+          Hinted: DefinedTypes option
+          /// The types that apply where the chain holds no SchemaDefRequirement. A document with one process has none,
+          /// and neither has the process main of a packed document or a process that its steps reach. Any other process
+          /// of a packed document that no step runs has every type of the document, because a runner may start with it.
+          Fallback: DefinedTypes }
 
     /// What the decoders of types, ports and steps know about the place that they read.
     type DecodeScope =
@@ -466,19 +503,308 @@ module Decode =
           Shorthand: bool
           /// Where the place admits the stream types.
           StreamTypes: StreamTypes
-          /// The cwlVersion that a process without one of its own takes. It is the version of the enclosing process,
-          /// and a document at the root has none.
+          /// Which names the place admits for a type that a SchemaDefRequirement defines.
+          References: ReferenceNames
+          /// The ids of the types that the whole document defines, without the leading #. Schema Salad gives a type
+          /// the id of the process or step that holds its SchemaDefRequirement, followed by its name: Name in a
+          /// process without an id, and main/Name in the process main of a packed document. A step adds its own id,
+          /// as in wf/move/Name for the step move of the workflow wf. A name in a port finds its id in this set, and
+          /// the type applies only when InForce holds the id too.
+          Definitions: Set<string>
+          /// The paths of the files that the SchemaDefRequirements of the document import, with the . and .. segments
+          /// resolved.
+          ImportedPaths: Set<string>
+          /// The chains of enclosing processes and steps that reach the place, with the innermost SchemaDefRequirement
+          /// of each chain. Only the innermost one applies. The requirement of a step overrides the requirement of its
+          /// workflow, and the requirement of a process overrides both. A process of a packed document has one chain
+          /// for each step that runs it, and a document with one process has a single chain.
+          Chains: SchemaDefChain list
+          /// The types that apply at the place. A chain applies the types of its Required, else the types of its
+          /// Hinted, else its Fallback, and a type applies only when every chain applies it, as cwltool checks a
+          /// process once for each step that runs it. While an entry of a SchemaDefRequirement decodes, they are the
+          /// types of the entries before it and the entry itself, because the requirement overrides the types around it.
+          InForce: DefinedTypes
+          /// The ids of the types that the place cannot use yet, because the SchemaDefRequirement that it belongs to
+          /// defines them further down its list. They are not in InForce. The scope keeps them to tell a type that
+          /// comes too late from a type that nothing defines.
+          Later: Set<string>
+          /// The id of the nearest object around the place that has one, without the leading #, and the empty text for
+          /// the document itself. A type name in a port is relative to the id of the port, which Schema Salad
+          /// resolves two levels up (refScope 2), so DocId is the base of every lookup of a name.
+          DocId: string
+          /// The ids of the processes of the packed document that the place belongs to, without a leading #, or none
+          /// outside of a packed document. A step of such a document refers to a process by #id.
+          GraphIds: Set<string> option
+          /// The cwlVersion that a process without one of its own takes. It is the version of the enclosing process
+          /// or of the packed document, and a document at the root has none.
           DefaultCwlVersion: string option }
 
     /// The scope of the root of a document.
     let rootScope : DecodeScope =
         { Shorthand = true
           StreamTypes = NoStreams
+          References = DefinedNames
+          Definitions = Set.empty
+          ImportedPaths = Set.empty
+          Chains = [ { Required = None; Hinted = None; Fallback = { Ids = Set.empty; Imports = Set.empty } } ]
+          InForce = { Ids = Set.empty; Imports = Set.empty }
+          Later = Set.empty
+          DocId = ""
+          GraphIds = None
           DefaultCwlVersion = None }
 
+    let private scalarText (node: YamlNode) : string option =
+        match node.Kind with
+        | YamlNodeKind.Scalar scalar -> Some scalar.Value
+        | _ -> None
+
+    /// The entries of a mapping, and none for any other node. The readers of the raw node before the decode must not
+    /// fail, because the decoder of the requirement reports a malformed node at its place.
+    let private entriesOf (node: YamlNode) : MappingEntry list =
+        match node.Kind with
+        | YamlNodeKind.Mapping collection -> collection.Items
+        | _ -> []
+
+    let private valueOf (key: string) (node: YamlNode) : YamlNode option =
+        entriesOf node |> List.tryPick (fun entry -> if scalarText entry.Key = Some key then Some entry.Value else None)
+
+    let private itemsOf (node: YamlNode) : YamlNode list =
+        match node.Kind with
+        | YamlNodeKind.Sequence collection -> collection.Items |> List.map (fun item -> item.Node)
+        | _ -> []
+
+    /// The path that an entry of the types field of a SchemaDefRequirement imports, as written. The entry is a
+    /// mapping with the $import directive only. The types field can be such a mapping as a whole too.
+    let private importedPathOf (entry: YamlNode) : string option =
+        match entriesOf entry with
+        | [ single ] when scalarText single.Key = Some "$import" -> scalarText single.Value
+        | _ -> None
+
+    /// The path of an imported file with its . and .. segments resolved, so that ./shapes.yml, a/../shapes.yml and
+    /// shapes.yml name one file. Schema Salad resolves the path of the import and the path in front of the # of a type
+    /// name against the document in the same way. A path with a scheme stays as written.
+    let private normalizedPath (path: string) : string =
+        if path.Contains "://" then
+            path
+        else
+            let segments =
+                path.Split('/')
+                |> Array.toList
+                |> List.filter (fun segment -> segment <> "" && segment <> ".")
+                |> List.fold
+                    (fun resolved segment ->
+                        match resolved with
+                        | previous :: rest when segment = ".." && previous <> ".." -> rest
+                        | _ -> segment :: resolved)
+                    []
+                |> List.rev
+            (if path.StartsWith "/" then "/" else "") + String.concat "/" segments
+
+    /// The entries of the types field of a SchemaDefRequirement. The field is a list. A mapping with the $import
+    /// directive only is the field as a whole, and Schema Salad replaces it with the list of the imported file, so it
+    /// stands for a list with one import.
+    let private typeEntriesIn (types: YamlNode) : YamlNode list =
+        match types.Kind with
+        | YamlNodeKind.Sequence _ -> itemsOf types
+        | YamlNodeKind.Mapping _ when (importedPathOf types).IsSome -> [ types ]
+        | _ -> []
+
+
+    /// The nodes of the SchemaDefRequirements in a requirements or hints field, in list and in map syntax.
+    let private schemaDefsIn (field: YamlNode) : YamlNode list =
+        match field.Kind with
+        | YamlNodeKind.Sequence _ ->
+            itemsOf field |> List.filter (fun item -> (valueOf "class" item |> Option.bind scalarText) = Some "SchemaDefRequirement")
+        | YamlNodeKind.Mapping _ -> valueOf "SchemaDefRequirement" field |> Option.toList
+        | _ -> []
+
+    /// The id that Schema Salad gives an object, without the leading #. An id that starts with # is absolute in the
+    /// document. Any other id is relative to the id of the enclosing object, and the document has the empty id.
+    let private scopedId (enclosing: string) (id: string) : string =
+        let id = id.Trim()
+        if id.StartsWith "#" then id.Substring 1
+        elif enclosing = "" then id
+        else enclosing + "/" + id
+
+    /// The id of a process, which is its id field resolved against the id of the enclosing object. A process without
+    /// an id has the enclosing id when it stands at the root. An inline run of a step lives below the name of its
+    /// field, run, so the caller passes that name as the segment. Its id field is relative to that segment, and a run
+    /// without an id has the segment as its id.
+    let private processId (enclosing: string) (segment: string) (node: YamlNode) : string =
+        let baseId = if segment = "" then enclosing else scopedId enclosing segment
+        match valueOf "id" node |> Option.bind scalarText with
+        | Some id -> scopedId baseId id
+        | None -> baseId
+
+    /// The steps of a workflow node with their ids, in map and in list form.
+    let private stepsOf (node: YamlNode) : (string * YamlNode) list =
+        match valueOf "steps" node with
+        | Some steps ->
+            match steps.Kind with
+            | YamlNodeKind.Mapping _ ->
+                entriesOf steps |> List.choose (fun entry -> scalarText entry.Key |> Option.map (fun id -> id, entry.Value))
+            | YamlNodeKind.Sequence _ ->
+                itemsOf steps |> List.choose (fun step -> valueOf "id" step |> Option.bind scalarText |> Option.map (fun id -> id, step))
+            | _ -> []
+        | None -> []
+
+    /// The fields of a record schema with the type of each one. The fields are a list of objects with a name, or a
+    /// mapping from the name to the type or to an object that holds it. An object that holds the type is the field
+    /// itself, as the decoder reads it.
+    let private fieldTypesOf (record: YamlNode) : (string * YamlNode) list =
+        match valueOf "fields" record with
+        | Some fields ->
+            match fields.Kind with
+            | YamlNodeKind.Sequence _ ->
+                itemsOf fields
+                |> List.choose (fun field ->
+                    match valueOf "name" field |> Option.bind scalarText, valueOf "type" field with
+                    | Some name, Some fieldType -> Some (name, fieldType)
+                    | _ -> None)
+            | YamlNodeKind.Mapping _ ->
+                entriesOf fields
+                |> List.choose (fun entry ->
+                    scalarText entry.Key
+                    |> Option.map (fun name ->
+                        match entry.Value.Kind, valueOf "type" entry.Value with
+                        | YamlNodeKind.Mapping _, Some fieldType -> name, fieldType
+                        | _ -> name, entry.Value))
+            | _ -> []
+        | None -> []
+
+    /// The ids of the named record and enum schemas in a type, including the schema itself. A named schema has the id
+    /// of its name below the given id. The fields of a record are objects with ids of their own below the id of the
+    /// record, or below the given id when the record has no name, and the schemas in their types get ids below the id
+    /// of the field. An array schema has no id, so the schemas in its items stand below the given id.
+    let rec private namedSchemaIds (parentId: string) (node: YamlNode) : string list =
+        match node.Kind with
+        | YamlNodeKind.Sequence _ -> itemsOf node |> List.collect (namedSchemaIds parentId)
+        | YamlNodeKind.Mapping _ ->
+            let ownId = valueOf "name" node |> Option.bind scalarText |> Option.map (scopedId parentId)
+            match valueOf "type" node |> Option.bind scalarText with
+            | Some "record" ->
+                let recordId = defaultArg ownId parentId
+                Option.toList ownId
+                @ (fieldTypesOf node |> List.collect (fun (name, fieldType) -> namedSchemaIds (scopedId recordId name) fieldType))
+            | Some "enum" -> Option.toList ownId
+            | Some "array" -> valueOf "items" node |> Option.map (namedSchemaIds parentId) |> Option.defaultValue []
+            | _ -> valueOf "type" node |> Option.map (namedSchemaIds parentId) |> Option.defaultValue []
+        | _ -> []
+
+    /// The ids that an entry of the types field of a SchemaDefRequirement defines below the id of its holder: its own
+    /// id and the ids of the named schemas inside it. An import and an unnamed schema add no id of their own.
+    let private entryIds (holderId: string) (entry: YamlNode) : string list =
+        if (importedPathOf entry).IsSome then [] else namedSchemaIds holderId entry
+
+    /// The entries of the types field of the SchemaDefRequirements in the requirements and the hints of a process or
+    /// a step.
+    let private typeEntriesOf (holder: YamlNode) : YamlNode list =
+        [ "requirements"; "hints" ]
+        |> List.collect (fun field -> valueOf field holder |> Option.toList)
+        |> List.collect schemaDefsIn
+        |> List.collect (fun schemaDef -> valueOf "types" schemaDef |> Option.map typeEntriesIn |> Option.defaultValue [])
+
+    /// The ids of the types that a document defines and the paths of the files that it imports. The walk reads the raw
+    /// nodes of each process and of its steps, and it descends into the inline runs of the steps. The ports decode
+    /// before the requirements of their process, and every port sees the definitions of the whole document.
+    let private documentDefinitions (root: YamlNode) : Set<string> * Set<string> =
+        let definitions = ResizeArray<string>()
+        let imports = ResizeArray<string>()
+        let addHolder (holderId: string) (holder: YamlNode) =
+            for entry in typeEntriesOf holder do
+                match importedPathOf entry with
+                | Some path -> imports.Add (normalizedPath path)
+                | None -> definitions.AddRange (entryIds holderId entry)
+        let rec addProcess (id: string) (processNode: YamlNode) =
+            addHolder id processNode
+            for (stepName, step) in stepsOf processNode do
+                let stepId = scopedId id stepName
+                addHolder stepId step
+                match valueOf "run" step with
+                | Some run -> addProcess (processId stepId "run" run) run
+                | None -> ()
+        match valueOf "$graph" root with
+        | Some graph -> itemsOf graph |> List.iter (fun processNode -> addProcess (processId "" "" processNode) processNode)
+        | None -> addProcess (processId "" "" root) root
+        Set.ofSeq definitions, Set.ofSeq imports
+
+    /// The scope of a document, with the types that it defines, the files that it imports and the id of its root
+    /// process. The definitions come from a pre-pass over the raw nodes.
+    let documentScope (root: YamlNode) : DecodeScope =
+        let definitions, imports = documentDefinitions root
+        { rootScope with Definitions = definitions; ImportedPaths = imports; DocId = processId "" "" root }
+
+    /// The types that a SchemaDefRequirement defines, with the ids relative to the id of the process or step that
+    /// holds it.
+    let private definedTypesOf (holderId: string) (schemaDef: YamlNode) : DefinedTypes =
+        let entries = valueOf "types" schemaDef |> Option.map typeEntriesIn |> Option.defaultValue []
+        { Ids = entries |> List.collect (entryIds holderId) |> Set.ofList
+          Imports = entries |> List.choose importedPathOf |> List.map normalizedPath |> Set.ofList }
+
+    /// The types that a chain applies: those of its requirement, else those of its hint, else its fallback.
+    let private appliedBy (chain: SchemaDefChain) : DefinedTypes =
+        match chain.Required, chain.Hinted with
+        | Some types, _ -> types
+        | None, Some types -> types
+        | None, None -> chain.Fallback
+
+    /// The scope inside a process or a step. The SchemaDefRequirement of the process or step overrides the one of the
+    /// enclosing process or step in each chain, and a requirement overrides a hint of the same class. The last
+    /// SchemaDefRequirement of a list is the innermost one, as in cwltool. The id of the holder is the DocId of the
+    /// scope.
+    let private enterHolder (holder: YamlNode) (scope: DecodeScope) : DecodeScope =
+        let innermostIn (field: string) =
+            valueOf field holder |> Option.bind (fun types -> schemaDefsIn types |> List.tryLast) |> Option.map (definedTypesOf scope.DocId)
+        let required = innermostIn "requirements"
+        let hinted = innermostIn "hints"
+        let chains =
+            scope.Chains
+            |> List.map (fun chain -> { chain with Required = Option.orElse chain.Required required; Hinted = Option.orElse chain.Hinted hinted })
+            |> List.distinct
+        let inForce =
+            chains
+            |> List.map appliedBy
+            |> List.reduce (fun left right -> { Ids = Set.intersect left.Ids right.Ids; Imports = Set.intersect left.Imports right.Imports })
+        { scope with Chains = chains; InForce = inForce }
+
+    /// The id that a link names among the given type ids, and none when it names no id. A link that starts with # is
+    /// the absolute id in the document. Any other link is relative to the id of the port or of the record field that
+    /// holds it, and Schema Salad drops the last two segments of that id first (refScope 2). It looks for the link
+    /// behind what remains and then behind each shorter prefix, down to the root of the document.
+    let private resolveLink (scope: DecodeScope) (ids: Set<string>) (link: string) : string option =
+        if link.StartsWith "#" then
+            Some (link.Substring 1) |> Option.filter (fun id -> Set.contains id ids)
+        else
+            let owner = if scope.DocId = "" then [] else scope.DocId.Split('/') |> Array.toList
+            let rec lookup (prefix: string list) =
+                let id = String.concat "/" (prefix @ [ link ])
+                if Set.contains id ids then Some id
+                elif prefix.IsEmpty then None
+                else lookup (List.truncate (prefix.Length - 1) prefix)
+            lookup (List.truncate (max 0 (owner.Length - 2)) owner)
+
+    /// The path in front of the # of a type name, with the . and .. segments resolved, and none for a name without a
+    /// path. A type of an imported file is named behind the path of the file (path#Name).
+    let private importedPathOfName (name: string) : string option =
+        let hash = name.IndexOf '#'
+        if hash > 0 then Some (normalizedPath (name.Substring(0, hash))) else None
+
+    /// True when the name spells a type that applies at the place. The name finds an id in the document, and the
+    /// innermost SchemaDefRequirement defines that id. A name behind a path needs the import in that requirement.
+    let private isDefinedReference (scope: DecodeScope) (name: string) : bool =
+        match importedPathOfName name with
+        | Some path -> Set.contains path scope.InForce.Imports
+        | None -> resolveLink scope scope.Definitions name |> Option.exists (fun id -> Set.contains id scope.InForce.Ids)
+
+    /// True when a Reference can spell the name: it is not empty, holds no whitespace and none of the characters [ ] ?
+    /// that the shorthand of a type uses.
+    let private isWellFormedName (name: string) : bool =
+        name <> "" && not (name |> Seq.exists (fun character -> System.Char.IsWhiteSpace character || character = '[' || character = ']' || character = '?'))
+
     /// The type that a type name spells. The node is the scalar that holds the name, and an unknown name is a decode
-    /// error at its place. The stream types are valid here only in a scope that admits them at every place. A port
-    /// admits them as its whole type, which the readers of a port type check before they read a name.
+    /// error at its place. A name that is no builtin type is a Reference when the scope defines it, or when the scope
+    /// takes every well-formed name. The stream types are no name here. A port admits them as its whole type, which
+    /// the readers of a port type check before they read a name.
     let cwlSimpleTypeFromString (scope: DecodeScope) (node: YamlNode) (name: string) : CWLType =
         match name with
         | "File" -> File (FileInstance ())
@@ -490,14 +816,12 @@ module Decode =
         | "double" -> Double
         | "boolean" -> Boolean
         | "Any" -> Any
-        | "stdout" when scope.StreamTypes = AnyStreams -> Stdout
-        | "stderr" when scope.StreamTypes = AnyStreams -> Stderr
-        | "stdin" when scope.StreamTypes = AnyStreams -> Stdin
         | "stdout" | "stderr" ->
             raise (
                 YamlDecodeException
                     { Message =
-                        "The type " + name + " is valid only as the whole type of an output of a command line tool, without an outputBinding."
+                        "The type " + name + " is valid only as the whole type"
+                        + (if scope.StreamTypes = AnyStreams then "." else " of an output of a command line tool, without an outputBinding.")
                       Path = []
                       Span = node.Span }
             )
@@ -505,7 +829,8 @@ module Decode =
             raise (
                 YamlDecodeException
                     { Message =
-                        "The type stdin is valid only as the whole type of an input of a command line tool, without an inputBinding."
+                        "The type stdin is valid only as the whole type"
+                        + (if scope.StreamTypes = AnyStreams then "." else " of an input of a command line tool, without an inputBinding.")
                       Path = []
                       Span = node.Span }
             )
@@ -518,7 +843,25 @@ module Decode =
                       Path = []
                       Span = node.Span }
             )
-        | _ -> raise (YamlDecodeException { Message = "Invalid CWL type: " + name; Path = []; Span = node.Span })
+        | "Dirent" -> raise (YamlDecodeException { Message = "Invalid CWL type: " + name; Path = []; Span = node.Span })
+        | _ when (scope.References = AnyNames && isWellFormedName name) || isDefinedReference scope name -> Reference name
+        | _ ->
+            // path#Name names a type in a file. The name inside the file stays unchecked, so only the path can be unknown.
+            let hash = name.IndexOf '#'
+            let overridden =
+                "Invalid CWL type: " + name + ". The document defines this type in a SchemaDefRequirement that does not apply here. The innermost SchemaDefRequirement applies. It overrides the one of the enclosing process, and a requirement overrides a hint."
+                + (if scope.GraphIds.IsSome then " A process of a packed document that a step runs takes the SchemaDefRequirement that applies at the step, and a process that several steps run needs the type at each of them." else "")
+            let message =
+                if (resolveLink scope scope.Later name).IsSome then
+                    "Invalid CWL type: " + name + ". The SchemaDefRequirement defines this type further down. It processes its types in the order listed, so a type may name only the types before it and itself."
+                elif hash > 0 then
+                    if Set.contains (normalizedPath (name.Substring(0, hash))) scope.ImportedPaths then overridden
+                    else "Invalid CWL type: " + name + ". The file " + name.Substring(0, hash) + " is not imported by a SchemaDefRequirement of the document."
+                elif (resolveLink scope scope.Definitions name).IsSome then
+                    overridden
+                else
+                    "Invalid CWL type: " + name
+            raise (YamlDecodeException { Message = message; Path = []; Span = node.Span })
 
     /// Read a type name with the shorthand of a CWL document. T[] is an array of T and T? is null or T, so T[]? is an
     /// optional array. A document reads one [] only, because CWL reads a nested array as a schema. The scope tells
@@ -548,6 +891,11 @@ module Decode =
     let private withShorthand (shorthand: bool) (scope: DecodeScope) : DecodeScope =
         { scope with Shorthand = shorthand }
 
+    /// The scope inside an object that has an id, such as a port or a record field. The id is the given name resolved
+    /// against the id of the enclosing object, and the type names inside are relative to it.
+    let private withChildId (name: string) (scope: DecodeScope) : DecodeScope =
+        { scope with DocId = scopedId scope.DocId name }
+
     /// Decode an InputArraySchema from a YamlNode
     let rec inputArraySchemaDecoder (scope: DecodeScope) : (YamlNode -> InputArraySchema) =
         fun value ->
@@ -572,7 +920,8 @@ module Decode =
     /// Decode a record field object under its name. The type field is the type of the field. The doc and the label
     /// are typed, and every other property of the field, such as inputBinding or secondaryFiles, stays on the field.
     and inputRecordFieldObject (scope: DecodeScope) (name: string) (value: YamlNode) : InputRecordField =
-        let decodedType = value |> Decode.object (fun get -> get.Required.Field "type" (cwlTypeDecoderAt (withShorthand true scope)))
+        let decodedType =
+            value |> Decode.object (fun get -> get.Required.Field "type" (cwlTypeDecoderAt (scope |> withChildId name |> withShorthand true)))
         let doc, label, sourceNodes = docAndLabelDecoder value
         let field = InputRecordField(name, decodedType, ?doc = doc, ?label = label)
         field.SourceNodes <- sourceNodes
@@ -601,7 +950,7 @@ module Decode =
                 atField name (fun () ->
                     match entry.Value.Kind with
                     | YamlNodeKind.Mapping _ -> inputRecordFieldObject scope name entry.Value
-                    | _ -> InputRecordField(name, cwlTypeDecoderAt (withShorthand true scope) entry.Value))
+                    | _ -> InputRecordField(name, cwlTypeDecoderAt (scope |> withChildId name |> withShorthand true) entry.Value))
             fields.Add(field)
         fields
 
@@ -609,6 +958,9 @@ module Decode =
     and inputRecordSchemaDecoder (scope: DecodeScope) : (YamlNode -> InputRecordSchema) =
         fun value ->
         Decode.object (fun get ->
+            let recordName = get.Optional.Field "name" Decode.string
+            // The fields of a named record are relative to the id of the record.
+            let scope = match recordName with Some name -> withChildId name scope | None -> scope
             // Try to decode fields as an array (flow-style) or as a map (block-style)
             let decodedFields =
                 // Get the fields element directly
@@ -641,7 +993,7 @@ module Decode =
                     ?fields = decodedFields,
                     ?label = label,
                     ?doc = doc,
-                    ?name = get.Optional.Field "name" Decode.string
+                    ?name = recordName
                 )
             schema.SourceNodes <- sourceNodes
             overflowIntoDynamicObj schema (InputRecordSchema.KnownFieldNames |> Seq.toList) value |> ignore
@@ -740,10 +1092,16 @@ module Decode =
     /// stdout[] spells no stream type, and the name reader rejects it.
     let private tryWholeStreamType (scope: DecodeScope) (node: YamlNode) : CWLType option =
         match scope.StreamTypes, typeText node with
-        | OutputStreams, "stdout" -> Some Stdout
-        | OutputStreams, "stderr" -> Some Stderr
-        | InputStreams, "stdin" -> Some Stdin
+        | (OutputStreams | AnyStreams), "stdout" -> Some Stdout
+        | (OutputStreams | AnyStreams), "stderr" -> Some Stderr
+        | (InputStreams | AnyStreams), "stdin" -> Some Stdin
         | _ -> None
+
+    /// The scope of a type that stands without a port or a schema around it: the type text of an RO-Crate entity and
+    /// the type of a parameter file. No SchemaDefRequirement is in view, so a well-formed name that is no builtin type
+    /// is a Reference, and the stream types are valid as the whole type only.
+    let typeTextScope : DecodeScope =
+        { rootScope with StreamTypes = AnyStreams; References = AnyNames }
 
     /// Decode the type of a type that stands without a surrounding mapping. Such a type has no listing field, so the
     /// Dirent shorthand is an error.
@@ -765,25 +1123,29 @@ module Decode =
     /// Decode the text of the additional type of an RO-Crate entity. The text is YAML. A scalar is a type name such as
     /// File[][]? and may be quoted, as the null type is written ("null"), or carry a comment. The shorthand nests
     /// arrays there, which a CWL document does not read. Anything else is a schema or a list of types. The text has no
-    /// port around it, so the stream types are valid at every place.
+    /// port and no SchemaDefRequirement around it, so it reads like any type text (typeTextScope). A stream type is the
+    /// whole text, and a name that is no builtin type is a Reference when it is well-formed.
     let cwlTypeFromAdditionalType (text: string) : CWLType =
         let node = readYaml text
-        let scope = { rootScope with StreamTypes = AnyStreams }
+        let scope = typeTextScope
         match node.Kind with
         | YamlNodeKind.Scalar _ ->
-            let typeName = typeText node
-            let optional = typeName.EndsWith "?"
-            let stripped = if optional then typeName.Substring(0, typeName.Length - 1) else typeName
-            // Any number of [] stands behind the name.
-            let mutable name = stripped
-            let mutable depth = 0
-            while name.EndsWith "[]" do
-                name <- name.Substring(0, name.Length - 2)
-                depth <- depth + 1
-            let mutable arrayType = cwlSimpleTypeFromString scope node name
-            for _ in 1 .. depth do
-                arrayType <- Array (InputArraySchema(arrayType))
-            if optional then Union (ResizeArray [ Null; arrayType ]) else arrayType
+            match tryWholeStreamType scope node with
+            | Some streamType -> streamType
+            | None ->
+                let typeName = typeText node
+                let optional = typeName.EndsWith "?"
+                let stripped = if optional then typeName.Substring(0, typeName.Length - 1) else typeName
+                // Any number of [] stands behind the name.
+                let mutable name = stripped
+                let mutable depth = 0
+                while name.EndsWith "[]" do
+                    name <- name.Substring(0, name.Length - 2)
+                    depth <- depth + 1
+                let mutable arrayType = cwlSimpleTypeFromString scope node name
+                for _ in 1 .. depth do
+                    arrayType <- Array (InputArraySchema(arrayType))
+                if optional then Union (ResizeArray [ Null; arrayType ]) else arrayType
         | _ -> cwlTypeDecoderAt scope node
 
     /// A type list of exactly null and one other type is the optional type, as the shorthand File? is. The encoder
@@ -825,7 +1187,7 @@ module Decode =
         // and object forms share the same object initialization path.
         let outputBinding = outputBindingDecoder value
         let outputSourceValues = outputSourceDecoder value
-        let cwlType = portTypeDecoder scope value |> fst
+        let cwlType = portTypeDecoder (withChildId name scope) value |> fst
         // The tool writes the file of a stream output itself, so a binding has nothing to bind.
         let streamWithBinding (typeName: string) : unit =
             raise (
@@ -1063,40 +1425,54 @@ module Decode =
             ?outdirMax = optionalResourceField get "outdirMax"
         )
 
-    /// Decode schema definition entries in either named object or map-entry shorthand form.
-    let schemaDefRequirementTypeDecoder (value: YamlNode) : SchemaDefRequirementType =
-        let entries = mappingEntries value
-        let schemaDefKnownFields =
-            // SchemaDefRequirement entries combine the wrapper fields with the
-            // schema fields of the referenced record/array/enum definition.
-            Set.unionMany
-                [
-                    SchemaDefRequirementType.KnownFieldNames
-                    InputRecordSchema.KnownFieldNames
-                    InputArraySchema.KnownFieldNames
-                    InputEnumSchema.KnownFieldNames
-                ]
-            |> Seq.toList
-        match entries |> List.tryFind (fun entry -> entryName entry = "name") with
-        | Some nameEntry ->
-            // Explicit object form: {name: X, type: ...}
-            let schema = SchemaDefRequirementType(decodeStringOrExpression nameEntry.Value, cwlTypeDecoder' value)
-            overflowIntoDynamicObj schema schemaDefKnownFields value |> ignore
-            schema
-        | None ->
-            match entries with
-            | [] ->
-                raise (System.ArgumentException("SchemaDefRequirement entry cannot be empty."))
-            | first :: _ ->
-                // Map shorthand form: {X: {type: record, ...}}
-                let firstName = entryName first
-                let schema = SchemaDefRequirementType(firstName, cwlTypeDecoder' first.Value)
-                overflowIntoDynamicObj schema (firstName :: schemaDefKnownFields) value |> ignore
-                schema
+    /// Decode an entry of the types field that defines a type. CWL defines the entry as the schema itself, with type:
+    /// record or enum. Process.yml admits no other type there, so any other type is an error at the entry, such as a
+    /// builtin type name or an array schema. The schema keeps its name, which is optional, and its extension fields.
+    let schemaDefinitionDecoder (scope: DecodeScope) (value: YamlNode) : SchemaDefinition =
+        let fail (message: string) : 'T =
+            raise (YamlDecodeException { Message = message; Path = []; Span = value.Span })
+        match valueOf "type" value with
+        | Some typeNode ->
+            match scalarText typeNode with
+            | Some "record" -> SchemaDefinition.Record (inputRecordSchemaDecoder scope value)
+            | Some "enum" -> SchemaDefinition.Enum (inputEnumSchemaDecoder value)
+            | Some other -> fail ("A SchemaDefRequirement defines record and enum types only, found type: " + other + ".")
+            | None -> fail "A SchemaDefRequirement defines record and enum types only, found a type that is no name."
+        | None -> fail "Expected a type field. A SchemaDefRequirement defines a record or an enum."
 
-    /// Decode a YamlNode into a SchemaDefRequirementType array
-    let schemaDefRequirementDecoder (get: Decode.IGetters): ResizeArray<SchemaDefRequirementType> =
-        get.Required.Field "types" (Decode.resizearray schemaDefRequirementTypeDecoder)
+    /// Decode an entry of the types field: a file to import, as {$import: path}, or a type to define.
+    let schemaDefEntryDecoder (scope: DecodeScope) (value: YamlNode) : SchemaDefEntry =
+        match importedPathOf value with
+        | Some path -> Imported path
+        | None -> Defined (schemaDefinitionDecoder scope value)
+
+    /// Decode a YamlNode into a SchemaDefEntry array. A SchemaDefRequirement processes its types in the order listed
+    /// (Process.yml), so an entry sees the entries before it, itself included. A type may name itself, which makes a
+    /// recursive record. The requirement overrides the SchemaDefRequirements around it, so an entry does not see their
+    /// types. The ports of the process see every entry of the innermost requirement. A types field that is an $import
+    /// mapping stands for a list with one import.
+    let schemaDefRequirementDecoder (scope: DecodeScope) (get: Decode.IGetters): ResizeArray<SchemaDefEntry> =
+        get.Required.Field "types" (fun typesNode ->
+            let isEntryList =
+                match typesNode.Kind with
+                | YamlNodeKind.Sequence _ -> true
+                | _ -> (importedPathOf typesNode).IsSome
+            if isEntryList then
+                let entries = typeEntriesIn typesNode
+                let ids = entries |> List.map (entryIds scope.DocId)
+                let imports = entries |> List.map (fun entry -> importedPathOf entry |> Option.map normalizedPath)
+                entries
+                |> List.mapi (fun index entry ->
+                    // An id that an earlier entry defines too stays visible.
+                    let upToEntry = ids |> List.take (index + 1) |> List.concat |> Set.ofList
+                    let later = ids |> List.skip (index + 1) |> List.concat |> Set.ofList |> fun later -> Set.difference later upToEntry
+                    // The requirement overrides the types around it, so the entry sees its own requirement only.
+                    let inForce = { Ids = upToEntry; Imports = imports |> List.take (index + 1) |> List.choose id |> Set.ofList }
+                    let entryScope = { scope with InForce = inForce; Later = later }
+                    atField $"[{index}]" (fun () -> schemaDefEntryDecoder entryScope entry))
+                |> ResizeArray
+            else
+                Decode.resizearray (schemaDefEntryDecoder scope) typesNode)
 
     /// Decode only plain boolean scalars, as the core schema reads them, and leave every other node for the
     /// requirement to take as an expression. A quoted "false" is a string.
@@ -1151,10 +1527,10 @@ module Decode =
         InlineJavascriptRequirementValue(?expressionLib = get.Optional.Field "expressionLib" decodeStringArrayOrScalar)
 
     /// Dispatch a known CWL requirement class to its typed decoder.
-    let requirementFromTypeName cls get =
+    let requirementFromTypeName (scope: DecodeScope) cls get =
         match cls with
         | "InlineJavascriptRequirement" -> InlineJavascriptRequirement (inlineJavascriptRequirementDecoder get)
-        | "SchemaDefRequirement" -> SchemaDefRequirement (schemaDefRequirementDecoder get)
+        | "SchemaDefRequirement" -> SchemaDefRequirement (schemaDefRequirementDecoder scope get)
         | "DockerRequirement" -> DockerRequirement (dockerRequirementDecoder get)
         | "SoftwareRequirement" -> SoftwareRequirement (softwareRequirementDecoder get)
         | "LoadListingRequirement" -> LoadListingRequirement (loadListingRequirementDecoder get)
@@ -1205,14 +1581,14 @@ module Decode =
         requirement
 
     /// Decode requirements from either sequence syntax or class-name map syntax.
-    let requirementArrayDecoder : YamlNode -> ResizeArray<Requirement> =
+    let requirementArrayDecoderWithScope (scope: DecodeScope) : YamlNode -> ResizeArray<Requirement> =
         fun yEle ->
             // helper: decode a single requirement object that contain 'class' field
             let decodeSingleRequirementObject (ele: YamlNode) : Requirement =
                 Decode.object (fun get ->
                     // Sequence syntax carries class inside each item.
                     let cls = get.Required.Field "class" (Decode.nonNull Decode.string)
-                    requirementFromTypeName cls get
+                    requirementFromTypeName scope cls get
                     |> addRequirementPayloadOverflow ele
                 ) ele
 
@@ -1235,19 +1611,23 @@ module Decode =
                     // and the mapping value as that requirement's payload.
                     let name = entryName entry
                     atField name (fun () ->
-                        Decode.object (requirementFromTypeName name) entry.Value
+                        Decode.object (requirementFromTypeName scope name) entry.Value
                         |> addRequirementPayloadOverflow entry.Value)
                 )
                 |> ResizeArray
             // INVALID CWL REQUIREMENTS
             | _ -> raise (System.ArgumentException($"Invalid CWL requirements syntax: {YamlNode.show yEle}"))
 
+    /// Decode requirements from either sequence syntax or class-name map syntax, outside of any process.
+    let requirementArrayDecoder : YamlNode -> ResizeArray<Requirement> =
+        requirementArrayDecoderWithScope rootScope
+
     /// Try known requirement decoding for hints, falling back to UnknownHint on decode failure.
-    let tryDecodeKnownRequirementFromElement (element: YamlNode) : Requirement option =
+    let tryDecodeKnownRequirementFromElement (scope: DecodeScope) (element: YamlNode) : Requirement option =
         try
             Some (Decode.object (fun get ->
                 let cls = get.Required.Field "class" (Decode.nonNull Decode.string)
-                requirementFromTypeName cls get
+                requirementFromTypeName scope cls get
                 |> addRequirementPayloadOverflow element
             ) element)
         with ex ->
@@ -1264,8 +1644,8 @@ module Decode =
             None
 
     /// Decode one hint as a known requirement when possible, otherwise preserve the raw hint.
-    let decodeHintElement (element: YamlNode) : HintEntry =
-        match tryDecodeKnownRequirementFromElement element with
+    let decodeHintElement (scope: DecodeScope) (element: YamlNode) : HintEntry =
+        match tryDecodeKnownRequirementFromElement scope element with
         | Some requirement -> KnownHint requirement
         | None ->
             let hintClass =
@@ -1276,14 +1656,14 @@ module Decode =
             UnknownHint (HintUnknownValue(hintClass, { Node = element }))
 
     /// Decode hints from sequence syntax or class-name map syntax while preserving unknown hints.
-    let hintArrayDecoder : YamlNode -> ResizeArray<HintEntry> =
+    let hintArrayDecoderWithScope (scope: DecodeScope) : YamlNode -> ResizeArray<HintEntry> =
         fun yEle ->
             match yEle.Kind with
             | YamlNodeKind.Sequence collection ->
                 // Sequence hints can be known requirement payloads or arbitrary
                 // extension hints.
                 collection.Items
-                |> List.map (fun item -> decodeHintElement item.Node)
+                |> List.map (fun item -> decodeHintElement scope item.Node)
                 |> ResizeArray
             | YamlNodeKind.Mapping _ ->
                 mappingEntries yEle
@@ -1309,25 +1689,38 @@ module Decode =
                             // Scalar map-style hints are wrapped as {class, value}
                             // so decodeHintElement can still classify them.
                             YamlNode.mapping [ classEntry; YamlNode.entry (YamlNode.plain "value") payload ]
-                    decodeHintElement valueWithClass
+                    decodeHintElement scope valueWithClass
                 )
                 |> ResizeArray
             | _ ->
                 raise (System.ArgumentException($"Invalid CWL hints syntax: {YamlNode.show yEle}"))
 
+    /// Decode hints from sequence syntax or class-name map syntax, outside of any process.
+    let hintArrayDecoder : YamlNode -> ResizeArray<HintEntry> =
+        hintArrayDecoderWithScope rootScope
+
     /// Access the requirements field and decode the YamlNodes into a Requirement array
-    let requirementsDecoder: (YamlNode -> ResizeArray<Requirement> option) =
+    let requirementsDecoderWithScope (scope: DecodeScope) : (YamlNode -> ResizeArray<Requirement> option) =
         Decode.object (fun get ->
-            let requirements = get.Optional.Field "requirements" requirementArrayDecoder
+            let requirements = get.Optional.Field "requirements" (requirementArrayDecoderWithScope scope)
             requirements
         )
 
     /// Access the hints field and decode the YamlNodes into a HintEntry array
-    let hintsDecoder: (YamlNode -> ResizeArray<HintEntry> option) =
+    let hintsDecoderWithScope (scope: DecodeScope) : (YamlNode -> ResizeArray<HintEntry> option) =
         Decode.object (fun get ->
-            let hints = get.Optional.Field "hints" hintArrayDecoder
+            let hints = get.Optional.Field "hints" (hintArrayDecoderWithScope scope)
             hints
         )
+
+    /// Decode the requirements of a node that stands alone. The types that its SchemaDefRequirements define are the
+    /// only ones that its other requirements may name.
+    let requirementsDecoder: (YamlNode -> ResizeArray<Requirement> option) =
+        fun node -> requirementsDecoderWithScope (documentScope node) node
+
+    /// Decode the hints of a node that stands alone, as requirementsDecoder decodes its requirements.
+    let hintsDecoder: (YamlNode -> ResizeArray<HintEntry> option) =
+        fun node -> hintsDecoderWithScope (documentScope node) node
 
     /// Decode a YamlNode into an InputBinding
     let inputBindingDecoder: (YamlNode -> InputBinding option) =
@@ -1366,7 +1759,7 @@ module Decode =
         // inputBinding is nested and decoded separately so both shorthand and object
         // input definitions can share the same construction flow.
         let inputBinding = inputBindingDecoder value
-        let cwlType, optional = portTypeDecoder scope value
+        let cwlType, optional = portTypeDecoder (withChildId name scope) value
         match cwlType, inputBinding with
         | Stdin, Some _ ->
             // The tool reads a stdin input from its standard input, so a binding has nothing to bind.
@@ -1682,8 +2075,9 @@ module Decode =
         | _ -> false
 
     /// The cwlVersion of a process. A process below the top level takes the default of the scope, which is the version of
-    /// the enclosing process. CWL ignores a cwlVersion field anywhere else than at the top level, so a field of such a
-    /// process changes nothing, whatever it holds. The field at the top level is required and a text.
+    /// the enclosing process or of the packed document. CWL ignores a cwlVersion field anywhere else than at the top level
+    /// (concepts.md), so a field of such a process changes nothing, whatever it holds. The field of the root is required and
+    /// a text.
     let versionDecoder (scope: DecodeScope) : (YamlNode -> string) =
         fun node ->
             match scope.DefaultCwlVersion with
@@ -1694,13 +2088,25 @@ module Decode =
     let rec workflowStepRunDecoder (warnings: WarningSink) (scope: DecodeScope) (runValue: YamlNode) : WorkflowStepRun =
         match runValue.Kind with
         | YamlNodeKind.Scalar _ ->
-            // Most workflow steps reference an external CWL file by path.
-            RunString (Decode.nonNull Decode.string runValue)
+            // Most workflow steps reference an external CWL file by path. A step of a packed document may refer to a
+            // process of the document by #id, and then the id must belong to one of its processes.
+            let reference = Decode.nonNull Decode.string runValue
+            match scope.GraphIds with
+            | Some ids when reference.StartsWith "#" && not (Set.contains (LocalReference.withoutHash reference) ids) ->
+                raise (
+                    YamlDecodeException
+                        { Message = "The run field refers to " + reference + ", which is no process of the $graph."
+                          Path = []
+                          Span = runValue.Span }
+                )
+            | _ -> RunString reference
         | YamlNodeKind.Mapping _ ->
             // Inline run objects are full CWL processing units and can themselves
             // contain tolerant ports/steps, so the same warning sink is threaded in.
-            // An inline run without a cwlVersion takes the one of the scope.
-            match decodeCWLProcessingUnitElementWithWarnings warnings scope runValue with
+            // An inline run without a cwlVersion takes the one of the scope. Its id is relative to the id of the step.
+            // An inline run without an id has run as its segment.
+            let runScope = { scope with DocId = processId scope.DocId "run" runValue }
+            match decodeCWLProcessingUnitElementWithWarnings warnings runScope runValue with
             | CommandLineTool tool -> WorkflowStepRunOps.fromTool tool
             | Workflow workflow -> WorkflowStepRunOps.fromWorkflow workflow
             | ExpressionTool expressionTool -> WorkflowStepRunOps.fromExpressionTool expressionTool
@@ -1710,6 +2116,9 @@ module Decode =
 
     /// Decode a named workflow step and thread warnings into nested step inputs and inline runs.
     and decodeWorkflowStepFromValueWithId (warnings: WarningSink) (scope: DecodeScope) (path: string) (stepId: string) (value: YamlNode) : WorkflowStep =
+        // Schema Salad gives the step its id behind the id of the workflow. The definitions of its requirements and
+        // its inline run are relative to that id, and its SchemaDefRequirement overrides the one of the workflow.
+        let scope = scope |> withChildId stepId |> enterHolder value
         // Required fields are decoded strictly because the step has an explicit id.
         let runValue = Decode.object (fun get' -> get'.Required.Field "run" (Decode.nonNull Decode.node)) value
         let run = atField "run" (fun () -> workflowStepRunDecoder warnings scope runValue)
@@ -1720,8 +2129,8 @@ module Decode =
         // Optional fields are decoded independently so missing fields do not block
         // preservation of other step metadata.
         let outputs = outputStepsDecoder value
-        let requirements = requirementsDecoder value
-        let hints = hintsDecoder value
+        let requirements = requirementsDecoderWithScope scope value
+        let hints = hintsDecoderWithScope scope value
         let doc, label, sourceNodes = docAndLabelDecoder value
         let scatter = scatterFieldDecoder "scatter" value
         let scatterMethod = scatterMethodFieldDecoder "scatterMethod" value
@@ -1794,6 +2203,8 @@ module Decode =
     and commandLineToolDecoder (warnings: WarningSink) (scope: DecodeScope) (yamlCWL: YamlNode) =
         // Decode standard sections first. Inputs and outputs are required.
         let cwlVersion = versionDecoder scope yamlCWL
+        // The SchemaDefRequirement of the process overrides the one of the enclosing process.
+        let scope = enterHolder yamlCWL scope
         // Only the ports of a command line tool may have a stream type.
         let outputs = outputsDecoderWithWarnings warnings { scope with StreamTypes = OutputStreams } yamlCWL
         let inputs = requiredInputsDecoder warnings { scope with StreamTypes = InputStreams } "a command line tool" yamlCWL
@@ -1808,8 +2219,8 @@ module Decode =
                           Span = stdinNode.Span }
                 ))
         | _ -> ()
-        let requirements = requirementsDecoder yamlCWL
-        let hints = hintsDecoder yamlCWL
+        let requirements = requirementsDecoderWithScope scope yamlCWL
+        let hints = hintsDecoderWithScope scope yamlCWL
         let intent = intentDecoder yamlCWL
         let baseCommand = baseCommandDecoder yamlCWL
         let doc, label, sourceNodes = docAndLabelDecoder yamlCWL
@@ -1862,10 +2273,12 @@ module Decode =
         // ExpressionTool shares port/requirement metadata decoding with other
         // processing units, then decodes its required expression body.
         let cwlVersion = versionDecoder scope yamlCWL
+        // The SchemaDefRequirement of the process overrides the one of the enclosing process.
+        let scope = enterHolder yamlCWL scope
         let outputs = outputsDecoderWithWarnings warnings scope yamlCWL
         let inputs = requiredInputsDecoder warnings scope "an expression tool" yamlCWL
-        let requirements = requirementsDecoder yamlCWL
-        let hints = hintsDecoder yamlCWL
+        let requirements = requirementsDecoderWithScope scope yamlCWL
+        let hints = hintsDecoderWithScope scope yamlCWL
         let intent = intentDecoder yamlCWL
         let doc, label, sourceNodes = docAndLabelDecoder yamlCWL
         let expression =
@@ -1906,10 +2319,12 @@ module Decode =
     /// Decode an Operation and enforce its required inputs collection.
     and operationDecoder (warnings: WarningSink) (scope: DecodeScope) (yamlCWL: YamlNode) =
         let cwlVersion = versionDecoder scope yamlCWL
+        // The SchemaDefRequirement of the process overrides the one of the enclosing process.
+        let scope = enterHolder yamlCWL scope
         let outputs = outputsDecoderWithWarnings warnings scope yamlCWL
         let inputs = requiredInputsDecoder warnings scope "an operation" yamlCWL
-        let requirements = requirementsDecoder yamlCWL
-        let hints = hintsDecoder yamlCWL
+        let requirements = requirementsDecoderWithScope scope yamlCWL
+        let hints = hintsDecoderWithScope scope yamlCWL
         let intent = intentDecoder yamlCWL
         let doc, label, sourceNodes = docAndLabelDecoder yamlCWL
         let description =
@@ -1949,10 +2364,12 @@ module Decode =
         // Workflow inputs and steps are required by this model; outputs and steps
         // can still use tolerant collection decoders internally.
         let cwlVersion = versionDecoder scope yamlCWL
+        // The SchemaDefRequirement of the process overrides the one of the enclosing process.
+        let scope = enterHolder yamlCWL scope
         let outputs = outputsDecoderWithWarnings warnings scope yamlCWL
         let inputs = requiredInputsDecoder warnings scope "a workflow" yamlCWL
-        let requirements = requirementsDecoder yamlCWL
-        let hints = hintsDecoder yamlCWL
+        let requirements = requirementsDecoderWithScope scope yamlCWL
+        let hints = hintsDecoderWithScope scope yamlCWL
         let intent = intentDecoder yamlCWL
         let steps = stepsDecoderWithScope warnings { scope with DefaultCwlVersion = Some cwlVersion } yamlCWL
         let doc, label, sourceNodes = docAndLabelDecoder yamlCWL
@@ -2003,7 +2420,7 @@ module Decode =
 
     /// Decode an already-parsed CWL element without warning collection.
     let decodeCWLProcessingUnitElement (yamlCWL: YamlNode) =
-        decodeCWLProcessingUnitElementWithWarnings None rootScope yamlCWL
+        decodeCWLProcessingUnitElementWithWarnings None (documentScope yamlCWL) yamlCWL
 
     let stepArrayDecoder = stepArrayDecoderWithScope None { rootScope with DefaultCwlVersion = Some "v1.2" }
 
@@ -2013,7 +2430,7 @@ module Decode =
     let decodeCommandLineToolWithWarnings (cwl: string) =
         let warnings = ResizeArray<DecodeWarning>()
         let yamlCWL = readYaml cwl
-        { Value = commandLineToolDecoder (Some warnings) rootScope yamlCWL; Warnings = warnings }
+        { Value = commandLineToolDecoder (Some warnings) (documentScope yamlCWL) yamlCWL; Warnings = warnings }
 
     /// Decode a CWL CommandLineTool and discard recoverable warnings.
     let decodeCommandLineTool (cwl: string) =
@@ -2023,7 +2440,7 @@ module Decode =
     let decodeWorkflowWithWarnings (cwl: string) =
         let warnings = ResizeArray<DecodeWarning>()
         let yamlCWL = readYaml cwl
-        { Value = workflowDecoder (Some warnings) rootScope yamlCWL; Warnings = warnings }
+        { Value = workflowDecoder (Some warnings) (documentScope yamlCWL) yamlCWL; Warnings = warnings }
 
     /// Decode a CWL Workflow and discard recoverable warnings.
     let decodeWorkflow (cwl: string) =
@@ -2033,7 +2450,7 @@ module Decode =
     let decodeExpressionToolWithWarnings (cwl: string) =
         let warnings = ResizeArray<DecodeWarning>()
         let yamlCWL = readYaml cwl
-        { Value = expressionToolDecoder (Some warnings) rootScope yamlCWL; Warnings = warnings }
+        { Value = expressionToolDecoder (Some warnings) (documentScope yamlCWL) yamlCWL; Warnings = warnings }
 
     /// Decode a CWL ExpressionTool and discard recoverable warnings.
     let decodeExpressionTool (cwl: string) =
@@ -2043,21 +2460,203 @@ module Decode =
     let decodeOperationWithWarnings (cwl: string) =
         let warnings = ResizeArray<DecodeWarning>()
         let yamlCWL = readYaml cwl
-        { Value = operationDecoder (Some warnings) rootScope yamlCWL; Warnings = warnings }
+        { Value = operationDecoder (Some warnings) (documentScope yamlCWL) yamlCWL; Warnings = warnings }
 
     /// Decode a CWL Operation and discard recoverable warnings.
     let decodeOperation (cwl: string) =
         (decodeOperationWithWarnings cwl).Value
 
-    /// Decode any CWL processing unit from a YAML string and return recoverable warnings.
+    /// Decode any CWL processing unit from a YAML string and return recoverable warnings. A packed document has no
+    /// process at its root, so it is a decode error here, and decodeCWLDocument reads it.
     let decodeCWLProcessingUnitWithWarnings (cwl:string) =
         let warnings = ResizeArray<DecodeWarning>()
         let yamlCWL = readYaml cwl
-        { Value = decodeCWLProcessingUnitElementWithWarnings (Some warnings) rootScope yamlCWL; Warnings = warnings }
+        if hasField "$graph" yamlCWL then
+            raise (
+                YamlDecodeException
+                    { Message = "The document is a packed document with a $graph and has no process at its root. Read it with decodeCWLDocument."
+                      Path = []
+                      Span = yamlCWL.Span }
+            )
+        { Value = decodeCWLProcessingUnitElementWithWarnings (Some warnings) (documentScope yamlCWL) yamlCWL; Warnings = warnings }
 
     /// Decode any CWL processing unit and discard recoverable warnings.
     let decodeCWLProcessingUnit (cwl:string) =
         (decodeCWLProcessingUnitWithWarnings cwl).Value
+
+    /// The steps of a process that run another process of the document by #id, with the path of each run field and its
+    /// node. The walk descends into the inline runs of the steps.
+    let rec private runsIn (path: string list) (processNode: YamlNode) : (string list * string * YamlNode) list =
+        stepsOf processNode
+        |> List.collect (fun (stepId, step) ->
+            match valueOf "run" step with
+            | Some run ->
+                let runPath = path @ [ "steps"; stepId; "run" ]
+                match run.Kind with
+                | YamlNodeKind.Scalar scalar when scalar.Value.StartsWith "#" -> [ runPath, LocalReference.withoutHash scalar.Value, run ]
+                | YamlNodeKind.Mapping _ -> runsIn runPath run
+                | _ -> []
+            | None -> [])
+
+    /// The chains of SchemaDefRequirements that reach each process of a packed document. A step passes its own chains to
+    /// the process that it runs by #id, so a process has the chains of all steps that run it. The process main starts
+    /// the document, so it has a chain without a fallback, as a root process has, and the processes that its steps reach
+    /// inherit that. Any other process that no step runs has the fallback of every type of the document, because a
+    /// runner may start with it. The walk reads the raw nodes with the same scope steps as the decoders, and it needs a
+    /// document without cycles of run references.
+    let private chainsOfProcesses (graphScope: DecodeScope) (processes: (string * YamlNode) list) (callers: Map<string, string list>) : Map<string, SchemaDefChain list> =
+        let nodes = Map.ofList processes
+        let everyType = { Ids = graphScope.Definitions; Imports = graphScope.ImportedPaths }
+        let rec runsFrom (scope: DecodeScope) (processNode: YamlNode) : (string * SchemaDefChain list) list =
+            let scope = enterHolder processNode scope
+            stepsOf processNode
+            |> List.collect (fun (stepId, step) ->
+                let stepScope = scope |> withChildId stepId |> enterHolder step
+                match valueOf "run" step with
+                | Some run ->
+                    match run.Kind with
+                    | YamlNodeKind.Scalar scalar when scalar.Value.StartsWith "#" -> [ LocalReference.withoutHash scalar.Value, stepScope.Chains ]
+                    | YamlNodeKind.Mapping _ -> runsFrom { stepScope with DocId = processId stepScope.DocId "run" run } run
+                    | _ -> []
+                | None -> [])
+        let entries = System.Collections.Generic.Dictionary<string, SchemaDefChain list>()
+        let sites = System.Collections.Generic.Dictionary<string, (string * SchemaDefChain list) list>()
+        let rec chainsOf (id: string) : SchemaDefChain list =
+            match entries.TryGetValue id with
+            | true, chains -> chains
+            | _ ->
+                let fromRunner = if id = "main" then [ { Required = None; Hinted = None; Fallback = { Ids = Set.empty; Imports = Set.empty } } ] else []
+                let fromSteps =
+                    Map.tryFind id callers
+                    |> Option.defaultValue []
+                    |> List.collect (fun caller -> sitesOf caller |> List.filter (fun (target, _) -> target = id) |> List.collect snd)
+                let chains =
+                    match fromRunner @ fromSteps with
+                    | [] -> [ { Required = None; Hinted = None; Fallback = everyType } ]
+                    | found -> List.distinct found
+                entries.[id] <- chains
+                chains
+        and sitesOf (id: string) : (string * SchemaDefChain list) list =
+            match sites.TryGetValue id with
+            | true, found -> found
+            | _ ->
+                let node = nodes.[id]
+                let found = runsFrom { graphScope with DocId = processId "" "" node; Chains = chainsOf id } node
+                sites.[id] <- found
+                found
+        processes |> List.map (fun (id, _) -> id, chainsOf id) |> Map.ofList
+
+    /// Decode a packed document. Its processes use the cwlVersion of the root and ignore their own, and a step names a
+    /// process of the document by #id. The scope of each process holds the ids and the type definitions of the whole
+    /// document, because a workflow may run a process that stands behind it in the list and a process may name a type
+    /// that another one defines by its id, as main/Point or #main/Point. Which of these types apply to a process
+    /// follows from the steps that run it. A process takes the SchemaDefRequirements in force at each of those steps,
+    /// and the process main takes none, as a root process does. A process that no step runs and that is not main takes
+    /// every type of the document.
+    let decodeCWLGraphElementWithWarnings (warnings: WarningSink) (yamlCWL: YamlNode) : CWLGraph =
+        let cwlVersion = versionDecoder rootScope yamlCWL
+        // The root of a packed document holds no process, so a class there contradicts the $graph.
+        match entriesOf yamlCWL |> List.tryFind (fun entry -> scalarText entry.Key = Some "class") with
+        | Some classEntry ->
+            raise (
+                YamlDecodeException
+                    { Message = "The document has a $graph, so it has no process at its root and no class field."
+                      Path = []
+                      Span = classEntry.Key.Span }
+            )
+        | None -> ()
+        let graphNode = Decode.object (fun get -> get.Required.Field "$graph" (Decode.nonNull Decode.node)) yamlCWL
+        let processNodes =
+            match graphNode.Kind with
+            | YamlNodeKind.Sequence _ -> itemsOf graphNode
+            | _ ->
+                atField "$graph" (fun () ->
+                    raise (
+                        YamlDecodeException
+                            { Message = "Expected a list of processes, found " + describeNode graphNode + "."
+                              Path = []
+                              Span = graphNode.Span }
+                    ))
+        // Every process needs an id that no other process of the document has, because a step names a process by its id.
+        let idList =
+            let seen = System.Collections.Generic.HashSet<string>()
+            processNodes
+            |> List.mapi (fun index node ->
+                let failAt (message: string) (at: YamlNode) : 'T =
+                    atField "$graph" (fun () ->
+                        atField $"[{index}]" (fun () -> raise (YamlDecodeException { Message = message; Path = []; Span = at.Span })))
+                match valueOf "id" node with
+                | Some idNode ->
+                    match scalarText idNode with
+                    | Some id when id <> "" ->
+                        let id = LocalReference.withoutHash id
+                        if not (seen.Add id) then
+                            failAt ("The id " + id + " belongs to an earlier process of the document too. An id must be unique in the document.") idNode
+                        id
+                    | _ -> failAt ("Expected the id of a process, found " + describeNode idNode + ".") idNode
+                | None -> failAt "Expected an id field. Every process of a packed document needs one." node)
+        let ids = Set.ofList idList
+        // A run that leads back to a process on its way never ends. The run field that closes the cycle is the error.
+        let members = List.zip idList processNodes |> List.mapi (fun index (id, node) -> id, (index, node)) |> Map.ofList
+        let visiting = System.Collections.Generic.Dictionary<string, bool>()
+        let rec visit (stack: string list) (id: string) : unit =
+            visiting.[id] <- true
+            let index, processNode = members.[id]
+            for (runPath, target, runNode) in runsIn [] processNode do
+                if members.ContainsKey target then
+                    match visiting.TryGetValue target with
+                    | true, true ->
+                        let cycle = (id :: stack) |> List.rev |> List.skipWhile (fun step -> step <> target)
+                        let names = (cycle @ [ target ]) |> List.map (fun name -> "#" + name) |> String.concat ", "
+                        let raiseAt () =
+                            raise (
+                                YamlDecodeException
+                                    { Message = "The run field closes a cycle of run references (" + names + "). A process cannot run itself."
+                                      Path = []
+                                      Span = runNode.Span }
+                            )
+                        (List.foldBack (fun segment (inner: unit -> unit) -> (fun () -> atField segment inner)) ([ "$graph"; $"[{index}]" ] @ runPath) raiseAt) ()
+                    | true, false -> ()
+                    | _ -> visit (id :: stack) target
+            visiting.[id] <- false
+        for id in idList do
+            if not (visiting.ContainsKey id) then visit [] id
+        let graphScope = { documentScope yamlCWL with DefaultCwlVersion = Some cwlVersion; GraphIds = Some ids; DocId = "" }
+        // A process takes the types in force at each step that runs it, so the steps that run it are known before it decodes.
+        let callers =
+            idList
+            |> List.collect (fun id -> runsIn [] (snd members.[id]) |> List.map (fun (_, target, _) -> target, id))
+            |> List.filter (fun (target, _) -> members.ContainsKey target)
+            |> List.groupBy fst
+            |> List.map (fun (target, runs) -> target, runs |> List.map snd |> List.distinct)
+            |> Map.ofList
+        let chains = chainsOfProcesses graphScope (List.zip idList processNodes) callers
+        let processes =
+            List.zip idList processNodes
+            |> List.mapi (fun index (id, node) ->
+                atField "$graph" (fun () ->
+                    atField $"[{index}]" (fun () ->
+                        decodeCWLProcessingUnitElementWithWarnings warnings { graphScope with DocId = processId "" "" node; Chains = chains.[id] } node)))
+            |> ResizeArray
+        let graph = CWLGraph(processes, cwlVersion = cwlVersion)
+        overflowIntoDynamicObj graph (CWLGraph.KnownFieldNames |> Seq.toList) yamlCWL |> ignore
+        graph
+
+    /// Decode a CWL document, which is a process or a packed document, from a YAML string and return recoverable
+    /// warnings.
+    let decodeCWLDocumentWithWarnings (cwl: string) =
+        let warnings = ResizeArray<DecodeWarning>()
+        let yamlCWL = readYaml cwl
+        let document =
+            if hasField "$graph" yamlCWL then
+                CWLDocument.Graph (decodeCWLGraphElementWithWarnings (Some warnings) yamlCWL)
+            else
+                CWLDocument.Process (decodeCWLProcessingUnitElementWithWarnings (Some warnings) (documentScope yamlCWL) yamlCWL)
+        { Value = document; Warnings = warnings }
+
+    /// Decode a CWL document, which is a process or a packed document, and discard recoverable warnings.
+    let decodeCWLDocument (cwl: string) =
+        (decodeCWLDocumentWithWarnings cwl).Value
 
 module DecodeParameters =
 
@@ -2126,10 +2725,11 @@ module DecodeParameters =
             |> ignore
             reference
 
+        // A parameter file has no schema around its types, so they read like the type text of an RO-Crate entity.
         let decodeType (typeElement: YamlNode) =
             match typeElement.Kind with
-            | YamlNodeKind.Scalar _ -> Decode.cwlTypeStringDecoder Decode.rootScope typeElement |> fst
-            | _ -> Decode.cwlTypeDecoder' typeElement
+            | YamlNodeKind.Scalar _ -> Decode.cwlTypeStringDecoder Decode.typeTextScope typeElement |> fst
+            | _ -> Decode.cwlTypeDecoderAt Decode.typeTextScope typeElement
 
         match tryField "type" yEle, tryField "value" yEle with
         | Some typeElement, Some valueElement ->

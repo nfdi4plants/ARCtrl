@@ -37,6 +37,7 @@ module Encode =
         | Double -> PrimitiveType "double"
         | Boolean -> PrimitiveType "boolean"
         | Any -> PrimitiveType "Any"
+        | Reference name -> PrimitiveType name
         | Null -> PrimitiveType "null"
         | Stdout -> PrimitiveType "stdout"
         | Stderr -> PrimitiveType "stderr"
@@ -385,6 +386,7 @@ module Encode =
         | Double -> encodeString "double"
         | Boolean -> encodeString "boolean"
         | Any -> encodeString "Any"
+        | Reference name -> encodeString name
         | Stdout -> encodeString "stdout"
         | Stderr -> encodeString "stderr"
         | Stdin -> encodeString "stdin"
@@ -401,6 +403,7 @@ module Encode =
             | Double -> encodeString "double?"
             | Boolean -> encodeString "boolean?"
             | Any -> encodeString "Any?"
+            | Reference name -> encodeString (name + "?")
             | Array arraySchema ->
                 // Optional array - use shorthand detection
                 match arrayShorthand arraySchema.Items with
@@ -447,6 +450,10 @@ module Encode =
 
     /// Encode record schemas with map-form fields and preserved schema metadata.
     and encodeInputRecordSchema (schema:InputRecordSchema) : YamlNode =
+        inputRecordSchemaPairs schema |> Encode.object
+
+    /// The entries of a record schema.
+    and inputRecordSchemaPairs (schema:InputRecordSchema) : (string * YamlNode) list =
         let fieldsElement =
             match schema.Fields with
             | Some fs ->
@@ -461,10 +468,13 @@ module Encode =
         |> appendOpt "doc" (encodeSourceText schema.SourceNodes.Doc) schema.Doc
         |> appendOpt "name" encodeString schema.Name
         |> appendDynamicPropertiesExcept InputRecordSchema.KnownFieldNames schema
-        |> Encode.object
 
     /// Encode enum schemas while preserving symbol order and schema metadata.
     and encodeInputEnumSchema (schema:InputEnumSchema) : YamlNode =
+        inputEnumSchemaPairs schema |> Encode.object
+
+    /// The entries of an enum schema.
+    and inputEnumSchemaPairs (schema:InputEnumSchema) : (string * YamlNode) list =
         let pairs =
             // Symbol order is semantically significant, so emit the ResizeArray order.
             [ "type", encodeString "enum" ]
@@ -475,16 +485,18 @@ module Encode =
         |> appendOpt "doc" (encodeSourceText schema.SourceNodes.Doc) schema.Doc
         |> appendOpt "name" encodeString schema.Name
         |> appendDynamicPropertiesExcept InputEnumSchema.KnownFieldNames schema
-        |> Encode.object
 
     /// Encode array schemas with their item type and preserved schema metadata.
     and encodeInputArraySchema (schema:InputArraySchema) : YamlNode =
+        inputArraySchemaPairs schema |> Encode.object
+
+    /// The entries of an array schema.
+    and inputArraySchemaPairs (schema:InputArraySchema) : (string * YamlNode) list =
         [ "type", encodeString "array"; "items", encodeSchemaType schema.Items ]
         |> appendOpt "label" (encodeSourceText schema.SourceNodes.Label) schema.Label
         |> appendOpt "doc" (encodeSourceText schema.SourceNodes.Doc) schema.Doc
         |> appendOpt "name" encodeString schema.Name
         |> appendDynamicPropertiesExcept InputArraySchema.KnownFieldNames schema
-        |> Encode.object
 
     // ------------------------------
     // Binding & Port encoders
@@ -543,7 +555,7 @@ module Encode =
             | Array arraySchema ->
                 // Check if we can use short form
                 match arraySchema.Items with
-                | File _ | Directory _ | Dirent _ | String | Int | Long | Float | Double | Boolean | Any ->
+                | File _ | Directory _ | Dirent _ | String | Int | Long | Float | Double | Boolean | Any | Reference _ ->
                     encodeCWLType t
                 | _ ->
                     // Complex array - need full schema form wrapped in "type"
@@ -615,7 +627,7 @@ module Encode =
             | Array arraySchema ->
                 // Check if we can use short form
                 match arraySchema.Items with
-                | File _ | Directory _ | Dirent _ | String | Int | Long | Float | Double | Boolean | Any ->
+                | File _ | Directory _ | Dirent _ | String | Int | Long | Float | Double | Boolean | Any | Reference _ ->
                     encodeCWLType t
                 | _ ->
                     // Complex array - need full schema form wrapped in "type"
@@ -658,14 +670,16 @@ module Encode =
     // Requirement encoder (always extended style)
     // ------------------------------
 
-    /// Encode one SchemaDefRequirement type entry and preserved schema extension fields.
-    let encodeSchemaDefRequirementType (s:SchemaDefRequirementType) : YamlNode =
-        [
-            "name", encodeString s.Name
-            "type", encodeCWLType s.Type_
-        ]
-        |> appendDynamicPropertiesExcept SchemaDefRequirementType.KnownFieldNames s
-        |> Encode.object
+    /// Encode one SchemaDefRequirement type entry. CWL defines the entry as the schema itself, with type: record or
+    /// enum and the fields of the schema. The name leads when the schema has one, and the extension fields of the
+    /// schema follow.
+    let encodeSchemaDefinition (definition: SchemaDefinition) : YamlNode =
+        let schemaPairs =
+            match definition with
+            | SchemaDefinition.Record schema -> inputRecordSchemaPairs schema
+            | SchemaDefinition.Enum schema -> inputEnumSchemaPairs schema
+        let name, others = schemaPairs |> List.partition (fun (key, _) -> key = "name")
+        name @ others |> Encode.object
 
     /// Encode known CWL requirements in extended form while preserving requirement extensions.
     let encodeRequirement (r:Requirement) : YamlNode =
@@ -682,9 +696,13 @@ module Encode =
             |> Encode.object
         | SchemaDefRequirement types ->
             // SchemaDefRequirement contains schema entries that already preserve their
-            // own extension fields.
+            // own extension fields. An imported file is a mapping with the $import directive.
+            let encodeEntry (entry: SchemaDefEntry) =
+                match entry with
+                | Defined schema -> encodeSchemaDefinition schema
+                | Imported path -> Encode.object [ "$import", encodeString path ]
             [ "class", encodeString "SchemaDefRequirement";
-              "types", (types |> Seq.map encodeSchemaDefRequirementType |> List.ofSeq |> encodeSequence) ] |> Encode.object
+              "types", (types |> Seq.map encodeEntry |> List.ofSeq |> encodeSequence) ] |> Encode.object
         | DockerRequirement dr ->
             // Docker fields are optional and emitted only when present.
             [ "class", encodeString "DockerRequirement" ]
@@ -915,31 +933,34 @@ module Encode =
     let private cwlVersionPairs (includeCwlVersion: bool) (version: string) : (string * YamlNode) list =
         if includeCwlVersion then [ "cwlVersion", encodeString version ] else []
 
-    /// Encode workflow step run targets as paths or inline processing units.
-    let rec encodeWorkflowStepRun (run: WorkflowStepRun) : YamlNode =
-        match run with
-        | RunString runPath ->
+    /// Encode workflow step run targets as paths or inline processing units. The function returns the reference of a
+    /// run that is a process of a packed document, and such a run is written as that reference.
+    let rec private encodeWorkflowStepRunReferencing (referenceOf: WorkflowStepRun -> string option) (run: WorkflowStepRun) : YamlNode =
+        match referenceOf run, run with
+        | Some reference, _ ->
+            encodeString reference
+        | None, RunString runPath ->
             // External run reference.
             encodeString runPath
-        | RunCommandLineTool toolObj ->
+        | None, RunCommandLineTool toolObj ->
             // Inline CommandLineTool run; validate the object payload before encoding.
             match WorkflowStepRunOps.tryGetTool run with
             | Some tool -> encodeToolDescriptionElement true tool
             | None ->
                 raise (System.ArgumentException($"RunCommandLineTool must contain CWLToolDescription but got %A{toolObj}"))
-        | RunWorkflow workflowObj ->
+        | None, RunWorkflow workflowObj ->
             // Inline nested Workflow run.
             match WorkflowStepRunOps.tryGetWorkflow run with
-            | Some workflow -> encodeWorkflowDescriptionElement true workflow
+            | Some workflow -> encodeWorkflowDescriptionElementReferencing referenceOf true workflow
             | None ->
                 raise (System.ArgumentException($"RunWorkflow must contain CWLWorkflowDescription but got %A{workflowObj}"))
-        | RunExpressionTool expressionToolObj ->
+        | None, RunExpressionTool expressionToolObj ->
             // Inline ExpressionTool run.
             match WorkflowStepRunOps.tryGetExpressionTool run with
             | Some expressionTool -> encodeExpressionToolDescriptionElement true expressionTool
             | None ->
                 raise (System.ArgumentException($"RunExpressionTool must contain CWLExpressionToolDescription but got %A{expressionToolObj}"))
-        | RunOperation operationObj ->
+        | None, RunOperation operationObj ->
             // Inline Operation run.
             match WorkflowStepRunOps.tryGetOperation run with
             | Some operation -> encodeOperationDescriptionElement true operation
@@ -1084,7 +1105,7 @@ module Encode =
 
     /// Encode a Workflow element with ordered sections and preserved metadata. The flag tells whether the element
     /// writes its cwlVersion.
-    and encodeWorkflowDescriptionElement (includeCwlVersion: bool) (wd: CWLWorkflowDescription) : YamlNode =
+    and private encodeWorkflowDescriptionElementReferencing (referenceOf: WorkflowStepRun -> string option) (includeCwlVersion: bool) (wd: CWLWorkflowDescription) : YamlNode =
         let basePairs =
             // Base identity fields stay in the first top-level section.
             cwlVersionPairs includeCwlVersion wd.CWLVersion
@@ -1108,7 +1129,7 @@ module Encode =
             withRequirements @ [ "inputs", (wd.Inputs |> Seq.map encodeCWLInput |> Seq.toList |> Encode.object) ]
         let withSteps =
             // Steps are map entries keyed by step id.
-            withInputs @ [ "steps", (wd.Steps |> Seq.map encodeWorkflowStep |> Seq.toList |> Encode.object) ]
+            withInputs @ [ "steps", (wd.Steps |> Seq.map (encodeWorkflowStepReferencing referenceOf) |> Seq.toList |> Encode.object) ]
         let withOutputs =
             // Outputs follow steps for scan-friendly workflow YAML.
             withSteps @ [ "outputs", (wd.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> Encode.object) ]
@@ -1124,10 +1145,10 @@ module Encode =
         |> Encode.object
 
     /// Encode one workflow step as a map entry keyed by step id.
-    and encodeWorkflowStep (ws:WorkflowStep) : (string * YamlNode) =
+    and private encodeWorkflowStepReferencing (referenceOf: WorkflowStepRun -> string option) (ws:WorkflowStep) : (string * YamlNode) =
         let basePairs =
             // Required step fields are emitted first.
-            [ "run", encodeWorkflowStepRun ws.Run
+            [ "run", encodeWorkflowStepRunReferencing referenceOf ws.Run
               "in", encodeStepInputs ws.In
               "out", encodeStepOutputs ws.Out ]
             |> appendOpt "label" (encodeSourceText ws.SourceNodes.Label) ws.Label
@@ -1147,6 +1168,19 @@ module Encode =
             | Some r when r.Count > 0 -> withHints @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> encodeSequence) ]
             | _ -> withHints
         ws.Id, Encode.object withReq
+
+    /// Encode workflow step run targets as paths or inline processing units.
+    let encodeWorkflowStepRun (run: WorkflowStepRun) : YamlNode =
+        encodeWorkflowStepRunReferencing (fun _ -> None) run
+
+    /// Encode a Workflow element with ordered sections and preserved metadata. The flag tells whether the element
+    /// writes its cwlVersion.
+    let encodeWorkflowDescriptionElement (includeCwlVersion: bool) (wd: CWLWorkflowDescription) : YamlNode =
+        encodeWorkflowDescriptionElementReferencing (fun _ -> None) includeCwlVersion wd
+
+    /// Encode one workflow step as a map entry keyed by step id.
+    let encodeWorkflowStep (ws:WorkflowStep) : (string * YamlNode) =
+        encodeWorkflowStepReferencing (fun _ -> None) ws
 
     // ------------------------------
     // Top-level encoders
@@ -1425,6 +1459,55 @@ module Encode =
         | Workflow wd -> encodeWorkflowDescription wd
         | ExpressionTool et -> encodeExpressionToolDescription et
         | Operation op -> encodeOperationDescription op
+
+    /// True when the run holds the same object as the process. A step of a packed document that runs one of its
+    /// processes holds that process, and the identity tells it from an inline copy.
+    let private runsProcess (run: WorkflowStepRun) (processingUnit: CWLProcessingUnit) : bool =
+        match run, processingUnit with
+        | RunCommandLineTool runObj, CommandLineTool tool -> System.Object.ReferenceEquals(runObj, tool)
+        | RunWorkflow runObj, Workflow workflow -> System.Object.ReferenceEquals(runObj, workflow)
+        | RunExpressionTool runObj, ExpressionTool expressionTool -> System.Object.ReferenceEquals(runObj, expressionTool)
+        | RunOperation runObj, Operation operation -> System.Object.ReferenceEquals(runObj, operation)
+        | _ -> false
+
+    /// Encode a packed document: the cwlVersion of the root and the processes under $graph. The processes use the
+    /// version of the root, so they write none of their own. The other keys of the root follow the graph. A step that
+    /// holds one of the processes of the graph as its run is written as a reference to it, as in run: "#shout".
+    /// Workflow runs cross-reference the processes of a packed document by id, and a step that was resolved against
+    /// its own document holds the process itself.
+    let encodeCWLGraph (graph: CWLGraph) : string =
+        let referenceOf (run: WorkflowStepRun) : string option =
+            graph.Processes
+            |> Seq.tryPick (fun processingUnit ->
+                match CWLProcessingUnit.tryGetId processingUnit with
+                | Some id when runsProcess run processingUnit -> Some ("#" + LocalReference.withoutHash id)
+                | _ -> None)
+        let encodeMember (processingUnit: CWLProcessingUnit) : YamlNode =
+            match processingUnit with
+            | CommandLineTool td -> encodeToolDescriptionElement false td
+            | Workflow wd -> encodeWorkflowDescriptionElementReferencing referenceOf false wd
+            | ExpressionTool et -> encodeExpressionToolDescriptionElement false et
+            | Operation op -> encodeOperationDescriptionElement false op
+        [ "cwlVersion", encodeString graph.CWLVersion
+          "$graph", (graph.Processes |> Seq.map encodeMember |> List.ofSeq |> encodeSequence) ]
+        |> appendDynamicPropertiesExcept CWLGraph.KnownFieldNames graph
+        |> Encode.object
+        |> renderTopLevelElement ["cwlVersion"] ["$graph"]
+
+    /// Encode a CWL document, which is a process or a packed document.
+    let encodeCWLDocument (document: CWLDocument) : string =
+        match document with
+        | CWLDocument.Process processingUnit -> encodeProcessingUnit processingUnit
+        | CWLDocument.Graph graph -> encodeCWLGraph graph
+
+    /// Encode the process of a file that may hold a packed document. The file is the packed document while the process
+    /// is the process main of the graph, so the other processes and the other keys of the root are written as they were
+    /// read. In any other case the file holds the process alone. The caller can change the id of the process, or the
+    /// graph, after the read, so this decides on each write.
+    let encodeProcessingUnitInGraph (graph: CWLGraph option) (processingUnit: CWLProcessingUnit) : string =
+        match graph with
+        | Some graph when CWLGraph.isMain processingUnit graph -> encodeCWLGraph graph
+        | _ -> encodeProcessingUnit processingUnit
 
     /// Encode a CWLType in flow style, so that the written text has no line break and can be embedded in JSON.
     /// Unions are lists, and schemas are mappings with their fields in the array form.

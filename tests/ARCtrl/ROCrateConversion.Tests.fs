@@ -1989,7 +1989,11 @@ let tests_AdditionalTypeDecoding =
                   "Stdout", CWLType.Stdout
                   "Stderr", CWLType.Stderr
                   "Stdin", CWLType.Stdin
-                  "StreamUnion", CWLType.Union (ResizeArray [CWLType.Stdout; CWLType.String])
+                  "Reference", CWLType.Reference "Point"
+                  "ReferenceInFile", CWLType.Reference "shapes.yml#Circle"
+                  "ReferenceArray", Helper.CWL.array (CWLType.Reference "Point")
+                  "OptionalReference", Helper.CWL.optional (CWLType.Reference "Point")
+                  "RecordWithReference", Helper.CWL.record [Helper.CWL.field "p" (CWLType.Reference "Point")]
                   "Any", CWLType.Any
                   "AnyArray", Helper.CWL.array CWLType.Any
                   "OptionalAny", Helper.CWL.optional CWLType.Any
@@ -2009,6 +2013,31 @@ let tests_AdditionalTypeDecoding =
                     let decoded = WorkflowConversion.decomposeAdditionalType encoded
                     Expect.equal decoded original (sprintf "%s should survive compose and decompose, written as %s" name encoded)
                 )
+        ]
+        testList "TypesWithoutSchema" [
+            testCase "WellFormedUnknownNameIsAReference" (fun () ->
+                Expect.equal (WorkflowConversion.decomposeAdditionalType "Strng") (CWLType.Reference "Strng") "No schema is in view to say that the name is wrong."
+                Expect.equal
+                    (WorkflowConversion.decomposeAdditionalType "Point[]?")
+                    (Helper.CWL.optional (Helper.CWL.array (CWLType.Reference "Point")))
+                    "The shorthand works with a reference."
+            )
+            testCase "MalformedNamesFail" (fun () ->
+                for text in [ "File["; "a b"; "File]"; "File[]]"; "Po?int" ] do
+                    match (try WorkflowConversion.decomposeAdditionalType text |> ignore; None with YAMLicious.YamlDecodeException error -> Some error) with
+                    | Some error ->
+                        Expect.stringContains error.Message "Invalid CWL type" $"{text}: the error should say that the type is invalid."
+                        Expect.isSome error.Span $"{text}: the error should have the place in the text."
+                    | None -> failwith $"{text} must fail"
+            )
+            testCase "StreamTypesAreTheWholeTypeOnly" (fun () ->
+                for text in [ "[stdout, string]"; "stdout?"; "stdout[]"; "stderr[]"; "[stdin, \"null\"]" ] do
+                    match (try WorkflowConversion.decomposeAdditionalType text |> ignore; None with YAMLicious.YamlDecodeException error -> Some error) with
+                    | Some error ->
+                        Expect.stringContains error.Message "valid only as the whole type" $"{text}: the error should say where a stream type is valid."
+                        Expect.isSome error.Span $"{text}: the error should have the place in the text."
+                    | None -> failwith $"{text} must fail"
+            )
         ]
         testList "UnionOrder" [
             testCase "NullBehindTheTypeIsAList" (fun () ->
@@ -2338,11 +2367,13 @@ let tests_AdditionalTypeErrorHandling =
                     (fun () -> WorkflowConversion.decomposeAdditionalType invalidYaml |> ignore)
                     "Should throw on invalid YAML syntax"
             )
-            testCase "UnknownType_ShouldThrow" (fun () ->
+            testCase "UnknownName_IsReference" (fun () ->
+                // The text has no schema around it, so a name that is no builtin type names a type that a SchemaDefRequirement defines.
                 let unknownType = "unknownPrimitiveType"
-                Expect.throws 
-                    (fun () -> WorkflowConversion.decomposeAdditionalType unknownType |> ignore)
-                    "Should throw on unknown type string"
+                Expect.equal
+                    (WorkflowConversion.decomposeAdditionalType unknownType)
+                    (CWLType.Reference unknownType)
+                    "Should read an unknown type string as a reference"
             )
             testCase "RecordWithoutFieldsProperty_CreatesEmptyRecord" (fun () ->
                 // CWL specification allows records without explicit 'fields' property
@@ -2583,6 +2614,22 @@ let tests_YAMLInputValue =
             let graph = node.Flatten()
             let roundTripped = RunConversion.decomposeCWLInputValue(node, runName, graph = graph)
             Expect.equal roundTripped paramValue "Nested file arrays should roundtrip through RO-Crate."
+        )
+        testCase "ReferenceTypedRecord_Roundtrip" (fun () ->
+            let name = "start"
+            let runName = "plot"
+            let value =
+                CWL.CWLParameterValue.Record (ResizeArray [
+                    CWL.CWLParameterRecordField("x", CWL.CWLParameterValue.Int 1L)
+                    CWL.CWLParameterRecordField("y", CWL.CWLParameterValue.Int 2L)
+                ])
+            let paramValue = CWLParameterReference(name, value = value)
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Reference "Point")
+            let formalParam = WorkflowConversion.composeFormalParameterFromInput(cwlParam, runName = runName)
+            let node = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
+            let graph = node.Flatten()
+            let roundTripped = RunConversion.decomposeCWLInputValue(node, runName, graph = graph)
+            Expect.equal roundTripped.Value paramValue.Value "A value of a referenced type should roundtrip through RO-Crate."
         )
     ]
 

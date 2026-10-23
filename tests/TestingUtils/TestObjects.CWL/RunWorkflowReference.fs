@@ -33,6 +33,33 @@ steps:
     in: {}
     out: [out]"""
 
+/// A workflow whose step runs the process shout of the packed document tools.cwl next to it.
+let packedToolReferenceText = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  text: string
+outputs:
+  result:
+    type: File
+    outputSource: Shout/loud
+steps:
+  Shout:
+    run: tools.cwl#shout
+    in:
+      message: text
+    out: [loud]"""
+
+/// A workflow whose only step runs the file of the workflow itself.
+let selfReferenceText = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs: {}
+steps:
+  Again:
+    run: run.cwl
+    in: {}
+    out: []"""
+
 module CycleSafe =
 
     let workflowACwlText = """cwlVersion: v1.2

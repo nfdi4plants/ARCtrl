@@ -499,6 +499,8 @@ and [<CustomEquality; NoComparison>] CWLType =
     /// The type of an input of a command line tool that reads from the standard input of the tool. CWL admits it as the
     /// whole type of an input without an inputBinding, and the tool must not set stdin itself.
     | Stdin
+    /// A type that a SchemaDefRequirement defines, spelled by its name as written (Name, #Name or file#Name).
+    | Reference of string
     | Null
     | Array of InputArraySchema
     | Record of InputRecordSchema
@@ -522,6 +524,7 @@ and [<CustomEquality; NoComparison>] CWLType =
             | Stdout, Stdout -> true
             | Stderr, Stderr -> true
             | Stdin, Stdin -> true
+            | Reference left, Reference right -> left = right
             | Null, Null -> true
             | Array a1, Array a2 -> a1.Equals(a2)
             | Record r1, Record r2 -> r1.Equals(r2)
@@ -552,39 +555,35 @@ and [<CustomEquality; NoComparison>] CWLType =
         | Any -> hash 15
         | Stderr -> hash 16
         | Stdin -> hash 17
+        | Reference name -> hash (18, name)
 
     static member file() = File(FileInstance())
 
     static member directory() = Directory(DirectoryInstance())
 
-[<AttachMembers>]
-type SchemaDefRequirementType (name: string, type_: CWLType) =
-    inherit DynamicObj ()
-
-    let mutable _name = name
-    let mutable _type = type_
-
-    member this.Name
-        with get() = _name
-        and set(value) = _name <- value
-
-    member this.Type_
-        with get() = _type
-        and set(value) = _type <- value
-
+/// The schema that a SchemaDefRequirement defines. CWL admits record and enum schemas there and no other type, so an
+/// alias for a builtin type and an array schema have no case. A union of the two schema classes holds that rule in the
+/// type itself, and no place has to check it. The schema keeps its own name, which is optional, and its own extension
+/// fields.
+[<RequireQualifiedAccess; CustomEquality; NoComparison; AttachMembers>]
+type SchemaDefinition =
+    | Record of InputRecordSchema
+    | Enum of InputEnumSchema
+    with
     override this.Equals(o: obj) =
         match o with
-        | :? SchemaDefRequirementType as other ->
-            this.Name = other.Name &&
-            this.Type_.Equals(other.Type_) &&
-            DynamicObjHelpers.dynamicPropertiesEqual this other
+        | :? SchemaDefinition as other ->
+            match this, other with
+            | Record left, Record right -> left.Equals(right)
+            | Enum left, Enum right -> left.Equals(right)
+            | _ -> false
         | _ -> false
 
     override this.GetHashCode() =
-        hash (this.Name, this.Type_, DynamicObjHelpers.hashDynamicProperties this)
+        match this with
+        | Record schema -> hash (0, schema)
+        | Enum schema -> hash (1, schema)
 
-    static member KnownFieldNames =
-        CWLKnownFieldNames.schemaDefRequirementType
 
 [<AttachMembers>]
 type SoftwarePackage (package: string, ?version: ResizeArray<string>, ?specs: ResizeArray<string>) =

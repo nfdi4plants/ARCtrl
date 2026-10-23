@@ -65,8 +65,14 @@ let specInputFieldsDecodeFileContent = """inputs:
     secondaryFiles: .bai"""
     
 
-/// The forms of the format field of an input: a name, a list of names, a list of one name and the empty list.
-let formatFormsFileContent = """inputs:
+/// A tool with the forms of the format field of an input: a name, a list of names, a list of one name and the empty
+/// list. The names use the prefix edam, which the document declares as a namespace.
+let formatFormsFileContent = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+$namespaces:
+  edam: http://edamontology.org/
+inputs:
   single:
     type: File
     format: edam:format_2330
@@ -78,4 +84,5 @@ let formatFormsFileContent = """inputs:
     format: [edam:format_2330]
   empty:
     type: File
-    format: []"""
+    format: []
+outputs: []"""

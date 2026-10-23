@@ -242,6 +242,28 @@ let private tests_read_contracts = testList "read_contracts" [
     )
     ]
 
+/// The text that the write contracts of the ARC hold for a file.
+let private writtenCwlText (arc: ARC) (path: string) : string =
+    let contract = arc.GetWriteContracts() |> Array.find (fun c -> c.Path = path)
+    match contract.DTO with
+    | Some (DTO.Text text) -> text
+    | other -> failwith $"Expected the text of {path} but got %A{other}"
+
+/// An ARC that reads the given text as the CWL file of its run.
+let private arcWithRunCwl (cwlText: string) : ARC =
+    let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
+    let contracts = [|
+        SimpleISA.Investigation.investigationReadContract
+        SimpleISA.Study.bII_S_1ReadContract
+        SimpleISA.Assay.proteomeReadContract
+        SimpleISA.Workflow.proteomicsReadContract
+        SimpleISA.Run.proteomicsReadContract
+        Contract.create(Operation.READ, path = runCwlPath, dtoType = DTOType.CWL, dto = DTO.Text cwlText)
+    |]
+    let arc = ARC("MyIdentifier")
+    arc.SetISAFromContracts contracts
+    arc
+
 let private tests_SetISAFromContracts = testList "SetISAFromContracts" [
     testCase "simpleISA" (fun () -> 
         let arc = ARC("MyIdentifier")
@@ -600,6 +622,462 @@ let private tests_SetISAFromContracts = testList "SetISAFromContracts" [
             Expect.equal unresolved "./missing.cwl" "Missing referenced workflow should remain unresolved string"
         | other ->
             Expect.isTrue false (sprintf "Expected missing reference to remain RunString but got %A" other)
+    )
+    testCase "simpleISAWithWR_WithPackedRunCWL_ResolvesProcessesOfTheGraph" (fun () ->
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
+        let contracts = [|
+            SimpleISA.Investigation.investigationReadContract
+            SimpleISA.Study.bII_S_1ReadContract
+            SimpleISA.Assay.proteomeReadContract
+            SimpleISA.Workflow.proteomicsReadContract
+            SimpleISA.Run.proteomicsReadContract
+            Contract.create(Operation.READ, path = runCwlPath, dtoType = DTOType.CWL, dto = DTO.Text TestObjects.CWL.Workflow.PackedDocument.graphFile)
+        |]
+
+        let arc = ARC("MyIdentifier")
+        arc.SetISAFromContracts contracts
+
+        let runWorkflow =
+            match Expect.wantSome arc.Runs.[0].CWLDescription "Run CWL description should be present" with
+            | ARCtrl.CWL.Workflow workflow -> workflow
+            | other -> failwith $"Expected the process main of the packed document but got %A{other}"
+        Expect.equal runWorkflow.Id (Some "main") "The run starts with the process main."
+        let tool =
+            match ARCtrl.CWL.WorkflowStepRunOps.tryGetTool runWorkflow.Steps.[0].Run with
+            | Some tool -> tool
+            | None -> failwith $"Expected the step to hold the tool of the graph but got %A{runWorkflow.Steps.[0].Run}"
+        Expect.equal tool.BaseCommand.Value.[0] "echo" "The step holds the process shout of the packed document."
+    )
+    testCase "simpleISAWithWR_WithPackedCWL_KeepsProcessesOfDifferentDocumentsApart" (fun () ->
+        let workflowCwlPath = Identifier.Workflow.cwlFileNameFromIdentifier Workflow.Proteomics.workflowIdentifier
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
+        let workflowCwlText = TestObjects.CWL.Workflow.PackedDocument.graphFile
+        let runCwlText = TestObjects.CWL.Workflow.PackedDocument.graphFile.Replace("baseCommand: echo", "baseCommand: cat")
+        let contracts = [|
+            SimpleISA.Investigation.investigationReadContract
+            SimpleISA.Study.bII_S_1ReadContract
+            SimpleISA.Assay.proteomeReadContract
+            SimpleISA.Workflow.proteomicsReadContract
+            Contract.create(Operation.READ, path = workflowCwlPath, dtoType = DTOType.CWL, dto = DTO.Text workflowCwlText)
+            SimpleISA.Run.proteomicsReadContract
+            Contract.create(Operation.READ, path = runCwlPath, dtoType = DTOType.CWL, dto = DTO.Text runCwlText)
+        |]
+
+        let arc = ARC("MyIdentifier")
+        arc.SetISAFromContracts contracts
+
+        let commandOf (description: ARCtrl.CWL.CWLProcessingUnit option) =
+            match Expect.wantSome description "CWL description should be present" with
+            | ARCtrl.CWL.Workflow workflow ->
+                match ARCtrl.CWL.WorkflowStepRunOps.tryGetTool workflow.Steps.[0].Run with
+                | Some tool -> tool.BaseCommand.Value.[0]
+                | None -> failwith $"Expected the step to hold a tool but got %A{workflow.Steps.[0].Run}"
+            | other -> failwith $"Expected a workflow but got %A{other}"
+        Expect.equal (commandOf arc.Workflows.[0].CWLDescription) "echo" "The workflow runs the shout of its own document."
+        Expect.equal (commandOf arc.Runs.[0].CWLDescription) "cat" "The run runs the shout of its own document."
+    )
+    testCase "simpleISAWithWR_WithPackedRunCWL_WithoutMainFails" (fun () ->
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
+        let withoutMain = TestObjects.CWL.Workflow.PackedDocument.graphFile.Replace("- id: main", "- id: first")
+        let contracts = [|
+            SimpleISA.Investigation.investigationReadContract
+            SimpleISA.Study.bII_S_1ReadContract
+            SimpleISA.Assay.proteomeReadContract
+            SimpleISA.Workflow.proteomicsReadContract
+            SimpleISA.Run.proteomicsReadContract
+            Contract.create(Operation.READ, path = runCwlPath, dtoType = DTOType.CWL, dto = DTO.Text withoutMain)
+        |]
+
+        let arc = ARC("MyIdentifier")
+        match (try arc.SetISAFromContracts contracts; None with error -> Some error.Message) with
+        | Some message ->
+            Expect.stringContains message runCwlPath "The error names the file."
+            Expect.stringContains message "no process with the id main" "The error says that the process main is missing."
+        | None -> failwith "A packed run without the process main has nothing to start with."
+    )
+    testCase "simpleISAWithWR_WithPackedRunCWL_IsWrittenAsTheSamePackedDocument" (fun () ->
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
+        let packedText = TestObjects.CWL.Workflow.PackedDocument.namespacedFile
+        let contracts = [|
+            SimpleISA.Investigation.investigationReadContract
+            SimpleISA.Study.bII_S_1ReadContract
+            SimpleISA.Assay.proteomeReadContract
+            SimpleISA.Workflow.proteomicsReadContract
+            SimpleISA.Run.proteomicsReadContract
+            Contract.create(Operation.READ, path = runCwlPath, dtoType = DTOType.CWL, dto = DTO.Text packedText)
+        |]
+
+        let arc = ARC("MyIdentifier")
+        arc.SetISAFromContracts contracts
+
+        let main =
+            match Expect.wantSome arc.Runs.[0].CWLDescription "Run CWL description should be present" with
+            | ARCtrl.CWL.Workflow workflow -> workflow
+            | other -> failwith $"Expected the process main of the packed document but got %A{other}"
+        Expect.isTrue (main.Steps |> Seq.forall (fun step -> (ARCtrl.CWL.WorkflowStepRunOps.tryGetTool step.Run).IsSome)) "Consumers see the processes of the graph inlined in the steps of main."
+        Expect.isSome arc.Runs.[0].CWLGraph "The run keeps the graph beside its description."
+
+        let written = writtenCwlText arc runCwlPath
+        Expect.equal (ARCtrl.CWL.Decode.decodeCWLDocument written) (ARCtrl.CWL.Decode.decodeCWLDocument packedText) "Writing an unchanged run gives the document that was read."
+        Expect.stringContains written "$namespaces:" "The namespaces stay."
+        Expect.stringContains written "ex:note: kept at the root" "The other keys of the root stay."
+        Expect.equal (written.Split('\n') |> Array.filter (fun line -> line.Contains "baseCommand") |> Array.length) 2 "Each tool stands once, as a process of the graph."
+    )
+    testCase "simpleISAWithWR_WithPackedRunCWL_WritesTheEditedMainAndTheRestOfTheDocument" (fun () ->
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
+        let packedText = TestObjects.CWL.Workflow.PackedDocument.namespacedFile
+        let contracts = [|
+            SimpleISA.Investigation.investigationReadContract
+            SimpleISA.Study.bII_S_1ReadContract
+            SimpleISA.Assay.proteomeReadContract
+            SimpleISA.Workflow.proteomicsReadContract
+            SimpleISA.Run.proteomicsReadContract
+            Contract.create(Operation.READ, path = runCwlPath, dtoType = DTOType.CWL, dto = DTO.Text packedText)
+        |]
+
+        let arc = ARC("MyIdentifier")
+        arc.SetISAFromContracts contracts
+        match Expect.wantSome arc.Runs.[0].CWLDescription "Run CWL description should be present" with
+        | ARCtrl.CWL.Workflow workflow -> workflow.Label <- Some "Edited"
+        | other -> failwith $"Expected the process main of the packed document but got %A{other}"
+
+        let original = match ARCtrl.CWL.Decode.decodeCWLDocument packedText with | ARCtrl.CWL.CWLDocument.Graph graph -> graph | other -> failwith $"Expected a packed document but got %A{other}"
+        let writtenGraph = match ARCtrl.CWL.Decode.decodeCWLDocument (writtenCwlText arc runCwlPath) with | ARCtrl.CWL.CWLDocument.Graph graph -> graph | other -> failwith $"Expected a packed document but got %A{other}"
+        match writtenGraph.Processes.[0] with
+        | ARCtrl.CWL.Workflow workflow ->
+            Expect.equal workflow.Label (Some "Edited") "The edit of main is written."
+            Expect.equal workflow.Steps.[0].Run (ARCtrl.CWL.RunString "#shout") "The step runs the process by its id."
+        | other -> failwith $"Expected the process main but got %A{other}"
+        Expect.equal writtenGraph.Processes.[1] original.Processes.[1] "The other processes are written as they were read."
+        Expect.equal writtenGraph.Processes.[2] original.Processes.[2] "All of them."
+        Expect.equal (DynamicObj.DynObj.tryGetTypedPropertyValue<string> "ex:note" writtenGraph) (Some "kept at the root") "The other keys of the root stay."
+    )
+    testCase "simpleISAWithWR_WithPackedWorkflowCWL_IsWrittenAsTheSamePackedDocument" (fun () ->
+        let workflowCwlPath = Identifier.Workflow.cwlFileNameFromIdentifier Workflow.Proteomics.workflowIdentifier
+        let packedText = TestObjects.CWL.Workflow.PackedDocument.namespacedFile
+        let contracts = [|
+            SimpleISA.Investigation.investigationReadContract
+            SimpleISA.Study.bII_S_1ReadContract
+            SimpleISA.Assay.proteomeReadContract
+            SimpleISA.Workflow.proteomicsReadContract
+            Contract.create(Operation.READ, path = workflowCwlPath, dtoType = DTOType.CWL, dto = DTO.Text packedText)
+        |]
+
+        let arc = ARC("MyIdentifier")
+        arc.SetISAFromContracts contracts
+
+        Expect.isSome arc.Workflows.[0].CWLGraph "The workflow keeps the graph beside its description."
+        Expect.equal
+            (ARCtrl.CWL.Decode.decodeCWLDocument (writtenCwlText arc workflowCwlPath))
+            (ARCtrl.CWL.Decode.decodeCWLDocument packedText)
+            "Writing an unchanged workflow gives the document that was read."
+    )
+    testCase "simpleISAWithWR_WithPackedRunCWL_CopyAndComparisonKeepTheGraph" (fun () ->
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
+        let contracts = [|
+            SimpleISA.Investigation.investigationReadContract
+            SimpleISA.Study.bII_S_1ReadContract
+            SimpleISA.Assay.proteomeReadContract
+            SimpleISA.Workflow.proteomicsReadContract
+            SimpleISA.Run.proteomicsReadContract
+            Contract.create(Operation.READ, path = runCwlPath, dtoType = DTOType.CWL, dto = DTO.Text TestObjects.CWL.Workflow.PackedDocument.namespacedFile)
+        |]
+
+        let arc = ARC("MyIdentifier")
+        arc.SetISAFromContracts contracts
+
+        let copy = arc.Runs.[0].Copy()
+        Expect.isSome copy.CWLGraph "A copy keeps the graph."
+        Expect.equal copy arc.Runs.[0] "A copy equals its run."
+        let other = arc.Runs.[0].Copy()
+        other.CWLGraph <- None
+        Expect.notEqual other arc.Runs.[0] "The graph counts for the comparison."
+    )
+    testCase "simpleISAWithWR_WithPackedRunCWL_ReplacedMainWithAnotherIdIsWrittenAsPlainDocumentAndReadsBack" (fun () ->
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
+        let arc = arcWithRunCwl TestObjects.CWL.Workflow.PackedDocument.namespacedFile
+        let replacement = ARCtrl.CWL.Decode.decodeCWLProcessingUnit """cwlVersion: v1.2
+class: CommandLineTool
+id: renamed
+baseCommand: date
+inputs: {}
+outputs: {}"""
+        arc.Runs.[0].CWLDescription <- Some replacement
+
+        let written = writtenCwlText arc runCwlPath
+        match ARCtrl.CWL.Decode.decodeCWLDocument written with
+        | ARCtrl.CWL.CWLDocument.Process (ARCtrl.CWL.CommandLineTool tool) -> Expect.equal tool.Id (Some "renamed") "The file holds the new process."
+        | other -> failwith $"Expected a plain command line tool but got %A{other}"
+
+        let readBack = arcWithRunCwl written
+        Expect.isNone readBack.Runs.[0].CWLGraph "A plain file has no graph."
+        Expect.equal (ARCtrl.CWL.CWLProcessingUnit.tryGetId readBack.Runs.[0].CWLDescription.Value) (Some "renamed") "The run reads the process back."
+    )
+    testCase "simpleISAWithWR_WithPackedRunCWL_ReplacedMainWithoutIdStaysWithoutId" (fun () ->
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
+        let arc = arcWithRunCwl TestObjects.CWL.Workflow.PackedDocument.namespacedFile
+        let replacement = ARCtrl.CWL.Decode.decodeCWLProcessingUnit """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: date
+inputs: {}
+outputs: {}"""
+        arc.Runs.[0].CWLDescription <- Some replacement
+        let written = writtenCwlText arc runCwlPath
+
+        Expect.isNone (ARCtrl.CWL.CWLProcessingUnit.tryGetId replacement) "Writing does not give the process an id."
+        Expect.isNone (ARCtrl.CWL.CWLProcessingUnit.tryGetId arc.Runs.[0].CWLDescription.Value) "The run still holds the process without an id."
+        match ARCtrl.CWL.Decode.decodeCWLDocument written with
+        | ARCtrl.CWL.CWLDocument.Process (ARCtrl.CWL.CommandLineTool tool) -> Expect.isNone tool.Id "The file holds the process without an id."
+        | other -> failwith $"Expected a plain command line tool but got %A{other}"
+    )
+    testCase "simpleISAWithWR_WithPackedRunCWL_EditedMainStaysTheMainWhenAssignedAgain" (fun () ->
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
+        let arc = arcWithRunCwl TestObjects.CWL.Workflow.PackedDocument.namespacedFile
+        let main =
+            match Expect.wantSome arc.Runs.[0].CWLDescription "Run CWL description should be present" with
+            | ARCtrl.CWL.Workflow workflow -> workflow
+            | other -> failwith $"Expected the process main of the packed document but got %A{other}"
+        main.Label <- Some "Edited"
+        // A new union value around the same description is still the process main.
+        arc.Runs.[0].CWLDescription <- Some (ARCtrl.CWL.Workflow main)
+        Expect.isSome arc.Runs.[0].CWLGraph "The file stays a packed document."
+        let writtenGraph =
+            match ARCtrl.CWL.Decode.decodeCWLDocument (writtenCwlText arc runCwlPath) with
+            | ARCtrl.CWL.CWLDocument.Graph graph -> graph
+            | other -> failwith $"Expected a packed document but got %A{other}"
+        Expect.equal (ARCtrl.CWL.CWLProcessingUnit.tryGetId writtenGraph.Processes.[0]) (Some "main") "Main is written under its id."
+        Expect.equal (ARCtrl.CWL.CWLProcessingUnit.tryGetId writtenGraph.Processes.[1]) (Some "shout") "The other processes keep their ids."
+        Expect.equal main.Id (Some "main") "Writing does not change the process."
+    )
+    testCase "simpleISAWithWR_WithPackedRunCWL_MainRenamedInPlaceIsWrittenAsPlainDocumentAndReadsBack" (fun () ->
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
+        let arc = arcWithRunCwl TestObjects.CWL.Workflow.PackedDocument.namespacedFile
+        let main =
+            match Expect.wantSome arc.Runs.[0].CWLDescription "Run CWL description should be present" with
+            | ARCtrl.CWL.Workflow workflow -> workflow
+            | other -> failwith $"Expected the process main of the packed document but got %A{other}"
+        main.Id <- Some "renamed"
+
+        let written = writtenCwlText arc runCwlPath
+        match ARCtrl.CWL.Decode.decodeCWLDocument written with
+        | ARCtrl.CWL.CWLDocument.Process (ARCtrl.CWL.Workflow workflow) ->
+            Expect.equal workflow.Id (Some "renamed") "The file holds the process alone."
+            Expect.isTrue (workflow.Steps |> Seq.forall (fun step -> (ARCtrl.CWL.WorkflowStepRunOps.tryGetTool step.Run).IsSome)) "The steps hold their tools, because the file has no graph to refer to."
+        | other -> failwith $"Expected a plain workflow but got %A{other}"
+
+        let readBack = arcWithRunCwl written
+        Expect.isNone readBack.Runs.[0].CWLGraph "A plain file has no graph."
+        Expect.equal (ARCtrl.CWL.CWLProcessingUnit.tryGetId readBack.Runs.[0].CWLDescription.Value) (Some "renamed") "The run reads the process back."
+    )
+    testCase "simpleISAWithWR_WithPackedRunCWL_MainWithoutIdIsWrittenAsPlainDocumentAndReadsBack" (fun () ->
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
+        let arc = arcWithRunCwl TestObjects.CWL.Workflow.PackedDocument.namespacedFile
+        let main =
+            match Expect.wantSome arc.Runs.[0].CWLDescription "Run CWL description should be present" with
+            | ARCtrl.CWL.Workflow workflow -> workflow
+            | other -> failwith $"Expected the process main of the packed document but got %A{other}"
+        main.Id <- None
+
+        let written = writtenCwlText arc runCwlPath
+        match ARCtrl.CWL.Decode.decodeCWLDocument written with
+        | ARCtrl.CWL.CWLDocument.Process (ARCtrl.CWL.Workflow workflow) -> Expect.isNone workflow.Id "The file holds the process alone, without an id."
+        | other -> failwith $"Expected a plain workflow but got %A{other}"
+        Expect.isNone (arcWithRunCwl written).Runs.[0].CWLGraph "A plain file has no graph."
+    )
+    testCase "simpleISAWithWR_WithPackedRunCWL_MainRenamedAndRenamedBackIsWrittenAsPackedDocument" (fun () ->
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
+        let packedText = TestObjects.CWL.Workflow.PackedDocument.namespacedFile
+        let arc = arcWithRunCwl packedText
+        let main =
+            match Expect.wantSome arc.Runs.[0].CWLDescription "Run CWL description should be present" with
+            | ARCtrl.CWL.Workflow workflow -> workflow
+            | other -> failwith $"Expected the process main of the packed document but got %A{other}"
+        main.Id <- Some "renamed"
+        main.Id <- Some "main"
+
+        Expect.equal (ARCtrl.CWL.Decode.decodeCWLDocument (writtenCwlText arc runCwlPath)) (ARCtrl.CWL.Decode.decodeCWLDocument packedText) "The write sees a process main again and keeps the graph."
+    )
+    testCase "simpleISAWithWR_WithPackedRunCWL_ReplacedDescriptionWrittenAndReadBackGivesEqualRun" (fun () ->
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
+        let arc = arcWithRunCwl TestObjects.CWL.Workflow.PackedDocument.graphFile
+        arc.Runs.[0].CWLDescription <- Some (ARCtrl.CWL.Decode.decodeCWLProcessingUnit """cwlVersion: v1.2
+class: CommandLineTool
+id: solo
+baseCommand: [echo]
+inputs: {}
+outputs: {}""")
+        Expect.isNone arc.Runs.[0].CWLGraph "The graph belongs to the file only while the description is its process main."
+
+        let written = writtenCwlText arc runCwlPath
+        Expect.isFalse (written.Contains "$graph") "The file holds the description alone."
+        let readBack = arcWithRunCwl written
+        Expect.isTrue (arc.Runs.[0].StructurallyEquals readBack.Runs.[0]) "The run equals the run that reads the written file."
+        Expect.equal arc.Runs.[0] readBack.Runs.[0] "Equals agrees."
+        Expect.equal (arc.Runs.[0].GetHashCode()) (readBack.Runs.[0].GetHashCode()) "The hashes agree."
+        Expect.equal (arc.Runs.[0].Copy().CWLGraph) None "A copy has no graph either."
+    )
+    testCase "simpleISAWithWR_WithPackedRunCWL_MainRenamedInPlaceHasNoGraphUntilItIsRenamedBack" (fun () ->
+        let arc = arcWithRunCwl TestObjects.CWL.Workflow.PackedDocument.graphFile
+        let untouched = arcWithRunCwl TestObjects.CWL.Workflow.PackedDocument.graphFile
+        let main =
+            match Expect.wantSome arc.Runs.[0].CWLDescription "Run CWL description should be present" with
+            | ARCtrl.CWL.Workflow workflow -> workflow
+            | other -> failwith $"Expected the process main of the packed document but got %A{other}"
+        Expect.equal arc.Runs.[0] untouched.Runs.[0] "Two reads of one text are equal."
+
+        main.Id <- Some "renamed"
+        Expect.isNone arc.Runs.[0].CWLGraph "A renamed process is not the process main of the graph."
+        Expect.isNone (arc.Runs.[0].Copy().CWLGraph) "A copy sees no graph."
+        Expect.notEqual arc.Runs.[0] untouched.Runs.[0] "The rename makes another run."
+
+        main.Id <- Some "main"
+        Expect.isSome arc.Runs.[0].CWLGraph "The graph comes back with the process main."
+        Expect.isSome (arc.Runs.[0].Copy().CWLGraph) "A copy sees it again."
+        Expect.equal arc.Runs.[0] untouched.Runs.[0] "The run equals the untouched run again."
+        Expect.equal (arc.Runs.[0].GetHashCode()) (untouched.Runs.[0].GetHashCode()) "So do the hashes."
+    )
+    testCase "simpleISAWithWR_WithPackedRunCWL_GraphWithAnotherMainIsNotWritten" (fun () ->
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
+        let packedText = TestObjects.CWL.Workflow.PackedDocument.namespacedFile
+        let arc = arcWithRunCwl packedText
+        // The same text decodes to other objects, so the process main of this graph is not the description of the run.
+        match ARCtrl.CWL.Decode.decodeCWLDocument packedText with
+        | ARCtrl.CWL.CWLDocument.Graph graph -> arc.Runs.[0].CWLGraph <- Some graph
+        | other -> failwith $"Expected a packed document but got %A{other}"
+        Expect.isNone arc.Runs.[0].CWLGraph "A graph whose process main is another object is not the graph of the file."
+
+        let written = writtenCwlText arc runCwlPath
+        match ARCtrl.CWL.Decode.decodeCWLDocument written with
+        | ARCtrl.CWL.CWLDocument.Process (ARCtrl.CWL.Workflow workflow) -> Expect.equal workflow.Id (Some "main") "The file holds the description of the run alone."
+        | other -> failwith $"Expected a plain workflow but got %A{other}"
+        Expect.isNone (arcWithRunCwl written).Runs.[0].CWLGraph "A plain file has no graph."
+    )
+    testCase "simpleISAWithWR_WithPackedWorkflowCWL_ReplacedMainMakesTheFilePlain" (fun () ->
+        let workflowCwlPath = Identifier.Workflow.cwlFileNameFromIdentifier Workflow.Proteomics.workflowIdentifier
+        let contracts = [|
+            SimpleISA.Investigation.investigationReadContract
+            SimpleISA.Study.bII_S_1ReadContract
+            SimpleISA.Assay.proteomeReadContract
+            SimpleISA.Workflow.proteomicsReadContract
+            Contract.create(Operation.READ, path = workflowCwlPath, dtoType = DTOType.CWL, dto = DTO.Text TestObjects.CWL.Workflow.PackedDocument.namespacedFile)
+        |]
+        let arc = ARC("MyIdentifier")
+        arc.SetISAFromContracts contracts
+        Expect.isSome arc.Workflows.[0].CWLGraph "The file is a packed document."
+
+        arc.Workflows.[0].CWLDescription <- arc.Workflows.[0].CWLDescription
+        Expect.isSome arc.Workflows.[0].CWLGraph "The same description keeps the graph."
+        arc.Workflows.[0].CWLDescription <- Some (ARCtrl.CWL.Decode.decodeCWLProcessingUnit TestObjects.CWL.RunWorkflowReference.workflowToolText)
+        match ARCtrl.CWL.Decode.decodeCWLDocument (writtenCwlText arc workflowCwlPath) with
+        | ARCtrl.CWL.CWLDocument.Process _ -> ()
+        | other -> failwith $"Expected a plain document but got %A{other}"
+    )
+    testCase "simpleISAWithWR_WithPackedWorkflowCWL_MainRenamedInPlaceIsWrittenAsPlainDocumentAndReadsBack" (fun () ->
+        let workflowCwlPath = Identifier.Workflow.cwlFileNameFromIdentifier Workflow.Proteomics.workflowIdentifier
+        let contracts = [|
+            SimpleISA.Investigation.investigationReadContract
+            SimpleISA.Study.bII_S_1ReadContract
+            SimpleISA.Assay.proteomeReadContract
+            SimpleISA.Workflow.proteomicsReadContract
+            Contract.create(Operation.READ, path = workflowCwlPath, dtoType = DTOType.CWL, dto = DTO.Text TestObjects.CWL.Workflow.PackedDocument.namespacedFile)
+        |]
+        let arc = ARC("MyIdentifier")
+        arc.SetISAFromContracts contracts
+        match Expect.wantSome arc.Workflows.[0].CWLDescription "Workflow CWL description should be present" with
+        | ARCtrl.CWL.Workflow workflow -> workflow.Id <- Some "renamed"
+        | other -> failwith $"Expected the process main of the packed document but got %A{other}"
+        Expect.isNone arc.Workflows.[0].CWLGraph "A renamed process is not the process main of the graph."
+
+        let written = writtenCwlText arc workflowCwlPath
+        match ARCtrl.CWL.Decode.decodeCWLDocument written with
+        | ARCtrl.CWL.CWLDocument.Process (ARCtrl.CWL.Workflow workflow) -> Expect.equal workflow.Id (Some "renamed") "The file holds the process alone."
+        | other -> failwith $"Expected a plain workflow but got %A{other}"
+    )
+    testCase "simpleISAWithWR_WithCyclicPackedRunCWL_FailsAtTheRunFieldThatClosesTheCycle" (fun () ->
+        match (try arcWithRunCwl TestObjects.CWL.Workflow.PackedDocument.cyclicFile |> ignore; None with YAMLicious.YamlDecodeException error -> Some error) with
+        | Some error ->
+            Expect.equal (YAMLicious.DecodeError.pathText error) "$graph[1].steps.back.run" "The error shows the run field that closes the cycle."
+            Expect.stringContains error.Message "cycle of run references" "The error names the cycle."
+        | None -> failwith "A cycle of run references must fail."
+    )
+    testCase "resolveRunReferencesOfDocument_RunThatLeadsBackToMainStaysAReference" (fun () ->
+        let graph =
+            match ARCtrl.CWL.Decode.decodeCWLDocument TestObjects.CWL.Workflow.PackedDocument.nestedGraphFile with
+            | ARCtrl.CWL.CWLDocument.Graph graph -> graph
+            | other -> failwith $"Expected a packed document but got %A{other}"
+        let workflowOf (processingUnit: ARCtrl.CWL.CWLProcessingUnit) =
+            match processingUnit with
+            | ARCtrl.CWL.Workflow workflow -> workflow
+            | other -> failwith $"Expected a workflow but got %A{other}"
+        // The decoder rejects a cycle, so the program closes it after the read.
+        let sub = workflowOf graph.Processes.[1]
+        sub.Steps.[0].Run <- ARCtrl.CWL.RunString "#main"
+
+        let main, _ = ARCtrl.CWLRunResolver.resolveRunReferencesOfDocument "runs/r/run.cwl" (ARCtrl.CWL.CWLDocument.Graph graph) (fun _ -> None)
+
+        let main = workflowOf main
+        Expect.isSome (ARCtrl.CWL.WorkflowStepRunOps.tryGetWorkflow main.Steps.[0].Run) "The step of main holds the workflow sub."
+        Expect.equal sub.Steps.[0].Run (ARCtrl.CWL.RunString "#main") "The run that leads back to main is not resolved, so main is not inside itself."
+    )
+    testCase "resolveRunReferencesFromLookup_RunThatLeadsBackToItsFileStaysAReference" (fun () ->
+        let workflow =
+            match ARCtrl.CWL.Decode.decodeCWLProcessingUnit TestObjects.CWL.RunWorkflowReference.selfReferenceText with
+            | ARCtrl.CWL.Workflow workflow -> workflow
+            | other -> failwith $"Expected a workflow but got %A{other}"
+        let ownPathKey = ArcPathHelper.normalizePathKey "runs/r/run.cwl"
+        let lookup (path: string) = if ArcPathHelper.normalizePathKey path = ownPathKey then Some (ARCtrl.CWL.Workflow workflow) else None
+        ARCtrl.CWLRunResolver.resolveRunReferencesFromLookup "runs/r/run.cwl" (ARCtrl.CWL.Workflow workflow) lookup |> ignore
+        Expect.equal workflow.Steps.[0].Run (ARCtrl.CWL.RunString "run.cwl") "The step that runs its own file is not resolved."
+    )
+    testCase "getRunNodeCandidates_FragmentReferenceIsLookedUpBehindThePathOfItsDocument" (fun () ->
+        Expect.sequenceEqual
+            (ARCtrl.CWLRunResolver.getRunNodeCandidates "runs/r/run.cwl" "#shout")
+            [| "runs/r/run.cwl#shout"; "#shout" |]
+            "The candidates are the path of the document with the fragment, and the fragment alone."
+        Expect.sequenceEqual
+            (ARCtrl.CWLRunResolver.getRunNodeCandidates "runs/r/run.cwl#main" "#shout")
+            [| "runs/r/run.cwl#shout"; "#shout" |]
+            "A process of the packed document refers to its siblings through the same document."
+    )
+    testCase "getRunNodeCandidates_PathWithFragmentKeepsTheFragmentBehindEveryPath" (fun () ->
+        Expect.sequenceEqual
+            (ARCtrl.CWLRunResolver.getRunNodeCandidates "workflows/w/workflow.cwl" "tools.cwl#shout")
+            [| "tools.cwl#shout"; "workflows/w/tools.cwl#shout" |]
+            "Each candidate path of the file keeps the fragment."
+        Expect.sequenceEqual
+            (ARCtrl.CWLRunResolver.getRunNodeCandidates "workflows/w/workflow.cwl" "./sub/../tools.cwl#shout")
+            [| "./sub/../tools.cwl#shout"; "tools.cwl#shout"; "workflows/w/tools.cwl#shout" |]
+            "The fragment stays behind the normalized paths too."
+        Expect.isEmpty
+            (ARCtrl.CWLRunResolver.getRunNodeCandidates "workflows/w/workflow.cwl" "notes.txt#shout")
+            "The path in front of the fragment must be a CWL file."
+    )
+    testCase "simpleISAWithWR_WithCWL_ResolvesPathWithFragmentToProcessOfPackedDocument" (fun () ->
+        let workflowIdentifier = Workflow.Proteomics.workflowIdentifier
+        let workflowCwlPath = Identifier.Workflow.cwlFileNameFromIdentifier workflowIdentifier
+        let packedToolsPath = ArcPathHelper.combineMany [|ArcPathHelper.WorkflowsFolderName; workflowIdentifier; "tools.cwl"|]
+        let contracts = [|
+            SimpleISA.Investigation.investigationReadContract
+            SimpleISA.Study.bII_S_1ReadContract
+            SimpleISA.Assay.proteomeReadContract
+            SimpleISA.Workflow.proteomicsReadContract
+            Contract.create(Operation.READ, path = workflowCwlPath, dtoType = DTOType.CWL, dto = DTO.Text TestObjects.CWL.RunWorkflowReference.packedToolReferenceText)
+            Contract.create(Operation.READ, path = packedToolsPath, dtoType = DTOType.CWL, dto = DTO.Text TestObjects.CWL.Workflow.PackedDocument.graphFile)
+        |]
+
+        let arc = ARC("MyIdentifier")
+        arc.SetISAFromContracts contracts
+
+        let workflow =
+            match Expect.wantSome arc.Workflows.[0].CWLDescription "Workflow CWL description should be present" with
+            | ARCtrl.CWL.Workflow workflow -> workflow
+            | other -> failwith $"Expected a workflow but got %A{other}"
+        match ARCtrl.CWL.WorkflowStepRunOps.tryGetTool workflow.Steps.[0].Run with
+        | Some tool ->
+            Expect.equal tool.Id (Some "shout") "The step holds the process shout of the packed document."
+            Expect.equal tool.BaseCommand.Value.[0] "echo" "The step holds the tool of the packed document."
+        | None -> failwith $"Expected the step to hold the tool of the packed document but got %A{workflow.Steps.[0].Run}"
+        Expect.isNone arc.Workflows.[0].CWLGraph "The workflow file itself is no packed document."
     )
     testCase "GetStudyRemoveContractsOnlyRegistered" (fun () -> // set to pending, until performance issues in Study.fromFsWorkbook is resolved.
         let arc = ARC("MyIdentifier")

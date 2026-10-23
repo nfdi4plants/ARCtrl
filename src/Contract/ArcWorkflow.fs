@@ -39,7 +39,7 @@ module WorkflowContractExtensions =
                         if p <> path && p <> "workflows/.gitkeep" then Contract.createCreate(p, DTOType.PlainText)
                 if this.CWLDescription.IsSome then
                     let path = Identifier.Workflow.cwlFileNameFromIdentifier this.Identifier
-                    let dto = CWL.Encode.encodeProcessingUnit this.CWLDescription.Value
+                    let dto = CWL.Encode.encodeProcessingUnitInGraph this.CWLGraph this.CWLDescription.Value
                     Contract.createCreate(path, DTOType.CWL, DTO.Text dto)
                 c
             |]
@@ -72,11 +72,18 @@ module WorkflowContractExtensions =
                 |> Some 
             | _ -> None
 
-        static member tryCWLFromReadContract (workflowIdentifier : string) (c:Contract) =
+        /// The CWL file of the workflow as a document, which is one process or a packed document.
+        static member tryCWLDocumentFromReadContract (workflowIdentifier : string) (c:Contract) =
             let p = Identifier.Workflow.cwlFileNameFromIdentifier workflowIdentifier
             match c with
             | {Operation = READ; DTOType = Some DTOType.CWL; DTO = Some (DTO.Text cwl)} when c.Path = p->
-                cwl
-                |> CWL.Decode.decodeCWLProcessingUnit
-                |> Some 
+                Some (CWL.Decode.decodeCWLDocument cwl)
             | _ -> None
+
+        /// The process that the CWL file of the workflow starts with. A packed document runs from its process main.
+        static member tryCWLFromReadContract (workflowIdentifier : string) (c:Contract) =
+            ArcWorkflow.tryCWLDocumentFromReadContract workflowIdentifier c
+            |> Option.map (fun document ->
+                match CWL.CWLDocument.tryGetMain document with
+                | Some processingUnit -> processingUnit
+                | None -> failwith $"The packed CWL document {c.Path} has no process with the id main.")

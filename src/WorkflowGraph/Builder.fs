@@ -196,11 +196,18 @@ module Builder =
                 else
                     withoutHash
 
-    /// Returns true if a run path ends in '.cwl'.
+    /// Returns true if a run path is a fragment #id, which refers to a process of the packed document that holds the step.
+    let isFragmentReference (runPath: string) =
+        not (System.String.IsNullOrWhiteSpace runPath)
+        && runPath.Trim().StartsWith("#")
+        && runPath.Trim().Length > 1
+
+    /// Returns true if a run path ends in '.cwl' or is a fragment #id.
     let isCwlReference (runPath: string) =
         let candidate = trimToNameCandidate runPath
-        System.String.IsNullOrWhiteSpace candidate |> not
-        && candidate.EndsWith(".cwl", System.StringComparison.OrdinalIgnoreCase)
+        isFragmentReference runPath
+        || (System.String.IsNullOrWhiteSpace candidate |> not
+            && candidate.EndsWith(".cwl", System.StringComparison.OrdinalIgnoreCase))
 
     /// Extracts the basename of a path and strips the '.cwl' extension.
     let tryBasenameNoCwlExtension (value: string) =
@@ -238,10 +245,24 @@ module Builder =
         |> List.tryPick id
         |> Option.defaultValue fallback
 
-    /// Generates multiple path candidates to try when resolving a run reference.
+    /// Generates multiple path candidates to try when resolving a run reference. A fragment #id refers to a process of
+    /// the packed document that holds the workflow, so its first candidate is the path of the document with the
+    /// fragment, as in runs/r/run.cwl#shout, and the second is the fragment alone.
     let getRunPathCandidates (workflowFilePath: string option) (runPath: string) : string [] =
         if System.String.IsNullOrWhiteSpace runPath then
             [||]
+        elif isFragmentReference runPath then
+            let documentPath =
+                match workflowFilePath with
+                | Some workflowPath when System.String.IsNullOrWhiteSpace workflowPath |> not ->
+                    let hashIndex = workflowPath.IndexOf('#')
+                    if hashIndex >= 0 then workflowPath.Substring(0, hashIndex) else workflowPath
+                | _ -> ""
+            [|
+                documentPath + runPath.Trim()
+                runPath.Trim()
+            |]
+            |> Array.distinct
         else
             let trimmedRunPath = runPath.Trim()
             let normalizedRunPath = ArcPathHelper.normalize trimmedRunPath

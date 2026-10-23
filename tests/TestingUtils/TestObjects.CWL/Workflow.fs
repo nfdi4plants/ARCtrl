@@ -1139,10 +1139,12 @@ outputs:
 
 module InlineRunVersions =
 
-    /// A workflow of version v1.0 whose inline processes mostly have no cwlVersion. One tool has its own, and an
-    /// inline workflow holds a tool without one.
-    let workflowFile = """cwlVersion: v1.0
+    /// A workflow of version v1.2 whose inline processes mostly have no cwlVersion. One tool names v1.0, which CWL
+    /// ignores below the top level, and an inline workflow holds a tool without one.
+    let workflowFile = """cwlVersion: v1.2
 class: Workflow
+requirements:
+  - class: SubworkflowFeatureRequirement
 inputs: {}
 outputs: {}
 steps:
@@ -1157,7 +1159,7 @@ steps:
   own_version:
     run:
       class: CommandLineTool
-      cwlVersion: v1.2
+      cwlVersion: v1.0
       baseCommand: echo
       inputs: {}
       outputs: {}
@@ -1179,4 +1181,842 @@ steps:
           out: []
     in: {}
     out: []
+"""
+
+module PackedDocument =
+
+    /// A packed document whose workflow names the version of the root and whose tool names v1.0. CWL ignores the
+    /// version of a process below the top level.
+    let versionsFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    cwlVersion: v1.2
+    inputs:
+      text: string
+    steps:
+      shout:
+        run: "#shout"
+        in:
+          message: text
+        out: [loud]
+    outputs:
+      result:
+        type: File
+        outputSource: shout/loud
+  - id: shout
+    class: CommandLineTool
+    cwlVersion: v1.0
+    baseCommand: echo
+    inputs:
+      message:
+        type: string
+        inputBinding:
+          position: 1
+    outputs:
+      loud:
+        type: stdout
+"""
+
+    /// A packed document whose two tools both have the id main.
+    let duplicateIdsFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: CommandLineTool
+    baseCommand: echo
+    inputs: {}
+    outputs: {}
+  - id: main
+    class: CommandLineTool
+    baseCommand: cat
+    inputs: {}
+    outputs: {}
+"""
+
+    /// A packed document whose two tools have the id main, the first one written as #main.
+    let duplicateIdsWithHashFile = """cwlVersion: v1.2
+$graph:
+  - id: "#main"
+    class: CommandLineTool
+    baseCommand: echo
+    inputs: {}
+    outputs: {}
+  - id: main
+    class: CommandLineTool
+    baseCommand: cat
+    inputs: {}
+    outputs: {}
+"""
+
+    /// A packed document with namespaces and an extension key at the root. The workflow refers to two tools by #shout
+    /// and #count, and one tool names an EDAM format through the namespace edam.
+    let namespacedFile = """cwlVersion: v1.2
+$namespaces:
+  edam: http://edamontology.org/
+  ex: https://example.org/ns#
+ex:note: kept at the root
+$graph:
+  - id: main
+    class: Workflow
+    inputs:
+      text: string
+    steps:
+      shout:
+        run: "#shout"
+        in:
+          message: text
+        out: [loud]
+      count:
+        run: "#count"
+        in:
+          lines: shout/loud
+        out: [total]
+    outputs:
+      result:
+        type: File
+        outputSource: count/total
+  - id: shout
+    class: CommandLineTool
+    baseCommand: echo
+    inputs:
+      message:
+        type: string
+        inputBinding:
+          position: 1
+    outputs:
+      loud:
+        type: stdout
+        format: edam:format_1964
+  - id: count
+    class: CommandLineTool
+    baseCommand: wc
+    inputs:
+      lines:
+        type: File
+        inputBinding:
+          position: 1
+    outputs:
+      total:
+        type: stdout
+"""
+
+    /// A packed document of a workflow and the tool that it runs. The workflow refers to the tool by #shout.
+    let graphFile = """cwlVersion: v1.2
+$namespaces:
+  ex: https://example.org/ns#
+$graph:
+  - id: main
+    class: Workflow
+    inputs:
+      text: string
+    steps:
+      shout:
+        run: "#shout"
+        in:
+          message: text
+        out: [loud]
+    outputs:
+      result:
+        type: File
+        outputSource: shout/loud
+  - id: shout
+    class: CommandLineTool
+    baseCommand: echo
+    inputs:
+      message:
+        type: string
+        inputBinding:
+          position: 1
+    outputs:
+      loud:
+        type: stdout
+"""
+
+    /// A packed document whose workflow defines a type that a sibling tool names with the absolute id #main/Point and
+    /// with the relative id main/Point.
+    let siblingTypesFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    requirements:
+      - class: SchemaDefRequirement
+        types:
+          - name: Point
+            type: record
+            fields:
+              x: int
+    inputs: {}
+    outputs: {}
+    steps: {}
+  - id: other
+    class: CommandLineTool
+    baseCommand: x
+    inputs:
+      absolute: "#main/Point"
+      relative: main/Point
+    outputs: {}
+"""
+
+    /// A packed document whose workflow defines a type that the workflow and its tool name as #main/Point.
+    let typesFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    requirements:
+      - class: SchemaDefRequirement
+        types:
+          - name: Point
+            type: record
+            fields:
+              x: int
+    inputs:
+      origin: "#main/Point"
+    steps:
+      place:
+        run: "#place"
+        in:
+          at: origin
+        out: []
+    outputs: {}
+  - id: place
+    class: CommandLineTool
+    baseCommand: place
+    inputs:
+      at: "#main/Point"
+    outputs: {}
+"""
+
+    /// A packed document whose tool place has a SchemaDefRequirement of its own and names the type of the workflow
+    /// main. The requirement of the tool overrides the types of main.
+    let memberWithOwnTypesFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    requirements:
+      - class: SchemaDefRequirement
+        types:
+          - name: Point
+            type: record
+            fields:
+              x: int
+    inputs:
+      origin: "#main/Point"
+    steps:
+      place:
+        run: "#place"
+        in:
+          at: origin
+        out: []
+    outputs: {}
+  - id: place
+    class: CommandLineTool
+    baseCommand: place
+    requirements:
+      - class: SchemaDefRequirement
+        types:
+          - name: Other
+            type: enum
+            symbols: [a]
+    inputs:
+      at: "#main/Point"
+    outputs: {}
+"""
+
+    /// A packed document whose workflow main runs sub and whose workflow sub runs main again, which is a cycle of run
+    /// references that never ends.
+    let cyclicFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    requirements:
+      - class: SubworkflowFeatureRequirement
+    inputs: {}
+    steps:
+      s:
+        run: "#sub"
+        in: {}
+        out: []
+    outputs: {}
+  - id: sub
+    class: Workflow
+    inputs: {}
+    steps:
+      back:
+        run: "#main"
+        in: {}
+        out: []
+    outputs: {}
+"""
+
+    /// A packed document whose workflow main runs an inline workflow, and a step of that inline workflow runs main again.
+    let cyclicThroughInlineRunFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    requirements:
+      - class: SubworkflowFeatureRequirement
+    inputs: {}
+    steps:
+      s:
+        run:
+          class: Workflow
+          inputs: {}
+          steps:
+            t:
+              run: "#main"
+              in: {}
+              out: []
+          outputs: {}
+        in: {}
+        out: []
+    outputs: {}
+"""
+
+    /// A packed document whose workflow main runs the tool shout in two steps. Two runs of one process are no cycle.
+    let sharedProcessFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    inputs: {}
+    steps:
+      first:
+        run: "#shout"
+        in: {}
+        out: []
+      second:
+        run: "#shout"
+        in: {}
+        out: []
+    outputs: {}
+  - id: shout
+    class: CommandLineTool
+    baseCommand: echo
+    inputs: {}
+    outputs: {}
+"""
+
+    /// A packed document whose workflow main runs the workflow sub, which runs the tool shout.
+    let nestedGraphFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    requirements:
+      - class: SubworkflowFeatureRequirement
+    inputs: {}
+    steps:
+      s:
+        run: "#sub"
+        in: {}
+        out: []
+    outputs: {}
+  - id: sub
+    class: Workflow
+    inputs: {}
+    steps:
+      t:
+        run: "#shout"
+        in: {}
+        out: []
+    outputs: {}
+  - id: shout
+    class: CommandLineTool
+    baseCommand: echo
+    inputs: {}
+    outputs: {}
+"""
+
+    /// A packed document whose workflow main defines the type Point and runs the tool place. The tool names the type
+    /// Q of the tool other, which no step runs and which main does not define.
+    let reachedMemberNamesSiblingTypeFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    requirements:
+      - class: SchemaDefRequirement
+        types:
+          - name: Point
+            type: enum
+            symbols: [a]
+    inputs: {}
+    steps:
+      place:
+        run: "#place"
+        in:
+          at: {default: b}
+        out: []
+    outputs: {}
+  - id: place
+    class: CommandLineTool
+    baseCommand: place
+    inputs:
+      at: "#other/Q"
+    outputs: {}
+  - id: other
+    class: CommandLineTool
+    baseCommand: other
+    requirements:
+      - class: SchemaDefRequirement
+        types:
+          - name: Q
+            type: enum
+            symbols: [b]
+    inputs: {}
+    outputs: {}
+"""
+
+    /// A packed document whose tool main runs no step. The tool place names the type Q of the tool other, and no step
+    /// runs place or other.
+    let unreachedMemberNamesSiblingTypeFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: CommandLineTool
+    baseCommand: main
+    inputs: {}
+    outputs: {}
+  - id: place
+    class: CommandLineTool
+    baseCommand: place
+    inputs:
+      at: "#other/Q"
+    outputs: {}
+  - id: other
+    class: CommandLineTool
+    baseCommand: other
+    requirements:
+      - class: SchemaDefRequirement
+        types:
+          - name: Q
+            type: enum
+            symbols: [b]
+    inputs: {}
+    outputs: {}
+"""
+
+    /// A packed document whose workflow main defines the type Point and runs the tool place in two steps. The step
+    /// second has a SchemaDefRequirement of its own, which overrides the one of main for the tool.
+    let memberRunByTwoStepsFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    requirements:
+      - class: SchemaDefRequirement
+        types:
+          - name: Point
+            type: record
+            fields:
+              x: int
+    inputs:
+      origin: "#main/Point"
+    steps:
+      first:
+        run: "#place"
+        in:
+          at: origin
+        out: []
+      second:
+        requirements:
+          - class: SchemaDefRequirement
+            types:
+              - name: Offset
+                type: enum
+                symbols: [a]
+        run: "#place"
+        in:
+          at: origin
+        out: []
+    outputs: {}
+  - id: place
+    class: CommandLineTool
+    baseCommand: place
+    inputs:
+      at: "#main/Point"
+    outputs: {}
+"""
+
+    /// A packed document whose workflow main defines the type Point and runs the tool place in two steps that share
+    /// the types of main.
+    let memberRunByTwoStepsWithSharedTypesFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    requirements:
+      - class: SchemaDefRequirement
+        types:
+          - name: Point
+            type: record
+            fields:
+              x: int
+    inputs:
+      origin: "#main/Point"
+    steps:
+      first:
+        run: "#place"
+        in:
+          at: origin
+        out: []
+      second:
+        run: "#place"
+        in:
+          at: origin
+        out: []
+    outputs: {}
+  - id: place
+    class: CommandLineTool
+    baseCommand: place
+    inputs:
+      at: "#main/Point"
+    outputs: {}
+"""
+
+    /// A packed document whose workflow main defines the type Point and runs the tool place. The tool has a hint with
+    /// a SchemaDefRequirement of its own, which the requirement of main overrides.
+    let memberWithOwnHintFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    requirements:
+      - class: SchemaDefRequirement
+        types:
+          - name: Point
+            type: record
+            fields:
+              x: int
+    inputs:
+      origin: "#main/Point"
+    steps:
+      place:
+        run: "#place"
+        in:
+          at: origin
+        out: []
+    outputs: {}
+  - id: place
+    class: CommandLineTool
+    baseCommand: place
+    hints:
+      - class: SchemaDefRequirement
+        types:
+          - name: Other
+            type: enum
+            symbols: [a]
+    inputs:
+      at: "#main/Point"
+    outputs: {}
+"""
+
+    /// A packed document whose workflow main defines the type Point and runs the workflow sub, which runs the tool
+    /// place. Neither of them has a SchemaDefRequirement, so the tool takes the types of main through sub.
+    let nestedMemberFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    requirements:
+      - class: SubworkflowFeatureRequirement
+      - class: SchemaDefRequirement
+        types:
+          - name: Point
+            type: record
+            fields:
+              x: int
+    inputs:
+      origin: "#main/Point"
+    steps:
+      s:
+        run: "#sub"
+        in:
+          p: origin
+        out: []
+    outputs: {}
+  - id: sub
+    class: Workflow
+    inputs:
+      p: "#main/Point"
+    steps:
+      t:
+        run: "#place"
+        in:
+          at: p
+        out: []
+    outputs: {}
+  - id: place
+    class: CommandLineTool
+    baseCommand: place
+    inputs:
+      at: "#main/Point"
+    outputs: {}
+"""
+
+    /// A packed document whose workflow main defines the type Point and runs an inline workflow in the step s. A step
+    /// of that workflow runs the tool place by #id, and the tool names the type of main.
+    let memberRunFromInlineWorkflowFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    requirements:
+      - class: SubworkflowFeatureRequirement
+      - class: SchemaDefRequirement
+        types:
+          - name: Point
+            type: record
+            fields:
+              x: int
+    inputs: {}
+    steps:
+      s:
+        run:
+          class: Workflow
+          inputs: {}
+          steps:
+            t:
+              run: "#place"
+              in:
+                at: {default: {x: 1}}
+              out: []
+          outputs: {}
+        in: {}
+        out: []
+    outputs: {}
+  - id: place
+    class: CommandLineTool
+    baseCommand: place
+    inputs:
+      at: "#main/Point"
+    outputs: {}
+"""
+
+    /// A packed document like the one with the inline workflow, but the step s has a SchemaDefRequirement of its own.
+    /// It overrides the one of main for the inline workflow and for the tool that the inline workflow runs.
+    let memberRunFromInlineWorkflowWithStepTypesFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    requirements:
+      - class: SubworkflowFeatureRequirement
+      - class: SchemaDefRequirement
+        types:
+          - name: Point
+            type: record
+            fields:
+              x: int
+    inputs: {}
+    steps:
+      s:
+        requirements:
+          - class: SchemaDefRequirement
+            types:
+              - name: Offset
+                type: enum
+                symbols: [a]
+        run:
+          class: Workflow
+          inputs: {}
+          steps:
+            t:
+              run: "#place"
+              in:
+                at: {default: {x: 1}}
+              out: []
+          outputs: {}
+        in: {}
+        out: []
+    outputs: {}
+  - id: place
+    class: CommandLineTool
+    baseCommand: place
+    inputs:
+      at: "#main/Point"
+    outputs: {}
+"""
+
+    /// A packed document like the one with the nested workflow, but the tool place names the type Q of the tool other.
+    /// No step runs other, and the SchemaDefRequirement of main does not define Q.
+    let nestedMemberNamesSiblingTypeFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    requirements:
+      - class: SubworkflowFeatureRequirement
+      - class: SchemaDefRequirement
+        types:
+          - name: Point
+            type: record
+            fields:
+              x: int
+    inputs:
+      origin: "#main/Point"
+    steps:
+      s:
+        run: "#sub"
+        in:
+          p: origin
+        out: []
+    outputs: {}
+  - id: sub
+    class: Workflow
+    inputs:
+      p: "#main/Point"
+    steps:
+      t:
+        run: "#place"
+        in:
+          at: p
+        out: []
+    outputs: {}
+  - id: place
+    class: CommandLineTool
+    baseCommand: place
+    inputs:
+      at: "#other/Q"
+    outputs: {}
+  - id: other
+    class: CommandLineTool
+    baseCommand: other
+    requirements:
+      - class: SchemaDefRequirement
+        types:
+          - name: Q
+            type: enum
+            symbols: [b]
+    inputs: {}
+    outputs: {}
+"""
+
+    /// A packed document whose tool main names the type Offset of the tool shift. No SchemaDefRequirement of main
+    /// defines it, and the process main starts the document.
+    let mainNamesSiblingTypeFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: CommandLineTool
+    baseCommand: main
+    inputs:
+      at:
+        type: "#shift/Offset"
+        default: a
+    outputs: {}
+  - id: shift
+    class: CommandLineTool
+    baseCommand: shift
+    requirements:
+      - class: SchemaDefRequirement
+        types:
+          - name: Offset
+            type: enum
+            symbols: [a]
+    inputs: {}
+    outputs: {}
+"""
+
+    /// A packed document whose workflow main has no SchemaDefRequirement and runs the tool place. The tool names the
+    /// type Offset of the tool shift, which no step runs.
+    let mainRunsMemberNamesSiblingTypeFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    inputs: {}
+    steps:
+      place:
+        run: "#place"
+        in:
+          at: {default: a}
+        out: []
+    outputs: {}
+  - id: place
+    class: CommandLineTool
+    baseCommand: place
+    inputs:
+      at: "#shift/Offset"
+    outputs: {}
+  - id: shift
+    class: CommandLineTool
+    baseCommand: shift
+    requirements:
+      - class: SchemaDefRequirement
+        types:
+          - name: Offset
+            type: enum
+            symbols: [a]
+    inputs: {}
+    outputs: {}
+"""
+
+    /// A packed document whose workflow main has no SchemaDefRequirement and runs the workflow sub, which runs the tool
+    /// place. The tool names the type Offset of the tool shift, which no step runs.
+    let mainReachesMemberThroughWorkflowNamesSiblingTypeFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: Workflow
+    requirements:
+      - class: SubworkflowFeatureRequirement
+    inputs: {}
+    steps:
+      s:
+        run: "#sub"
+        in: {}
+        out: []
+    outputs: {}
+  - id: sub
+    class: Workflow
+    inputs: {}
+    steps:
+      t:
+        run: "#place"
+        in:
+          at: {default: a}
+        out: []
+    outputs: {}
+  - id: place
+    class: CommandLineTool
+    baseCommand: place
+    inputs:
+      at: "#shift/Offset"
+    outputs: {}
+  - id: shift
+    class: CommandLineTool
+    baseCommand: shift
+    requirements:
+      - class: SchemaDefRequirement
+        types:
+          - name: Offset
+            type: enum
+            symbols: [a]
+    inputs: {}
+    outputs: {}
+"""
+
+    /// A packed document whose tool main runs no step. The workflow extra runs the tool place, and no step runs extra.
+    /// The tool names the type Offset of the tool shift.
+    let unreachedWorkflowRunsMemberNamesSiblingTypeFile = """cwlVersion: v1.2
+$graph:
+  - id: main
+    class: CommandLineTool
+    baseCommand: main
+    inputs: {}
+    outputs: {}
+  - id: extra
+    class: Workflow
+    inputs: {}
+    steps:
+      place:
+        run: "#place"
+        in:
+          at: {default: a}
+        out: []
+    outputs: {}
+  - id: place
+    class: CommandLineTool
+    baseCommand: place
+    inputs:
+      at: "#shift/Offset"
+    outputs: {}
+  - id: shift
+    class: CommandLineTool
+    baseCommand: shift
+    requirements:
+      - class: SchemaDefRequirement
+        types:
+          - name: Offset
+            type: enum
+            symbols: [a]
+    inputs: {}
+    outputs: {}
 """

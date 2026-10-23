@@ -21,19 +21,21 @@ export { FileSystem } from './ts/FileSystem/FileSystem.js'
 export { FileSystemTree } from './ts/FileSystem/FileSystemTree.js'
 
 /// CWL
-import { CWLProcessingUnit } from './ts/CWL/CWLProcessingUnit.js'
-import { CWLType, FileInstance, DirectoryInstance, DirentInstance, InputEnumSchema, InputRecordField, InputRecordSchema, InputArraySchema, SchemaDefRequirementType, SoftwarePackage } from './ts/CWL/CWLTypes.js'
+import { CWLProcessingUnit, CWLDocument, CWLGraph } from './ts/CWL/CWLProcessingUnit.js'
+import { CWLType, FileInstance, DirectoryInstance, DirentInstance, InputEnumSchema, InputRecordField, InputRecordSchema, InputArraySchema, SchemaDefinition, SoftwarePackage } from './ts/CWL/CWLTypes.js'
 import { CWLParameterValue, CWLParameterRecordField } from './ts/CWL/ParameterValue.js'
 import { CWLParameterReference } from './ts/CWL/ParameterReference.js'
-import { CWLInput, InputBinding } from './ts/CWL/Inputs.js'
-import { CWLOutput, OutputBinding } from './ts/CWL/Outputs.js'
+import { CWLInput, InputBinding, InputFormat } from './ts/CWL/Inputs.js'
+import { CWLOutput, OutputBinding, OutputSource } from './ts/CWL/Outputs.js'
 import { CWLToolDescription } from './ts/CWL/ToolDescription.js'
 import { CWLWorkflowDescription } from './ts/CWL/WorkflowDescription.js'
 import { WorkflowStep, StepInput, StepOutput } from './ts/CWL/WorkflowSteps.js'
-import { Requirement, DockerRequirement, EnvironmentDef, ResourceRequirementInstance } from './ts/CWL/Requirements.js'
+import { Requirement, SchemaDefEntry, DockerRequirement, EnvironmentDef, ResourceRequirementInstance } from './ts/CWL/Requirements.js'
 
 export const CWL = {
     CWLProcessingUnit,
+    CWLDocument,
+    CWLGraph,
     CWLType,
     FileInstance,
     DirectoryInstance,
@@ -42,21 +44,24 @@ export const CWL = {
     InputRecordField,
     InputRecordSchema,
     InputArraySchema,
-    SchemaDefRequirementType,
+    SchemaDefinition,
     SoftwarePackage,
     CWLParameterValue,
     CWLParameterRecordField,
     CWLParameterReference,
     CWLInput,
     InputBinding,
+    InputFormat,
     CWLOutput,
     OutputBinding,
+    OutputSource,
     CWLToolDescription,
     CWLWorkflowDescription,
     WorkflowStep,
     StepInput,
     StepOutput,
     Requirement,
+    SchemaDefEntry,
     DockerRequirement,
     EnvironmentDef,
     ResourceRequirementInstance

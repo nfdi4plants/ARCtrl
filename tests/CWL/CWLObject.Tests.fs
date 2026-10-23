@@ -927,7 +927,11 @@ outputs: {}
     ]
 
 let testStreamTypes =
-    let tool (ports: string) = "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: cat\n" + ports
+    let toolHead = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: cat
+"""
+    let tool (ports: string) = toolHead + ports
     let decodeError (decode: unit -> unit) =
         try
             decode ()

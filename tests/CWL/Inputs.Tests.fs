@@ -148,11 +148,8 @@ let testInputMutationApi =
     ]
 
 let testInputFormat =
-    let decodedInputs () =
-        TestObjects.CWL.Inputs.formatFormsFileContent
-        |> Decode.readYaml
-        |> Decode.inputsDecoder
-        |> Option.get
+    let decodedTool () = Decode.decodeCommandLineTool TestObjects.CWL.Inputs.formatFormsFileContent
+    let decodedInputs () = (decodedTool ()).Inputs.Value
     let formatOf (inputs: ResizeArray<CWLInput>) (name: string) =
         (inputs |> Seq.find (fun input -> input.Name = name)).Format
 
@@ -167,7 +164,8 @@ let testInputFormat =
 
         testCase "each form of the format is written as it was read" <| fun _ ->
             let inputs = decodedInputs ()
-            let encoded = Encode.encodeToolDescription (CWLToolDescription(outputs = ResizeArray(), inputs = inputs))
+            let encoded = Encode.encodeToolDescription (decodedTool ())
+            Expect.stringContains encoded "edam: http://edamontology.org/" "The namespace of the prefix is written too."
             Expect.stringContains encoded "format: edam:format_2330\n" "A name is written as a scalar."
             Expect.stringContains encoded "format: [edam:format_2330, edam:format_1930]\n" "A list is written as a list."
             Expect.stringContains encoded "format: [edam:format_2330]\n" "A list of one name stays a list."

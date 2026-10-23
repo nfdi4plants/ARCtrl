@@ -370,6 +370,16 @@ type ResourceRequirementInstance (
     static member KnownFieldNames =
         CWLKnownFieldNames.resourceRequirementInstance
 
+/// An entry of the types field of a SchemaDefRequirement: a type that the document defines, or a file whose types the
+/// document imports. A defined type is the record or enum schema itself, with its own optional name and extension
+/// fields. A type field names an imported type as path#Name, and the path counts with its . and .. segments
+/// resolved. The name inside the file stays unchecked, because the decoder reads no file. A types field that is an
+/// $import mapping as a whole holds one Imported entry, because Schema Salad replaces that mapping with the list of
+/// the file. The model does not tell the two spellings apart, and the encoder writes the list.
+type SchemaDefEntry =
+    | Defined of SchemaDefinition
+    | Imported of string
+
 /// Entry in InitialWorkDirRequirement listing.
 /// CWL allows either a Dirent object or a string/expression entry.
 type InitialWorkDirEntry =
@@ -440,7 +450,7 @@ type Requirement =
     /// Indicates that the workflow platform must support inline Javascript expressions.
     | InlineJavascriptRequirement of InlineJavascriptRequirementValue
     /// This field consists of an array of type definitions which must be used when interpreting the inputs and outputs fields.
-    | SchemaDefRequirement of ResizeArray<SchemaDefRequirementType>
+    | SchemaDefRequirement of ResizeArray<SchemaDefEntry>
     /// Indicates that a workflow component should be run in a Docker or Docker-compatible (such as Singularity and udocker) container environment and specifies how to fetch or build the image.
     | DockerRequirement of DockerRequirement
     /// A list of software packages that should be configured in the environment of the defined process.

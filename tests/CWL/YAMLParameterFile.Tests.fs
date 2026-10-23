@@ -223,6 +223,29 @@ items:
             Expect.isFalse (encoded.Contains("{}")) "The empty item must not turn into an empty mapping."
             let valuesOf (references: ResizeArray<CWLParameterReference>) = references |> Seq.map (fun r -> r.Key, r.Value) |> Seq.toList
             Expect.equal (valuesOf (DecodeParameters.decodeYAMLParameterFile encoded)) (valuesOf decoded) "The keys and values should not change."
+        testCase "the types of a parameter file read like a type text, so a reference roundtrips" <| fun _ ->
+            let point = CWLType.Reference "Point"
+            let references =
+                ResizeArray [
+                    CWLParameterReference(key = "origin", value = CWLParameterValue.Record (ResizeArray [ CWLParameterRecordField("x", CWLParameterValue.Int 1L) ]), type_ = point)
+                    CWLParameterReference(key = "route", value = CWLParameterValue.Array (ResizeArray [ CWLParameterValue.Int 1L ]), type_ = CWLType.Array (InputArraySchema(point)))
+                    CWLParameterReference(key = "log", value = CWLParameterValue.String "run.log", type_ = CWLType.Stdout)
+                ]
+            let encoded = Encode.encodeYAMLParameterFile references
+            Expect.stringContains encoded "type: Point" "The reference is written as its name."
+            Expect.sequenceEqual (DecodeParameters.decodeYAMLParameterFile encoded) references "The types read back."
+        testCase "a malformed type name or a stream type inside another type in a parameter file is a decode error" <| fun _ ->
+            let decodeError (types: string) =
+                try
+                    DecodeParameters.decodeYAMLParameterFile ("x:\n  type: " + types + "\n  value: 1\n") |> ignore
+                    None
+                with YamlDecodeException error -> Some error
+            for (types, message) in [ "a b", "Invalid CWL type"; "File[", "Invalid CWL type"; "[stdout, string]", "valid only as the whole type"; "stdout?", "valid only as the whole type" ] do
+                match decodeError types with
+                | Some error ->
+                    Expect.stringContains error.Message message $"{types}: the error should say what is wrong."
+                    Expect.isSome error.Span $"{types}: the error should have the place in the text."
+                | None -> failwith $"{types} must fail"
         testCase "a comment after a flow sequence does not hide the sequence" <| fun _ ->
             let yaml = """xs: [a, b] # tail
 files:

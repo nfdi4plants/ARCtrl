@@ -225,7 +225,55 @@ let tests_builderCore =
             Expect.equal (countEdges EdgeKind.Calls graph) 1 ""
     ]
 
-let main = 
+let tests_fragmentRunReferences =
+    let graph =
+        match Decode.decodeCWLDocument TestObjects.CWL.Workflow.PackedDocument.graphFile with
+        | CWLDocument.Graph graph -> graph
+        | other -> failwith $"Expected a packed document but got %A{other}"
+    let main = Expect.wantSome (CWLGraph.tryFindProcess "main" graph) "The packed document holds the process main."
+    let shout = Expect.wantSome (CWLGraph.tryFindProcess "shout" graph) "The packed document holds the process shout."
+    let optionsWith (lookup: (string -> CWLProcessingUnit option) option) =
+        WorkflowGraphBuildOptions.defaultOptions
+        |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "runs/tests/run.cwl")
+        |> WorkflowGraphBuildOptions.withTryResolveRunPath lookup
+
+    testList "Fragment run references" [
+        testCase "a fragment is a reference to resolve and a bare word is not" <| fun () ->
+            Expect.isTrue (Builder.isCwlReference "#shout") "A fragment refers to a process of the packed document."
+            Expect.isFalse (Builder.isCwlReference "#") "A # alone names nothing."
+            Expect.isFalse (Builder.isCwlReference "shout") "A word without # or .cwl is no reference to a CWL file."
+            Expect.isTrue (Builder.isCwlReference "tool.cwl") "A path to a CWL file stays a reference."
+        testCase "the candidates of a fragment are the path of the document with the fragment and the fragment alone" <| fun () ->
+            Expect.sequenceEqual (Builder.getRunPathCandidates (Some "runs/tests/run.cwl") "#shout") [| "runs/tests/run.cwl#shout"; "#shout" |] "The document comes first."
+            Expect.sequenceEqual (Builder.getRunPathCandidates (Some "runs/tests/run.cwl#main") "#shout") [| "runs/tests/run.cwl#shout"; "#shout" |] "A process of the document refers to its siblings through the same document."
+            Expect.sequenceEqual (Builder.getRunPathCandidates None "#shout") [| "#shout" |] "Without a path only the fragment is left."
+        testCase "a fragment resolves through the path of the document" <| fun () ->
+            let resolver (path: string) =
+                if ArcPathHelper.normalizePathKey path = "runs/tests/run.cwl#shout" then Some shout else None
+            let graph = Builder.buildWith (optionsWith (Some resolver)) main
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool) graph) 1 "The tool of the graph is a node."
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference) graph) 0 "Nothing stays unresolved."
+        testCase "a fragment resolves through the fragment alone when the lookup holds that" <| fun () ->
+            let resolver (path: string) = if path = "#shout" then Some shout else None
+            let graph = Builder.buildWith (optionsWith (Some resolver)) main
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool) graph) 1 "The tool of the graph is a node."
+        testCase "a fragment that the lookup does not hold is an unresolved reference with the id as its label" <| fun () ->
+            let graph = Builder.buildWith (optionsWith (Some (fun _ -> None))) main
+            let unresolved =
+                graph.Nodes
+                |> Seq.tryFind (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference)
+            Expect.equal (Expect.wantSome unresolved "Expected an unresolved reference node").Label "shout" "The label is the id."
+            Expect.isTrue (graph.Diagnostics |> Seq.exists (fun d -> d.Kind = GraphIssueKind.ResolutionFailed)) "The failure is a diagnostic."
+        testCase "a fragment without a resolver is an external reference with the id as its label" <| fun () ->
+            let graph = Builder.buildWith (optionsWith None) main
+            let external =
+                graph.Nodes
+                |> Seq.tryFind (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference)
+            Expect.equal (Expect.wantSome external "Expected an external reference node").Label "shout" "The label is the id."
+    ]
+
+let main =
     testList "Builder" [
         tests_builderCore
+        tests_fragmentRunReferences
     ]
