@@ -2,6 +2,7 @@ module ARCtrl.Contract
 
 open ARCtrl
 open ARCtrl.Contract
+open ARCtrl.Spreadsheet
 open FsSpreadsheet
 open CrossAsync
 
@@ -31,6 +32,31 @@ let fulfillReadContractAsync basePath (c : Contract) =
         | e -> return Error (sprintf "Error reading contract %s: %s" c.Path e.Message)
     }
     |> catchWith (fun e -> Error (sprintf "Error reading contract %s: %s" c.Path e.Message))
+
+/// Interrupted entity creations can leave zero-byte workbooks behind.
+///
+/// For assays, studies, workflows and runs, such a workbook is fulfilled with the workbook of an empty entity named after its folder.
+let tryFulfillEmptyEntityContractAsync basePath (c : Contract) : CrossAsync<Contract option> =
+    crossAsync {
+        match c.DTOType with
+        | Some DTOType.ISA_Assay
+        | Some DTOType.ISA_Study
+        | Some DTOType.ISA_Workflow
+        | Some DTOType.ISA_Run ->
+            let! isEmpty = FileSystemHelper.isEmptyFileAsync (ArcPathHelper.combine basePath c.Path)
+            if isEmpty then
+                let identifier = (ArcPathHelper.split c.Path).[1]
+                let wb =
+                    match c.DTOType with
+                    | Some DTOType.ISA_Assay -> ArcAssay(identifier) |> ArcAssay.toFsWorkbook
+                    | Some DTOType.ISA_Study -> ArcStudy.toFsWorkbook(ArcStudy(identifier))
+                    | Some DTOType.ISA_Workflow -> ArcWorkflow(identifier) |> ArcWorkflow.toFsWorkbook
+                    | _ -> ArcRun(identifier) |> ArcRun.toFsWorkbook
+                return Some {c with DTO = Some (DTO.Spreadsheet wb)}
+            else
+                return None
+        | _ -> return None
+    }
 
 let fullfillContractBatchAsyncBy
     (contractF : string -> Contract -> CrossAsync<Result<Contract, string>>)

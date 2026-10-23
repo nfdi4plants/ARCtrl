@@ -392,8 +392,20 @@ let testMetaDataFunctions =
                 
             Expect.workSheetEqual o Assay.Proteome.assayMetadata "Written assay metadata does not match read assay metadata"
         )
+        // https://github.com/nfdi4plants/ARCtrl/issues/641
+        testCase "WriterFailsOnDuplicateCommentNames" (fun () ->
+            let assay = ArcAssay("MyAssay", comments = ResizeArray [Comment("note", "first"); Comment("note", "second")])
+            let writingResult =
+                try
+                    ArcAssay.toFsWorkbook assay |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error err.Message
+            let message = Expect.wantError writingResult "Writing an assay with duplicate comment names should fail"
+            Expect.stringContains message "Comment[note]" "Error should name the duplicate comment"
+        )
 
-                
+
         ]
 
 let testAssayFileReader = 

@@ -27,6 +27,8 @@ type Stats =
 
     abstract member isFile : unit -> bool
 
+    abstract member size : int
+
 [<Erase>]
 type Dirent =
     abstract member isDirectory: unit -> bool
@@ -171,6 +173,25 @@ let fileExistsAsync (path : string) : CrossAsync<bool> =
     #if !FABLE_COMPILER
     crossAsync {
         return System.IO.File.Exists path
+    }
+    #endif
+
+let isEmptyFileAsync (path : string) : CrossAsync<bool> =
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        crossAsync {
+            let! fsStat = FS.stat path
+            return fsStat.size = 0
+        }
+    #endif
+    #if FABLE_COMPILER_PYTHON
+        let f (path : string) : bool = emitPyExpr (path) "Path(path).stat().st_size == 0"
+        crossAsync {
+            return f path
+        }
+    #endif
+    #if !FABLE_COMPILER
+    crossAsync {
+        return System.IO.FileInfo(path).Length = 0L
     }
     #endif
 
@@ -425,6 +446,8 @@ let getAllFilePathsAsync (directoryPath : string) : CrossAsync<string []> =
                 let! subFiles = dirs |> Seq.map getSubFilesAsync |> CrossAsync.all
                 let subFiles = subFiles |> Seq.concat
                 let! subDirs = dirs |> Seq.map getSubDirectoriesAsync |> CrossAsync.all
+                // Git metadata is not part of the ARC and can contain locked files, so it is not entered
+                let subDirs = subDirs |> Seq.map (Array.filter (fun d -> ArcPathHelper.getFileName d <> ".git"))
                 let! subDirContents = subDirs |> Seq.map allFiles |> CrossAsync.all
                 let subDirContents = subDirContents |> Seq.concat
                 return subFiles |> Seq.append subDirContents

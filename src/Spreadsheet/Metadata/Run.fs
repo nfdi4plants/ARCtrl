@@ -118,9 +118,8 @@ module Run =
 
         run.Comments
         |> ResizeArray.iter (fun comment -> 
-            let n,v = comment |> Comment.toString
+            let n = matrix.Matrix |> Comment.addToMatrix i comment
             commentKeys <- n :: commentKeys
-            matrix.Matrix.Add((n,i),v)
         )   
         
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}

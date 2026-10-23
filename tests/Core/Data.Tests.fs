@@ -78,11 +78,92 @@ let private tests_AbsoluteFilePath = testList "AbsoluteFilePath" [
         let absolute = d.GetAbsolutePathForAssay(assayName)
         let expected = $"assays/{assayName}/dataset/MyFile"
         Expect.equal absolute expected "Absolute path should match expected path"
+    // https://github.com/nfdi4plants/ARCtrl/issues/629
+    testCase "Workflow_Relative" <| fun _ ->
+        let fileName = "MyFile"
+        let workflowName = "MyWorkflow"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForWorkflow(workflowName)
+        let expected = $"workflows/{workflowName}/{fileName}"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Workflow_Absolute" <| fun _ ->
+        let fileName = "workflows/MyWorkflow/MyFile"
+        let workflowName = "MyWorkflow"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForWorkflow(workflowName)
+        let expected = $"workflows/{workflowName}/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Workflow_Absolute_/" <| fun _ ->
+        let fileName = "/workflows/MyWorkflow/MyFile"
+        let workflowName = "MyWorkflow"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForWorkflow(workflowName)
+        let expected = $"workflows/{workflowName}/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Workflow_Absolute_./" <| fun _ ->
+        let fileName = "./workflows/MyWorkflow/MyFile"
+        let workflowName = "MyWorkflow"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForWorkflow(workflowName)
+        let expected = $"workflows/{workflowName}/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    // https://github.com/nfdi4plants/ARCtrl/issues/629
+    testCase "Run_Relative" <| fun _ ->
+        let fileName = "MyFile"
+        let runName = "MyRun"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForRun(runName)
+        let expected = $"runs/{runName}/{fileName}"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Run_Absolute" <| fun _ ->
+        let fileName = "runs/MyRun/MyFile"
+        let runName = "MyRun"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForRun(runName)
+        let expected = $"runs/{runName}/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Run_Absolute_/" <| fun _ ->
+        let fileName = "/runs/MyRun/MyFile"
+        let runName = "MyRun"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForRun(runName)
+        let expected = $"runs/{runName}/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
+    testCase "Run_Absolute_./" <| fun _ ->
+        let fileName = "./runs/MyRun/MyFile"
+        let runName = "MyRun"
+        let d = Data(name = fileName)
+        let absolute = d.GetAbsolutePathForRun(runName)
+        let expected = $"runs/{runName}/MyFile"
+        Expect.equal absolute expected "Absolute path should match expected path"
     ]
 
+
+// https://github.com/nfdi4plants/ARCtrl/issues/630
+let private tests_isEmpty = testList "isEmpty" [
+    testCase "NoName" <| fun _ ->
+        let d = Data()
+        Expect.isTrue (d.isEmpty()) "Data without any values should be empty"
+    testCase "EmptyName" <| fun _ ->
+        let d = Data(name = "")
+        Expect.isTrue (d.isEmpty()) "Data with empty name should be empty"
+    testCase "BlankName" <| fun _ ->
+        let d = Data(name = "  ")
+        Expect.isTrue (d.isEmpty()) "Data with blank name should be empty"
+    testCase "BlankNameWithSelector" <| fun _ ->
+        let d = Data(name = "  #row=1")
+        Expect.isFalse (d.isEmpty()) "Data with selector should not be empty"
+    testCase "Name" <| fun _ ->
+        let d = Data(name = "MyFile.csv")
+        Expect.isFalse (d.isEmpty()) "Data with name should not be empty"
+    testCase "OnlyComment" <| fun _ ->
+        let d = Data(comments = ResizeArray [Comment.create("MyKey","MyValue")])
+        Expect.isFalse (d.isEmpty()) "Data with comment should not be empty"
+    ]
 
 let main = 
     testList "Data" [
         tests_GetHashCode
         tests_AbsoluteFilePath
+        tests_isEmpty
     ]

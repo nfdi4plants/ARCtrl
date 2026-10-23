@@ -229,6 +229,31 @@ let private testInvestigationFile =
             Expect.equal investigation.AssayCount 3 "AssayCount"
             Expect.equal investigation.StudyCount 2 "StudyCount"
         )
+        // https://github.com/nfdi4plants/ARCtrl/issues/641
+        testCase "WriterFailsOnDuplicateCommentNames" (fun () ->
+            let investigation = ArcInvestigation("MyInvestigation", title = "MyTitle", comments = ResizeArray [Comment("note", "first"); Comment("note", "second")])
+            let writingResult =
+                try
+                    ArcInvestigation.toFsWorkbook investigation |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error err.Message
+            let message = Expect.wantError writingResult "Writing an investigation with duplicate comment names should fail"
+            Expect.stringContains message "Comment[note]" "Error should name the duplicate comment"
+        )
+        // https://github.com/nfdi4plants/ARCtrl/issues/641
+        testCase "WriterFailsOnDuplicatePersonCommentNames" (fun () ->
+            let person = Person(firstName = "Ada", lastName = "Lovelace", comments = ResizeArray [Comment("note", "first"); Comment("note", "second")])
+            let investigation = ArcInvestigation("MyInvestigation", title = "MyTitle", contacts = ResizeArray [person])
+            let writingResult =
+                try
+                    ArcInvestigation.toFsWorkbook investigation |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error err.Message
+            let message = Expect.wantError writingResult "Writing a person with duplicate comment names should fail"
+            Expect.stringContains message "Comment[note]" "Error should name the duplicate comment"
+        )
 
         //testCase "OutputMatchesInputEmpty" (fun () ->
 

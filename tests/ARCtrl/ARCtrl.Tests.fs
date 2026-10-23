@@ -1005,6 +1005,19 @@ let private tests_writeContracts = testList "write_contracts" [
         let expectedContract = Contract.createCreate(p, DTOType.PlainText, DTO.Text licenseFullText)
         Expect.equal actualContract expectedContract "should be equal"
     )
+    // https://github.com/nfdi4plants/ARCtrl/issues/641
+    testCase "duplicateCommentNames_ErrorSurfaces" (fun _ ->
+        let inv = ArcInvestigation("MyInvestigation", "BestTitle", comments = ResizeArray [Comment("note", "first"); Comment("note", "second")])
+        let arc = ARC.fromArcInvestigation(isa = inv)
+        let writingResult =
+            try
+                arc.GetWriteContracts() |> ignore
+                Result.Ok "DidRun"
+            with
+            | err -> Result.Error err.Message
+        let message = Expect.wantError writingResult "Getting write contracts for an investigation with duplicate comment names should fail"
+        Expect.stringContains message "Comment[note]" "Error should name the duplicate comment"
+    )
 ]
 
 let private tests_updateContracts = testList "update_contracts" [
@@ -1960,6 +1973,54 @@ let tests_load =
             Expect.hasLength r.Performers 2 "Run should have 2 performers"
             }          
         )
+        // https://github.com/nfdi4plants/ARCtrl/issues/620
+        testCaseCrossAsync "zeroByteWorkbooks" (crossAsync {
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Load_ZeroByteWorkbooks"
+            do! FileSystemHelper.deleteFileOrDirectoryAsync p
+            let inv = ArcInvestigation("MyInvestigation", "BestTitle")
+            inv.InitAssay("MyAssay") |> ignore
+            inv.InitStudy("MyStudy") |> ignore
+            inv.InitWorkflow("MyWorkflow") |> ignore
+            inv.InitRun("MyRun") |> ignore
+            let! writeResult = ARC.fromArcInvestigation(isa = inv).TryWriteAsync(p)
+            Expect.wantOk writeResult "ARC should write successfully" |> ignore
+            // Simulate interrupted entity creations, which leave zero-byte workbooks behind
+            do! FileSystemHelper.writeFileTextAsync (ArcPathHelper.combine p "assays/MyAssay/isa.assay.xlsx") ""
+            do! FileSystemHelper.writeFileTextAsync (ArcPathHelper.combine p "studies/MyStudy/isa.study.xlsx") ""
+            do! FileSystemHelper.writeFileTextAsync (ArcPathHelper.combine p "workflows/MyWorkflow/isa.workflow.xlsx") ""
+            do! FileSystemHelper.writeFileTextAsync (ArcPathHelper.combine p "runs/MyRun/isa.run.xlsx") ""
+
+            let! result = ARC.tryLoadAsync(p)
+            let result = Expect.wantOk result "ARC with zero-byte workbooks should load successfully"
+            Expect.sequenceEqual result.AssayIdentifiers ["MyAssay"] "Assay should be recovered from its folder"
+            Expect.sequenceEqual result.StudyIdentifiers ["MyStudy"] "Study should be recovered from its folder"
+            Expect.sequenceEqual result.WorkflowIdentifiers ["MyWorkflow"] "Workflow should be recovered from its folder"
+            Expect.sequenceEqual result.RunIdentifiers ["MyRun"] "Run should be recovered from its folder"
+
+            // Updating the ARC should write the recovered workbooks to disk
+            let! updateResult = result.TryUpdateAsync(p)
+            Expect.wantOk updateResult "ARC should update successfully" |> ignore
+            let! _ = FileSystemHelper.readFileXlsxAsync (ArcPathHelper.combine p "assays/MyAssay/isa.assay.xlsx")
+            let! _ = FileSystemHelper.readFileXlsxAsync (ArcPathHelper.combine p "studies/MyStudy/isa.study.xlsx")
+            let! _ = FileSystemHelper.readFileXlsxAsync (ArcPathHelper.combine p "workflows/MyWorkflow/isa.workflow.xlsx")
+            let! _ = FileSystemHelper.readFileXlsxAsync (ArcPathHelper.combine p "runs/MyRun/isa.run.xlsx")
+            ()
+            }
+        )
+        // https://github.com/nfdi4plants/ARCtrl/issues/620
+        testCaseCrossAsync "nonEmptyCorruptWorkbookFails" (crossAsync {
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Load_CorruptWorkbook"
+            do! FileSystemHelper.deleteFileOrDirectoryAsync p
+            let inv = ArcInvestigation("MyInvestigation", "BestTitle")
+            inv.InitAssay("MyAssay") |> ignore
+            let! writeResult = ARC.fromArcInvestigation(isa = inv).TryWriteAsync(p)
+            Expect.wantOk writeResult "ARC should write successfully" |> ignore
+            do! FileSystemHelper.writeFileTextAsync (ArcPathHelper.combine p "assays/MyAssay/isa.assay.xlsx") "This is not a workbook"
+
+            let! result = ARC.tryLoadAsync(p)
+            Expect.isError result "Loading should fail for a non-empty corrupt workbook"
+            }
+        )
     ]
 
 
@@ -1990,6 +2051,54 @@ let tests_write =
                 |> map Seq.sort
 
             Expect.sequenceEqual paths expectedPaths "Files were not created correctly."                  
+        })
+        // https://github.com/nfdi4plants/ARCtrl/issues/622
+        testCaseCrossAsync "empty_AdditionalContracts" (crossAsync {
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_AdditionalContracts"
+            do! FileSystemHelper.deleteFileOrDirectoryAsync p
+            let a = ARC("MyInvestigation")
+            let additionalContracts = [|
+                Contract.createCreate(".gitignore", DTOType.PlainText, DTO.Text "*.tmp")
+                Contract.createCreate("notes/.gitkeep", DTOType.PlainText)
+            |]
+
+            let! result = a.TryWriteAsync(p, additionalContracts = additionalContracts)
+
+            Expect.wantOk result "ARC should write successfully" |> ignore
+
+            let expectedPaths =
+                [
+                    "/isa.investigation.xlsx";
+                    "/assays/.gitkeep";
+                    "/studies/.gitkeep";
+                    "/runs/.gitkeep";
+                    "/workflows/.gitkeep";
+                    "/.gitignore";
+                    "/notes/.gitkeep"
+                ]
+                |> List.sort
+
+            let! paths =
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
+
+            Expect.sequenceEqual paths expectedPaths "Additional files were not created correctly."
+            let! gitignore = FileSystemHelper.readFileTextAsync (ArcPathHelper.combine p ".gitignore")
+            Expect.equal gitignore "*.tmp" "Additional file content was not written correctly."
+        })
+        // https://github.com/nfdi4plants/ARCtrl/issues/622
+        testCaseCrossAsync "empty_AdditionalContracts_WriteAsync" (crossAsync {
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_AdditionalContracts_WriteAsync"
+            do! FileSystemHelper.deleteFileOrDirectoryAsync p
+            let a = ARC("MyInvestigation")
+            let additionalContracts = [|
+                Contract.createCreate(".gitignore", DTOType.PlainText, DTO.Text "*.tmp")
+            |]
+
+            do! a.WriteAsync(p, additionalContracts = additionalContracts)
+
+            let! gitignoreExists = FileSystemHelper.fileExistsAsync (ArcPathHelper.combine p ".gitignore")
+            Expect.isTrue gitignoreExists "Additional file was not created."
         })
         testCaseCrossAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARC"

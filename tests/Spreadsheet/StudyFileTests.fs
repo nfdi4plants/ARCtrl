@@ -127,6 +127,18 @@ let testFullStudyFile =
 
             Expect.workBookEqual o Study.bII_S_1WB "Written study file does not match read study file"
         )
+        // https://github.com/nfdi4plants/ARCtrl/issues/641
+        testCase "WriterFailsOnDuplicateCommentNames" (fun () ->
+            let study = ArcStudy("MyStudy", comments = ResizeArray [Comment("note", "first"); Comment("note", "second")])
+            let writingResult =
+                try
+                    ArcStudy.toFsWorkbook study |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error err.Message
+            let message = Expect.wantError writingResult "Writing a study with duplicate comment names should fail"
+            Expect.stringContains message "Comment[note]" "Error should name the duplicate comment"
+        )
     ]
 
 let main = 

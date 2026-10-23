@@ -117,7 +117,9 @@ type InvestigationConversion =
             LDDataset.getComments(investigation, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
             |> fun c ->
-                if dateModified.IsSome then
+                // The dateModified comment might already have been read from the comment nodes
+                let hasDateModifiedComment = c |> Seq.exists (fun c -> c.Name = Some DateTime.dateModifiedKey)
+                if dateModified.IsSome && not hasDateModifiedComment then
                     let dateModifiedComment = Comment(DateTime.dateModifiedKey, dateModified.Value)
                     ResizeArray.append c (ResizeArray [dateModifiedComment])
                 else c

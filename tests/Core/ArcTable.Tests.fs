@@ -2642,6 +2642,24 @@ let private tests_Join = testList "Join" [
             Expect.equal table.Headers.[3] (CompositeHeader.Component oa_instrumentModel) "Header component [instrument model]"
             Expect.equal table.Headers.[4] (CompositeHeader.Parameter (OntologyAnnotation())) "Header parameter [empty] 2"
             Expect.equal (table.TryGetCellAt(0,4).Value) (CompositeCell.createFreeText "Source_4") "Input cell should be unchanged, only header should be changed"
+        // https://github.com/nfdi4plants/ARCtrl/issues/647
+        testCase "Add to table with rows, fills empty cells" <| fun _ ->
+            let table = ArcTable.init "MyTable"
+            table.AddColumn(CompositeHeader.Input IOType.Source)
+            table.AddColumn(CompositeHeader.ProtocolUri)
+            table.AddColumn(CompositeHeader.Output IOType.Sample)
+            table.AddRowsEmpty 3
+            let joinTable = ArcTable.init "jointable"
+            joinTable.AddColumn(CompositeHeader.Parameter oa_temperature)
+            table.Join(joinTable,-1,TableJoinOptions.Headers)
+            Expect.equal table.ColumnCount 4 "columnCount"
+            Expect.equal table.RowCount 3 "rows should be untouched"
+            let joinedColumn = table.GetColumn 3
+            Expect.equal joinedColumn.Header (CompositeHeader.Parameter oa_temperature) "Header parameter [temperature]"
+            Expect.equal joinedColumn.Cells.Count 3 "joined column should have one cell per row"
+            Expect.equal (table.GetCellAt(3,0)) (CompositeCell.emptyTerm) "cell 3,0"
+            Expect.equal (table.GetCellAt(3,2)) (CompositeCell.emptyTerm) "cell 3,2"
+            Expect.equal table.Columns.Count 4 "all columns should be accessible"
     ]
     testList "TableJoinOption.WithUnits" [ 
         testCase "Add to empty, no unit" <| fun _ ->

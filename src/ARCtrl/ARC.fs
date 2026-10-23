@@ -163,8 +163,9 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     static member fromArcInvestigation (isa : ArcInvestigation, ?fs : FileSystem, ?license: License) = 
         ARC(identifier = isa.Identifier, ?title = isa.Title, ?description = isa.Description, ?submissionDate = isa.SubmissionDate, ?publicReleaseDate = isa.PublicReleaseDate, ontologySourceReferences = isa.OntologySourceReferences, publications = isa.Publications, contacts = isa.Contacts, assays = isa.Assays, studies = isa.Studies, workflows = isa.Workflows, runs = isa.Runs, registeredStudyIdentifiers = isa.RegisteredStudyIdentifiers, comments = isa.Comments, remarks = isa.Remarks, ?fs = fs, ?license = license) 
 
-    member this.TryWriteAsync(arcPath, ?forceOverwrite) =
-        this.GetWriteContracts()
+    member this.TryWriteAsync(arcPath, ?forceOverwrite, ?additionalContracts : Contract []) =
+        // Additional contracts are fulfilled after the ARC contracts, so they are not overwritten by them
+        Array.append (this.GetWriteContracts()) (defaultArg additionalContracts [||])
         |> fullFillContractBatchAsync (defaultArg forceOverwrite false) arcPath
 
     member this.TryUpdateAsync(arcPath, ?forceOverwrite) =
@@ -189,6 +190,13 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             let arc = ARC.fromFilePaths (paths |> Seq.toArray)
 
             let contracts = arc.GetReadContracts()
+
+            let! recoveredContracts =
+                contracts
+                |> Array.map (tryFulfillEmptyEntityContractAsync arcPath)
+                |> CrossAsync.all
+            let recoveredContracts = recoveredContracts |> Array.choose id
+            let contracts = contracts |> Array.filter (fun c -> recoveredContracts |> Array.exists (fun rc -> rc.Path = c.Path) |> not)
       
             let! fulFilledContracts = 
                 contracts 
@@ -196,7 +204,18 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
 
             match fulFilledContracts with
             | Ok c -> 
-                arc.SetISAFromContracts(c)
+                arc.SetISAFromContracts(Array.append c recoveredContracts)
+                // Recovered entities only exist in memory, so they are marked as changed to be written on the next update
+                recoveredContracts
+                |> Array.iter (fun rc ->
+                    let identifier = (ArcPathHelper.split rc.Path).[1]
+                    match rc.DTOType with
+                    | Some DTOType.ISA_Assay -> let a = arc.GetAssay identifier in a.StaticHash <- a.GetLightHashCode() + 1
+                    | Some DTOType.ISA_Study -> let s = arc.GetStudy identifier in s.StaticHash <- s.GetLightHashCode() + 1
+                    | Some DTOType.ISA_Workflow -> let w = arc.GetWorkflow identifier in w.StaticHash <- w.GetLightHashCode() + 1
+                    | Some DTOType.ISA_Run -> let r = arc.GetRun identifier in r.StaticHash <- r.GetLightHashCode() + 1
+                    | _ -> ()
+                )
                 return Ok arc
             | Error e -> return Error e
         }      
@@ -390,9 +409,9 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         |> fullFillContractBatchAsync false arcPath
 
 
-    member this.WriteAsync(arcPath) =
+    member this.WriteAsync(arcPath, ?additionalContracts : Contract []) =
         crossAsync {
-            let! result = this.TryWriteAsync(arcPath)
+            let! result = this.TryWriteAsync(arcPath, ?additionalContracts = additionalContracts)
             match result with
             | Ok _ -> ()
             | Error errors ->
@@ -462,8 +481,8 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         }
     
     #if FABLE_COMPILER_PYTHON || !FABLE_COMPILER
-    member this.Write(arcPath) =
-        Async.RunSynchronously (this.WriteAsync(arcPath))
+    member this.Write(arcPath, ?additionalContracts : Contract []) =
+        Async.RunSynchronously (this.WriteAsync(arcPath, ?additionalContracts = additionalContracts))
 
     member this.Update(arcPath) =
         Async.RunSynchronously (this.UpdateAsync(arcPath))
@@ -745,10 +764,11 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     member this.GetWriteContracts (?skipUpdateFS : bool) =
         if not (defaultArg skipUpdateFS false) then
             this.UpdateFileSystem()
-
+        this.StaticHash <- this.GetLightHashCode()
+        // Create outside of the array expression, as fable-library-py hides exceptions thrown when such an expression starts
+        let investigationContract = this.ToCreateContract()
         [|
-            this.StaticHash <- this.GetLightHashCode()
-            yield this.ToCreateContract()
+            yield investigationContract
             for s in this.Studies do
                 s.StaticHash <- s.GetLightHashCode()
                 yield! s.ToCreateContract(WithFolder = true)
