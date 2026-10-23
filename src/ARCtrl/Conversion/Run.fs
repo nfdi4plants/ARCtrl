@@ -26,6 +26,8 @@ type RunConversion =
 
     static member decomposeCWLInputFilePath (path : string, runName : string) =
         let prefix = ArcPathHelper.combineMany [| "runs"; runName|]
+        // File ids in RO-Crate start with ./
+        let path = if path.StartsWith("./") then path.Substring(2) else path
         if path.StartsWith(prefix) then
             path.Replace(prefix, "").TrimStart('/')
         else

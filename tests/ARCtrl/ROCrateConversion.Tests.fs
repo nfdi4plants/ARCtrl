@@ -2975,6 +2975,17 @@ let tests_ArcRun =
             let run' = RunConversion.decomposeRun(ro_Run, graph = graph)
             Expect.equal run' run "Run should match"
         )
+        // File ids are normalized to start with ./, see https://github.com/nfdi4plants/ARCtrl/issues/615
+        testCase "Full_FromScaffold_NormalizedIds" (fun () ->
+            let run = create_run_full()
+            let ro_Run = RunConversion.composeRun run
+            let json = ro_Run.Flatten() |> JsonController.LDGraph.toROCrateJsonString()
+            let graph = JsonController.LDGraph.fromROCrateJsonString json
+            let ro_Run' = Expect.wantSome (graph.TryGetNode "./runs/MyRun/") "Run should have normalized id"
+            let run' = RunConversion.decomposeRun(ro_Run', graph = graph)
+            Expect.sequenceEqual run'.CWLInput run.CWLInput "CWL inputs should match"
+            Expect.equal run' run "Run should match"
+        )
         testCase "CWLAndISAInputMatch" (fun () ->
             let inputFileName = "input.txt"
             let tool = 
