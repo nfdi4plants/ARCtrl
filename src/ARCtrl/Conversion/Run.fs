@@ -78,11 +78,6 @@ type RunConversion =
         if inputParam.Type_.IsNone then
             failwith $"Cannot convert param values \"{inputValue.Values}\" as Input parameter \"{inputParam.Name}\" has no type."
         let type_ = inputParam.Type_.Value
-        if inputValue.Type.IsSome then
-            if not (CWL.CWLType.typesEqual inputValue.Type.Value type_) then
-                let typeStr = CWL.Encode.formatCWLType inputValue.Type.Value
-                let paramTypeStr = CWL.Encode.formatCWLType type_
-                failwith $"Type ({typeStr}) of yml input value \"{inputValue.Key}\" does not match type of workflow input parameter ({paramTypeStr})."
         match type_ with
         | CWL.CWLType.File when inputValue.Values.Count = 1 ->
             let path = RunConversion.composeCWLInputFilePath(inputValue.Values[0], runName)
@@ -256,8 +251,7 @@ type RunConversion =
             let path = RunConversion.decomposeCWLInputFilePath(inputValue.Id, runName)
             CWL.CWLParameterReference(
                 key = key,
-                values = ResizeArray [path],
-                type_ = CWL.CWLType.File
+                value = CWL.CWLParameterValue.File (CWL.FileInstance(path = path))
             )
         else if LDPropertyValue.validateCWLParameter(inputValue, ?context = context) then
             let valueObject = LDPropertyValue.getValueObject(inputValue, ?context = context)

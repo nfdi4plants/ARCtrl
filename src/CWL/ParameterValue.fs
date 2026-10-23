@@ -137,23 +137,3 @@ module CWLParameterValue =
             |> ResizeArray
             |> CWLParameterValue.Array
             |> Some
-
-    let rec tryInferType value =
-        match value with
-        | CWLParameterValue.File _ -> Some CWLType.File
-        | CWLParameterValue.Directory _ -> Some CWLType.Directory
-        | CWLParameterValue.Array values when values.Count > 0 ->
-            let inferredItemTypes =
-                values
-                |> Seq.map tryInferType
-                |> Seq.toArray
-
-            match inferredItemTypes.[0] with
-            | Some firstType
-                when inferredItemTypes
-                     |> Array.forall (function
-                         | Some itemType -> CWLType.typesEqual firstType itemType
-                         | None -> false) ->
-                Some (CWLType.Array (InputArraySchema(firstType)))
-            | _ -> None
-        | _ -> None

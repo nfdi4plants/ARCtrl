@@ -190,10 +190,10 @@ let testWorkflowStep =
             Expect.isNone actual "RunWorkflow with non-workflow payload should not decode as workflow"
         testCase "encodeWorkflowStepRun raises for wrong obj in RunCommandLineTool" <| fun _ ->
             let run = RunCommandLineTool (box "bad")
-            Expect.throws (fun _ -> Encode.encodeWorkflowStepRun run |> ignore) "Encoding invalid RunCommandLineTool payload should fail"
+            Expect.throws (fun _ -> Encode.encodeWorkflowStepRun false run |> ignore) "Encoding invalid RunCommandLineTool payload should fail"
         testCase "encodeWorkflowStepRun raises for wrong obj in RunWorkflow" <| fun _ ->
             let run = RunWorkflow (box "bad")
-            Expect.throws (fun _ -> Encode.encodeWorkflowStepRun run |> ignore) "Encoding invalid RunWorkflow payload should fail"
+            Expect.throws (fun _ -> Encode.encodeWorkflowStepRun false run |> ignore) "Encoding invalid RunWorkflow payload should fail"
         testCase "tryGetExpressionTool returns Some for correct payload" <| fun _ ->
             let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray [], expression = SchemaSaladString.Literal "$(null)")
             let run = RunExpressionTool (box expressionTool)
@@ -211,7 +211,7 @@ let testWorkflowStep =
             Expect.isNone (WorkflowStepRunOps.tryGetWorkflow run) "RunExpressionTool should not decode as workflow"
         testCase "encodeWorkflowStepRun raises for wrong obj in RunExpressionTool" <| fun _ ->
             let run = RunExpressionTool (box 42)
-            Expect.throws (fun _ -> Encode.encodeWorkflowStepRun run |> ignore) "Encoding invalid RunExpressionTool payload should fail"
+            Expect.throws (fun _ -> Encode.encodeWorkflowStepRun false run |> ignore) "Encoding invalid RunExpressionTool payload should fail"
     ]
 
 let testWorkflowStepOps =
@@ -305,8 +305,62 @@ let testWorkflowStepOps =
             Expect.equal step.In.[0].Id "keep" "Non-matching input should remain."
     ]
 
+let private toolStep () =
+    WorkflowStep.fromRunPath(
+        id = "step1",
+        in_ = ResizeArray(),
+        out_ = ResizeArray [| StepOutputString "out" |],
+        runPath = "./tool.cwl"
+    )
+
+let private echoTool () =
+    CWLToolDescription(outputs = ResizeArray(), baseCommand = ResizeArray [ "echo" ])
+
+let testResolvedRun =
+    testList "ResolvedRun" [
+        testCase "a step has no resolved run until a process is set" <| fun _ ->
+            let step = toolStep ()
+            Expect.isNone step.ResolvedRun.Run "The decoder and the constructor leave the resolved run empty."
+            Expect.equal (WorkflowStep.getResolvedRun step) (RunString "./tool.cwl") "Without a process the run stands for itself."
+        testCase "getResolvedRun returns the process the reference resolved to" <| fun _ ->
+            let step = toolStep ()
+            let tool = echoTool ()
+            step.ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromTool tool) }
+            Expect.equal step.Run (RunString "./tool.cwl") "The run keeps the reference."
+            Expect.isSome (WorkflowStepRunOps.tryGetTool (WorkflowStep.getResolvedRun step)) "The resolved run is the tool."
+        testCase "an inline run is its own resolved run" <| fun _ ->
+            let tool = echoTool ()
+            let step = toolStep ()
+            step.Run <- WorkflowStepRunOps.fromTool tool
+            Expect.isNone step.ResolvedRun.Run "An inline run has nothing to resolve."
+            Expect.equal (WorkflowStep.getResolvedRun step) (WorkflowStepRunOps.fromTool tool) "The inline process is the run."
+        testCase "setting the run drops the process of the previous reference" <| fun _ ->
+            let step = toolStep ()
+            step.ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromTool (echoTool ())) }
+            step.Run <- RunString "./other.cwl"
+            Expect.isNone step.ResolvedRun.Run "The process belonged to ./tool.cwl."
+            Expect.equal (WorkflowStep.getResolvedRun step) (RunString "./other.cwl") "The new reference stands for itself."
+        testCase "the resolved run stays out of the equality and the hash of the step" <| fun _ ->
+            let resolved = toolStep ()
+            resolved.ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromTool (echoTool ())) }
+            let plain = toolStep ()
+            Expect.equal resolved plain "A step with a resolved run equals the step without it."
+            Expect.equal (hash resolved) (hash plain) "Both hash alike."
+            let other = toolStep ()
+            other.Run <- RunString "./other.cwl"
+            Expect.notEqual resolved other "Another reference still makes another step."
+        testCase "the encoder writes the reference of a step with a resolved run" <| fun _ ->
+            let step = toolStep ()
+            step.ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromTool (echoTool ())) }
+            let workflow = CWLWorkflowDescription(steps = ResizeArray [ step ], inputs = ResizeArray(), outputs = ResizeArray())
+            let written = Encode.encodeWorkflowDescription workflow
+            Expect.stringContains written "run: ./tool.cwl" "The file refers to the tool."
+            Expect.isFalse (written.Contains "baseCommand") "The tool stays in its own file."
+    ]
+
 let main = 
     testList "WorkflowStep" [
         testWorkflowStep
         testWorkflowStepOps
+        testResolvedRun
     ]

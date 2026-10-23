@@ -685,7 +685,7 @@ steps:
 
             let encodeSteps (steps: ResizeArray<WorkflowStep>) =
                 steps
-                |> Seq.map (Encode.encodeWorkflowStep >> renderYamlPair)
+                |> Seq.map (Encode.encodeWorkflowStep false >> renderYamlPair)
                 |> ResizeArray
 
             let encodeRequirements (requirements: ResizeArray<Requirement>) =
@@ -727,7 +727,7 @@ let testCWLWorkflowDescriptionEncode =
             testCase "the process element encoders write the cwlVersion only when asked to" <| fun _ ->
                 let elements (includeCwlVersion: bool) =
                     [ Encode.encodeToolDescriptionElement includeCwlVersion (CWLToolDescription(outputs = ResizeArray()))
-                      Encode.encodeWorkflowDescriptionElement includeCwlVersion (CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray()))
+                      Encode.encodeWorkflowDescriptionElement false includeCwlVersion (CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray()))
                       Encode.encodeExpressionToolDescriptionElement includeCwlVersion (CWLExpressionToolDescription(outputs = ResizeArray(), expression = SchemaSaladString.Literal "$(null)"))
                       Encode.encodeOperationDescriptionElement includeCwlVersion (CWLOperationDescription(inputs = ResizeArray(), outputs = ResizeArray())) ]
                     |> List.map Encode.writeYaml
@@ -1119,15 +1119,30 @@ let testPackedDocuments =
             Expect.notEqual (graphOf namespaced) (graphOf (namespaced.Replace("baseCommand: wc", "baseCommand: cat"))) "Another process makes another graph."
             Expect.notEqual (graphOf namespaced) (graphOf (namespaced.Replace("ex:note: kept at the root", "ex:note: changed"))) "Another key of the root makes another graph."
             Expect.notEqual (graphOf namespaced) (graphOf (namespaced.Replace("cwlVersion: v1.2", "cwlVersion: v1.1"))) "Another version makes another graph."
-        testCase "a step that holds a process of the graph is written as a reference, and an inline copy stays inline" <| fun _ ->
+        testCase "a step that runs a process of the graph keeps the reference in the graph and writes the resolved process inline in a plain file" <| fun _ ->
             let graph = graphOf fixture
             let main = workflowOf graph.Processes.[0]
-            main.Steps.[0].Run <- WorkflowStepRunOps.fromTool (toolOf graph.Processes.[1])
-            Expect.equal (graphOf (Encode.encodeCWLGraph graph)) (graphOf fixture) "The step runs the process by its id again."
-            let copy = toolOf (graphOf fixture).Processes.[1]
-            main.Steps.[0].Run <- WorkflowStepRunOps.fromTool copy
-            let inlined = graphOf (Encode.encodeCWLGraph graph)
-            Expect.equal (workflowOf inlined.Processes.[0]).Steps.[0].Run (WorkflowStepRunOps.fromTool copy) "A copy of the process is written inside the step."
+            let shout = toolOf graph.Processes.[1]
+            main.Steps.[0].ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromTool shout) }
+            Expect.equal (graphOf (Encode.encodeCWLGraph graph)) (graphOf fixture) "In the graph the step runs the process by its id."
+            let plain = Encode.encodeProcessingUnit (Workflow main)
+            Expect.isFalse (plain.Contains "#shout") "The plain file has no reference to the graph."
+            match Decode.decodeCWLDocument plain with
+            | CWLDocument.Process (Workflow written) ->
+                Expect.equal (WorkflowStepRunOps.tryGetTool written.Steps.[0].Run |> Option.bind (fun tool -> tool.BaseCommand) |> Option.map Seq.toList) (Some [ "echo" ]) "The plain file holds the tool inside the step."
+            | other -> failwith $"Expected a plain workflow but got %A{other}"
+        testCase "a step that runs a process of the graph without a resolved process cannot be written as a plain file" <| fun _ ->
+            let main = workflowOf (graphOf fixture).Processes.[0]
+            let error = Expect.wantSome (try Encode.encodeProcessingUnit (Workflow main) |> ignore; None with :? System.ArgumentException as error -> Some error) "The plain file cannot refer to the graph."
+            Expect.stringContains error.Message "The step shout" "The error names the step."
+            Expect.stringContains error.Message "#shout" "The error names the reference."
+        testCase "a step that runs a file keeps the reference in a plain file even with a resolved process" <| fun _ ->
+            let step = WorkflowStep.fromRunPath(id = "s", in_ = ResizeArray(), out_ = ResizeArray(), runPath = "./tool.cwl")
+            step.ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromTool (CWLToolDescription(outputs = ResizeArray(), baseCommand = ResizeArray [ "echo" ]))) }
+            let workflow = CWLWorkflowDescription(steps = ResizeArray [ step ], inputs = ResizeArray(), outputs = ResizeArray())
+            let plain = Encode.encodeProcessingUnit (Workflow workflow)
+            Expect.stringContains plain "run: ./tool.cwl" "The file reference stays."
+            Expect.isFalse (plain.Contains "baseCommand") "The tool is not inlined."
         testCase "a process is the process main of a graph when the graph finds that object under the id main" <| fun _ ->
             let namespaced = TestObjects.CWL.Workflow.PackedDocument.namespacedFile
             let graph = graphOf namespaced
@@ -1143,11 +1158,29 @@ let testPackedDocuments =
             let packed = Encode.encodeProcessingUnitInGraph (Some graph) graph.Processes.[0]
             Expect.equal packed (Encode.encodeCWLGraph graph) "The process main stands for its graph."
             Expect.equal (graphOf packed) (graphOf namespaced) "The other processes and the keys of the root are written as they were read."
+            // A plain file holds the processes that its steps run inline, so the steps need their resolved processes.
+            let resolved (graph: CWLGraph) =
+                for processingUnit in graph.Processes do
+                    match processingUnit with
+                    | Workflow workflow ->
+                        for step in workflow.Steps do
+                            match step.Run with
+                            | RunString reference when reference.StartsWith "#" ->
+                                CWLGraph.tryFindProcess reference graph
+                                |> Option.iter (fun target ->
+                                    let run =
+                                        match target with
+                                        | CommandLineTool tool -> WorkflowStepRunOps.fromTool tool
+                                        | other -> failwith $"Expected a tool but got %A{other}"
+                                    step.ResolvedRun <- { Run = Some run })
+                            | _ -> ()
+                    | _ -> ()
+                graph
             let renamed (id: string option) =
-                let fresh = graphOf namespaced
+                let fresh = resolved (graphOf namespaced)
                 (workflowOf fresh.Processes.[0]).Id <- id
                 fresh, fresh.Processes.[0]
-            let withoutMain = graphOf (namespaced.Replace("- id: main", "- id: first"))
+            let withoutMain = resolved (graphOf (namespaced.Replace("- id: main", "- id: first")))
             let renamedGraph, renamedMain = renamed (Some "renamed")
             let unnamedGraph, unnamedMain = renamed None
             let cases =

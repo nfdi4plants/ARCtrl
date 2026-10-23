@@ -115,13 +115,16 @@ module Builder =
         nodeId
 
     /// Creates a step node for a CWL workflow step, adds a Contains edge from the workflow. Returns the step node ID.
+    /// The id of the step is read against the id of the workflow, as the step #main/first of a packed document is first.
     let addStepNode
         (state: BuildState)
         (scope: string)
         (workflowNodeId: WorkflowGraphNodeId)
+        (workflowId: string option)
         (step: WorkflowStep)
         =
-        let stepNodeId = GraphId.stepNodeId scope step.Id
+        let stepName = ReferenceParsing.relativeId workflowId step.Id
+        let stepNodeId = GraphId.stepNodeId scope stepName
         let metadata =
             createMetadata [
                 "when", step.When_ |> Option.map (fun expression -> box expression.AsDirectiveString)
@@ -130,17 +133,18 @@ module Builder =
             ]
         let node =
             WorkflowGraphNode.create
-                (stepNodeId, NodeKind.StepNode, defaultArg step.Label step.Id, ownerNodeId = workflowNodeId, ?metadata = metadata)
+                (stepNodeId, NodeKind.StepNode, defaultArg step.Label stepName, ownerNodeId = workflowNodeId, ?metadata = metadata)
         addNode state node
         addEdgeByType state EdgeKind.Contains workflowNodeId stepNodeId None
         stepNodeId
 
     /// Adds all input and output port nodes for a CWL workflow.
     let addWorkflowPorts (state: BuildState) (workflowNodeId: WorkflowGraphNodeId) (workflow: CWLWorkflowDescription) =
+        let relative = ReferenceParsing.relativeId workflow.Id
         workflow.Inputs
-        |> Seq.iter (fun input -> addPortNode state workflowNodeId PortDirection.Input input.Name input.Name |> ignore)
+        |> Seq.iter (fun input -> addPortNode state workflowNodeId PortDirection.Input (relative input.Name) (relative input.Name) |> ignore)
         workflow.Outputs
-        |> Seq.iter (fun output -> addPortNode state workflowNodeId PortDirection.Output output.Name output.Name |> ignore)
+        |> Seq.iter (fun output -> addPortNode state workflowNodeId PortDirection.Output (relative output.Name) (relative output.Name) |> ignore)
 
     /// Adds all input and output port nodes for a CWL CommandLineTool.
     let addToolPorts (state: BuildState) (toolNodeId: WorkflowGraphNodeId) (tool: CWLToolDescription) =
@@ -167,11 +171,12 @@ module Builder =
 
     /// Adds all input and output port nodes for a workflow step.
     let addStepPorts (state: BuildState) (stepNodeId: WorkflowGraphNodeId) (step: WorkflowStep) =
+        let relative = ReferenceParsing.relativeId (Some step.Id)
         step.In
-        |> Seq.iter (fun input -> addPortNode state stepNodeId PortDirection.Input input.Id input.Id |> ignore)
+        |> Seq.iter (fun input -> addPortNode state stepNodeId PortDirection.Input (relative input.Id) (relative input.Id) |> ignore)
         step.Out
         |> Seq.iter (fun output ->
-            let outputId = ReferenceParsing.extractStepOutputId output
+            let outputId = ReferenceParsing.extractStepOutputId output |> relative
             addPortNode state stepNodeId PortDirection.Output outputId outputId |> ignore
         )
 
@@ -677,18 +682,19 @@ module Builder =
         (state: BuildState)
         (scope: string)
         (workflowNodeId: WorkflowGraphNodeId)
+        (workflowId: string option)
         (step: WorkflowStep)
         =
-        let stepNodeId = GraphId.stepNodeId scope step.Id
+        let stepNodeId = GraphId.stepNodeId scope (ReferenceParsing.relativeId workflowId step.Id)
 
         for stepInput in step.In do
-            let targetInputPortId = GraphId.portNodeId stepNodeId PortDirection.Input stepInput.Id
+            let targetInputPortId = GraphId.portNodeId stepNodeId PortDirection.Input (ReferenceParsing.relativeId (Some step.Id) stepInput.Id)
             match stepInput.Source with
             | None ->
                 ()
             | Some sources ->
                 for source in sources do
-                    let sourceRef = ReferenceParsing.parseSourceReference source
+                    let sourceRef = ReferenceParsing.parseSourceReference (ReferenceParsing.relativeId workflowId source)
                     if System.String.IsNullOrWhiteSpace sourceRef.PortId then
                         addDiagnostic
                             state
@@ -729,9 +735,10 @@ module Builder =
         (workflow: CWLWorkflowDescription)
         =
         for output in workflow.Outputs do
+            let outputName = ReferenceParsing.relativeId workflow.Id output.Name
             let outputSources = output.GetOutputSources()
             for outputSource in outputSources do
-                let parsedSource = ReferenceParsing.parseSourceReference outputSource
+                let parsedSource = ReferenceParsing.parseSourceReference (ReferenceParsing.relativeId workflow.Id outputSource)
                 if System.String.IsNullOrWhiteSpace parsedSource.PortId then
                     addDiagnostic
                         state
@@ -750,7 +757,7 @@ module Builder =
                         | None ->
                             GraphId.portNodeId workflowNodeId PortDirection.Input parsedSource.PortId
 
-                    let targetPortId = GraphId.portNodeId workflowNodeId PortDirection.Output output.Name
+                    let targetPortId = GraphId.portNodeId workflowNodeId PortDirection.Output outputName
                     if hasNode state sourcePortId && hasNode state targetPortId then
                         addEdgeByType state EdgeKind.BindsWorkflowOutput sourcePortId targetPortId None
                     else
@@ -770,15 +777,15 @@ module Builder =
         (workflow: CWLWorkflowDescription)
         =
         for step in workflow.Steps do
-            let stepNodeId = addStepNode state scope workflowNodeId step
+            let stepNodeId = addStepNode state scope workflowNodeId workflow.Id step
             addStepPorts state stepNodeId step
 
-            let runScope = GraphId.childScope scope $"{step.Id}/run"
-            let _, runNodeId = buildRunNode state runScope stepNodeId workflowFilePath step.Run
+            let runScope = GraphId.childScope scope $"{ReferenceParsing.relativeId workflow.Id step.Id}/run"
+            let _, runNodeId = buildRunNode state runScope stepNodeId workflowFilePath (WorkflowStep.getResolvedRun step)
             addEdgeByType state EdgeKind.Calls stepNodeId runNodeId (Some "calls")
 
         workflow.Steps
-        |> Seq.iter (wireStepInputs state scope workflowNodeId)
+        |> Seq.iter (wireStepInputs state scope workflowNodeId workflow.Id)
 
         wireWorkflowOutputs state scope workflowNodeId workflow
 

@@ -600,7 +600,7 @@ let testEncodeNormalizeEdgeCases =
                 )
 
             let encodedYaml =
-                YAMLicious.Encode.object [ "steps", YAMLicious.Encode.object [ Encode.encodeWorkflowStep step ] ]
+                YAMLicious.Encode.object [ "steps", YAMLicious.Encode.object [ Encode.encodeWorkflowStep false step ] ]
                 |> Encode.writeYaml
 
             let decodedSteps =
@@ -2720,9 +2720,6 @@ let testFileAndDirectoryTypes =
             Expect.equal CWLType.Directory CWLType.Directory "A Directory equals a Directory."
             Expect.notEqual CWLType.File CWLType.Directory "A File is no Directory."
             Expect.equal (hash CWLType.File) (hash CWLType.File) "Equal types hash alike."
-        testCase "the type of a File value is File" <| fun _ ->
-            Expect.equal (CWLParameterValue.tryInferType (CWLParameterValue.File (FileInstance(path = "a.txt")))) (Some CWLType.File) "A File value has the type File."
-            Expect.equal (CWLParameterValue.tryInferType (CWLParameterValue.Directory (DirectoryInstance(path = "d")))) (Some CWLType.Directory) "A Directory value has the type Directory."
     ]
 
 let testDirentIsNoType =

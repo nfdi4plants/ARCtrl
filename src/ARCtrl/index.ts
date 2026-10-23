@@ -29,7 +29,7 @@ import { CWLInput, InputBinding, InputFormat, BindingPosition } from './ts/CWL/I
 import { CWLOutput, OutputBinding, OutputSource, OutputGlob } from './ts/CWL/Outputs.js'
 import { CWLToolDescription } from './ts/CWL/ToolDescription.js'
 import { CWLWorkflowDescription } from './ts/CWL/WorkflowDescription.js'
-import { WorkflowStep, StepInput, StepOutput } from './ts/CWL/WorkflowSteps.js'
+import { WorkflowStep, ResolvedRun, StepInput, StepOutput } from './ts/CWL/WorkflowSteps.js'
 import { Requirement, SchemaDefEntry, DockerRequirement, EnvironmentDef, ResourceRequirementInstance } from './ts/CWL/Requirements.js'
 
 export const CWL = {
@@ -61,6 +61,7 @@ export const CWL = {
     CWLToolDescription,
     CWLWorkflowDescription,
     WorkflowStep,
+    ResolvedRun,
     StepInput,
     StepOutput,
     Requirement,

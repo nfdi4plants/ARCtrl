@@ -205,3 +205,87 @@ steps:
     run: ../../workflows/Proteomics/tool.cwl
     in: {}
     out: [out]"""
+
+
+/// The layout of an ARC with a run that runs a workflow, which runs a tool. The tool reads a script file with $include.
+module StandardLayout =
+
+    let runCwlText = """cwlVersion: v1.2
+class: Workflow
+requirements:
+  - class: SubworkflowFeatureRequirement
+inputs:
+  msg: string
+outputs: []
+steps:
+  main:
+    run: ../../workflows/Proteomics/workflow.cwl
+    in:
+      msg: msg
+    out: []"""
+
+    let workflowCwlText = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  msg: string
+outputs: []
+steps:
+  shout:
+    run: shout.cwl
+    in:
+      msg: msg
+    out: []"""
+
+    let shoutCwlText = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+requirements:
+  - class: InitialWorkDirRequirement
+    listing:
+      - entryname: script.sh
+        entry:
+          $include: script.sh
+inputs:
+  msg: string
+outputs: []"""
+
+/// Two workflows in different directories whose steps run a file of the same relative path, and a run that runs both.
+module SameRelativePathInTwoDirectories =
+
+    let workflowCwlText = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs: {}
+steps:
+  shout:
+    run: shout.cwl
+    in: {}
+    out: []"""
+
+    let echoCwlText = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs: {}
+outputs: {}"""
+
+    let catCwlText = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: cat
+inputs: {}
+outputs: {}"""
+
+    let runCwlText = """cwlVersion: v1.2
+class: Workflow
+requirements:
+  - class: SubworkflowFeatureRequirement
+inputs: {}
+outputs: {}
+steps:
+  first:
+    run: ../../workflows/First/workflow.cwl
+    in: {}
+    out: []
+  second:
+    run: ../../workflows/Second/workflow.cwl
+    in: {}
+    out: []"""

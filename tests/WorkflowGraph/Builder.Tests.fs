@@ -196,6 +196,21 @@ let tests_builderCore =
             Expect.isTrue (cycleIssues >= 1) ""
             Expect.isTrue (graph.NodeCount > 0) ""
 
+        testCase "a step with a resolved run builds the node of that process" <| fun () ->
+            let workflow =
+                match decodeProcessingUnit TestObjects.CWL.WorkflowGraph.singleStepToolRunWorkflowFile with
+                | Workflow workflow -> workflow
+                | other -> failwith $"Expected a workflow but got %A{other}"
+            let tool =
+                match decodeProcessingUnit TestObjects.CWL.CommandLineTool.cwlFile with
+                | CommandLineTool tool -> tool
+                | other -> failwith $"Expected a tool but got %A{other}"
+            workflow.Steps.[0].ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromTool tool) }
+            let graph = Builder.build (Workflow workflow)
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool) graph) 1 "The tool is a node."
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference) graph) 0 "The reference is not left over."
+            Expect.equal (countEdges EdgeKind.Calls graph) 1 "The step calls the tool."
+
         testCase "inline commandlinetool run builds called node" <| fun () ->
             let graph =
                 TestObjects.CWL.Workflow.workflowWithInlineRunCommandLineToolFile
@@ -272,8 +287,34 @@ let tests_fragmentRunReferences =
             Expect.equal (Expect.wantSome external "Expected an external reference node").Label "shout" "The label is the id."
     ]
 
+let tests_fullIds =
+    let graph =
+        match Decode.decodeCWLDocument TestObjects.CWL.WorkflowGraph.packedWithFullIdsFile with
+        | CWLDocument.Graph graph -> graph
+        | other -> failwith $"Expected a packed document but got %A{other}"
+    let main = Expect.wantSome (CWLGraph.tryFindProcess "main" graph) "The packed document holds the process main."
+    let built =
+        let resolver (path: string) = CWLGraph.tryFindProcess (path.Substring(path.IndexOf('#') + 1)) graph
+        WorkflowGraphBuildOptions.defaultOptions
+        |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "runs/tests/run.cwl")
+        |> WorkflowGraphBuildOptions.withTryResolveRunPath (Some resolver)
+        |> fun options -> Builder.buildWith options main
+
+    testList "Full ids of a packed document" [
+        testCase "the ids of the steps and ports are read against the id of the workflow" <| fun () ->
+            Expect.isTrue (hasNode "step:root/first" built) "The step #main/first is first."
+            Expect.isTrue (hasNode "step:root/second" built) "The step #main/second is second."
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.StepNode) built) 2 ""
+        testCase "the references of the steps and the outputs wire the ports" <| fun () ->
+            Expect.equal (countEdges EdgeKind.BindsWorkflowInput built) 1 "The input #main/msg feeds #main/first/msg."
+            Expect.equal (countEdges EdgeKind.DataFlow built) 1 "The output #main/first/out feeds #main/second/msg."
+            Expect.equal (countEdges EdgeKind.BindsWorkflowOutput built) 1 "The output #main/result takes #main/second/out."
+            Expect.isEmpty (built.Diagnostics |> Seq.filter (fun d -> d.Kind = GraphIssueKind.MissingReference) |> Seq.toList) "No reference is left unwired."
+    ]
+
 let main =
     testList "Builder" [
         tests_builderCore
         tests_fragmentRunReferences
+        tests_fullIds
     ]

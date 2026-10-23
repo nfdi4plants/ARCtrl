@@ -34,6 +34,25 @@ module RunContractExtensions =
 
     type ArcRun with
 
+        /// The contract that carries the CWL file of the run, or none for a run without a description. The operation is
+        /// CREATE for a file that is new and UPDATE for a file that changed.
+        member this.TryToCWLContract (operation: Operation) : Contract option =
+            this.CWLDescription
+            |> Option.map (fun description ->
+                let path = Identifier.Run.cwlFileNameFromIdentifier this.Identifier
+                let dto = CWL.Encode.encodeProcessingUnitInGraph this.CWLGraph description
+                Contract.create(operation, path, DTOType.CWL, DTO.Text dto))
+
+        /// The contract that carries the parameter file run.yml of the run, or none for a run without parameter
+        /// references. The operation is CREATE for a file that is new and UPDATE for a file that changed.
+        member this.TryToYMLContract (operation: Operation) : Contract option =
+            if this.CWLInput.Count = 0 then
+                None
+            else
+                let path = Identifier.Run.ymlFileNameFromIdentifier this.Identifier
+                let dto = CWL.Encode.encodeYAMLParameterFile this.CWLInput
+                Some (Contract.create(operation, path, DTOType.YAML, DTO.Text dto))
+
         member this.ToCreateContract (?WithFolder) =
             let withFolder = defaultArg WithFolder false
             let path = Identifier.Run.fileNameFromIdentifier this.Identifier
@@ -43,10 +62,12 @@ module RunContractExtensions =
                     let folderFS =  FileSystemTree.createRunsFolder([|FileSystemTree.createRunFolder this.Identifier|])
                     for p in folderFS.ToFilePaths(false) do
                         if p <> path && p <> "runs/.gitkeep" then Contract.createCreate(p, DTOType.PlainText)
-                if this.CWLDescription.IsSome then
-                    let path = Identifier.Run.cwlFileNameFromIdentifier this.Identifier
-                    let dto = CWL.Encode.encodeProcessingUnitInGraph this.CWLGraph this.CWLDescription.Value
-                    Contract.createCreate(path, DTOType.CWL, DTO.Text dto)
+                match this.TryToCWLContract Operation.CREATE with
+                | Some contract -> contract
+                | None -> ()
+                match this.TryToYMLContract Operation.CREATE with
+                | Some contract -> contract
+                | None -> ()
                 c
             |]
 
@@ -83,7 +104,7 @@ module RunContractExtensions =
             let p = Identifier.Run.cwlFileNameFromIdentifier runIdentifier
             match c with
             | {Operation = READ; DTOType = Some DTOType.CWL; DTO = Some (DTO.Text text)} when c.Path = p ->
-                Some (CWL.Decode.decodeCWLDocument text)
+                Some (decodeCWLFile c.Path text)
             | _ -> None
 
         /// The process that the CWL file of the run starts with. A packed document runs from its process main.
@@ -98,5 +119,5 @@ module RunContractExtensions =
             let p = Identifier.Run.ymlFileNameFromIdentifier runIdentifier
             match c with
             | {Operation = READ; DTOType = Some DTOType.YAML; DTO = Some (DTO.Text text)} when c.Path = p ->
-                CWL.DecodeParameters.decodeYAMLParameterFile text |> Some
+                decodeParameterFile c.Path text |> Some
             | _ -> None

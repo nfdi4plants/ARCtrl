@@ -18,11 +18,8 @@ exampleList:
 module File =
     let filePath = "data/examplePath"
     let fileClass = "File"
-    let fileType = CWLType.File
 
-    let fileParameterReference = CWLParameterReference(key = Inputs.File.inputFileName, values = ResizeArray [filePath])
-
-    let fileParameterReferenceWithType = CWLParameterReference(key = Inputs.File.inputFileName, values = ResizeArray [filePath], type_ = fileType)
+    let fileParameterReference = CWLParameterReference(key = Inputs.File.inputFileName, value = CWLParameterValue.File (FileInstance(path = filePath)))
 
 module String =
 

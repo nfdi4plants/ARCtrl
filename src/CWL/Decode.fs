@@ -2713,41 +2713,10 @@ module DecodeParameters =
         | YamlNodeKind.Alias name ->
             Decode.failAlias name value
 
+    /// A job file gives each input a plain CWL value. An object with the fields type and value is a record with these
+    /// two fields, and the type of the input comes from the process.
     let cwlParameterReferenceDecoder (key: string) (yEle: YamlNode): CWLParameterReference =
-        let makeReference (value: CWLParameterValue) (explicitType: CWLType option) =
-            let type_ =
-                explicitType
-                |> Option.orElseWith (fun () -> CWLParameterValue.tryInferType value)
-
-            CWLParameterReference(key = key, value = value, ?type_ = type_)
-
-        let withOverflow (reference: CWLParameterReference) =
-            Decode.overflowIntoDynamicObj
-                reference
-                (CWLParameterReference.KnownFieldNames |> Seq.toList)
-                yEle
-            |> ignore
-            reference
-
-        // A parameter file has no schema around its types, so they read like the type text of an RO-Crate entity.
-        let decodeType (typeElement: YamlNode) =
-            match typeElement.Kind with
-            | YamlNodeKind.Scalar _ -> Decode.cwlTypeStringDecoder Decode.typeTextScope typeElement
-            | _ -> Decode.cwlTypeDecoderAt Decode.typeTextScope typeElement
-
-        match tryField "type" yEle, tryField "value" yEle with
-        | Some typeElement, Some valueElement ->
-            makeReference (decodeParameterValue valueElement) (Some (decodeType typeElement))
-            |> withOverflow
-        | None, Some valueElement ->
-            makeReference (decodeParameterValue valueElement) None
-            |> withOverflow
-        | Some typeElement, None ->
-            makeReference CWLParameterValue.Null (Some (decodeType typeElement))
-            |> withOverflow
-        | _ ->
-            makeReference (decodeParameterValue yEle) None
-            |> withOverflow
+        CWLParameterReference(key = key, value = decodeParameterValue yEle)
 
     /// Decode every top-level parameter entry into CWLParameterReference values.
     let cwlparameterReferenceArrayDecoder: YamlNode -> ResizeArray<CWLParameterReference> =

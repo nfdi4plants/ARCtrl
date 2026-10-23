@@ -272,7 +272,7 @@ module Helper =
             tables = ResizeArray [singleRowMixedValues; table2],
             performers = ResizeArray [person],
             cwlDescription = TestObjects.CWL.CommandLineTool.Basic.processingUnit,
-            cwlInput = ResizeArray [TestObjects.CWL.YAMLParameterFile.File.fileParameterReferenceWithType; TestObjects.CWL.YAMLParameterFile.String.stringParameterReference]
+            cwlInput = ResizeArray [TestObjects.CWL.YAMLParameterFile.File.fileParameterReference; TestObjects.CWL.YAMLParameterFile.String.stringParameterReference]
         )
        
 
@@ -2472,7 +2472,7 @@ let tests_YAMLInputValue =
             let name = "MyInput"
             let runName = "MyRun"
             let filePath = "myfile.txt"
-            let paramValue = CWLParameterReference(name, values = ResizeArray.singleton  filePath, type_ = CWLType.File)
+            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = filePath)))
             let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
@@ -2490,19 +2490,30 @@ let tests_YAMLInputValue =
             let name = "MyInput"
             let runName = "MyRun"
             let filePath = "myfile.txt"
-            let paramValue = CWLParameterReference(name, values = ResizeArray.singleton  filePath, type_ = CWLType.File)
+            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = filePath)))
             let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
             let paramValue' = RunConversion.decomposeCWLInputValue(file,runName)
             Expect.equal paramValue' paramValue "Parameter value should match after roundabout"
         )
+        testCase "SimpleFileInRun_IsAFileObjectInTheJobFile" (fun () ->
+            let name = "MyInput"
+            let runName = "MyRun"
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
+            let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
+            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = "myfile.txt")))
+            let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
+            let decomposed = RunConversion.decomposeCWLInputValue(file, runName)
+            let jobFile = CWL.Encode.encodeYAMLParameterFile (ResizeArray [ decomposed ])
+            Expect.equal jobFile "MyInput:\n  class: File\n  path: myfile.txt\n" "The job file gives the file as a File object, which is what cwltool accepts for a File input."
+        )
         testCase "SimpleFileInAssay" (fun () ->
             let name = "MyInput"
             let runName = "MyRun"
             let fileName = "myfile.txt"
-            let filePath = ResizeArray.singleton $"../../assays/MyAssay/dataset/{fileName}"
-            let paramValue = CWLParameterReference(name, values = filePath, type_ = CWLType.File)
+            let filePath = $"../../assays/MyAssay/dataset/{fileName}"
+            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = filePath)))
             let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
@@ -2520,8 +2531,8 @@ let tests_YAMLInputValue =
             let name = "MyInput"
             let runName = "MyRun"
             let fileName = "myfile.txt"
-            let filePath = ResizeArray.singleton $"../../assays/MyAssay/dataset/{fileName}"
-            let paramValue = CWLParameterReference(name, values = filePath, type_ = CWLType.File)
+            let filePath = $"../../assays/MyAssay/dataset/{fileName}"
+            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = filePath)))
             let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
@@ -2548,15 +2559,6 @@ let tests_YAMLInputValue =
             //Expect.equal exampleOfWorkAsRef.Id formalParam.Id "ExampleOfWork ID should match name"
             let exampleOfWorkAsNode : LDNode = Expect.wantSome (tryLDNode exampleOfWork) "ExampleOfWork should be a node"
             Expect.equal exampleOfWorkAsNode.Id formalParam.Id "ExampleOfWork ID should match name"
-        )
-        testCase "FailForNonMatchingType" (fun () ->
-            let name = "MyInput"
-            let runName = "MyRun"
-            let value = ResizeArray.singleton "verbose"
-            let paramValue = CWLParameterReference(name, values = value, type_ = CWLType.Int)
-            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
-            let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
-            Expect.throws (fun () -> RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName) |> ignore) "Should throw for non-matching type"
         )
         testCase "SimpleArray" (fun () ->
             let name = "MyInput"
@@ -2745,8 +2747,7 @@ let tests_OperationDescription =
             let runInput =
                 CWL.CWLParameterReference(
                     key = "input",
-                    values = ResizeArray [ "value" ],
-                    type_ = CWL.CWLType.String
+                    values = ResizeArray [ "value" ]
                 )
             let run =
                 ArcRun(
@@ -3050,14 +3051,14 @@ let tests_ArcWorkflow =
 
                 let parsedTool =
                     let parsedToolOpt =
-                        match parsedStep.Run with
+                        match CWL.WorkflowStep.getResolvedRun parsedStep with
                         | CWL.RunCommandLineTool toolObj ->
                             match toolObj with
                             | :? CWL.CWLToolDescription as parsedTool -> Some parsedTool
                             | _ -> None
                         | _ -> None
                     let mismatchMessage =
-                        match parsedStep.Run with
+                        match CWL.WorkflowStep.getResolvedRun parsedStep with
                         | CWL.RunCommandLineTool toolObj ->
                             $"Expected resolved run of step {parsedStep.Id} to be CWLToolDescription object but got %A{toolObj}"
                         | other ->
@@ -3165,8 +3166,7 @@ let tests_ArcRun =
             )
             let ymlParam = CWLParameterReference(
                 key = TestObjects.CWL.Inputs.File.inputFileName,
-                values = ResizeArray [inputFileName],
-                type_ = CWLType.File
+                value = CWLParameterValue.File (FileInstance(path = inputFileName))
             )
             let run = ArcRun(
                 "MyRun",
@@ -3462,11 +3462,11 @@ let tests_ArcRun =
 
             let parsedRunStep = parsedRunWorkflow.Steps.[0]
             Expect.isTrue
-                (match parsedRunStep.Run with | CWL.RunWorkflow _ -> true | _ -> false)
-                (sprintf "Expected run step to resolve to RunWorkflow but got %A" parsedRunStep.Run)
+                (match CWL.WorkflowStep.getResolvedRun parsedRunStep with | CWL.RunWorkflow _ -> true | _ -> false)
+                (sprintf "Expected run step to resolve to RunWorkflow but got %A" (CWL.WorkflowStep.getResolvedRun parsedRunStep))
 
             let referencedWorkflowObj: obj =
-                match parsedRunStep.Run with
+                match CWL.WorkflowStep.getResolvedRun parsedRunStep with
                 | CWL.RunWorkflow workflowObj -> workflowObj
                 | _ -> Unchecked.defaultof<obj>
             Expect.isTrue
@@ -3485,7 +3485,7 @@ let tests_ArcRun =
             let unresolvedNestedRuns =
                 parsedReferencedWorkflow.Steps
                 |> Seq.choose (fun step ->
-                    match step.Run with
+                    match CWL.WorkflowStep.getResolvedRun step with
                     | CWL.RunString unresolvedPath -> Some (step.Id, unresolvedPath)
                     | _ -> None
                 )
@@ -3530,11 +3530,11 @@ let tests_ArcRun =
                     Expect.wantSome expectedToolOpt $"Expected source tool for step {parsedStep.Id}"
 
                 Expect.isTrue
-                    (match parsedStep.Run with | CWL.RunCommandLineTool _ -> true | _ -> false)
-                    (sprintf "Expected step %s to resolve to RunCommandLineTool but got %A" parsedStep.Id parsedStep.Run)
+                    (match CWL.WorkflowStep.getResolvedRun parsedStep with | CWL.RunCommandLineTool _ -> true | _ -> false)
+                    (sprintf "Expected step %s to resolve to RunCommandLineTool but got %A" parsedStep.Id (CWL.WorkflowStep.getResolvedRun parsedStep))
 
                 let parsedToolObj: obj =
-                    match parsedStep.Run with
+                    match CWL.WorkflowStep.getResolvedRun parsedStep with
                     | CWL.RunCommandLineTool toolObj -> toolObj
                     | _ -> Unchecked.defaultof<obj>
                 Expect.isTrue

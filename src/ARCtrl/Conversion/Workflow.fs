@@ -379,34 +379,30 @@ type WorkflowConversion =
 
     /// <summary>
     /// Converts a workflow-step LD node into a CWL WorkflowStep.
-    /// Can optionally resolve run string references into inline CWL processing units via the graph.
+    /// Can optionally resolve the run reference of the step via the graph. The step keeps the reference as its run and
+    /// holds the resolved process in its ResolvedRun.
     /// </summary>
     /// <param name="step">Workflow step LD node.</param>
     /// <param name="workflowFilePath">Optional workflow file path used for resolving relative run references.</param>
-    /// <param name="resolveRunReferences">If true, attempts graph-backed run resolution; otherwise keeps raw RunString.</param>
+    /// <param name="resolveRunReferences">If true, attempts graph-backed run resolution; otherwise the step has no resolved run.</param>
     /// <param name="context">Optional LDContext for node property access.</param>
     /// <param name="graph">Optional LDGraph used for run reference resolution.</param>
     static member decomposeWorkflowStep (step : LDNode, ?workflowFilePath: string, ?resolveRunReferences: bool, ?context : LDContext, ?graph : LDGraph) =
         let name = LDComputationalWorkflow.getNameAsString(step, ?context = context)
         let runString = LDDataset.getIdentifierAsString(step, ?context = context)
         let shouldResolveRunReferences = defaultArg resolveRunReferences true
-        let run =
-            let initialRun = CWL.RunString runString
-            if not shouldResolveRunReferences then
-                initialRun
-            else
-                match workflowFilePath with
-                | Some path ->
-                    // Use graph-backed lookup so run paths can be materialized to inline CWL objects.
-                    let tryResolveRunPath runPath =
-                        WorkflowConversion.tryDecodeProcessingUnitFromGraph(runPath, ?graph = graph, ?context = context)
-                    CWLRunResolver.resolveWorkflowStepRunFromLookup path initialRun tryResolveRunPath
-                | None ->
-                    // Without a workflow path we cannot resolve relative references safely.
-                    initialRun
         let inputs = ResizeArray()
         let output = ResizeArray<CWL.StepOutput>()
-        CWL.WorkflowStep(id = name, in_ = inputs, out_ = output, run = run)
+        let workflowStep = CWL.WorkflowStep(id = name, in_ = inputs, out_ = output, run = CWL.RunString runString)
+        // Without a workflow path we cannot resolve relative references safely.
+        match workflowFilePath with
+        | Some path when shouldResolveRunReferences ->
+            // Use graph-backed lookup so run paths resolve to CWL objects of the crate.
+            let tryResolveRunPath runPath =
+                WorkflowConversion.tryDecodeProcessingUnitFromGraph(runPath, ?graph = graph, ?context = context)
+            CWLRunResolver.resolveWorkflowStepFromLookup path workflowStep tryResolveRunPath
+        | _ -> ()
+        workflowStep
 
 
     /// <summary>

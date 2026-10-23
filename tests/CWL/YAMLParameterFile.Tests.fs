@@ -21,7 +21,6 @@ let testYAMLParameterFile =
                 )
             Expect.equal expected.Key decodeYAMLParameterFile.[0].Key ""
             Expect.sequenceEqual expected.Values decodeYAMLParameterFile.[0].Values ""
-            Expect.equal expected.Type decodeYAMLParameterFile.[0].Type ""
         testCase "exampleKeyString" <| fun _ ->
             let expected =             
                 CWLParameterReference(
@@ -30,27 +29,22 @@ let testYAMLParameterFile =
                 )
             Expect.equal expected.Key decodeYAMLParameterFile.[1].Key ""
             Expect.sequenceEqual expected.Values decodeYAMLParameterFile.[1].Values ""
-            Expect.equal expected.Type decodeYAMLParameterFile.[1].Type ""
         testCase "exampleFile" <| fun _ ->
             let expected =
                 CWLParameterReference(
                     key = "exampleFile",
-                    values = ResizeArray [| "../examplePath" |],
-                    type_ = (CWLType.File)
+                    values = ResizeArray [| "../examplePath" |]
                 )
             Expect.equal expected.Key decodeYAMLParameterFile.[2].Key ""
             Expect.sequenceEqual expected.Values decodeYAMLParameterFile.[2].Values ""
-            Expect.equal expected.Type decodeYAMLParameterFile.[2].Type ""
         testCase "exampleDir" <| fun _ ->
             let expected =
                 CWLParameterReference(
                     key = "exampleDir",
-                    values = ResizeArray [| "../examplePathDir" |],
-                    type_ = (CWLType.Directory)
+                    values = ResizeArray [| "../examplePathDir" |]
                 )
             Expect.equal expected.Key decodeYAMLParameterFile.[3].Key ""
             Expect.sequenceEqual expected.Values decodeYAMLParameterFile.[3].Values ""
-            Expect.equal expected.Type decodeYAMLParameterFile.[3].Type ""
         testCase "exampleList" <| fun _ ->
             let expected =
                 CWLParameterReference(
@@ -59,12 +53,10 @@ let testYAMLParameterFile =
                 )
             Expect.equal expected.Key decodeYAMLParameterFile.[4].Key ""
             Expect.sequenceEqual expected.Values decodeYAMLParameterFile.[4].Values ""
-            Expect.equal expected.Type decodeYAMLParameterFile.[4].Type ""
         testCase "nested File arrays decode as structured values" <| fun _ ->
             let decoded = DecodeParameters.decodeYAMLParameterFile TestObjects.CWL.YAMLParameterFile.Structured.nestedFileArray
             let reference = Expect.wantExactlyOne decoded "Expected one parameter reference."
             Expect.equal reference.Key "sampleRecordFiles" "Key should decode."
-            Expect.equal reference.Type (Some (CWLType.Array (InputArraySchema(CWLType.Array (InputArraySchema(CWLType.File)))))) "Nested file array type should be inferred."
             match reference.Value with
             | Some (CWLParameterValue.Array outer) ->
                 Expect.equal outer.Count 2 "Outer array should contain one entry per sample."
@@ -106,18 +98,7 @@ let testYAMLParameterFile =
             let encoded = Encode.encodeYAMLParameterFile decoded
             let decodedAgain = DecodeParameters.decodeYAMLParameterFile encoded
             Expect.sequenceEqual decodedAgain decoded "Structured parameter values should roundtrip through YAML."
-        testCase "known fields are typed fields, not dynamic overflow" <| fun _ ->
-            let reference =
-                CWLParameterReference(
-                    key = "input",
-                    values = ResizeArray [| "value" |],
-                    type_ = CWLType.String
-                )
-            Expect.sequenceEqual CWLParameterReference.KnownFieldNames (Set [| "class"; "path"; "location"; "type"; "value" |]) ""
-            Expect.isEmpty ((reference :> DynamicObj) |> DynamicObjHelpers.dynamicPropertiesSnapshot) "Known fields should not be stored as dynamic properties."
-            DynObj.setProperty "arc:note" "keep me" reference
-            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" reference) (Some "keep me") "Unknown fields should stay in dynamic overflow."
-        testCase "file object parameter fields decode without field order assumptions and keep overflow" <| fun _ ->
+        testCase "file object fields decode without field order assumptions and keep extension fields on the file" <| fun _ ->
             let yaml = """exampleFile:
   path: ../examplePath
   arc:file note: keep file note
@@ -126,10 +107,39 @@ let testYAMLParameterFile =
             let reference = decoded.[0]
             Expect.equal reference.Key "exampleFile" ""
             Expect.sequenceEqual reference.Values (ResizeArray [| "../examplePath" |]) "Path should decode even when it appears before class."
-            Expect.equal reference.Type (Some (CWLType.File)) "Class should decode to File type regardless of field order."
-            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:file note" reference) (Some "keep file note") "Unknown parameter object fields should be preserved on the parameter reference."
-            Expect.isNone (DynObj.tryGetTypedPropertyValue<string> "class" reference) "Known class field should not be overflow."
-            Expect.isNone (DynObj.tryGetTypedPropertyValue<string> "path" reference) "Known path field should not be overflow."
+            match reference.Value with
+            | Some (CWLParameterValue.File file) ->
+                Expect.equal file.Path (Some "../examplePath") "The file keeps its path."
+                Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:file note" file) (Some "keep file note") "Unknown fields of the file object stay on the file."
+                Expect.isNone (DynObj.tryGetTypedPropertyValue<string> "class" file) "Known class field should not be overflow."
+            | other -> failwithf "Expected a file value but got %A" other
+        testCase "an object with the fields type and value is a record" <| fun _ ->
+            let yaml = "sample:\n  type: tumor\n  value: 3\n"
+            let reference = Expect.wantExactlyOne (DecodeParameters.decodeYAMLParameterFile yaml) "Expected one parameter reference."
+            let expected =
+                CWLParameterValue.Record (ResizeArray [
+                    CWLParameterRecordField("type", CWLParameterValue.String "tumor")
+                    CWLParameterRecordField("value", CWLParameterValue.Int 3L)
+                ])
+            Expect.equal reference.Value (Some expected) "The two fields are the fields of the record, whatever the process input declares."
+            Expect.equal (Encode.encodeYAMLParameterFile (ResizeArray [ reference ])) yaml "The record is written as it was read."
+        testCase "an object whose type field is no CWL type is a record too" <| fun _ ->
+            let yaml = """sample:
+  type: tumor tissue
+  id: s1
+"""
+            let reference = Expect.wantExactlyOne (DecodeParameters.decodeYAMLParameterFile yaml) "Expected one parameter reference."
+            let expected =
+                CWLParameterValue.Record (ResizeArray [
+                    CWLParameterRecordField("type", CWLParameterValue.String "tumor tissue")
+                    CWLParameterRecordField("id", CWLParameterValue.String "s1")
+                ])
+            Expect.equal reference.Value (Some expected) "The text tumor tissue is a string value, not a type."
+        testCase "a file value is written as a File object and nothing else" <| fun _ ->
+            let reference = CWLParameterReference(key = "reads", value = CWLParameterValue.File (FileInstance(path = "a.txt")))
+            let encoded = Encode.encodeYAMLParameterFile (ResizeArray [ reference ])
+            Expect.equal encoded "reads:\n  class: File\n  path: a.txt\n" "The job file has the class and the path, and no type."
+            Expect.sequenceEqual (DecodeParameters.decodeYAMLParameterFile encoded) (ResizeArray [ reference ]) "The File object reads back as the same value."
         testCase "quoted scalars decode as strings and plain scalars keep their type" <| fun _ ->
             let yaml = TestObjects.CWL.YAMLParameterFile.CoreSchemaScalars.quotedAndPlainScalars
             let decoded = DecodeParameters.decodeYAMLParameterFile yaml
@@ -223,29 +233,6 @@ items:
             Expect.isFalse (encoded.Contains("{}")) "The empty item must not turn into an empty mapping."
             let valuesOf (references: ResizeArray<CWLParameterReference>) = references |> Seq.map (fun r -> r.Key, r.Value) |> Seq.toList
             Expect.equal (valuesOf (DecodeParameters.decodeYAMLParameterFile encoded)) (valuesOf decoded) "The keys and values should not change."
-        testCase "the types of a parameter file read like a type text, so a reference roundtrips" <| fun _ ->
-            let point = CWLType.Reference "Point"
-            let references =
-                ResizeArray [
-                    CWLParameterReference(key = "origin", value = CWLParameterValue.Record (ResizeArray [ CWLParameterRecordField("x", CWLParameterValue.Int 1L) ]), type_ = point)
-                    CWLParameterReference(key = "route", value = CWLParameterValue.Array (ResizeArray [ CWLParameterValue.Int 1L ]), type_ = CWLType.Array (InputArraySchema(point)))
-                    CWLParameterReference(key = "log", value = CWLParameterValue.String "run.log", type_ = CWLType.Stdout)
-                ]
-            let encoded = Encode.encodeYAMLParameterFile references
-            Expect.stringContains encoded "type: Point" "The reference is written as its name."
-            Expect.sequenceEqual (DecodeParameters.decodeYAMLParameterFile encoded) references "The types read back."
-        testCase "a malformed type name or a stream type inside another type in a parameter file is a decode error" <| fun _ ->
-            let decodeError (types: string) =
-                try
-                    DecodeParameters.decodeYAMLParameterFile ("x:\n  type: " + types + "\n  value: 1\n") |> ignore
-                    None
-                with YamlDecodeException error -> Some error
-            for (types, message) in [ "a b", "Invalid CWL type"; "File[", "Invalid CWL type"; "[stdout, string]", "valid only as the whole type"; "stdout?", "valid only as the whole type" ] do
-                match decodeError types with
-                | Some error ->
-                    Expect.stringContains error.Message message $"{types}: the error should say what is wrong."
-                    Expect.isSome error.Span $"{types}: the error should have the place in the text."
-                | None -> failwith $"{types} must fail"
         testCase "a comment after a flow sequence does not hide the sequence" <| fun _ ->
             let yaml = """xs: [a, b] # tail
 files:

@@ -234,6 +234,26 @@ type WorkflowStepRun =
     | RunExpressionTool of obj
     | RunOperation of obj
 
+/// The process that the run reference of a step resolved to. The run holds the reference as it is written, and this
+/// holds what it stands for, one of the four cases of a run that carry a process. The reader of an ARC sets it from the
+/// other files of the ARC, and a step that was not read from an ARC has none.
+///
+/// The resolved process is no part of the value of the step, so every ResolvedRun is equal to every other one and hashes
+/// to 0. DynamicObj compares and hashes all properties of an object, and the resolved process is a whole workflow with
+/// resolved steps of its own.
+[<CustomEquality; NoComparison>]
+type ResolvedRun =
+    { Run: WorkflowStepRun option }
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? ResolvedRun -> true
+        | _ -> false
+
+    override this.GetHashCode() = 0
+
+    static member Empty : ResolvedRun = { Run = None }
+
 [<AttachMembers>]
 type WorkflowStep (
     id: string,
@@ -262,6 +282,7 @@ type WorkflowStep (
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<HintEntry> option = hints
     let mutable _sourceNodes = SourceNodes.Empty
+    let mutable _resolvedRun = ResolvedRun.Empty
 
     member this.Id
         with get() = _id
@@ -275,9 +296,19 @@ type WorkflowStep (
         with get() = _out
         and set(out_) = _out <- out_
 
+    /// The run as it is written: a reference to a file or to a process of the same packed document, or an inline
+    /// process. Setting it drops the resolved process, which belonged to the previous reference.
     member this.Run
         with get() = _run
-        and set(run) = _run <- run
+        and set(run) =
+            _run <- run
+            _resolvedRun <- ResolvedRun.Empty
+
+    /// The process that a run reference resolved to. The encoder writes only Run, so resolving a reference never changes
+    /// the text of the file.
+    member this.ResolvedRun
+        with get() = _resolvedRun
+        and set(value) = _resolvedRun <- value
 
     member this.Label
         with get() = _label
@@ -342,6 +373,11 @@ type WorkflowStep (
 
     static member KnownFieldNames =
         CWLKnownFieldNames.workflowStep
+
+    /// The run that holds the process of the step: the process that the reference resolved to, or the run itself when
+    /// it is an inline process or a reference that did not resolve.
+    static member getResolvedRun (step: WorkflowStep) : WorkflowStepRun =
+        defaultArg step.ResolvedRun.Run step.Run
 
     /// Updates a workflow step input by index.
     static member updateInputAt (index: int) (f: StepInput -> StepInput) (step: WorkflowStep) =
