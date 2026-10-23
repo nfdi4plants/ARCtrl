@@ -1137,6 +1137,18 @@ let private tests_DataContext =
 
 
         )
+        // https://github.com/nfdi4plants/ARCtrl/issues/651
+        testCase "Full_Compacted" (fun () ->
+            let dc = create_dataContextOfRow "MyFile" 1
+            let fd = BaseTypes.composeFragmentDescriptor(dc)
+            let graph = fd.Flatten()
+            let context = LDContext(baseContexts = ResizeArray [Context.initV1_2(); Context.initBioschemasContext()])
+            graph.SetContext(context)
+            graph.Compact_InPlace()
+            let fd' = graph.GetNode(fd.Id)
+            let dc' = BaseTypes.decomposeFragmentDescriptor(fd', graph = graph, context = context)
+            Expect.equal dc' dc "Data context should match"
+        )
     ]
 
 let private tests_Datamap =
