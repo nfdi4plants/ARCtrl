@@ -63,6 +63,7 @@ type AssayConversion =
         ResizeArray.append files filesFromfragments
 
     static member composeAssay (assay : ArcAssay, ?fs : FileSystem) =
+        BaseTypes.warnIfTitleEmpty("Assay", assay.Identifier, assay.Title)
         let measurementMethod = assay.TechnologyType |> Option.map BaseTypes.composeDefinedTerm
         let measurementTechnique = assay.TechnologyPlatform |> Option.map BaseTypes.composeDefinedTerm
         let variableMeasured = assay.MeasurementType |> Option.map BaseTypes.composePropertyValueFromOA

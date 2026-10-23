@@ -12,6 +12,12 @@ open System.Collections.Generic
 /// Functions for transforming base level ARC Table and ISA Json Objects
 type BaseTypes = 
 
+    /// Prints a warning if the title is empty, as the ISA RO-Crate profile requires a non-empty name
+    static member warnIfTitleEmpty (entityType : string, identifier : string, title : string option) =
+        match title with
+        | Some t when not (System.String.IsNullOrWhiteSpace t) -> ()
+        | _ -> printfn "Warning: %s \"%s\" has no title, but RO-Crate requires a non-empty name." entityType identifier
+
     static member composeComment (comment : ARCtrl.Comment) =
         let name = match comment.Name with | Some n -> n | None -> failwith "Comment must have a name"
         LDComment.create(name = name, ?text = comment.Value)
@@ -181,16 +187,16 @@ type BaseTypes =
         let selectorFormat =
             file
             |> Option.bind (fun f -> LDFile.tryGetUsageInfoAsString(f, ?context = context))
-        let explicationName = LDPropertyValue.tryGetValueAsString(fd)
-        let explicationID = LDPropertyValue.tryGetValueReferenceAsString(fd)
+        let explicationName = LDPropertyValue.tryGetValueAsString(fd, ?context = context)
+        let explicationID = LDPropertyValue.tryGetValueReferenceAsString(fd, ?context = context)
         let explication = BaseTypes.tryOntologyTermFromNameAndID(?name = explicationName, ?id = explicationID)
-        let unitName = LDPropertyValue.tryGetUnitTextAsString(fd)
-        let unitID = LDPropertyValue.tryGetUnitCodeAsString(fd)
+        let unitName = LDPropertyValue.tryGetUnitTextAsString(fd, ?context = context)
+        let unitID = LDPropertyValue.tryGetUnitCodeAsString(fd, ?context = context)
         let unit = BaseTypes.tryOntologyTermFromNameAndID(?name = unitName, ?id = unitID)
-        let generatedBy = LDPropertyValue.tryGetMeasurementMethodAsString(fd)
-        let description = LDPropertyValue.tryGetDescriptionAsString(fd)
-        let label = LDPropertyValue.tryGetAlternateNameAsString(fd)
-        let comments = LDPropertyValue.getDisambiguatingDescriptionsAsString(fd) |> ResizeArray.map Comment.fromString
+        let generatedBy = LDPropertyValue.tryGetMeasurementMethodAsString(fd, ?context = context)
+        let description = LDPropertyValue.tryGetDescriptionAsString(fd, ?context = context)
+        let label = LDPropertyValue.tryGetAlternateNameAsString(fd, ?context = context)
+        let comments = LDPropertyValue.getDisambiguatingDescriptionsAsString(fd, ?context = context) |> ResizeArray.map Comment.fromString
         DataContext(name = name, ?format = format, ?selectorFormat = selectorFormat, ?explication = explication, ?unit = unit, ?objectType = objectType, ?generatedBy = generatedBy, ?description = description, ?label = label, comments = comments)
 
     /// Convert a CompositeHeader and Cell tuple to a ISA ProcessInput

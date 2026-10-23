@@ -681,6 +681,61 @@ let private tests_ArcTableProcess =
             let name = LDLabProcess.getNameAsString p
             Expect.equal name $"{tableName1}_0" "Process name should be table name with row index"
         )
+        // https://github.com/nfdi4plants/ARCtrl/issues/585
+        testCase "EmptyInputOutputCells GetProcesses" (fun () ->
+            let t = ArcTable.init(tableName1)
+            t.AddColumns([|
+                CompositeColumn.create(CompositeHeader.Input IOType.Source, ResizeArray [CompositeCell.createFreeText "EIO_Source_0"; CompositeCell.emptyFreeText])
+                CompositeColumn.create(CompositeHeader.Parameter oa_species, createCells_chlamy 2)
+                CompositeColumn.create(CompositeHeader.Output IOType.Data, ResizeArray [CompositeCell.createData (Data(name = "EIO_Data_0")); CompositeCell.emptyData])
+            |])
+            let processes = t.GetProcesses()
+            Expect.equal processes.Length 2 "Should have 2 processes"
+            Expect.equal (LDLabProcess.getObjects processes.[0]).Count 1 "First process should have 1 input"
+            Expect.equal (LDLabProcess.getResults processes.[0]).Count 1 "First process should have 1 output"
+            Expect.equal (LDLabProcess.getObjects processes.[1]).Count 0 "Empty input cell should not result in an input"
+            Expect.equal (LDLabProcess.getResults processes.[1]).Count 0 "Empty output cell should not result in an output"
+        )
+        testCase "EmptyInputCellWithCharacteristic GetProcesses" (fun () ->
+            let t = ArcTable.init(tableName1)
+            t.AddColumns([|
+                CompositeColumn.create(CompositeHeader.Input IOType.Source, ResizeArray [CompositeCell.emptyFreeText])
+                CompositeColumn.create(CompositeHeader.Characteristic oa_species, createCells_chlamy 1)
+                CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "EICC_Sample" 1)
+            |])
+            let processes = t.GetProcesses()
+            Expect.equal processes.Length 1 "Should have 1 process"
+            let input = Expect.wantSome ((LDLabProcess.getObjects processes.[0]) |> Seq.tryExactlyOne) "Input with characteristic should be kept"
+            Expect.hasLength (LDSample.getCharacteristics input) 1 "Input should have the characteristic"
+        )
+        testCase "EmptyOutputCellWithFactor GetProcesses" (fun () ->
+            let t = ArcTable.init(tableName1)
+            t.AddColumns([|
+                CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "EOCF_Source" 1)
+                CompositeColumn.create(CompositeHeader.Factor oa_temperature, createCells_DegreeCelsius 1)
+                CompositeColumn.create(CompositeHeader.Output IOType.Sample, ResizeArray [CompositeCell.emptyFreeText])
+            |])
+            let processes = t.GetProcesses()
+            Expect.equal processes.Length 1 "Should have 1 process"
+            let output = Expect.wantSome ((LDLabProcess.getResults processes.[0]) |> Seq.tryExactlyOne) "Output with factor should be kept"
+            Expect.hasLength (LDSample.getFactors output) 1 "Output should have the factor value"
+        )
+        testCase "EmptyInputOutputCells GetAndFromProcesses" (fun () ->
+            let t = ArcTable.init(tableName1)
+            t.AddColumns([|
+                CompositeColumn.create(CompositeHeader.Input IOType.Source, ResizeArray [CompositeCell.createFreeText "EIO_Source_0"; CompositeCell.emptyFreeText])
+                CompositeColumn.create(CompositeHeader.Parameter oa_species, createCells_chlamy 2)
+                CompositeColumn.create(CompositeHeader.Output IOType.Sample, ResizeArray [CompositeCell.createFreeText "EIO_Sample_0"; CompositeCell.emptyFreeText])
+            |])
+            let processes = t.GetProcesses()
+            let table = ArcTable.fromProcesses(tableName1,processes)
+            // Empty input and output cells are not stored in the read table, so compare cell values instead of the table values
+            Expect.sequenceEqual table.Headers t.Headers "Headers should be equal"
+            Expect.equal table.RowCount t.RowCount "Row count should be equal"
+            for c in 0 .. t.ColumnCount - 1 do
+                for r in 0 .. t.RowCount - 1 do
+                    Expect.equal (table.GetCellAt(c,r)) (t.GetCellAt(c,r)) $"Cell ({c},{r}) should be equal"
+        )
 
         testCase "SingleRowMixedValues GetProcesses" (fun () ->          
             let t = singleRowMixedValues.Copy()          
@@ -1081,6 +1136,18 @@ let private tests_DataContext =
             Expect.equal dc dc' "Data context should match"
 
 
+        )
+        // https://github.com/nfdi4plants/ARCtrl/issues/651
+        testCase "Full_Compacted" (fun () ->
+            let dc = create_dataContextOfRow "MyFile" 1
+            let fd = BaseTypes.composeFragmentDescriptor(dc)
+            let graph = fd.Flatten()
+            let context = LDContext(baseContexts = ResizeArray [Context.initV1_2(); Context.initBioschemasContext()])
+            graph.SetContext(context)
+            graph.Compact_InPlace()
+            let fd' = graph.GetNode(fd.Id)
+            let dc' = BaseTypes.decomposeFragmentDescriptor(fd', graph = graph, context = context)
+            Expect.equal dc' dc "Data context should match"
         )
     ]
 
@@ -1572,6 +1639,24 @@ let tests_Publication =
             let pubMedID = "12345678"
             let p = ARCtrl.Publication.create(title = "My Paper", doi = doi, pubMedID = pubMedID)
             let ro_Publication = ScholarlyArticleConversion.composeScholarlyArticle p
+            let p' = ScholarlyArticleConversion.decomposeScholarlyArticle ro_Publication
+            Expect.equal p' p "Publication should match"
+        )
+        // https://github.com/nfdi4plants/ARCtrl/issues/627
+        testCase "DOI_FromScaffold_AbsoluteID" (fun () ->
+            let p = ARCtrl.Publication.create(title = "My Paper", doi = "10.1234/5678", pubMedID = "12345678")
+            let ro_Publication = ScholarlyArticleConversion.composeScholarlyArticle p
+            Expect.equal ro_Publication.Id "https://doi.org/10.1234/5678" "Publication id should be the DOI url"
+        )
+        testCase "PubMedID_FromScaffold_AbsoluteID" (fun () ->
+            let p = ARCtrl.Publication.create(title = "My Paper", pubMedID = "12345678")
+            let ro_Publication = ScholarlyArticleConversion.composeScholarlyArticle p
+            Expect.equal ro_Publication.Id "https://pubmed.ncbi.nlm.nih.gov/12345678/" "Publication id should be the PubMed url"
+        )
+        testCase "DOIUrl_FromScaffold_AbsoluteID" (fun () ->
+            let p = ARCtrl.Publication.create(title = "My Paper", doi = "https://doi.org/10.1234/5678")
+            let ro_Publication = ScholarlyArticleConversion.composeScholarlyArticle p
+            Expect.equal ro_Publication.Id "https://doi.org/10.1234/5678" "Publication id should be the given DOI url"
             let p' = ScholarlyArticleConversion.decomposeScholarlyArticle ro_Publication
             Expect.equal p' p "Publication should match"
         )
@@ -2601,6 +2686,18 @@ let tests_ArcWorkflow =
             let workflow' = WorkflowConversion.decomposeWorkflow ro_Workflow
             Expect.equal workflow' workflow "Workflow should match"
         )
+        // https://github.com/nfdi4plants/ARCtrl/issues/651
+        testCase "WithDatamap_FromScaffold" (fun () ->
+            let workflow = create_workflow_full()
+            let dc1 = create_dataContextOfRow "MyFile" 1
+            let dc2 = create_dataContextOfRow "MyFile" 2
+            workflow.Datamap <- Some (Datamap(ResizeArray[dc1;dc2]))
+            let ro_Workflow = WorkflowConversion.composeWorkflow workflow
+            let workflow' = WorkflowConversion.decomposeWorkflow ro_Workflow
+            let dm' = Expect.wantSome workflow'.Datamap "Workflow should have a data map"
+            Expect.equal dm' workflow.Datamap.Value "Data map should match"
+            Expect.equal workflow' workflow "Workflow should match"
+        )
         testCase  "Full_FromScaffold_Flattened" (fun () ->
             let workflow = create_workflow_full()
             let ro_Workflow = WorkflowConversion.composeWorkflow workflow
@@ -2900,6 +2997,17 @@ let tests_ArcRun =
             Expect.isTrue (r :? LDRef) "Run should be flattened correctly"
             //
             let run' = RunConversion.decomposeRun(ro_Run, graph = graph)
+            Expect.equal run' run "Run should match"
+        )
+        // File ids are normalized to start with ./, see https://github.com/nfdi4plants/ARCtrl/issues/615
+        testCase "Full_FromScaffold_NormalizedIds" (fun () ->
+            let run = create_run_full()
+            let ro_Run = RunConversion.composeRun run
+            let json = ro_Run.Flatten() |> JsonController.LDGraph.toROCrateJsonString()
+            let graph = JsonController.LDGraph.fromROCrateJsonString json
+            let ro_Run' = Expect.wantSome (graph.TryGetNode "./runs/MyRun/") "Run should have normalized id"
+            let run' = RunConversion.decomposeRun(ro_Run', graph = graph)
+            Expect.sequenceEqual run'.CWLInput run.CWLInput "CWL inputs should match"
             Expect.equal run' run "Run should match"
         )
         testCase "CWLAndISAInputMatch" (fun () ->
@@ -3598,6 +3706,20 @@ let tests_Investigation =
             Expect.isSome p'.PublicReleaseDate "PublicReleaseDate default value should be set"
             p'.PublicReleaseDate <- None // As a default value is used otherwise
             Expect.equal p' p "Investigation should match"
+        )
+        // https://github.com/nfdi4plants/ARCtrl/issues/651
+        testCase "RegisteredAssays_FromScaffold_Flattened" (fun () ->
+            let investigation = ArcInvestigation("My Investigation", title = "My Best Investigation")
+            let study = investigation.InitStudy("My Study")
+            investigation.InitAssay("My Assay") |> ignore
+            study.RegisterAssay("My Assay")
+            study.RegisterAssay("Missing Assay")
+            let ro_Investigation = InvestigationConversion.composeInvestigation investigation
+            let graph = ro_Investigation.Flatten()
+            Expect.isNone (graph.TryGetNode(LDDataset.genIDAssay "Missing Assay")) "Missing assay should not be referenced"
+            let investigation' = InvestigationConversion.decomposeInvestigation(ro_Investigation, graph = graph)
+            let study' = Expect.wantSome (investigation'.TryGetStudy "My Study") "Study should exist"
+            Expect.sequenceEqual study'.RegisteredAssayIdentifiers ["My Assay"] "Existing registered assay should be read"
         )
         // This test is meant to check, that two processes created from two different tables with the same name are distinctly named
         // This is important to ensure they are not merged

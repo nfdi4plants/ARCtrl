@@ -4,6 +4,7 @@ open TestingUtils
 open ARCtrl
 open CrossAsync
 open ARCtrl.ArcPathHelper
+open ARCtrl.Spreadsheet
 
 let fileExists =
     testList "FileExists" [
@@ -97,6 +98,16 @@ let readFileXlsx =
             let expected = ["A";"B";"C"] |> Seq.map box
             Expect.sequenceEqual row2 expected "Worksheet does not contain correct values"
 
+        })
+        // https://github.com/nfdi4plants/ARCtrl/issues/508
+        testCaseCrossAsync "tableWithTotalsRowFormula" (crossAsync {
+            let p = TestObjects.IO.assayWithTotalsRowFormulaPath
+            let! result = FileSystemHelper.readFileXlsxAsync p
+            let tableNames = result.GetWorksheets() |> Seq.collect (fun ws -> ws.Tables) |> Seq.map (fun t -> t.Name) |> Seq.sort |> List.ofSeq
+            Expect.equal tableNames ["annotationTable0"; "annotationTable1"] "Workbook should contain both annotation tables"
+            let assay = ArcAssay.fromFsWorkbook result
+            Expect.equal assay.Identifier "RNASeq" "Assay identifier should be read"
+            Expect.sequenceEqual (assay.Tables |> Seq.map (fun t -> t.Name, t.ColumnCount, t.RowCount)) [("rna_extraction", 9, 6); ("illumina", 14, 6)] "Annotation tables should be read completely"
         })
     ]
 
