@@ -504,6 +504,7 @@ type WorkflowConversion =
             |> CWL.CommandLineTool              
 
     static member composeWorkflow (workflow : ArcWorkflow, ?fs : FileSystem) =
+        BaseTypes.warnIfTitleEmpty("Workflow", workflow.Identifier, workflow.Title)
         let workflowProtocol =
             let workflowFilePath = Identifier.Workflow.cwlFileNameFromIdentifier workflow.Identifier
             match workflow.CWLDescription with

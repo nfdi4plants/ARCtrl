@@ -344,6 +344,7 @@ type RunConversion =
         cwlDescription, parameterRefs
 
     static member composeRun (run : ArcRun, ?fs : FileSystem) =
+        BaseTypes.warnIfTitleEmpty("Run", run.Identifier, run.Title)
         let workflowProtocol =
             let workflowFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
             match run.CWLDescription with

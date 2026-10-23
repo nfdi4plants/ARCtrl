@@ -12,6 +12,12 @@ open System.Collections.Generic
 /// Functions for transforming base level ARC Table and ISA Json Objects
 type BaseTypes = 
 
+    /// Prints a warning if the title is empty, as the ISA RO-Crate profile requires a non-empty name
+    static member warnIfTitleEmpty (entityType : string, identifier : string, title : string option) =
+        match title with
+        | Some t when not (System.String.IsNullOrWhiteSpace t) -> ()
+        | _ -> printfn "Warning: %s \"%s\" has no title, but RO-Crate requires a non-empty name." entityType identifier
+
     static member composeComment (comment : ARCtrl.Comment) =
         let name = match comment.Name with | Some n -> n | None -> failwith "Comment must have a name"
         LDComment.create(name = name, ?text = comment.Value)

@@ -14,6 +14,7 @@ open ARCtrl.Helper.Regex.ActivePatterns
 type StudyConversion = 
 
     static member composeStudy (study : ArcStudy, ?fs : FileSystem) =
+        BaseTypes.warnIfTitleEmpty("Study", study.Identifier, study.Title)
         let dateCreated =
             study.SubmissionDate
             |> Option.map DateTime.compose
