@@ -1575,6 +1575,24 @@ let tests_Publication =
             let p' = ScholarlyArticleConversion.decomposeScholarlyArticle ro_Publication
             Expect.equal p' p "Publication should match"
         )
+        // https://github.com/nfdi4plants/ARCtrl/issues/627
+        testCase "DOI_FromScaffold_AbsoluteID" (fun () ->
+            let p = ARCtrl.Publication.create(title = "My Paper", doi = "10.1234/5678", pubMedID = "12345678")
+            let ro_Publication = ScholarlyArticleConversion.composeScholarlyArticle p
+            Expect.equal ro_Publication.Id "https://doi.org/10.1234/5678" "Publication id should be the DOI url"
+        )
+        testCase "PubMedID_FromScaffold_AbsoluteID" (fun () ->
+            let p = ARCtrl.Publication.create(title = "My Paper", pubMedID = "12345678")
+            let ro_Publication = ScholarlyArticleConversion.composeScholarlyArticle p
+            Expect.equal ro_Publication.Id "https://pubmed.ncbi.nlm.nih.gov/12345678/" "Publication id should be the PubMed url"
+        )
+        testCase "DOIUrl_FromScaffold_AbsoluteID" (fun () ->
+            let p = ARCtrl.Publication.create(title = "My Paper", doi = "https://doi.org/10.1234/5678")
+            let ro_Publication = ScholarlyArticleConversion.composeScholarlyArticle p
+            Expect.equal ro_Publication.Id "https://doi.org/10.1234/5678" "Publication id should be the given DOI url"
+            let p' = ScholarlyArticleConversion.decomposeScholarlyArticle ro_Publication
+            Expect.equal p' p "Publication should match"
+        )
         testCase "DOI_PubMedID_FromScaffold_ToDeprecatedROCrate" (fun () ->
             let doi = "10.1234/5678"
             let pubMedID = "12345678"

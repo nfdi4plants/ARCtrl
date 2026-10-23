@@ -78,9 +78,21 @@ type ScholarlyArticleConversion =
                 LDPropertyValue.createPubMedID publication.PubMedID.Value
         ]
         let status = publication.Status |> Option.map BaseTypes.composeDefinedTerm
+        // RO-Crate requires citations to have an absolute URL as @id
+        let isUrl (s : string) = s.StartsWith("http://") || s.StartsWith("https://")
+        let id =
+            match publication.DOI, publication.PubMedID with
+            | Some doi, _ when isUrl doi -> Some doi
+            | Some doi, _ when doi <> "" -> Some $"https://doi.org/{doi}"
+            | _, Some pubMedID when isUrl pubMedID -> Some pubMedID
+            | _, Some pubMedID when pubMedID <> "" -> Some $"https://pubmed.ncbi.nlm.nih.gov/{pubMedID}/"
+            | _ ->
+                printfn "Warning: Publication \"%s\" has neither a DOI nor a PubMed ID, so it cannot be given an absolute URL as @id as required by RO-Crate." title
+                None
         let scholarlyArticle = 
             LDScholarlyArticle.create(
                 headline = title,
+                ?id = id,
                 identifiers = identifiers,
                 ?authors = authors,
                 //?url = publication.DOI,
