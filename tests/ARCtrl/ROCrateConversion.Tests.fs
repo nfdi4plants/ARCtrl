@@ -2686,6 +2686,18 @@ let tests_ArcWorkflow =
             let workflow' = WorkflowConversion.decomposeWorkflow ro_Workflow
             Expect.equal workflow' workflow "Workflow should match"
         )
+        // https://github.com/nfdi4plants/ARCtrl/issues/651
+        testCase "WithDatamap_FromScaffold" (fun () ->
+            let workflow = create_workflow_full()
+            let dc1 = create_dataContextOfRow "MyFile" 1
+            let dc2 = create_dataContextOfRow "MyFile" 2
+            workflow.Datamap <- Some (Datamap(ResizeArray[dc1;dc2]))
+            let ro_Workflow = WorkflowConversion.composeWorkflow workflow
+            let workflow' = WorkflowConversion.decomposeWorkflow ro_Workflow
+            let dm' = Expect.wantSome workflow'.Datamap "Workflow should have a data map"
+            Expect.equal dm' workflow.Datamap.Value "Data map should match"
+            Expect.equal workflow' workflow "Workflow should match"
+        )
         testCase  "Full_FromScaffold_Flattened" (fun () ->
             let workflow = create_workflow_full()
             let ro_Workflow = WorkflowConversion.composeWorkflow workflow
