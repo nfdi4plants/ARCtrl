@@ -449,9 +449,37 @@ module Decode =
             | _ ->
                 raise (System.ArgumentException($"Invalid InitialWorkDir listing entry: {YamlNode.show value}"))
 
+    /// Where a type may be one of the stream types stdout, stderr and stdin.
+    type StreamTypes =
+        /// Nowhere.
+        | NoStreams
+        /// As the whole type of an output of a command line tool, which admits stdout and stderr.
+        | OutputStreams
+        /// As the whole type of an input of a command line tool, which admits stdin.
+        | InputStreams
+        /// At every place. The type text of an RO-Crate entity has no position, and ARCtrl wrote it itself.
+        | AnyStreams
+
+    /// What the decoders of types, ports and steps know about the place that they read.
+    type DecodeScope =
+        { /// True where the place reads the shorthand of a type name (File[], File?). A type under items does not.
+          Shorthand: bool
+          /// Where the place admits the stream types.
+          StreamTypes: StreamTypes
+          /// The cwlVersion that a process without one of its own takes. It is the version of the enclosing process,
+          /// and a document at the root has none.
+          DefaultCwlVersion: string option }
+
+    /// The scope of the root of a document.
+    let rootScope : DecodeScope =
+        { Shorthand = true
+          StreamTypes = NoStreams
+          DefaultCwlVersion = None }
+
     /// The type that a type name spells. The node is the scalar that holds the name, and an unknown name is a decode
-    /// error at its place.
-    let cwlSimpleTypeFromString (node: YamlNode) (name: string) : CWLType =
+    /// error at its place. The stream types are valid here only in a scope that admits them at every place. A port
+    /// admits them as its whole type, which the readers of a port type check before they read a name.
+    let cwlSimpleTypeFromString (scope: DecodeScope) (node: YamlNode) (name: string) : CWLType =
         match name with
         | "File" -> File (FileInstance ())
         | "Directory" -> Directory (DirectoryInstance ())
@@ -461,7 +489,26 @@ module Decode =
         | "float" -> Float
         | "double" -> Double
         | "boolean" -> Boolean
-        | "stdout" -> Stdout
+        | "Any" -> Any
+        | "stdout" when scope.StreamTypes = AnyStreams -> Stdout
+        | "stderr" when scope.StreamTypes = AnyStreams -> Stderr
+        | "stdin" when scope.StreamTypes = AnyStreams -> Stdin
+        | "stdout" | "stderr" ->
+            raise (
+                YamlDecodeException
+                    { Message =
+                        "The type " + name + " is valid only as the whole type of an output of a command line tool, without an outputBinding."
+                      Path = []
+                      Span = node.Span }
+            )
+        | "stdin" ->
+            raise (
+                YamlDecodeException
+                    { Message =
+                        "The type stdin is valid only as the whole type of an input of a command line tool, without an inputBinding."
+                      Path = []
+                      Span = node.Span }
+            )
         | "null" -> Null
         | "record" | "enum" | "array" ->
             raise (
@@ -474,10 +521,10 @@ module Decode =
         | _ -> raise (YamlDecodeException { Message = "Invalid CWL type: " + name; Path = []; Span = node.Span })
 
     /// Read a type name with the shorthand of a CWL document. T[] is an array of T and T? is null or T, so T[]? is an
-    /// optional array. A document reads one [] only, because CWL reads a nested array as a schema. The flag tells
+    /// optional array. A document reads one [] only, because CWL reads a nested array as a schema. The scope tells
     /// whether the place of the node reads the shorthand, which a type under items does not. The second result tells
     /// whether the text ended in a question mark.
-    let cwlTypeFromShorthand (shorthand: bool) (node: YamlNode) (direntListing: unit -> CWLType) : CWLType * bool =
+    let cwlTypeFromShorthand (scope: DecodeScope) (node: YamlNode) (direntListing: unit -> CWLType) : CWLType * bool =
         let fail (message: string) : 'T =
             raise (YamlDecodeException { Message = message; Path = []; Span = node.Span })
         let text = typeText node
@@ -485,7 +532,7 @@ module Decode =
         let withoutOptional = if optional then text.Substring(0, text.Length - 1) else text
         let isArray = withoutOptional.EndsWith "[]"
         let name = if isArray then withoutOptional.Substring(0, withoutOptional.Length - 2) else withoutOptional
-        if (optional || isArray) && not shorthand then
+        if (optional || isArray) && not scope.Shorthand then
             fail (
                 "Expected a type name or a schema under items, found " + text + ". CWL reads the shorthand [] and ? as a type and "
                 + "as a member of a type list. Write the array as a schema with type: array and items."
@@ -493,16 +540,20 @@ module Decode =
         elif name.EndsWith "[]" then
             fail ("Expected one [] behind a type name, found " + text + ". CWL reads a nested array as a schema with type: array and items.")
         else
-            let baseType = if name = "Dirent" && not isArray then direntListing () else cwlSimpleTypeFromString node name
+            let baseType = if name = "Dirent" && not isArray then direntListing () else cwlSimpleTypeFromString scope node name
             let arrayType = if isArray then Array (InputArraySchema(baseType)) else baseType
             (if optional then Union (ResizeArray [ Null; arrayType ]) else arrayType), optional
 
+    /// The scope of a place that reads the shorthand of a type name, or of one that does not.
+    let private withShorthand (shorthand: bool) (scope: DecodeScope) : DecodeScope =
+        { scope with Shorthand = shorthand }
+
     /// Decode an InputArraySchema from a YamlNode
-    let rec inputArraySchemaDecoder: (YamlNode -> InputArraySchema) =
+    let rec inputArraySchemaDecoder (scope: DecodeScope) : (YamlNode -> InputArraySchema) =
         fun value ->
         Decode.object (fun get ->
             // The items are a type name or a schema, with no shorthand.
-            let decodedItems = get.Required.Field "items" itemsTypeDecoder
+            let decodedItems = get.Required.Field "items" (itemsTypeDecoder scope)
 
             // Array schema metadata is optional, but unknown fields still need to
             // remain on the schema object for lossless roundtrips.
@@ -520,8 +571,8 @@ module Decode =
         ) value
     /// Decode a record field object under its name. The type field is the type of the field. The doc and the label
     /// are typed, and every other property of the field, such as inputBinding or secondaryFiles, stays on the field.
-    and inputRecordFieldObject (name: string) (value: YamlNode) : InputRecordField =
-        let decodedType = value |> Decode.object (fun get -> get.Required.Field "type" cwlTypeDecoder')
+    and inputRecordFieldObject (scope: DecodeScope) (name: string) (value: YamlNode) : InputRecordField =
+        let decodedType = value |> Decode.object (fun get -> get.Required.Field "type" (cwlTypeDecoderAt (withShorthand true scope)))
         let doc, label, sourceNodes = docAndLabelDecoder value
         let field = InputRecordField(name, decodedType, ?doc = doc, ?label = label)
         field.SourceNodes <- sourceNodes
@@ -529,18 +580,18 @@ module Decode =
         field
 
     /// Decode an InputRecordField from a YamlNode
-    and inputRecordFieldDecoder: (YamlNode -> InputRecordField) =
+    and inputRecordFieldDecoder (scope: DecodeScope) : (YamlNode -> InputRecordField) =
         fun value ->
             // Array-style record fields carry their own name field.
             let name = value |> Decode.object (fun get -> get.Required.Field "name" (Decode.nonNull Decode.string))
-            atField name (fun () -> inputRecordFieldObject name value)
+            atField name (fun () -> inputRecordFieldObject scope name value)
 
     /// Decode fields as an array: [{name: x, type: y}]
-    and decodeFieldsAsArray (element: YamlNode) : ResizeArray<InputRecordField> =
-        Decode.resizearray inputRecordFieldDecoder element
+    and decodeFieldsAsArray (scope: DecodeScope) (element: YamlNode) : ResizeArray<InputRecordField> =
+        Decode.resizearray (inputRecordFieldDecoder scope) element
 
     /// Decode fields as a map: {fieldName: type} or {fieldName: {type: ..., inputBinding: ...}}
-    and decodeFieldsAsMap (element: YamlNode) : ResizeArray<InputRecordField> =
+    and decodeFieldsAsMap (scope: DecodeScope) (element: YamlNode) : ResizeArray<InputRecordField> =
         let fields = ResizeArray<InputRecordField>()
         for entry in mappingEntries element do
             // Map-style record fields use the mapping key as the field name. A mapping is the field object, with the
@@ -549,13 +600,13 @@ module Decode =
             let field =
                 atField name (fun () ->
                     match entry.Value.Kind with
-                    | YamlNodeKind.Mapping _ -> inputRecordFieldObject name entry.Value
-                    | _ -> InputRecordField(name, cwlTypeDecoder' entry.Value))
+                    | YamlNodeKind.Mapping _ -> inputRecordFieldObject scope name entry.Value
+                    | _ -> InputRecordField(name, cwlTypeDecoderAt (withShorthand true scope) entry.Value))
             fields.Add(field)
         fields
 
     /// Decode an InputRecordSchema from a YamlNode
-    and inputRecordSchemaDecoder: (YamlNode -> InputRecordSchema) =
+    and inputRecordSchemaDecoder (scope: DecodeScope) : (YamlNode -> InputRecordSchema) =
         fun value ->
         Decode.object (fun get ->
             // Try to decode fields as an array (flow-style) or as a map (block-style)
@@ -571,8 +622,8 @@ module Decode =
                     // A list holds field objects with their names, and a mapping holds the fields under their names.
                     atField "fields" (fun () ->
                         match element.Kind with
-                        | YamlNodeKind.Sequence _ -> Some (decodeFieldsAsArray element)
-                        | YamlNodeKind.Mapping _ -> Some (decodeFieldsAsMap element)
+                        | YamlNodeKind.Sequence _ -> Some (decodeFieldsAsArray scope element)
+                        | YamlNodeKind.Mapping _ -> Some (decodeFieldsAsMap scope element)
                         | _ ->
                             raise (
                                 YamlDecodeException
@@ -619,15 +670,15 @@ module Decode =
     /// Decode a CWLType from a YamlNode (handles all types including complex schemas). A document reads the shorthand
     /// File[] and File? as the whole value of a type field and as a member of a type list.
     and cwlTypeDecoder' (element: YamlNode): CWLType =
-        cwlTypeDecoderAt true element
+        cwlTypeDecoderAt rootScope element
 
     /// Decode the type under items. It is a name or a schema, and a list of those, with no shorthand.
-    and itemsTypeDecoder (element: YamlNode): CWLType =
-        cwlTypeDecoderAt false element
+    and itemsTypeDecoder (scope: DecodeScope) (element: YamlNode): CWLType =
+        cwlTypeDecoderAt (withShorthand false scope) element
 
-    /// Decode a CWLType from a YamlNode. The flag tells whether the place reads the shorthand of a type name.
-    and cwlTypeDecoderAt (shorthand: bool) (element: YamlNode): CWLType =
-        let noListing () = cwlSimpleTypeFromString element "Dirent"
+    /// Decode a CWLType from a YamlNode. The scope tells whether the place reads the shorthand of a type name.
+    and cwlTypeDecoderAt (scope: DecodeScope) (element: YamlNode): CWLType =
+        let noListing () = cwlSimpleTypeFromString scope element "Dirent"
 
         let parseTypeObjectString (typeNode: YamlNode) =
             // Object forms such as {type: File, secondaryFiles: ...} need the
@@ -637,7 +688,7 @@ module Decode =
             // object are read from the object itself.
             let parsed, isOptional =
                 atField "type" (fun () ->
-                    cwlTypeFromShorthand shorthand typeNode (fun () -> cwlSimpleTypeFromString typeNode "Dirent"))
+                    cwlTypeFromShorthand scope typeNode (fun () -> cwlSimpleTypeFromString scope typeNode "Dirent"))
             let typeStr = typeText typeNode
             let stripped = if isOptional then typeStr.Substring(0, typeStr.Length - 1) else typeStr
             let optionalOf (baseType: CWLType) = if isOptional then Union (ResizeArray [Null; baseType]) else baseType
@@ -650,12 +701,12 @@ module Decode =
         match element.Kind with
         | YamlNodeKind.Scalar _ ->
             // Simple type string
-            cwlTypeFromShorthand shorthand element noListing |> fst
+            cwlTypeFromShorthand scope element noListing |> fst
         | YamlNodeKind.Sequence collection ->
             // Union type. Each member is a type name with the shorthand of its place, an array schema, a record or an enum.
             let types =
                 collection.Items
-                |> List.mapi (fun index item -> atField $"[{index}]" (fun () -> cwlTypeDecoderAt shorthand item.Node))
+                |> List.mapi (fun index item -> atField $"[{index}]" (fun () -> cwlTypeDecoderAt scope item.Node))
                 |> ResizeArray
             Union types
         | YamlNodeKind.Mapping _ ->
@@ -668,13 +719,13 @@ module Decode =
                         // Schema objects advertise their kind in the type field. Simple
                         // File/Directory object types are handled separately to keep metadata.
                         match Decode.string typeNode with
-                        | "record" -> Record (inputRecordSchemaDecoder element)
+                        | "record" -> Record (inputRecordSchemaDecoder scope element)
                         | "enum" -> Enum (inputEnumSchemaDecoder element)
-                        | "array" -> Array (inputArraySchemaDecoder element)
+                        | "array" -> Array (inputArraySchemaDecoder scope element)
                         | _ -> parseTypeObjectString typeNode
                     | _ ->
                         // Nested complex type, for example type: { type: array, ... }, or a union list.
-                        atField "type" (fun () -> cwlTypeDecoderAt shorthand typeNode)
+                        atField "type" (fun () -> cwlTypeDecoderAt scope typeNode)
                 | None ->
                     raise (
                         YamlDecodeException
@@ -685,23 +736,39 @@ module Decode =
             ) element
         | YamlNodeKind.Alias name -> failAlias name element
 
+    /// The stream type that the whole type text of a port spells, when the scope admits it. Text such as stdout? or
+    /// stdout[] spells no stream type, and the name reader rejects it.
+    let private tryWholeStreamType (scope: DecodeScope) (node: YamlNode) : CWLType option =
+        match scope.StreamTypes, typeText node with
+        | OutputStreams, "stdout" -> Some Stdout
+        | OutputStreams, "stderr" -> Some Stderr
+        | InputStreams, "stdin" -> Some Stdin
+        | _ -> None
+
     /// Decode the type of a type that stands without a surrounding mapping. Such a type has no listing field, so the
     /// Dirent shorthand is an error.
-    let cwlTypeStringDecoder (node: YamlNode) =
-        cwlTypeFromShorthand
-            true
-            node
-            (fun () -> raise (YamlDecodeException { Message = "The Dirent type needs a listing field."; Path = []; Span = node.Span }))
+    let cwlTypeStringDecoder (scope: DecodeScope) (node: YamlNode) =
+        match tryWholeStreamType scope node with
+        | Some streamType -> streamType, false
+        | None ->
+            cwlTypeFromShorthand
+                scope
+                node
+                (fun () -> raise (YamlDecodeException { Message = "The Dirent type needs a listing field."; Path = []; Span = node.Span }))
 
     /// Decode the type text of the type field of a mapping and check if it is optional.
-    let cwlTypeStringMatcher (node: YamlNode) (get: Decode.IGetters) =
-        cwlTypeFromShorthand true node (fun () -> get.Required.Field "listing" direntDecoder)
+    let cwlTypeStringMatcher (scope: DecodeScope) (node: YamlNode) (get: Decode.IGetters) =
+        match tryWholeStreamType scope node with
+        | Some streamType -> streamType, false
+        | None -> cwlTypeFromShorthand scope node (fun () -> get.Required.Field "listing" direntDecoder)
 
     /// Decode the text of the additional type of an RO-Crate entity. The text is YAML. A scalar is a type name such as
     /// File[][]? and may be quoted, as the null type is written ("null"), or carry a comment. The shorthand nests
-    /// arrays there, which a CWL document does not read. Anything else is a schema or a list of types.
+    /// arrays there, which a CWL document does not read. Anything else is a schema or a list of types. The text has no
+    /// port around it, so the stream types are valid at every place.
     let cwlTypeFromAdditionalType (text: string) : CWLType =
         let node = readYaml text
+        let scope = { rootScope with StreamTypes = AnyStreams }
         match node.Kind with
         | YamlNodeKind.Scalar _ ->
             let typeName = typeText node
@@ -713,11 +780,11 @@ module Decode =
             while name.EndsWith "[]" do
                 name <- name.Substring(0, name.Length - 2)
                 depth <- depth + 1
-            let mutable arrayType = cwlSimpleTypeFromString node name
+            let mutable arrayType = cwlSimpleTypeFromString scope node name
             for _ in 1 .. depth do
                 arrayType <- Array (InputArraySchema(arrayType))
             if optional then Union (ResizeArray [ Null; arrayType ]) else arrayType
-        | _ -> cwlTypeDecoder' node
+        | _ -> cwlTypeDecoderAt scope node
 
     /// A type list of exactly null and one other type is the optional type, as the shorthand File? is. The encoder
     /// writes it as that shorthand, so the flag has to be set when the list is read.
@@ -728,37 +795,49 @@ module Decode =
         | _ -> false
 
     /// Access the type field and decode a YamlNode into a CWLType
-    let cwlTypeDecoder: (YamlNode -> CWLType*bool) =
+    let cwlTypeDecoder (scope: DecodeScope) : (YamlNode -> CWLType*bool) =
         Decode.object (fun get ->
             let typeNode = get.Required.Field "type" Decode.node
             match typeNode.Kind with
             | YamlNodeKind.Scalar _ ->
                 // Scalar type field, including shorthand such as File[]?.
-                atField "type" (fun () -> cwlTypeStringMatcher typeNode get)
+                atField "type" (fun () -> cwlTypeStringMatcher scope typeNode get)
             | _ ->
                 // Complex type field, for example inline record/enum/array schema.
-                let cwlType = get.Required.Field "type" cwlTypeDecoder'
+                let cwlType = get.Required.Field "type" (cwlTypeDecoderAt scope)
                 cwlType, isOptionalUnion cwlType
         )
 
     /// Decode the type of a port. CWL lets a map entry hold just the type, written as a type string
     /// (File?) or as a list of types (a union such as [null, File]). Any other value is the port object.
-    let portTypeDecoder (value: YamlNode) : CWLType * bool =
+    let portTypeDecoder (scope: DecodeScope) (value: YamlNode) : CWLType * bool =
         match value.Kind with
         | YamlNodeKind.Scalar _ ->
-            cwlTypeStringDecoder value
+            cwlTypeStringDecoder scope value
         | YamlNodeKind.Sequence _ ->
-            let cwlType = cwlTypeDecoder' value
+            let cwlType = cwlTypeDecoderAt scope value
             cwlType, isOptionalUnion cwlType
-        | _ -> cwlTypeDecoder value
+        | _ -> cwlTypeDecoder scope value
 
     /// Decode a named output from either map shorthand or full object form.
-    let decodeNamedOutput (name: string) (value: YamlNode) =
+    let decodeNamedOutput (scope: DecodeScope) (name: string) (value: YamlNode) =
         // Decode dependent fields before constructing the output so both shorthand
         // and object forms share the same object initialization path.
         let outputBinding = outputBindingDecoder value
         let outputSourceValues = outputSourceDecoder value
-        let cwlType = portTypeDecoder value |> fst
+        let cwlType = portTypeDecoder scope value |> fst
+        // The tool writes the file of a stream output itself, so a binding has nothing to bind.
+        let streamWithBinding (typeName: string) : unit =
+            raise (
+                YamlDecodeException
+                    { Message = "The type " + typeName + " is valid only for an output without an outputBinding."
+                      Path = []
+                      Span = value.Span }
+            )
+        match cwlType, outputBinding with
+        | Stdout, Some _ -> streamWithBinding "stdout"
+        | Stderr, Some _ -> streamWithBinding "stderr"
+        | _ -> ()
         let doc, label, sourceNodes = docAndLabelDecoder value
         // Optional presentation and behavior fields are read directly from the
         // object form; shorthand values simply leave them absent.
@@ -783,22 +862,22 @@ module Decode =
         output
 
     /// Decode one sequence-form output, warning only for malformed unnamed entries.
-    let decodeOutputSequenceItem (warnings: WarningSink) (path: string) (index: int) (item: YamlNode) =
+    let decodeOutputSequenceItem (warnings: WarningSink) (scope: DecodeScope) (path: string) (index: int) (item: YamlNode) =
         match tryGetStringField "id" item with
-        | Some id -> Some (atField id (fun () -> decodeNamedOutput id item))
+        | Some id -> Some (atField id (fun () -> decodeNamedOutput scope id item))
         | None ->
             addWarning warnings $"{path}[{index}]" "Skipped malformed unnamed CWL output entry." (Some item)
             None
 
     /// Decode a YamlNode into an Output Array
-    let outputArrayDecoderWithWarnings (warnings: WarningSink) (path: string) : (YamlNode -> ResizeArray<CWLOutput>) =
+    let outputArrayDecoderWithWarnings (warnings: WarningSink) (scope: DecodeScope) (path: string) : (YamlNode -> ResizeArray<CWLOutput>) =
         fun value ->
             match value.Kind with
             | YamlNodeKind.Sequence collection ->
                 // Sequence-form ports must declare id on each item. Unnamed malformed
                 // items are the tolerant path and produce warnings.
                 collection.Items
-                |> List.mapi (fun index item -> decodeOutputSequenceItem warnings path index item.Node)
+                |> List.mapi (fun index item -> decodeOutputSequenceItem warnings scope path index item.Node)
                 |> List.choose id
                 |> ResizeArray
             | _ ->
@@ -806,21 +885,21 @@ module Decode =
                 [|
                     for entry in mappingEntries value do
                         let name = entryName entry
-                        atField name (fun () -> decodeNamedOutput name entry.Value)
+                        atField name (fun () -> decodeNamedOutput scope name entry.Value)
                 |]
                 |> ResizeArray
 
     let outputArrayDecoder: (YamlNode -> ResizeArray<CWLOutput>) =
-        outputArrayDecoderWithWarnings None "outputs"
+        outputArrayDecoderWithWarnings None rootScope "outputs"
 
     /// Access the outputs field and decode a YamlNode into an Output Array
-    let outputsDecoderWithWarnings (warnings: WarningSink) : (YamlNode -> ResizeArray<CWLOutput>) =
+    let outputsDecoderWithWarnings (warnings: WarningSink) (scope: DecodeScope) : (YamlNode -> ResizeArray<CWLOutput>) =
         Decode.object (fun get ->
-            get.Required.Field "outputs" (outputArrayDecoderWithWarnings warnings "outputs")
+            get.Required.Field "outputs" (outputArrayDecoderWithWarnings warnings scope "outputs")
         )
 
     let outputsDecoder: (YamlNode -> ResizeArray<CWLOutput>) =
-        outputsDecoderWithWarnings None
+        outputsDecoderWithWarnings None rootScope
 
     /// Decode a YamlNode into a DockerRequirement
     let dockerRequirementDecoder (get: Decode.IGetters): DockerRequirement =
@@ -1272,12 +1351,32 @@ module Decode =
         // A port in scalar shorthand has no input binding.
         tryGetPresentField "inputBinding" decodeBinding
 
+    /// Decode the format of an input: one name or a list of names. The format of an output admits one name only.
+    let inputFormatDecoder (node: YamlNode) : InputFormat =
+        match node.Kind with
+        | YamlNodeKind.Sequence collection ->
+            collection.Items
+            |> List.mapi (fun index item -> atField $"[{index}]" (fun () -> Decode.nonNull Decode.string item.Node))
+            |> ResizeArray
+            |> InputFormat.Multiple
+        | _ -> InputFormat.Single (Decode.string node)
+
     /// Decode a named input from map shorthand or full object form, preserving optionality and extensions.
-    let decodeNamedInput (name: string) (value: YamlNode) =
+    let decodeNamedInput (scope: DecodeScope) (name: string) (value: YamlNode) =
         // inputBinding is nested and decoded separately so both shorthand and object
         // input definitions can share the same construction flow.
         let inputBinding = inputBindingDecoder value
-        let cwlType, optional = portTypeDecoder value
+        let cwlType, optional = portTypeDecoder scope value
+        match cwlType, inputBinding with
+        | Stdin, Some _ ->
+            // The tool reads a stdin input from its standard input, so a binding has nothing to bind.
+            raise (
+                YamlDecodeException
+                    { Message = "The type stdin is valid only for an input without an inputBinding."
+                      Path = []
+                      Span = value.Span }
+            )
+        | _ -> ()
         let doc, label, sourceNodes = docAndLabelDecoder value
         // Known optional fields are copied into typed properties; unrecognized fields
         // are attached below as DynamicObj overflow.
@@ -1289,7 +1388,7 @@ module Decode =
                 ?secondaryFiles = tryGetYamlField "secondaryFiles" value,
                 ?streamable = tryGetBoolField "streamable" value,
                 ?doc = doc,
-                ?format = tryGetStringField "format" value,
+                ?format = tryGetPresentField "format" inputFormatDecoder value,
                 ?loadContents = tryGetBoolField "loadContents" value,
                 ?loadListing = tryGetLoadListingField "loadListing" value,
                 ?defaultValue = tryGetYamlField "default" value
@@ -1301,21 +1400,21 @@ module Decode =
         input
 
     /// Decode one sequence-form input, warning only for malformed unnamed entries.
-    let decodeInputSequenceItem (warnings: WarningSink) (path: string) (index: int) (item: YamlNode) =
+    let decodeInputSequenceItem (warnings: WarningSink) (scope: DecodeScope) (path: string) (index: int) (item: YamlNode) =
         match tryGetStringField "id" item with
-        | Some id -> Some (atField id (fun () -> decodeNamedInput id item))
+        | Some id -> Some (atField id (fun () -> decodeNamedInput scope id item))
         | None ->
             addWarning warnings $"{path}[{index}]" "Skipped malformed unnamed CWL input entry." (Some item)
             None
 
     /// Decode a YamlNode into an Input array
-    let inputArrayDecoderWithWarnings (warnings: WarningSink) (path: string) : (YamlNode -> ResizeArray<CWLInput>) =
+    let inputArrayDecoderWithWarnings (warnings: WarningSink) (scope: DecodeScope) (path: string) : (YamlNode -> ResizeArray<CWLInput>) =
         fun value ->
             match value.Kind with
             | YamlNodeKind.Sequence collection ->
                 // Sequence-form inputs must carry an id on each object item.
                 collection.Items
-                |> List.mapi (fun index item -> decodeInputSequenceItem warnings path index item.Node)
+                |> List.mapi (fun index item -> decodeInputSequenceItem warnings scope path index item.Node)
                 |> List.choose id
                 |> ResizeArray
             | _ ->
@@ -1323,26 +1422,26 @@ module Decode =
                 [|
                     for entry in mappingEntries value do
                         let name = entryName entry
-                        atField name (fun () -> decodeNamedInput name entry.Value)
+                        atField name (fun () -> decodeNamedInput scope name entry.Value)
                 |]
                 |> ResizeArray
 
     let inputArrayDecoder: (YamlNode -> ResizeArray<CWLInput>) =
-        inputArrayDecoderWithWarnings None "inputs"
+        inputArrayDecoderWithWarnings None rootScope "inputs"
 
     /// Access the inputs field and decode the YamlNodes into an Input array
-    let inputsDecoderWithWarnings (warnings: WarningSink) : (YamlNode -> ResizeArray<CWLInput> option) =
+    let inputsDecoderWithWarnings (warnings: WarningSink) (scope: DecodeScope) : (YamlNode -> ResizeArray<CWLInput> option) =
         Decode.object (fun get ->
-            get.Optional.Field "inputs" (inputArrayDecoderWithWarnings warnings "inputs")
+            get.Optional.Field "inputs" (inputArrayDecoderWithWarnings warnings scope "inputs")
         )
 
     let inputsDecoder: (YamlNode -> ResizeArray<CWLInput> option) =
-        inputsDecoderWithWarnings None
+        inputsDecoderWithWarnings None rootScope
 
     /// Decode the inputs of a process. CWL requires them for every class, so a missing inputs field is a decode error
     /// at the place of the process.
-    let private requiredInputsDecoder (warnings: WarningSink) (what: string) (yamlCWL: YamlNode) : ResizeArray<CWLInput> =
-        match inputsDecoderWithWarnings warnings yamlCWL with
+    let private requiredInputsDecoder (warnings: WarningSink) (scope: DecodeScope) (what: string) (yamlCWL: YamlNode) : ResizeArray<CWLInput> =
+        match inputsDecoderWithWarnings warnings scope yamlCWL with
         | Some inputs -> inputs
         | None ->
             raise (
@@ -1370,9 +1469,6 @@ module Decode =
                     None
             | None -> None
         )
-
-    let versionDecoder: (YamlNode -> string) =
-        Decode.object (fun get -> get.Required.Field "cwlVersion" (Decode.nonNull Decode.string))
 
     let classDecoder: (YamlNode -> string) =
         Decode.object (fun get ->
@@ -1585,30 +1681,26 @@ module Decode =
             |> List.exists (fun entry -> entryName entry = fieldName)
         | _ -> false
 
-    /// Inject the parent workflow cwlVersion into inline run objects that omit it.
-    let withDefaultCwlVersion (defaultCwlVersion: string) (node: YamlNode) : YamlNode =
-        match node.Kind with
-        | YamlNodeKind.Mapping collection when not (hasField "cwlVersion" node) ->
-            // Inline run objects commonly omit cwlVersion and inherit the workflow's
-            // version for decoding purposes.
-            let versionEntry = YamlNode.entry (YamlNode.plain "cwlVersion") (Encode.string defaultCwlVersion)
-            { node with Kind = YamlNodeKind.Mapping { collection with Items = versionEntry :: collection.Items } }
-        | _ ->
-            // Inline tools can declare their own version, and non-object run values are path strings.
-            // Neither needs a version injection.
-            node
+    /// The cwlVersion of a process. A process below the top level takes the default of the scope, which is the version of
+    /// the enclosing process. CWL ignores a cwlVersion field anywhere else than at the top level, so a field of such a
+    /// process changes nothing, whatever it holds. The field at the top level is required and a text.
+    let versionDecoder (scope: DecodeScope) : (YamlNode -> string) =
+        fun node ->
+            match scope.DefaultCwlVersion with
+            | Some defaultCwlVersion -> defaultCwlVersion
+            | None -> Decode.object (fun get -> get.Required.Field "cwlVersion" (Decode.nonNull Decode.string)) node
 
     /// Decode a workflow step run as either a path string or an inline CWL processing unit.
-    let rec workflowStepRunDecoder (warnings: WarningSink) (defaultCwlVersion: string) (runValue: YamlNode) : WorkflowStepRun =
+    let rec workflowStepRunDecoder (warnings: WarningSink) (scope: DecodeScope) (runValue: YamlNode) : WorkflowStepRun =
         match runValue.Kind with
         | YamlNodeKind.Scalar _ ->
             // Most workflow steps reference an external CWL file by path.
             RunString (Decode.nonNull Decode.string runValue)
         | YamlNodeKind.Mapping _ ->
-            let normalizedRun = withDefaultCwlVersion defaultCwlVersion runValue
             // Inline run objects are full CWL processing units and can themselves
             // contain tolerant ports/steps, so the same warning sink is threaded in.
-            match decodeCWLProcessingUnitElementWithWarnings warnings normalizedRun with
+            // An inline run without a cwlVersion takes the one of the scope.
+            match decodeCWLProcessingUnitElementWithWarnings warnings scope runValue with
             | CommandLineTool tool -> WorkflowStepRunOps.fromTool tool
             | Workflow workflow -> WorkflowStepRunOps.fromWorkflow workflow
             | ExpressionTool expressionTool -> WorkflowStepRunOps.fromExpressionTool expressionTool
@@ -1617,10 +1709,10 @@ module Decode =
             raise (System.ArgumentException($"Unsupported run value for workflow step: {YamlNode.show runValue}"))
 
     /// Decode a named workflow step and thread warnings into nested step inputs and inline runs.
-    and decodeWorkflowStepFromValueWithId (warnings: WarningSink) (defaultCwlVersion: string) (path: string) (stepId: string) (value: YamlNode) : WorkflowStep =
+    and decodeWorkflowStepFromValueWithId (warnings: WarningSink) (scope: DecodeScope) (path: string) (stepId: string) (value: YamlNode) : WorkflowStep =
         // Required fields are decoded strictly because the step has an explicit id.
         let runValue = Decode.object (fun get' -> get'.Required.Field "run" (Decode.nonNull Decode.node)) value
-        let run = atField "run" (fun () -> workflowStepRunDecoder warnings defaultCwlVersion runValue)
+        let run = atField "run" (fun () -> workflowStepRunDecoder warnings scope runValue)
         let inputs =
             Decode.object (fun get' ->
                 get'.Required.Field "in" (inputStepDecoderWithWarnings warnings $"{path}.in")
@@ -1659,29 +1751,29 @@ module Decode =
         |> ignore
         wfStep
 
-    and decodeWorkflowStepFromArrayItem (defaultCwlVersion: string) (item: YamlNode) : WorkflowStep =
+    and decodeWorkflowStepFromArrayItem (scope: DecodeScope) (item: YamlNode) : WorkflowStep =
         let stepId = stringFieldDecoder "id" item
-        decodeWorkflowStepFromValueWithId None defaultCwlVersion "steps[]" stepId item
+        decodeWorkflowStepFromValueWithId None scope "steps[]" stepId item
 
     /// Decode one sequence-form workflow step, warning only for malformed unnamed entries.
-    and decodeWorkflowStepFromArrayItemWithWarnings (warnings: WarningSink) (defaultCwlVersion: string) (index: int) (item: YamlNode) =
+    and decodeWorkflowStepFromArrayItemWithWarnings (warnings: WarningSink) (scope: DecodeScope) (index: int) (item: YamlNode) =
         match tryGetStringField "id" item with
         // An id marks the item as an intended step, so malformed required fields
         // should still fail instead of becoming warnings.
-        | Some stepId -> Some (atField stepId (fun () -> decodeWorkflowStepFromValueWithId warnings defaultCwlVersion $"steps[{index}]" stepId item))
+        | Some stepId -> Some (atField stepId (fun () -> decodeWorkflowStepFromValueWithId warnings scope $"steps[{index}]" stepId item))
         | None ->
             // Unnamed malformed sequence entries are skipped with location-aware warnings.
             addWarning warnings $"steps[{index}]" "Skipped malformed unnamed CWL workflow step entry." (Some item)
             None
 
     /// Decode workflow steps from sequence-form or map-form syntax with version-aware inline runs.
-    and stepArrayDecoderWithVersion (warnings: WarningSink) (defaultCwlVersion: string) : (YamlNode -> ResizeArray<WorkflowStep>) =
+    and stepArrayDecoderWithScope (warnings: WarningSink) (scope: DecodeScope) : (YamlNode -> ResizeArray<WorkflowStep>) =
         fun value ->
             match value.Kind with
             | YamlNodeKind.Sequence collection ->
                 // Sequence-form steps carry id in each item.
                 collection.Items
-                |> List.mapi (fun index item -> decodeWorkflowStepFromArrayItemWithWarnings warnings defaultCwlVersion index item.Node)
+                |> List.mapi (fun index item -> decodeWorkflowStepFromArrayItemWithWarnings warnings scope index item.Node)
                 |> List.choose id
                 |> ResizeArray
             | _ ->
@@ -1689,21 +1781,33 @@ module Decode =
                 [|
                     for entry in mappingEntries value do
                         let key = entryName entry
-                        atField key (fun () -> decodeWorkflowStepFromValueWithId warnings defaultCwlVersion $"steps.{key}" key entry.Value)
+                        atField key (fun () -> decodeWorkflowStepFromValueWithId warnings scope $"steps.{key}" key entry.Value)
                 |]
                 |> ResizeArray
 
-    and stepsDecoderWithVersion (warnings: WarningSink) (defaultCwlVersion: string) : (YamlNode -> ResizeArray<WorkflowStep>) =
+    and stepsDecoderWithScope (warnings: WarningSink) (scope: DecodeScope) : (YamlNode -> ResizeArray<WorkflowStep>) =
         Decode.object (fun get ->
-            get.Required.Field "steps" (stepArrayDecoderWithVersion warnings defaultCwlVersion)
+            get.Required.Field "steps" (stepArrayDecoderWithScope warnings scope)
         )
 
     /// Decode a CommandLineTool and preserve unknown top-level metadata fields.
-    and commandLineToolDecoder (warnings: WarningSink) (yamlCWL : YamlNode) =
+    and commandLineToolDecoder (warnings: WarningSink) (scope: DecodeScope) (yamlCWL: YamlNode) =
         // Decode standard sections first. Inputs and outputs are required.
-        let cwlVersion = versionDecoder yamlCWL
-        let outputs = outputsDecoderWithWarnings warnings yamlCWL
-        let inputs = requiredInputsDecoder warnings "a command line tool" yamlCWL
+        let cwlVersion = versionDecoder scope yamlCWL
+        // Only the ports of a command line tool may have a stream type.
+        let outputs = outputsDecoderWithWarnings warnings { scope with StreamTypes = OutputStreams } yamlCWL
+        let inputs = requiredInputsDecoder warnings { scope with StreamTypes = InputStreams } "a command line tool" yamlCWL
+        // A stdin input reads the standard input, so the tool must not name a file for it as well.
+        match tryGetPresentField "stdin" id yamlCWL with
+        | Some stdinNode when inputs |> Seq.exists (fun input -> input.Type_ = Some Stdin) ->
+            atField "stdin" (fun () ->
+                raise (
+                    YamlDecodeException
+                        { Message = "The tool sets stdin and has an input of the type stdin. CWL admits only one of them."
+                          Path = []
+                          Span = stdinNode.Span }
+                ))
+        | _ -> ()
         let requirements = requirementsDecoder yamlCWL
         let hints = hintsDecoder yamlCWL
         let intent = intentDecoder yamlCWL
@@ -1754,12 +1858,12 @@ module Decode =
         description
 
     /// Decode an ExpressionTool and preserve unknown top-level metadata fields.
-    and expressionToolDecoder (warnings: WarningSink) (yamlCWL: YamlNode) =
+    and expressionToolDecoder (warnings: WarningSink) (scope: DecodeScope) (yamlCWL: YamlNode) =
         // ExpressionTool shares port/requirement metadata decoding with other
         // processing units, then decodes its required expression body.
-        let cwlVersion = versionDecoder yamlCWL
-        let outputs = outputsDecoderWithWarnings warnings yamlCWL
-        let inputs = requiredInputsDecoder warnings "an expression tool" yamlCWL
+        let cwlVersion = versionDecoder scope yamlCWL
+        let outputs = outputsDecoderWithWarnings warnings scope yamlCWL
+        let inputs = requiredInputsDecoder warnings scope "an expression tool" yamlCWL
         let requirements = requirementsDecoder yamlCWL
         let hints = hintsDecoder yamlCWL
         let intent = intentDecoder yamlCWL
@@ -1800,10 +1904,10 @@ module Decode =
         description
 
     /// Decode an Operation and enforce its required inputs collection.
-    and operationDecoder (warnings: WarningSink) (yamlCWL: YamlNode) =
-        let cwlVersion = versionDecoder yamlCWL
-        let outputs = outputsDecoderWithWarnings warnings yamlCWL
-        let inputs = requiredInputsDecoder warnings "an operation" yamlCWL
+    and operationDecoder (warnings: WarningSink) (scope: DecodeScope) (yamlCWL: YamlNode) =
+        let cwlVersion = versionDecoder scope yamlCWL
+        let outputs = outputsDecoderWithWarnings warnings scope yamlCWL
+        let inputs = requiredInputsDecoder warnings scope "an operation" yamlCWL
         let requirements = requirementsDecoder yamlCWL
         let hints = hintsDecoder yamlCWL
         let intent = intentDecoder yamlCWL
@@ -1841,16 +1945,16 @@ module Decode =
         description
 
     /// Decode a Workflow, including version-aware steps and preserved metadata fields.
-    and workflowDecoder (warnings: WarningSink) (yamlCWL: YamlNode) =
+    and workflowDecoder (warnings: WarningSink) (scope: DecodeScope) (yamlCWL: YamlNode) =
         // Workflow inputs and steps are required by this model; outputs and steps
         // can still use tolerant collection decoders internally.
-        let cwlVersion = versionDecoder yamlCWL
-        let outputs = outputsDecoderWithWarnings warnings yamlCWL
-        let inputs = requiredInputsDecoder warnings "a workflow" yamlCWL
+        let cwlVersion = versionDecoder scope yamlCWL
+        let outputs = outputsDecoderWithWarnings warnings scope yamlCWL
+        let inputs = requiredInputsDecoder warnings scope "a workflow" yamlCWL
         let requirements = requirementsDecoder yamlCWL
         let hints = hintsDecoder yamlCWL
         let intent = intentDecoder yamlCWL
-        let steps = stepsDecoderWithVersion warnings cwlVersion yamlCWL
+        let steps = stepsDecoderWithScope warnings { scope with DefaultCwlVersion = Some cwlVersion } yamlCWL
         let doc, label, sourceNodes = docAndLabelDecoder yamlCWL
         let description =
             CWLWorkflowDescription(
@@ -1886,30 +1990,30 @@ module Decode =
         description
 
     /// Dispatch a parsed CWL document to the processing-unit decoder declared by its class field.
-    and decodeCWLProcessingUnitElementWithWarnings (warnings: WarningSink) (yamlCWL: YamlNode) =
+    and decodeCWLProcessingUnitElementWithWarnings (warnings: WarningSink) (scope: DecodeScope) (yamlCWL: YamlNode) =
         let cls = classDecoder yamlCWL
         match cls with
         // The class field is the only discriminator at this layer; individual
         // decoders handle version, ports, requirements, and metadata.
-        | "CommandLineTool" -> CommandLineTool (commandLineToolDecoder warnings yamlCWL)
-        | "Workflow" -> Workflow (workflowDecoder warnings yamlCWL)
-        | "ExpressionTool" -> ExpressionTool (expressionToolDecoder warnings yamlCWL)
-        | "Operation" -> Operation (operationDecoder warnings yamlCWL)
+        | "CommandLineTool" -> CommandLineTool (commandLineToolDecoder warnings scope yamlCWL)
+        | "Workflow" -> Workflow (workflowDecoder warnings scope yamlCWL)
+        | "ExpressionTool" -> ExpressionTool (expressionToolDecoder warnings scope yamlCWL)
+        | "Operation" -> Operation (operationDecoder warnings scope yamlCWL)
         | _ -> raise (System.ArgumentException($"Invalid or unsupported CWL class: {cls}"))
 
     /// Decode an already-parsed CWL element without warning collection.
     let decodeCWLProcessingUnitElement (yamlCWL: YamlNode) =
-        decodeCWLProcessingUnitElementWithWarnings None yamlCWL
+        decodeCWLProcessingUnitElementWithWarnings None rootScope yamlCWL
 
-    let stepArrayDecoder = stepArrayDecoderWithVersion None "v1.2"
+    let stepArrayDecoder = stepArrayDecoderWithScope None { rootScope with DefaultCwlVersion = Some "v1.2" }
 
-    let stepsDecoder = stepsDecoderWithVersion None "v1.2"
+    let stepsDecoder = stepsDecoderWithScope None { rootScope with DefaultCwlVersion = Some "v1.2" }
 
     /// Decode a CWL CommandLineTool YAML string and return recoverable warnings.
     let decodeCommandLineToolWithWarnings (cwl: string) =
         let warnings = ResizeArray<DecodeWarning>()
         let yamlCWL = readYaml cwl
-        { Value = commandLineToolDecoder (Some warnings) yamlCWL; Warnings = warnings }
+        { Value = commandLineToolDecoder (Some warnings) rootScope yamlCWL; Warnings = warnings }
 
     /// Decode a CWL CommandLineTool and discard recoverable warnings.
     let decodeCommandLineTool (cwl: string) =
@@ -1919,7 +2023,7 @@ module Decode =
     let decodeWorkflowWithWarnings (cwl: string) =
         let warnings = ResizeArray<DecodeWarning>()
         let yamlCWL = readYaml cwl
-        { Value = workflowDecoder (Some warnings) yamlCWL; Warnings = warnings }
+        { Value = workflowDecoder (Some warnings) rootScope yamlCWL; Warnings = warnings }
 
     /// Decode a CWL Workflow and discard recoverable warnings.
     let decodeWorkflow (cwl: string) =
@@ -1929,7 +2033,7 @@ module Decode =
     let decodeExpressionToolWithWarnings (cwl: string) =
         let warnings = ResizeArray<DecodeWarning>()
         let yamlCWL = readYaml cwl
-        { Value = expressionToolDecoder (Some warnings) yamlCWL; Warnings = warnings }
+        { Value = expressionToolDecoder (Some warnings) rootScope yamlCWL; Warnings = warnings }
 
     /// Decode a CWL ExpressionTool and discard recoverable warnings.
     let decodeExpressionTool (cwl: string) =
@@ -1939,7 +2043,7 @@ module Decode =
     let decodeOperationWithWarnings (cwl: string) =
         let warnings = ResizeArray<DecodeWarning>()
         let yamlCWL = readYaml cwl
-        { Value = operationDecoder (Some warnings) yamlCWL; Warnings = warnings }
+        { Value = operationDecoder (Some warnings) rootScope yamlCWL; Warnings = warnings }
 
     /// Decode a CWL Operation and discard recoverable warnings.
     let decodeOperation (cwl: string) =
@@ -1949,7 +2053,7 @@ module Decode =
     let decodeCWLProcessingUnitWithWarnings (cwl:string) =
         let warnings = ResizeArray<DecodeWarning>()
         let yamlCWL = readYaml cwl
-        { Value = decodeCWLProcessingUnitElementWithWarnings (Some warnings) yamlCWL; Warnings = warnings }
+        { Value = decodeCWLProcessingUnitElementWithWarnings (Some warnings) rootScope yamlCWL; Warnings = warnings }
 
     /// Decode any CWL processing unit and discard recoverable warnings.
     let decodeCWLProcessingUnit (cwl:string) =
@@ -2024,7 +2128,7 @@ module DecodeParameters =
 
         let decodeType (typeElement: YamlNode) =
             match typeElement.Kind with
-            | YamlNodeKind.Scalar _ -> Decode.cwlTypeStringDecoder typeElement |> fst
+            | YamlNodeKind.Scalar _ -> Decode.cwlTypeStringDecoder Decode.rootScope typeElement |> fst
             | _ -> Decode.cwlTypeDecoder' typeElement
 
         match tryField "type" yEle, tryField "value" yEle with

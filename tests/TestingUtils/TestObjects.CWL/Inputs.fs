@@ -64,3 +64,18 @@ let specInputFieldsDecodeFileContent = """inputs:
     format: edam:format_2330
     secondaryFiles: .bai"""
     
+
+/// The forms of the format field of an input: a name, a list of names, a list of one name and the empty list.
+let formatFormsFileContent = """inputs:
+  single:
+    type: File
+    format: edam:format_2330
+  several:
+    type: File
+    format: [edam:format_2330, edam:format_1930]
+  one_in_list:
+    type: File
+    format: [edam:format_2330]
+  empty:
+    type: File
+    format: []"""

@@ -97,6 +97,33 @@ type InputBinding (
         ) =
         InputBinding(?prefix = prefix, ?position = position, ?itemSeparator = itemSeparator, ?separate = separate, ?loadContents = loadContents, ?valueFrom = valueFrom, ?shellQuote = shellQuote)
 
+/// The format of an input, as a single name or as a list of names. A name is an IRI or an expression. A single name
+/// differs from a list of one name, and the empty list stays an empty list, because CWL keeps the spellings apart. The
+/// lists compare by their elements, because a ResizeArray compares references. The format of an output is a single
+/// name only.
+[<RequireQualifiedAccess; CustomEquality; NoComparison; AttachMembers>]
+type InputFormat =
+    | Single of string
+    | Multiple of ResizeArray<string>
+    with
+    member this.AsValues() =
+        match this with
+        | Single value -> ResizeArray [| value |]
+        | Multiple values -> values
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? InputFormat as other ->
+            match this, other with
+            | Single left, Single right -> left = right
+            | Multiple left, Multiple right -> HashHelpers.seqEqual left right
+            | _ -> false
+        | _ -> false
+
+    override this.GetHashCode() =
+        match this with
+        | Single value -> HashHelpers.mergeHashes 1 (hash value)
+        | Multiple values -> HashHelpers.mergeHashes 2 (HashHelpers.hashSeq values)
 
 [<AttachMembers>]
 type CWLInput (
@@ -108,7 +135,7 @@ type CWLInput (
     ?secondaryFiles: RawYaml,
     ?streamable: bool,
     ?doc: string,
-    ?format: string,
+    ?format: InputFormat,
     ?loadContents: bool,
     ?loadListing: LoadListingEnum,
     ?defaultValue: RawYaml
@@ -167,6 +194,7 @@ type CWLInput (
         with get() = _sourceNodes
         and set(value) = _sourceNodes <- value
 
+    /// The format of the input: one name or a list of names.
     member this.Format
         with get() = _format
         and set(value) = _format <- value

@@ -209,6 +209,43 @@ let testCWLWorkflowDescriptionDecode =
                     failwithf "Expected CWLToolDescription payload but got %A" toolObj
             | other ->
                 failwithf "Expected RunCommandLineTool but got %A" other
+        testCase "an inline run takes the version of the enclosing process whatever its own cwlVersion holds" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.InlineRunVersions.workflowFile
+            let step (id: string) = decoded.Steps |> Seq.find (fun s -> s.Id = id)
+            let tool (run: WorkflowStepRun) = Expect.wantSome (WorkflowStepRunOps.tryGetTool run) "Expected an inline tool"
+            Expect.equal (tool (step "plain").Run).CWLVersion "v1.0" "A run without a version takes the version of the workflow."
+            Expect.equal (tool (step "own_version").Run).CWLVersion "v1.0" "A cwlVersion field inside the run changes nothing."
+            let nested = Expect.wantSome (WorkflowStepRunOps.tryGetWorkflow (step "nested").Run) "Expected an inline workflow"
+            Expect.equal nested.CWLVersion "v1.0" "An inline workflow without a version takes the version of the enclosing one."
+            Expect.equal (tool nested.Steps.[0].Run).CWLVersion "v1.0" "The process in it takes that version."
+        testCase "a process without a cwlVersion is a decode error when no process encloses it" <| fun _ ->
+            let yaml = """class: CommandLineTool
+baseCommand: echo
+inputs: {}
+outputs: {}"""
+            match (try Decode.decodeCommandLineTool yaml |> ignore; None with YamlDecodeException error -> Some error) with
+            | Some error ->
+                Expect.stringContains error.Message "cwlVersion" "The error names the missing field."
+                Expect.isSome error.Span "The error has the place in the text."
+            | None -> failwith "A process at the root needs a cwlVersion."
+        testCase "an inline run with an empty cwlVersion takes the version of the enclosing process" <| fun _ ->
+            let yaml = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs: {}
+steps:
+  s:
+    run:
+      class: CommandLineTool
+      cwlVersion:
+      baseCommand: echo
+      inputs: {}
+      outputs: {}
+    in: {}
+    out: []"""
+            let decoded = Decode.decodeWorkflow yaml
+            let tool = Expect.wantSome (WorkflowStepRunOps.tryGetTool decoded.Steps.[0].Run) "Expected an inline tool"
+            Expect.equal tool.CWLVersion "v1.2" "The empty field changes nothing."
         testCase "step input array form decode" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithInputArrayStepFile
             let stepInput = decoded.Steps.[0].In.[0]
@@ -654,6 +691,20 @@ let testCWLWorkflowDescriptionEncode =
                 let decodedModified = Decode.decodeWorkflow modified
                 let missing = decodedModified.Outputs |> Seq.filter (fun o -> o.OutputSource.IsNone) |> Seq.toList
                 Expect.isTrue (missing.Length > 0) "At least one output should be missing outputSource after manual removal"
+        ]
+        testList "Process elements" [
+            testCase "the process element encoders write the cwlVersion only when asked to" <| fun _ ->
+                let elements (includeCwlVersion: bool) =
+                    [ Encode.encodeToolDescriptionElement includeCwlVersion (CWLToolDescription(outputs = ResizeArray()))
+                      Encode.encodeWorkflowDescriptionElement includeCwlVersion (CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray()))
+                      Encode.encodeExpressionToolDescriptionElement includeCwlVersion (CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)"))
+                      Encode.encodeOperationDescriptionElement includeCwlVersion (CWLOperationDescription(inputs = ResizeArray(), outputs = ResizeArray())) ]
+                    |> List.map Encode.writeYaml
+                for text in elements true do
+                    Expect.stringContains text "cwlVersion: v1.2" "The element writes its version."
+                for text in elements false do
+                    Expect.isFalse (text.Contains "cwlVersion") "The element takes the version of its document."
+                    Expect.stringContains text "class:" "The element still writes its class."
         ]
         testList "Workflow Encode RoundTrip" [
             testCase "workflow encode/decode deterministic & outputSource preserved" <| fun _ ->

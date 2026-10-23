@@ -488,7 +488,17 @@ and [<CustomEquality; NoComparison>] CWLType =
     | Float
     | Double
     | Boolean
+    /// Validates for any non-null value.
+    | Any
+    /// The type of an output of a command line tool that holds the standard output of the tool. CWL admits it as the
+    /// whole type of an output without an outputBinding.
     | Stdout
+    /// The type of an output of a command line tool that holds the standard error of the tool. CWL admits it as the
+    /// whole type of an output without an outputBinding.
+    | Stderr
+    /// The type of an input of a command line tool that reads from the standard input of the tool. CWL admits it as the
+    /// whole type of an input without an inputBinding, and the tool must not set stdin itself.
+    | Stdin
     | Null
     | Array of InputArraySchema
     | Record of InputRecordSchema
@@ -508,7 +518,10 @@ and [<CustomEquality; NoComparison>] CWLType =
             | Float, Float -> true
             | Double, Double -> true
             | Boolean, Boolean -> true
+            | Any, Any -> true
             | Stdout, Stdout -> true
+            | Stderr, Stderr -> true
+            | Stdin, Stdin -> true
             | Null, Null -> true
             | Array a1, Array a2 -> a1.Equals(a2)
             | Record r1, Record r2 -> r1.Equals(r2)
@@ -536,6 +549,9 @@ and [<CustomEquality; NoComparison>] CWLType =
         | Record r -> hash (12, r)
         | Enum e -> hash (13, e)
         | Union u -> hash (14, u |> Seq.map (fun t -> t.GetHashCode()) |> Seq.toList)
+        | Any -> hash 15
+        | Stderr -> hash 16
+        | Stdin -> hash 17
 
     static member file() = File(FileInstance())
 

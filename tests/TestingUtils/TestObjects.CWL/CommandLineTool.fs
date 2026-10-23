@@ -380,3 +380,40 @@ arguments:
   - y
 outputs: {}
 """
+
+module StreamTypes =
+
+    /// A tool whose input has the type stdin and whose outputs have the types stdout and stderr.
+    let cwlFile = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: sort
+stdout: sorted.txt
+stderr: sort.log
+inputs:
+  unsorted: stdin
+outputs:
+  sorted: stdout
+  log:
+    type: stderr
+    doc: The standard error of the tool.
+"""
+
+    /// A workflow whose inline tool has an output of the type stdout.
+    let workflowWithInlineTool = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs:
+  result:
+    type: File
+    outputSource: sort/sorted
+steps:
+  sort:
+    run:
+      class: CommandLineTool
+      baseCommand: sort
+      inputs: {}
+      outputs:
+        sorted: stdout
+    in: {}
+    out: [sorted]
+"""

@@ -12,6 +12,16 @@ module Encode =
     // Type classification helpers - Single source of truth for CWL type categorization
     // ------------------------------
     
+    /// Matches the optional type, the list [null, X]. Schema Salad reads the shorthand X? as exactly this list. A list
+    /// with the null behind X is a plain type list, and X? would reorder it.
+    let (|OptionalOf|_|) (t: CWLType) : CWLType option =
+        match t with
+        | Union types ->
+            match Seq.toList types with
+            | [ Null; otherType ] -> Some otherType
+            | _ -> None
+        | _ -> None
+
     /// Active pattern to classify CWL types as primitive (with shorthand) or complex (requiring full YAML)
     let rec (|PrimitiveType|ComplexType|) (t: CWLType) =
         match t with
@@ -26,8 +36,11 @@ module Encode =
         | Float -> PrimitiveType "float"
         | Double -> PrimitiveType "double"
         | Boolean -> PrimitiveType "boolean"
+        | Any -> PrimitiveType "Any"
         | Null -> PrimitiveType "null"
         | Stdout -> PrimitiveType "stdout"
+        | Stderr -> PrimitiveType "stderr"
+        | Stdin -> PrimitiveType "stdin"
         // Schemas and general unions require structured YAML unless a later
         // optional-union special case handles them.
         | Record _ | Enum _ | Union _ -> ComplexType
@@ -61,13 +74,9 @@ module Encode =
         | Array arraySchema ->
             // Complex if array doesn't have shorthand (array of record/enum)
             tryGetArrayShorthand arraySchema.Items |> Option.isNone
-        | Union types ->
-            // Complex if not a simple optional type
-            let typesList = types |> Seq.toList
-            match typesList with
-            | [Null; otherType] | [otherType; Null] ->
-                isComplexType otherType
-            | _ -> true // Multi-type union is complex
+        | OptionalOf otherType -> isComplexType otherType
+        // Every other union is a type list.
+        | Union _ -> true
         | _ -> false
 
     // ------------------------------
@@ -375,37 +384,36 @@ module Encode =
         | Float -> encodeString "float"
         | Double -> encodeString "double"
         | Boolean -> encodeString "boolean"
+        | Any -> encodeString "Any"
         | Stdout -> encodeString "stdout"
+        | Stderr -> encodeString "stderr"
+        | Stdin -> encodeString "stdin"
         | Null -> encodeString "null"
-        | Union types ->
-            // Check if this is an optional type (union of null and one other type).
-            // Only those unions can use CWL's `?` shorthand.
-            let typesList = types |> Seq.toList
-            match typesList with
-            | [Null; otherType] | [otherType; Null] ->
-                // Optional type - use short form with "?"
-                match otherType with
-                | File _ -> encodeString "File?"
-                | Directory _ -> encodeString "Directory?"
-                | String -> encodeString "string?"
-                | Int -> encodeString "int?"
-                | Long -> encodeString "long?"
-                | Float -> encodeString "float?"
-                | Double -> encodeString "double?"
-                | Boolean -> encodeString "boolean?"
-                | Array arraySchema ->
-                    // Optional array - use shorthand detection
-                    match arrayShorthand arraySchema.Items with
-                    | Some shorthand -> encodeString (shorthand + "[]?")
-                    | None ->
-                        // Complex optional array - use full form
-                        encodeSequence [ encodeString "null"; encodeInputArraySchema arraySchema ]
-                | _ ->
-                    // Complex optional type - use array form [null, type]
-                    typesList |> List.map encodeMember |> encodeSequence
+        | OptionalOf otherType ->
+            // Only the list [null, X] can use CWL's `?` shorthand.
+            match otherType with
+            | File _ -> encodeString "File?"
+            | Directory _ -> encodeString "Directory?"
+            | String -> encodeString "string?"
+            | Int -> encodeString "int?"
+            | Long -> encodeString "long?"
+            | Float -> encodeString "float?"
+            | Double -> encodeString "double?"
+            | Boolean -> encodeString "boolean?"
+            | Any -> encodeString "Any?"
+            | Array arraySchema ->
+                // Optional array - use shorthand detection
+                match arrayShorthand arraySchema.Items with
+                | Some shorthand -> encodeString (shorthand + "[]?")
+                | None ->
+                    // Complex optional array - use full form
+                    encodeSequence [ encodeString "null"; encodeInputArraySchema arraySchema ]
             | _ ->
-                // General union - use array form
-                typesList |> List.map encodeMember |> encodeSequence
+                // Complex optional type - use array form [null, type]
+                [ Null; otherType ] |> List.map encodeMember |> encodeSequence
+        | Union types ->
+            // Every other union is a type list.
+            types |> Seq.toList |> List.map encodeMember |> encodeSequence
         | Array arraySchema ->
             // Try to use short form for arrays; fall back to schema object for complex item types.
             match arrayShorthand arraySchema.Items with
@@ -532,32 +540,10 @@ module Encode =
             // Output type encoding mirrors input type encoding, but wraps complex
             // schema forms under `type` when the port itself is an object.
             match t with
-            | Union types ->
-                // Check if this is a simple optional (encodeCWLType handles the short form)
-                let typesList = types |> Seq.toList
-                match typesList with
-                | [Null; otherType] | [otherType; Null] ->
-                    // Simple optional or optional simple array - use short form
-                    match otherType with
-                    | File _ | Directory _ | String | Int | Long | Float | Double | Boolean ->
-                        encodeCWLType t
-                    | Array arraySchema ->
-                        match arraySchema.Items with
-                        | File _ | Directory _ | String | Int | Long | Float | Double | Boolean ->
-                            encodeCWLType t
-                        | _ ->
-                            // Complex optional array
-                            encodeCWLType t
-                    | _ ->
-                        // Complex optional type
-                        encodeCWLType t
-                | _ ->
-                    // General union
-                    encodeCWLType t
             | Array arraySchema ->
                 // Check if we can use short form
                 match arraySchema.Items with
-                | File _ | Directory _ | Dirent _ | String | Int | Long | Float | Double | Boolean ->
+                | File _ | Directory _ | Dirent _ | String | Int | Long | Float | Double | Boolean | Any ->
                     encodeCWLType t
                 | _ ->
                     // Complex array - need full schema form wrapped in "type"
@@ -569,7 +555,7 @@ module Encode =
                 // Enum needs full schema form wrapped in "type"
                 Encode.object [ "type", encodeInputEnumSchema enumSchema ]
             | _ ->
-                // Simple types
+                // Simple types and unions
                 encodeCWLType t
         )
 
@@ -614,38 +600,22 @@ module Encode =
         |> appendDynamicPropertiesExcept InputBinding.KnownFieldNames ib
         |> Encode.object
 
+    /// Encode the format of an input in the form that it holds, so a list of one name stays a list.
+    let encodeInputFormat (format: InputFormat) : YamlNode =
+        match format with
+        | InputFormat.Single value -> encodeString value
+        | InputFormat.Multiple values -> values |> Seq.map encodeString |> List.ofSeq |> encodeSequence
+
     /// Encode a workflow or tool input, choosing shorthand only when type is the sole field.
     let encodeCWLInput (i:CWLInput) : (string * YamlNode) =
         let typeElement = i.Type_ |> Option.map (fun t ->
             // Input type object wrapping follows the same shorthand/full-schema rules
             // as outputs to avoid losing complex schema metadata.
             match t with
-            | Union types ->
-                // Check if this is a simple optional (encodeCWLType handles the short form)
-                let typesList = types |> Seq.toList
-                match typesList with
-                | [Null; otherType] | [otherType; Null] ->
-                    // Simple optional or optional simple array - use short form
-                    match otherType with
-                    | File _ | Directory _ | String | Int | Long | Float | Double | Boolean ->
-                        encodeCWLType t
-                    | Array arraySchema ->
-                        match arraySchema.Items with
-                        | File _ | Directory _ | String | Int | Long | Float | Double | Boolean ->
-                            encodeCWLType t
-                        | _ ->
-                            // Complex optional array
-                            encodeCWLType t
-                    | _ ->
-                        // Complex optional type
-                        encodeCWLType t
-                | _ ->
-                    // General union
-                    encodeCWLType t
             | Array arraySchema ->
                 // Check if we can use short form
                 match arraySchema.Items with
-                | File _ | Directory _ | Dirent _ | String | Int | Long | Float | Double | Boolean ->
+                | File _ | Directory _ | Dirent _ | String | Int | Long | Float | Double | Boolean | Any ->
                     encodeCWLType t
                 | _ ->
                     // Complex array - need full schema form wrapped in "type"
@@ -657,10 +627,10 @@ module Encode =
                 // Enum needs full schema form wrapped in "type"
                 Encode.object [ "type", encodeInputEnumSchema enumSchema ]
             | _ ->
-                // Simple types
+                // Simple types and unions
                 encodeCWLType t
         )
-        
+
         let pairs =
             // Build object-form fields in CWL's conventional order; optional is
             // encoded through the type union shorthand rather than as a separate field.
@@ -670,7 +640,7 @@ module Encode =
             |> appendOpt "secondaryFiles" rawYamlNode i.SecondaryFiles
             |> appendOpt "streamable" Encode.bool i.Streamable
             |> appendOpt "doc" (encodeSourceText i.SourceNodes.Doc) i.Doc
-            |> appendOpt "format" encodeString i.Format
+            |> appendOpt "format" encodeInputFormat i.Format
             |> appendOpt "loadContents" Encode.bool i.LoadContents
             |> appendOpt "loadListing" (LoadListingEnum.toCwlString >> encodeString) i.LoadListing
             |> appendOpt "default" rawYamlNode i.DefaultValue
@@ -941,6 +911,10 @@ module Encode =
         | 1 -> encodeString scatter.[0]
         | _ -> scatter |> Seq.map encodeString |> List.ofSeq |> encodeSequence
 
+    /// The cwlVersion entry of a process. A process that takes the version of its enclosing document writes none.
+    let private cwlVersionPairs (includeCwlVersion: bool) (version: string) : (string * YamlNode) list =
+        if includeCwlVersion then [ "cwlVersion", encodeString version ] else []
+
     /// Encode workflow step run targets as paths or inline processing units.
     let rec encodeWorkflowStepRun (run: WorkflowStepRun) : YamlNode =
         match run with
@@ -950,34 +924,35 @@ module Encode =
         | RunCommandLineTool toolObj ->
             // Inline CommandLineTool run; validate the object payload before encoding.
             match WorkflowStepRunOps.tryGetTool run with
-            | Some tool -> encodeToolDescriptionElement tool
+            | Some tool -> encodeToolDescriptionElement true tool
             | None ->
                 raise (System.ArgumentException($"RunCommandLineTool must contain CWLToolDescription but got %A{toolObj}"))
         | RunWorkflow workflowObj ->
             // Inline nested Workflow run.
             match WorkflowStepRunOps.tryGetWorkflow run with
-            | Some workflow -> encodeWorkflowDescriptionElement workflow
+            | Some workflow -> encodeWorkflowDescriptionElement true workflow
             | None ->
                 raise (System.ArgumentException($"RunWorkflow must contain CWLWorkflowDescription but got %A{workflowObj}"))
         | RunExpressionTool expressionToolObj ->
             // Inline ExpressionTool run.
             match WorkflowStepRunOps.tryGetExpressionTool run with
-            | Some expressionTool -> encodeExpressionToolDescriptionElement expressionTool
+            | Some expressionTool -> encodeExpressionToolDescriptionElement true expressionTool
             | None ->
                 raise (System.ArgumentException($"RunExpressionTool must contain CWLExpressionToolDescription but got %A{expressionToolObj}"))
         | RunOperation operationObj ->
             // Inline Operation run.
             match WorkflowStepRunOps.tryGetOperation run with
-            | Some operation -> encodeOperationDescriptionElement operation
+            | Some operation -> encodeOperationDescriptionElement true operation
             | None ->
                 raise (System.ArgumentException($"RunOperation must contain CWLOperationDescription but got %A{operationObj}"))
 
-    /// Encode a CommandLineTool element with ordered sections and preserved metadata.
-    and encodeToolDescriptionElement (td: CWLToolDescription) : YamlNode =
+    /// Encode a CommandLineTool element with ordered sections and preserved metadata. The flag tells whether the element
+    /// writes its cwlVersion.
+    and encodeToolDescriptionElement (includeCwlVersion: bool) (td: CWLToolDescription) : YamlNode =
         let basePairs =
             // Base identity fields stay in the first top-level section.
-            [ "cwlVersion", encodeString td.CWLVersion
-              "class", encodeString "CommandLineTool" ]
+            cwlVersionPairs includeCwlVersion td.CWLVersion
+            @ [ "class", encodeString "CommandLineTool" ]
             |> appendOptPair (td.Id |> Option.map (fun id -> "id", encodeString id))
             |> appendOpt "label" (encodeSourceText td.SourceNodes.Label) td.Label
             |> appendOpt "doc" (encodeDocText td.SourceNodes.Doc) td.Doc
@@ -1028,12 +1003,13 @@ module Encode =
         |> appendDynamicPropertiesExcept CWLToolDescription.KnownFieldNames td
         |> Encode.object
 
-    /// Encode an ExpressionTool element with ordered sections and preserved metadata.
-    and encodeExpressionToolDescriptionElement (et: CWLExpressionToolDescription) : YamlNode =
+    /// Encode an ExpressionTool element with ordered sections and preserved metadata. The flag tells whether the element
+    /// writes its cwlVersion.
+    and encodeExpressionToolDescriptionElement (includeCwlVersion: bool) (et: CWLExpressionToolDescription) : YamlNode =
         let basePairs =
             // Base identity fields stay in the first top-level section.
-            [ "cwlVersion", encodeString et.CWLVersion
-              "class", encodeString "ExpressionTool" ]
+            cwlVersionPairs includeCwlVersion et.CWLVersion
+            @ [ "class", encodeString "ExpressionTool" ]
             |> appendOptPair (et.Id |> Option.map (fun id -> "id", encodeString id))
             |> appendOpt "label" (encodeSourceText et.SourceNodes.Label) et.Label
             |> appendOpt "doc" (encodeDocText et.SourceNodes.Doc) et.Doc
@@ -1068,12 +1044,13 @@ module Encode =
         |> appendDynamicPropertiesExcept CWLExpressionToolDescription.KnownFieldNames et
         |> Encode.object
 
-    /// Encode an Operation element with ordered sections and preserved metadata.
-    and encodeOperationDescriptionElement (op: CWLOperationDescription) : YamlNode =
+    /// Encode an Operation element with ordered sections and preserved metadata. The flag tells whether the element
+    /// writes its cwlVersion.
+    and encodeOperationDescriptionElement (includeCwlVersion: bool) (op: CWLOperationDescription) : YamlNode =
         let basePairs =
             // Base identity fields stay in the first top-level section.
-            [ "cwlVersion", encodeString op.CWLVersion
-              "class", encodeString "Operation" ]
+            cwlVersionPairs includeCwlVersion op.CWLVersion
+            @ [ "class", encodeString "Operation" ]
             |> appendOptPair (op.Id |> Option.map (fun id -> "id", encodeString id))
             |> appendOpt "label" (encodeSourceText op.SourceNodes.Label) op.Label
             |> appendOpt "doc" (encodeDocText op.SourceNodes.Doc) op.Doc
@@ -1105,12 +1082,13 @@ module Encode =
         |> appendDynamicPropertiesExcept CWLOperationDescription.KnownFieldNames op
         |> Encode.object
 
-    /// Encode a Workflow element with ordered sections and preserved metadata.
-    and encodeWorkflowDescriptionElement (wd: CWLWorkflowDescription) : YamlNode =
+    /// Encode a Workflow element with ordered sections and preserved metadata. The flag tells whether the element
+    /// writes its cwlVersion.
+    and encodeWorkflowDescriptionElement (includeCwlVersion: bool) (wd: CWLWorkflowDescription) : YamlNode =
         let basePairs =
             // Base identity fields stay in the first top-level section.
-            [ "cwlVersion", encodeString wd.CWLVersion
-              "class", encodeString "Workflow" ]
+            cwlVersionPairs includeCwlVersion wd.CWLVersion
+            @ [ "class", encodeString "Workflow" ]
             |> appendOptPair (wd.Id |> Option.map (fun id -> "id", encodeString id))
             |> appendOpt "label" (encodeSourceText wd.SourceNodes.Label) wd.Label
             |> appendOpt "doc" (encodeDocText wd.SourceNodes.Doc) wd.Doc
@@ -1422,22 +1400,22 @@ module Encode =
 
     let encodeToolDescription (td:CWLToolDescription) : string =
         // Tool top-level layout places command fields before ports.
-        encodeToolDescriptionElement td
+        encodeToolDescriptionElement true td
         |> renderTopLevelElement ["cwlVersion"; "class"; "id"; "label"; "doc"; "intent"] ["hints"; "requirements"; "baseCommand"; "inputs"; "outputs"]
 
     let encodeWorkflowDescription (wd:CWLWorkflowDescription) : string =
         // Workflow layout keeps inputs, steps, and outputs as separate scan blocks.
-        encodeWorkflowDescriptionElement wd
+        encodeWorkflowDescriptionElement true wd
         |> renderTopLevelElement ["cwlVersion"; "class"; "id"; "label"; "doc"; "intent"] ["hints"; "requirements"; "inputs"; "steps"; "outputs"]
 
     let encodeExpressionToolDescription (et:CWLExpressionToolDescription) : string =
         // ExpressionTool layout writes expression after ports.
-        encodeExpressionToolDescriptionElement et
+        encodeExpressionToolDescriptionElement true et
         |> renderTopLevelElement ["cwlVersion"; "class"; "id"; "label"; "doc"; "intent"] ["hints"; "requirements"; "inputs"; "outputs"; "expression"]
 
     let encodeOperationDescription (op: CWLOperationDescription) : string =
         // Operation layout mirrors workflow/tool metadata and port ordering.
-        encodeOperationDescriptionElement op
+        encodeOperationDescriptionElement true op
         |> renderTopLevelElement ["cwlVersion"; "class"; "id"; "label"; "doc"; "intent"] ["hints"; "requirements"; "inputs"; "outputs"]
 
     let encodeProcessingUnit (pu : CWLProcessingUnit) :string =

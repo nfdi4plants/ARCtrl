@@ -87,7 +87,7 @@ let testInputMutationApi =
                     optional = true,
                     label = "Argument",
                     doc = "Argument docs",
-                    format = "edam:format_2330",
+                    format = InputFormat.Single "edam:format_2330",
                     loadContents = true,
                     loadListing = LoadListingEnum.ShallowListing,
                     streamable = false
@@ -135,7 +135,7 @@ let testInputMutationApi =
 
             Expect.equal input.Label (Some "Sample") "label should decode to a typed field."
             Expect.equal input.Doc (Some "Sample input docs") "doc should decode to a typed field."
-            Expect.equal input.Format (Some "edam:format_2330") "format should decode to a typed field."
+            Expect.equal input.Format (Some (InputFormat.Single "edam:format_2330")) "format should decode to a typed field."
             Expect.equal input.LoadContents (Some true) "loadContents should decode to a typed field."
             Expect.equal input.LoadListing (Some LoadListingEnum.ShallowListing) "loadListing should decode to a typed field."
             Expect.equal input.Streamable (Some false) "streamable should decode to a typed field."
@@ -145,6 +145,67 @@ let testInputMutationApi =
             Expect.equal input.InputBinding.Value.LoadContents (Some true) "inputBinding.loadContents should decode to a typed field."
             Expect.equal input.InputBinding.Value.ShellQuote (Some false) "inputBinding.shellQuote should decode to a typed field."
             Expect.isEmpty (input |> DynamicObjHelpers.dynamicPropertiesSnapshot) "Known input fields should not be overflow."
+    ]
+
+let testInputFormat =
+    let decodedInputs () =
+        TestObjects.CWL.Inputs.formatFormsFileContent
+        |> Decode.readYaml
+        |> Decode.inputsDecoder
+        |> Option.get
+    let formatOf (inputs: ResizeArray<CWLInput>) (name: string) =
+        (inputs |> Seq.find (fun input -> input.Name = name)).Format
+
+    testList "Input format" [
+        testCase "a name, a list of names, a list of one name and the empty list decode into their own forms" <| fun _ ->
+            let inputs = decodedInputs ()
+            Expect.equal (formatOf inputs "single") (Some (InputFormat.Single "edam:format_2330")) "A name is a single format."
+            Expect.equal (formatOf inputs "several") (Some (InputFormat.Multiple (ResizeArray [ "edam:format_2330"; "edam:format_1930" ]))) "A list keeps its names in order."
+            Expect.equal (formatOf inputs "one_in_list") (Some (InputFormat.Multiple (ResizeArray [ "edam:format_2330" ]))) "A list of one name is a list."
+            Expect.equal (formatOf inputs "empty") (Some (InputFormat.Multiple (ResizeArray()))) "The empty list stays a list."
+            Expect.notEqual (formatOf inputs "single") (formatOf inputs "one_in_list") "A name differs from a list of that name."
+
+        testCase "each form of the format is written as it was read" <| fun _ ->
+            let inputs = decodedInputs ()
+            let encoded = Encode.encodeToolDescription (CWLToolDescription(outputs = ResizeArray(), inputs = inputs))
+            Expect.stringContains encoded "format: edam:format_2330\n" "A name is written as a scalar."
+            Expect.stringContains encoded "format: [edam:format_2330, edam:format_1930]\n" "A list is written as a list."
+            Expect.stringContains encoded "format: [edam:format_2330]\n" "A list of one name stays a list."
+            Expect.stringContains encoded "format: []\n" "The empty list stays an empty list."
+            let roundTripped = (Decode.decodeCommandLineTool encoded).Inputs.Value
+            for input in inputs do
+                Expect.equal (formatOf roundTripped input.Name) input.Format $"The format of {input.Name} survives the round trip."
+
+        testCase "a mapping as the format of an input is a decode error at format" <| fun _ ->
+            let yaml = """inputs:
+  x:
+    type: File
+    format:
+      iri: edam:format_2330"""
+            match (try Decode.readYaml yaml |> Decode.inputsDecoder |> ignore; None with YamlDecodeException error -> Some error) with
+            | Some error ->
+                Expect.equal (DecodeError.pathText error) "inputs.x.format" "The error shows the format field."
+                Expect.isSome error.Span "The error has the place in the text."
+            | None -> failwith "A mapping as the format of an input must fail."
+
+        testCase "a list as the format of an output is a decode error at format" <| fun _ ->
+            let yaml = """outputs:
+  result:
+    type: File
+    format: [edam:format_2330, edam:format_1930]"""
+            match (try Decode.readYaml yaml |> Decode.outputsDecoder |> ignore; None with YamlDecodeException error -> Some error) with
+            | Some error ->
+                Expect.equal (DecodeError.pathText error) "outputs.result.format" "The error shows the format field."
+                Expect.isSome error.Span "The error has the place in the text."
+            | None -> failwith "A list as the format of an output must fail."
+
+        testCase "formats compare and hash by their names" <| fun _ ->
+            let several = InputFormat.Multiple (ResizeArray [ "a"; "b" ])
+            Expect.equal several (InputFormat.Multiple (ResizeArray [ "a"; "b" ])) "Lists with the same names are equal."
+            Expect.equal (hash several) (hash (InputFormat.Multiple (ResizeArray [ "a"; "b" ]))) "Equal lists have the same hash."
+            Expect.notEqual several (InputFormat.Multiple (ResizeArray [ "b"; "a" ])) "The order of the names counts."
+            let values = (InputFormat.Single "a").AsValues()
+            Expect.sequenceEqual values (ResizeArray [ "a" ]) "A name reads as a list of one name."
     ]
 
 let testProcessingUnitInputOps =
@@ -443,6 +504,7 @@ let main =
     testList "Input" [
         testInput
         testInputMutationApi
+        testInputFormat
         testProcessingUnitInputOps
         testProcessingUnitOutputOps
         testProcessingUnitRequirementOps

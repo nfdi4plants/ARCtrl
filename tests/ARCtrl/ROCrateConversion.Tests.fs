@@ -1987,6 +1987,12 @@ let tests_AdditionalTypeDecoding =
                   "Boolean", CWLType.Boolean
                   "Null", CWLType.Null
                   "Stdout", CWLType.Stdout
+                  "Stderr", CWLType.Stderr
+                  "Stdin", CWLType.Stdin
+                  "StreamUnion", CWLType.Union (ResizeArray [CWLType.Stdout; CWLType.String])
+                  "Any", CWLType.Any
+                  "AnyArray", Helper.CWL.array CWLType.Any
+                  "OptionalAny", Helper.CWL.optional CWLType.Any
                   "FileArray", Helper.CWL.array (CWLType.file())
                   "NestedStringArray", Helper.CWL.array (Helper.CWL.array CWLType.String)
                   "OptionalString", Helper.CWL.optional CWLType.String
@@ -2003,6 +2009,20 @@ let tests_AdditionalTypeDecoding =
                     let decoded = WorkflowConversion.decomposeAdditionalType encoded
                     Expect.equal decoded original (sprintf "%s should survive compose and decompose, written as %s" name encoded)
                 )
+        ]
+        testList "UnionOrder" [
+            testCase "NullBehindTheTypeIsAList" (fun () ->
+                let original = CWLType.Union (ResizeArray [CWLType.String; CWLType.Null])
+                let encoded = WorkflowConversion.composeAdditionalType original
+                Expect.equal encoded """[string, "null"]""" "A list with the null behind the type is no optional type."
+                Expect.equal (WorkflowConversion.decomposeAdditionalType encoded) original "The list should keep its order."
+            )
+            testCase "NullInFrontOfTheTypeIsTheShorthand" (fun () ->
+                let original = Helper.CWL.optional CWLType.String
+                let encoded = WorkflowConversion.composeAdditionalType original
+                Expect.equal encoded "string?" "A list with the null in front of the type is the optional type."
+                Expect.equal (WorkflowConversion.decomposeAdditionalType encoded) original "The shorthand should give the list back."
+            )
         ]
         testList "ScalarForms" [
             testCase "NullIsWrittenQuoted" (fun () ->

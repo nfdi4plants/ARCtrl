@@ -1136,3 +1136,47 @@ outputs:
       - File
     outputSource: run_tool/result
 """
+
+module InlineRunVersions =
+
+    /// A workflow of version v1.0 whose inline processes mostly have no cwlVersion. One tool has its own, and an
+    /// inline workflow holds a tool without one.
+    let workflowFile = """cwlVersion: v1.0
+class: Workflow
+inputs: {}
+outputs: {}
+steps:
+  plain:
+    run:
+      class: CommandLineTool
+      baseCommand: echo
+      inputs: {}
+      outputs: {}
+    in: {}
+    out: []
+  own_version:
+    run:
+      class: CommandLineTool
+      cwlVersion: v1.2
+      baseCommand: echo
+      inputs: {}
+      outputs: {}
+    in: {}
+    out: []
+  nested:
+    run:
+      class: Workflow
+      inputs: {}
+      outputs: {}
+      steps:
+        deep:
+          run:
+            class: CommandLineTool
+            baseCommand: echo
+            inputs: {}
+            outputs: {}
+          in: {}
+          out: []
+    in: {}
+    out: []
+"""

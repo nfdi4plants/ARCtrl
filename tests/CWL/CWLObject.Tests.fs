@@ -353,7 +353,7 @@ let testCWLToolDescriptionEncode =
             testCase "hints emitted before requirements for both encoder variants" <| fun _ ->
                 let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFile
                 let topLevelEncoded = Encode.encodeToolDescription decoded
-                let elementEncoded = decoded |> Encode.encodeToolDescriptionElement |> Encode.writeYaml
+                let elementEncoded = decoded |> Encode.encodeToolDescriptionElement true |> Encode.writeYaml
 
                 let topReqIndex = topLevelEncoded.IndexOf("requirements:")
                 let topHintIndex = topLevelEncoded.IndexOf("hints:")
@@ -839,6 +839,261 @@ outputs: []
         testCase "unions in the encoder output use only quoted null members" <| fun _ ->
             let encoded = Encode.encodeToolDescription (Decode.decodeCommandLineTool tool)
             Expect.isFalse (encoded.Contains("[null") || encoded.Contains("- null") || encoded.Contains(", null")) "A plain null member reads as a YAML null, which CWL rejects."
+        testCase "a type list with the null behind the type keeps its order" <| fun _ ->
+            let yaml = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs:
+  x: [string, "null"]
+outputs:
+  y: [File, "null"]
+"""
+            let decoded = Decode.decodeCommandLineTool yaml
+            Expect.equal decoded.Inputs.Value.[0].Type_ (Some (Union (ResizeArray [ String; Null ]))) "The input type keeps the order of the list."
+            Expect.equal decoded.Outputs.[0].Type_ (Some (Union (ResizeArray [ CWLType.file (); Null ]))) "The output type keeps the order of the list."
+            let encoded = Encode.encodeToolDescription decoded
+            Expect.stringContains encoded """x: [string, "null"]""" "The input is written as a list."
+            Expect.stringContains encoded """y: [File, "null"]""" "The output is written as a list."
+            let roundTripped = Decode.decodeCommandLineTool encoded
+            Expect.equal roundTripped.Inputs.Value.[0].Type_ decoded.Inputs.Value.[0].Type_ "The input type survives the round trip."
+            Expect.equal roundTripped.Outputs.[0].Type_ decoded.Outputs.[0].Type_ "The output type survives the round trip."
+        testCase "a type list with the null in front of the type is written as the shorthand" <| fun _ ->
+            let yaml = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs:
+  x: ["null", string]
+outputs:
+  y: ["null", File]
+"""
+            let decoded = Decode.decodeCommandLineTool yaml
+            Expect.equal decoded.Inputs.Value.[0].Type_ (Some (Union (ResizeArray [ Null; String ]))) "The input type keeps the order of the list."
+            let encoded = Encode.encodeToolDescription decoded
+            Expect.stringContains encoded "x: string?" "The input is written as the shorthand."
+            Expect.stringContains encoded "y: File?" "The output is written as the shorthand."
+            let roundTripped = Decode.decodeCommandLineTool encoded
+            Expect.equal roundTripped.Inputs.Value.[0].Type_ decoded.Inputs.Value.[0].Type_ "The input type survives the round trip."
+            Expect.equal roundTripped.Outputs.[0].Type_ decoded.Outputs.[0].Type_ "The output type survives the round trip."
+    ]
+
+let testAnyType =
+    let expectedInputTypes =
+        [ "anything", Any
+          "maybe_anything", Union (ResizeArray [ Null; Any ])
+          "anything_list", Array (InputArraySchema(Any))
+          "anything_or_text", Union (ResizeArray [ Any; String ])
+          "listed", Array (InputArraySchema(Any)) ]
+    let expectedOutputTypes =
+        [ "anything_out", Any
+          "maybe_out", Union (ResizeArray [ Null; Any ])
+          "list_out", Array (InputArraySchema(Any)) ]
+    let expectTypes (operation: CWLOperationDescription) =
+        for (name, expected) in expectedInputTypes do
+            let input = operation.Inputs |> Seq.find (fun i -> i.Name = name)
+            Expect.equal input.Type_ (Some expected) $"The input {name} should have the type {expected}."
+        for (name, expected) in expectedOutputTypes do
+            let output = operation.Outputs |> Seq.find (fun o -> o.Name = name)
+            Expect.equal output.Type_ (Some expected) $"The output {name} should have the type {expected}."
+
+    testList "Any type" [
+        testCase "Any decodes as a type name, in an optional, in an array, in a union and under items" <| fun _ ->
+            expectTypes (Decode.decodeOperation TestObjects.CWL.Operation.AnyType.cwlFile)
+        testCase "Any is written as the shorthand and reads back" <| fun _ ->
+            let encoded = Encode.encodeOperationDescription (Decode.decodeOperation TestObjects.CWL.Operation.AnyType.cwlFile)
+            Expect.stringContains encoded "maybe_anything: Any?" "An optional Any is written as the shorthand."
+            Expect.stringContains encoded "anything_list: Any[]" "An array of Any is written as the shorthand."
+            Expect.stringContains encoded "anything_or_text: [Any, string]" "A union with Any is a list."
+            Expect.stringContains encoded "listed: Any[]" "An array schema with Any items is written as the shorthand."
+            expectTypes (Decode.decodeOperation encoded)
+        testCase "Any equals Any and differs from the other types" <| fun _ ->
+            Expect.equal Any Any "Any is equal to itself."
+            Expect.equal (hash Any) (hash Any) "Any hashes to the same value each time."
+            Expect.notEqual Any String "Any is no string."
+            Expect.notEqual (Union (ResizeArray [ Null; Any ])) (Union (ResizeArray [ Null; String ])) "The members of a union count."
+        testCase "Any decodes under the items of an array schema that stands under items" <| fun _ ->
+            let yaml = """cwlVersion: v1.2
+class: Operation
+inputs:
+  nested:
+    type:
+      type: array
+      items:
+        type: array
+        items: Any
+outputs: {}
+"""
+            let operation = Decode.decodeOperation yaml
+            Expect.equal operation.Inputs.[0].Type_ (Some (Array (InputArraySchema(Array (InputArraySchema(Any)))))) "An array schema may hold an array schema of Any."
+    ]
+
+let testStreamTypes =
+    let tool (ports: string) = "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: cat\n" + ports
+    let decodeError (decode: unit -> unit) =
+        try
+            decode ()
+            None
+        with YamlDecodeException error -> Some error
+    let portType (ports: ResizeArray<'port>) (nameOf: 'port -> string) (typeOf: 'port -> CWLType option) (name: string) =
+        Expect.wantSome (typeOf (ports |> Seq.find (fun port -> nameOf port = name))) $"{name} should have a type."
+
+    testList "Stream types" [
+        testCase "stdout, stderr and stdin decode as the whole type of a port of a command line tool" <| fun _ ->
+            let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.StreamTypes.cwlFile
+            Expect.equal (portType decoded.Inputs.Value (fun i -> i.Name) (fun i -> i.Type_) "unsorted") Stdin "The input has the type stdin."
+            Expect.equal (portType decoded.Outputs (fun o -> o.Name) (fun o -> o.Type_) "sorted") Stdout "The output has the type stdout."
+            Expect.equal (portType decoded.Outputs (fun o -> o.Name) (fun o -> o.Type_) "log") Stderr "The output in object form has the type stderr."
+            Expect.isNone decoded.Inputs.Value.[0].Optional "A stream type is no optional type."
+        testCase "a stream type in object form decodes as the whole type" <| fun _ ->
+            let decoded = Decode.decodeCommandLineTool (tool """inputs:
+  lines:
+    type: stdin
+    label: Lines
+outputs:
+  out:
+    type: stdout""")
+            Expect.equal decoded.Inputs.Value.[0].Type_ (Some Stdin) "The input has the type stdin."
+            Expect.equal decoded.Outputs.[0].Type_ (Some Stdout) "The output has the type stdout."
+        testCase "stream types are written as type names and read back" <| fun _ ->
+            let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.StreamTypes.cwlFile
+            let encoded = Encode.encodeToolDescription decoded
+            Expect.stringContains encoded "unsorted: stdin" "The input is written as the type name."
+            Expect.stringContains encoded "sorted: stdout" "The output is written as the type name."
+            Expect.stringContains encoded "type: stderr" "The output in object form keeps its object."
+            let roundTripped = Decode.decodeCommandLineTool encoded
+            Expect.equal (portType roundTripped.Inputs.Value (fun i -> i.Name) (fun i -> i.Type_) "unsorted") Stdin "The input survives the round trip."
+            Expect.equal (portType roundTripped.Outputs (fun o -> o.Name) (fun o -> o.Type_) "sorted") Stdout "The stdout output survives the round trip."
+            Expect.equal (portType roundTripped.Outputs (fun o -> o.Name) (fun o -> o.Type_) "log") Stderr "The stderr output survives the round trip."
+        testCase "the inline command line tool of a workflow admits stream types" <| fun _ ->
+            let decoded = Decode.decodeWorkflow TestObjects.CWL.CommandLineTool.StreamTypes.workflowWithInlineTool
+            let inlineTool = Expect.wantSome (WorkflowStepRunOps.tryGetTool decoded.Steps.[0].Run) "The step runs an inline tool."
+            Expect.equal inlineTool.Outputs.[0].Type_ (Some Stdout) "The output has the type stdout."
+        testCase "a stream type anywhere but as the whole type of a port is a decode error at its place" <| fun _ ->
+            let cases =
+                [ "an optional stdout", "outputs.x", tool """inputs: {}
+outputs:
+  x: stdout?"""
+                  "an array of stderr", "outputs.x", tool """inputs: {}
+outputs:
+  x: stderr[]"""
+                  "stdout in a type list", "outputs.x[0]", tool """inputs: {}
+outputs:
+  x: [stdout, "null"]"""
+                  "an optional stdout in a type field", "outputs.x.type", tool """inputs: {}
+outputs:
+  x:
+    type: stdout?"""
+                  "stdout under items", "outputs.x.type.items", tool """inputs: {}
+outputs:
+  x:
+    type:
+      type: array
+      items: stdout"""
+                  "stdout as the type of a record field", "outputs.x.type.fields.f", tool """inputs: {}
+outputs:
+  x:
+    type:
+      type: record
+      fields:
+        f: stdout"""
+                  "stdout as a schema", "outputs.x.type.type", tool """inputs: {}
+outputs:
+  x:
+    type:
+      type: stdout"""
+                  "stdin as the type of an output", "outputs.x", tool """inputs: {}
+outputs:
+  x: stdin"""
+                  "stdout as the type of an input", "inputs.x", tool """inputs:
+  x: stdout
+outputs: {}"""
+                  "an optional stdin", "inputs.x", tool """inputs:
+  x: stdin?
+outputs: {}"""
+                  "an array of stdin", "inputs.x", tool """inputs:
+  x: stdin[]
+outputs: {}"""
+                  "stdin in a type list", "inputs.x[0]", tool """inputs:
+  x: [stdin, string]
+outputs: {}""" ]
+            for (name, path, yaml) in cases do
+                match decodeError (fun () -> Decode.decodeCommandLineTool yaml |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path $"{name}: the error should show the place of the type."
+                    Expect.stringContains error.Message "is valid only as the whole type of" $"{name}: the error should say where the type is valid."
+                    Expect.isSome error.Span $"{name}: the error should have the place in the text."
+                | None -> failwith $"{name} must fail"
+        testCase "a stream type with a binding is a decode error at the port" <| fun _ ->
+            let cases =
+                [ "stdout with an outputBinding", "outputs.x", "The type stdout is valid only for an output without an outputBinding.", tool """inputs: {}
+outputs:
+  x:
+    type: stdout
+    outputBinding:
+      glob: out.txt"""
+                  "stderr with an outputBinding", "outputs.x", "The type stderr is valid only for an output without an outputBinding.", tool """inputs: {}
+outputs:
+  x:
+    type: stderr
+    outputBinding:
+      glob: err.txt"""
+                  "stdin with an inputBinding", "inputs.x", "The type stdin is valid only for an input without an inputBinding.", tool """inputs:
+  x:
+    type: stdin
+    inputBinding:
+      position: 1
+outputs: {}""" ]
+            for (name, path, message, yaml) in cases do
+                match decodeError (fun () -> Decode.decodeCommandLineTool yaml |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path $"{name}: the error should show the port."
+                    Expect.equal error.Message message $"{name}: the error should say what is wrong."
+                    Expect.isSome error.Span $"{name}: the error should have the place in the text."
+                | None -> failwith $"{name} must fail"
+        testCase "a tool that sets stdin and has an input of the type stdin is a decode error at stdin" <| fun _ ->
+            let yaml = tool """stdin: input.txt
+inputs:
+  x: stdin
+outputs: {}"""
+            match decodeError (fun () -> Decode.decodeCommandLineTool yaml |> ignore) with
+            | Some error ->
+                Expect.equal (DecodeError.pathText error) "stdin" "The error shows the field of the tool."
+                Expect.isSome error.Span "The error has the place in the text."
+            | None -> failwith "Both ways to read the standard input must fail."
+            let withoutInput = tool """stdin: input.txt
+inputs: {}
+outputs: {}"""
+            Expect.equal (Decode.decodeCommandLineTool withoutInput).Stdin (Some "input.txt") "The tool field alone is valid."
+        testCase "a workflow, an expression tool and an operation admit no stream type" <| fun _ ->
+            let cases =
+                [ "a workflow output", "outputs.x", """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+steps: {}
+outputs:
+  x: stdout"""
+                  "a workflow input", "inputs.x", """cwlVersion: v1.2
+class: Workflow
+inputs:
+  x: stdin
+steps: {}
+outputs: {}"""
+                  "an expression tool output", "outputs.x", """cwlVersion: v1.2
+class: ExpressionTool
+inputs: {}
+outputs:
+  x: stdout
+expression: '${ return {}; }'"""
+                  "an operation output", "outputs.x", """cwlVersion: v1.2
+class: Operation
+inputs: {}
+outputs:
+  x: stderr""" ]
+            for (name, path, yaml) in cases do
+                match decodeError (fun () -> Decode.decodeCWLProcessingUnit yaml |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path $"{name}: the error should show the port."
+                    Expect.stringContains error.Message "is valid only as the whole type of" $"{name}: the error should say where the type is valid."
+                | None -> failwith $"{name} must fail"
     ]
 
 let testYamlReaderAndWriter =
@@ -2379,6 +2634,8 @@ let main =
         testUnionArrayItemDecoding
         testStringScalars
         testToolUnionPorts
+        testAnyType
+        testStreamTypes
         testYamlReaderAndWriter
         testDocAndLabelLayout
         testEqualityOfDecodedObjects
