@@ -1,3 +1,22 @@
+### 3.2.3+5fd259c2 (Released 2026-10-23)
+* Additions:
+    * [[#2b927d1a](https://github.com/nfdi4plants/ARCtrl/commit/2b927d1aed13e5b80fca94a96a3e71c3da2d7698)] add isEmpty to CompositeCell and Data, counting blank values as empty (#531, #630)
+    * [[#77d35561](https://github.com/nfdi4plants/ARCtrl/commit/77d35561be27822d6241f8f1ded77bd5800996a4)] add GetAbsolutePathForWorkflow and GetAbsolutePathForRun to Data (#629)
+    * [[#956210d6](https://github.com/nfdi4plants/ARCtrl/commit/956210d6b002a66b4f909794e9bbd353d8dd800b)] add optional additional contracts to ARC write functions (#622)
+    * [[#e8fa828a](https://github.com/nfdi4plants/ARCtrl/commit/e8fa828a55a8b342af22bbd8d8288e417b4d8450)] recover zero-byte entity workbooks when loading an ARC (#620)
+    * [[#11e3641f](https://github.com/nfdi4plants/ARCtrl/commit/11e3641f5375d93827a9874b60a5dbe9c19380d0)] skip .git folders when collecting ARC file paths (#619)
+    * [[#27e95ace](https://github.com/nfdi4plants/ARCtrl/commit/27e95ace155dcb4c61f9295a3069afb7b0621040)] fail with clear error on duplicate comment names when writing ISA-XLSX (#641)
+    * [[#0b47c3ee](https://github.com/nfdi4plants/ARCtrl/commit/0b47c3eef547b0652432353df25b2f2d758405f8)] add first version of contributing md
+    * [[#2ce46c3b](https://github.com/nfdi4plants/ARCtrl/commit/2ce46c3bbce7c969a69adf3e56d5efd7b69945da)] Group RO-Crate processes by their own name before the protocol name
+* Bugfixes:
+    * [[#6a4c70d8](https://github.com/nfdi4plants/ARCtrl/commit/6a4c70d827e8fa03f54b944777b294a0de923e42)] fix ISA-JSON import failing on ontology values with empty unit (#640)
+    * [[#62ff2b13](https://github.com/nfdi4plants/ARCtrl/commit/62ff2b1307ee2a60439ff6cd17888d212f037b86)] fix dateModified comment being duplicated on RO-Crate read (#642)
+    * [[#8c681679](https://github.com/nfdi4plants/ARCtrl/commit/8c6816793266d3f3b7744f117a2728bd295b1fe9)] fix TableJoinOptions.Headers join not adding empty cells (#647)
+    * [[#f9c7432b](https://github.com/nfdi4plants/ARCtrl/commit/f9c7432b0cf6bbf6227d4ba60992d88e9b004bde)] Test the Int32 boundary of process name suffixes
+    * [[#00994da0](https://github.com/nfdi4plants/ARCtrl/commit/00994da046823fbf52f38ab754c5057d148bb121)] Keep the full process name when its number suffix overflows Int32
+    * [[#2886ba86](https://github.com/nfdi4plants/ARCtrl/commit/2886ba8615685d1f624962ef313c1a570b11f291)] Match process name suffixes exactly and suffix empty tables too
+    * [[#2c0d72a1](https://github.com/nfdi4plants/ARCtrl/commit/2c0d72a1df766389b2d1fdf8d6ce4c5e63e21222)] Always suffix RO-Crate process names with the row index
+
 ### 3.2.2+281b4fef (Released 2026-10-2)
 * Additions:
     * [[#331ec704](https://github.com/nfdi4plants/ARCtrl/commit/331ec704fccabd29fdb20b8b312b5d69d513380c)] update fable dependencies
