@@ -22,7 +22,7 @@ module File =
 
     let inputFileName = "firstArg"
 
-    let inputFileType = CWLType.file()
+    let inputFileType = CWLType.File
 
     let inputFilePrefix = "-f"
 

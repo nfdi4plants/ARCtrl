@@ -417,3 +417,81 @@ steps:
     in: {}
     out: [sorted]
 """
+
+/// Ports with a schema as the type and with fields besides the type.
+module PortSchemas =
+
+    let cwlFile = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs:
+  mode:
+    type:
+      type: enum
+      symbols: [fast, slow]
+    inputBinding:
+      prefix: --mode
+  samples:
+    label: the samples
+    type:
+      type: array
+      items:
+        type: record
+        fields:
+          name: string
+outputs:
+  summary:
+    doc: the summary
+    type:
+      type: record
+      fields:
+        count: int
+"""
+
+/// Array types with fields besides their items.
+module ArraySchemas =
+
+    /// An array with its own input binding under a port with another input binding.
+    let withBinding = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs:
+  files:
+    type:
+      type: array
+      items: File
+      inputBinding:
+        prefix: -I
+    inputBinding:
+      position: 1
+outputs: []
+"""
+
+    /// Arrays with a label, a doc, a name and an item separator, in type lists and as the whole type.
+    let withMetadata = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs:
+  names:
+    type:
+      - "null"
+      - type: array
+        items: string
+        label: names
+        inputBinding:
+          itemSeparator: ","
+  counts:
+    type:
+      type: array
+      items: int
+      doc: the counts
+  tags:
+    type:
+      - string
+      - type: array
+        items: string
+        name: Tags
+  plain: string[]
+  maybe: int[]?
+outputs: []
+"""

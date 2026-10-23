@@ -27,9 +27,8 @@ module Encode =
         match t with
         // Primitive cases have a direct CWL scalar spelling and can participate
         // in shorthand array syntax.
-        | File _ -> PrimitiveType "File"
-        | Directory _ -> PrimitiveType "Directory"
-        | Dirent _ -> PrimitiveType "Dirent"
+        | File -> PrimitiveType "File"
+        | Directory -> PrimitiveType "Directory"
         | String -> PrimitiveType "string"
         | Int -> PrimitiveType "int"
         | Long -> PrimitiveType "long"
@@ -51,30 +50,38 @@ module Encode =
             | PrimitiveType _ -> PrimitiveType "array"
             | ComplexType -> ComplexType
 
+    /// True when the array schema holds nothing but its items. The shorthand T[] has no place for a label, a doc, a
+    /// name, an inputBinding or any other field of the schema.
+    let private isPlainArray (schema: InputArraySchema) : bool =
+        schema.Label.IsNone
+        && schema.Doc.IsNone
+        && schema.Name.IsNone
+        && Seq.isEmpty (DynamicObjHelpers.dynamicPropertiesExcept InputArraySchema.KnownFieldNames schema)
+
     /// Try to get shorthand notation for a CWL type (e.g., "File", "string[]", "int[][]")
     /// Returns None for complex types that require full YAML serialization
     let rec tryGetArrayShorthand (cwlType: CWLType) : string option =
         match cwlType with
         | PrimitiveType name when name <> "array" -> Some name
-        | Array arraySchema ->
+        | Array arraySchema when isPlainArray arraySchema ->
             // Recursively get shorthand for inner type and append []
             tryGetArrayShorthand arraySchema.Items |> Option.map (fun s -> s + "[]")
         | _ -> None
 
-    /// The shorthand of the items of a one-level array in a CWL document, as in File[]. CWL reads one [] after a name,
-    /// so an array of arrays has none.
-    let private tryGetItemShorthand (items: CWLType) : string option =
-        match items with
-        | PrimitiveType name when name <> "array" -> Some name
+    /// The shorthand of a one-level array in a CWL document, as in File[]. CWL reads one [] after a name, so an array
+    /// of arrays has none.
+    let private tryGetDocumentArrayShorthand (schema: InputArraySchema) : string option =
+        match schema.Items with
+        | PrimitiveType name when name <> "array" && isPlainArray schema -> Some (name + "[]")
         | _ -> None
 
     /// Determine if a type requires full YAML serialization (complex type)
     let rec isComplexType (t: CWLType) : bool =
         match t with
         | Record _ | Enum _ -> true
-        | Array arraySchema ->
-            // Complex if array doesn't have shorthand (array of record/enum)
-            tryGetArrayShorthand arraySchema.Items |> Option.isNone
+        | Array _ ->
+            // Complex if array doesn't have shorthand (array of record/enum, or an array with more than its items)
+            tryGetArrayShorthand t |> Option.isNone
         | OptionalOf otherType -> isComplexType otherType
         // Every other union is a type list.
         | Union _ -> true
@@ -313,7 +320,7 @@ module Encode =
     // ------------------------------
     // CWLType encoder
     // ------------------------------
-    /// Encode File fields with the supplied discriminator key (`type` or `class`).
+    /// Encode the fields of a File value, led by the supplied discriminator key and value.
     let encodeFilePairs discriminatorKey discriminatorValue (file: FileInstance) =
         [ discriminatorKey, encodeString discriminatorValue ]
         |> appendOpt "location" encodeString file.Location
@@ -329,7 +336,7 @@ module Encode =
         |> appendOpt "contents" encodeString file.Contents
         |> appendDynamicPropertiesExcept FileInstance.KnownFieldNames file
 
-    /// Encode Directory fields with the supplied discriminator key (`type` or `class`).
+    /// Encode the fields of a Directory value, led by the supplied discriminator key and value.
     let encodeDirectoryPairs discriminatorKey discriminatorValue (directory: DirectoryInstance) =
         [ discriminatorKey, encodeString discriminatorValue ]
         |> appendOpt "location" encodeString directory.Location
@@ -350,35 +357,14 @@ module Encode =
 
     /// Encode a CWL type, as a CWL document when the flag is set.
     and encodeTypeWith (cwlDocument: bool) (t:CWLType) : YamlNode =
-        let arrayShorthand = if cwlDocument then tryGetItemShorthand else tryGetArrayShorthand
+        let arrayShorthand (schema: InputArraySchema) =
+            if cwlDocument then tryGetDocumentArrayShorthand schema else tryGetArrayShorthand (CWLType.Array schema)
         // A member of a type list reads the shorthand of a type field, in a CWL document as in the RO-Crate text.
         let encodeMember = encodeTypeWith cwlDocument
-        let hasFileFields (file: FileInstance) =
-            // encodeFilePairs always includes the discriminator, so more than one
-            // pair means metadata is present and scalar File shorthand would lose it.
-            (encodeFilePairs "type" "File" file).Length > 1
-
-        let hasDirectoryFields (directory: DirectoryInstance) =
-            // Same rule as File: any metadata requires object form.
-            (encodeDirectoryPairs "type" "Directory" directory).Length > 1
 
         match t with
-        | File file when hasFileFields file ->
-            // Preserve File metadata such as secondaryFiles or format.
-            encodeFilePairs "type" "File" file |> Encode.object
-        | File _ -> encodeString "File"
-        | Directory directory when hasDirectoryFields directory ->
-            // Preserve Directory metadata such as listing.
-            encodeDirectoryPairs "type" "Directory" directory |> Encode.object
-        | Directory _ -> encodeString "Directory"
-        | Dirent d ->
-            // Dirent is always structured because it has required entry plus optional
-            // entryname/writable fields.
-            [ "entry", encodeSchemaSaladString d.Entry ]
-            |> appendOpt "entryname" encodeSchemaSaladString d.Entryname
-            |> appendOpt "writable" (fun b -> Encode.bool b) d.Writable
-            |> appendDynamicPropertiesExcept DirentInstance.KnownFieldNames d
-            |> Encode.object
+        | File -> encodeString "File"
+        | Directory -> encodeString "Directory"
         | String -> encodeString "string"
         | Int -> encodeString "int"
         | Long -> encodeString "long"
@@ -394,8 +380,8 @@ module Encode =
         | OptionalOf otherType ->
             // Only the list [null, X] can use CWL's `?` shorthand.
             match otherType with
-            | File _ -> encodeString "File?"
-            | Directory _ -> encodeString "Directory?"
+            | File -> encodeString "File?"
+            | Directory -> encodeString "Directory?"
             | String -> encodeString "string?"
             | Int -> encodeString "int?"
             | Long -> encodeString "long?"
@@ -406,8 +392,8 @@ module Encode =
             | Reference name -> encodeString (name + "?")
             | Array arraySchema ->
                 // Optional array - use shorthand detection
-                match arrayShorthand arraySchema.Items with
-                | Some shorthand -> encodeString (shorthand + "[]?")
+                match arrayShorthand arraySchema with
+                | Some shorthand -> encodeString (shorthand + "?")
                 | None ->
                     // Complex optional array - use full form
                     encodeSequence [ encodeString "null"; encodeInputArraySchema arraySchema ]
@@ -419,8 +405,8 @@ module Encode =
             types |> Seq.toList |> List.map encodeMember |> encodeSequence
         | Array arraySchema ->
             // Try to use short form for arrays; fall back to schema object for complex item types.
-            match arrayShorthand arraySchema.Items with
-            | Some shorthand -> encodeString (shorthand + "[]")
+            match arrayShorthand arraySchema with
+            | Some shorthand -> encodeString shorthand
             | None -> encodeInputArraySchema arraySchema
         | Record recordSchema -> encodeInputRecordSchema recordSchema
         | Enum enumSchema -> encodeInputEnumSchema enumSchema
@@ -546,31 +532,21 @@ module Encode =
             |> Seq.toList
             |> Encode.object
 
+    /// A port as a map entry. The type comes first, and a port without other fields is written as the type alone, as
+    /// in outputName: File. The map value is the port itself when it is a mapping, so a schema without other fields
+    /// stays under type. A port with other fields writes the schema under type in any case, as the CWL schemas
+    /// define.
+    let private encodePortEntry (name: string) (type_: CWLType option) (otherPairs: (string * YamlNode) list) : string * YamlNode =
+        match type_ |> Option.map encodeCWLType, otherPairs with
+        | Some typeNode, [] ->
+            match typeNode.Kind with
+            | YamlNodeKind.Mapping _ -> name, Encode.object [ "type", typeNode ]
+            | _ -> name, typeNode
+        | typeNode, _ ->
+            name, Encode.object (Option.toList (typeNode |> Option.map (fun node -> "type", node)) @ otherPairs)
+
     /// Encode a workflow or tool output, choosing shorthand only when type is the sole field.
     let encodeCWLOutput (o:CWLOutput) : (string * YamlNode) =
-        let typeElement = o.Type_ |> Option.map (fun t ->
-            // Output type encoding mirrors input type encoding, but wraps complex
-            // schema forms under `type` when the port itself is an object.
-            match t with
-            | Array arraySchema ->
-                // Check if we can use short form
-                match arraySchema.Items with
-                | File _ | Directory _ | Dirent _ | String | Int | Long | Float | Double | Boolean | Any | Reference _ ->
-                    encodeCWLType t
-                | _ ->
-                    // Complex array - need full schema form wrapped in "type"
-                    Encode.object [ "type", encodeInputArraySchema arraySchema ]
-            | Record recordSchema ->
-                // Record needs full schema form wrapped in "type"
-                Encode.object [ "type", encodeInputRecordSchema recordSchema ]
-            | Enum enumSchema ->
-                // Enum needs full schema form wrapped in "type"
-                Encode.object [ "type", encodeInputEnumSchema enumSchema ]
-            | _ ->
-                // Simple types and unions
-                encodeCWLType t
-        )
-
         let outputSourceElement =
             // Keep scalar outputSource compact, but use a sequence when multiple
             // upstream step outputs feed this workflow output.
@@ -578,26 +554,17 @@ module Encode =
             | Some (OutputSource.Single value) -> Some (encodeString value)
             | Some (OutputSource.Multiple values) when values.Count > 0 -> Some (encodeStringArrayOrScalar values)
             | _ -> None
-        
-        let pairs =
-            // Build object-form fields in CWL's conventional order.
-            []
-            |> appendOpt "type" id typeElement
-            |> appendOpt "label" (encodeSourceText o.SourceNodes.Label) o.Label
-            |> appendOpt "secondaryFiles" rawYamlNode o.SecondaryFiles
-            |> appendOpt "streamable" Encode.bool o.Streamable
-            |> appendOpt "doc" (encodeSourceText o.SourceNodes.Doc) o.Doc
-            |> appendOpt "format" encodeString o.Format
-            |> appendOpt "outputBinding" encodeOutputBinding o.OutputBinding
-            |> appendOpt "outputSource" id outputSourceElement
-            |> appendDynamicPropertiesExcept CWLOutput.KnownFieldNames o
-        match pairs with
-        | [ ("type", t) ] ->
-            // Map shorthand: outputName: File
-            o.Name, t
-        | _ ->
-            // Always extended form when additional fields like outputSource/outputBinding present
-            o.Name, (Encode.object pairs)
+
+        []
+        |> appendOpt "label" (encodeSourceText o.SourceNodes.Label) o.Label
+        |> appendOpt "secondaryFiles" rawYamlNode o.SecondaryFiles
+        |> appendOpt "streamable" Encode.bool o.Streamable
+        |> appendOpt "doc" (encodeSourceText o.SourceNodes.Doc) o.Doc
+        |> appendOpt "format" encodeString o.Format
+        |> appendOpt "outputBinding" encodeOutputBinding o.OutputBinding
+        |> appendOpt "outputSource" id outputSourceElement
+        |> appendDynamicPropertiesExcept CWLOutput.KnownFieldNames o
+        |> encodePortEntry o.Name o.Type_
 
     /// Encode inputBinding fields and preserved extension properties.
     let encodeInputBinding (ib:InputBinding) : YamlNode =
@@ -620,51 +587,19 @@ module Encode =
 
     /// Encode a workflow or tool input, choosing shorthand only when type is the sole field.
     let encodeCWLInput (i:CWLInput) : (string * YamlNode) =
-        let typeElement = i.Type_ |> Option.map (fun t ->
-            // Input type object wrapping follows the same shorthand/full-schema rules
-            // as outputs to avoid losing complex schema metadata.
-            match t with
-            | Array arraySchema ->
-                // Check if we can use short form
-                match arraySchema.Items with
-                | File _ | Directory _ | Dirent _ | String | Int | Long | Float | Double | Boolean | Any | Reference _ ->
-                    encodeCWLType t
-                | _ ->
-                    // Complex array - need full schema form wrapped in "type"
-                    Encode.object [ "type", encodeInputArraySchema arraySchema ]
-            | Record recordSchema ->
-                // Record needs full schema form wrapped in "type"
-                Encode.object [ "type", encodeInputRecordSchema recordSchema ]
-            | Enum enumSchema ->
-                // Enum needs full schema form wrapped in "type"
-                Encode.object [ "type", encodeInputEnumSchema enumSchema ]
-            | _ ->
-                // Simple types and unions
-                encodeCWLType t
-        )
-
-        let pairs =
-            // Build object-form fields in CWL's conventional order; optional is
-            // encoded through the type union shorthand rather than as a separate field.
-            []
-            |> appendOpt "type" id typeElement
-            |> appendOpt "label" (encodeSourceText i.SourceNodes.Label) i.Label
-            |> appendOpt "secondaryFiles" rawYamlNode i.SecondaryFiles
-            |> appendOpt "streamable" Encode.bool i.Streamable
-            |> appendOpt "doc" (encodeSourceText i.SourceNodes.Doc) i.Doc
-            |> appendOpt "format" encodeInputFormat i.Format
-            |> appendOpt "loadContents" Encode.bool i.LoadContents
-            |> appendOpt "loadListing" (LoadListingEnum.toCwlString >> encodeString) i.LoadListing
-            |> appendOpt "default" rawYamlNode i.DefaultValue
-            |> appendOpt "inputBinding" encodeInputBinding i.InputBinding
-            |> appendDynamicPropertiesExcept CWLInput.KnownFieldNames i
-        match pairs with
-        | [ ("type", t) ] ->
-            // Map shorthand: inputName: string
-            i.Name, t
-        | _ ->
-            // Extended form is needed whenever metadata/default/binding/extensions exist.
-            i.Name, Encode.object pairs
+        // Build object-form fields in CWL's conventional order.
+        []
+        |> appendOpt "label" (encodeSourceText i.SourceNodes.Label) i.Label
+        |> appendOpt "secondaryFiles" rawYamlNode i.SecondaryFiles
+        |> appendOpt "streamable" Encode.bool i.Streamable
+        |> appendOpt "doc" (encodeSourceText i.SourceNodes.Doc) i.Doc
+        |> appendOpt "format" encodeInputFormat i.Format
+        |> appendOpt "loadContents" Encode.bool i.LoadContents
+        |> appendOpt "loadListing" (LoadListingEnum.toCwlString >> encodeString) i.LoadListing
+        |> appendOpt "default" rawYamlNode i.DefaultValue
+        |> appendOpt "inputBinding" encodeInputBinding i.InputBinding
+        |> appendDynamicPropertiesExcept CWLInput.KnownFieldNames i
+        |> encodePortEntry i.Name i.Type_
 
     // ------------------------------
     // Requirement encoder (always extended style)

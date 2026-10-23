@@ -140,8 +140,8 @@ module CWLParameterValue =
 
     let rec tryInferType value =
         match value with
-        | CWLParameterValue.File _ -> Some (CWLType.file())
-        | CWLParameterValue.Directory _ -> Some (CWLType.directory())
+        | CWLParameterValue.File _ -> Some CWLType.File
+        | CWLParameterValue.Directory _ -> Some CWLType.Directory
         | CWLParameterValue.Array values when values.Count > 0 ->
             let inferredItemTypes =
                 values

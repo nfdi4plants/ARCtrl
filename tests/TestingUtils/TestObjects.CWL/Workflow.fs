@@ -933,18 +933,14 @@ let workflowWithUnknownPortFieldsFile = """cwlVersion: v1.2
 class: Workflow
 inputs:
 - id: sample
-  type:
-    type: File
-    arc:type note: keep input type note
+  type: File
   inputBinding:
     prefix: --sample
     arc:binding note: keep input binding note
   arc:note: keep input note
 outputs:
 - id: result
-  type:
-    type: File
-    arc:type note: keep output type note
+  type: File
   outputSource: step1/out
   outputBinding:
     glob: result.txt

@@ -28,7 +28,7 @@ module CSV =
 
     let outputCSVName = "output"
 
-    let outputCSVType = CWLType.file()
+    let outputCSVType = CWLType.File
 
     let outputCSVGlobStr = "*.csv"
 

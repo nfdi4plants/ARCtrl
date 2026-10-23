@@ -409,7 +409,7 @@ module Decode =
         tryGetPresentField "outputSource" decodeStringArrayOrScalar
 
     /// Decode a YamlNode into a Dirent
-    let direntDecoder: (YamlNode -> CWLType) =
+    let direntDecoder: (YamlNode -> DirentInstance) =
         fun value ->
             Decode.object (fun get ->
                 let dirent =
@@ -419,7 +419,7 @@ module Decode =
                         ?writable = get.Optional.Field "writable" Decode.bool
                     )
                 overflowIntoDynamicObj dirent (DirentInstance.KnownFieldNames |> Seq.toList) value |> ignore
-                Dirent dirent
+                dirent
             ) value
 
     /// Decode a listing entry of InitialWorkDirRequirement.
@@ -435,9 +435,7 @@ module Decode =
                     |> List.exists (fun entry -> entryName entry = "entry")
 
                 if hasEntryField then
-                    match direntDecoder value with
-                    | Dirent dirent -> DirentEntry dirent
-                    | _ -> raise (System.ArgumentException("Unexpected InitialWorkDir Dirent decoding result."))
+                    DirentEntry (direntDecoder value)
                 else
                     // File and Directory entries are discriminated by their class field;
                     // all other objects are treated as schema-salad string directives.
@@ -807,8 +805,8 @@ module Decode =
     /// the readers of a port type check before they read a name.
     let cwlSimpleTypeFromString (scope: DecodeScope) (node: YamlNode) (name: string) : CWLType =
         match name with
-        | "File" -> File (FileInstance ())
-        | "Directory" -> Directory (DirectoryInstance ())
+        | "File" -> File
+        | "Directory" -> Directory
         | "string" -> String
         | "int" -> Int
         | "long" -> Long
@@ -843,7 +841,6 @@ module Decode =
                       Path = []
                       Span = node.Span }
             )
-        | "Dirent" -> raise (YamlDecodeException { Message = "Invalid CWL type: " + name; Path = []; Span = node.Span })
         | _ when (scope.References = AnyNames && isWellFormedName name) || isDefinedReference scope name -> Reference name
         | _ ->
             // path#Name names a type in a file. The name inside the file stays unchecked, so only the path can be unknown.
@@ -867,7 +864,7 @@ module Decode =
     /// optional array. A document reads one [] only, because CWL reads a nested array as a schema. The scope tells
     /// whether the place of the node reads the shorthand, which a type under items does not. The second result tells
     /// whether the text ended in a question mark.
-    let cwlTypeFromShorthand (scope: DecodeScope) (node: YamlNode) (direntListing: unit -> CWLType) : CWLType * bool =
+    let cwlTypeFromShorthand (scope: DecodeScope) (node: YamlNode) : CWLType * bool =
         let fail (message: string) : 'T =
             raise (YamlDecodeException { Message = message; Path = []; Span = node.Span })
         let text = typeText node
@@ -883,7 +880,7 @@ module Decode =
         elif name.EndsWith "[]" then
             fail ("Expected one [] behind a type name, found " + text + ". CWL reads a nested array as a schema with type: array and items.")
         else
-            let baseType = if name = "Dirent" && not isArray then direntListing () else cwlSimpleTypeFromString scope node name
+            let baseType = cwlSimpleTypeFromString scope node name
             let arrayType = if isArray then Array (InputArraySchema(baseType)) else baseType
             (if optional then Union (ResizeArray [ Null; arrayType ]) else arrayType), optional
 
@@ -1030,30 +1027,10 @@ module Decode =
 
     /// Decode a CWLType from a YamlNode. The scope tells whether the place reads the shorthand of a type name.
     and cwlTypeDecoderAt (scope: DecodeScope) (element: YamlNode): CWLType =
-        let noListing () = cwlSimpleTypeFromString scope element "Dirent"
-
-        let parseTypeObjectString (typeNode: YamlNode) =
-            // Object forms such as {type: File, secondaryFiles: ...} need the
-            // surrounding object to populate File/Directory metadata. The name of the type
-            // goes through the reader of type names, which decides whether this place reads the shorthand.
-            // The path of an error shows the type field for the name only, because the other fields of the
-            // object are read from the object itself.
-            let parsed, isOptional =
-                atField "type" (fun () ->
-                    cwlTypeFromShorthand scope typeNode (fun () -> cwlSimpleTypeFromString scope typeNode "Dirent"))
-            let typeStr = typeText typeNode
-            let stripped = if isOptional then typeStr.Substring(0, typeStr.Length - 1) else typeStr
-            let optionalOf (baseType: CWLType) = if isOptional then Union (ResizeArray [Null; baseType]) else baseType
-
-            match stripped with
-            | "File" -> optionalOf (File (decodeFileInstanceFields element))
-            | "Directory" -> optionalOf (Directory (decodeDirectoryInstanceFields element))
-            | _ -> parsed
-
         match element.Kind with
         | YamlNodeKind.Scalar _ ->
             // Simple type string
-            cwlTypeFromShorthand scope element noListing |> fst
+            cwlTypeFromShorthand scope element |> fst
         | YamlNodeKind.Sequence collection ->
             // Union type. Each member is a type name with the shorthand of its place, an array schema, a record or an enum.
             let types =
@@ -1066,18 +1043,22 @@ module Decode =
             Decode.object (fun get ->
                 match get.Optional.Field "type" Decode.node with
                 | Some typeNode ->
-                    match typeNode.Kind with
-                    | YamlNodeKind.Scalar _ ->
-                        // Schema objects advertise their kind in the type field. Simple
-                        // File/Directory object types are handled separately to keep metadata.
-                        match Decode.string typeNode with
-                        | "record" -> Record (inputRecordSchemaDecoder scope element)
-                        | "enum" -> Enum (inputEnumSchemaDecoder element)
-                        | "array" -> Array (inputArraySchemaDecoder scope element)
-                        | _ -> parseTypeObjectString typeNode
+                    // A mapping is a schema, and its type field names the kind of the schema. A type name stands for
+                    // itself, without a mapping around it, so the fields of a File belong to the port. The schema of a
+                    // port or of a record field stands under its own type field, so a schema or a list in the type
+                    // field of a schema is a misplaced level.
+                    match scalarText typeNode with
+                    | Some "record" -> Record (inputRecordSchemaDecoder scope element)
+                    | Some "enum" -> Enum (inputEnumSchemaDecoder element)
+                    | Some "array" -> Array (inputArraySchemaDecoder scope element)
                     | _ ->
-                        // Nested complex type, for example type: { type: array, ... }, or a union list.
-                        atField "type" (fun () -> cwlTypeDecoderAt scope typeNode)
+                        atField "type" (fun () ->
+                            raise (
+                                YamlDecodeException
+                                    { Message = "Expected record, enum or array in the type field of a schema, found " + describeNode typeNode + "."
+                                      Path = []
+                                      Span = typeNode.Span }
+                            ))
                 | None ->
                     raise (
                         YamlDecodeException
@@ -1103,22 +1084,12 @@ module Decode =
     let typeTextScope : DecodeScope =
         { rootScope with StreamTypes = AnyStreams; References = AnyNames }
 
-    /// Decode the type of a type that stands without a surrounding mapping. Such a type has no listing field, so the
-    /// Dirent shorthand is an error.
+    /// Decode the type text of a scalar, whether it stands alone or in the type field of a mapping, and check if it is
+    /// optional.
     let cwlTypeStringDecoder (scope: DecodeScope) (node: YamlNode) =
         match tryWholeStreamType scope node with
         | Some streamType -> streamType, false
-        | None ->
-            cwlTypeFromShorthand
-                scope
-                node
-                (fun () -> raise (YamlDecodeException { Message = "The Dirent type needs a listing field."; Path = []; Span = node.Span }))
-
-    /// Decode the type text of the type field of a mapping and check if it is optional.
-    let cwlTypeStringMatcher (scope: DecodeScope) (node: YamlNode) (get: Decode.IGetters) =
-        match tryWholeStreamType scope node with
-        | Some streamType -> streamType, false
-        | None -> cwlTypeFromShorthand scope node (fun () -> get.Required.Field "listing" direntDecoder)
+        | None -> cwlTypeFromShorthand scope node
 
     /// Decode the text of the additional type of an RO-Crate entity. The text is YAML. A scalar is a type name such as
     /// File[][]? and may be quoted, as the null type is written ("null"), or carry a comment. The shorthand nests
@@ -1163,7 +1134,7 @@ module Decode =
             match typeNode.Kind with
             | YamlNodeKind.Scalar _ ->
                 // Scalar type field, including shorthand such as File[]?.
-                atField "type" (fun () -> cwlTypeStringMatcher scope typeNode get)
+                atField "type" (fun () -> cwlTypeStringDecoder scope typeNode)
             | _ ->
                 // Complex type field, for example inline record/enum/array schema.
                 let cwlType = get.Required.Field "type" (cwlTypeDecoderAt scope)

@@ -17,19 +17,19 @@ let testInput =
         testList "Directory" [
             let directoryItem = decodeInput.[0]
             testCase "Name" <| fun _ -> Expect.equal "arcDirectory"  directoryItem.Name ""
-            testCase "Type" <| fun _ -> Expect.equal (Directory (DirectoryInstance()))  directoryItem.Type_.Value ""
+            testCase "Type" <| fun _ -> Expect.equal (Directory)  directoryItem.Type_.Value ""
         ]
         testList "File" [
             let fileItem = decodeInput.[1]
             testCase "Name" <| fun _ -> Expect.equal "firstArg"  fileItem.Name ""
-            testCase "Type" <| fun _ -> Expect.equal (File (FileInstance()))  fileItem.Type_.Value ""
+            testCase "Type" <| fun _ -> Expect.equal (File)  fileItem.Type_.Value ""
             testCase "InputBinding" <| fun _ -> Expect.equal (Some (InputBinding.create(position = 1, prefix = "--example"))) fileItem.InputBinding ""
         ]
         testList "File optional" [
             let fileItem = decodeInput.[2]
             testCase "Name" <| fun _ -> Expect.equal "argOptional"  fileItem.Name ""
             testCase "Type" <| fun _ -> 
-                let expected = Union (ResizeArray [Null; File (FileInstance())])
+                let expected = Union (ResizeArray [Null; File])
                 Expect.equal fileItem.Type_.Value expected "Should be Union of [Null; File]"
             testCase "Optional" <| fun _ -> Expect.equal (Some true) fileItem.Optional ""
         ]
@@ -37,7 +37,7 @@ let testInput =
             let fileItem = decodeInput.[3]
             testCase "Name" <| fun _ -> Expect.equal "argOptionalMap"  fileItem.Name ""
             testCase "Type" <| fun _ -> 
-                let expected = Union (ResizeArray [Null; Array (InputArraySchema(File (FileInstance())))])
+                let expected = Union (ResizeArray [Null; Array (InputArraySchema(File))])
                 Expect.equal fileItem.Type_.Value expected "Should be Union of [Null; File[]]"
             testCase "Optional" <| fun _ -> Expect.equal (Some true) fileItem.Optional ""
         ]

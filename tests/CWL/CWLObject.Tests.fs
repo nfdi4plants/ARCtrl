@@ -123,7 +123,7 @@ outputs: {}"""
                     let actual = fileItem.Name
                     Expect.equal actual expected ""
                 testCase "Type" <| fun _ ->
-                    let expected = File (FileInstance())
+                    let expected = File
                     let actual = fileItem.Type_.Value
                     Expect.equal actual expected ""
                 testCase "InputBinding" <| fun _ ->
@@ -160,7 +160,7 @@ outputs: {}"""
                     let actual = directoryItem.Name
                     Expect.equal actual expected ""
                 testCase "Type" <| fun _ ->
-                    let expected = Directory (DirectoryInstance())
+                    let expected = Directory
                     let actual = directoryItem.Type_.Value
                     Expect.equal actual expected ""
                 testCase "OutputBinding" <| fun _ ->
@@ -175,7 +175,7 @@ outputs: {}"""
                     let actual = fileItem.Name
                     Expect.equal actual expected ""
                 testCase "Type" <| fun _ ->
-                    let expected = File (FileInstance())
+                    let expected = File
                     let actual = fileItem.Type_.Value
                     Expect.equal actual expected ""
                 testCase "OutputBinding" <| fun _ ->
@@ -245,7 +245,7 @@ let testCWLToolDescriptionMetadata =
                     let actual = fileItem.Name
                     Expect.equal actual expected ""
                 testCase "Type" <| fun _ ->
-                    let expected = File (FileInstance())
+                    let expected = File
                     let actual = fileItem.Type_.Value
                     Expect.equal actual expected ""
                 testCase "InputBinding" <| fun _ ->
@@ -282,7 +282,7 @@ let testCWLToolDescriptionMetadata =
                     let actual = directoryItem.Name
                     Expect.equal actual expected ""
                 testCase "Type" <| fun _ ->
-                    let expected = Directory (DirectoryInstance())
+                    let expected = Directory
                     let actual = directoryItem.Type_.Value
                     Expect.equal actual expected ""
                 testCase "OutputBinding" <| fun _ ->
@@ -297,7 +297,7 @@ let testCWLToolDescriptionMetadata =
                     let actual = fileItem.Name
                     Expect.equal actual expected ""
                 testCase "Type" <| fun _ ->
-                    let expected = File (FileInstance())
+                    let expected = File
                     let actual = fileItem.Type_.Value
                     Expect.equal actual expected ""
                 testCase "OutputBinding" <| fun _ ->
@@ -429,7 +429,7 @@ let testNestedArrayDecoding =
 
 let testUnionArrayItemDecoding =
     let expectedMixedInputType =
-        Array (InputArraySchema(Union (ResizeArray [String; File (FileInstance())])))
+        Array (InputArraySchema(Union (ResizeArray [String; File])))
 
     let assertMixedInputType (decoded: CWLToolDescription) =
         let inputs = Expect.wantSome decoded.Inputs "Union-array-items fixture should decode inputs."
@@ -559,7 +559,7 @@ expression: $(null)"""
             let encoded = Encode.encodeExpressionToolDescription decoded
             let roundTripped = Decode.decodeExpressionTool encoded
             let output = roundTripped.Outputs |> Seq.find (fun o -> o.Name = "pool_DIR")
-            Expect.equal output.Type_ (Some (Directory (DirectoryInstance()))) "pool_DIR output type should remain Directory."
+            Expect.equal output.Type_ (Some (Directory)) "pool_DIR output type should remain Directory."
             Expect.equal roundTripped.Expression decoded.Expression "Expression payload should roundtrip without semantic changes."
             Expect.stringContains roundTripped.Expression "sanitize(entry)" "Sanitize helper should survive roundtrip."
             Expect.stringContains roundTripped.Expression "allowedFields" "allowedFields array should survive roundtrip."
@@ -771,7 +771,7 @@ outputs: {}
             Expect.equal enumText "{type: enum, symbols: [\"true\", a, \"x,y\", \"12\"]}" "Lookalikes and flow indicators need quotes inside the flow text."
             Expect.isTrue (CWLType.typesEqual enumType (enumText |> YAMLicious.Reader.readRoot |> Decode.cwlTypeDecoder')) "The flow text should decode to the same enum."
             let recordType =
-                Record (InputRecordSchema(fields = ResizeArray [ InputRecordField("null", CWLType.String); InputRecordField("ok", CWLType.file ()) ]))
+                Record (InputRecordSchema(fields = ResizeArray [ InputRecordField("null", CWLType.String); InputRecordField("ok", CWLType.File) ]))
             let recordText = Encode.cwlTypeToYamlString recordType
             Expect.stringContains recordText "{name: \"null\", type: string}" "A field named null needs quotes."
             Expect.stringContains recordText "{name: ok, type: File}" "An ordinary field name stays plain."
@@ -789,7 +789,7 @@ outputs: {}
 
         testCase "the null type is written as a quoted string" <| fun _ ->
             Expect.equal (Encode.cwlTypeToYamlString Null) "\"null\"" "A plain null would read as a YAML null."
-            Expect.equal (Encode.cwlTypeToYamlString (Union (ResizeArray [ Null; CWLType.file () ]))) "[\"null\", File]" "The null member of a union must be quoted."
+            Expect.equal (Encode.cwlTypeToYamlString (Union (ResizeArray [ Null; CWLType.File ]))) "[\"null\", File]" "The null member of a union must be quoted."
     ]
 
 let testToolUnionPorts =
@@ -803,17 +803,17 @@ let testToolUnionPorts =
         let typeOf name = (Expect.wantSome (inputs |> Seq.find (fun i -> i.Name = name)).Type_ $"{name} should have a type")
         let optionalOf inner = Union (ResizeArray [ Null; inner ])
         assertTypesEqual (optionalOf (Enum (InputEnumSchema(ResizeArray [ "alpha"; "beta" ])))) (typeOf "mode_choice") "mode_choice"
-        assertTypesEqual (optionalOf (CWLType.directory ())) (typeOf "optional_dir") "optional_dir"
-        assertTypesEqual (optionalOf (CWLType.file ())) (typeOf "flow_union") "flow_union"
+        assertTypesEqual (optionalOf (CWLType.Directory)) (typeOf "optional_dir") "optional_dir"
+        assertTypesEqual (optionalOf (CWLType.File)) (typeOf "flow_union") "flow_union"
         assertTypesEqual (Union (ResizeArray [ String; Int ])) (typeOf "block_union") "block_union"
-        assertTypesEqual (optionalOf (Array (InputArraySchema(Union (ResizeArray [ String; CWLType.file () ]))))) (typeOf "array_or_null") "array_or_null"
+        assertTypesEqual (optionalOf (Array (InputArraySchema(Union (ResizeArray [ String; CWLType.File ]))))) (typeOf "array_or_null") "array_or_null"
         let flagOf name = (inputs |> Seq.find (fun i -> i.Name = name)).Optional
         for name in [ "mode_choice"; "optional_dir"; "flow_union"; "array_or_null" ] do
             Expect.equal (flagOf name) (Some true) (sprintf "%s is a union of null and one type, so it is optional." name)
         Expect.equal (flagOf "block_union") None "A union without null is not optional."
         let outputTypeOf name = Expect.wantSome (decoded.Outputs |> Seq.find (fun o -> o.Name = name)).Type_ $"{name} should have a type"
-        assertTypesEqual (Union (ResizeArray [ CWLType.file (); CWLType.directory () ])) (outputTypeOf "result") "result"
-        assertTypesEqual (optionalOf (CWLType.file ())) (outputTypeOf "maybe") "maybe"
+        assertTypesEqual (Union (ResizeArray [ CWLType.File; CWLType.Directory ])) (outputTypeOf "result") "result"
+        assertTypesEqual (optionalOf (CWLType.File)) (outputTypeOf "maybe") "maybe"
 
     testList "Union port types" [
         testCase "unions in object form and in bare list form decode" <| fun _ ->
@@ -850,7 +850,7 @@ outputs:
 """
             let decoded = Decode.decodeCommandLineTool yaml
             Expect.equal decoded.Inputs.Value.[0].Type_ (Some (Union (ResizeArray [ String; Null ]))) "The input type keeps the order of the list."
-            Expect.equal decoded.Outputs.[0].Type_ (Some (Union (ResizeArray [ CWLType.file (); Null ]))) "The output type keeps the order of the list."
+            Expect.equal decoded.Outputs.[0].Type_ (Some (Union (ResizeArray [ CWLType.File; Null ]))) "The output type keeps the order of the list."
             let encoded = Encode.encodeToolDescription decoded
             Expect.stringContains encoded """x: [string, "null"]""" "The input is written as a list."
             Expect.stringContains encoded """y: [File, "null"]""" "The output is written as a list."
@@ -999,11 +999,6 @@ outputs:
       type: record
       fields:
         f: stdout"""
-                  "stdout as a schema", "outputs.x.type.type", tool """inputs: {}
-outputs:
-  x:
-    type:
-      type: stdout"""
                   "stdin as the type of an output", "outputs.x", tool """inputs: {}
 outputs:
   x: stdin"""
@@ -1649,19 +1644,19 @@ outputs: {}
         testCase "a record field keeps its type and its other properties apart, in map and array form, for input and output records" <| fun _ ->
             // the lines of the type of the field, and the type that the decoder must find (None where the text is the check)
             let types : (string * string list * CWLType option) list =
-                [ "File", [ "type: File" ], Some (CWLType.file ())
-                  "Directory", [ "type: Directory" ], Some (CWLType.directory ())
+                [ "File", [ "type: File" ], Some (CWLType.File)
+                  "Directory", [ "type: Directory" ], Some (CWLType.Directory)
                   "string", [ "type: string" ], Some CWLType.String
                   "int", [ "type: int" ], Some CWLType.Int
                   "long", [ "type: long" ], Some CWLType.Long
                   "float", [ "type: float" ], Some CWLType.Float
                   "double", [ "type: double" ], Some CWLType.Double
                   "boolean", [ "type: boolean" ], Some CWLType.Boolean
-                  "optional File", [ "type: File?" ], Some (Union (ResizeArray [ Null; CWLType.file () ]))
-                  "File array", [ "type: File[]" ], Some (Array (InputArraySchema(CWLType.file ())))
-                  "union list", [ "type:"; "  - \"null\""; "  - File" ], Some (Union (ResizeArray [ Null; CWLType.file () ]))
+                  "optional File", [ "type: File?" ], Some (Union (ResizeArray [ Null; CWLType.File ]))
+                  "File array", [ "type: File[]" ], Some (Array (InputArraySchema(CWLType.File)))
+                  "union list", [ "type:"; "  - \"null\""; "  - File" ], Some (Union (ResizeArray [ Null; CWLType.File ]))
                   "union of two types", [ "type:"; "  - string"; "  - int" ], Some (Union (ResizeArray [ CWLType.String; CWLType.Int ]))
-                  "array schema", [ "type:"; "  type: array"; "  items: File" ], Some (Array (InputArraySchema(CWLType.file ())))
+                  "array schema", [ "type:"; "  type: array"; "  items: File" ], Some (Array (InputArraySchema(CWLType.File)))
                   "nested array schema", [ "type:"; "  type: array"; "  items:"; "    type: array"; "    items: string" ], None
                   "array of records", [ "type:"; "  type: array"; "  items:"; "    type: record"; "    fields:"; "      g:"; "        type: File"; "        inputBinding:"; "          prefix: --g" ], None
                   "enum", [ "type:"; "  type: enum"; "  symbols: [a, b]" ], None
@@ -1695,11 +1690,6 @@ outputs: {}
                             match expectedType with
                             | Some expected -> Expect.isTrue (CWLType.typesEqual expected recordField.Type) (sprintf "%s: the type of the field is %A, found %A" name expected recordField.Type)
                             | None -> ()
-                            // File and Directory types carry no properties of the field
-                            match recordField.Type with
-                            | File file -> Expect.isEmpty (file.GetProperties(false)) (sprintf "%s: the File type holds no property of the field" name)
-                            | Directory directory -> Expect.isEmpty (directory.GetProperties(false)) (sprintf "%s: the Directory type holds no property of the field" name)
-                            | _ -> ()
                             let fieldKeys = recordField.GetProperties(false) |> Seq.map (fun property -> property.Key) |> Seq.toList
                             for key in propertyKeys do
                                 if key <> "doc" && key <> "label" then
@@ -1723,9 +1713,9 @@ outputs: {}
             let decoded = Decode.decodeCommandLineTool yaml
             let fields = match decoded.Inputs.Value.[0].Type_ with | Some (Record schema) -> schema.Fields.Value | other -> failwithf "Expected a record, found %A" other
             Expect.sequenceEqual (fields |> Seq.map (fun field -> field.Name)) [ "a"; "b"; "c"; "d" ] "The fields keep their order."
-            Expect.isTrue (CWLType.typesEqual (CWLType.file ()) fields.[0].Type) "A field can be given as the type."
+            Expect.isTrue (CWLType.typesEqual (CWLType.File) fields.[0].Type) "A field can be given as the type."
             Expect.isTrue (CWLType.typesEqual (Union (ResizeArray [ Null; CWLType.String ])) fields.[1].Type) "A field can be given as an optional type."
-            Expect.isTrue (CWLType.typesEqual (Union (ResizeArray [ Null; CWLType.file () ])) fields.[2].Type) "A field can be given as a type list."
+            Expect.isTrue (CWLType.typesEqual (Union (ResizeArray [ Null; CWLType.File ])) fields.[2].Type) "A field can be given as a type list."
             Expect.equal fields.[3].Doc (Some "object form") "A field object keeps its doc."
             let encoded = Encode.encodeToolDescription decoded
             Expect.equal (Decode.decodeCommandLineTool encoded) decoded "The written text should decode to the same tool."
@@ -1775,41 +1765,25 @@ outputs:
             | Some error -> Expect.equal (DecodeError.pathText error) "outputs.o" "The error of an output type should show the output."
             | None -> failwith "An invalid output type must fail"
 
-        testCase "a type object with a question mark is a decode error under items and an optional type in a type field" <| fun _ ->
-            let tool (portLines: string list) =
-                "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n" + String.concat "\n" portLines + "\noutputs: []\n"
-            let cases =
-                [ "File? in a type object under items", "inputs.x.type.items.type", [ "  x:"; "    type:"; "      type: array"; "      items: {type: \"File?\"}" ]
-                  "Directory? in a type object in a list under items", "inputs.x.type.items[1].type", [ "  x:"; "    type:"; "      type: array"; "      items: [string, {type: \"Directory?\"}]" ] ]
-            for (name, path, portLines) in cases do
-                match (try Decode.decodeCommandLineTool (tool portLines) |> ignore; None with YamlDecodeException error -> Some error) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the path of the type" name)
-                    Expect.stringContains error.Message "Expected a type name or a schema under items, found" (sprintf "%s: the error should say what CWL reads" name)
-                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
-                | None -> failwith (sprintf "%s must fail" name)
-            let optional = (Decode.decodeCommandLineTool (tool [ "  x:"; "    type:"; "      type: \"File?\""; "      size: 5" ])).Inputs.Value.[0]
-            match optional.Type_ with
-            | Some (Union members) ->
-                Expect.equal members.[0] CWLType.Null "The optional type starts with null."
-                match members.[1] with
-                | File file -> Expect.equal file.Size (Some 5L) "The File type keeps the fields of its object."
-                | other -> failwithf "Expected a File type, found %A" other
-            | other -> failwithf "Expected an optional type, found %A" other
-
-        testCase "an error in the other fields of a type object shows the path of the field and an invalid name shows the type field" <| fun _ ->
+        testCase "a type object with a type name is a decode error at its type field in every type position" <| fun _ ->
             let tool (portLines: string list) =
                 "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n" + String.concat "\n" portLines + "\noutputs: []\n"
             let items (lines: string list) = [ "  x:"; "    type:"; "      type: array" ] @ lines
             let cases =
-                [ "a File object with a size that is no number", "inputs.x.type.items.size", "Expected an int64", items [ "      items: {type: File, size: abc}" ]
-                  "an optional File object with a size that is no number", "inputs.x.type.size", "Expected an int64", [ "  x:"; "    type:"; "      type: \"File?\""; "      size: abc" ]
-                  "a type object with an invalid name", "inputs.x.type.items.type", "Invalid CWL type: foo", items [ "      items: {type: foo}" ] ]
-            for (name, path, message, portLines) in cases do
+                [ "File under items", "inputs.x.type.items.type", "File", items [ "      items: {type: File}" ]
+                  "File? under items", "inputs.x.type.items.type", "File?", items [ "      items: {type: \"File?\"}" ]
+                  "Directory? in a list under items", "inputs.x.type.items[1].type", "Directory?", items [ "      items: [string, {type: \"Directory?\"}]" ]
+                  "File with a format under items", "inputs.x.type.items.type", "File", items [ "      items: {type: File, format: \"http://edamontology.org/format_2330\"}" ]
+                  "optional File with a size in the type field of a port", "inputs.x.type.type", "File?", [ "  x:"; "    type:"; "      type: \"File?\""; "      size: 5" ]
+                  "File with a format in a type list", "inputs.x[1].type", "File", [ "  x: [\"null\", {type: File, format: \"http://edamontology.org/format_2330\"}]" ]
+                  "a stream type", "inputs.x.type.items.type", "stdout", items [ "      items: {type: stdout}" ]
+                  "a name that is no type", "inputs.x.type.items.type", "foo", items [ "      items: {type: foo}" ] ]
+            for (name, path, word, portLines) in cases do
                 match (try Decode.decodeCommandLineTool (tool portLines) |> ignore; None with YamlDecodeException error -> Some error) with
                 | Some error ->
-                    Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the path" name)
-                    Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
+                    Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the path of the type" name)
+                    Expect.stringContains error.Message ("Expected record, enum or array in the type field of a schema, found the text \"" + word + "\"") (sprintf "%s: the error should say what CWL reads" name)
+                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
                 | None -> failwith (sprintf "%s must fail" name)
 
         testCase "the fields of a record that are neither a list nor a mapping are a decode error at fields" <| fun _ ->
@@ -1865,9 +1839,7 @@ outputs:
             Expect.equal withFile.[1].Type CWLType.String "title is a string."
             Expect.equal withFlags.[0].Type CWLType.Boolean "verbose is a boolean."
             Expect.equal withFlags.[1].Type CWLType.Boolean "quiet is a boolean."
-            match withFile.[0].Type with
-            | File file -> Expect.isEmpty (file.GetProperties(false)) "The File type of source holds no inputBinding."
-            | other -> failwithf "Expected a File type, found %A" other
+            Expect.equal withFile.[0].Type CWLType.File "source is a File."
             for field in Seq.append withFile withFlags do
                 Expect.isTrue (field.GetProperties(false) |> Seq.exists (fun property -> property.Key = "inputBinding")) (sprintf "%s keeps its inputBinding." field.Name)
             let encoded = Encode.encodeToolDescription decoded
@@ -1943,23 +1915,23 @@ outputs:
             let arrayOf (inner: CWLType) = CWLType.Array (InputArraySchema(inner))
             let optionalOf (inner: CWLType) = CWLType.Union (ResizeArray [ CWLType.Null; inner ])
             let members = read [ "  x: [string, \"File[]\"]"; "  y: [int, \"File?\"]"; "  z: [\"null\", \"string[]\"]" ]
-            Expect.equal members.[0].Type_ (Some (CWLType.Union (ResizeArray [ CWLType.String; arrayOf (CWLType.File (FileInstance())) ]))) "A member may be an array shorthand."
-            Expect.equal members.[1].Type_ (Some (CWLType.Union (ResizeArray [ CWLType.Int; optionalOf (CWLType.File (FileInstance())) ]))) "A member may be an optional shorthand."
+            Expect.equal members.[0].Type_ (Some (CWLType.Union (ResizeArray [ CWLType.String; arrayOf (CWLType.File) ]))) "A member may be an array shorthand."
+            Expect.equal members.[1].Type_ (Some (CWLType.Union (ResizeArray [ CWLType.Int; optionalOf (CWLType.File) ]))) "A member may be an optional shorthand."
             Expect.equal members.[2].Type_ (Some (optionalOf (arrayOf CWLType.String))) "A list of null and an array shorthand is an optional array."
             let fieldTypes = read [ "  r:"; "    type:"; "      type: record"; "      fields:"; "        f: File[]?"; "        g:"; "          type: string[]" ]
             match fieldTypes.[0].Type_ with
             | Some (CWLType.Record schema) ->
-                Expect.equal schema.Fields.Value.[0].Type (optionalOf (arrayOf (CWLType.File (FileInstance())))) "A record field reads File[]? as a type."
+                Expect.equal schema.Fields.Value.[0].Type (optionalOf (arrayOf (CWLType.File))) "A record field reads File[]? as a type."
                 Expect.equal schema.Fields.Value.[1].Type (arrayOf CWLType.String) "A record field reads string[] in its type field."
             | other -> failwith (sprintf "Expected a record but got %A" other)
             let items = read [ "  x:"; "    type:"; "      type: array"; "      items: [string, File]" ]
-            Expect.equal items.[0].Type_ (Some (arrayOf (CWLType.Union (ResizeArray [ CWLType.String; CWLType.File (FileInstance()) ])))) "A name under items needs no shorthand."
+            Expect.equal items.[0].Type_ (Some (arrayOf (CWLType.Union (ResizeArray [ CWLType.String; CWLType.File ])))) "A name under items needs no shorthand."
 
         testCase "the shorthand text of a type nests arrays and the type of a CWL document does not" <| fun _ ->
-            let nested = Array (InputArraySchema(Array (InputArraySchema(CWLType.file ()))))
+            let nested = Array (InputArraySchema(Array (InputArraySchema(CWLType.File))))
             Expect.equal ((Encode.encodeCWLTypeShorthand nested |> Encode.writeYaml).Trim()) "File[][]" "The shorthand text nests the arrays."
             Expect.equal ((Encode.encodeCWLType nested |> Encode.writeYaml).Trim()) "type: array\nitems:\n  type: array\n  items: File" "A CWL document writes the schema."
-            Expect.equal ((Encode.encodeCWLType (Array (InputArraySchema(CWLType.file ()))) |> Encode.writeYaml).Trim()) "File[]" "An array of one level is the shorthand."
+            Expect.equal ((Encode.encodeCWLType (Array (InputArraySchema(CWLType.File))) |> Encode.writeYaml).Trim()) "File[]" "An array of one level is the shorthand."
 
         testCase "a process without inputs writes the empty inputs that CWL requires and reads back equal" <| fun _ ->
             let tool (inputs: string) = "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\n" + inputs + "outputs: []\n"
@@ -2628,6 +2600,173 @@ let testEqualityOfDecodedObjects =
             Expect.notEqual (decode (text.Replace("ext-list: [a, b]", "ext-list: [b, a]"))).Inputs.Value.[0] first.Inputs.Value.[0] "Another order of the elements makes the inputs unequal."
     ]
 
+let testPortSchemaNesting =
+    let tool (portLines: string list) =
+        "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n" + String.concat "\n" portLines + "\noutputs: []\n"
+    let enumSchema = Enum (InputEnumSchema(ResizeArray [ "fast"; "slow" ]))
+
+    testList "Port schema nesting" [
+        testCase "the schema of a port with other fields stands directly under type" <| fun _ ->
+            let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.PortSchemas.cwlFile
+            let encoded = Encode.encodeToolDescription decoded
+            Expect.stringContains encoded "  mode:\n    type:\n      type: enum\n      symbols: [fast, slow]\n    inputBinding:\n      prefix: --mode\n" "The enum input keeps its schema under type and its binding beside it."
+            Expect.stringContains encoded "  summary:\n    type:\n      type: record\n      fields:\n        count:\n          type: int\n    doc: the summary\n" "The record output keeps its schema under type and its doc beside it."
+            Expect.stringContains encoded "  samples:\n    type:\n      type: array\n      items:\n        type: record\n" "The array of records keeps its schema under type."
+            Expect.isFalse (encoded.Contains "type:\n      type:\n        type:") "No port writes a schema in a second mapping under type."
+            Expect.equal (Decode.decodeCommandLineTool encoded) decoded "The written text should decode to the same tool."
+        testCase "a port with a schema and no other field writes the schema under type" <| fun _ ->
+            let hand =
+                CWLToolDescription(
+                    ResizeArray [ CWLOutput("record", Record (InputRecordSchema(fields = ResizeArray [ InputRecordField("a", CWLType.String) ]))) ],
+                    inputs = ResizeArray [ CWLInput("mode", enumSchema) ],
+                    baseCommand = ResizeArray [ "echo" ]
+                )
+            let encoded = Encode.encodeToolDescription hand
+            Expect.stringContains encoded "  mode:\n    type:\n      type: enum\n      symbols: [fast, slow]\n" "The enum input is a port object with the schema under type."
+            Expect.stringContains encoded "  record:\n    type:\n      type: record\n      fields:\n        a:\n          type: string\n" "The record output is a port object with the schema under type."
+            Expect.equal (Decode.decodeCommandLineTool encoded) hand "The hand-built tool should read back as it was built."
+        testCase "a hand-built enum input with a binding reads back equal" <| fun _ ->
+            let hand =
+                CWLToolDescription(
+                    ResizeArray [],
+                    inputs = ResizeArray [ CWLInput("mode", enumSchema, inputBinding = InputBinding.create(prefix = "--mode")) ],
+                    baseCommand = ResizeArray [ "echo" ]
+                )
+            let encoded = Encode.encodeToolDescription hand
+            Expect.stringContains encoded "    type:\n      type: enum\n" "The schema stands under type."
+            Expect.equal (Decode.decodeCommandLineTool encoded) hand "The written text should read back as the same tool."
+        testCase "a schema under a schema under type is a decode error" <| fun _ ->
+            let yaml = tool [ "  mode:"; "    type:"; "      type:"; "        type: enum"; "        symbols: [fast, slow]"; "    inputBinding:"; "      prefix: --mode" ]
+            match (try Decode.decodeCommandLineTool yaml |> ignore; None with YamlDecodeException error -> Some error) with
+            | Some error ->
+                Expect.equal (DecodeError.pathText error) "inputs.mode.type.type" "The error should show the misplaced level."
+                Expect.stringContains error.Message "Expected record, enum or array in the type field of a schema" "The error should say what a schema has under type."
+                Expect.isSome error.Span "The error should have the place in the text."
+            | None -> failwith "A schema in the type of a schema must fail."
+        testCase "a type list under the type of a schema is a decode error" <| fun _ ->
+            let yaml = tool [ "  x:"; "    type:"; "      type: [string, int]" ]
+            match (try Decode.decodeCommandLineTool yaml |> ignore; None with YamlDecodeException error -> Some error) with
+            | Some error -> Expect.equal (DecodeError.pathText error) "inputs.x.type.type" "The error should show the misplaced level."
+            | None -> failwith "A type list in the type of a schema must fail."
+    ]
+
+let testArrayShorthand =
+    let inputOf (name: string) (tool: CWLToolDescription) = tool.Inputs.Value |> Seq.find (fun input -> input.Name = name)
+
+    testList "Array shorthand" [
+        testCase "an array with an input binding keeps its binding and the binding of its port" <| fun _ ->
+            let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.ArraySchemas.withBinding
+            let encoded = Encode.encodeToolDescription decoded
+            Expect.stringContains encoded "    type:\n      type: array\n      items: File\n      inputBinding:\n        prefix: -I\n    inputBinding:\n      position: 1\n" "The array stays a schema with its binding, and the port keeps its own."
+            Expect.isFalse (encoded.Contains "File[]") "The shorthand would drop the binding of the array."
+            Expect.equal (Decode.decodeCommandLineTool encoded) decoded "The written text should decode to the same tool."
+        testCase "an array with a label, a doc or a name is written as a schema, as a type or in a type list" <| fun _ ->
+            let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.ArraySchemas.withMetadata
+            let encoded = Encode.encodeToolDescription decoded
+            Expect.stringContains encoded "  names:\n    - \"null\"\n    - type: array\n      items: string\n      label: names\n      inputBinding:\n        itemSeparator: \",\"\n" "The optional array with a label keeps its schema."
+            Expect.stringContains encoded "  counts:\n    type:\n      type: array\n      items: int\n      doc: the counts\n" "The array with a doc keeps its schema."
+            Expect.stringContains encoded "  tags:\n    - string\n    - type: array\n      items: string\n      name: Tags\n" "The array with a name keeps its schema in a type list."
+            Expect.stringContains encoded "  plain: string[]\n" "A plain array stays the shorthand."
+            Expect.stringContains encoded "  maybe: int[]?\n" "A plain optional array stays the shorthand."
+            Expect.equal (Decode.decodeCommandLineTool encoded) decoded "The written text should decode to the same tool."
+        testCase "the schema of an array keeps the fields that the shorthand has no place for" <| fun _ ->
+            let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.ArraySchemas.withMetadata
+            match (inputOf "names" decoded).Type_ with
+            | Some (Union members) ->
+                match members.[1] with
+                | Array schema ->
+                    Expect.equal schema.Label (Some "names") "The label is typed."
+                    Expect.isTrue (schema.TryGetPropertyValue "inputBinding" |> Option.isSome) "The binding stays on the schema."
+                | other -> failwithf "Expected an array schema, found %A" other
+            | other -> failwithf "Expected a type list, found %A" other
+        testCase "a hand-built array with a label is not written as the shorthand" <| fun _ ->
+            let labelled = InputArraySchema(CWLType.String, label = "names")
+            let hand =
+                CWLToolDescription(
+                    ResizeArray [],
+                    inputs = ResizeArray [ CWLInput("a", Array labelled); CWLInput("b", Union (ResizeArray [ Null; Array labelled ]), optional = true); CWLInput("c", Array (InputArraySchema(CWLType.String))) ],
+                    baseCommand = ResizeArray [ "echo" ]
+                )
+            let encoded = Encode.encodeToolDescription hand
+            Expect.stringContains encoded "  a:\n    type:\n      type: array\n      items: string\n      label: names\n" "The array as the whole type keeps its label."
+            Expect.stringContains encoded "  b:\n    - \"null\"\n    - type: array\n      items: string\n      label: names\n" "The optional array keeps its label."
+            Expect.stringContains encoded "  c: string[]\n" "The plain array is the shorthand."
+            Expect.equal (Decode.decodeCommandLineTool encoded) hand "The hand-built tool should read back as it was built."
+        testCase "the text of an additional type needs a schema for an array with a label" <| fun _ ->
+            let labelled = Array (InputArraySchema(CWLType.File, label = "files"))
+            Expect.isTrue (Encode.isComplexType labelled) "An array with a label has no shorthand."
+            Expect.isTrue (Encode.isComplexType (Union (ResizeArray [ Null; labelled ]))) "An optional array with a label has no shorthand."
+            Expect.isFalse (Encode.isComplexType (Array (InputArraySchema(CWLType.File)))) "A plain array has the shorthand."
+            Expect.equal ((Encode.encodeCWLTypeShorthand (Array (InputArraySchema(Array (InputArraySchema(CWLType.File))))) |> Encode.writeYaml).Trim()) "File[][]" "A plain array of arrays has the nested shorthand."
+    ]
+
+let testFileAndDirectoryTypes =
+    let tool (portLines: string list) =
+        "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n" + String.concat "\n" portLines + "\noutputs: []\n"
+
+    testList "File and Directory types" [
+        testCase "the format and the secondaryFiles of an optional File stay on the port and the type round trips equal" <| fun _ ->
+            let yaml = tool [ "  reads:"; "    type: File?"; "    format: edam:format_2330"; "    secondaryFiles: .bai"; "  dir: Directory?" ]
+            let decoded = Decode.decodeCommandLineTool yaml
+            let reads = decoded.Inputs.Value.[0]
+            Expect.equal reads.Type_ (Some (Union (ResizeArray [ Null; CWLType.File ]))) "The type is an optional File."
+            Expect.equal reads.Format (Some (InputFormat.Single "edam:format_2330")) "The format belongs to the port."
+            Expect.isSome reads.SecondaryFiles "The secondaryFiles belong to the port."
+            Expect.equal decoded.Inputs.Value.[1].Type_ (Some (Union (ResizeArray [ Null; CWLType.Directory ]))) "The type is an optional Directory."
+            let encoded = Encode.encodeToolDescription decoded
+            Expect.stringContains encoded "  reads:\n    type: File?\n    secondaryFiles: .bai\n    format: edam:format_2330\n  dir: Directory?\n" "The port keeps its fields and the types are the shorthand."
+            Expect.equal (Decode.decodeCommandLineTool encoded) decoded "The written text should decode to the same tool."
+        testCase "a File and a Directory are equal to themselves and to nothing else" <| fun _ ->
+            Expect.equal CWLType.File CWLType.File "A File equals a File."
+            Expect.equal CWLType.Directory CWLType.Directory "A Directory equals a Directory."
+            Expect.notEqual CWLType.File CWLType.Directory "A File is no Directory."
+            Expect.equal (hash CWLType.File) (hash CWLType.File) "Equal types hash alike."
+        testCase "the type of a File value is File" <| fun _ ->
+            Expect.equal (CWLParameterValue.tryInferType (CWLParameterValue.File (FileInstance(path = "a.txt")))) (Some CWLType.File) "A File value has the type File."
+            Expect.equal (CWLParameterValue.tryInferType (CWLParameterValue.Directory (DirectoryInstance(path = "d")))) (Some CWLType.Directory) "A Directory value has the type Directory."
+    ]
+
+let testDirentIsNoType =
+    let tool (inputLines: string list) (outputLines: string list) =
+        "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n" + String.concat "\n" inputLines + "\noutputs:\n" + String.concat "\n" outputLines + "\n"
+
+    testList "Dirent is no type" [
+        testCase "Dirent as a type name is an invalid CWL type at its place" <| fun _ ->
+            let cases =
+                [ "an input", "inputs.x", tool [ "  x: Dirent" ] [ "  o: string" ]
+                  "an array of Dirent", "inputs.x", tool [ "  x: Dirent[]" ] [ "  o: string" ]
+                  "an optional Dirent", "inputs.x", tool [ "  x: Dirent?" ] [ "  o: string" ]
+                  "the type field of an input", "inputs.x.type", tool [ "  x:"; "    type: Dirent"; "    listing: []" ] [ "  o: string" ]
+                  "a member of a type list", "inputs.x[1]", tool [ "  x: [string, Dirent]" ] [ "  o: string" ]
+                  "the items of an array", "inputs.x.type.items", tool [ "  x:"; "    type:"; "      type: array"; "      items: Dirent" ] [ "  o: string" ]
+                  "an output", "outputs.o", tool [ "  x: string" ] [ "  o: Dirent" ] ]
+            for (name, path, yaml) in cases do
+                match (try Decode.decodeCommandLineTool yaml |> ignore; None with YamlDecodeException error -> Some error) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the place of the type" name)
+                    Expect.equal error.Message "Invalid CWL type: Dirent" (sprintf "%s: the error should name the type" name)
+                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+                | None -> failwith (sprintf "%s must fail" name)
+        testCase "a Dirent stays an entry of the listing of an InitialWorkDirRequirement" <| fun _ ->
+            let yaml = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+requirements:
+  - class: InitialWorkDirRequirement
+    listing:
+      - entryname: a.txt
+        entry: hello
+inputs: {}
+outputs: {}
+"""
+            let decoded = Decode.decodeCommandLineTool yaml
+            match decoded.Requirements.Value.[0] with
+            | InitialWorkDirRequirement listing ->
+                Expect.equal listing.[0] (DirentEntry (DirentInstance(SchemaSaladString.Literal "hello", entryname = SchemaSaladString.Literal "a.txt"))) "The entry is a Dirent."
+            | other -> failwithf "Expected an InitialWorkDirRequirement, found %A" other
+            Expect.equal (Decode.decodeCommandLineTool (Encode.encodeToolDescription decoded)) decoded "The written text should decode to the same tool."
+    ]
+
 let main =
     testList "CWLToolDescription" [
         testCWLToolDescriptionDecode
@@ -2646,5 +2785,9 @@ let main =
         testExpressionTool
         testOperation
         testTopLevelDirectDynamicOverflow
+        testPortSchemaNesting
+        testArrayShorthand
+        testFileAndDirectoryTypes
+        testDirentIsNoType
     ]
 

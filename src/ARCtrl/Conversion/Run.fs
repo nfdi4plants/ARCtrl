@@ -84,7 +84,7 @@ type RunConversion =
                 let paramTypeStr = CWL.Encode.formatCWLType type_
                 failwith $"Type ({typeStr}) of yml input value \"{inputValue.Key}\" does not match type of workflow input parameter ({paramTypeStr})."
         match type_ with
-        | CWL.CWLType.File _ when inputValue.Values.Count = 1 ->
+        | CWL.CWLType.File when inputValue.Values.Count = 1 ->
             let path = RunConversion.composeCWLInputFilePath(inputValue.Values[0], runName)
             let file = LDFile.createCWLParameter(path, exampleOfWork = exampleOfWork)
             match inputValue.Value with
@@ -151,7 +151,7 @@ type RunConversion =
                 |> CWL.CWLParameterValue.Array
             | _ ->
                 CWL.CWLParameterValue.Array (ResizeArray [RunConversion.decomposeCWLParameterValue(value, runName, expectedType = arraySchema.Items, ?graph = graph)])
-        | Some (CWL.CWLType.File _) ->
+        | Some CWL.CWLType.File ->
             match value with
             | :? LDNode as node when LDFile.validate(node) ->
                 let path = RunConversion.decomposeCWLInputFilePath(node.Id, runName)
@@ -161,7 +161,7 @@ type RunConversion =
                 let path = RunConversion.decomposeCWLInputFilePath(path, runName)
                 CWL.CWLParameterValue.File (CWL.FileInstance(path = path))
             | _ -> CWL.CWLParameterValue.String (string value)
-        | Some (CWL.CWLType.Directory _) ->
+        | Some CWL.CWLType.Directory ->
             match value with
             | :? LDNode as node when LDFile.validate(node) ->
                 let path = RunConversion.decomposeCWLInputFilePath(node.Id, runName)
@@ -257,7 +257,7 @@ type RunConversion =
             CWL.CWLParameterReference(
                 key = key,
                 values = ResizeArray [path],
-                type_ = CWL.CWLType.file()
+                type_ = CWL.CWLType.File
             )
         else if LDPropertyValue.validateCWLParameter(inputValue, ?context = context) then
             let valueObject = LDPropertyValue.getValueObject(inputValue, ?context = context)

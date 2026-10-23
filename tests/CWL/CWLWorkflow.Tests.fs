@@ -58,13 +58,13 @@ let testCWLWorkflowDescriptionDecode =
         testCase "inputs" <| fun _ ->
             let expected = ResizeArray [|
                 CWLInput("cores", CWLType.Int)
-                CWLInput("db", CWLType.File (FileInstance()))
-                CWLInput ("stage", CWLType.Directory (DirectoryInstance()))
-                CWLInput ("outputMzML", CWLType.Directory (DirectoryInstance()))
-                CWLInput ("outputPSM", CWLType.Directory (DirectoryInstance()))
-                CWLInput ("inputMzML", CWLType.Directory (DirectoryInstance()))
-                CWLInput ("paramsMzML", CWLType.File (FileInstance()))
-                CWLInput ("paramsPSM", CWLType.File (FileInstance()))
+                CWLInput("db", CWLType.File)
+                CWLInput ("stage", CWLType.Directory)
+                CWLInput ("outputMzML", CWLType.Directory)
+                CWLInput ("outputPSM", CWLType.Directory)
+                CWLInput ("inputMzML", CWLType.Directory)
+                CWLInput ("paramsMzML", CWLType.File)
+                CWLInput ("paramsPSM", CWLType.File)
                 // Note: sampleRecord has complex type and will be checked separately
             |]
             let actual = decodeCWLWorkflowDescription.Inputs
@@ -178,8 +178,8 @@ let testCWLWorkflowDescriptionDecode =
         ]
         testCase "outputs" <| fun _ ->
             let expected = ResizeArray [|
-                CWLOutput("mzlite", CWLType.Directory (DirectoryInstance()), outputSource = OutputSource.Single "MzMLToMzlite/dir")
-                CWLOutput("psm", CWLType.Directory (DirectoryInstance()), outputSource = OutputSource.Single "PeptideSpectrumMatching/dir")
+                CWLOutput("mzlite", CWLType.Directory, outputSource = OutputSource.Single "MzMLToMzlite/dir")
+                CWLOutput("psm", CWLType.Directory, outputSource = OutputSource.Single "PeptideSpectrumMatching/dir")
             |]
             let actual = decodeCWLWorkflowDescription.Outputs
             for i = 0 to actual.Count - 1 do
@@ -345,8 +345,8 @@ steps:
                         |> Seq.toList
                     Expect.equal arrayItems [expectedItem] $"{name} should include exactly one array type."
                 | other -> failwithf "Expected optional array type for %s, got %A" name other
-            assertOptionalArray "optional_files" (File (FileInstance()))
-            assertOptionalArray "optional_dirs" (Directory (DirectoryInstance()))
+            assertOptionalArray "optional_files" (File)
+            assertOptionalArray "optional_dirs" (Directory)
         testCase "inline enum and record schema union types decode" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithInlineSchemaUnionTypesFile
             let mode = decoded.Inputs |> Seq.find (fun input -> input.Name = "mode")
@@ -371,7 +371,7 @@ steps:
                     Expect.equal sampleId.Type String "sample_id type should decode."
                     let files = fields |> Seq.find (fun field -> field.Name = "files")
                     match files.Type with
-                    | Array arraySchema -> Expect.equal arraySchema.Items (File (FileInstance())) "files should decode as File array."
+                    | Array arraySchema -> Expect.equal arraySchema.Items (File) "files should decode as File array."
                     | other -> failwithf "Expected files to decode as an array, got %A" other
                 | other -> failwithf "Expected one inline record schema, got %A" other
             | other -> failwithf "Expected record_payload to decode as a union, got %A" other
@@ -480,13 +480,7 @@ steps:
                 (DynObj.tryGetTypedPropertyValue<string> "arc:note" input)
                 (Some "keep input note")
                 "Unknown input fields should be preserved."
-            match input.Type_ with
-            | Some (CWLType.File file) ->
-                Expect.equal
-                    (DynObj.tryGetTypedPropertyValue<string> "arc:type note" file)
-                    (Some "keep input type note")
-                    "Unknown input type-object fields should be preserved on the file instance."
-            | other -> failwith $"Expected sample input to decode as File, got %A{other}."
+            Expect.equal input.Type_ (Some CWLType.File) "The sample input should decode as File."
             Expect.isNone
                 (DynObj.tryGetTypedPropertyValue<string> "arc:binding note" input)
                 "Unknown input binding fields should not be flattened onto the input."
@@ -498,13 +492,7 @@ steps:
                 (DynObj.tryGetTypedPropertyValue<string> "arc:note" output)
                 (Some "keep output note")
                 "Unknown output fields should be preserved."
-            match output.Type_ with
-            | Some (CWLType.File file) ->
-                Expect.equal
-                    (DynObj.tryGetTypedPropertyValue<string> "arc:type note" file)
-                    (Some "keep output type note")
-                    "Unknown output type-object fields should be preserved on the file instance."
-            | other -> failwith $"Expected result output to decode as File, got %A{other}."
+            Expect.equal output.Type_ (Some CWLType.File) "The result output should decode as File."
             Expect.isNone
                 (DynObj.tryGetTypedPropertyValue<string> "arc:binding note" output)
                 "Unknown output binding fields should not be flattened onto the output."
@@ -804,17 +792,11 @@ let testCWLWorkflowDescriptionEncode =
                 let outputBinding = Expect.wantSome output.OutputBinding "Output binding should survive roundtrip."
 
                 Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" input) (Some "keep input note") "Input overflow should roundtrip."
-                match input.Type_ with
-                | Some (CWLType.File file) ->
-                    Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:type note" file) (Some "keep input type note") "Input type overflow should roundtrip."
-                | other -> failwith $"Expected File input type, got %A{other}."
+                Expect.equal input.Type_ (Some CWLType.File) "The input type should roundtrip."
                 Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:binding note" inputBinding) (Some "keep input binding note") "Input binding overflow should roundtrip."
 
                 Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" output) (Some "keep output note") "Output overflow should roundtrip."
-                match output.Type_ with
-                | Some (CWLType.File file) ->
-                    Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:type note" file) (Some "keep output type note") "Output type overflow should roundtrip."
-                | other -> failwith $"Expected File output type, got %A{other}."
+                Expect.equal output.Type_ (Some CWLType.File) "The output type should roundtrip."
                 Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:binding note" outputBinding) (Some "keep output binding note") "Output binding overflow should roundtrip."
 
                 Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:step note" step) (Some "keep step note") "Workflow step overflow should roundtrip."
@@ -1017,8 +999,8 @@ let testWorkflowUnionPortRoundTrip =
         testCase "unions of null with an enum, a record or an array decode, encode and decode again" <| fun _ ->
             let check (workflow: CWLWorkflowDescription) =
                 assertTypesEqual (optionalOf (enumOf [ "alpha"; "beta"; "gamma"; "delta" ])) (inputTypeOf workflow "mode_choice") "mode_choice"
-                assertTypesEqual (optionalOf (CWLType.directory ())) (inputTypeOf workflow "annotation_directory") "annotation_directory"
-                assertTypesEqual (optionalOf (Array (InputArraySchema(CWLType.file ())))) (inputTypeOf workflow "sample_files") "sample_files"
+                assertTypesEqual (optionalOf (CWLType.Directory)) (inputTypeOf workflow "annotation_directory") "annotation_directory"
+                assertTypesEqual (optionalOf (Array (InputArraySchema(CWLType.File)))) (inputTypeOf workflow "sample_files") "sample_files"
                 assertTypesEqual (Union (ResizeArray [ Int; Float ])) (inputTypeOf workflow "threshold") "threshold"
                 match inputTypeOf workflow "reference_dbs" with
                 | Union members ->
@@ -1034,8 +1016,8 @@ let testWorkflowUnionPortRoundTrip =
                 for name in [ "mode_choice"; "annotation_directory"; "sample_files"; "reference_dbs" ] do
                     Expect.equal (flagOf name) (Some true) (sprintf "%s is a union of null and one type, so it is optional." name)
                 Expect.equal (flagOf "threshold") None "A union without null is not optional."
-                assertTypesEqual (optionalOf (CWLType.file ())) (outputTypeOf workflow "chosen") "chosen"
-                assertTypesEqual (Union (ResizeArray [ CWLType.file (); CWLType.directory () ])) (outputTypeOf workflow "summary") "summary"
+                assertTypesEqual (optionalOf (CWLType.File)) (outputTypeOf workflow "chosen") "chosen"
+                assertTypesEqual (Union (ResizeArray [ CWLType.File; CWLType.Directory ])) (outputTypeOf workflow "summary") "summary"
                 let expressionTool = Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool workflow.Steps.[0].Run) "The inline ExpressionTool should decode."
                 let toolInput = (Expect.wantSome expressionTool.Inputs "The inline tool should keep its inputs.") |> Seq.find (fun i -> i.Name = "mode_string")
                 assertTypesEqual (optionalOf (enumOf [ "alpha"; "delta"; "beta"; "gamma" ])) (Expect.wantSome toolInput.Type_ "Inline input type") "inline mode_string"
@@ -1052,12 +1034,12 @@ let testWorkflowUnionPortRoundTrip =
         testCase "array form ports with unions roundtrip" <| fun _ ->
             let check (workflow: CWLWorkflowDescription) =
                 assertTypesEqual CWLType.String (inputTypeOf workflow "NAME_PATTERN") "NAME_PATTERN"
-                assertTypesEqual (optionalOf (CWLType.file ())) (inputTypeOf workflow "INDEX_FILES") "INDEX_FILES"
+                assertTypesEqual (optionalOf (CWLType.File)) (inputTypeOf workflow "INDEX_FILES") "INDEX_FILES"
                 assertTypesEqual (optionalOf (Array (InputArraySchema(Float)))) (inputTypeOf workflow "LIMITS") "LIMITS"
                 assertTypesEqual (Union (ResizeArray [ String; Int; Boolean ])) (inputTypeOf workflow "CHOICE") "CHOICE"
-                assertTypesEqual (optionalOf (CWLType.file ())) (inputTypeOf workflow "MAYBE_LIST") "MAYBE_LIST"
-                assertTypesEqual (CWLType.file ()) (outputTypeOf workflow "RESULT_LIST") "RESULT_LIST"
-                assertTypesEqual (optionalOf (CWLType.file ())) (outputTypeOf workflow "OPTIONAL_RESULT") "OPTIONAL_RESULT"
+                assertTypesEqual (optionalOf (CWLType.File)) (inputTypeOf workflow "MAYBE_LIST") "MAYBE_LIST"
+                assertTypesEqual (CWLType.File) (outputTypeOf workflow "RESULT_LIST") "RESULT_LIST"
+                assertTypesEqual (optionalOf (CWLType.File)) (outputTypeOf workflow "OPTIONAL_RESULT") "OPTIONAL_RESULT"
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.UnionPorts.arrayFormWorkflow
             check decoded
             check (Decode.decodeWorkflow (Encode.encodeWorkflowDescription decoded))
@@ -1075,12 +1057,12 @@ outputs:
   result: ["null", File]
 """
             let workflow = Decode.decodeWorkflow yaml
-            assertTypesEqual (optionalOf (CWLType.file ())) (inputTypeOf workflow "flow_style") "flow_style"
+            assertTypesEqual (optionalOf (CWLType.File)) (inputTypeOf workflow "flow_style") "flow_style"
             assertTypesEqual (Union (ResizeArray [ String; Int ])) (inputTypeOf workflow "block_style") "block_style"
             let flagOf name = (CWLWorkflowDescription.getInputs workflow |> Seq.find (fun i -> i.Name = name)).Optional
             Expect.equal (flagOf "flow_style") (Some true) "A bare list of null and a file is optional."
             Expect.equal (flagOf "block_style") None "A bare list of two types without null is not optional."
-            assertTypesEqual (optionalOf (CWLType.file ())) (outputTypeOf workflow "result") "result"
+            assertTypesEqual (optionalOf (CWLType.File)) (outputTypeOf workflow "result") "result"
     ]
 
 let testPackedDocuments =

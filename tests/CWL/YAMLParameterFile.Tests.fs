@@ -36,7 +36,7 @@ let testYAMLParameterFile =
                 CWLParameterReference(
                     key = "exampleFile",
                     values = ResizeArray [| "../examplePath" |],
-                    type_ = (CWLType.file())
+                    type_ = (CWLType.File)
                 )
             Expect.equal expected.Key decodeYAMLParameterFile.[2].Key ""
             Expect.sequenceEqual expected.Values decodeYAMLParameterFile.[2].Values ""
@@ -46,7 +46,7 @@ let testYAMLParameterFile =
                 CWLParameterReference(
                     key = "exampleDir",
                     values = ResizeArray [| "../examplePathDir" |],
-                    type_ = (CWLType.directory())
+                    type_ = (CWLType.Directory)
                 )
             Expect.equal expected.Key decodeYAMLParameterFile.[3].Key ""
             Expect.sequenceEqual expected.Values decodeYAMLParameterFile.[3].Values ""
@@ -64,7 +64,7 @@ let testYAMLParameterFile =
             let decoded = DecodeParameters.decodeYAMLParameterFile TestObjects.CWL.YAMLParameterFile.Structured.nestedFileArray
             let reference = Expect.wantExactlyOne decoded "Expected one parameter reference."
             Expect.equal reference.Key "sampleRecordFiles" "Key should decode."
-            Expect.equal reference.Type (Some (CWLType.Array (InputArraySchema(CWLType.Array (InputArraySchema(CWLType.file())))))) "Nested file array type should be inferred."
+            Expect.equal reference.Type (Some (CWLType.Array (InputArraySchema(CWLType.Array (InputArraySchema(CWLType.File)))))) "Nested file array type should be inferred."
             match reference.Value with
             | Some (CWLParameterValue.Array outer) ->
                 Expect.equal outer.Count 2 "Outer array should contain one entry per sample."
@@ -126,7 +126,7 @@ let testYAMLParameterFile =
             let reference = decoded.[0]
             Expect.equal reference.Key "exampleFile" ""
             Expect.sequenceEqual reference.Values (ResizeArray [| "../examplePath" |]) "Path should decode even when it appears before class."
-            Expect.equal reference.Type (Some (CWLType.file())) "Class should decode to File type regardless of field order."
+            Expect.equal reference.Type (Some (CWLType.File)) "Class should decode to File type regardless of field order."
             Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:file note" reference) (Some "keep file note") "Unknown parameter object fields should be preserved on the parameter reference."
             Expect.isNone (DynObj.tryGetTypedPropertyValue<string> "class" reference) "Known class field should not be overflow."
             Expect.isNone (DynObj.tryGetTypedPropertyValue<string> "path" reference) "Known path field should not be overflow."

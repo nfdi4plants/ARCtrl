@@ -1901,7 +1901,7 @@ let tests_FormalParameter =
             )
             ptestCase "File" (fun () ->
                 let name = "MyInput"
-                let t = CWLType.file()
+                let t = CWLType.File
                 let input = CWL.CWLInput(name = name, type_ = t)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 Expect.equal formalParameter.Id "#FormalParameter_MyInput" "FormalParameter ID should match"
@@ -1936,7 +1936,7 @@ let tests_FormalParameter =
             )
             testCase "File" (fun () ->
                 let name = "MyOutput"
-                let t = CWLType.file()
+                let t = CWLType.File
                 let output = CWL.CWLOutput(name = name, type_ = t)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
                 let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
@@ -1947,7 +1947,7 @@ let tests_FormalParameter =
             )
             testCase "File_GlobBinding" (fun () ->
                 let name = "MyOutput"
-                let t = CWLType.file()
+                let t = CWLType.File
                 let binding = OutputBinding.create(glob = "*.txt")
                 let output = CWL.CWLOutput(name = name, type_ = t, outputBinding = binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
@@ -1963,7 +1963,7 @@ let tests_FormalParameter =
             )
             testCase "File_GlobBinding_Roundabout" (fun () ->
                 let name = "MyOutput"
-                let t = CWLType.file()
+                let t = CWLType.File
                 let binding = OutputBinding.create(glob = "*.txt")
                 let output = CWL.CWLOutput(name = name, type_ = t, outputBinding = binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
@@ -1977,8 +1977,8 @@ let tests_AdditionalTypeDecoding =
     testList "AdditionalTypeDecoding" [
         testList "EveryTypeRoundTrip" [
             let cases : (string * CWLType) list =
-                [ "File", CWLType.file()
-                  "Directory", CWLType.directory()
+                [ "File", CWLType.File
+                  "Directory", CWLType.Directory
                   "String", CWLType.String
                   "Int", CWLType.Int
                   "Long", CWLType.Long
@@ -1997,10 +1997,10 @@ let tests_AdditionalTypeDecoding =
                   "Any", CWLType.Any
                   "AnyArray", Helper.CWL.array CWLType.Any
                   "OptionalAny", Helper.CWL.optional CWLType.Any
-                  "FileArray", Helper.CWL.array (CWLType.file())
+                  "FileArray", Helper.CWL.array (CWLType.File)
                   "NestedStringArray", Helper.CWL.array (Helper.CWL.array CWLType.String)
                   "OptionalString", Helper.CWL.optional CWLType.String
-                  "OptionalDirectoryArray", Helper.CWL.optional (Helper.CWL.array (CWLType.directory()))
+                  "OptionalDirectoryArray", Helper.CWL.optional (Helper.CWL.array (CWLType.Directory))
                   "Union", CWLType.Union (ResizeArray [CWLType.String; CWLType.Int])
                   "UnionWithNull", CWLType.Union (ResizeArray [CWLType.Null; CWLType.String; CWLType.Int])
                   "Record", Helper.CWL.record [Helper.CWL.field "name" CWLType.String]
@@ -2058,7 +2058,7 @@ let tests_AdditionalTypeDecoding =
                 Expect.equal (WorkflowConversion.composeAdditionalType CWLType.Null) "\"null\"" "The null type is quoted so that it is no YAML null."
             )
             testCase "DoubleQuoted" (fun () ->
-                Expect.equal (WorkflowConversion.decomposeAdditionalType "\"File\"") (CWLType.file()) "A double-quoted type name is the type."
+                Expect.equal (WorkflowConversion.decomposeAdditionalType "\"File\"") (CWLType.File) "A double-quoted type name is the type."
             )
             testCase "SingleQuotedOptional" (fun () ->
                 Expect.equal (WorkflowConversion.decomposeAdditionalType "'string?'") (Helper.CWL.optional CWLType.String) "A single-quoted optional type is the type."
@@ -2067,7 +2067,7 @@ let tests_AdditionalTypeDecoding =
                 Expect.equal (WorkflowConversion.decomposeAdditionalType "null") CWLType.Null "The plain text null is the null type."
             )
             testCase "TrailingComment" (fun () ->
-                Expect.equal (WorkflowConversion.decomposeAdditionalType "File[]? # an optional list") (Helper.CWL.optional (Helper.CWL.array (CWLType.file()))) "A comment behind the type is no part of it."
+                Expect.equal (WorkflowConversion.decomposeAdditionalType "File[]? # an optional list") (Helper.CWL.optional (Helper.CWL.array (CWLType.File))) "A comment behind the type is no part of it."
             )
             testCase "MissingValueFails" (fun () ->
                 Expect.throws (fun () -> WorkflowConversion.decomposeAdditionalType "" |> ignore) "No text is no type."
@@ -2085,13 +2085,13 @@ let tests_AdditionalTypeDecoding =
                 Expect.equal decoded CWLType.Int "Should decode int from YAML"
             )
             testCase "File" (fun () ->
-                let expected = CWLType.file()
+                let expected = CWLType.File
                 let encoded = "File"
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
                 Expect.equal decoded expected "Should decode File from YAML"
             )
             testCase "FileArray" (fun () ->
-                let expected = CWLType.Array (InputArraySchema(CWLType.file()))
+                let expected = CWLType.Array (InputArraySchema(CWLType.File))
                 let encoded = "File[]"
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
                 Expect.equal decoded expected "Should decode File[] from YAML"
@@ -2103,7 +2103,7 @@ let tests_AdditionalTypeDecoding =
                 Expect.equal decoded expected "Should decode string[] from YAML"
             )
             testCase "NestedFileArray" (fun () ->
-                let inner = InputArraySchema(CWLType.file())
+                let inner = InputArraySchema(CWLType.File)
                 let expected = CWLType.Array (InputArraySchema(CWLType.Array inner))
                 let encoded = "File[][]"
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
@@ -2157,7 +2157,7 @@ let tests_AdditionalTypeDecoding =
                 Expect.equal decoded expected "Should decode optional string correctly"
             )
             testCase "OptionalFileArray_YAML" (fun () ->
-                let expected = Helper.CWL.optional (Helper.CWL.array (CWLType.file()))
+                let expected = Helper.CWL.optional (Helper.CWL.array (CWLType.File))
                 let encoded = "File[]?"
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
                 Expect.equal decoded expected "Should decode optional File[] correctly"
@@ -2235,12 +2235,12 @@ let tests_AdditionalTypeEncoding =
                 Expect.equal encoded "int" "Int should encode to YAML shorthand"
             )
             testCase "File" (fun () ->
-                let t = CWLType.file()
+                let t = CWLType.File
                 let encoded = WorkflowConversion.composeAdditionalType t
                 Expect.equal encoded "File" "File should encode to YAML shorthand"
             )
             testCase "FileArray" (fun () ->
-                let t = Helper.CWL.array (CWLType.file())
+                let t = Helper.CWL.array (CWLType.File)
                 let encoded = WorkflowConversion.composeAdditionalType t
                 Expect.equal encoded "File[]" "File[] should encode to YAML shorthand"
             )
@@ -2250,7 +2250,7 @@ let tests_AdditionalTypeEncoding =
                 Expect.equal encoded "string[]" "string[] should encode to YAML shorthand"
             )
             testCase "NestedFileArray" (fun () ->
-                let t = Helper.CWL.array (Helper.CWL.array (CWLType.file()))
+                let t = Helper.CWL.array (Helper.CWL.array (CWLType.File))
                 let encoded = WorkflowConversion.composeAdditionalType t
                 Expect.equal encoded "File[][]" "File[][] should encode to YAML shorthand"
             )
@@ -2302,7 +2302,7 @@ let tests_AdditionalTypeEncoding =
                 Expect.equal encoded "string?" "Optional string should use YAML shorthand"
             )
             testCase "OptionalFileArray_YAML" (fun () ->
-                let fileArray = InputArraySchema(CWLType.file())
+                let fileArray = InputArraySchema(CWLType.File)
                 let t = CWLType.Union (ResizeArray [CWLType.Null; CWLType.Array fileArray])
                 let encoded = WorkflowConversion.composeAdditionalType t
                 Expect.equal encoded "File[]?" "Optional File[] should use YAML shorthand"
@@ -2347,7 +2347,7 @@ let tests_AdditionalTypeEncoding =
                 Expect.equal additionalType expected "AdditionalType should be single-line YAML-encoded record"
             )
             testCase "FileArrayInput_CreatesValidFormalParameter" (fun () ->
-                let arraySchema = InputArraySchema(CWLType.file())
+                let arraySchema = InputArraySchema(CWLType.File)
                 let t = CWLType.Array arraySchema
                 let input = CWL.CWLInput(name = "MyFileArrayInput", type_ = t)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
@@ -2472,8 +2472,8 @@ let tests_YAMLInputValue =
             let name = "MyInput"
             let runName = "MyRun"
             let filePath = "myfile.txt"
-            let paramValue = CWLParameterReference(name, values = ResizeArray.singleton  filePath, type_ = CWLType.file())
-            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
+            let paramValue = CWLParameterReference(name, values = ResizeArray.singleton  filePath, type_ = CWLType.File)
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
             Expect.sequenceEqual file.SchemaType [LDFile.schemaType] "File should have correct schema type"
@@ -2490,8 +2490,8 @@ let tests_YAMLInputValue =
             let name = "MyInput"
             let runName = "MyRun"
             let filePath = "myfile.txt"
-            let paramValue = CWLParameterReference(name, values = ResizeArray.singleton  filePath, type_ = CWLType.file())
-            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
+            let paramValue = CWLParameterReference(name, values = ResizeArray.singleton  filePath, type_ = CWLType.File)
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
             let paramValue' = RunConversion.decomposeCWLInputValue(file,runName)
@@ -2502,8 +2502,8 @@ let tests_YAMLInputValue =
             let runName = "MyRun"
             let fileName = "myfile.txt"
             let filePath = ResizeArray.singleton $"../../assays/MyAssay/dataset/{fileName}"
-            let paramValue = CWLParameterReference(name, values = filePath, type_ = CWLType.file())
-            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
+            let paramValue = CWLParameterReference(name, values = filePath, type_ = CWLType.File)
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
             Expect.sequenceEqual file.SchemaType [LDFile.schemaType] "File should have correct schema type"
@@ -2521,8 +2521,8 @@ let tests_YAMLInputValue =
             let runName = "MyRun"
             let fileName = "myfile.txt"
             let filePath = ResizeArray.singleton $"../../assays/MyAssay/dataset/{fileName}"
-            let paramValue = CWLParameterReference(name, values = filePath, type_ = CWLType.file())
-            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
+            let paramValue = CWLParameterReference(name, values = filePath, type_ = CWLType.File)
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
             let paramValue' = RunConversion.decomposeCWLInputValue(file,runName)
@@ -2554,7 +2554,7 @@ let tests_YAMLInputValue =
             let runName = "MyRun"
             let value = ResizeArray.singleton "verbose"
             let paramValue = CWLParameterReference(name, values = value, type_ = CWLType.Int)
-            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             Expect.throws (fun () -> RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName) |> ignore) "Should throw for non-matching type"
         )
@@ -2607,7 +2607,7 @@ let tests_YAMLInputValue =
             let cwlParam =
                 CWL.CWLInput(
                     name = name,
-                    type_ = CWLType.Array (InputArraySchema(CWLType.Array (InputArraySchema(CWLType.file()))))
+                    type_ = CWLType.Array (InputArraySchema(CWLType.Array (InputArraySchema(CWLType.File))))
                 )
             let formalParam = WorkflowConversion.composeFormalParameterFromInput(cwlParam, runName = runName)
             let node = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
@@ -3151,7 +3151,7 @@ let tests_ArcRun =
             let tool = 
                 CWL.CWLToolDescription(
                     outputs = ResizeArray [TestObjects.CWL.Outputs.CSV.outputCSV],
-                    inputs = ResizeArray [CWL.CWLInput(name = TestObjects.CWL.Inputs.File.inputFileName, type_ = CWLType.file())]
+                    inputs = ResizeArray [CWL.CWLInput(name = TestObjects.CWL.Inputs.File.inputFileName, type_ = CWLType.File)]
                 )
                 |> CWL.CommandLineTool
             let table = ArcTable.init("MyTable")
@@ -3166,7 +3166,7 @@ let tests_ArcRun =
             let ymlParam = CWLParameterReference(
                 key = TestObjects.CWL.Inputs.File.inputFileName,
                 values = ResizeArray [inputFileName],
-                type_ = CWLType.file()
+                type_ = CWLType.File
             )
             let run = ArcRun(
                 "MyRun",
@@ -3271,7 +3271,7 @@ let tests_ArcRun =
         testCase "NestedFileArrayInput_Roundtrip" (fun () ->
             let inputName = "sampleRecordFiles"
             let inputType =
-                CWLType.Array (InputArraySchema(CWLType.Array (InputArraySchema(CWLType.file()))))
+                CWLType.Array (InputArraySchema(CWLType.Array (InputArraySchema(CWLType.File))))
             let workflow =
                 CWL.CWLWorkflowDescription(
                     steps = ResizeArray(),

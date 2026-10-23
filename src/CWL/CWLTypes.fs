@@ -474,14 +474,11 @@ and [<AttachMembers>] InputArraySchema (items: CWLType, ?label: string, ?doc: st
 
 /// Primitive types with the concept of a file and directory as a builtin type.
 and [<CustomEquality; NoComparison>] CWLType =
-    /// Represents a file (or group of files when secondaryFiles is provided)
-    | File of FileInstance
-    /// Represents a directory to present to a command line tool.
-    /// Directories are represented as objects with class of Directory. Directory objects have a number of properties that provide metadata about the directory.
-    | Directory of DirectoryInstance
-    /// Define a file or subdirectory that must be placed in the designated output directory prior to executing the command line tool.
-    /// May be the result of executing an expression, such as building a configuration file from a template.
-    | Dirent of DirentInstance
+    /// A file. The type has no fields, because CWL spells it as the name File only. The format and the secondaryFiles
+    /// of a file belong to the port that has this type, and the location and the other fields belong to a File value.
+    | File
+    /// A directory to present to a command line tool. The type has no fields, like File.
+    | Directory
     | String
     | Int
     | Long
@@ -511,9 +508,8 @@ and [<CustomEquality; NoComparison>] CWLType =
         match o with
         | :? CWLType as other ->
             match this, other with
-            | File f1, File f2 -> f1.Equals(f2)
-            | Directory d1, Directory d2 -> d1.Equals(d2)
-            | Dirent di1, Dirent di2 -> di1 = di2
+            | File, File -> true
+            | Directory, Directory -> true
             | String, String -> true
             | Int, Int -> true
             | Long, Long -> true
@@ -537,9 +533,8 @@ and [<CustomEquality; NoComparison>] CWLType =
     
     override this.GetHashCode(): int =
         match this with
-        | File f -> hash (0, f.GetHashCode())
-        | Directory d -> hash (1, d.GetHashCode())
-        | Dirent di -> hash (2, di)
+        | File -> hash 0
+        | Directory -> hash 1
         | String -> hash 3
         | Int -> hash 4
         | Long -> hash 5
@@ -556,10 +551,6 @@ and [<CustomEquality; NoComparison>] CWLType =
         | Stderr -> hash 16
         | Stdin -> hash 17
         | Reference name -> hash (18, name)
-
-    static member file() = File(FileInstance())
-
-    static member directory() = Directory(DirectoryInstance())
 
 /// The schema that a SchemaDefRequirement defines. CWL admits record and enum schemas there and no other type, so an
 /// alias for a builtin type and an array schema have no case. A union of the two schema classes holds that rule in the
@@ -646,13 +637,11 @@ module InputRecordSchema =
 
 module CWLType =
 
-    /// Compare two CWLTypes for equality, ignoring the metadata carried by File and Directory instances.
+    /// Compare two CWLTypes for equality, ignoring the label, the doc and the name of array and record schemas.
     ///
-    /// This is deliberately laxer than CWLType.Equals, which compares FileInstance and DirectoryInstance contents.
+    /// This is deliberately laxer than CWLType.Equals, which compares them too.
     let rec typesEqual (left : CWLType) (right : CWLType) =
         match left, right with
-        | CWLType.File _, CWLType.File _
-        | CWLType.Directory _, CWLType.Directory _ -> true
         | CWLType.Array left, CWLType.Array right ->
             typesEqual left.Items right.Items
         | CWLType.Union left, CWLType.Union right ->

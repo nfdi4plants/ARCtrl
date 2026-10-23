@@ -23,7 +23,7 @@ let testOutput =
                 let actual = fileItem.Name
                 Expect.equal actual expected ""
             testCase "Type" <| fun _ ->
-                let expected = File (FileInstance())
+                let expected = File
                 let actual = fileItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "OutputBinding" <| fun _ ->
@@ -38,7 +38,7 @@ let testOutput =
                 let actual = directoryItem.Name
                 Expect.equal actual expected ""
             testCase "Type" <| fun _ ->
-                let expected = Directory (DirectoryInstance())
+                let expected = Directory
                 let actual = directoryItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "OutputBinding" <| fun _ ->
@@ -53,7 +53,7 @@ let testOutput =
                 let actual = directoryItem.Name
                 Expect.equal actual expected ""
             testCase "Type" <| fun _ ->
-                let expected = Directory (DirectoryInstance())
+                let expected = Directory
                 let actual = directoryItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "OutputBinding" <| fun _ ->
@@ -68,7 +68,7 @@ let testOutput =
                 let actual = fileArrayItem.Name
                 Expect.equal actual expected ""
             testCase "Type" <| fun _ ->
-                let expected = Array (InputArraySchema(File (FileInstance())))
+                let expected = Array (InputArraySchema(File))
                 let actual = fileArrayItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "OutputBinding" <| fun _ ->
@@ -83,7 +83,7 @@ let testOutput =
                 let actual = fileArrayItem.Name
                 Expect.equal actual expected ""
             testCase "Type" <| fun _ ->
-                let expected = Array (InputArraySchema(File (FileInstance())))
+                let expected = Array (InputArraySchema(File))
                 let actual = fileArrayItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "OutputBinding" <| fun _ ->
@@ -97,11 +97,11 @@ let testOutputMutationApi =
     testList "Mutation API" [
         testCase "typed setters roundtrip values" <| fun _ ->
             let output = CWLOutput("result")
-            output.Type_ <- Some (File (FileInstance()))
+            output.Type_ <- Some (File)
             output.OutputBinding <- Some (OutputBinding.create(glob = "results/*.txt"))
             output.OutputSource <- Some (OutputSource.Single "step/out")
 
-            Expect.equal output.Type_ (Some (File (FileInstance()))) "Type_ setter should write DynamicObj-backed value."
+            Expect.equal output.Type_ (Some (File)) "Type_ setter should write DynamicObj-backed value."
             Expect.equal output.OutputBinding (Some (OutputBinding.create(glob = "results/*.txt"))) "OutputBinding setter should write value."
             Expect.equal output.OutputSource (Some (OutputSource.Single "step/out")) "OutputSource setter should write value."
 
