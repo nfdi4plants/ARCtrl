@@ -271,17 +271,35 @@ type ProcessConversion =
             |> Seq.choose (fun (generalI,header) -> ProcessConversion.tryGetCommentGetter generalI header)
             |> Seq.toList
 
+        // Empty input or output cells should not result in entities, unless characteristics or factors are given for them
+        let areCellsEmpty (isColumn : CompositeHeader -> bool) =
+            let columnIndices = headers |> Seq.filter (snd >> isColumn) |> Seq.map fst |> List.ofSeq
+            fun (table : ArcTable) i ->
+                columnIndices
+                |> List.forall (fun generalI ->
+                    match ArcTableAux.Unchecked.tryGetCellAt(generalI,i) table.Values with
+                    | Some cell -> cell.isEmpty()
+                    | None -> true
+                )
+
+        let isInputEmpty = areCellsEmpty (fun h -> h.isInput || h.isCharacteristic)
+
+        let isOutputEmpty = areCellsEmpty (fun h -> h.isOutput || h.isFactor)
+
         let inputGetter =
             match headers |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetInputGetter generalI header fs) with
             | Some inputGetter ->
                 fun (table : ArcTable) i ->
-                    let chars = charGetters |> Seq.map (fun f -> f table i) |> ResizeArray
-                    let input = inputGetter table i
+                    if isInputEmpty table i then
+                        ResizeArray []
+                    else
+                        let chars = charGetters |> Seq.map (fun f -> f table i) |> ResizeArray
+                        let input = inputGetter table i
 
-                    if chars.Count > 0 then
-                        LDSample.setAdditionalProperties(input,chars)
-                    input
-                    |> ResizeArray.singleton
+                        if chars.Count > 0 then
+                            LDSample.setAdditionalProperties(input,chars)
+                        input
+                        |> ResizeArray.singleton
             | None when charGetters.Length <> 0 ->
                 fun (table : ArcTable) i ->
                     let chars = charGetters |> Seq.map (fun f -> f table i) |> ResizeArray
@@ -296,12 +314,15 @@ type ProcessConversion =
             match headers |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetOutputGetter generalI header fs) with
             | Some outputGetter ->
                 fun (table : ArcTable) i ->
-                    let factors = factorValueGetters |> Seq.map (fun f -> f table i) |> ResizeArray
-                    let output = outputGetter table i
-                    if factors.Count > 0 then
-                        LDSample.setAdditionalProperties(output,factors)
-                    output
-                    |> ResizeArray.singleton
+                    if isOutputEmpty table i then
+                        ResizeArray []
+                    else
+                        let factors = factorValueGetters |> Seq.map (fun f -> f table i) |> ResizeArray
+                        let output = outputGetter table i
+                        if factors.Count > 0 then
+                            LDSample.setAdditionalProperties(output,factors)
+                        output
+                        |> ResizeArray.singleton
             | None when factorValueGetters.Length <> 0 ->
                 fun (table : ArcTable) i ->
                     let factors = factorValueGetters |> Seq.map (fun f -> f table i) |> ResizeArray

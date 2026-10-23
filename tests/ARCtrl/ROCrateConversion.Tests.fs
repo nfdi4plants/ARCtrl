@@ -681,6 +681,61 @@ let private tests_ArcTableProcess =
             let name = LDLabProcess.getNameAsString p
             Expect.equal name $"{tableName1}_0" "Process name should be table name with row index"
         )
+        // https://github.com/nfdi4plants/ARCtrl/issues/585
+        testCase "EmptyInputOutputCells GetProcesses" (fun () ->
+            let t = ArcTable.init(tableName1)
+            t.AddColumns([|
+                CompositeColumn.create(CompositeHeader.Input IOType.Source, ResizeArray [CompositeCell.createFreeText "EIO_Source_0"; CompositeCell.emptyFreeText])
+                CompositeColumn.create(CompositeHeader.Parameter oa_species, createCells_chlamy 2)
+                CompositeColumn.create(CompositeHeader.Output IOType.Data, ResizeArray [CompositeCell.createData (Data(name = "EIO_Data_0")); CompositeCell.emptyData])
+            |])
+            let processes = t.GetProcesses()
+            Expect.equal processes.Length 2 "Should have 2 processes"
+            Expect.equal (LDLabProcess.getObjects processes.[0]).Count 1 "First process should have 1 input"
+            Expect.equal (LDLabProcess.getResults processes.[0]).Count 1 "First process should have 1 output"
+            Expect.equal (LDLabProcess.getObjects processes.[1]).Count 0 "Empty input cell should not result in an input"
+            Expect.equal (LDLabProcess.getResults processes.[1]).Count 0 "Empty output cell should not result in an output"
+        )
+        testCase "EmptyInputCellWithCharacteristic GetProcesses" (fun () ->
+            let t = ArcTable.init(tableName1)
+            t.AddColumns([|
+                CompositeColumn.create(CompositeHeader.Input IOType.Source, ResizeArray [CompositeCell.emptyFreeText])
+                CompositeColumn.create(CompositeHeader.Characteristic oa_species, createCells_chlamy 1)
+                CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "EICC_Sample" 1)
+            |])
+            let processes = t.GetProcesses()
+            Expect.equal processes.Length 1 "Should have 1 process"
+            let input = Expect.wantSome ((LDLabProcess.getObjects processes.[0]) |> Seq.tryExactlyOne) "Input with characteristic should be kept"
+            Expect.hasLength (LDSample.getCharacteristics input) 1 "Input should have the characteristic"
+        )
+        testCase "EmptyOutputCellWithFactor GetProcesses" (fun () ->
+            let t = ArcTable.init(tableName1)
+            t.AddColumns([|
+                CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "EOCF_Source" 1)
+                CompositeColumn.create(CompositeHeader.Factor oa_temperature, createCells_DegreeCelsius 1)
+                CompositeColumn.create(CompositeHeader.Output IOType.Sample, ResizeArray [CompositeCell.emptyFreeText])
+            |])
+            let processes = t.GetProcesses()
+            Expect.equal processes.Length 1 "Should have 1 process"
+            let output = Expect.wantSome ((LDLabProcess.getResults processes.[0]) |> Seq.tryExactlyOne) "Output with factor should be kept"
+            Expect.hasLength (LDSample.getFactors output) 1 "Output should have the factor value"
+        )
+        testCase "EmptyInputOutputCells GetAndFromProcesses" (fun () ->
+            let t = ArcTable.init(tableName1)
+            t.AddColumns([|
+                CompositeColumn.create(CompositeHeader.Input IOType.Source, ResizeArray [CompositeCell.createFreeText "EIO_Source_0"; CompositeCell.emptyFreeText])
+                CompositeColumn.create(CompositeHeader.Parameter oa_species, createCells_chlamy 2)
+                CompositeColumn.create(CompositeHeader.Output IOType.Sample, ResizeArray [CompositeCell.createFreeText "EIO_Sample_0"; CompositeCell.emptyFreeText])
+            |])
+            let processes = t.GetProcesses()
+            let table = ArcTable.fromProcesses(tableName1,processes)
+            // Empty input and output cells are not stored in the read table, so compare cell values instead of the table values
+            Expect.sequenceEqual table.Headers t.Headers "Headers should be equal"
+            Expect.equal table.RowCount t.RowCount "Row count should be equal"
+            for c in 0 .. t.ColumnCount - 1 do
+                for r in 0 .. t.RowCount - 1 do
+                    Expect.equal (table.GetCellAt(c,r)) (t.GetCellAt(c,r)) $"Cell ({c},{r}) should be equal"
+        )
 
         testCase "SingleRowMixedValues GetProcesses" (fun () ->          
             let t = singleRowMixedValues.Copy()          
