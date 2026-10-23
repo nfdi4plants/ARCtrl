@@ -3707,6 +3707,20 @@ let tests_Investigation =
             p'.PublicReleaseDate <- None // As a default value is used otherwise
             Expect.equal p' p "Investigation should match"
         )
+        // https://github.com/nfdi4plants/ARCtrl/issues/651
+        testCase "RegisteredAssays_FromScaffold_Flattened" (fun () ->
+            let investigation = ArcInvestigation("My Investigation", title = "My Best Investigation")
+            let study = investigation.InitStudy("My Study")
+            investigation.InitAssay("My Assay") |> ignore
+            study.RegisterAssay("My Assay")
+            study.RegisterAssay("Missing Assay")
+            let ro_Investigation = InvestigationConversion.composeInvestigation investigation
+            let graph = ro_Investigation.Flatten()
+            Expect.isNone (graph.TryGetNode(LDDataset.genIDAssay "Missing Assay")) "Missing assay should not be referenced"
+            let investigation' = InvestigationConversion.decomposeInvestigation(ro_Investigation, graph = graph)
+            let study' = Expect.wantSome (investigation'.TryGetStudy "My Study") "Study should exist"
+            Expect.sequenceEqual study'.RegisteredAssayIdentifiers ["My Assay"] "Existing registered assay should be read"
+        )
         // This test is meant to check, that two processes created from two different tables with the same name are distinctly named
         // This is important to ensure they are not merged
         // https://github.com/nfdi4plants/ARCtrl/issues/514

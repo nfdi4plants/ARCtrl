@@ -44,6 +44,17 @@ type StudyConversion =
         let dataFiles = 
             processSequence
             |> Option.map (fun ps -> AssayConversion.getDataFilesFromProcesses(ps, ?fragmentDescriptors = fragmentDescriptors))
+        // Registered assays are referenced as parts of the study, if they exist in the investigation. The full assay is added by the investigation and merged on flattening
+        let registeredAssays =
+            match study.Investigation with
+            | Some inv ->
+                study.RegisteredAssayIdentifiers
+                |> ResizeArray.filter inv.ContainsAssay
+                |> ResizeArray.map (fun a -> LDDataset.createAssay(identifier = a))
+            | None -> ResizeArray []
+        let hasParts =
+            ResizeArray.append (Option.defaultValue (ResizeArray []) dataFiles) registeredAssays
+            |> Option.fromSeq
         let comments = 
             study.Comments
             |> ResizeArray.map (fun c -> BaseTypes.composeComment c)
@@ -57,7 +68,7 @@ type StudyConversion =
             ?dateModified = dateModified,
             ?creators = creators,
             ?citations = publications,
-            ?hasParts = dataFiles,
+            ?hasParts = hasParts,
             ?variableMeasureds = fragmentDescriptors,
             ?abouts = processSequence,
             ?comments = comments
@@ -86,6 +97,10 @@ type StudyConversion =
         let tables = 
             LDDataset.getAboutsAsLabProcess(study, ?graph = graph, ?context = context)
             |> fun ps -> ArcTables.fromProcesses(List.ofSeq ps, ?graph = graph, ?context = context)
+        let registeredAssayIdentifiers =
+            LDDataset.getHasPartsAsDataset(study, ?graph = graph, ?context = context)
+            |> ResizeArray.filter (fun d -> LDDataset.validateAssay(d, ?context = context))
+            |> ResizeArray.map (fun d -> LDDataset.getIdentifierAsString(d, ?context = context))
         let comments =
             LDDataset.getComments(study, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
@@ -104,5 +119,6 @@ type StudyConversion =
             contacts = creators,
             publications = publications,
             tables = tables.Tables,
+            registeredAssayIdentifiers = registeredAssayIdentifiers,
             comments = comments
         )
