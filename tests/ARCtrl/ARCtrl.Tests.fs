@@ -2558,6 +2558,50 @@ let tests_ROCrate =
                 Expect.equal arcActual.Title arcExpected.Title "Title should be equal"
                 Expect.equal arcActual.Description arcExpected.Description "Description should be equal"
                 Expect.equal arcActual.License arcExpected.License "License should be equal"
+            // https://github.com/nfdi4plants/ARCtrl/issues/651
+            testCase "Full" <| fun _ ->
+                let createDatamap() =
+                    Datamap(ResizeArray [
+                        ROCrateConversion.Tests.Helper.create_dataContextOfRow "MyFile" 1
+                        ROCrateConversion.Tests.Helper.create_dataContextOfRow "MyFile" 2
+                    ])
+                let investigation = ROCrateConversion.Tests.Helper.create_investigation_toplevel()
+                let study = ROCrateConversion.Tests.Helper.create_study_full()
+                study.Datamap <- Some (createDatamap())
+                // The full test objects use json encoded dates, which are not read from xlsx, so plain date strings are used instead
+                investigation.SubmissionDate <- Some "2024-01-01T12:00:00"
+                investigation.PublicReleaseDate <- Some "2024-02-01T12:00:00"
+                study.SubmissionDate <- Some "2024-01-01T12:00:00"
+                study.PublicReleaseDate <- Some "2024-02-01T12:00:00"
+                let assay = ROCrateConversion.Tests.Helper.create_assay_full()
+                assay.Datamap <- Some (createDatamap())
+                let workflow = ROCrateConversion.Tests.Helper.create_workflow_full()
+                workflow.Datamap <- Some (createDatamap())
+                let run = ROCrateConversion.Tests.Helper.create_run_full()
+                run.Datamap <- Some (createDatamap())
+                investigation.AddStudy(study)
+                investigation.AddAssay(assay, registerIn = ResizeArray [study])
+                investigation.AddWorkflow(workflow)
+                investigation.AddRun(run)
+                let arcExpected = ARC.fromArcInvestigation(investigation, license = License.initFulltext "CC-BY-4.0")
+                let json = arcExpected.ToROCrateJsonString()
+                let arcActual = ARC.fromROCrateJsonString(json)
+                // Data paths are read with leading ./, see https://github.com/nfdi4plants/ARCtrl/issues/615
+                for datamap in [study.Datamap; assay.Datamap; workflow.Datamap; run.Datamap] do
+                    datamap.Value.DataContexts |> Seq.iter (fun dc -> dc.FilePath <- Some ("./" + dc.FilePath.Value))
+                Expect.equal arcActual.Identifier arcExpected.Identifier "Identifier should be equal"
+                Expect.equal arcActual.Title arcExpected.Title "Title should be equal"
+                Expect.equal arcActual.Description arcExpected.Description "Description should be equal"
+                Expect.equal arcActual.SubmissionDate arcExpected.SubmissionDate "SubmissionDate should be equal"
+                Expect.equal arcActual.PublicReleaseDate arcExpected.PublicReleaseDate "PublicReleaseDate should be equal"
+                Expect.sequenceEqual arcActual.Publications arcExpected.Publications "Publications should be equal"
+                Expect.sequenceEqual arcActual.Contacts arcExpected.Contacts "Contacts should be equal"
+                Expect.sequenceEqual arcActual.Comments arcExpected.Comments "Comments should be equal"
+                Expect.equal arcActual.License arcExpected.License "License should be equal"
+                Expect.sequenceEqual arcActual.Studies arcExpected.Studies "Studies should be equal"
+                Expect.sequenceEqual arcActual.Assays arcExpected.Assays "Assays should be equal"
+                Expect.sequenceEqual arcActual.Workflows arcExpected.Workflows "Workflows should be equal"
+                Expect.sequenceEqual arcActual.Runs arcExpected.Runs "Runs should be equal"
             testCase "NoLicense" <| fun _ ->
                 let arcExpected = ARC("MyARC", title = "MyTitle", description = "MyDescription")
                 let json = arcExpected.ToROCrateJsonString()
