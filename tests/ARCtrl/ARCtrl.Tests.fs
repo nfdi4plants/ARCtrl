@@ -2654,8 +2654,31 @@ let tests_ROCrate =
             ) |> ignore
             let roCrate = arc.ToROCrateJsonString()
             let arc' = ARC.fromROCrateJsonString(roCrate)
+            // Data paths are read with leading ./, see https://github.com/nfdi4plants/ARCtrl/issues/615
+            table.UpdateCellAt(0, 0, CompositeCell.createDataFromString("./assays/MyAssay/dataset/MyData.csv"))
+            table.UpdateCellAt(0, 1, CompositeCell.createDataFromString("./assays/MyAssay/dataset/ABC.D"))
             Expect.testFileSystemTree arc'.FileSystem.Tree arc.FileSystem.Tree 
             Expect.equal arc'.Assays[0] arc.Assays[0] "Assays should be equal"
+        // https://github.com/nfdi4plants/ARCtrl/issues/615
+        testCase "NormalizeDataEntityIds" <| fun _ ->
+            let arc = ARC("MyARC", title = "MyTitle")
+            let assay = arc.InitAssay("MyAssay")
+            assay.Title <- Some "My Assay"
+            let table = assay.InitTable("MyTable")
+            table.AddColumn(
+                CompositeHeader.Input IOType.Data,
+                ResizeArray [CompositeCell.createDataFromString("assays/MyAssay/dataset/MyData.csv")]
+            ) |> ignore
+            let roCrate = arc.ToROCrateJsonString()
+            // Decode without normalization, to check the written ids
+            let graph = Json.Decode.fromJsonString Json.LDGraph.decoder roCrate
+            let context = graph.TryGetContext()
+            Expect.isNone (graph.TryGetNode "assays/MyAssay/dataset/MyData.csv") "File without leading ./ should not be written"
+            let file = Expect.wantSome (graph.TryGetNode "./assays/MyAssay/dataset/MyData.csv") "File should be written with leading ./"
+            Expect.equal (ROCrate.LDFile.getNameAsString(file, ?context = context)) "./assays/MyAssay/dataset/MyData.csv" "File name should be written with leading ./"
+            Expect.isNone (graph.TryGetNode "assays/MyAssay/") "Assay dataset without leading ./ should not be written"
+            let assayNode = Expect.wantSome (graph.TryGetNode "./assays/MyAssay/") "Assay dataset should be written with leading ./"
+            Expect.equal (ROCrate.LDDataset.getNameAsString(assayNode, ?context = context)) "My Assay" "Assay name should not be changed"
         testCase "PersonGetsMergedOneORCID" <| fun _ ->
             let pWithORCID = Person(firstName = "John", lastName = "Doe", orcid = "0000-0003-3925-6778", email = "john.doe@example.com")
             let pWithoutORCID = Person(firstName = "John", lastName = "Doe", phone = "123456")
