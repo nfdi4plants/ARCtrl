@@ -195,17 +195,17 @@ let testWorkflowStep =
             let run = RunWorkflow (box "bad")
             Expect.throws (fun _ -> Encode.encodeWorkflowStepRun run |> ignore) "Encoding invalid RunWorkflow payload should fail"
         testCase "tryGetExpressionTool returns Some for correct payload" <| fun _ ->
-            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray [], expression = "$(null)")
+            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray [], expression = SchemaSaladString.Literal "$(null)")
             let run = RunExpressionTool (box expressionTool)
             let actual = WorkflowStepRunOps.tryGetExpressionTool run
             Expect.isSome actual "Should extract expression tool payload"
-            Expect.equal actual.Value.Expression "$(null)" ""
+            Expect.equal actual.Value.Expression (SchemaSaladString.Literal "$(null)") ""
         testCase "tryGetExpressionTool returns None for wrong obj type" <| fun _ ->
             let run = RunExpressionTool (box "not an expression tool")
             let actual = WorkflowStepRunOps.tryGetExpressionTool run
             Expect.isNone actual "Should not extract non-ExpressionTool payload"
         testCase "tryGetTool and tryGetWorkflow return None for RunExpressionTool" <| fun _ ->
-            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray [], expression = "$(null)")
+            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray [], expression = SchemaSaladString.Literal "$(null)")
             let run = RunExpressionTool (box expressionTool)
             Expect.isNone (WorkflowStepRunOps.tryGetTool run) "RunExpressionTool should not decode as tool"
             Expect.isNone (WorkflowStepRunOps.tryGetWorkflow run) "RunExpressionTool should not decode as workflow"

@@ -23,7 +23,7 @@ let testInput =
             let fileItem = decodeInput.[1]
             testCase "Name" <| fun _ -> Expect.equal "firstArg"  fileItem.Name ""
             testCase "Type" <| fun _ -> Expect.equal (File)  fileItem.Type_.Value ""
-            testCase "InputBinding" <| fun _ -> Expect.equal (Some (InputBinding.create(position = 1, prefix = "--example"))) fileItem.InputBinding ""
+            testCase "InputBinding" <| fun _ -> Expect.equal (Some (InputBinding.create(position = BindingPosition.Number 1, prefix = "--example"))) fileItem.InputBinding ""
         ]
         testList "File optional" [
             let fileItem = decodeInput.[2]
@@ -31,7 +31,7 @@ let testInput =
             testCase "Type" <| fun _ -> 
                 let expected = Union (ResizeArray [Null; File])
                 Expect.equal fileItem.Type_.Value expected "Should be Union of [Null; File]"
-            testCase "Optional" <| fun _ -> Expect.equal (Some true) fileItem.Optional ""
+            testCase "Optional" <| fun _ -> Expect.isTrue fileItem.Optional ""
         ]
         testList "File array optional" [
             let fileItem = decodeInput.[3]
@@ -39,7 +39,7 @@ let testInput =
             testCase "Type" <| fun _ -> 
                 let expected = Union (ResizeArray [Null; Array (InputArraySchema(File))])
                 Expect.equal fileItem.Type_.Value expected "Should be Union of [Null; File[]]"
-            testCase "Optional" <| fun _ -> Expect.equal (Some true) fileItem.Optional ""
+            testCase "Optional" <| fun _ -> Expect.isTrue fileItem.Optional ""
         ]
         testList "String" [
             let stringItem = decodeInput.[4]
@@ -49,7 +49,7 @@ let testInput =
                 let actual = stringItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "InputBinding" <| fun _ ->
-                let expected = Some (InputBinding.create(position = 2, separate = false))
+                let expected = Some (InputBinding.create(position = BindingPosition.Number 2, separate = false))
                 let actual = stringItem.InputBinding
                 Expect.equal actual expected ""
         ]
@@ -60,25 +60,23 @@ let testInputMutationApi =
         testCase "typed setters roundtrip values" <| fun _ ->
             let input = CWLInput("arg")
             input.Type_ <- Some CWLType.String
-            input.InputBinding <- Some (InputBinding.create(prefix = "--arg", position = 1, separate = true))
-            input.Optional <- Some true
+            input.InputBinding <- Some (InputBinding.create(prefix = "--arg", position = BindingPosition.Number 1, separate = true))
 
             Expect.equal input.Type_ (Some CWLType.String) "Type_ setter should write DynamicObj-backed value."
-            Expect.equal input.InputBinding (Some (InputBinding.create(prefix = "--arg", position = 1, separate = true))) "InputBinding setter should write value."
-            Expect.equal input.Optional (Some true) "Optional setter should write value."
+            Expect.equal input.InputBinding (Some (InputBinding.create(prefix = "--arg", position = BindingPosition.Number 1, separate = true))) "InputBinding setter should write value."
+            Expect.isFalse input.Optional "A string is no optional type."
 
         testCase "typed setters can clear optional values" <| fun _ ->
             let input = CWLInput("arg", type_ = CWLType.Int, optional = true)
             input.Type_ <- None
-            input.Optional <- None
             input.InputBinding <- None
 
             Expect.isNone input.Type_ "Type_ should be removable."
-            Expect.isNone input.Optional "Optional should be removable."
+            Expect.isFalse input.Optional "An input without a type is not optional."
             Expect.isNone input.InputBinding "InputBinding should be removable."
 
         testCase "known fields are typed fields, not dynamic overflow" <| fun _ ->
-            let binding = InputBinding.create(prefix = "--arg", position = 1, itemSeparator = ",", separate = true, loadContents = true, valueFrom = "$(self)", shellQuote = false)
+            let binding = InputBinding.create(prefix = "--arg", position = BindingPosition.Number 1, itemSeparator = ",", separate = true, loadContents = true, valueFrom = "$(self)", shellQuote = false)
             let input =
                 CWLInput(
                     "arg",
@@ -222,7 +220,7 @@ let testProcessingUnitInputOps =
             Expect.equal inputs.Count 0 "Missing inputs should normalize to empty ResizeArray."
 
         testCase "getOrCreateExpressionToolInputs creates missing collection" <| fun _ ->
-            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)")
+            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = SchemaSaladString.Literal "$(null)")
             let created = CWLExpressionToolDescription.getOrCreateInputs expressionTool
             created.Add(CWLInput("arg"))
             Expect.isSome expressionTool.Inputs "Inputs should be initialized."
@@ -236,7 +234,7 @@ let testProcessingUnitInputOps =
 
         testCase "getExpressionToolInputsOrEmpty returns existing collection when inputs are present" <| fun _ ->
             let existing = ResizeArray [| CWLInput("existing") |]
-            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)", inputs = existing)
+            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = SchemaSaladString.Literal "$(null)", inputs = existing)
             let actual = CWLExpressionToolDescription.getInputsOrEmpty expressionTool
             Expect.isTrue (obj.ReferenceEquals(actual, existing)) "Existing expression tool input collection should be returned unchanged."
 
@@ -248,7 +246,7 @@ let testProcessingUnitInputOps =
 
         testCase "getOrCreateExpressionToolInputs returns existing collection when already initialized" <| fun _ ->
             let existing = ResizeArray [| CWLInput("existing") |]
-            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)", inputs = existing)
+            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = SchemaSaladString.Literal "$(null)", inputs = existing)
             let actual = CWLExpressionToolDescription.getOrCreateInputs expressionTool
             Expect.isTrue (obj.ReferenceEquals(actual, existing)) "Existing collection should be reused."
 
@@ -282,7 +280,7 @@ let testProcessingUnitOutputOps =
 
         testCase "getOutputs returns ExpressionTool outputs" <| fun _ ->
             let outputs = ResizeArray [| CWLOutput("expOut") |]
-            let pu = CWLProcessingUnit.ExpressionTool (CWLExpressionToolDescription(outputs = outputs, expression = "$(null)"))
+            let pu = CWLProcessingUnit.ExpressionTool (CWLExpressionToolDescription(outputs = outputs, expression = SchemaSaladString.Literal "$(null)"))
             let actual = CWLProcessingUnit.getOutputs pu
             Expect.isTrue (obj.ReferenceEquals(actual, outputs)) "ExpressionTool outputs should be returned unchanged."
 
@@ -308,7 +306,7 @@ let testProcessingUnitRequirementOps =
                 |> CWLProcessingUnit.getRequirements
 
             let expressionReqs =
-                CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)")
+                CWLExpressionToolDescription(outputs = ResizeArray(), expression = SchemaSaladString.Literal "$(null)")
                 |> CWLProcessingUnit.ExpressionTool
                 |> CWLProcessingUnit.getRequirements
 
@@ -339,7 +337,7 @@ let testProcessingUnitRequirementOps =
                 |> CWLProcessingUnit.getRequirements
 
             let expressionActual =
-                CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)", requirements = expressionReqs)
+                CWLExpressionToolDescription(outputs = ResizeArray(), expression = SchemaSaladString.Literal "$(null)", requirements = expressionReqs)
                 |> CWLProcessingUnit.ExpressionTool
                 |> CWLProcessingUnit.getRequirements
 
@@ -368,7 +366,7 @@ let testProcessingUnitHintOps =
                 |> CWLProcessingUnit.getHints
 
             let expressionHints =
-                CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)")
+                CWLExpressionToolDescription(outputs = ResizeArray(), expression = SchemaSaladString.Literal "$(null)")
                 |> CWLProcessingUnit.ExpressionTool
                 |> CWLProcessingUnit.getHints
 
@@ -385,7 +383,7 @@ let testProcessingUnitHintOps =
         testCase "getOrCreate hint helpers initialize missing collections" <| fun _ ->
             let tool = CWLToolDescription(outputs = ResizeArray())
             let workflow = CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray())
-            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)")
+            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = SchemaSaladString.Literal "$(null)")
             let operation = CWLOperationDescription(inputs = ResizeArray(), outputs = ResizeArray())
 
             let toolHints = CWLToolDescription.getOrCreateHints tool
@@ -431,7 +429,7 @@ let testProcessingUnitIntentOps =
                 |> CWLProcessingUnit.getIntent
 
             let expressionIntent =
-                CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)")
+                CWLExpressionToolDescription(outputs = ResizeArray(), expression = SchemaSaladString.Literal "$(null)")
                 |> CWLProcessingUnit.ExpressionTool
                 |> CWLProcessingUnit.getIntent
 
@@ -462,7 +460,7 @@ let testProcessingUnitIntentOps =
                 |> CWLProcessingUnit.getIntent
 
             let expressionActual =
-                CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)", intent = expressionIntentValues)
+                CWLExpressionToolDescription(outputs = ResizeArray(), expression = SchemaSaladString.Literal "$(null)", intent = expressionIntentValues)
                 |> CWLProcessingUnit.ExpressionTool
                 |> CWLProcessingUnit.getIntent
 
@@ -479,7 +477,7 @@ let testProcessingUnitIntentOps =
         testCase "getOrCreate intent helpers initialize missing collections" <| fun _ ->
             let tool = CWLToolDescription(outputs = ResizeArray())
             let workflow = CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray())
-            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)")
+            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = SchemaSaladString.Literal "$(null)")
             let operation = CWLOperationDescription(inputs = ResizeArray(), outputs = ResizeArray())
 
             let toolIntent = CWLToolDescription.getOrCreateIntent tool
@@ -498,11 +496,82 @@ let testProcessingUnitIntentOps =
             Expect.equal operation.Intent.Value.Count 1 "Operation intent should be initialized and retained."
     ]
 
-let main = 
+let testInputOptional =
+    let tool (inputs: CWLInput list) =
+        CWLToolDescription(ResizeArray [], inputs = ResizeArray inputs, baseCommand = ResizeArray [ "echo" ])
+
+    testList "Optional input" [
+        testCase "optional = true with an int is written as int? and reads back equal" <| fun _ ->
+            let hand = tool [ CWLInput("x", CWLType.Int, optional = true) ]
+            Expect.equal hand.Inputs.Value.[0].Type_ (Some (Union (ResizeArray [ Null; CWLType.Int ]))) "The optional int is the union of null and int."
+            Expect.isTrue hand.Inputs.Value.[0].Optional "The input is optional."
+            let encoded = Encode.encodeToolDescription hand
+            Expect.stringContains encoded "  x: int?\n" "The optional int is the shorthand."
+            Expect.equal (Decode.decodeCommandLineTool encoded) hand "The written text should read back as the same tool."
+        testCase "the input decoded from the shorthand equals the input built with optional = true" <| fun _ ->
+            let decoded = Decode.decodeCommandLineTool "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n  x: int?\noutputs: []\n"
+            Expect.equal decoded.Inputs.Value.[0] (CWLInput("x", CWLType.Int, optional = true)) "Both inputs have the union of null and int."
+            Expect.equal decoded.Inputs.Value.[0] (CWLInput("x", Union (ResizeArray [ Null; CWLType.Int ]))) "A union with null is optional without the parameter."
+        testCase "the parameter adds null to a type that has none and changes no other type" <| fun _ ->
+            Expect.equal (CWLInput("a", Union (ResizeArray [ CWLType.String; CWLType.Int ]), optional = true)).Type_ (Some (Union (ResizeArray [ Null; CWLType.String; CWLType.Int ]))) "The members of a union stay the members of one union."
+            Expect.equal (CWLInput("b", Union (ResizeArray [ CWLType.String; Null ]), optional = true)).Type_ (Some (Union (ResizeArray [ CWLType.String; Null ]))) "A union with null stays as it is."
+            Expect.equal (CWLInput("c", CWLType.Int, optional = false)).Type_ (Some CWLType.Int) "The parameter false changes nothing."
+            Expect.equal (CWLInput("d", Null, optional = true)).Type_ (Some Null) "The type null admits null already."
+            Expect.isNone (CWLInput("e", optional = true)).Type_ "An input without a type has nothing to add null to."
+            Expect.isFalse (CWLInput("e", optional = true)).Optional "An input without a type is not optional."
+        testCase "an input is optional when its type is a union that contains null, wherever the null stands" <| fun _ ->
+            let input = CWLInput("x", CWLType.String)
+            Expect.isFalse input.Optional "A string is not optional."
+            input.Type_ <- Some (Union (ResizeArray [ CWLType.String; CWLType.Int ]))
+            Expect.isFalse input.Optional "A union without null is not optional."
+            input.Type_ <- Some (Union (ResizeArray [ CWLType.String; Null ]))
+            Expect.isTrue input.Optional "The null behind a type makes the input optional."
+            input.Type_ <- Some (Union (ResizeArray [ CWLType.String; CWLType.Int; Null ]))
+            Expect.isTrue input.Optional "The null behind two types makes the input optional."
+            input.Type_ <- Some Null
+            Expect.isFalse input.Optional "The bare type null is no union."
+            let decoded = Decode.decodeCommandLineTool "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n  x: [string, int, \"null\"]\noutputs: []\n"
+            Expect.isTrue decoded.Inputs.Value.[0].Optional "A decoded union that contains null is optional."
+        testCase "inputs of equal types are equal whether the type was given or came from the parameter" <| fun _ ->
+            Expect.equal (hash (CWLInput("x", CWLType.Int, optional = true))) (hash (CWLInput("x", Union (ResizeArray [ Null; CWLType.Int ])))) "Equal inputs hash alike."
+            Expect.notEqual (CWLInput("x", CWLType.Int)) (CWLInput("x", CWLType.Int, optional = true)) "An optional int differs from an int."
+    ]
+
+let testBindingPosition =
+    let tool (position: string) =
+        String.concat "\n" [ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo"; "inputs:"; "  x:"; "    type: string"; "    inputBinding:"; "      position: " + position; "outputs: []"; "" ]
+    let positionOf (decoded: CWLToolDescription) = decoded.Inputs.Value.[0].InputBinding.Value.Position
+
+    testList "Binding position" [
+        testCase "an int is a number and an expression is an expression, and both are written as they were" <| fun _ ->
+            for text, expected in [ "3", BindingPosition.Number 3; "-1", BindingPosition.Number -1; "0x2", BindingPosition.Number 2; "$(1 + 1)", BindingPosition.Expression "$(1 + 1)"; "${return 3;}", BindingPosition.Expression "${return 3;}" ] do
+                let decoded = Decode.decodeCommandLineTool (tool text)
+                Expect.equal (positionOf decoded) (Some expected) (sprintf "position: %s should decode as %A" text expected)
+                let encoded = Encode.encodeToolDescription decoded
+                Expect.equal (positionOf (Decode.decodeCommandLineTool encoded)) (Some expected) (sprintf "position: %s should survive a write and a read" text)
+            let encoded = Encode.encodeToolDescription (Decode.decodeCommandLineTool (tool "$(1 + 1)"))
+            Expect.stringContains encoded "      position: $(1 + 1)\n" "The expression is written as a plain scalar."
+        testCase "a position that is neither an int nor an expression is a decode error at the position" <| fun _ ->
+            for text in [ "abc"; "\"2\""; "1.5"; "true" ] do
+                match (try Decode.decodeCommandLineTool (tool text) |> ignore; None with YamlDecodeException error -> Some error) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) "inputs.x.inputBinding.position" (sprintf "position: %s should fail at the field" text)
+                    Expect.stringContains error.Message "Expected an int or an expression" (sprintf "position: %s should say what is wrong" text)
+                    Expect.isSome error.Span (sprintf "position: %s should have the place in the text" text)
+                | None -> failwith (sprintf "position: %s must fail" text)
+        testCase "positions compare by their value" <| fun _ ->
+            Expect.equal (BindingPosition.Number 1) (BindingPosition.Number 1) "Equal numbers are equal."
+            Expect.notEqual (BindingPosition.Number 1) (BindingPosition.Expression "$(1)") "A number differs from an expression."
+            Expect.equal (InputBinding.create(position = BindingPosition.Expression "$(1)")) (InputBinding.create(position = BindingPosition.Expression "$(1)")) "Bindings with equal positions are equal."
+    ]
+
+let main =
     testList "Input" [
         testInput
         testInputMutationApi
         testInputFormat
+        testBindingPosition
+        testInputOptional
         testProcessingUnitInputOps
         testProcessingUnitOutputOps
         testProcessingUnitRequirementOps

@@ -200,7 +200,7 @@ let testCWLWorkflowDescriptionDecode =
             Expect.sequenceEqual step.Scatter.Value (ResizeArray [|"input1"|]) ""
             Expect.equal step.ScatterMethod (Some DotProduct) ""
             Expect.equal step.In.[0].LoadContents (Some true) ""
-            Expect.equal step.In.[0].LoadListing (Some "deep_listing") ""
+            Expect.equal step.In.[0].LoadListing (Some LoadListingEnum.DeepListing) ""
             Expect.equal step.In.[0].Label (Some "Input label") ""
             Expect.equal step.In.[0].LinkMerge (Some MergeNested) ""
             let expectedOut = ResizeArray [| StepOutputRecord (StepOutputParameter.create "out") |]
@@ -516,7 +516,7 @@ steps:
             let step = decoded.Steps.[0]
             let stepInput = step.In.[0]
             Expect.equal step.Id "step1" ""
-            Expect.equal step.When_ (Some "$(inputs.input1 != null)") ""
+            Expect.equal step.When_ (Some (SchemaSaladString.Literal "$(inputs.input1 != null)")) ""
             Expect.equal stepInput.PickValue (Some FirstNonNull) ""
             Expect.equal stepInput.Doc (Some "Input docs") ""
             let defaultValue =
@@ -569,7 +569,7 @@ steps:
                 Expect.wantSome
                     (WorkflowStepRunOps.tryGetExpressionTool runValue)
                     "Should extract ExpressionTool payload"
-            Expect.equal expressionTool.Expression "$(null)" ""
+            Expect.equal expressionTool.Expression (SchemaSaladString.Literal "$(null)") ""
         testCase "inline ExpressionTool chain decodes all steps" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithInlineExpressionToolChainFile
             Expect.equal decoded.Steps.Count 3 "Should have 3 steps"
@@ -579,7 +579,7 @@ steps:
                     Expect.wantSome
                         (WorkflowStepRunOps.tryGetExpressionTool step.Run)
                         $"Step {i} should be ExpressionTool"
-                Expect.isTrue (expressionTool.Expression.Length > 0) $"Step {i} expression should be non-empty"
+                Expect.isTrue (expressionTool.Expression.Value.Length > 0) $"Step {i} expression should be non-empty"
         testCase "loadContents on inline ExpressionTool input decoded" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithLoadContentsExpressionToolFile
             let step = decoded.Steps.[0]
@@ -728,7 +728,7 @@ let testCWLWorkflowDescriptionEncode =
                 let elements (includeCwlVersion: bool) =
                     [ Encode.encodeToolDescriptionElement includeCwlVersion (CWLToolDescription(outputs = ResizeArray()))
                       Encode.encodeWorkflowDescriptionElement includeCwlVersion (CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray()))
-                      Encode.encodeExpressionToolDescriptionElement includeCwlVersion (CWLExpressionToolDescription(outputs = ResizeArray(), expression = "$(null)"))
+                      Encode.encodeExpressionToolDescriptionElement includeCwlVersion (CWLExpressionToolDescription(outputs = ResizeArray(), expression = SchemaSaladString.Literal "$(null)"))
                       Encode.encodeOperationDescriptionElement includeCwlVersion (CWLOperationDescription(inputs = ResizeArray(), outputs = ResizeArray())) ]
                     |> List.map Encode.writeYaml
                 for text in elements true do
@@ -750,7 +750,7 @@ let testCWLWorkflowDescriptionEncode =
                 let roundTripped = Decode.decodeWorkflow encoded
                 let step = roundTripped.Steps.[0]
                 let stepInput = step.In.[0]
-                Expect.equal step.When_ (Some "$(inputs.input1 != null)") ""
+                Expect.equal step.When_ (Some (SchemaSaladString.Literal "$(inputs.input1 != null)")) ""
                 Expect.equal stepInput.PickValue (Some FirstNonNull) ""
                 Expect.equal stepInput.Doc (Some "Input docs") ""
                 let defaultEntry =
@@ -880,10 +880,10 @@ steps: {}"""
                 let expression = "$(inputs.name == 'test')"
                 let yaml = TestObjects.CWL.Workflow.workflowWithWhenExpressionFile expression
                 let decoded = Decode.decodeWorkflow yaml
-                Expect.equal decoded.Steps.[0].When_ (Some expression) ""
+                Expect.equal decoded.Steps.[0].When_ (Some (SchemaSaladString.Literal expression)) ""
                 let encoded = Encode.encodeWorkflowDescription decoded
                 let roundTripped = Decode.decodeWorkflow encoded
-                Expect.equal roundTripped.Steps.[0].When_ (Some expression) ""
+                Expect.equal roundTripped.Steps.[0].When_ (Some (SchemaSaladString.Literal expression)) ""
             testCase "scatter + scatterMethod together roundtrip" <| fun _ ->
                 let yaml = TestObjects.CWL.Workflow.workflowWithScatterAndScatterMethodFile
                 let decoded = Decode.decodeWorkflow yaml
@@ -916,7 +916,7 @@ steps: {}"""
                     Expect.wantSome
                         (WorkflowStepRunOps.tryGetExpressionTool roundTripped.Steps.[1].Run)
                         "Should roundtrip ExpressionTool run"
-                Expect.equal expressionTool.Expression "$({'out': inputs.y})" "Expression preserved"
+                Expect.equal expressionTool.Expression (SchemaSaladString.Literal "$({'out': inputs.y})") "Expression preserved"
             testCase "inline ExpressionTool chain roundtrip" <| fun _ ->
                 let original = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithInlineExpressionToolChainFile
                 let encoded = Encode.encodeWorkflowDescription original
@@ -973,9 +973,9 @@ steps:
                         (WorkflowStepRunOps.tryGetExpressionTool roundTripped.Steps.[0].Run)
                         "Should roundtrip multiline inline ExpressionTool run"
 
-                Expect.stringContains expressionTool.Expression "return" "Expression should decode after roundtrip."
-                Expect.stringContains expressionTool.Expression "var name = \"arc\"" "Variable assignment should survive roundtrip."
-                Expect.stringContains expressionTool.Expression "{\"out\": name}" "Return object should survive roundtrip."
+                Expect.stringContains expressionTool.Expression.Value "return" "Expression should decode after roundtrip."
+                Expect.stringContains expressionTool.Expression.Value "var name = \"arc\"" "Variable assignment should survive roundtrip."
+                Expect.stringContains expressionTool.Expression.Value "{\"out\": name}" "Return object should survive roundtrip."
         ]
     ]
 
@@ -1014,8 +1014,8 @@ let testWorkflowUnionPortRoundTrip =
                 | other -> failwithf "Expected a union but got %A" other
                 let flagOf name = (CWLWorkflowDescription.getInputs workflow |> Seq.find (fun i -> i.Name = name)).Optional
                 for name in [ "mode_choice"; "annotation_directory"; "sample_files"; "reference_dbs" ] do
-                    Expect.equal (flagOf name) (Some true) (sprintf "%s is a union of null and one type, so it is optional." name)
-                Expect.equal (flagOf "threshold") None "A union without null is not optional."
+                    Expect.isTrue (flagOf name) (sprintf "%s is a union of null and one type, so it is optional." name)
+                Expect.isFalse (flagOf "threshold") "A union without null is not optional."
                 assertTypesEqual (optionalOf (CWLType.File)) (outputTypeOf workflow "chosen") "chosen"
                 assertTypesEqual (Union (ResizeArray [ CWLType.File; CWLType.Directory ])) (outputTypeOf workflow "summary") "summary"
                 let expressionTool = Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool workflow.Steps.[0].Run) "The inline ExpressionTool should decode."
@@ -1060,8 +1060,8 @@ outputs:
             assertTypesEqual (optionalOf (CWLType.File)) (inputTypeOf workflow "flow_style") "flow_style"
             assertTypesEqual (Union (ResizeArray [ String; Int ])) (inputTypeOf workflow "block_style") "block_style"
             let flagOf name = (CWLWorkflowDescription.getInputs workflow |> Seq.find (fun i -> i.Name = name)).Optional
-            Expect.equal (flagOf "flow_style") (Some true) "A bare list of null and a file is optional."
-            Expect.equal (flagOf "block_style") None "A bare list of two types without null is not optional."
+            Expect.isTrue (flagOf "flow_style") "A bare list of null and a file is optional."
+            Expect.isFalse (flagOf "block_style") "A bare list of two types without null is not optional."
             assertTypesEqual (optionalOf (CWLType.File)) (outputTypeOf workflow "result") "result"
     ]
 

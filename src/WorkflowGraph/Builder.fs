@@ -124,7 +124,7 @@ module Builder =
         let stepNodeId = GraphId.stepNodeId scope step.Id
         let metadata =
             createMetadata [
-                "when", step.When_ |> Option.map box
+                "when", step.When_ |> Option.map (fun expression -> box expression.AsDirectiveString)
                 "scatterMethod", step.ScatterMethod |> Option.map (fun sm -> sm.AsCwlString |> box)
                 "scatter", step.Scatter |> Option.map (fun values -> values |> Seq.toArray |> box)
             ]
@@ -428,7 +428,7 @@ module Builder =
             let metadata =
                 createMetadata [
                     "cwlVersion", Some (box expressionTool.CWLVersion)
-                    "expression", Some (box expressionTool.Expression)
+                    "expression", Some (box expressionTool.Expression.AsDirectiveString)
                 ]
             let nodeId =
                 addProcessingUnitNode

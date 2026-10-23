@@ -3,8 +3,35 @@ namespace ARCtrl.CWL
 open DynamicObj
 open Fable.Core
 
+/// The glob of an output binding, as a single pattern or as a list of patterns. A single pattern differs from a list
+/// of one pattern, and the empty list stays an empty list, because CWL keeps the spellings apart. The lists compare by
+/// their elements, because a ResizeArray compares references. A pattern is a string or an expression.
+[<RequireQualifiedAccess; CustomEquality; NoComparison; AttachMembers>]
+type OutputGlob =
+    | Single of string
+    | Multiple of ResizeArray<string>
+    with
+    member this.AsValues() =
+        match this with
+        | Single value -> ResizeArray [| value |]
+        | Multiple values -> values
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? OutputGlob as other ->
+            match this, other with
+            | Single left, Single right -> left = right
+            | Multiple left, Multiple right -> HashHelpers.seqEqual left right
+            | _ -> false
+        | _ -> false
+
+    override this.GetHashCode() =
+        match this with
+        | Single value -> HashHelpers.mergeHashes 1 (hash value)
+        | Multiple values -> HashHelpers.mergeHashes 2 (HashHelpers.hashSeq values)
+
 [<AttachMembers>]
-type OutputBinding (?glob: string, ?loadContents: bool, ?loadListing: LoadListingEnum, ?outputEval: string) =
+type OutputBinding (?glob: OutputGlob, ?loadContents: bool, ?loadListing: LoadListingEnum, ?outputEval: string) =
     inherit DynamicObj ()
 
     let mutable _glob = glob
@@ -44,7 +71,7 @@ type OutputBinding (?glob: string, ?loadContents: bool, ?loadListing: LoadListin
     static member KnownFieldNames =
         CWLKnownFieldNames.outputBinding
 
-    static member create(?glob: string, ?loadContents: bool, ?loadListing: LoadListingEnum, ?outputEval: string) =
+    static member create(?glob: OutputGlob, ?loadContents: bool, ?loadListing: LoadListingEnum, ?outputEval: string) =
         OutputBinding(?glob = glob, ?loadContents = loadContents, ?loadListing = loadListing, ?outputEval = outputEval)
 
 /// The source of an output, as a single name or as a list of names. A single name differs from a list of one name,

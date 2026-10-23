@@ -51,12 +51,18 @@ type WorkflowConversion =
             match inp.Type_ with
             | Some t -> WorkflowConversion.composeAdditionalType t
             | None -> failwith "Input must have a type"
-        let valueRequired = inp.Optional |> Option.defaultValue false |> not
+        let valueRequired = not inp.Optional
         let id = LDFormalParameter.genID(name = inp.Name, ?workflowName = workflowName, ?runName = runName)
         let identifiers =
             inp.InputBinding
             |> Option.bind (fun ib ->
-                WorkflowConversion.composeFormalParamInputIdentifiers ib.Prefix ib.Position
+                // The identifiers hold a number only, so a position that is an expression has no place in them.
+                let position =
+                    ib.Position
+                    |> Option.bind (function
+                        | CWL.BindingPosition.Number number -> Some number
+                        | CWL.BindingPosition.Expression _ -> None)
+                WorkflowConversion.composeFormalParamInputIdentifiers ib.Prefix position
             )
         LDFormalParameter.create(
             additionalType = additionalType,
@@ -74,7 +80,7 @@ type WorkflowConversion =
         | _ ->
             CWL.InputBinding.create(
                 ?prefix = prefix,
-                ?position = position
+                ?position = (position |> Option.map CWL.BindingPosition.Number)
             )
             |> Some
 
@@ -88,12 +94,11 @@ type WorkflowConversion =
         let name = LDFormalParameter.getNameAsString(inp, ?context = context)
         CWL.CWLInput(name, t, ?inputBinding = binding, ?optional = optional)
 
-    static member composeFormalParameterOutputIdentifiers (glob : string option) =
+    static member composeFormalParameterOutputIdentifiers (glob : CWL.OutputGlob option) =
         match glob with
-        | Some g ->               
-            ResizeArray [
-                LDPropertyValue.createGlob(g)
-            ]
+        | Some globs ->
+            globs.AsValues()
+            |> ResizeArray.map (fun g -> LDPropertyValue.createGlob(g))
             |> Some
         | None -> None
 
@@ -117,9 +122,11 @@ type WorkflowConversion =
         )
 
     static member decomposeOutputBindings(identifiers : ResizeArray<LDNode>, ?context : LDContext) =
-        CWL.OutputBinding.create(
-            ?glob = Seq.tryPick (fun n -> LDPropertyValue.tryGetAsGlob(n, ?context = context)) identifiers
-        )
+        let globs = identifiers |> Seq.choose (fun n -> LDPropertyValue.tryGetAsGlob(n, ?context = context)) |> ResizeArray
+        match globs.Count with
+        | 0 -> CWL.OutputBinding.create()
+        | 1 -> CWL.OutputBinding.create(glob = CWL.OutputGlob.Single globs.[0])
+        | _ -> CWL.OutputBinding.create(glob = CWL.OutputGlob.Multiple globs)
 
     static member decomposeOutputFromFormalParameter(outp : LDNode, ?context : LDContext, ?graph : LDGraph) =
         let t = outp.AdditionalType |> Seq.exactlyOne |> WorkflowConversion.decomposeAdditionalType
@@ -288,7 +295,7 @@ type WorkflowConversion =
             )
         // Persist expression on schema:description to keep roundtrip fidelity without introducing
         // a custom LD predicate in the current RO-Crate projection.
-        LDLabProtocol.setDescriptionAsString(protocol, expressionTool.Expression)
+        LDLabProtocol.setDescriptionAsString(protocol, expressionTool.Expression.AsDirectiveString)
         protocol
 
     /// <summary>
@@ -311,7 +318,7 @@ type WorkflowConversion =
             |> Option.defaultValue "$(null)"
         CWL.CWLExpressionToolDescription(
             outputs = outputs,
-            expression = expression,
+            expression = CWL.SchemaSaladString.Literal expression,
             inputs = inputs
         )
 

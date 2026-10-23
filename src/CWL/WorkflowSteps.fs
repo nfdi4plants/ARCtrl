@@ -67,7 +67,7 @@ type StepInput (
     ?pickValue: PickValueMethod,
     ?doc: string,
     ?loadContents: bool,
-    ?loadListing: string,
+    ?loadListing: LoadListingEnum,
     ?label: string
 ) =
     inherit DynamicObj ()
@@ -170,7 +170,7 @@ type StepInput (
         ?pickValue: PickValueMethod,
         ?doc: string,
         ?loadContents: bool,
-        ?loadListing: string,
+        ?loadListing: LoadListingEnum,
         ?label: string
     ) =
         StepInput(
@@ -244,7 +244,7 @@ type WorkflowStep (
     ?doc: string,
     ?scatter: ResizeArray<string>,
     ?scatterMethod: ScatterMethod,
-    ?when_: string,
+    ?when_: SchemaSaladString,
     ?requirements: ResizeArray<Requirement>,
     ?hints: ResizeArray<HintEntry>
 ) =
@@ -258,7 +258,7 @@ type WorkflowStep (
     let mutable _doc: string option = doc
     let mutable _scatter: ResizeArray<string> option = scatter
     let mutable _scatterMethod: ScatterMethod option = scatterMethod
-    let mutable _when: string option = when_
+    let mutable _when: SchemaSaladString option = when_
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<HintEntry> option = hints
     let mutable _sourceNodes = SourceNodes.Empty
@@ -322,7 +322,7 @@ type WorkflowStep (
         ?doc: string,
         ?scatter: ResizeArray<string>,
         ?scatterMethod: ScatterMethod,
-        ?when_: string,
+        ?when_: SchemaSaladString,
         ?requirements: ResizeArray<Requirement>,
         ?hints: ResizeArray<HintEntry>
     ) =

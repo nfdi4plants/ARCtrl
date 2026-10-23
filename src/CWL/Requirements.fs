@@ -100,7 +100,7 @@ type DockerRequirement (
 
 /// Define an environment variable that will be set in the runtime environment by the workflow platform when executing the command line tool.
 [<AttachMembers>]
-type EnvironmentDef (envName: string, envValue: string) =
+type EnvironmentDef (envName: string, envValue: SchemaSaladString) =
     inherit DynamicObj ()
 
     let mutable _envName = envName
@@ -251,7 +251,7 @@ type InplaceUpdateRequirementValue (inplaceUpdate: bool) =
 
 type ToolTimeLimitValue =
     | ToolTimeLimitSeconds of int64
-    | ToolTimeLimitExpression of string
+    | ToolTimeLimitExpression of SchemaSaladString
 
 /// "min" is the minimum amount of a resource that must be reserved to schedule a job. If "min" cannot be satisfied, the job should not be run.
 /// "max" is the maximum amount of a resource that the job shall be permitted to use. If a node has sufficient resources, multiple jobs may be scheduled on a single node provided each job's "max" resource requirements are met.
@@ -342,7 +342,7 @@ type ResourceRequirementInstance (
     member this.TryGetExpression(name: string) =
         this.TryGetKnownField(name)
         |> Option.bind (function
-            | :? string as value -> Some value
+            | :? SchemaSaladString as value -> Some value
             | _ -> None)
 
     member this.KnownFieldValues =
@@ -380,16 +380,50 @@ type SchemaDefEntry =
     | Defined of SchemaDefinition
     | Imported of string
 
+/// A File or a Directory, the only items that an array inside the listing of an InitialWorkDirRequirement may hold.
+type FileOrDirectory =
+    | FileItem of FileInstance
+    | DirectoryItem of DirectoryInstance
+
 /// Entry in InitialWorkDirRequirement listing.
-/// CWL allows either a Dirent object or a string/expression entry.
+/// CWL allows null, a Dirent object, a string/expression entry, a File, a Directory and an array of Files and
+/// Directories. The lists of the array compare by their elements.
+[<CustomEquality; NoComparison>]
 type InitialWorkDirEntry =
     | DirentEntry of DirentInstance
     | StringEntry of SchemaSaladString
     | FileEntry of FileInstance
     | DirectoryEntry of DirectoryInstance
+    /// An item without a value, which the runner skips.
+    | NullEntry
+    /// An array of Files and Directories as one item.
+    | FilesEntry of ResizeArray<FileOrDirectory>
+
+    with
+    override this.Equals(o: obj) =
+        match o with
+        | :? InitialWorkDirEntry as other ->
+            match this, other with
+            | DirentEntry left, DirentEntry right -> left.Equals right
+            | StringEntry left, StringEntry right -> left = right
+            | FileEntry left, FileEntry right -> left.Equals right
+            | DirectoryEntry left, DirectoryEntry right -> left.Equals right
+            | NullEntry, NullEntry -> true
+            | FilesEntry left, FilesEntry right -> HashHelpers.seqEqual left right
+            | _ -> false
+        | _ -> false
+
+    override this.GetHashCode() =
+        match this with
+        | DirentEntry value -> HashHelpers.mergeHashes 1 (hash value)
+        | StringEntry value -> HashHelpers.mergeHashes 2 (hash value)
+        | FileEntry value -> HashHelpers.mergeHashes 3 (hash value)
+        | DirectoryEntry value -> HashHelpers.mergeHashes 4 (hash value)
+        | NullEntry -> 5
+        | FilesEntry values -> HashHelpers.mergeHashes 6 (HashHelpers.hashSeq values)
 
 [<AttachMembers>]
-type InlineJavascriptRequirementValue (?expressionLib: ResizeArray<string>) =
+type InlineJavascriptRequirementValue (?expressionLib: ResizeArray<SchemaSaladString>) =
     inherit DynamicObj ()
 
     let mutable _expressionLib = expressionLib
@@ -460,6 +494,8 @@ type Requirement =
     /// Define a list of files and subdirectories that must be created by the workflow platform in the designated output directory prior to executing the command line tool.
     /// CWL supports string/expression entries and Dirent objects.
     | InitialWorkDirRequirement of ResizeArray<InitialWorkDirEntry>
+    /// Expression form of the InitialWorkDirRequirement listing, as in listing: $(inputs.directory.listing).
+    | InitialWorkDirExpressionRequirement of string
     /// Define a list of environment variables which will be set in the execution environment of the tool. See EnvironmentDef for details.
     | EnvVarRequirement of ResizeArray<EnvironmentDef>
     /// Modify the behavior of CommandLineTool to generate a single string containing a shell command line.
@@ -469,11 +505,11 @@ type Requirement =
     /// For implementations that support reusing output from past work (on the assumption that same code and same input produce same results), control whether to enable or disable the reuse behavior for a particular tool or step.
     | WorkReuseRequirement of WorkReuseRequirementValue
     /// Expression payload form of WorkReuse enableReuse.
-    | WorkReuseExpressionRequirement of string
+    | WorkReuseExpressionRequirement of SchemaSaladString
     /// Indicate whether a process requires outgoing IPv4/IPv6 network access. Choice of IPv4 or IPv6 is implementation and site specific, correct tools must support both.
     | NetworkAccessRequirement of NetworkAccessRequirementValue
     /// Expression payload form of NetworkAccess networkAccess.
-    | NetworkAccessExpressionRequirement of string
+    | NetworkAccessExpressionRequirement of SchemaSaladString
     /// If inplaceUpdate is true, then an implementation supporting this feature may permit tools to directly update files with writable: true in InitialWorkDirRequirement. 
     | InplaceUpdateRequirement of InplaceUpdateRequirementValue
     /// Set an upper limit on the execution time of a CommandLineTool.
@@ -498,6 +534,7 @@ type Requirement =
             | SoftwareRequirement left, SoftwareRequirement right -> HashHelpers.seqEqual left right
             | LoadListingRequirement left, LoadListingRequirement right -> left.Equals right
             | InitialWorkDirRequirement left, InitialWorkDirRequirement right -> HashHelpers.seqEqual left right
+            | InitialWorkDirExpressionRequirement left, InitialWorkDirExpressionRequirement right -> left = right
             | EnvVarRequirement left, EnvVarRequirement right -> HashHelpers.seqEqual left right
             | ShellCommandRequirement, ShellCommandRequirement -> true
             | ResourceRequirement left, ResourceRequirement right -> left.Equals right
@@ -535,6 +572,7 @@ type Requirement =
         | ScatterFeatureRequirement -> 17
         | MultipleInputFeatureRequirement -> 18
         | StepInputExpressionRequirement -> 19
+        | InitialWorkDirExpressionRequirement value -> HashHelpers.mergeHashes 20 (hash value)
 
     static member defaultInlineJavascriptRequirement =
         InlineJavascriptRequirement InlineJavascriptRequirementValue.defaultEmpty

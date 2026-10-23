@@ -6,7 +6,7 @@ open Fable.Core
 [<AttachMembers>]
 type CWLExpressionToolDescription (
         outputs: ResizeArray<CWLOutput>,
-        expression: string,
+        expression: SchemaSaladString,
         ?cwlVersion: string,
         ?requirements: ResizeArray<Requirement>,
         ?hints: ResizeArray<HintEntry>,
@@ -22,7 +22,7 @@ type CWLExpressionToolDescription (
     let mutable _id: string option = id
     let mutable _cwlVersion: string = cwlVersion |> Option.defaultValue "v1.2"
     let mutable _outputs: ResizeArray<CWLOutput> = outputs
-    let mutable _expression: string = expression
+    let mutable _expression: SchemaSaladString = expression
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<HintEntry> option = hints
     let mutable _intent: ResizeArray<string> option = intent

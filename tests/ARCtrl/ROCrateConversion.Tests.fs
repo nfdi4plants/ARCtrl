@@ -1865,7 +1865,7 @@ let tests_FormalParameter =
             testCase "Position" (fun () ->
                 let name = "MyInput"
                 let t = CWLType.String
-                let binding = InputBinding.create(position = 1)
+                let binding = InputBinding.create(position = BindingPosition.Number 1)
                 let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 let identifiers = LDFormalParameter.getIdentifiers formalParameter
@@ -1878,7 +1878,7 @@ let tests_FormalParameter =
             testCase "PrefixPosition" (fun () ->
                 let name = "MyInput"
                 let t = CWLType.String
-                let binding = InputBinding.create(prefix = "--eenput", position = 1)
+                let binding = InputBinding.create(prefix = "--eenput", position = BindingPosition.Number 1)
                 let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 let identifiers = LDFormalParameter.getIdentifiers formalParameter
@@ -1893,7 +1893,7 @@ let tests_FormalParameter =
             testCase "PrefixPosition_Roundabout" (fun () ->
                 let name = "MyInput"
                 let t = CWLType.String
-                let binding = InputBinding.create(prefix = "--eenput", position = 1)
+                let binding = InputBinding.create(prefix = "--eenput", position = BindingPosition.Number 1)
                 let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 let input' = WorkflowConversion.decomposeInputFromFormalParameter formalParameter
@@ -1948,7 +1948,7 @@ let tests_FormalParameter =
             testCase "File_GlobBinding" (fun () ->
                 let name = "MyOutput"
                 let t = CWLType.File
-                let binding = OutputBinding.create(glob = "*.txt")
+                let binding = OutputBinding.create(glob = OutputGlob.Single "*.txt")
                 let output = CWL.CWLOutput(name = name, type_ = t, outputBinding = binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
                 let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
@@ -1964,7 +1964,7 @@ let tests_FormalParameter =
             testCase "File_GlobBinding_Roundabout" (fun () ->
                 let name = "MyOutput"
                 let t = CWLType.File
-                let binding = OutputBinding.create(glob = "*.txt")
+                let binding = OutputBinding.create(glob = OutputGlob.Single "*.txt")
                 let output = CWL.CWLOutput(name = name, type_ = t, outputBinding = binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
                 let output' = WorkflowConversion.decomposeOutputFromFormalParameter formalParameter

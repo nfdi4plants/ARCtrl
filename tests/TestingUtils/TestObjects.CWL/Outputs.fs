@@ -32,7 +32,7 @@ module CSV =
 
     let outputCSVGlobStr = "*.csv"
 
-    let outputCSVGlob = OutputBinding.create(glob = outputCSVGlobStr)
+    let outputCSVGlob = OutputBinding.create(glob = OutputGlob.Single outputCSVGlobStr)
 
     let outputCSV = CWLOutput(outputCSVName, outputCSVType, outputBinding = outputCSVGlob)
 

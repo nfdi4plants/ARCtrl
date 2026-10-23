@@ -34,6 +34,8 @@ type SchemaSaladString =
         | Include value
         | Import value -> value
 
+    /// The text as a document spells it, with the directive in front of the path. A display of the string can use it.
+    /// The decoder and the encoder keep the directive as a case, so no field of a document holds this text.
     member this.AsDirectiveString =
         match this with
         | Literal value -> value
@@ -49,8 +51,6 @@ module SchemaSaladString =
     let importPath value = Import value
 
     let value (saladString: SchemaSaladString) = saladString.Value
-
-    let toDirectiveString (saladString: SchemaSaladString) = saladString.AsDirectiveString
 
 [<AttachMembers>]
 type FileInstance (
@@ -658,6 +658,22 @@ module CWLType =
                 ) leftFields rightFields
             | _ -> false
         | _ -> left = right
+
+    /// True when the type is a union that contains null, so that a value of the type may be missing. The shorthand
+    /// File? is such a union.
+    let isOptional (type_ : CWLType) =
+        match type_ with
+        | CWLType.Union types -> types |> Seq.exists (function CWLType.Null -> true | _ -> false)
+        | _ -> false
+
+    /// The type with null added: the union of null and the type, with null in front. A type that admits null already
+    /// stays as it is, and the members of a union stay the members of one union.
+    let makeOptional (type_ : CWLType) =
+        match type_ with
+        | CWLType.Null -> type_
+        | CWLType.Union types when isOptional type_ -> type_
+        | CWLType.Union types -> CWLType.Union (ResizeArray (Seq.append [ CWLType.Null ] types))
+        | _ -> CWLType.Union (ResizeArray [ CWLType.Null; type_ ])
 
     /// Helper function to check if a CWLType is or contains an Array type
     let isArrayType (type_ : CWLType) =

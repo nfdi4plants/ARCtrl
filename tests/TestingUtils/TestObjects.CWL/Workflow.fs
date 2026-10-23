@@ -935,7 +935,7 @@ inputs:
 - id: sample
   type: File
   inputBinding:
-    prefix: --sample
+    loadContents: true
     arc:binding note: keep input binding note
   arc:note: keep input note
 outputs:

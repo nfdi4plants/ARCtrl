@@ -27,7 +27,7 @@ let testOutput =
                 let actual = fileItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "OutputBinding" <| fun _ ->
-                let expected = Some (OutputBinding.create(glob = "./arc/runs/fsResult1/result.csv"))
+                let expected = Some (OutputBinding.create(glob = OutputGlob.Single "./arc/runs/fsResult1/result.csv"))
                 let actual = fileItem.OutputBinding
                 Expect.equal actual expected ""
         ]
@@ -42,7 +42,7 @@ let testOutput =
                 let actual = directoryItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "OutputBinding" <| fun _ ->
-                let expected = Some (OutputBinding.create(glob = "./arc/runs/fsResult1/example.csv"))
+                let expected = Some (OutputBinding.create(glob = OutputGlob.Single "./arc/runs/fsResult1/example.csv"))
                 let actual = directoryItem.OutputBinding
                 Expect.equal actual expected ""
         ]
@@ -72,7 +72,7 @@ let testOutput =
                 let actual = fileArrayItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "OutputBinding" <| fun _ ->
-                let expected = Some (OutputBinding.create(glob = "./arc/runs/fsResult1/example.csv"))
+                let expected = Some (OutputBinding.create(glob = OutputGlob.Single "./arc/runs/fsResult1/example.csv"))
                 let actual = fileArrayItem.OutputBinding
                 Expect.equal actual expected ""
         ]
@@ -87,7 +87,7 @@ let testOutput =
                 let actual = fileArrayItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "OutputBinding" <| fun _ ->
-                let expected = Some (OutputBinding.create(glob = "./arc/runs/fsResult1/example.csv"))
+                let expected = Some (OutputBinding.create(glob = OutputGlob.Single "./arc/runs/fsResult1/example.csv"))
                 let actual = fileArrayItem.OutputBinding
                 Expect.equal actual expected ""
         ]
@@ -98,11 +98,11 @@ let testOutputMutationApi =
         testCase "typed setters roundtrip values" <| fun _ ->
             let output = CWLOutput("result")
             output.Type_ <- Some (File)
-            output.OutputBinding <- Some (OutputBinding.create(glob = "results/*.txt"))
+            output.OutputBinding <- Some (OutputBinding.create(glob = OutputGlob.Single "results/*.txt"))
             output.OutputSource <- Some (OutputSource.Single "step/out")
 
             Expect.equal output.Type_ (Some (File)) "Type_ setter should write DynamicObj-backed value."
-            Expect.equal output.OutputBinding (Some (OutputBinding.create(glob = "results/*.txt"))) "OutputBinding setter should write value."
+            Expect.equal output.OutputBinding (Some (OutputBinding.create(glob = OutputGlob.Single "results/*.txt"))) "OutputBinding setter should write value."
             Expect.equal output.OutputSource (Some (OutputSource.Single "step/out")) "OutputSource setter should write value."
 
         testCase "typed setters can clear optional values" <| fun _ ->
@@ -110,7 +110,7 @@ let testOutputMutationApi =
                 CWLOutput(
                     "result",
                     type_ = CWLType.String,
-                    outputBinding = OutputBinding.create(glob = "*.txt"),
+                    outputBinding = OutputBinding.create(glob = OutputGlob.Single "*.txt"),
                     outputSource = OutputSource.Single "step/out"
                 )
             output.Type_ <- None
@@ -126,7 +126,7 @@ let testOutputMutationApi =
             Expect.isNone output.OutputSource "Empty outputSource collections should normalize to None."
 
         testCase "known fields are typed fields, not dynamic overflow" <| fun _ ->
-            let binding = OutputBinding.create(glob = "*.txt", loadContents = true, loadListing = LoadListingEnum.DeepListing, outputEval = "$(self[0])")
+            let binding = OutputBinding.create(glob = OutputGlob.Single "*.txt", loadContents = true, loadListing = LoadListingEnum.DeepListing, outputEval = "$(self[0])")
             let output =
                 CWLOutput(
                     "result",
@@ -165,8 +165,42 @@ let testOutputMutationApi =
             Expect.isEmpty (output |> DynamicObjHelpers.dynamicPropertiesSnapshot) "Known output fields should not be overflow."
     ]
 
-let main = 
+let testOutputGlob =
+    let tool (glob: string) =
+        String.concat "\n" [ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo"; "inputs: []"; "outputs:"; "  o:"; "    type: File[]"; "    outputBinding:"; "      glob: " + glob; "" ]
+    let globOf (decoded: CWLToolDescription) = decoded.Outputs.[0].OutputBinding.Value.Glob
+
+    testList "Output glob" [
+        testCase "a pattern, a list of patterns and an expression keep the form that they were written in" <| fun _ ->
+            let cases =
+                [ "\"*.txt\"", OutputGlob.Single "*.txt", "glob: \"*.txt\""
+                  "[a.txt, b.txt]", OutputGlob.Multiple (ResizeArray [ "a.txt"; "b.txt" ]), "glob: [a.txt, b.txt]"
+                  "[a.txt]", OutputGlob.Multiple (ResizeArray [ "a.txt" ]), "glob: [a.txt]"
+                  "[]", OutputGlob.Multiple (ResizeArray []), "glob: []"
+                  "[a.txt, $(inputs.x)]", OutputGlob.Multiple (ResizeArray [ "a.txt"; "$(inputs.x)" ]), "glob: [a.txt, $(inputs.x)]"
+                  "$(inputs.x)", OutputGlob.Single "$(inputs.x)", "glob: $(inputs.x)" ]
+            for text, expected, written in cases do
+                let decoded = Decode.decodeCommandLineTool (tool text)
+                Expect.equal (globOf decoded) (Some expected) (sprintf "glob: %s should decode as %A" text expected)
+                let encoded = Encode.encodeToolDescription decoded
+                Expect.stringContains encoded written (sprintf "glob: %s should be written in its form" text)
+                Expect.equal (Decode.decodeCommandLineTool encoded) decoded (sprintf "glob: %s should survive a write and a read" text)
+        testCase "a glob that is neither a string nor a list of strings is a decode error" <| fun _ ->
+            for text, path in [ "{a: b}", "outputs.o.outputBinding.glob"; "[a.txt, {a: b}]", "outputs.o.outputBinding.glob[1]"; "[a.txt, [b.txt]]", "outputs.o.outputBinding.glob[1]" ] do
+                match (try Decode.decodeCommandLineTool (tool text) |> ignore; None with YamlDecodeException error -> Some error) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path (sprintf "glob: %s should fail at its place" text)
+                    Expect.isSome error.Span (sprintf "glob: %s should have the place in the text" text)
+                | None -> failwith (sprintf "glob: %s must fail" text)
+        testCase "globs compare by their patterns" <| fun _ ->
+            Expect.equal (OutputGlob.Multiple (ResizeArray [ "a"; "b" ])) (OutputGlob.Multiple (ResizeArray [ "a"; "b" ])) "Lists with equal patterns are equal."
+            Expect.notEqual (OutputGlob.Multiple (ResizeArray [ "a" ])) (OutputGlob.Single "a") "A list of one pattern differs from the pattern."
+            Expect.equal (OutputBinding.create(glob = OutputGlob.Multiple (ResizeArray [ "a" ]))) (OutputBinding.create(glob = OutputGlob.Multiple (ResizeArray [ "a" ]))) "Bindings with equal globs are equal."
+    ]
+
+let main =
     testList "Output" [
         testOutput
         testOutputMutationApi
+        testOutputGlob
     ]

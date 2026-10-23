@@ -81,18 +81,65 @@ let testRequirementDecode =
                 Expect.equal hints.Count 1 "Expected one hint entry"
                 Expect.equal hints.[0] (KnownHint StepInputExpressionRequirement) "Known hint should decode as KnownHint"
 
-            testCase "Malformed known hint payload falls back to UnknownHint" <| fun _ ->
-                let yaml = """hints:
-  - class: DockerRequirement
-    dockerPull:
-      nested: invalid"""
-                let hints = decodeHints yaml
-                Expect.equal hints.Count 1 "Expected one hint entry"
-                match hints.[0] with
-                | UnknownHint unknownHint ->
-                    Expect.equal unknownHint.Class (Some "DockerRequirement") "Malformed known hint should preserve class in UnknownHint"
-                | _ ->
-                    failwith "Expected UnknownHint fallback for malformed known hint payload"
+            testCase "A malformed known hint is a decode error at the field, in the list form and in the map form" <| fun _ ->
+                let cases =
+                    [ "list form", "hints[0].dockerPull", "hints:\n  - class: DockerRequirement\n    dockerPull:\n      nested: invalid"
+                      "list form with a list", "hints[1].dockerPull", "hints:\n  - class: ShellCommandRequirement\n  - class: DockerRequirement\n    dockerPull: [a, b]"
+                      "map form", "hints.DockerRequirement.dockerPull", "hints:\n  DockerRequirement:\n    dockerPull: [a, b]" ]
+                for name, path, yaml in cases do
+                    match decodeError (fun () -> decodeHints yaml |> ignore) with
+                    | Some error ->
+                        Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the field" name)
+                        Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+                    | None -> failwith (sprintf "%s: a malformed known hint must fail" name)
+
+            testCase "A hint of a known class decodes as the requirement of that class" <| fun _ ->
+                let bodies =
+                    [ "InlineJavascriptRequirement", [ "expressionLib:"; "  - var a = 1;" ]
+                      "DockerRequirement", [ "dockerPull: ubuntu" ]
+                      "SoftwareRequirement", [ "packages:"; "  samtools: [\"1.0\"]" ]
+                      "EnvVarRequirement", [ "envDef:"; "  A: b" ]
+                      "ResourceRequirement", [ "coresMin: 2" ]
+                      "WorkReuse", [ "enableReuse: false" ]
+                      "NetworkAccess", [ "networkAccess: true" ]
+                      "ToolTimeLimit", [ "timelimit: 60" ]
+                      "ShellCommandRequirement", []
+                      "ScatterFeatureRequirement", [] ]
+                for className, body in bodies do
+                    let lines (field: string) = field + ":" :: ("  - class: " + className) :: (body |> List.map (fun line -> "    " + line))
+                    let asHint = (decodeHints (String.concat "\n" (lines "hints"))).[0]
+                    let asRequirement = (decodeRequirements (String.concat "\n" (lines "requirements"))).[0]
+                    Expect.equal asHint (KnownHint asRequirement) (sprintf "%s: the hint is the requirement" className)
+
+            testCase "A valid InitialWorkDirRequirement hint with a null item is typed" <| fun _ ->
+                let yaml = "hints:\n  - class: InitialWorkDirRequirement\n    listing:\n      - null\n      - [{class: File, location: a.txt}]"
+                match (decodeHints yaml).[0] with
+                | KnownHint (InitialWorkDirRequirement listing) ->
+                    Expect.sequenceEqual listing (ResizeArray [ NullEntry; FilesEntry (ResizeArray [ FileItem (FileInstance(location = "a.txt")) ]) ]) "The listing keeps the null item and the array."
+                | other -> failwithf "Expected a known InitialWorkDirRequirement hint, found %A" other
+
+            testCase "A hint without a class is a decode error" <| fun _ ->
+                match decodeError (fun () -> decodeHints "hints:\n  - foo: bar" |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) "hints[0]" "The error shows the hint."
+                    Expect.stringContains error.Message "class" "The error names the missing field."
+                | None -> failwith "A hint without a class must fail."
+
+            testCase "A SchemaDefRequirement hint that a requirement overrides keeps type names that do not resolve" <| fun _ ->
+                let tool (hintFields: string) (requirement: bool) =
+                    let header = [ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo" ]
+                    let overriding = [ "requirements:"; "  - class: SchemaDefRequirement"; "    types:"; "      - name: A"; "        type: enum"; "        symbols: [x]" ]
+                    let hint = [ "hints:"; "  - class: SchemaDefRequirement"; "    types:"; "      - name: B"; "        type: record"; "        fields:"; "          a: " + hintFields ]
+                    String.concat "\n" (header @ (if requirement then overriding else []) @ hint @ [ "inputs: {}"; "outputs: {}"; "" ])
+                let overridden = Decode.decodeCommandLineTool (tool "Nope" true)
+                // Asserted through a bool, because the Python backend drops an empty branch of a match in statement position.
+                let isKnownSchemaDef = match overridden.Hints.Value.[0] with | KnownHint (SchemaDefRequirement _) -> true | _ -> false
+                Expect.isTrue isKnownSchemaDef "The hint is a known SchemaDefRequirement."
+                match decodeError (fun () -> Decode.decodeCommandLineTool (tool "Nope" false) |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) "hints[0].types[0].fields.a" "The error shows the type of the field."
+                    Expect.stringContains error.Message "Invalid CWL type: Nope" "The error names the type."
+                | None -> failwith "A hint that applies must name types that resolve."
 
             testCase "Unknown requirement class still fails for requirements" <| fun _ ->
                 let yaml = """requirements:
@@ -156,26 +203,24 @@ outputs: {}"""
                 match requirement with
                 | InlineJavascriptRequirement inlineJavascriptRequirement ->
                     let actualExpressionLib = Expect.wantSome inlineJavascriptRequirement.ExpressionLib "expressionLib should be present"
-                    let expectedExpressionLib = ResizeArray [| "$(function() { return 1; })"; "$(function() { return 2; })" |]
+                    let expectedExpressionLib = ResizeArray [| SchemaSaladString.Literal "$(function() { return 1; })"; SchemaSaladString.Literal "$(function() { return 2; })" |]
                     Expect.sequenceEqual actualExpressionLib expectedExpressionLib "expressionLib entries should decode"
                 | _ ->
                     failwith "Expected InlineJavascriptRequirement"
-            testCase "Decode scalar expressionLib form" <| fun _ ->
+            testCase "A scalar expressionLib is a decode error at the field" <| fun _ ->
                 let yaml = """requirements:
   - class: InlineJavascriptRequirement
     expressionLib: $(function() { return 42; })"""
-                let reqs = decodeRequirements yaml
-                let requirement = findRequirement reqs (function InlineJavascriptRequirement _ -> true | _ -> false)
-                match requirement with
-                | InlineJavascriptRequirement inlineJavascriptRequirement ->
-                    let expressionLib = Expect.wantSome inlineJavascriptRequirement.ExpressionLib "Scalar expressionLib should normalize to a single entry array."
-                    Expect.sequenceEqual expressionLib (ResizeArray [| "$(function() { return 42; })" |]) "Scalar expressionLib should be preserved."
-                | _ ->
-                    failwith "Expected InlineJavascriptRequirement"
+                match decodeError (fun () -> decodeRequirements yaml |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) "requirements[0].expressionLib" "The error shows the field."
+                    Expect.stringContains error.Message "Expected a list of strings" "The error says what is wrong."
+                    Expect.isSome error.Span "The error has the place in the text."
+                | None -> failwith "A scalar expressionLib must fail."
 
             testCase "Encode emits expressionLib when present" <| fun _ ->
                 let requirement =
-                    InlineJavascriptRequirement (InlineJavascriptRequirementValue(expressionLib = ResizeArray [| "$(function() { return 1; })" |]))
+                    InlineJavascriptRequirement (InlineJavascriptRequirementValue(expressionLib = ResizeArray [| SchemaSaladString.Literal "$(function() { return 1; })" |]))
                 let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
                 Expect.stringContains encoded "class: InlineJavascriptRequirement" "Encoded output should include class"
                 Expect.stringContains encoded "expressionLib" "Encoded output should include expressionLib"
@@ -332,18 +377,13 @@ outputs: {}"""
                     Expect.sequenceEqual listing expected "String listing entries should decode into StringEntry values."
                 | _ ->
                     failwith "Wrong requirement type: expected InitialWorkDirRequirement"
-            testCase "Scalar listing form decodes as single listing entry" <| fun _ ->
+            testCase "Scalar listing form decodes as the expression form of the requirement" <| fun _ ->
                 let yaml = """requirements:
   - class: InitialWorkDirRequirement
     listing: $(inputs.stageDirectory)"""
                 let reqs = decodeRequirements yaml
-                let initialWorkDirItem = findRequirement reqs (function InitialWorkDirRequirement _ -> true | _ -> false)
-                match initialWorkDirItem with
-                | InitialWorkDirRequirement listing ->
-                    let expected = ResizeArray [| StringEntry (SchemaSaladString.Literal "$(inputs.stageDirectory)") |]
-                    Expect.sequenceEqual listing expected "Scalar listing form should decode to a single StringEntry."
-                | _ ->
-                    failwith "Wrong requirement type: expected InitialWorkDirRequirement"
+                let initialWorkDirItem = findRequirement reqs (function InitialWorkDirExpressionRequirement _ -> true | _ -> false)
+                Expect.equal initialWorkDirItem (InitialWorkDirExpressionRequirement "$(inputs.stageDirectory)") "Scalar listing form should decode to the expression."
             testCase "Object listing entry without entry field decodes as StringEntry" <| fun _ ->
                 let yaml = """requirements:
   - class: InitialWorkDirRequirement
@@ -413,7 +453,7 @@ outputs: {}"""
             testCase "Class Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsClassFileContent
                 let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
-                let expected = EnvVarRequirement (ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", "true"); EnvironmentDef("TEST", "false") |])
+                let expected = EnvVarRequirement (ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", SchemaSaladString.Literal "true"); EnvironmentDef("TEST", SchemaSaladString.Literal "false") |])
                 let actual = envVarItem
                 match actual, expected with
                 | EnvVarRequirement a, EnvVarRequirement e ->
@@ -423,7 +463,7 @@ outputs: {}"""
             testCase "Mapping Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsMappingFileContent
                 let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
-                let expected = EnvVarRequirement (ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", "true"); EnvironmentDef("TEST", "false") |])
+                let expected = EnvVarRequirement (ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", SchemaSaladString.Literal "true"); EnvironmentDef("TEST", SchemaSaladString.Literal "false") |])
                 let actual = envVarItem
                 match actual, expected with
                 | EnvVarRequirement a, EnvVarRequirement e ->
@@ -433,7 +473,7 @@ outputs: {}"""
             testCase "Json Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsJSONFileContent
                 let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
-                let expected = EnvVarRequirement (ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", "true"); EnvironmentDef("TEST", "false") |])
+                let expected = EnvVarRequirement (ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", SchemaSaladString.Literal "true"); EnvironmentDef("TEST", SchemaSaladString.Literal "false") |])
                 let actual = envVarItem
                 match actual, expected with
                 | EnvVarRequirement a, EnvVarRequirement e ->
@@ -451,7 +491,7 @@ outputs: {}"""
                 let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
                 match envVarItem with
                 | EnvVarRequirement envs ->
-                    let expected = ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", "true"); EnvironmentDef("TEST", "false") |]
+                    let expected = ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", SchemaSaladString.Literal "true"); EnvironmentDef("TEST", SchemaSaladString.Literal "false") |]
                     Expect.sequenceEqual envs expected "EnvVar map shorthand should decode to normalized EnvironmentDef list."
                 | _ ->
                     failwith "Wrong requirement type: expected EnvVarRequirement"
@@ -467,7 +507,7 @@ outputs: {}"""
                 | EnvVarRequirement envs ->
                     Expect.equal envs.Count 1 "Expected one map-shorthand environment definition"
                     Expect.equal envs.[0].EnvName "FLAG" "Map key should decode as env name"
-                    Expect.equal envs.[0].EnvValue "true" "Unquoted YAML boolean should normalize to string value"
+                    Expect.equal envs.[0].EnvValue (SchemaSaladString.Literal "true") "Unquoted YAML boolean should normalize to string value"
                 | _ ->
                     failwith "Wrong requirement type: expected EnvVarRequirement"
 
@@ -490,12 +530,12 @@ outputs: {}"""
             testCase "Array form roundtrips values that look like another type" <| fun _ ->
                 let envs =
                     ResizeArray [|
-                        EnvironmentDef("A", "true")
-                        EnvironmentDef("B", "1.0")
-                        EnvironmentDef("C", "null")
-                        EnvironmentDef("D", "0x1F")
-                        EnvironmentDef("E", "plain")
-                        EnvironmentDef("F", "\"inner quotes\"")
+                        EnvironmentDef("A", SchemaSaladString.Literal "true")
+                        EnvironmentDef("B", SchemaSaladString.Literal "1.0")
+                        EnvironmentDef("C", SchemaSaladString.Literal "null")
+                        EnvironmentDef("D", SchemaSaladString.Literal "0x1F")
+                        EnvironmentDef("E", SchemaSaladString.Literal "plain")
+                        EnvironmentDef("F", SchemaSaladString.Literal "\"inner quotes\"")
                     |]
                 let yaml =
                     YAMLicious.Encode.object [ "requirements", YamlNode.sequence [ YamlNode.item (Encode.encodeRequirement (EnvVarRequirement envs)) ] ]
@@ -512,14 +552,14 @@ outputs: {}"""
                     failwith "Wrong requirement type: expected EnvVarRequirement"
 
             testCase "Compact map encode helper quotes values that look like another type" <| fun _ ->
-                let envs = ResizeArray [| EnvironmentDef("FLAG", "true"); EnvironmentDef("COUNT", "12"); EnvironmentDef("NAME", "worker") |]
+                let envs = ResizeArray [| EnvironmentDef("FLAG", SchemaSaladString.Literal "true"); EnvironmentDef("COUNT", SchemaSaladString.Literal "12"); EnvironmentDef("NAME", SchemaSaladString.Literal "worker") |]
                 let encoded = Encode.encodeEnvVarRequirementCompactMap envs |> Encode.writeYaml
                 Expect.stringContains encoded "FLAG: \"true\"" "A string true needs quotes in the compact map."
                 Expect.stringContains encoded "COUNT: \"12\"" "A string number needs quotes in the compact map."
                 Expect.stringContains encoded "NAME: worker" "Other strings stay plain."
 
             testCase "Compact map encode helper emits envDef map" <| fun _ ->
-                let envs = ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", "true"); EnvironmentDef("TEST", "false") |]
+                let envs = ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", SchemaSaladString.Literal "true"); EnvironmentDef("TEST", SchemaSaladString.Literal "false") |]
                 let encoded = Encode.encodeEnvVarRequirementCompactMap envs |> Encode.writeYaml
                 Expect.stringContains encoded "class: EnvVarRequirement" "EnvVar compact helper should emit class"
                 Expect.stringContains encoded "envDef:" "EnvVar compact helper should emit envDef map"
@@ -769,15 +809,23 @@ outputs: {}"""
                 Expect.stringContains encoded "loadListing: shallow_listing" "Enum should encode to canonical CWL symbol."
         ]
         testList "Payloaded requirement defaults and custom values" [
-            testCase "WorkReuse and InplaceUpdate default to true when payload omitted" <| fun _ ->
+            testCase "WorkReuse defaults to true when payload omitted" <| fun _ ->
                 let yaml = """requirements:
-  - class: WorkReuse
-  - class: InplaceUpdateRequirement"""
-                let reqs = decodeRequirements yaml
-                let workReuse = findRequirement reqs (function WorkReuseRequirement _ -> true | _ -> false)
-                let inplace = findRequirement reqs (function InplaceUpdateRequirement _ -> true | _ -> false)
+  - class: WorkReuse"""
+                let workReuse = findRequirement (decodeRequirements yaml) (function WorkReuseRequirement _ -> true | _ -> false)
                 Expect.equal workReuse (WorkReuseRequirement (WorkReuseRequirementValue(true))) "WorkReuse without explicit payload should default to true."
-                Expect.equal inplace (InplaceUpdateRequirement (InplaceUpdateRequirementValue(true))) "InplaceUpdateRequirement without payload should default to true."
+            testCase "NetworkAccess and InplaceUpdateRequirement without their field are decode errors and never get a true" <| fun _ ->
+                for className, field in [ "NetworkAccess", "networkAccess"; "InplaceUpdateRequirement", "inplaceUpdate" ] do
+                    for form in [ "requirements"; "hints" ] do
+                        let yaml = form + ":\n  - class: " + className
+                        match decodeError (fun () -> (if form = "hints" then decodeHints yaml |> ignore else decodeRequirements yaml |> ignore)) with
+                        | Some error ->
+                            Expect.equal (DecodeError.pathText error) (form + "[0]") (sprintf "%s in %s: the error shows the requirement" className form)
+                            Expect.stringContains error.Message ("no field " + field) (sprintf "%s in %s: the error names the field" className form)
+                            Expect.isSome error.Span (sprintf "%s in %s: the error has the place in the text" className form)
+                        | None -> failwith (sprintf "%s without %s must fail in %s" className field form)
+                let falseNetwork = (decodeRequirements "requirements:\n  - class: NetworkAccess\n    networkAccess: false").[0]
+                Expect.stringContains (Encode.encodeRequirement falseNetwork |> Encode.writeYaml) "networkAccess: false" "A false stays false."
             testCase "WorkReuse, NetworkAccess, InplaceUpdate decode explicit false payloads" <| fun _ ->
                 let yaml = """requirements:
   - class: WorkReuse
@@ -815,8 +863,8 @@ outputs: {}"""
                 let reqs = decodeRequirements yaml
                 let workReuse = findRequirement reqs (function WorkReuseExpressionRequirement _ -> true | _ -> false)
                 let network = findRequirement reqs (function NetworkAccessExpressionRequirement _ -> true | _ -> false)
-                Expect.equal workReuse (WorkReuseExpressionRequirement "false") "A quoted false is the text false."
-                Expect.equal network (NetworkAccessExpressionRequirement "true") "A quoted true is the text true."
+                Expect.equal workReuse (WorkReuseExpressionRequirement (SchemaSaladString.Literal "false")) "A quoted false is the text false."
+                Expect.equal network (NetworkAccessExpressionRequirement (SchemaSaladString.Literal "true")) "A quoted true is the text true."
                 let encoded = Encode.encodeRequirement workReuse |> Encode.writeYaml
                 Expect.stringContains encoded "enableReuse: \"false\"" "The text should be written quoted, so that it reads back as the same text."
             testCase "WorkReuse and NetworkAccess decode every core schema spelling of a bool" <| fun _ ->
@@ -854,7 +902,7 @@ outputs: {}"""
     timelimit: $(inputs.max_runtime_seconds)"""
                 let reqs = decodeRequirements yaml
                 let requirement = findRequirement reqs (function ToolTimeLimitRequirement _ -> true | _ -> false)
-                let expected = ToolTimeLimitRequirement (ToolTimeLimitExpression "$(inputs.max_runtime_seconds)")
+                let expected = ToolTimeLimitRequirement (ToolTimeLimitExpression (SchemaSaladString.Literal "$(inputs.max_runtime_seconds)"))
                 Expect.equal requirement expected "Expression timelimit should decode to ToolTimeLimitExpression."
             testCase "Encode numeric timelimit as integer scalar" <| fun _ ->
                 let requirement = ToolTimeLimitRequirement (ToolTimeLimitSeconds 300L)
@@ -867,7 +915,7 @@ outputs: {}"""
     timelimit: 3.5"""
                 let reqs = decodeRequirements yaml
                 let requirement = findRequirement reqs (function ToolTimeLimitRequirement _ -> true | _ -> false)
-                let expected = ToolTimeLimitRequirement (ToolTimeLimitExpression "3.5")
+                let expected = ToolTimeLimitRequirement (ToolTimeLimitExpression (SchemaSaladString.Literal "3.5"))
                 Expect.equal requirement expected "Float timelimit should decode via expression fallback."
             testCase "A float timelimit is written as the number and a quoted number stays a string" <| fun _ ->
                 for (text, expected) in [ "3.5", "timelimit: 3.5"; "\"5\"", "timelimit: \"5\""; "\"3.5\"", "timelimit: 3.5" ] do
@@ -901,14 +949,14 @@ outputs: {}"""
                     let coresMin = resourceRequirement.CoresMin.Value :?> int64
                     let coresMax = resourceRequirement.CoresMax.Value :?> int64
                     let ramMin = resourceRequirement.RamMin.Value :?> float
-                    let outdirMin = resourceRequirement.OutdirMin.Value :?> string
+                    let outdirMin = resourceRequirement.OutdirMin.Value :?> SchemaSaladString
                     Expect.equal coresMin 2L "coresMin should decode to int64"
                     Expect.equal coresMax 922337203685477580L "coresMax should decode to int64"
                     Expect.equal ramMin 4.5 "ramMin should decode to float"
-                    Expect.equal outdirMin "$(inputs.outdir_min)" "Expression strings should be preserved"
+                    Expect.equal outdirMin (SchemaSaladString.Literal "$(inputs.outdir_min)") "Expression strings should be preserved"
                     Expect.equal (resourceRequirement.TryGetInt64("coresMin")) (Some 2L) "Typed int64 getter should return normalized value"
                     Expect.equal (resourceRequirement.TryGetFloat("ramMin")) (Some 4.5) "Typed float getter should return normalized value"
-                    Expect.equal (resourceRequirement.TryGetExpression("outdirMin")) (Some "$(inputs.outdir_min)") "Typed expression getter should return normalized value"
+                    Expect.equal (resourceRequirement.TryGetExpression("outdirMin")) (Some (SchemaSaladString.Literal "$(inputs.outdir_min)")) "Typed expression getter should return normalized value"
                 | _ ->
                     failwith "Expected ResourceRequirement"
 
@@ -923,7 +971,7 @@ outputs: {}"""
                 match findRequirement (decodeRequirements resource) (function ResourceRequirement _ -> true | _ -> false) with
                 | ResourceRequirement resourceRequirement ->
                     Expect.equal (resourceRequirement.TryGetInt64("coresMin")) (Some 16L) "A plain hexadecimal number is an int."
-                    Expect.equal (resourceRequirement.TryGetExpression("ramMin")) (Some "1024") "A quoted number is a string."
+                    Expect.equal (resourceRequirement.TryGetExpression("ramMin")) (Some (SchemaSaladString.Literal "1024")) "A quoted number is a string."
                     Expect.equal (resourceRequirement.TryGetInt64("ramMax")) (Some 1024L) "A plain number is an int."
                     Expect.equal (resourceRequirement.TryGetFloat("tmpdirMin")) (Some System.Double.PositiveInfinity) "The core schema spells infinity .inf."
                     Expect.equal (resourceRequirement.TryGetFloat("outdirMin")) (Some 1000.0) "An exponent number is a float."
@@ -933,13 +981,13 @@ outputs: {}"""
                     let yaml = "requirements:\n  - class: ToolTimeLimit\n    timelimit: " + value
                     findRequirement (decodeRequirements yaml) (function ToolTimeLimitRequirement _ -> true | _ -> false)
                 Expect.equal (limit "0x3C") (ToolTimeLimitRequirement (ToolTimeLimitSeconds 60L)) "A plain hexadecimal number is the number of seconds."
-                Expect.equal (limit "\"60\"") (ToolTimeLimitRequirement (ToolTimeLimitExpression "60")) "A quoted number is a string and stays an expression."
+                Expect.equal (limit "\"60\"") (ToolTimeLimitRequirement (ToolTimeLimitExpression (SchemaSaladString.Literal "60"))) "A quoted number is a string and stays an expression."
                 let encoded = Encode.encodeRequirement (limit "\"60\"") |> Encode.writeYaml
                 Expect.stringContains encoded "timelimit: \"60\"" "The string must stay quoted so that it does not read back as a number."
 
             testCase "known fields are typed fields, not dynamic overflow" <| fun _ ->
                 let resourceRequirement =
-                    ResourceRequirementInstance(coresMin = 2L, ramMin = 4.5, outdirMin = "$(inputs.outdir_min)")
+                    ResourceRequirementInstance(coresMin = 2L, ramMin = 4.5, outdirMin = SchemaSaladString.Literal "$(inputs.outdir_min)")
 
                 Expect.sequenceEqual
                     ResourceRequirementInstance.KnownFieldNames
@@ -950,7 +998,7 @@ outputs: {}"""
                     "ResourceRequirement known fields should not be stored as dynamic properties."
                 Expect.equal (resourceRequirement.TryGetInt64("coresMin")) (Some 2L) "Typed int64 getter should read known field."
                 Expect.equal (resourceRequirement.TryGetFloat("ramMin")) (Some 4.5) "Typed float getter should read known field."
-                Expect.equal (resourceRequirement.TryGetExpression("outdirMin")) (Some "$(inputs.outdir_min)") "Typed expression getter should read known field."
+                Expect.equal (resourceRequirement.TryGetExpression("outdirMin")) (Some (SchemaSaladString.Literal "$(inputs.outdir_min)")) "Typed expression getter should read known field."
 
                 DynObj.setProperty "arc:note" "keep overflow" resourceRequirement
                 Expect.equal
@@ -1849,7 +1897,7 @@ let testRequirementEncode =
                     |> Option.get
                 Expect.sequenceEqual decoded requirements "Payload-bearing requirements should roundtrip."
             testCase "ToolTimeLimit expression form roundtrips" <| fun _ ->
-                let requirement = ToolTimeLimitRequirement (ToolTimeLimitExpression "$(inputs.max_runtime_seconds)")
+                let requirement = ToolTimeLimitRequirement (ToolTimeLimitExpression (SchemaSaladString.Literal "$(inputs.max_runtime_seconds)"))
                 let yaml = Encode.encodeRequirement requirement |> Encode.writeYaml
                 let document = "requirements:\n  - " + yaml.Replace("\n", "\n    ")
                 let decoded =
@@ -1940,6 +1988,215 @@ let testInitialWorkDirFileDirectoryEntries =
                 failwith "Expected InitialWorkDirRequirement"
     ]
 
+let testInitialWorkDirListingForms =
+    let listingOf (lines: string list) =
+        "requirements:\n  - class: InitialWorkDirRequirement\n    listing:" + String.concat "" (lines |> List.map (fun line -> "\n      " + line))
+    let encodeAndDecodeAgain (requirement: Requirement) =
+        let written = Encode.encodeRequirement requirement |> Encode.writeYaml
+        written, (decodeRequirements ("requirements:\n" + (written.TrimEnd().Split('\n') |> Array.mapi (fun index line -> (if index = 0 then "  - " else "    ") + line) |> String.concat "\n")))
+
+    testList "InitialWorkDirRequirement listing forms" [
+        testCase "a null item, an array of Files and Directories and an empty array decode as entries and round trip" <| fun _ ->
+            let yaml =
+                listingOf [ "- null"
+                            "- entryname: a.txt"
+                            "  entry: hello"
+                            "- - class: File"
+                            "    location: a.txt"
+                            "  - class: Directory"
+                            "    location: d"
+                            "- []" ]
+            let requirement = (decodeRequirements yaml).[0]
+            match requirement with
+            | InitialWorkDirRequirement listing ->
+                Expect.equal listing.Count 4 "Expected four entries."
+                Expect.equal listing.[0] NullEntry "A null item is a NullEntry."
+                Expect.equal listing.[1] (DirentEntry (DirentInstance(SchemaSaladString.Literal "hello", entryname = SchemaSaladString.Literal "a.txt"))) "A Dirent stays a DirentEntry."
+                Expect.equal listing.[2] (FilesEntry (ResizeArray [ FileItem (FileInstance(location = "a.txt")); DirectoryItem (DirectoryInstance(location = "d")) ])) "An array holds its File and its Directory."
+                Expect.equal listing.[3] (FilesEntry (ResizeArray [])) "An empty array is an entry."
+            | other -> failwithf "Expected an InitialWorkDirRequirement, found %A" other
+            let written, again = encodeAndDecodeAgain requirement
+            Expect.stringContains written "- null" "The null item is written as null."
+            Expect.stringContains written "- - class: File" "The array is written as an array."
+            Expect.equal again.[0] requirement "The written text should decode to the same requirement."
+        testCase "the entries of an array compare by their elements" <| fun _ ->
+            let files (location: string) = FilesEntry (ResizeArray [ FileItem (FileInstance(location = location)) ])
+            Expect.equal (files "a.txt") (files "a.txt") "Arrays with equal items are equal."
+            Expect.notEqual (files "a.txt") (files "b.txt") "Arrays with different items differ."
+            Expect.equal (hash (files "a.txt")) (hash (files "a.txt")) "Equal arrays hash alike."
+            Expect.notEqual NullEntry (files "a.txt") "A null item is no array."
+        testCase "an expression as the listing stays an expression" <| fun _ ->
+            let yaml = "requirements:\n  - class: InlineJavascriptRequirement\n  - class: InitialWorkDirRequirement\n    listing: $(inputs.directory.listing)"
+            let requirement = (decodeRequirements yaml).[1]
+            Expect.equal requirement (InitialWorkDirExpressionRequirement "$(inputs.directory.listing)") "The scalar listing is the expression."
+            let written, again = encodeAndDecodeAgain requirement
+            Expect.stringContains written "listing: $(inputs.directory.listing)" "The expression is written as a string."
+            Expect.isFalse (written.Contains "[") "The expression is no list."
+            Expect.equal again.[0] requirement "The written text should decode to the same requirement."
+        testCase "a list with one expression differs from the expression" <| fun _ ->
+            let yaml = "requirements:\n  - class: InitialWorkDirRequirement\n    listing:\n      - $(inputs.directory.listing)"
+            match (decodeRequirements yaml).[0] with
+            | InitialWorkDirRequirement listing ->
+                Expect.sequenceEqual listing (ResizeArray [ StringEntry (SchemaSaladString.Literal "$(inputs.directory.listing)") ]) "The list keeps its one entry."
+            | other -> failwithf "Expected an InitialWorkDirRequirement, found %A" other
+            Expect.notEqual (InitialWorkDirExpressionRequirement "$(x)") (InitialWorkDirRequirement (ResizeArray [ StringEntry (SchemaSaladString.Literal "$(x)") ])) "The two spellings are two requirements."
+        testCase "a mapping as the listing is a decode error at the listing" <| fun _ ->
+            let yaml = "requirements:\n  - class: InitialWorkDirRequirement\n    listing:\n      class: File\n      location: a.txt"
+            match decodeError (fun () -> decodeRequirements yaml |> ignore) with
+            | Some error ->
+                Expect.equal (DecodeError.pathText error) "requirements[0].listing" "The error shows the listing."
+                Expect.stringContains error.Message "Expected a list of entries or an expression for the listing, found a mapping." "The error says what is wrong."
+                Expect.isSome error.Span "The error has the place in the text."
+            | None -> failwith "A mapping as the listing must fail."
+        testCase "an item that CWL does not admit is a decode error at the item" <| fun _ ->
+            let cases =
+                [ "a mapping without entry or class", "requirements[0].listing[1]", listingOf [ "- $(inputs.x)"; "- foo: bar" ], "Expected a Dirent with an entry field"
+                  "a string inside an array", "requirements[0].listing[0][1]", listingOf [ "- - class: File"; "    location: a.txt"; "  - $(inputs.x)" ], "Expected a File or a Directory with a class field in an array of the listing"
+                  "a null inside an array", "requirements[0].listing[0][0]", listingOf [ "- [null]" ], "Expected a File or a Directory with a class field in an array of the listing"
+                  "a Dirent inside an array", "requirements[0].listing[0][0]", listingOf [ "- [{entry: a}]" ], "Expected a File or a Directory with a class field in an array of the listing"
+                  "an array inside an array", "requirements[0].listing[0][0]", listingOf [ "- [[{class: File, location: a.txt}]]" ], "Expected a File or a Directory with a class field in an array of the listing" ]
+            for (name, path, yaml, message) in cases do
+                match decodeError (fun () -> decodeRequirements yaml |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the item" name)
+                    Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
+                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+                | None -> failwith (sprintf "%s must fail" name)
+    ]
+
+let testSchemaSaladDirectivesInRequirements =
+    let requirementsOf (lines: string list) = "requirements:\n" + String.concat "\n" lines
+    let writeAndRead (requirement: Requirement) =
+        let written = Encode.encodeRequirement requirement |> Encode.writeYaml
+        written, (decodeRequirements ("requirements:\n" + (written.TrimEnd().Split('\n') |> Array.mapi (fun index line -> (if index = 0 then "  - " else "    ") + line) |> String.concat "\n"))).[0]
+    let include' (path: string) = SchemaSaladString.Include path
+
+    testList "Schema Salad directives in requirements" [
+        testCase "the entries of expressionLib keep a directive as a directive" <| fun _ ->
+            let yaml = requirementsOf [ "  - class: InlineJavascriptRequirement"; "    expressionLib:"; "      - $include: lib.js"; "      - var x = 1;"; "      - $import: more.yml" ]
+            let requirement = (decodeRequirements yaml).[0]
+            match requirement with
+            | InlineJavascriptRequirement value ->
+                Expect.sequenceEqual value.ExpressionLib.Value (ResizeArray [ include' "lib.js"; SchemaSaladString.Literal "var x = 1;"; SchemaSaladString.Import "more.yml" ]) "The entries are a directive, a literal and a directive."
+            | other -> failwithf "Expected an InlineJavascriptRequirement, found %A" other
+            let written, again = writeAndRead requirement
+            Expect.stringContains written "- $include: lib.js" "The include is written as a mapping."
+            Expect.isFalse (written.Contains "\"$include") "No entry is the text of a directive."
+            Expect.equal again requirement "The written text should decode to the same requirement."
+        testCase "envValue keeps a directive in the list form and in the map form" <| fun _ ->
+            let listForm = requirementsOf [ "  - class: EnvVarRequirement"; "    envDef:"; "      - envName: A"; "        envValue:"; "          $include: a.txt"; "      - envName: B"; "        envValue: plain" ]
+            let mapForm = requirementsOf [ "  - class: EnvVarRequirement"; "    envDef:"; "      A:"; "        $include: a.txt"; "      B: plain" ]
+            for name, yaml in [ "list", listForm; "map", mapForm ] do
+                let requirement = (decodeRequirements yaml).[0]
+                match requirement with
+                | EnvVarRequirement envs ->
+                    Expect.equal envs.[0].EnvValue (include' "a.txt") (sprintf "%s form: the include is kept" name)
+                    Expect.equal envs.[1].EnvValue (SchemaSaladString.Literal "plain") (sprintf "%s form: the literal is kept" name)
+                | other -> failwithf "Expected an EnvVarRequirement, found %A" other
+                let written, again = writeAndRead requirement
+                Expect.stringContains written "$include: a.txt" (sprintf "%s form: the include is written as a mapping" name)
+                Expect.equal again requirement (sprintf "%s form: the written text should decode to the same requirement" name)
+        testCase "the expression of WorkReuse, NetworkAccess and ToolTimeLimit keeps a directive" <| fun _ ->
+            let cases =
+                [ "WorkReuse", "enableReuse", WorkReuseExpressionRequirement (include' "reuse.txt")
+                  "NetworkAccess", "networkAccess", NetworkAccessExpressionRequirement (include' "network.txt")
+                  "ToolTimeLimit", "timelimit", ToolTimeLimitRequirement (ToolTimeLimitExpression (include' "limit.txt")) ]
+            for className, field, expected in cases do
+                let file = (match expected with
+                            | WorkReuseExpressionRequirement _ -> "reuse.txt"
+                            | NetworkAccessExpressionRequirement _ -> "network.txt"
+                            | _ -> "limit.txt")
+                let yaml = requirementsOf [ "  - class: " + className; "    " + field + ":"; "      $include: " + file ]
+                let requirement = (decodeRequirements yaml).[0]
+                Expect.equal requirement expected (sprintf "%s: the include is kept" className)
+                let written, again = writeAndRead requirement
+                Expect.stringContains written ("$include: " + file) (sprintf "%s: the include is written as a mapping" className)
+                Expect.equal again requirement (sprintf "%s: the written text should decode to the same requirement" className)
+        testCase "a resource that is an include stays an include" <| fun _ ->
+            let yaml = requirementsOf [ "  - class: ResourceRequirement"; "    coresMin: 2"; "    ramMin:"; "      $include: ram.txt" ]
+            let requirement = (decodeRequirements yaml).[0]
+            match requirement with
+            | ResourceRequirement resource ->
+                Expect.equal (resource.TryGetInt64 "coresMin") (Some 2L) "A number stays a number."
+                Expect.equal (resource.TryGetExpression "ramMin") (Some (include' "ram.txt")) "An include stays an include."
+            | other -> failwithf "Expected a ResourceRequirement, found %A" other
+            let written, again = writeAndRead requirement
+            Expect.stringContains written "$include: ram.txt" "The include is written as a mapping."
+            Expect.equal again requirement "The written text should decode to the same requirement."
+        testCase "a mapping that is no directive is a decode error at its place" <| fun _ ->
+            let cases =
+                [ "an entry of expressionLib", "requirements[0].expressionLib[1]", requirementsOf [ "  - class: InlineJavascriptRequirement"; "    expressionLib:"; "      - var x = 1;"; "      - foo: bar" ]
+                  "an envValue", "requirements[0].envDef[0].envValue", requirementsOf [ "  - class: EnvVarRequirement"; "    envDef:"; "      - envName: A"; "        envValue:"; "          $include: a.txt"; "          other: b" ]
+                  "an enableReuse", "requirements[0].enableReuse", requirementsOf [ "  - class: WorkReuse"; "    enableReuse:"; "      foo: bar" ]
+                  "a timelimit with a list", "requirements[0].timelimit", requirementsOf [ "  - class: ToolTimeLimit"; "    timelimit: [1, 2]" ]
+                  "a resource", "requirements[0].coresMin", requirementsOf [ "  - class: ResourceRequirement"; "    coresMin:"; "      foo: bar" ] ]
+            for name, path, yaml in cases do
+                match decodeError (fun () -> decodeRequirements yaml |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the place" name)
+                    Expect.stringContains error.Message "Expected a string or a mapping with the single key $include or $import, found" (sprintf "%s: the error should say what is wrong" name)
+                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+                | None -> failwith (sprintf "%s must fail" name)
+        testCase "a field that holds no directive is a decode error for a mapping" <| fun _ ->
+            let yaml = requirementsOf [ "  - class: DockerRequirement"; "    cwltool:dockerRunOptions:"; "      - $include: options.txt" ]
+            match decodeError (fun () -> decodeRequirements yaml |> ignore) with
+            | Some error -> Expect.equal (DecodeError.pathText error) "requirements[0].cwltool:dockerRunOptions[0]" "The error shows the entry."
+            | None -> failwith "A mapping in a list of strings must fail."
+    ]
+
+let testInvalidRequirementsAndHints =
+    testList "Invalid requirements and hints" [
+        testCase "a class alias that CWL does not know is a decode error at the class, and an unknown hint class stays unknown" <| fun _ ->
+            for alias, field in [ "WorkReuseRequirement", "enableReuse: true"; "NetworkAccessRequirement", "networkAccess: true"; "InplaceUpdate", "inplaceUpdate: true"; "ToolTimeLimitRequirement", "timelimit: 5" ] do
+                match decodeError (fun () -> decodeRequirements ("requirements:\n  - class: " + alias + "\n    " + field) |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) "requirements[0].class" (sprintf "%s: the error shows the class" alias)
+                    Expect.stringContains error.Message ("Invalid or unsupported requirement class: " + alias) (sprintf "%s: the error names the class" alias)
+                    Expect.isSome error.Span (sprintf "%s: the error has the place in the text" alias)
+                | None -> failwith (sprintf "%s must fail as a requirement" alias)
+                match decodeError (fun () -> decodeRequirements ("requirements:\n  " + alias + ":\n    " + field) |> ignore) with
+                | Some error -> Expect.equal (DecodeError.pathText error) ("requirements." + alias) (sprintf "%s: the error shows the key in the map form" alias)
+                | None -> failwith (sprintf "%s must fail as a key" alias)
+                match (decodeHints ("hints:\n  - class: " + alias + "\n    " + field)).[0] with
+                | UnknownHint unknown -> Expect.equal unknown.Class (Some alias) (sprintf "%s: a hint of this class stays unknown" alias)
+                | other -> failwithf "Expected an unknown hint, found %A" other
+        testCase "a requirement list or hint list that is neither a list nor a mapping is a decode error" <| fun _ ->
+            match decodeError (fun () -> decodeRequirements "requirements: abc" |> ignore) with
+            | Some error ->
+                Expect.equal (DecodeError.pathText error) "requirements" "The error shows the field."
+                Expect.stringContains error.Message "Expected a list or a mapping of requirements, found the text \"abc\"" "The error says what is wrong."
+                Expect.isFalse (error.Message.Contains "root:") "The error shows no dump of the node."
+                Expect.isSome error.Span "The error has the place in the text."
+            | None -> failwith "A scalar requirements field must fail."
+            match decodeError (fun () -> decodeHints "hints: abc" |> ignore) with
+            | Some error ->
+                Expect.equal (DecodeError.pathText error) "hints" "The error shows the field."
+                Expect.stringContains error.Message "Expected a list or a mapping of hints, found the text \"abc\"" "The error says what is wrong."
+                Expect.isSome error.Span "The error has the place in the text."
+            | None -> failwith "A scalar hints field must fail."
+        testCase "a map-form hint with a scalar or a list as the payload is a decode error and gets no value field" <| fun _ ->
+            for payload in [ "abc"; "[a, b]" ] do
+                match decodeError (fun () -> decodeHints ("hints:\n  DockerRequirement: " + payload) |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) "hints.DockerRequirement" (sprintf "payload %s: the error shows the hint" payload)
+                    Expect.stringContains error.Message "Expected a mapping for the hint DockerRequirement" (sprintf "payload %s: the error says what is wrong" payload)
+                    Expect.isSome error.Span (sprintf "payload %s: the error has the place in the text" payload)
+                | None -> failwith (sprintf "payload %s must fail" payload)
+        testCase "a negative time limit, a loadListing that is no symbol, and an envDef or packages field of another shape are decode errors at the field" <| fun _ ->
+            let cases =
+                [ "a negative time limit", "requirements[0].timelimit", "The timelimit of a ToolTimeLimit must not be negative", "requirements:\n  - class: ToolTimeLimit\n    timelimit: -1"
+                  "a loadListing that is no symbol", "requirements[0].loadListing", "Expected one of no_listing, shallow_listing and deep_listing", "requirements:\n  - class: LoadListingRequirement\n    loadListing: some"
+                  "an envDef that is a number", "requirements[0].envDef", "Expected a list or a mapping for envDef", "requirements:\n  - class: EnvVarRequirement\n    envDef: 5"
+                  "a packages field that is a number", "requirements[0].packages", "Expected a list or a mapping for packages", "requirements:\n  - class: SoftwareRequirement\n    packages: 5" ]
+            for name, path, message, yaml in cases do
+                match decodeError (fun () -> decodeRequirements yaml |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error shows the field" name)
+                    Expect.stringContains error.Message message (sprintf "%s: the error says what is wrong" name)
+                    Expect.isSome error.Span (sprintf "%s: the error has the place in the text" name)
+                | None -> failwith (sprintf "%s must fail" name)
+    ]
+
 let testDynamicPayloadModel =
     testList "DynamicObj payload model" [
         testCase "CWL schema payloads keep known fields typed and overflow dynamic" <| fun _ ->
@@ -1972,12 +2229,12 @@ let testDynamicPayloadModel =
 
         testCase "requirement payloads keep known fields typed and overflow dynamic" <| fun _ ->
             let docker = DockerRequirement.create(dockerPull = "ubuntu:24.04")
-            let env = EnvironmentDef("PATH", "/usr/bin")
+            let env = EnvironmentDef("PATH", SchemaSaladString.Literal "/usr/bin")
             let loadListing = LoadListingRequirementValue(DeepListing)
             let workReuse = WorkReuseRequirementValue(false)
             let network = NetworkAccessRequirementValue(false)
             let inplace = InplaceUpdateRequirementValue(false)
-            let inlineJs = InlineJavascriptRequirementValue(expressionLib = ResizeArray [| "helper.js" |])
+            let inlineJs = InlineJavascriptRequirementValue(expressionLib = ResizeArray [| SchemaSaladString.Literal "helper.js" |])
             let unknownHint = HintUnknownValue(Some "acme:Hint", { Node = Decode.readYaml "class: acme:Hint" })
 
             Expect.sequenceEqual DockerRequirement.KnownFieldNames (Set [| "class"; "dockerPull"; "dockerFile"; "dockerImageId"; "dockerLoad"; "dockerImport"; "dockerOutputDirectory"; "cwltool:dockerRunOptions" |]) ""
@@ -2016,7 +2273,7 @@ let testRequirementDynamicOverflowRoundtrip =
 
     testList "Requirement DynamicObj overflow roundtrip" [
         testCase "payload and nested entry overflow survives encode/decode" <| fun _ ->
-            let inlineJs = InlineJavascriptRequirementValue(expressionLib = ResizeArray [| "helper.js" |])
+            let inlineJs = InlineJavascriptRequirementValue(expressionLib = ResizeArray [| SchemaSaladString.Literal "helper.js" |])
             DynObj.setProperty "arc:inline note" "inline" inlineJs
 
             let loadListing = LoadListingRequirementValue(DeepListing)
@@ -2034,7 +2291,7 @@ let testRequirementDynamicOverflowRoundtrip =
             let dirent = DirentInstance(SchemaSaladString.Literal "contents", entryname = SchemaSaladString.Literal "file.txt")
             DynObj.setProperty "arc:dirent note" "dirent" dirent
 
-            let env = EnvironmentDef("ENV_NAME", "ENV_VALUE")
+            let env = EnvironmentDef("ENV_NAME", SchemaSaladString.Literal "ENV_VALUE")
             DynObj.setProperty "arc:env note" "env" env
 
             let package = SoftwarePackage("samtools", version = ResizeArray [| "1.19" |])
@@ -2110,6 +2367,9 @@ let main =
         testSchemaDefTypeReferences
         testSchemaDefEncoding
         testInitialWorkDirFileDirectoryEntries
+        testInitialWorkDirListingForms
+        testSchemaSaladDirectivesInRequirements
+        testInvalidRequirementsAndHints
         testDynamicPayloadModel
         testRequirementDynamicOverflowRoundtrip
     ]

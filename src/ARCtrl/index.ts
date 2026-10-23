@@ -22,11 +22,11 @@ export { FileSystemTree } from './ts/FileSystem/FileSystemTree.js'
 
 /// CWL
 import { CWLProcessingUnit, CWLDocument, CWLGraph } from './ts/CWL/CWLProcessingUnit.js'
-import { CWLType, FileInstance, DirectoryInstance, DirentInstance, InputEnumSchema, InputRecordField, InputRecordSchema, InputArraySchema, SchemaDefinition, SoftwarePackage } from './ts/CWL/CWLTypes.js'
+import { CWLType, SchemaSaladString, FileInstance, DirectoryInstance, DirentInstance, InputEnumSchema, InputRecordField, InputRecordSchema, InputArraySchema, SchemaDefinition, SoftwarePackage } from './ts/CWL/CWLTypes.js'
 import { CWLParameterValue, CWLParameterRecordField } from './ts/CWL/ParameterValue.js'
 import { CWLParameterReference } from './ts/CWL/ParameterReference.js'
-import { CWLInput, InputBinding, InputFormat } from './ts/CWL/Inputs.js'
-import { CWLOutput, OutputBinding, OutputSource } from './ts/CWL/Outputs.js'
+import { CWLInput, InputBinding, InputFormat, BindingPosition } from './ts/CWL/Inputs.js'
+import { CWLOutput, OutputBinding, OutputSource, OutputGlob } from './ts/CWL/Outputs.js'
 import { CWLToolDescription } from './ts/CWL/ToolDescription.js'
 import { CWLWorkflowDescription } from './ts/CWL/WorkflowDescription.js'
 import { WorkflowStep, StepInput, StepOutput } from './ts/CWL/WorkflowSteps.js'
@@ -37,6 +37,7 @@ export const CWL = {
     CWLDocument,
     CWLGraph,
     CWLType,
+    SchemaSaladString,
     FileInstance,
     DirectoryInstance,
     DirentInstance,
@@ -52,9 +53,11 @@ export const CWL = {
     CWLInput,
     InputBinding,
     InputFormat,
+    BindingPosition,
     CWLOutput,
     OutputBinding,
     OutputSource,
+    OutputGlob,
     CWLToolDescription,
     CWLWorkflowDescription,
     WorkflowStep,

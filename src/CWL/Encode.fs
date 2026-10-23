@@ -254,12 +254,16 @@ module Encode =
             // Single-line expressions are quoted for parser safety.
             YamlNode.scalar ScalarStyle.DoubleQuoted normalized
 
-    /// Encode schema-salad strings as literals or directive mappings.
-    let encodeSchemaSaladString (value: SchemaSaladString) : YamlNode =
+    /// Encode schema-salad strings as literals or directive mappings. The function encodes the text of a literal.
+    let encodeSchemaSaladStringWith (encodeLiteral: string -> YamlNode) (value: SchemaSaladString) : YamlNode =
         match value with
-        | SchemaSaladString.Literal text -> encodeString text
+        | SchemaSaladString.Literal text -> encodeLiteral text
         | SchemaSaladString.Include path -> Encode.object [ "$include", encodeString path ]
         | SchemaSaladString.Import path -> Encode.object [ "$import", encodeString path ]
+
+    /// Encode schema-salad strings as literals or directive mappings.
+    let encodeSchemaSaladString (value: SchemaSaladString) : YamlNode =
+        encodeSchemaSaladStringWith encodeString value
 
     /// Encode EnvVarRequirement using compact map shorthand (envName -> envValue).
     let encodeEnvVarRequirementCompactMap (envs: ResizeArray<EnvironmentDef>) : YamlNode =
@@ -267,7 +271,7 @@ module Encode =
             // Compact map form writes env names as keys. Env values are strings, and encodeString
             // quotes the ones that a YAML reader would take for a bool, a number or null.
             envs
-            |> Seq.map (fun env -> env.EnvName, encodeString env.EnvValue)
+            |> Seq.map (fun env -> env.EnvName, encodeSchemaSaladString env.EnvValue)
             |> Seq.toList
             |> Encode.object
         [ "class", encodeString "EnvVarRequirement"
@@ -488,10 +492,16 @@ module Encode =
     // Binding & Port encoders
     // ------------------------------
 
+    /// Encode the glob of an output binding in the form that it holds, so a list of one pattern stays a list.
+    let encodeOutputGlob (glob: OutputGlob) : YamlNode =
+        match glob with
+        | OutputGlob.Single value -> encodeString value
+        | OutputGlob.Multiple values -> values |> Seq.map encodeString |> List.ofSeq |> encodeSequence
+
     /// Encode outputBinding fields and preserved extension properties.
     let encodeOutputBinding (ob:OutputBinding) : YamlNode =
-        [ ob.Glob |> Option.map (fun g -> "glob", encodeString g) ]
-        |> List.choose id
+        []
+        |> appendOpt "glob" encodeOutputGlob ob.Glob
         |> appendOpt "loadContents" Encode.bool ob.LoadContents
         |> appendOpt "loadListing" (LoadListingEnum.toCwlString >> encodeString) ob.LoadListing
         |> appendOpt "outputEval" encodeString ob.OutputEval
@@ -566,12 +576,18 @@ module Encode =
         |> appendDynamicPropertiesExcept CWLOutput.KnownFieldNames o
         |> encodePortEntry o.Name o.Type_
 
+    /// Encode the position of an input binding: a number, or an expression.
+    let encodeBindingPosition (position: BindingPosition) : YamlNode =
+        match position with
+        | BindingPosition.Number value -> Encode.int value
+        | BindingPosition.Expression value -> encodeString value
+
     /// Encode inputBinding fields and preserved extension properties.
     let encodeInputBinding (ib:InputBinding) : YamlNode =
         []
         |> appendOpt "loadContents" Encode.bool ib.LoadContents
         |> appendOpt "prefix" encodeString ib.Prefix
-        |> appendOpt "position" (fun p -> Encode.int p) ib.Position
+        |> appendOpt "position" encodeBindingPosition ib.Position
         |> appendOpt "itemSeparator" encodeString ib.ItemSeparator
         |> appendOpt "separate" Encode.bool ib.Separate
         |> appendOpt "valueFrom" encodeString ib.ValueFrom
@@ -626,7 +642,7 @@ module Encode =
                 value.ExpressionLib
                 |> Option.bind (fun entries -> if entries.Count > 0 then Some entries else None)
             [ "class", encodeString "InlineJavascriptRequirement" ]
-            |> appendOpt "expressionLib" (fun entries -> entries |> Seq.map encodeString |> List.ofSeq |> encodeSequence) expressionLib
+            |> appendOpt "expressionLib" (fun entries -> entries |> Seq.map encodeSchemaSaladString |> List.ofSeq |> encodeSequence) expressionLib
             |> appendDynamicPropertiesExcept InlineJavascriptRequirementValue.KnownFieldNames value
             |> Encode.object
         | SchemaDefRequirement types ->
@@ -669,6 +685,10 @@ module Encode =
             |> appendDynamicPropertiesExcept LoadListingRequirementValue.KnownFieldNames loadListing
             |> Encode.object
         | InitialWorkDirRequirement listing ->
+            // File/Directory listing entries use class, not type, as discriminator.
+            let encodeFileOrDirectory = function
+                | FileItem file -> encodeFilePairs "class" "File" file |> Encode.object
+                | DirectoryItem directory -> encodeDirectoryPairs "class" "Directory" directory |> Encode.object
             let encodeInitialWorkDirEntry = function
                 | DirentEntry d ->
                     // Dirent entries use their own object form.
@@ -681,18 +701,21 @@ module Encode =
                 | StringEntry s ->
                     // String/expression listing entries stay scalar/directive form.
                     encodeSchemaSaladString s
-                | FileEntry file ->
-                    // File/Directory listing entries use class, not type, as discriminator.
-                    encodeFilePairs "class" "File" file |> Encode.object
-                | DirectoryEntry directory ->
-                    encodeDirectoryPairs "class" "Directory" directory |> Encode.object
+                | FileEntry file -> encodeFileOrDirectory (FileItem file)
+                | DirectoryEntry directory -> encodeFileOrDirectory (DirectoryItem directory)
+                | NullEntry -> Encode.nullValue
+                | FilesEntry items -> items |> Seq.map encodeFileOrDirectory |> List.ofSeq |> encodeSequence
 
             [ "class", encodeString "InitialWorkDirRequirement";
               "listing", (listing |> Seq.map encodeInitialWorkDirEntry |> List.ofSeq |> encodeSequence) ] |> Encode.object
+        | InitialWorkDirExpressionRequirement expression ->
+            [ "class", encodeString "InitialWorkDirRequirement"
+              "listing", encodeString expression ]
+            |> Encode.object
         | EnvVarRequirement envs ->
             let encodeEnv (e:EnvironmentDef) =
                 // Env var values are strings, and encodeString quotes values such as true or 1.
-                [ "envName", encodeString e.EnvName; "envValue", encodeString e.EnvValue ]
+                [ "envName", encodeString e.EnvName; "envValue", encodeSchemaSaladString e.EnvValue ]
                 |> appendDynamicPropertiesExcept EnvironmentDef.KnownFieldNames e
                 |> Encode.object
             [ "class", encodeString "EnvVarRequirement";
@@ -708,6 +731,7 @@ module Encode =
                 | :? int as i -> Some (key, Encode.int i)
                 | :? int64 as i -> Some (key, Encode.int64 i)
                 | :? string as s -> Some (key, encodeString s)
+                | :? SchemaSaladString as s -> Some (key, encodeSchemaSaladString s)
                 | :? bool as b -> Some (key, Encode.bool b)
                 | _ -> None
 
@@ -742,7 +766,7 @@ module Encode =
             |> Encode.object
         | WorkReuseExpressionRequirement expression ->
             [ "class", encodeString "WorkReuse"
-              "enableReuse", encodeString expression ]
+              "enableReuse", encodeSchemaSaladString expression ]
             |> Encode.object
         | NetworkAccessRequirement networkAccess ->
             [ "class", encodeString "NetworkAccess"
@@ -751,7 +775,7 @@ module Encode =
             |> Encode.object
         | NetworkAccessExpressionRequirement expression ->
             [ "class", encodeString "NetworkAccess"
-              "networkAccess", encodeString expression ]
+              "networkAccess", encodeSchemaSaladString expression ]
             |> Encode.object
         | InplaceUpdateRequirement inplaceUpdate ->
             [ "class", encodeString "InplaceUpdateRequirement"
@@ -762,12 +786,13 @@ module Encode =
             let timelimit =
                 match tl with
                 | ToolTimeLimitSeconds seconds -> Encode.int64 seconds
-                | ToolTimeLimitExpression expression ->
+                | ToolTimeLimitExpression (SchemaSaladString.Literal expression) ->
                     // The decoder takes a float as an expression, because the time limit is a long or a string. A float
                     // that stays a plain scalar is the number that the file held. Every other text is a string.
                     match YamlNode.plain expression with
                     | Decode.CoreFloat _ -> YamlNode.plain expression
                     | _ -> encodeString expression
+                | ToolTimeLimitExpression directive -> encodeSchemaSaladString directive
             [ "class", encodeString "ToolTimeLimit"; "timelimit", timelimit ] |> Encode.object
         | SubworkflowFeatureRequirement -> [ "class", encodeString "SubworkflowFeatureRequirement" ] |> Encode.object
         | ScatterFeatureRequirement -> [ "class", encodeString "ScatterFeatureRequirement" ] |> Encode.object
@@ -817,7 +842,7 @@ module Encode =
             |> appendOpt "pickValue" encodePickValueMethod si.PickValue
             |> appendOpt "doc" (encodeSourceText si.SourceNodes.Doc) si.Doc
             |> appendOpt "loadContents" Encode.bool si.LoadContents
-            |> appendOpt "loadListing" encodeString si.LoadListing
+            |> appendOpt "loadListing" (LoadListingEnum.toCwlString >> encodeString) si.LoadListing
             |> appendOpt "label" (encodeSourceText si.SourceNodes.Label) si.Label
             |> appendDynamicPropertiesExcept StepInput.KnownFieldNames si
         match pairs with
@@ -988,7 +1013,7 @@ module Encode =
             withInputs @ [ "outputs", (et.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> Encode.object) ]
         let withExpression =
             // Expression is required and written after ports.
-            withOutputs @ [ "expression", encodeExpressionScalar et.Expression ]
+            withOutputs @ [ "expression", encodeSchemaSaladStringWith encodeExpressionScalar et.Expression ]
         let withMetadata =
             match et.Metadata with
             | Some md ->
@@ -1090,7 +1115,7 @@ module Encode =
             |> appendOpt "doc" (encodeSourceText ws.SourceNodes.Doc) ws.Doc
             |> appendOpt "scatter" encodeScatter ws.Scatter
             |> appendOpt "scatterMethod" encodeScatterMethod ws.ScatterMethod
-            |> appendOpt "when" encodeString ws.When_
+            |> appendOpt "when" encodeSchemaSaladString ws.When_
             |> appendDynamicPropertiesExcept WorkflowStep.KnownFieldNames ws
         let withHints =
             match ws.Hints with
@@ -1409,8 +1434,18 @@ module Encode =
     /// version of the root, so they write none of their own. The other keys of the root follow the graph. A step that
     /// holds one of the processes of the graph as its run is written as a reference to it, as in run: "#shout".
     /// Workflow runs cross-reference the processes of a packed document by id, and a step that was resolved against
-    /// its own document holds the process itself.
+    /// its own document holds the process itself. A member without an id, or with the id of an earlier member, has no
+    /// text that the decoder reads back, so the encoder refuses the graph.
     let encodeCWLGraph (graph: CWLGraph) : string =
+        let seen = System.Collections.Generic.HashSet<string>()
+        graph.Processes
+        |> Seq.iteri (fun index processingUnit ->
+            match CWLProcessingUnit.tryGetId processingUnit |> Option.map LocalReference.withoutHash with
+            | None | Some "" ->
+                raise (System.ArgumentException($"The member {index} of the graph has no id. Every process of a packed document needs one."))
+            | Some id ->
+                if not (seen.Add id) then
+                    raise (System.ArgumentException($"The member {index} of the graph has the id {id}, which an earlier member has too. An id must be unique in the document.")))
         let referenceOf (run: WorkflowStepRun) : string option =
             graph.Processes
             |> Seq.tryPick (fun processingUnit ->

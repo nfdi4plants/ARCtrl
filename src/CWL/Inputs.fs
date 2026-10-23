@@ -3,10 +3,17 @@ namespace ARCtrl.CWL
 open DynamicObj
 open Fable.Core
 
+/// The position of an input binding: a number, or an expression that evaluates to one. An expression is a string with
+/// $( or ${ in it.
+[<RequireQualifiedAccess>]
+type BindingPosition =
+    | Number of int
+    | Expression of string
+
 [<AttachMembers>]
 type InputBinding (
     ?prefix: string,
-    ?position: int,
+    ?position: BindingPosition,
     ?itemSeparator: string,
     ?separate: bool,
     ?loadContents: bool,
@@ -88,7 +95,7 @@ type InputBinding (
     static member create
         (
             ?prefix: string,
-            ?position: int,
+            ?position: BindingPosition,
             ?itemSeparator: string,
             ?separate: bool,
             ?loadContents: bool,
@@ -125,6 +132,8 @@ type InputFormat =
         | Single value -> HashHelpers.mergeHashes 1 (hash value)
         | Multiple values -> HashHelpers.mergeHashes 2 (HashHelpers.hashSeq values)
 
+/// An input of a process. The type tells whether the input is optional: it is when the type is a union that contains
+/// null. The parameter optional adds null to a type that has none, and it changes nothing for an input without a type.
 [<AttachMembers>]
 type CWLInput (
     name: string,
@@ -143,9 +152,11 @@ type CWLInput (
     inherit DynamicObj ()
 
     let mutable _name = name
-    let mutable _type = type_
+    let mutable _type =
+        match type_, optional with
+        | Some type_, Some true -> Some (CWLType.makeOptional type_)
+        | _ -> type_
     let mutable _inputBinding = inputBinding
-    let mutable _optional = optional
     let mutable _label = label
     let mutable _secondaryFiles = secondaryFiles
     let mutable _streamable = streamable
@@ -168,9 +179,11 @@ type CWLInput (
         with get() = _inputBinding
         and set(value) = _inputBinding <- value
 
-    member this.Optional
-        with get() = _optional
-        and set(value) = _optional <- value
+    /// True when the type is a union that contains null. The type holds this, and an input stores no flag of its own.
+    member this.Optional =
+        match _type with
+        | Some type_ -> CWLType.isOptional type_
+        | None -> false
 
     member this.Label
         with get() = _label
@@ -217,7 +230,6 @@ type CWLInput (
             this.Name = other.Name &&
             this.Type_ = other.Type_ &&
             this.InputBinding = other.InputBinding &&
-            this.Optional = other.Optional &&
             this.Label = other.Label &&
             this.SecondaryFiles = other.SecondaryFiles &&
             this.Streamable = other.Streamable &&
@@ -234,7 +246,6 @@ type CWLInput (
             this.Name,
             this.Type_,
             this.InputBinding,
-            this.Optional,
             this.Label,
             this.SecondaryFiles,
             this.Streamable,
