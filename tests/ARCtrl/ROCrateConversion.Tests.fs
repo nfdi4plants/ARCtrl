@@ -31,11 +31,11 @@ module Helper =
         
         /// Create a CWL Record type with fields
         let record (fields: ARCtrl.CWL.InputRecordField list) : ARCtrl.CWL.CWLType = 
-            ARCtrl.CWL.CWLType.Record (ARCtrl.CWL.InputRecordSchema(fields = ResizeArray fields))
+            ARCtrl.CWL.CWLType.Record (ARCtrl.CWL.InputRecordSchema(fields = ARCtrl.CWL.ListEntry.ofValues fields))
         
         /// Create a CWL Enum type with symbols
         let enum (symbols: string list) : ARCtrl.CWL.CWLType = 
-            ARCtrl.CWL.CWLType.Enum (ARCtrl.CWL.InputEnumSchema(ResizeArray symbols))
+            ARCtrl.CWL.CWLType.Enum (ARCtrl.CWL.InputEnumSchema(ResizeArray (List.map ARCtrl.CWL.SchemaSaladString.Literal symbols)))
         
         /// Create a CWL Array type
         let array (items: ARCtrl.CWL.CWLType) : ARCtrl.CWL.CWLType = 
@@ -1852,7 +1852,7 @@ let tests_FormalParameter =
             testCase "Prefix" (fun () ->
                 let name = "MyInput"
                 let t = CWLType.String
-                let binding = InputBinding.create(prefix = "--eenput")
+                let binding = InputBinding.create(prefix = (SchemaSaladString.Literal "--eenput"))
                 let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 let identifiers = LDFormalParameter.getIdentifiers formalParameter
@@ -1878,7 +1878,7 @@ let tests_FormalParameter =
             testCase "PrefixPosition" (fun () ->
                 let name = "MyInput"
                 let t = CWLType.String
-                let binding = InputBinding.create(prefix = "--eenput", position = BindingPosition.Number 1)
+                let binding = InputBinding.create(prefix = (SchemaSaladString.Literal "--eenput"), position = BindingPosition.Number 1)
                 let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 let identifiers = LDFormalParameter.getIdentifiers formalParameter
@@ -1893,7 +1893,7 @@ let tests_FormalParameter =
             testCase "PrefixPosition_Roundabout" (fun () ->
                 let name = "MyInput"
                 let t = CWLType.String
-                let binding = InputBinding.create(prefix = "--eenput", position = BindingPosition.Number 1)
+                let binding = InputBinding.create(prefix = (SchemaSaladString.Literal "--eenput"), position = BindingPosition.Number 1)
                 let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 let input' = WorkflowConversion.decomposeInputFromFormalParameter formalParameter
@@ -1948,7 +1948,7 @@ let tests_FormalParameter =
             testCase "File_GlobBinding" (fun () ->
                 let name = "MyOutput"
                 let t = CWLType.File
-                let binding = OutputBinding.create(glob = OutputGlob.Single "*.txt")
+                let binding = OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "*.txt"))
                 let output = CWL.CWLOutput(name = name, type_ = t, outputBinding = binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
                 let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
@@ -1964,7 +1964,7 @@ let tests_FormalParameter =
             testCase "File_GlobBinding_Roundabout" (fun () ->
                 let name = "MyOutput"
                 let t = CWLType.File
-                let binding = OutputBinding.create(glob = OutputGlob.Single "*.txt")
+                let binding = OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "*.txt"))
                 let output = CWL.CWLOutput(name = name, type_ = t, outputBinding = binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
                 let output' = WorkflowConversion.decomposeOutputFromFormalParameter formalParameter
@@ -2173,13 +2173,13 @@ let tests_AdditionalTypeDecoding =
         ]
         testList "EdgeCases" [
             testCase "EmptyRecord" (fun () ->
-                let original = CWLType.Record (InputRecordSchema(fields = ResizeArray []))
+                let original = CWLType.Record (InputRecordSchema(fields = ListEntry.ofValues []))
                 let encoded = WorkflowConversion.composeAdditionalType original
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
                 Expect.equal decoded original "Should decode empty Record correctly"
             )
             testCase "SingleSymbolEnum" (fun () ->
-                let original = CWLType.Enum (InputEnumSchema(ResizeArray ["only"]))
+                let original = CWLType.Enum (InputEnumSchema(ResizeArray [ SchemaSaladString.Literal "only" ]))
                 let encoded = WorkflowConversion.composeAdditionalType original
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
                 Expect.equal decoded original "Should decode single symbol Enum correctly"
@@ -2201,13 +2201,13 @@ let tests_AdditionalTypeDecoding =
             testCase "Record_RoundTrip" (fun () ->
                 let field1 = InputRecordField("name", CWLType.String)
                 let field2 = InputRecordField("count", CWLType.Int)
-                let original = CWLType.Record (InputRecordSchema(fields = ResizeArray [field1; field2]))
+                let original = CWLType.Record (InputRecordSchema(fields = ListEntry.ofValues [field1; field2]))
                 let encoded = WorkflowConversion.composeAdditionalType original
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
                 Expect.equal decoded original "Record should round-trip correctly"
             )
             testCase "Enum_RoundTrip" (fun () ->
-                let original = CWLType.Enum (InputEnumSchema(ResizeArray ["red"; "green"; "blue"]))
+                let original = CWLType.Enum (InputEnumSchema(ResizeArray [ SchemaSaladString.Literal "red"; SchemaSaladString.Literal "green"; SchemaSaladString.Literal "blue" ]))
                 let encoded = WorkflowConversion.composeAdditionalType original
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
                 Expect.equal decoded original "Enum should round-trip correctly"
@@ -2271,7 +2271,7 @@ let tests_AdditionalTypeEncoding =
                 Expect.equal encoded expected "Record should encode to single-line YAML"
             )
             testCase "Enum" (fun () ->
-                let schema = InputEnumSchema(ResizeArray ["option1"; "option2"; "option3"])
+                let schema = InputEnumSchema(ResizeArray [ SchemaSaladString.Literal "option1"; SchemaSaladString.Literal "option2"; SchemaSaladString.Literal "option3" ])
                 let t = CWLType.Enum schema
                 let encoded = WorkflowConversion.composeAdditionalType t
                 let expected = "{type: enum, symbols: [option1, option2, option3]}"
@@ -2279,7 +2279,7 @@ let tests_AdditionalTypeEncoding =
             )
             testCase "RecordArray" (fun () ->
                 let field = InputRecordField("value", CWLType.String)
-                let recordSchema = InputRecordSchema(fields = ResizeArray [field])
+                let recordSchema = InputRecordSchema(fields = ListEntry.ofValues [field])
                 let arraySchema = InputArraySchema(CWLType.Record recordSchema)
                 let t = CWLType.Array arraySchema
                 let encoded = WorkflowConversion.composeAdditionalType t
@@ -2287,7 +2287,7 @@ let tests_AdditionalTypeEncoding =
                 Expect.equal encoded expected "Array of records should encode to single-line YAML"
             )
             testCase "EnumArray" (fun () ->
-                let enumSchema = InputEnumSchema(ResizeArray ["A"; "B"; "C"])
+                let enumSchema = InputEnumSchema(ResizeArray [ SchemaSaladString.Literal "A"; SchemaSaladString.Literal "B"; SchemaSaladString.Literal "C" ])
                 let arraySchema = InputArraySchema(CWLType.Enum enumSchema)
                 let t = CWLType.Array arraySchema
                 let encoded = WorkflowConversion.composeAdditionalType t
@@ -2309,7 +2309,7 @@ let tests_AdditionalTypeEncoding =
             )
             testCase "OptionalRecord_YAML" (fun () ->
                 let field = InputRecordField("name", CWLType.String)
-                let recordSchema = InputRecordSchema(fields = ResizeArray [field])
+                let recordSchema = InputRecordSchema(fields = ListEntry.ofValues [field])
                 let t = CWLType.Union (ResizeArray [CWLType.Null; CWLType.Record recordSchema])
                 let encoded = WorkflowConversion.composeAdditionalType t
                 let expected = "[\"null\", {type: record, fields: [{name: name, type: string}]}]"
@@ -2325,7 +2325,7 @@ let tests_AdditionalTypeEncoding =
                 Expect.equal encoded expected "Empty record should encode to single-line YAML"
             )
             testCase "SingleSymbolEnum" (fun () ->
-                let schema = InputEnumSchema(ResizeArray ["only"])
+                let schema = InputEnumSchema(ResizeArray [ SchemaSaladString.Literal "only" ])
                 let t = CWLType.Enum schema
                 let encoded = WorkflowConversion.composeAdditionalType t
                 let expected = "{type: enum, symbols: [only]}"
@@ -2335,7 +2335,7 @@ let tests_AdditionalTypeEncoding =
         testList "Integration_WithFormalParameter" [
             testCase "RecordInput_CreatesValidFormalParameter" (fun () ->
                 let field = InputRecordField("name", CWLType.String)
-                let recordSchema = InputRecordSchema(fields = ResizeArray [field])
+                let recordSchema = InputRecordSchema(fields = ListEntry.ofValues [field])
                 let t = CWLType.Record recordSchema
                 let input = CWL.CWLInput(name = "MyRecordInput", type_ = t)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
@@ -2381,7 +2381,7 @@ let tests_AdditionalTypeErrorHandling =
                 let result = WorkflowConversion.decomposeAdditionalType recordWithoutFields
                 match result with
                 | CWLType.Record schema -> 
-                    Expect.isTrue (schema.Fields.IsNone || schema.Fields.Value.Count = 0) "Should create empty record"
+                    Expect.isTrue (schema.Fields.IsNone || (InputRecordSchema.getFieldsOrEmpty schema).Count = 0) "Should create empty record"
                 | _ -> failwith "Should decode as record type"
             )
             testCase "MalformedEnum_MissingSymbols" (fun () ->
@@ -2579,7 +2579,7 @@ let tests_YAMLInputValue =
             let name = "MyInput"
             let runName = "MyRun"
             let value = ["a"; "b"]
-            let inputBinding = CWL.InputBinding.create(itemSeparator = ";")
+            let inputBinding = CWL.InputBinding.create(itemSeparator = (SchemaSaladString.Literal ";"))
             let paramValue = CWLParameterReference(name, values = ResizeArray value)
             let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Array(InputArraySchema(CWLType.String)), inputBinding = inputBinding)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
@@ -2719,10 +2719,10 @@ let tests_OperationDescription =
             let roundTripped = WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(protocol)
             match roundTripped with
             | CWL.Operation rt ->
-                Expect.equal rt.Inputs.Count operation.Inputs.Count "Input count should survive roundtrip"
-                Expect.equal rt.Outputs.Count operation.Outputs.Count "Output count should survive roundtrip"
-                Expect.equal rt.Inputs.[0].Name operation.Inputs.[0].Name "Input name should survive roundtrip"
-                Expect.equal rt.Outputs.[0].Name operation.Outputs.[0].Name "Output name should survive roundtrip"
+                Expect.equal (CWL.ListEntry.values rt.Inputs).Count (CWL.ListEntry.values operation.Inputs).Count "Input count should survive roundtrip"
+                Expect.equal (CWL.ListEntry.values rt.Outputs).Count (CWL.ListEntry.values operation.Outputs).Count "Output count should survive roundtrip"
+                Expect.equal (CWL.ListEntry.values rt.Inputs).[0].Name (CWL.ListEntry.values operation.Inputs).[0].Name "Input name should survive roundtrip"
+                Expect.equal (CWL.ListEntry.values rt.Outputs).[0].Name (CWL.ListEntry.values operation.Outputs).[0].Name "Output name should survive roundtrip"
             | other ->
                 Expect.isTrue false $"Expected Operation but got %A{other}"
         )
@@ -2886,18 +2886,19 @@ let tests_ArcWorkflow =
 
             let getRunId (step: CWL.WorkflowStep) =
                 match step.Run with
-                | CWL.RunString runPath -> runPath
+                | CWL.RunString runPath
+                | CWL.RunImport runPath -> runPath
                 | CWL.RunCommandLineTool _ -> "inline:CommandLineTool"
                 | CWL.RunWorkflow _ -> "inline:Workflow"
                 | CWL.RunExpressionTool _ -> "inline:ExpressionTool"
                 | CWL.RunOperation _ -> "inline:Operation"
 
-            let sourceStepIds = sourceWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
-            let parsedStepIds = parsedWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
+            let sourceStepIds = (CWL.ListEntry.values sourceWorkflow.Steps) |> Seq.map (fun step -> step.Id) |> Seq.toList
+            let parsedStepIds = (CWL.ListEntry.values parsedWorkflow.Steps) |> Seq.map (fun step -> step.Id) |> Seq.toList
             Expect.equal parsedStepIds sourceStepIds "Step identifiers should be preserved through workflow conversion"
 
-            let sourceRuns = sourceWorkflow.Steps |> Seq.map getRunId |> Seq.toList
-            let parsedRuns = parsedWorkflow.Steps |> Seq.map getRunId |> Seq.toList
+            let sourceRuns = (CWL.ListEntry.values sourceWorkflow.Steps) |> Seq.map getRunId |> Seq.toList
+            let parsedRuns = (CWL.ListEntry.values parsedWorkflow.Steps) |> Seq.map getRunId |> Seq.toList
             Expect.equal parsedRuns sourceRuns "Step run references should be preserved through workflow conversion"
 
             Expect.equal parsedWorkflow.Steps.Count 12 "Full workflow should contain all expected steps"
@@ -2923,7 +2924,7 @@ let tests_ArcWorkflow =
                 Expect.wantSome sourceWorkflowOpt $"Expected full workflow fixture to decode as Workflow but got %A{processingUnit}"
 
             let expectedRunPathByStepId =
-                sourceWorkflow.Steps
+                (CWL.ListEntry.values sourceWorkflow.Steps)
                 |> Seq.map (fun step ->
                     let runPath =
                         let runPathOpt =
@@ -3027,21 +3028,20 @@ let tests_ArcWorkflow =
 
             let commandLineToolSignatures (tool: CWL.CWLToolDescription) =
                 let inputSignatures =
-                    tool.Inputs
-                    |> Option.defaultValue (ResizeArray())
+                    CWL.CWLToolDescription.getInputsOrEmpty tool
                     |> Seq.map inputSignature
                     |> Seq.sortBy (fun (name, _, _, _) -> name)
                     |> Seq.toList
                 let outputSignatures =
-                    tool.Outputs
+                    (CWL.ListEntry.values tool.Outputs)
                     |> Seq.map outputSignature
                     |> Seq.sortBy (fun (name, _, _) -> name)
                     |> Seq.toList
                 inputSignatures, outputSignatures
 
-            Expect.equal parsedWorkflow.Steps.Count sourceWorkflow.Steps.Count "All workflow steps should be preserved"
+            Expect.equal (CWL.ListEntry.values parsedWorkflow.Steps).Count (CWL.ListEntry.values sourceWorkflow.Steps).Count "All workflow steps should be preserved"
 
-            for parsedStep in parsedWorkflow.Steps do
+            for parsedStep in (CWL.ListEntry.values parsedWorkflow.Steps) do
                 let runPath =
                     let runPathOpt = expectedRunPathByStepId.TryFind parsedStep.Id
                     Expect.wantSome runPathOpt $"Expected source run path for step {parsedStep.Id}"
@@ -3104,8 +3104,8 @@ let tests_ArcWorkflow =
                 WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(protocol)
             match roundTripped with
             | CWL.Workflow rtWorkflow ->
-                Expect.equal rtWorkflow.Steps.Count workflow.Steps.Count "Step count should be preserved through RO-Crate roundtrip"
-                let runValue = rtWorkflow.Steps.[0].Run
+                Expect.equal (CWL.ListEntry.values rtWorkflow.Steps).Count (CWL.ListEntry.values workflow.Steps).Count "Step count should be preserved through RO-Crate roundtrip"
+                let runValue = (CWL.ListEntry.values rtWorkflow.Steps).[0].Run
                 match runValue with
                 | CWL.RunString runIdentifier ->
                     Expect.equal runIdentifier "inline:ExpressionTool" "Inline ExpressionTool marker should be preserved as run string"
@@ -3151,8 +3151,8 @@ let tests_ArcRun =
             let inputFileName = "input.txt"
             let tool = 
                 CWL.CWLToolDescription(
-                    outputs = ResizeArray [TestObjects.CWL.Outputs.CSV.outputCSV],
-                    inputs = ResizeArray [CWL.CWLInput(name = TestObjects.CWL.Inputs.File.inputFileName, type_ = CWLType.File)]
+                    outputs = ListEntry.ofValues [TestObjects.CWL.Outputs.CSV.outputCSV],
+                    inputs = ListEntry.ofValues [CWL.CWLInput(name = TestObjects.CWL.Inputs.File.inputFileName, type_ = CWLType.File)]
                 )
                 |> CWL.CommandLineTool
             let table = ArcTable.init("MyTable")
@@ -3275,7 +3275,7 @@ let tests_ArcRun =
             let workflow =
                 CWL.CWLWorkflowDescription(
                     steps = ResizeArray(),
-                    inputs = ResizeArray [CWL.CWLInput(name = inputName, type_ = inputType)],
+                    inputs = ListEntry.ofValues [CWL.CWLInput(name = inputName, type_ = inputType)],
                     outputs = ResizeArray()
                 )
             let runInputValues =
@@ -3360,9 +3360,9 @@ let tests_ArcRun =
                 Expect.wantSome sourceRunWorkflowOpt $"Expected run fixture to decode as Workflow but got %A{runProcessingUnit}"
             let! runParameterText = FileSystemHelper.readFileTextAsync runParameterFixturePath
             let runInputValues = CWL.DecodeParameters.decodeYAMLParameterFile (runParameterText.TrimEnd())
-            Expect.equal runInputValues.Count sourceRunWorkflow.Inputs.Count "run.yml should define all required run inputs"
+            Expect.equal runInputValues.Count (CWL.ListEntry.values sourceRunWorkflow.Inputs).Count "run.yml should define all required run inputs"
             let expectedInputKeys =
-                sourceRunWorkflow.Inputs
+                (CWL.ListEntry.values sourceRunWorkflow.Inputs)
                 |> Seq.map (fun input -> input.Name)
                 |> Seq.sort
                 |> Seq.toList
@@ -3419,12 +3419,12 @@ let tests_ArcRun =
 
             let workflowSignatures (workflow: CWL.CWLWorkflowDescription) =
                 let inputSignatures =
-                    workflow.Inputs
+                    (CWL.ListEntry.values workflow.Inputs)
                     |> Seq.map workflowInputSignature
                     |> Seq.sortBy (fun (name, _, _, _) -> name)
                     |> Seq.toList
                 let outputSignatures =
-                    workflow.Outputs
+                    (CWL.ListEntry.values workflow.Outputs)
                     |> Seq.map workflowOutputSignature
                     |> Seq.sortBy (fun (name, _, _) -> name)
                     |> Seq.toList
@@ -3432,13 +3432,12 @@ let tests_ArcRun =
 
             let toolSignatures (tool: CWL.CWLToolDescription) =
                 let inputSignatures =
-                    tool.Inputs
-                    |> Option.defaultValue (ResizeArray())
+                    CWL.CWLToolDescription.getInputsOrEmpty tool
                     |> Seq.map workflowInputSignature
                     |> Seq.sortBy (fun (name, _, _, _) -> name)
                     |> Seq.toList
                 let outputSignatures =
-                    tool.Outputs
+                    (CWL.ListEntry.values tool.Outputs)
                     |> Seq.map workflowOutputSignature
                     |> Seq.sortBy (fun (name, _, _) -> name)
                     |> Seq.toList
@@ -3452,15 +3451,15 @@ let tests_ArcRun =
                     | _ -> None
                 Expect.wantSome parsedRunWorkflowOpt $"Expected decomposed run to contain workflow CWL but got %A{run'.CWLDescription}"
 
-            let sourceRunStepIds = sourceRunWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
-            let parsedRunStepIds = parsedRunWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
+            let sourceRunStepIds = (CWL.ListEntry.values sourceRunWorkflow.Steps) |> Seq.map (fun step -> step.Id) |> Seq.toList
+            let parsedRunStepIds = (CWL.ListEntry.values parsedRunWorkflow.Steps) |> Seq.map (fun step -> step.Id) |> Seq.toList
             Expect.equal parsedRunStepIds sourceRunStepIds "Run workflow step identifiers should be preserved"
             let sourceRunInputs, sourceRunOutputs = workflowSignatures sourceRunWorkflow
             let parsedRunInputs, parsedRunOutputs = workflowSignatures parsedRunWorkflow
             Expect.equal parsedRunInputs sourceRunInputs "Run workflow input signatures should be preserved"
             Expect.equal parsedRunOutputs sourceRunOutputs "Run workflow output signatures should be preserved"
 
-            let parsedRunStep = parsedRunWorkflow.Steps.[0]
+            let parsedRunStep = (CWL.ListEntry.values parsedRunWorkflow.Steps).[0]
             Expect.isTrue
                 (match CWL.WorkflowStep.getResolvedRun parsedRunStep with | CWL.RunWorkflow _ -> true | _ -> false)
                 (sprintf "Expected run step to resolve to RunWorkflow but got %A" (CWL.WorkflowStep.getResolvedRun parsedRunStep))
@@ -3474,8 +3473,8 @@ let tests_ArcRun =
                 (sprintf "Expected RunWorkflow payload to be CWLWorkflowDescription but got %A" referencedWorkflowObj)
             let parsedReferencedWorkflow = referencedWorkflowObj :?> CWL.CWLWorkflowDescription
 
-            let sourceReferencedStepIds = sourceReferencedWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
-            let parsedReferencedStepIds = parsedReferencedWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
+            let sourceReferencedStepIds = (CWL.ListEntry.values sourceReferencedWorkflow.Steps) |> Seq.map (fun step -> step.Id) |> Seq.toList
+            let parsedReferencedStepIds = (CWL.ListEntry.values parsedReferencedWorkflow.Steps) |> Seq.map (fun step -> step.Id) |> Seq.toList
             Expect.equal parsedReferencedStepIds sourceReferencedStepIds "Referenced workflow step identifiers should be preserved"
             let sourceReferencedInputs, sourceReferencedOutputs = workflowSignatures sourceReferencedWorkflow
             let parsedReferencedInputs, parsedReferencedOutputs = workflowSignatures parsedReferencedWorkflow
@@ -3483,7 +3482,7 @@ let tests_ArcRun =
             Expect.equal parsedReferencedOutputs sourceReferencedOutputs "Referenced workflow output signatures should be preserved"
 
             let unresolvedNestedRuns =
-                parsedReferencedWorkflow.Steps
+                (CWL.ListEntry.values parsedReferencedWorkflow.Steps)
                 |> Seq.choose (fun step ->
                     match CWL.WorkflowStep.getResolvedRun step with
                     | CWL.RunString unresolvedPath -> Some (step.Id, unresolvedPath)
@@ -3494,7 +3493,7 @@ let tests_ArcRun =
 
             let referencedWorkflowGraphPath = fixturePathToGraphPath referencedWorkflowFixturePathNormalized
             let expectedRunPathByStepId =
-                sourceReferencedWorkflow.Steps
+                (CWL.ListEntry.values sourceReferencedWorkflow.Steps)
                 |> Seq.map (fun step ->
                     let runPath =
                         let runPathOpt =
@@ -3524,7 +3523,7 @@ let tests_ArcRun =
                     Expect.wantSome expectedToolOpt $"Expected referenced tool fixture for step {stepId} to decode as CommandLineTool but got %A{expectedToolProcessingUnit}"
                 expectedToolByStepId <- expectedToolByStepId.Add(stepId, expectedTool)
 
-            for parsedStep in parsedReferencedWorkflow.Steps do
+            for parsedStep in (CWL.ListEntry.values parsedReferencedWorkflow.Steps) do
                 let expectedTool =
                     let expectedToolOpt = expectedToolByStepId.TryFind parsedStep.Id
                     Expect.wantSome expectedToolOpt $"Expected source tool for step {parsedStep.Id}"

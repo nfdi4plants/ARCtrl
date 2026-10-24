@@ -27,12 +27,15 @@ type SchemaSaladString =
     | Literal of string
     | Include of string
     | Import of string
+    /// A $mixin on its own. A $mixin beside other fields completes an object, so a string has no such mixin.
+    | Mixin of string
     with
     member this.Value =
         match this with
         | Literal value
         | Include value
-        | Import value -> value
+        | Import value
+        | Mixin value -> value
 
     /// The text as a document spells it, with the directive in front of the path. A display of the string can use it.
     /// The decoder and the encoder keep the directive as a case, so no field of a document holds this text.
@@ -41,6 +44,7 @@ type SchemaSaladString =
         | Literal value -> value
         | Include value -> sprintf "$include: %s" value
         | Import value -> sprintf "$import: %s" value
+        | Mixin value -> sprintf "$mixin: %s" value
 
 module SchemaSaladString =
 
@@ -50,7 +54,89 @@ module SchemaSaladString =
 
     let importPath value = Import value
 
+    let mixinPath value = Mixin value
+
     let value (saladString: SchemaSaladString) = saladString.Value
+
+    /// The text of a literal string, and none for a directive, which names a file whose text the model does not hold.
+    let tryLiteral (saladString: SchemaSaladString) : string option =
+        match saladString with
+        | Literal text -> Some text
+        | Include _
+        | Import _
+        | Mixin _ -> None
+
+/// An entry of a list of objects, such as the inputs, the outputs, the steps or the fields of a record. An entry is the object
+/// itself, or the import of a file that holds the object or a list of objects, as in inputs: [{$import: ports.yml}]. An
+/// object that a file completes through $mixin is a third kind, which keeps the mapping as written. The decoder reads no
+/// file, so the import and the mixin stay entries of their own, in their place.
+[<RequireQualifiedAccess; NoComparison; AttachMembers>]
+type ListEntry<'T> =
+    | Value of 'T
+    | Imported of string
+    /// A mapping with a $mixin directive: the alone directive, or the directive beside the fields that complete the
+    /// object. The mapping is kept as it was written.
+    | Mixed of RawYaml
+
+    /// The object of a value entry, and none for an import or a mixin.
+    static member tryValue (entry: ListEntry<'T>) : 'T option =
+        match entry with
+        | Value value -> Some value
+        | Imported _
+        | Mixed _ -> None
+
+    /// The objects of the value entries, in order. The imports and the mixins stand for objects that the decoder does not
+    /// read, so they are left out. The result is a new list.
+    static member values (entries: seq<ListEntry<'T>>) : ResizeArray<'T> =
+        entries |> Seq.choose ListEntry.tryValue |> ResizeArray
+
+    /// The value entries for these objects, in order.
+    static member ofValues (values: seq<'T>) : ResizeArray<ListEntry<'T>> =
+        values |> Seq.map ListEntry.Value |> ResizeArray
+
+    /// The entry with another object, and the same import or mixin.
+    static member map (mapping: 'T -> 'U) (entry: ListEntry<'T>) : ListEntry<'U> =
+        match entry with
+        | Value value -> ListEntry.Value (mapping value)
+        | Imported path -> ListEntry.Imported path
+        | Mixed raw -> ListEntry.Mixed raw
+
+/// The doc of a CWL object. CWL admits one string or a list of strings, and Schema Salad joins the items of a list
+/// without a separator. A string, a directive and a list of plain strings are each one value, so the list [a, b] and the
+/// string ab are the same doc, and the layout of the author stays in the source node of the object. A directive in a
+/// list names a file with a part of the text, and the model does not hold that text, so the parts stay apart. The
+/// parts exist for that case only. A doc is the one string position that takes a list, so a list of strings has a type of
+/// its own and no other field can hold one.
+[<RequireQualifiedAccess; CustomEquality; NoComparison; AttachMembers>]
+type DocText =
+    /// A string or a directive, or a list of plain strings joined into one text.
+    | Text of SchemaSaladString
+    /// A list with a directive item, with every item in order.
+    | Parts of ResizeArray<SchemaSaladString>
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? DocText as other ->
+            match this, other with
+            | Text left, Text right -> left = right
+            | Parts left, Parts right -> HashHelpers.seqEqual left right
+            | _ -> false
+        | _ -> false
+
+    override this.GetHashCode() =
+        match this with
+        | Text value -> HashHelpers.mergeHashes 1 (hash value)
+        | Parts values -> HashHelpers.mergeHashes 2 (HashHelpers.hashSeq values)
+
+    /// The doc that is the given text.
+    static member literal (text: string) : DocText =
+        Text (SchemaSaladString.Literal text)
+
+    /// The text of the doc, and none for a doc with a directive.
+    member this.TryText : string option =
+        match this with
+        | Text value -> SchemaSaladString.tryLiteral value
+        | Parts _ -> None
 
 [<AttachMembers>]
 type FileInstance (
@@ -128,20 +214,20 @@ type FileInstance (
         CWLKnownFieldNames.fileInstance
 
     override this.GetHashCode (): int =
-        hash (
-            this.Location,
-            this.Path,
-            this.Basename,
-            this.Dirname,
-            this.Nameroot,
-            this.Nameext,
-            this.Checksum,
-            this.Size,
-            this.SecondaryFiles,
-            this.Format,
-            this.Contents,
-            DynamicObjHelpers.hashDynamicProperties this
-        )
+        HashHelpers.hashFields [
+            box this.Location
+            box this.Path
+            box this.Basename
+            box this.Dirname
+            box this.Nameroot
+            box this.Nameext
+            box this.Checksum
+            box this.Size
+            box this.SecondaryFiles
+            box this.Format
+            box this.Contents
+            box (DynamicObjHelpers.hashDynamicProperties this)
+        ]
 
     override this.Equals (o: obj): bool =
         match o with
@@ -252,7 +338,11 @@ type DirentInstance (entry: SchemaSaladString, ?entryname: SchemaSaladString, ?w
 [<CustomEquality; NoComparison>]
 type internal SourceNodes =
     { Doc: YamlNode option
-      Label: YamlNode option }
+      Label: YamlNode option
+      /// The names of the list fields that the document writes as one directive, as in requirements: {$import: path}.
+      /// The model holds such a field as a list with one imported entry, and the encoder writes the directive again
+      /// while the list holds that entry only.
+      WholeFields: Set<string> }
 
     override this.Equals(o: obj) =
         match o with
@@ -261,12 +351,15 @@ type internal SourceNodes =
 
     override this.GetHashCode() = 0
 
-    static member Empty : SourceNodes = { Doc = None; Label = None }
+    static member Empty : SourceNodes = { Doc = None; Label = None; WholeFields = Set.empty }
 
 /// Represents an enumeration type with a defined set of valid symbol values.
 /// Per the CWL specification, symbol order is semantically significant and preserved during serialization.
+/// A symbol is a string, so a directive can stand in its place. An $include yields the text of a file as the symbol,
+/// and an $import yields the symbol or the list of symbols of a file. The decoder reads no file, so a directive stays
+/// an entry of the list, in its place.
 [<AttachMembers>]
-type InputEnumSchema (symbols: ResizeArray<string>, ?label: string, ?doc: string, ?name: string) =
+type InputEnumSchema (symbols: ResizeArray<SchemaSaladString>, ?label: SchemaSaladString, ?doc: DocText, ?name: string) =
     inherit DynamicObj ()
 
     let mutable _symbols = symbols
@@ -317,9 +410,14 @@ type InputEnumSchema (symbols: ResizeArray<string>, ?label: string, ?doc: string
     static member KnownFieldNames =
         CWLKnownFieldNames.inputEnumSchema
 
+    /// Returns the symbols that the document writes out as strings. The directives are left out, and the list is a
+    /// new one.
+    static member getSymbols (schema: InputEnumSchema) : ResizeArray<string> =
+        schema.Symbols |> Seq.choose SchemaSaladString.tryLiteral |> ResizeArray
+
 /// Represents a field in an InputRecordSchema
 [<AttachMembers>]
-type InputRecordField (name: string, type_: CWLType, ?doc: string, ?label: string) =
+type InputRecordField (name: string, type_: CWLType, ?doc: DocText, ?label: SchemaSaladString) =
     inherit DynamicObj ()
 
     let mutable _name = name
@@ -366,8 +464,10 @@ type InputRecordField (name: string, type_: CWLType, ?doc: string, ?label: strin
     static member KnownFieldNames =
         CWLKnownFieldNames.inputRecordField
 
-/// Represents a record schema for workflow input parameters
-and [<AttachMembers>] InputRecordSchema (?fields: ResizeArray<InputRecordField>, ?label: string, ?doc: string, ?name: string) =
+/// Represents a record schema for workflow input parameters. An entry of the fields is a field, or the import of a file
+/// that holds a field or a list of fields. The decoder reads no file, so the import stays an entry of its own, in its
+/// place.
+and [<AttachMembers>] InputRecordSchema (?fields: ResizeArray<ListEntry<InputRecordField>>, ?label: SchemaSaladString, ?doc: DocText, ?name: string) =
     inherit DynamicObj ()
 
     let mutable _fields = fields
@@ -407,9 +507,7 @@ and [<AttachMembers>] InputRecordSchema (?fields: ResizeArray<InputRecordField>,
             (
                 match this.Fields, other.Fields with
                 | None, None -> true
-                | Some f1, Some f2 ->
-                    f1.Count = f2.Count &&
-                    Seq.forall2 (fun (a: InputRecordField) (b: InputRecordField) -> a.Equals(b)) f1 f2
+                | Some f1, Some f2 -> HashHelpers.seqEqual f1 f2
                 | _ -> false
             ) &&
             DynamicObjHelpers.dynamicPropertiesEqual this other
@@ -424,8 +522,13 @@ and [<AttachMembers>] InputRecordSchema (?fields: ResizeArray<InputRecordField>,
     static member KnownFieldNames =
         CWLKnownFieldNames.inputRecordSchema
 
+    /// Returns the fields of the record, or an empty list for a record without fields. The imports are left out, and
+    /// the list is a new one.
+    static member getFieldsOrEmpty (schema: InputRecordSchema) : ResizeArray<InputRecordField> =
+        schema.Fields |> Option.map ListEntry.values |> Option.defaultValue (ResizeArray())
+
 /// Represents an array schema for workflow input parameters
-and [<AttachMembers>] InputArraySchema (items: CWLType, ?label: string, ?doc: string, ?name: string) =
+and [<AttachMembers>] InputArraySchema (items: CWLType, ?label: SchemaSaladString, ?doc: DocText, ?name: string) =
     inherit DynamicObj ()
 
     let mutable _items = items
@@ -498,6 +601,15 @@ and [<CustomEquality; NoComparison>] CWLType =
     | Stdin
     /// A type that a SchemaDefRequirement defines, spelled by its name as written (Name, #Name or file#Name).
     | Reference of string
+    /// A type that a file holds, as type: {$import: path}. The decoder reads no file, so the type stays unresolved. It can
+    /// stand wherever a type can: as the type of a port, as a member of a type list and as the items of an array.
+    | ImportedType of string
+    /// A type that the text of a file names, as type: {$include: path}. The text is the name of a type, and the decoder
+    /// reads no file, so the type stays unresolved like an import.
+    | IncludedType of string
+    /// A type that a file completes through $mixin, as type: {$mixin: path}. The mapping is kept as it was written, and the
+    /// type stays unresolved like an import.
+    | MixedType of RawYaml
     | Null
     | Array of InputArraySchema
     | Record of InputRecordSchema
@@ -521,6 +633,9 @@ and [<CustomEquality; NoComparison>] CWLType =
             | Stderr, Stderr -> true
             | Stdin, Stdin -> true
             | Reference left, Reference right -> left = right
+            | ImportedType left, ImportedType right -> left = right
+            | IncludedType left, IncludedType right -> left = right
+            | MixedType left, MixedType right -> left.Equals(right)
             | Null, Null -> true
             | Array a1, Array a2 -> a1.Equals(a2)
             | Record r1, Record r2 -> r1.Equals(r2)
@@ -551,6 +666,9 @@ and [<CustomEquality; NoComparison>] CWLType =
         | Stderr -> hash 16
         | Stdin -> hash 17
         | Reference name -> hash (18, name)
+        | ImportedType path -> hash (19, path)
+        | MixedType raw -> hash (20, raw)
+        | IncludedType path -> hash (21, path)
 
 /// The schema that a SchemaDefRequirement defines. CWL admits record, enum and array schemas there and no other type,
 /// so an alias for a builtin type has no case. A union of the three schema classes holds that rule in the type itself,
@@ -635,6 +753,7 @@ module InputRecordSchema =
         schema.Fields
         |> Option.bind (fun fields ->
             fields
+            |> Seq.choose ListEntry.tryValue
             |> Seq.tryFind (fun field -> field.Name = name)
             |> Option.map (fun field -> field.Type)
         )
@@ -656,9 +775,13 @@ module CWLType =
             | None, None -> true
             | Some leftFields, Some rightFields ->
                 leftFields.Count = rightFields.Count &&
-                Seq.forall2 (fun (leftField: InputRecordField) (rightField: InputRecordField) ->
-                    leftField.Name = rightField.Name &&
-                    typesEqual leftField.Type rightField.Type
+                Seq.forall2 (fun (leftEntry: ListEntry<InputRecordField>) (rightEntry: ListEntry<InputRecordField>) ->
+                    match leftEntry, rightEntry with
+                    | ListEntry.Value leftField, ListEntry.Value rightField ->
+                        leftField.Name = rightField.Name &&
+                        typesEqual leftField.Type rightField.Type
+                    | ListEntry.Imported leftPath, ListEntry.Imported rightPath -> leftPath = rightPath
+                    | _ -> false
                 ) leftFields rightFields
             | _ -> false
         | _ -> left = right

@@ -44,6 +44,223 @@ let decodeError (decode: unit -> unit) =
         None
     with YamlDecodeException error -> Some error
 
+let testImportedRun =
+    let workflow (runLines: string list) =
+        String.concat "\n" ([ "cwlVersion: v1.2"; "class: Workflow"; "inputs: {}"; "outputs: {}"; "steps:"; "  s:" ] @ (runLines |> List.map (fun line -> "    " + line)) @ [ "    in: {}"; "    out: []"; "" ])
+    testList "Imported run" [
+        testCase "the run of a step may be an import, which is not the run of the same path" <| fun _ ->
+            let imported = Decode.decodeWorkflow (workflow [ "run: {$import: tool.cwl}" ])
+            Expect.equal (ListEntry.values imported.Steps).[0].Run (RunImport "tool.cwl") "The run is the import."
+            let plain = Decode.decodeWorkflow (workflow [ "run: tool.cwl" ])
+            Expect.equal (ListEntry.values plain.Steps).[0].Run (RunString "tool.cwl") "The run is the path."
+            Expect.notEqual (ListEntry.values imported.Steps).[0].Run (ListEntry.values plain.Steps).[0].Run "The two spellings differ."
+            Expect.notEqual imported plain "The workflows differ."
+        testCase "an imported run is written as the directive and reads back equal" <| fun _ ->
+            let imported = Decode.decodeWorkflow (workflow [ "run: {$import: tools/tool.cwl}" ])
+            let written = Encode.encodeWorkflowDescription imported
+            Expect.stringContains written "run: {$import: tools/tool.cwl}" "The run is a flow mapping."
+            Expect.equal (Decode.decodeWorkflow written) imported "The written text should decode to the same workflow."
+        testCase "an include or a directive with another field cannot stand for a run" <| fun _ ->
+            for (name, runLines, message) in
+                [ "an include", [ "run: {$include: tool.cwl}" ], "An $include yields the text of a file, but the run field of a step takes an object."
+                  "an import with another field", [ "run: {$import: tool.cwl, extra: 1}" ], "A directive has exactly one field" ] do
+                match decodeError (fun () -> Decode.decodeWorkflow (workflow runLines) |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) "steps.s.run" (sprintf "%s: the error should show the run" name)
+                    Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
+                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+                | None -> failwith (sprintf "%s must fail" name)
+    ]
+
+let testImportedEntries =
+    let workflow (inputs: string list) (outputs: string list) (steps: string list) =
+        String.concat "\n" ([ "cwlVersion: v1.2"; "class: Workflow" ] @ inputs @ outputs @ steps @ [ "" ])
+    let mixed =
+        workflow
+            [ "inputs:"; "  - {$import: inputs.yml}"; "  - id: a"; "    type: string" ]
+            [ "outputs:"; "  - id: o"; "    type: string"; "    outputSource: s/out"; "  - {$import: outputs.yml}" ]
+            [ "steps:"; "  - {$import: steps.yml}"; "  - id: s"; "    run: t.cwl"; "    in: {}"; "    out: [out]"; "  - {$import: more-steps.yml}" ]
+    let tool (cls: string) (extra: string list) (inputs: string list) (outputs: string list) =
+        String.concat "\n" ([ "cwlVersion: v1.2"; "class: " + cls ] @ extra @ inputs @ outputs @ [ "" ])
+    testList "Imported entries" [
+        testCase "an import stands in its place among the inputs, outputs and steps, is written back there and reads back equal" <| fun _ ->
+            let decoded = Decode.decodeWorkflow mixed
+            Expect.equal (List.ofSeq decoded.Inputs |> List.map (ListEntry.map (fun input -> input.Name))) [ ListEntry.Imported "inputs.yml"; ListEntry.Value "a" ] "The import comes first, then the input."
+            Expect.equal (List.ofSeq decoded.Outputs |> List.map (ListEntry.map (fun output -> output.Name))) [ ListEntry.Value "o"; ListEntry.Imported "outputs.yml" ] "The output comes first, then the import."
+            Expect.equal (List.ofSeq decoded.Steps |> List.map (ListEntry.map (fun step -> step.Id))) [ ListEntry.Imported "steps.yml"; ListEntry.Value "s"; ListEntry.Imported "more-steps.yml" ] "The imports stand around the step."
+            let written = Encode.encodeWorkflowDescription decoded
+            for position in [ "- {$import: inputs.yml}"; "- {$import: outputs.yml}"; "- {$import: steps.yml}"; "- {$import: more-steps.yml}" ] do
+                Expect.stringContains written position (sprintf "%s is written as an entry.\n%s" position written)
+            Expect.isTrue (written.IndexOf "inputs.yml" < written.IndexOf "id: a") "The import of the inputs stays in front of the input."
+            Expect.isTrue (written.IndexOf "id: s" < written.IndexOf "more-steps.yml") "The import of more steps stays behind the step."
+            let reread = Decode.decodeWorkflow written
+            Expect.equal reread decoded "The written text should decode to the same workflow."
+            Expect.equal (Encode.encodeWorkflowDescription reread) written "Writing again should give the same text."
+        testCase "the getters give the objects of the value entries and leave the imports out" <| fun _ ->
+            let decoded = Decode.decodeWorkflow mixed
+            Expect.equal (CWLWorkflowDescription.getInputs decoded |> Seq.map (fun input -> input.Name) |> List.ofSeq) [ "a" ] "Only the input is an object."
+            Expect.equal (CWLWorkflowDescription.getOutputs decoded |> Seq.map (fun output -> output.Name) |> List.ofSeq) [ "o" ] "Only the output is an object."
+            Expect.equal (CWLWorkflowDescription.getSteps decoded |> Seq.map (fun step -> step.Id) |> List.ofSeq) [ "s" ] "Only the step is an object."
+            let inputs = CWLWorkflowDescription.getInputs decoded
+            inputs.Clear()
+            Expect.equal decoded.Inputs.Count 2 "The list is a new one, so clearing it leaves the workflow as it was."
+        testCase "a field that is one directive keeps that spelling, and the list of that one import is equal" <| fun _ ->
+            let whole = workflow [ "inputs: {$import: p.yml}" ] [ "outputs: {$import: o.yml}" ] [ "steps: {$import: s.yml}" ]
+            let listed = workflow [ "inputs: [{$import: p.yml}]" ] [ "outputs:"; "  - {$import: o.yml}" ] [ "steps: [{$import: s.yml}]" ]
+            let decodedWhole = Decode.decodeWorkflow whole
+            let decodedListed = Decode.decodeWorkflow listed
+            Expect.equal (List.ofSeq decodedWhole.Inputs) [ ListEntry.Imported "p.yml" ] "The inputs are the import."
+            Expect.equal (List.ofSeq decodedWhole.Outputs) [ ListEntry.Imported "o.yml" ] "The outputs are the import."
+            Expect.equal (List.ofSeq decodedWhole.Steps) [ ListEntry.Imported "s.yml" ] "The steps are the import."
+            Expect.equal decodedWhole decodedListed "The spelling is layout, so the workflows are equal."
+            let writtenWhole = Encode.encodeWorkflowDescription decodedWhole
+            for field in [ "inputs: {$import: p.yml}"; "outputs: {$import: o.yml}"; "steps: {$import: s.yml}" ] do
+                Expect.stringContains writtenWhole field (sprintf "%s keeps its spelling.\n%s" field writtenWhole)
+            Expect.equal (Decode.decodeWorkflow writtenWhole) decodedWhole "The written text should decode to the same workflow."
+            let writtenListed = Encode.encodeWorkflowDescription decodedListed
+            Expect.isFalse (writtenListed.Contains "inputs: {$import") "The listed spelling is written as a list."
+            Expect.stringContains writtenListed "- {$import: p.yml}" "The listed import is an entry."
+        testCase "tools, expression tools and operations take imports among their inputs and outputs" <| fun _ ->
+            let inputs = [ "inputs:"; "  - {$import: ports.yml}"; "  - id: a"; "    type: string" ]
+            let outputs = [ "outputs:"; "  - id: o"; "    type: File"; "  - {$import: out.yml}" ]
+            let wholeInputs = [ "inputs: {$import: ports.yml}" ]
+            let wholeOutputs = [ "outputs: {$import: out.yml}" ]
+            let check (name: string) (decode: string -> 'T) (encode: 'T -> string) (text: string) (written: string list) =
+                let decoded = decode text
+                let encoded = encode decoded
+                for expected in written do
+                    Expect.stringContains encoded expected (sprintf "%s: %s is written.\n%s" name expected encoded)
+                Expect.equal (decode encoded) decoded (sprintf "%s: the written text should decode to the same process." name)
+                Expect.equal (encode (decode encoded)) encoded (sprintf "%s: writing again should give the same text." name)
+            let both = [ "- {$import: ports.yml}"; "- {$import: out.yml}" ]
+            let whole = [ "inputs: {$import: ports.yml}"; "outputs: {$import: out.yml}" ]
+            check "tool" Decode.decodeCommandLineTool Encode.encodeToolDescription (tool "CommandLineTool" [ "baseCommand: echo" ] inputs outputs) both
+            check "tool, whole fields" Decode.decodeCommandLineTool Encode.encodeToolDescription (tool "CommandLineTool" [ "baseCommand: echo" ] wholeInputs wholeOutputs) whole
+            check "expression tool" Decode.decodeExpressionTool Encode.encodeExpressionToolDescription (tool "ExpressionTool" [ "expression: $(null)" ] inputs outputs) both
+            check "expression tool, whole fields" Decode.decodeExpressionTool Encode.encodeExpressionToolDescription (tool "ExpressionTool" [ "expression: $(null)" ] wholeInputs wholeOutputs) whole
+            check "operation" Decode.decodeOperation Encode.encodeOperationDescription (tool "Operation" [] inputs outputs) both
+            check "operation, whole fields" Decode.decodeOperation Encode.encodeOperationDescription (tool "Operation" [] wholeInputs wholeOutputs) whole
+            let decoded = Decode.decodeCommandLineTool (tool "CommandLineTool" [ "baseCommand: echo" ] inputs outputs)
+            Expect.equal (CWLToolDescription.getInputsOrEmpty decoded |> Seq.map (fun input -> input.Name) |> List.ofSeq) [ "a" ] "The tool inputs without the import."
+            Expect.equal (CWLToolDescription.getOutputs decoded |> Seq.map (fun output -> output.Name) |> List.ofSeq) [ "o" ] "The tool outputs without the import."
+        testCase "an import among the outputs of an inline process leaves the out field of its step unchecked" <| fun _ ->
+            let inlineStep (outputLines: string list) =
+                workflow
+                    [ "inputs: {}" ]
+                    [ "outputs: {}" ]
+                    ([ "steps:"; "  s:"; "    run:"; "      class: CommandLineTool"; "      baseCommand: echo"; "      inputs: {}" ] @ (outputLines |> List.map (fun line -> "      " + line)) @ [ "    in: {}"; "    out: [r]" ])
+            let withImport = Decode.decodeWorkflow (inlineStep [ "outputs:"; "  - {$import: out.yml}" ])
+            Expect.equal (ListEntry.values withImport.Steps).[0].Out.Count 1 "The step lists the output that the file may hold."
+            match decodeError (fun () -> Decode.decodeWorkflow (inlineStep [ "outputs:"; "  s: string" ]) |> ignore) with
+            | Some error -> Expect.stringContains error.Message "has no output of that name" "Without the import the output is unknown."
+            | None -> failwith "An output that the process lacks must fail."
+        testCase "a directive cannot stand for the value of a map entry of the inputs, outputs or steps" <| fun _ ->
+            let cases =
+                [ "an input", workflow [ "inputs:"; "  a: {$import: port.yml}" ] [ "outputs: {}" ] [ "steps: {}" ], "inputs.a", "an entry of the inputs"
+                  "an output", workflow [ "inputs: {}" ] [ "outputs:"; "  o: {$import: port.yml}" ] [ "steps: {}" ], "outputs.o", "an entry of the outputs"
+                  "a step", workflow [ "inputs: {}" ] [ "outputs: {}" ] [ "steps:"; "  s: {$import: step.yml}" ], "steps.s", "an entry of the steps" ]
+            for (name, text, path, what) in cases do
+                match decodeError (fun () -> Decode.decodeWorkflow text |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the entry" name)
+                    Expect.stringContains error.Message ("A directive cannot stand for the value of " + what) (sprintf "%s: the error should say what is wrong" name)
+                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+                | None -> failwith (sprintf "%s must fail" name)
+        testCase "an include or a directive with another field cannot stand for an entry" <| fun _ ->
+            let cases =
+                [ "an include among the inputs", workflow [ "inputs:"; "  - {$include: p.yml}" ] [ "outputs: {}" ] [ "steps: {}" ], "inputs[0]", "An $include yields the text of a file, but an entry of the inputs takes an object."
+                  "an include among the outputs", workflow [ "inputs: {}" ] [ "outputs:"; "  - {$include: p.yml}" ] [ "steps: {}" ], "outputs[0]", "An $include yields the text of a file, but an entry of the outputs takes an object."
+                  "an include among the steps", workflow [ "inputs: {}" ] [ "outputs: {}" ] [ "steps:"; "  - {$include: p.yml}" ], "steps[0]", "An $include yields the text of a file, but an entry of the steps takes an object."
+                  "an import with another field among the inputs", workflow [ "inputs:"; "  - {$import: p.yml, id: a}" ] [ "outputs: {}" ] [ "steps: {}" ], "inputs[0]", "A directive has exactly one field"
+                  "an include as the whole outputs", workflow [ "inputs: {}" ] [ "outputs: {$include: o.yml}" ] [ "steps: {}" ], "outputs", "An $include yields the text of a file, but the outputs field takes an object." ]
+            for (name, text, path, message) in cases do
+                match decodeError (fun () -> Decode.decodeWorkflow text |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the entry" name)
+                    Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
+                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+                | None -> failwith (sprintf "%s must fail" name)
+        testCase "the processing unit gives the objects of the value entries" <| fun _ ->
+            let unit = CWLProcessingUnit.Workflow (Decode.decodeWorkflow mixed)
+            Expect.equal (CWLProcessingUnit.getInputs unit |> Seq.map (fun input -> input.Name) |> List.ofSeq) [ "a" ] "The processing unit reads the input only."
+            Expect.equal (CWLProcessingUnit.getOutputs unit |> Seq.map (fun output -> output.Name) |> List.ofSeq) [ "o" ] "The processing unit reads the output only."
+    ]
+
+let testImportedStepPorts =
+    let workflow (stepLines: string list) =
+        String.concat "\n" ([ "cwlVersion: v1.2"; "class: Workflow"; "inputs: {}"; "outputs: {}"; "steps:"; "  s:" ] @ (stepLines |> List.map (fun line -> "    " + line)) @ [ "" ])
+    let referenced (portLines: string list) = workflow ([ "run: t.cwl" ] @ portLines)
+    let stepOf (text: string) = (ListEntry.values (Decode.decodeWorkflow text).Steps).[0]
+    let mixed =
+        referenced [ "in:"; "  - {$import: more-in.yml}"; "  - id: a"; "    source: x"; "out:"; "  - r"; "  - {$import: more-out.yml}"; "  - {$include: id.txt}" ]
+    let failsAt (name: string) (text: string) (path: string) (message: string) =
+        match decodeError (fun () -> Decode.decodeWorkflow text |> ignore) with
+        | Some error ->
+            Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the entry" name)
+            Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
+            Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+        | None -> failwith (sprintf "%s must fail" name)
+    testList "Imported step inputs and outputs" [
+        testCase "an import stands in its place among the step inputs and outputs, is written back there and reads back equal" <| fun _ ->
+            let decoded = Decode.decodeWorkflow mixed
+            let step = (ListEntry.values decoded.Steps).[0]
+            Expect.equal (List.ofSeq step.In |> List.map (ListEntry.map (fun input -> input.Id))) [ ListEntry.Imported "more-in.yml"; ListEntry.Value "a" ] "The import comes first, then the step input."
+            Expect.equal (List.ofSeq step.Out) [ StepOutputString "r"; StepOutputImport "more-out.yml"; StepOutputInclude "id.txt" ] "The outputs keep their order and their kinds."
+            let written = Encode.encodeWorkflowDescription decoded
+            for position in [ "- {$import: more-in.yml}"; "- {$import: more-out.yml}"; "- {$include: id.txt}" ] do
+                Expect.stringContains written position (sprintf "%s is written as an entry.\n%s" position written)
+            Expect.isTrue (written.IndexOf "more-in.yml" < written.IndexOf "id: a") "The import stays in front of the step input."
+            let reread = Decode.decodeWorkflow written
+            Expect.equal reread decoded "The written text should decode to the same workflow."
+            Expect.equal (Encode.encodeWorkflowDescription reread) written "Writing again should give the same text."
+        testCase "the getters give the step inputs and outputs that the document writes out and leave the directives out" <| fun _ ->
+            let step = stepOf mixed
+            Expect.equal (WorkflowStep.getInputs step |> Seq.map (fun input -> input.Id) |> List.ofSeq) [ "a" ] "Only the step input is an object."
+            Expect.equal (List.ofSeq (WorkflowStep.getOutputs step)) [ StepOutputString "r" ] "Only the output r is written out."
+            Expect.equal (step.Out |> Seq.map StepOutput.tryId |> List.ofSeq) [ Some "r"; None; None ] "A directive has no id."
+            let inputs = WorkflowStep.getInputs step
+            inputs.Clear()
+            Expect.equal step.In.Count 2 "The list is a new one, so clearing it leaves the step as it was."
+        testCase "a field that is one directive keeps that spelling, and the list of that one import is equal" <| fun _ ->
+            let whole = referenced [ "in: {$import: in.yml}"; "out: {$import: out.yml}" ]
+            let listed = referenced [ "in: [{$import: in.yml}]"; "out:"; "  - {$import: out.yml}" ]
+            let decodedWhole = Decode.decodeWorkflow whole
+            let decodedListed = Decode.decodeWorkflow listed
+            Expect.equal (List.ofSeq (stepOf whole).In) [ ListEntry.Imported "in.yml" ] "The step inputs are the import, and not an input with the id $import."
+            Expect.equal (List.ofSeq (stepOf whole).Out) [ StepOutputImport "out.yml" ] "The outputs are the import."
+            Expect.equal decodedWhole decodedListed "The spelling is layout, so the workflows are equal."
+            let writtenWhole = Encode.encodeWorkflowDescription decodedWhole
+            for field in [ "in: {$import: in.yml}"; "out: {$import: out.yml}" ] do
+                Expect.stringContains writtenWhole field (sprintf "%s keeps its spelling.\n%s" field writtenWhole)
+            Expect.equal (Decode.decodeWorkflow writtenWhole) decodedWhole "The written text should decode to the same workflow."
+            let writtenListed = Encode.encodeWorkflowDescription decodedListed
+            Expect.isFalse (writtenListed.Contains "in: {$import") "The listed spelling is written as a list."
+            Expect.stringContains writtenListed "- {$import: in.yml}" "The listed import is an entry."
+        testCase "a list with an import and a repeated id is written as a list and reads back" <| fun _ ->
+            let text = referenced [ "in:"; "  - {id: a, source: x}"; "  - {$import: more.yml}"; "  - {id: a, source: y}"; "out: []" ]
+            let decoded = Decode.decodeWorkflow text
+            Expect.equal (Decode.decodeWorkflow (Encode.encodeWorkflowDescription decoded)) decoded "The written text should decode to the same workflow."
+        testCase "a directive cannot stand for the value of a map entry of the step inputs" <| fun _ ->
+            for (name, line) in [ "an import", "in: {a: {$import: p.yml}}"; "an include", "in: {a: {$include: p.yml}}" ] do
+                failsAt name (referenced [ line; "out: []" ]) "steps.s.in.a" "A directive cannot stand for the value of an entry of the in field"
+        testCase "an include or a directive with another field cannot stand for a step input" <| fun _ ->
+            let cases =
+                [ "an include among the step inputs", referenced [ "in: [{$include: p.yml}]"; "out: []" ], "steps.s.in[0]", "An $include yields the text of a file, but an entry of the in field takes an object."
+                  "an import with another field among the step inputs", referenced [ "in: [{$import: p.yml, id: a}]"; "out: []" ], "steps.s.in[0]", "A directive has exactly one field"
+                  "an include as the whole in field", referenced [ "in: {$include: p.yml}"; "out: []" ], "steps.s.in", "An $include yields the text of a file, but the in field of a step takes an object."
+                  "an include as the whole out field", referenced [ "in: {}"; "out: {$include: p.yml}" ], "steps.s.out", "An $include yields the text of a file, but the out field of a step takes an object."
+                  "an import with another field among the outputs", referenced [ "in: {}"; "out: [{$import: p.yml, id: r}]" ], "steps.s.out[0]", "A directive has exactly one field" ]
+            for (name, text, path, message) in cases do
+                failsAt name text path message
+        testCase "the out field is a list, so a map of outputs is still an error" <| fun _ ->
+            failsAt "a map of outputs" (referenced [ "in: {}"; "out: {r: {$import: p.yml}}" ]) "steps.s.out" "Expected a list of outputs, found a mapping."
+        testCase "the out field of a step with an inline process is checked for the entries that name an output" <| fun _ ->
+            let inlineStep (outLine: string) =
+                workflow [ "run:"; "  class: CommandLineTool"; "  baseCommand: echo"; "  inputs: {}"; "  outputs:"; "    r: stdout"; "in: {}"; outLine ]
+            Expect.equal (stepOf (inlineStep "out: [r, {$import: more.yml}, {$include: id.txt}]")).Out.Count 3 "The directives stand for outputs of files."
+            failsAt "a name beside an import" (inlineStep "out: [other, {$import: more.yml}]") "steps.s.out[0]" "has no output of that name"
+    ]
+
 let testCWLWorkflowDescriptionDecode =
     testList "Decode" [
         testCase "CWLVersion" <| fun _ ->
@@ -67,7 +284,7 @@ let testCWLWorkflowDescriptionDecode =
                 CWLInput ("paramsPSM", CWLType.File)
                 // Note: sampleRecord has complex type and will be checked separately
             |]
-            let actual = decodeCWLWorkflowDescription.Inputs
+            let actual = (ListEntry.values decodeCWLWorkflowDescription.Inputs)
             // Check the simple inputs (first 8)
             for i = 0 to 7 do
                 Expect.equal actual.[i].Name expected.[i].Name ""
@@ -77,7 +294,7 @@ let testCWLWorkflowDescriptionDecode =
             Expect.equal actual.Count 9 "Should have 9 inputs including sampleRecord"
             Expect.equal actual.[8].Name "sampleRecord" ""
         testCase "sampleRecord complex type" <| fun _ ->
-            let sampleRecordInput = decodeCWLWorkflowDescription.Inputs.[8]
+            let sampleRecordInput = (ListEntry.values decodeCWLWorkflowDescription.Inputs).[8]
             Expect.equal sampleRecordInput.Name "sampleRecord" ""
             Expect.isSome sampleRecordInput.Type_ "sampleRecord should have a type"
             match sampleRecordInput.Type_ with
@@ -89,7 +306,7 @@ let testCWLWorkflowDescriptionDecode =
                 | _ -> failwithf "Expected Record for array items but got: %A" arraySchema.Items
             | _ -> failwithf "Expected Array for sampleRecord type but got: %A" sampleRecordInput.Type_
         testList "steps" [
-            let workflowSteps = decodeCWLWorkflowDescription.Steps
+            let workflowSteps = (ListEntry.values decodeCWLWorkflowDescription.Steps)
             testList "IDs" [
                 testCase "MzMLToMzlite" <| fun _ ->
                     let expected = "MzMLToMzlite"
@@ -123,7 +340,7 @@ let testCWLWorkflowDescriptionDecode =
                         mkStepInput "outputDirectory" (Some (ResizeArray [|"outputMzML"|])) None
                         mkStepInput "parallelismLevel" (Some (ResizeArray [|"cores"|])) None
                     |]
-                    let actual = workflowSteps.[0].In
+                    let actual = WorkflowStep.getInputs workflowSteps.[0]
                     Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
                         Expect.equal actual.Id expected.Id ""
                         Expect.sequenceEqual actual.Source.Value expected.Source.Value ""
@@ -148,7 +365,7 @@ let testCWLWorkflowDescriptionDecode =
                         mkStepInput "outputDirectory" (Some (ResizeArray [|"outputPSM"|])) None
                         mkStepInput "parallelismLevel" (Some (ResizeArray [|"cores"|])) None
                     |]
-                    let actual = workflowSteps.[1].In
+                    let actual = WorkflowStep.getInputs workflowSteps.[1]
                     Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
                         Expect.equal actual.Id expected.Id ""
                         Expect.sequenceEqual actual.Source.Value expected.Source.Value ""
@@ -181,7 +398,7 @@ let testCWLWorkflowDescriptionDecode =
                 CWLOutput("mzlite", CWLType.Directory, outputSource = OutputSource.Single "MzMLToMzlite/dir")
                 CWLOutput("psm", CWLType.Directory, outputSource = OutputSource.Single "PeptideSpectrumMatching/dir")
             |]
-            let actual = decodeCWLWorkflowDescription.Outputs
+            let actual = (ListEntry.values decodeCWLWorkflowDescription.Outputs)
             for i = 0 to actual.Count - 1 do
                 Expect.equal actual.[i].Name expected.[i].Name ""
                 Expect.equal actual.[i].OutputBinding expected.[i].OutputBinding ""
@@ -194,20 +411,20 @@ let testCWLWorkflowDescriptionDecode =
             Expect.isNone decoded.Metadata "Intent should not be captured as overflow metadata."
         testCase "extended step fields decode" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithExtendedStepFile
-            let step = decoded.Steps.[0]
-            Expect.equal step.Label (Some "Example step") ""
-            Expect.equal step.Doc (Some "Step docs") ""
+            let step = (ListEntry.values decoded.Steps).[0]
+            Expect.equal step.Label (Some (SchemaSaladString.Literal "Example step")) ""
+            Expect.equal step.Doc (Some (DocText.literal "Step docs")) ""
             Expect.sequenceEqual step.Scatter.Value (ResizeArray [|"input1"|]) ""
             Expect.equal step.ScatterMethod (Some DotProduct) ""
-            Expect.equal step.In.[0].LoadContents (Some true) ""
-            Expect.equal step.In.[0].LoadListing (Some LoadListingEnum.DeepListing) ""
-            Expect.equal step.In.[0].Label (Some "Input label") ""
-            Expect.equal step.In.[0].LinkMerge (Some MergeNested) ""
+            Expect.equal (WorkflowStep.getInputs step).[0].LoadContents (Some true) ""
+            Expect.equal (WorkflowStep.getInputs step).[0].LoadListing (Some LoadListingEnum.DeepListing) ""
+            Expect.equal (WorkflowStep.getInputs step).[0].Label (Some (SchemaSaladString.Literal "Input label")) ""
+            Expect.equal (WorkflowStep.getInputs step).[0].LinkMerge (Some MergeNested) ""
             let expectedOut = ResizeArray [| StepOutputRecord (StepOutputParameter.create "out") |]
             Expect.sequenceEqual step.Out expectedOut ""
         testCase "inline run commandline tool decode" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithInlineRunCommandLineToolFile
-            match decoded.Steps.[0].Run with
+            match (ListEntry.values decoded.Steps).[0].Run with
             | RunCommandLineTool toolObj ->
                 match toolObj with
                 | :? CWLToolDescription as tool ->
@@ -218,13 +435,13 @@ let testCWLWorkflowDescriptionDecode =
                 failwithf "Expected RunCommandLineTool but got %A" other
         testCase "an inline run takes the version of the enclosing process and ignores its own cwlVersion" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.InlineRunVersions.workflowFile
-            let step (id: string) = decoded.Steps |> Seq.find (fun s -> s.Id = id)
+            let step (id: string) = (ListEntry.values decoded.Steps) |> Seq.find (fun s -> s.Id = id)
             let tool (run: WorkflowStepRun) = Expect.wantSome (WorkflowStepRunOps.tryGetTool run) "Expected an inline tool"
             Expect.equal (tool (step "plain").Run).CWLVersion "v1.2" "A run without a version takes the version of the workflow."
             Expect.equal (tool (step "own_version").Run).CWLVersion "v1.2" "A run that names v1.0 uses the version of the workflow."
             let nested = Expect.wantSome (WorkflowStepRunOps.tryGetWorkflow (step "nested").Run) "Expected an inline workflow"
             Expect.equal nested.CWLVersion "v1.2" "An inline workflow without a version takes the version of the enclosing one."
-            Expect.equal (tool nested.Steps.[0].Run).CWLVersion "v1.2" "The process in it takes that version."
+            Expect.equal (tool (ListEntry.values nested.Steps).[0].Run).CWLVersion "v1.2" "The process in it takes that version."
         testCase "a process without a cwlVersion is a decode error when no process encloses it" <| fun _ ->
             let yaml = """class: CommandLineTool
 baseCommand: echo
@@ -287,55 +504,55 @@ steps:
     out: []"""
             for (name, field) in [ "no value", ""; "an older version", " v1.0"; "a draft", " draft-3"; "the version itself", " v1.2"; "a newer version", " v1.3"; "a text that is no version", " banana" ] do
                 let decoded = Decode.decodeWorkflow (head + field + tail)
-                let tool = Expect.wantSome (WorkflowStepRunOps.tryGetTool decoded.Steps.[0].Run) "The step runs an inline tool."
+                let tool = Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values decoded.Steps).[0].Run) "The step runs an inline tool."
                 Expect.equal tool.CWLVersion "v1.2" $"{name}: the inline run takes the version of the workflow."
         testCase "step input array form decode" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithInputArrayStepFile
-            let stepInput = decoded.Steps.[0].In.[0]
+            let stepInput = (WorkflowStep.getInputs (ListEntry.values decoded.Steps).[0]).[0]
             Expect.equal stepInput.Id "in1" ""
             Expect.sequenceEqual stepInput.Source.Value (ResizeArray [|"input1"|]) ""
-            Expect.equal stepInput.Label (Some "Input in array syntax") ""
+            Expect.equal stepInput.Label (Some (SchemaSaladString.Literal "Input in array syntax")) ""
         testCase "workflow with no steps decodes to empty" <| fun _ ->
             let yaml = TestObjects.CWL.Workflow.workflowWithNoStepsFile
             let decoded = Decode.decodeWorkflow yaml
-            Expect.equal decoded.Steps.Count 0 ""
+            Expect.equal (ListEntry.values decoded.Steps).Count 0 ""
         testCase "sequence-form workflow ports with comments decode" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithSequencePortsAndCommentsFile
-            Expect.equal decoded.Inputs.Count 2 "Sequence-form inputs should decode."
-            Expect.equal decoded.Outputs.Count 2 "Sequence-form outputs should decode."
-            Expect.equal decoded.Steps.Count 2 "Sequence-form steps should decode after comments."
-            Expect.isTrue (decoded.Inputs |> Seq.exists (fun input -> input.Name = "input_data")) "input_data should decode."
-            Expect.isTrue (decoded.Outputs |> Seq.exists (fun output -> output.Name = "result_data")) "result_data output should decode."
-            Expect.equal decoded.Doc (Some "Workflow doc line.\n# This line is doc text, not a YAML comment.\n") "Block scalar comment-looking text should be preserved."
+            Expect.equal (ListEntry.values decoded.Inputs).Count 2 "Sequence-form inputs should decode."
+            Expect.equal (ListEntry.values decoded.Outputs).Count 2 "Sequence-form outputs should decode."
+            Expect.equal (ListEntry.values decoded.Steps).Count 2 "Sequence-form steps should decode after comments."
+            Expect.isTrue ((ListEntry.values decoded.Inputs) |> Seq.exists (fun input -> input.Name = "input_data")) "input_data should decode."
+            Expect.isTrue ((ListEntry.values decoded.Outputs) |> Seq.exists (fun output -> output.Name = "result_data")) "result_data output should decode."
+            Expect.equal decoded.Doc (Some (DocText.literal "Workflow doc line.\n# This line is doc text, not a YAML comment.\n")) "Block scalar comment-looking text should be preserved."
         testCase "sequence-form workflow fields with blank separator lines decode" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithBlankSeparatedSequenceFieldsFile
-            Expect.equal decoded.Inputs.Count 2 "Blank lines before and between sequence-form inputs should decode."
-            Expect.equal decoded.Outputs.Count 1 "Blank lines before sequence-form outputs should decode."
-            Expect.equal decoded.Steps.Count 1 "Blank lines before sequence-form steps should decode."
-            Expect.equal decoded.Steps.[0].In.Count 2 "Blank lines before and between nested step inputs should decode."
-            Expect.isTrue (decoded.Inputs |> Seq.exists (fun input -> input.Name = "trial_id")) "trial_id should decode."
-            Expect.equal decoded.Steps.[0].Id "collect" "The step following blank separators should stay mapped under steps."
+            Expect.equal (ListEntry.values decoded.Inputs).Count 2 "Blank lines before and between sequence-form inputs should decode."
+            Expect.equal (ListEntry.values decoded.Outputs).Count 1 "Blank lines before sequence-form outputs should decode."
+            Expect.equal (ListEntry.values decoded.Steps).Count 1 "Blank lines before sequence-form steps should decode."
+            Expect.equal (ListEntry.values decoded.Steps).[0].In.Count 2 "Blank lines before and between nested step inputs should decode."
+            Expect.isTrue ((ListEntry.values decoded.Inputs) |> Seq.exists (fun input -> input.Name = "trial_id")) "trial_id should decode."
+            Expect.equal (ListEntry.values decoded.Steps).[0].Id "collect" "The step following blank separators should stay mapped under steps."
         testCase "comment-separated map-form workflow inputs decode" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithLowerIndentedCommentMapInputsFile
-            Expect.equal decoded.Inputs.Count 2 "Comment-separated map-form inputs should decode."
-            Expect.isTrue (decoded.Inputs |> Seq.exists (fun input -> input.Name = "first")) "first input should decode."
-            Expect.isTrue (decoded.Inputs |> Seq.exists (fun input -> input.Name = "second")) "second input should decode."
+            Expect.equal (ListEntry.values decoded.Inputs).Count 2 "Comment-separated map-form inputs should decode."
+            Expect.isTrue ((ListEntry.values decoded.Inputs) |> Seq.exists (fun input -> input.Name = "first")) "first input should decode."
+            Expect.isTrue ((ListEntry.values decoded.Inputs) |> Seq.exists (fun input -> input.Name = "second")) "second input should decode."
         testCase "comment before sequence-form workflow inputs decodes" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithLowerIndentedCommentBeforeSequenceInputFile
-            Expect.equal decoded.Inputs.Count 1 "Comment before sequence-form inputs should decode."
-            Expect.equal decoded.Inputs.[0].Name "first" "first input should decode."
+            Expect.equal (ListEntry.values decoded.Inputs).Count 1 "Comment before sequence-form inputs should decode."
+            Expect.equal (ListEntry.values decoded.Inputs).[0].Name "first" "first input should decode."
         testCase "multiline valueFrom expression decodes as one string" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithMultilineValueFromFile
-            let step = decoded.Steps |> Seq.find (fun step -> step.Id = "expr_step")
-            let stepInput = step.In |> Seq.find (fun input -> input.Id = "reads")
-            let valueFrom = Expect.wantSome stepInput.ValueFrom "valueFrom should decode."
+            let step = (ListEntry.values decoded.Steps) |> Seq.find (fun step -> step.Id = "expr_step")
+            let stepInput = WorkflowStep.getInputs step |> Seq.find (fun input -> input.Id = "reads")
+            let valueFrom = (Expect.wantSome stepInput.ValueFrom "valueFrom should decode.").Value
             Expect.stringContains valueFrom "${" "valueFrom should include the expression opener."
             Expect.stringContains valueFrom "return reads;" "valueFrom should include the expression body."
             Expect.stringContains valueFrom "}" "valueFrom should include the expression closer."
         testCase "optional array shorthand input types decode" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithOptionalArrayInputTypesFile
             let assertOptionalArray name expectedItem =
-                let input = decoded.Inputs |> Seq.find (fun input -> input.Name = name)
+                let input = (ListEntry.values decoded.Inputs) |> Seq.find (fun input -> input.Name = name)
                 match input.Type_ with
                 | Some (Union types) ->
                     Expect.isTrue (types |> Seq.exists ((=) Null)) $"{name} should include null in the union."
@@ -349,24 +566,24 @@ steps:
             assertOptionalArray "optional_dirs" (Directory)
         testCase "inline enum and record schema union types decode" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithInlineSchemaUnionTypesFile
-            let mode = decoded.Inputs |> Seq.find (fun input -> input.Name = "mode")
+            let mode = (ListEntry.values decoded.Inputs) |> Seq.find (fun input -> input.Name = "mode")
             match mode.Type_ with
             | Some (Union types) ->
                 Expect.isTrue (types |> Seq.exists ((=) Null)) "mode should include null in the union."
                 match types |> Seq.choose (function | Enum schema -> Some schema | _ -> None) |> Seq.toList with
                 | [enumSchema] ->
                     Expect.equal enumSchema.Name (Some "Mode") "Inline enum name should decode."
-                    Expect.sequenceEqual enumSchema.Symbols (ResizeArray [| "fast"; "stringent" |]) "Inline enum symbols should decode."
+                    Expect.sequenceEqual (InputEnumSchema.getSymbols enumSchema) (ResizeArray [| "fast"; "stringent" |]) "Inline enum symbols should decode."
                 | other -> failwithf "Expected one inline enum schema, got %A" other
             | other -> failwithf "Expected mode to decode as a union, got %A" other
-            let recordPayload = decoded.Inputs |> Seq.find (fun input -> input.Name = "record_payload")
+            let recordPayload = (ListEntry.values decoded.Inputs) |> Seq.find (fun input -> input.Name = "record_payload")
             match recordPayload.Type_ with
             | Some (Union types) ->
                 Expect.isTrue (types |> Seq.exists ((=) Null)) "record_payload should include null in the union."
                 match types |> Seq.choose (function | Record schema -> Some schema | _ -> None) |> Seq.toList with
                 | [recordSchema] ->
                     Expect.equal recordSchema.Name (Some "Payload") "Inline record name should decode."
-                    let fields = Expect.wantSome recordSchema.Fields "Inline record fields should decode."
+                    let fields = Expect.wantSome recordSchema.Fields "Inline record fields should decode." |> ListEntry.values
                     let sampleId = fields |> Seq.find (fun field -> field.Name = "sample_id")
                     Expect.equal sampleId.Type String "sample_id type should decode."
                     let files = fields |> Seq.find (fun field -> field.Name = "files")
@@ -379,10 +596,10 @@ steps:
             Expect.isNone (DynObj.tryGetTypedPropertyValue<obj> "fields" decoded) "Nested record fields should not become workflow overflow."
         testCase "decodeWorkflowWithWarnings skips malformed unnamed entries" <| fun _ ->
             let result = Decode.decodeWorkflowWithWarnings TestObjects.CWL.Workflow.workflowWithUnnamedMalformedEntriesFile
-            Expect.equal result.Value.Inputs.Count 1 "Only valid input should decode."
-            Expect.equal result.Value.Outputs.Count 1 "Only valid output should decode."
-            Expect.equal result.Value.Steps.Count 1 "Only valid step should decode."
-            Expect.equal result.Value.Steps.[0].In.Count 1 "Only valid step input should decode."
+            Expect.equal (ListEntry.values result.Value.Inputs).Count 1 "Only valid input should decode."
+            Expect.equal (ListEntry.values result.Value.Outputs).Count 1 "Only valid output should decode."
+            Expect.equal (ListEntry.values result.Value.Steps).Count 1 "Only valid step should decode."
+            Expect.equal (ListEntry.values result.Value.Steps).[0].In.Count 1 "Only valid step input should decode."
             Expect.equal result.Warnings.Count 4 "Each malformed unnamed entry should produce one warning."
             Expect.sequenceEqual
                 (result.Warnings |> Seq.map (fun w -> w.Path) |> Seq.sort |> ResizeArray)
@@ -470,10 +687,10 @@ steps:
                 "Malformed step input ids should fail rather than become skipped unnamed step inputs."
         testCase "unknown fields on named ports and steps are preserved as dynamic properties" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithUnknownPortFieldsFile
-            let input = decoded.Inputs |> Seq.find (fun input -> input.Name = "sample")
-            let output = decoded.Outputs |> Seq.find (fun output -> output.Name = "result")
-            let step = decoded.Steps |> Seq.find (fun step -> step.Id = "step1")
-            let stepInput = step.In |> Seq.find (fun input -> input.Id = "sample")
+            let input = (ListEntry.values decoded.Inputs) |> Seq.find (fun input -> input.Name = "sample")
+            let output = (ListEntry.values decoded.Outputs) |> Seq.find (fun output -> output.Name = "result")
+            let step = (ListEntry.values decoded.Steps) |> Seq.find (fun step -> step.Id = "step1")
+            let stepInput = WorkflowStep.getInputs step |> Seq.find (fun input -> input.Id = "sample")
             let inputBinding = Expect.wantSome input.InputBinding "Input binding should decode."
             Expect.equal
                 (DynObj.tryGetTypedPropertyValue<string> "arc:note" input)
@@ -505,12 +722,12 @@ steps:
                 "Unknown step input fields should be preserved on the step input."
         testCase "steps array form decode with when/pickValue/doc/default" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithStepsArrayFile
-            let step = decoded.Steps.[0]
-            let stepInput = step.In.[0]
+            let step = (ListEntry.values decoded.Steps).[0]
+            let stepInput = (WorkflowStep.getInputs step).[0]
             Expect.equal step.Id "step1" ""
             Expect.equal step.When_ (Some (SchemaSaladString.Literal "$(inputs.input1 != null)")) ""
             Expect.equal stepInput.PickValue (Some FirstNonNull) ""
-            Expect.equal stepInput.Doc (Some "Input docs") ""
+            Expect.equal stepInput.Doc (Some (DocText.literal "Input docs")) ""
             let defaultValue =
                 stepInput.DefaultValue
                 |> Option.bind tryYamlScalarString
@@ -518,22 +735,22 @@ steps:
         testCase "inline run workflow decode" <| fun _ ->
             let yaml = TestObjects.CWL.Workflow.workflowWithInlineRunWorkflowFile
             let decoded = Decode.decodeWorkflow yaml
-            let runValue = decoded.Steps.[0].Run
+            let runValue = (ListEntry.values decoded.Steps).[0].Run
             let isRunWorkflow =
                 match runValue with
                 | RunWorkflow _ -> true
                 | _ -> false
             Expect.isTrue isRunWorkflow $"Expected RunWorkflow but got %A{runValue}"
             let workflow = Expect.wantSome (WorkflowStepRunOps.tryGetWorkflow runValue) "Expected inline workflow payload"
-            Expect.equal workflow.Steps.Count 1 ""
-            Expect.equal workflow.Steps.[0].Id "inner" ""
+            Expect.equal (ListEntry.values workflow.Steps).Count 1 ""
+            Expect.equal (ListEntry.values workflow.Steps).[0].Id "inner" ""
         testCase "workflow outputSource array form decodes and roundtrips" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithOutputSourceArrayFile
             let encoded = Encode.encodeWorkflowDescription decoded
             let roundTripped = Decode.decodeWorkflow encoded
             Expect.stringContains encoded "outputSource:" "Array-form outputSource should be emitted."
             let mergedOutput =
-                roundTripped.Outputs
+                (ListEntry.values roundTripped.Outputs)
                 |> Seq.find (fun output -> output.Name = "merged")
             let outputSources = mergedOutput.GetOutputSources()
             Expect.sequenceEqual outputSources (ResizeArray [| "step1/out"; "step2/out" |]) "outputSource entries should survive decode/encode/decode."
@@ -542,7 +759,7 @@ steps:
             let encoded = Encode.encodeWorkflowDescription decoded
             let roundTripped = Decode.decodeWorkflow encoded
             Expect.stringContains encoded "class: Operation" "Operation run should roundtrip with class marker."
-            Expect.equal roundTripped.Steps.[0].Id "op" "Operation-backed step should survive roundtrip."
+            Expect.equal (ListEntry.values roundTripped.Steps).[0].Id "op" "Operation-backed step should survive roundtrip."
         testCase "invalid pickValue fails decode" <| fun _ ->
             let invalidPickValue = TestObjects.CWL.Workflow.workflowWithInvalidPickValueFile
             Expect.throws (fun _ -> Decode.decodeWorkflow invalidPickValue |> ignore) "Invalid pickValue should fail"
@@ -551,7 +768,7 @@ steps:
             Expect.throws (fun _ -> Decode.decodeWorkflow invalidScatter |> ignore) "Invalid scatterMethod should fail"
         testCase "inline ExpressionTool run decode succeeds" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithUnsupportedInlineRunClassFile
-            let runValue = decoded.Steps.[0].Run
+            let runValue = (ListEntry.values decoded.Steps).[0].Run
             let isRunExpressionTool =
                 match runValue with
                 | RunExpressionTool _ -> true
@@ -564,9 +781,9 @@ steps:
             Expect.equal expressionTool.Expression (SchemaSaladString.Literal "$(null)") ""
         testCase "inline ExpressionTool chain decodes all steps" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithInlineExpressionToolChainFile
-            Expect.equal decoded.Steps.Count 3 "Should have 3 steps"
+            Expect.equal (ListEntry.values decoded.Steps).Count 3 "Should have 3 steps"
             for i in 0..2 do
-                let step = decoded.Steps.[i]
+                let step = (ListEntry.values decoded.Steps).[i]
                 let expressionTool =
                     Expect.wantSome
                         (WorkflowStepRunOps.tryGetExpressionTool step.Run)
@@ -574,36 +791,36 @@ steps:
                 Expect.isTrue (expressionTool.Expression.Value.Length > 0) $"Step {i} expression should be non-empty"
         testCase "loadContents on inline ExpressionTool input decoded" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithLoadContentsExpressionToolFile
-            let step = decoded.Steps.[0]
+            let step = (ListEntry.values decoded.Steps).[0]
             let expressionTool =
                 Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool step.Run) "Step run should be inline ExpressionTool"
             let hasLoadContentsOnStepInput =
-                step.In |> Seq.exists (fun si -> si.LoadContents = Some true)
+                WorkflowStep.getInputs step |> Seq.exists (fun si -> si.LoadContents = Some true)
             let hasValueFromOnStepInput =
-                step.In |> Seq.exists (fun si -> si.ValueFrom.IsSome)
+                WorkflowStep.getInputs step |> Seq.exists (fun si -> si.ValueFrom.IsSome)
             Expect.isTrue hasLoadContentsOnStepInput "Step input should have loadContents"
             Expect.isTrue hasValueFromOnStepInput "Step input should have valueFrom"
             let expressionToolInputs = expressionTool.Inputs |> Option.defaultValue (ResizeArray())
             Expect.equal expressionToolInputs.Count 1 "Inline expression tool should have one input"
         testCase "mixed workflow with CommandLineTool and ExpressionTool steps" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithMixedToolAndExpressionStepFile
-            Expect.equal decoded.Steps.Count 2 ""
-            match decoded.Steps.[0].Run with
+            Expect.equal (ListEntry.values decoded.Steps).Count 2 ""
+            match (ListEntry.values decoded.Steps).[0].Run with
             | RunString _ -> ()
             | other -> Expect.isTrue false $"Step 0 should be RunString but got %A{other}"
             let isExpressionToolStep =
-                match decoded.Steps.[1].Run with
+                match (ListEntry.values decoded.Steps).[1].Run with
                 | RunExpressionTool _ -> true
                 | _ -> false
             Expect.isTrue isExpressionToolStep "Step 1 should be RunExpressionTool"
         testCase "chained ExpressionTool array pipeline type verification" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithInlineExpressionToolChainFile
-            let step1 = Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool decoded.Steps.[0].Run) "Step 1 should be ExpressionTool"
-            let step2 = Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool decoded.Steps.[1].Run) "Step 2 should be ExpressionTool"
-            let step3 = Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool decoded.Steps.[2].Run) "Step 3 should be ExpressionTool"
+            let step1 = Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool (ListEntry.values decoded.Steps).[0].Run) "Step 1 should be ExpressionTool"
+            let step2 = Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool (ListEntry.values decoded.Steps).[1].Run) "Step 2 should be ExpressionTool"
+            let step3 = Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool (ListEntry.values decoded.Steps).[2].Run) "Step 3 should be ExpressionTool"
 
-            Expect.equal step1.Inputs.Value.[0].Type_ (Some CWLType.Int) "step1 input should be int"
-            match step1.Outputs.[0].Type_ with
+            Expect.equal (ListEntry.values step1.Inputs.Value).[0].Type_ (Some CWLType.Int) "step1 input should be int"
+            match (ListEntry.values step1.Outputs).[0].Type_ with
             | Some (Array arraySchema) ->
                 Expect.equal arraySchema.Items CWLType.Int "step1 output should be int[]"
             | other ->
@@ -612,18 +829,18 @@ steps:
             // Asserted via `if`/bool rather than a `match` with a unit success branch: Fable's
             // Python backend drops empty branches from a match in statement position, which would
             // leave `Expect.isTrue false` unconditional and make this assertion always fail.
-            let step2InputType = step2.Inputs.Value.[0].Type_
+            let step2InputType = (ListEntry.values step2.Inputs.Value).[0].Type_
             let isArray = match step2InputType with Some (Array _) -> true | _ -> false
             Expect.isTrue isArray $"step2 input should be int[] but got %A{step2InputType}"
 
-            Expect.equal step3.Outputs.[0].Type_ (Some CWLType.Int) "step3 output should be int"
+            Expect.equal (ListEntry.values step3.Outputs).[0].Type_ (Some CWLType.Int) "step3 output should be int"
         testCase "step-level loadContents with valueFrom on ExpressionTool" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithLoadContentsExpressionToolFile
-            let step = decoded.Steps.[0]
+            let step = (ListEntry.values decoded.Steps).[0]
             let stepInputHasLoadContents =
-                step.In |> Seq.exists (fun si -> si.LoadContents = Some true)
+                WorkflowStep.getInputs step |> Seq.exists (fun si -> si.LoadContents = Some true)
             let stepInputHasValueFrom =
-                step.In |> Seq.exists (fun si -> si.ValueFrom.IsSome)
+                WorkflowStep.getInputs step |> Seq.exists (fun si -> si.ValueFrom.IsSome)
             Expect.isTrue stepInputHasLoadContents "Step input should have loadContents"
             Expect.isTrue stepInputHasValueFrom "Step input should have valueFrom"
         testCase "advanced workflow fixture decodes and preserves full content" <| fun _ ->
@@ -644,7 +861,7 @@ steps:
             Expect.equal hints.Count 3 "All workflow hints should decode."
             match hints.[0] with
             | KnownHint (DockerRequirement dockerRequirement) ->
-                Expect.equal dockerRequirement.DockerImageId (Some "devcontainer") "Docker hint should keep dockerImageId."
+                Expect.equal dockerRequirement.DockerImageId (Some (SchemaSaladString.Literal "devcontainer")) "Docker hint should keep dockerImageId."
                 Expect.equal dockerRequirement.DockerFile (Some (SchemaSaladString.Include "./Dockerfile")) "Docker hint should keep dockerFile include."
                 Expect.sequenceEqual
                     (dockerRequirement.DockerRunOptions |> Option.defaultValue (ResizeArray()))
@@ -694,9 +911,9 @@ steps:
             Expect.equal roundTripped.Id workflow.Id "Workflow id should roundtrip."
             Expect.sequenceEqual (encodeHints (Expect.wantSome roundTripped.Hints "Roundtripped workflow hints should exist.")) (encodeHints hints) "Workflow hints should roundtrip."
             Expect.sequenceEqual (encodeRequirements (Expect.wantSome roundTripped.Requirements "Roundtripped workflow requirements should exist.")) (encodeRequirements requirements) "Workflow requirements should roundtrip."
-            Expect.sequenceEqual (encodeInputs roundTripped.Inputs) (encodeInputs workflow.Inputs) "Workflow inputs should roundtrip."
-            Expect.sequenceEqual (encodeSteps roundTripped.Steps) (encodeSteps workflow.Steps) "Workflow steps should roundtrip."
-            Expect.sequenceEqual (encodeOutputs roundTripped.Outputs) (encodeOutputs workflow.Outputs) "Workflow outputs should roundtrip."
+            Expect.sequenceEqual (encodeInputs (ListEntry.values roundTripped.Inputs)) (encodeInputs (ListEntry.values workflow.Inputs)) "Workflow inputs should roundtrip."
+            Expect.sequenceEqual (encodeSteps (ListEntry.values roundTripped.Steps)) (encodeSteps (ListEntry.values workflow.Steps)) "Workflow steps should roundtrip."
+            Expect.sequenceEqual (encodeOutputs (ListEntry.values roundTripped.Outputs)) (encodeOutputs (ListEntry.values workflow.Outputs)) "Workflow outputs should roundtrip."
     ]
 
 let testCWLWorkflowDescriptionEncode =
@@ -712,7 +929,7 @@ let testCWLWorkflowDescriptionEncode =
                     |> Array.filter (fun l -> not (l.TrimStart().StartsWith("outputSource:")))
                     |> String.concat "\n"
                 let decodedModified = Decode.decodeWorkflow modified
-                let missing = decodedModified.Outputs |> Seq.filter (fun o -> o.OutputSource.IsNone) |> Seq.toList
+                let missing = (ListEntry.values decodedModified.Outputs) |> Seq.filter (fun o -> o.OutputSource.IsNone) |> Seq.toList
                 Expect.isTrue (missing.Length > 0) "At least one output should be missing outputSource after manual removal"
         ]
         testList "Process elements" [
@@ -740,11 +957,11 @@ let testCWLWorkflowDescriptionEncode =
                 let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithStepsArrayFile
                 let encoded = Encode.encodeWorkflowDescription decoded
                 let roundTripped = Decode.decodeWorkflow encoded
-                let step = roundTripped.Steps.[0]
-                let stepInput = step.In.[0]
+                let step = (ListEntry.values roundTripped.Steps).[0]
+                let stepInput = (WorkflowStep.getInputs step).[0]
                 Expect.equal step.When_ (Some (SchemaSaladString.Literal "$(inputs.input1 != null)")) ""
                 Expect.equal stepInput.PickValue (Some FirstNonNull) ""
-                Expect.equal stepInput.Doc (Some "Input docs") ""
+                Expect.equal stepInput.Doc (Some (DocText.literal "Input docs")) ""
                 let defaultEntry =
                     Expect.wantSome stepInput.DefaultValue "Step input default should remain present as structured YAML"
                 match defaultEntry.Node.Kind with
@@ -776,10 +993,10 @@ let testCWLWorkflowDescriptionEncode =
                 let metadata = Expect.wantSome roundTripped.Metadata "Decoded direct overflow should be available as metadata."
                 Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:direct note" metadata) (Some "workflow note") "Workflow direct DynamicObj overflow should encode."
 
-                let input = roundTripped.Inputs |> Seq.find (fun input -> input.Name = "sample")
-                let output = roundTripped.Outputs |> Seq.find (fun output -> output.Name = "result")
-                let step = roundTripped.Steps |> Seq.find (fun step -> step.Id = "step1")
-                let stepInput = step.In |> Seq.find (fun input -> input.Id = "sample")
+                let input = (ListEntry.values roundTripped.Inputs) |> Seq.find (fun input -> input.Name = "sample")
+                let output = (ListEntry.values roundTripped.Outputs) |> Seq.find (fun output -> output.Name = "result")
+                let step = (ListEntry.values roundTripped.Steps) |> Seq.find (fun step -> step.Id = "step1")
+                let stepInput = WorkflowStep.getInputs step |> Seq.find (fun input -> input.Id = "sample")
                 let inputBinding = Expect.wantSome input.InputBinding "Input binding should survive roundtrip."
 
                 Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" input) (Some "keep input note") "Input overflow should roundtrip."
@@ -803,7 +1020,7 @@ steps: {}"""
                 let decoded = Decode.decodeWorkflow yaml
                 let encoded = Encode.encodeWorkflowDescription decoded
                 let roundTripped = Decode.decodeWorkflow encoded
-                let input = roundTripped.Inputs |> Seq.find (fun input -> input.Name = "sample")
+                let input = (ListEntry.values roundTripped.Inputs) |> Seq.find (fun input -> input.Name = "sample")
                 Expect.equal (DynObj.tryGetTypedPropertyValue<float> "arc:threshold" input) (Some 2.5) "Decimal overflow should roundtrip as a float."
             testCase "workflow singleton sequence overflow roundtrips as a sequence" <| fun _ ->
                 let yaml = """cwlVersion: v1.2
@@ -817,7 +1034,7 @@ steps: {}"""
                 let decoded = Decode.decodeWorkflow yaml
                 let encoded = Encode.encodeWorkflowDescription decoded
                 let roundTripped = Decode.decodeWorkflow encoded
-                let input = roundTripped.Inputs |> Seq.find (fun input -> input.Name = "sample")
+                let input = (ListEntry.values roundTripped.Inputs) |> Seq.find (fun input -> input.Name = "sample")
                 let items = Expect.wantSome (DynamicObjHelpers.tryGetTypedPropertyValueAsResizeArray<obj> "arc:list" input) "Singleton overflow should roundtrip as a collection."
                 Expect.equal items.Count 1 "Singleton overflow sequence should keep its item count."
                 Expect.equal (items.[0] :?> string) "only" "Singleton overflow sequence should keep its value."
@@ -830,11 +1047,11 @@ steps: {}"""
                     testCase cwlString <| fun _ ->
                         let yaml = TestObjects.CWL.Workflow.workflowWithPickValueMethodFile cwlString
                         let decoded = Decode.decodeWorkflow yaml
-                        Expect.equal decoded.Steps.[0].In.[0].PickValue (Some pickValueMethod) ""
+                        Expect.equal (WorkflowStep.getInputs (ListEntry.values decoded.Steps).[0]).[0].PickValue (Some pickValueMethod) ""
                         let encoded = Encode.encodeWorkflowDescription decoded
                         Expect.stringContains encoded $"pickValue: {cwlString}" ""
                         let roundTripped = Decode.decodeWorkflow encoded
-                        Expect.equal roundTripped.Steps.[0].In.[0].PickValue (Some pickValueMethod) ""
+                        Expect.equal (WorkflowStep.getInputs (ListEntry.values roundTripped.Steps).[0]).[0].PickValue (Some pickValueMethod) ""
             ]
             testList "ScatterMethod roundtrip" [
                 for (scatterMethod, cwlString) in [
@@ -845,24 +1062,24 @@ steps: {}"""
                     testCase cwlString <| fun _ ->
                         let yaml = TestObjects.CWL.Workflow.workflowWithScatterMethodFile cwlString
                         let decoded = Decode.decodeWorkflow yaml
-                        Expect.equal decoded.Steps.[0].ScatterMethod (Some scatterMethod) ""
+                        Expect.equal (ListEntry.values decoded.Steps).[0].ScatterMethod (Some scatterMethod) ""
                         let encoded = Encode.encodeWorkflowDescription decoded
                         Expect.stringContains encoded $"scatterMethod: {cwlString}" ""
                         let roundTripped = Decode.decodeWorkflow encoded
-                        Expect.equal roundTripped.Steps.[0].ScatterMethod (Some scatterMethod) ""
+                        Expect.equal (ListEntry.values roundTripped.Steps).[0].ScatterMethod (Some scatterMethod) ""
             ]
             testCase "structured default with array value roundtrips" <| fun _ ->
                 let yaml = TestObjects.CWL.Workflow.workflowWithStructuredArrayDefaultFile
                 let decoded = Decode.decodeWorkflow yaml
                 let decodedDefault =
-                    decoded.Steps.[0].In.[0].DefaultValue
+                    (WorkflowStep.getInputs (ListEntry.values decoded.Steps).[0]).[0].DefaultValue
                     |> Option.bind tryYamlScalarSequence
                     |> Option.defaultValue (ResizeArray())
                 Expect.sequenceEqual decodedDefault (ResizeArray [|"1"; "2"; "3"|]) ""
                 let encoded = Encode.encodeWorkflowDescription decoded
                 let roundTripped = Decode.decodeWorkflow encoded
                 let roundTrippedDefault =
-                    roundTripped.Steps.[0].In.[0].DefaultValue
+                    (WorkflowStep.getInputs (ListEntry.values roundTripped.Steps).[0]).[0].DefaultValue
                     |> Option.bind tryYamlScalarSequence
                     |> Option.defaultValue (ResizeArray())
                 Expect.sequenceEqual roundTrippedDefault (ResizeArray [|"1"; "2"; "3"|]) ""
@@ -870,30 +1087,30 @@ steps: {}"""
                 let expression = "$(inputs.name == 'test')"
                 let yaml = TestObjects.CWL.Workflow.workflowWithWhenExpressionFile expression
                 let decoded = Decode.decodeWorkflow yaml
-                Expect.equal decoded.Steps.[0].When_ (Some (SchemaSaladString.Literal expression)) ""
+                Expect.equal (ListEntry.values decoded.Steps).[0].When_ (Some (SchemaSaladString.Literal expression)) ""
                 let encoded = Encode.encodeWorkflowDescription decoded
                 let roundTripped = Decode.decodeWorkflow encoded
-                Expect.equal roundTripped.Steps.[0].When_ (Some (SchemaSaladString.Literal expression)) ""
+                Expect.equal (ListEntry.values roundTripped.Steps).[0].When_ (Some (SchemaSaladString.Literal expression)) ""
             testCase "scatter + scatterMethod together roundtrip" <| fun _ ->
                 let yaml = TestObjects.CWL.Workflow.workflowWithScatterAndScatterMethodFile
                 let decoded = Decode.decodeWorkflow yaml
-                Expect.sequenceEqual decoded.Steps.[0].Scatter.Value (ResizeArray [|"in1"; "in2"|]) ""
-                Expect.equal decoded.Steps.[0].ScatterMethod (Some FlatCrossProduct) ""
+                Expect.sequenceEqual (ListEntry.values decoded.Steps).[0].Scatter.Value (ResizeArray [|"in1"; "in2"|]) ""
+                Expect.equal (ListEntry.values decoded.Steps).[0].ScatterMethod (Some FlatCrossProduct) ""
                 let encoded = Encode.encodeWorkflowDescription decoded
                 let roundTripped = Decode.decodeWorkflow encoded
-                Expect.sequenceEqual roundTripped.Steps.[0].Scatter.Value (ResizeArray [|"in1"; "in2"|]) ""
-                Expect.equal roundTripped.Steps.[0].ScatterMethod (Some FlatCrossProduct) ""
+                Expect.sequenceEqual (ListEntry.values roundTripped.Steps).[0].Scatter.Value (ResizeArray [|"in1"; "in2"|]) ""
+                Expect.equal (ListEntry.values roundTripped.Steps).[0].ScatterMethod (Some FlatCrossProduct) ""
             testCase "step-level requirements and hints roundtrip" <| fun _ ->
                 let yaml = TestObjects.CWL.Workflow.workflowWithStepLevelRequirementsAndHintsFile
                 let decoded = Decode.decodeWorkflow yaml
-                let decodedStep = decoded.Steps.[0]
+                let decodedStep = (ListEntry.values decoded.Steps).[0]
                 let decodedHints = Expect.wantSome decodedStep.Hints "Step hints should decode"
                 let decodedRequirements = Expect.wantSome decodedStep.Requirements "Step requirements should decode"
                 Expect.equal decodedHints.[0] (KnownHint StepInputExpressionRequirement) ""
                 Expect.equal decodedRequirements.[0] (NetworkAccessRequirement (NetworkAccessRequirementValue(true))) ""
                 let encoded = Encode.encodeWorkflowDescription decoded
                 let roundTripped = Decode.decodeWorkflow encoded
-                let roundTrippedStep = roundTripped.Steps.[0]
+                let roundTrippedStep = (ListEntry.values roundTripped.Steps).[0]
                 let roundTrippedHints = Expect.wantSome roundTrippedStep.Hints "Step hints should survive roundtrip"
                 let roundTrippedRequirements = Expect.wantSome roundTrippedStep.Requirements "Step requirements should survive roundtrip"
                 Expect.equal roundTrippedHints.[0] (KnownHint StepInputExpressionRequirement) ""
@@ -904,22 +1121,22 @@ steps: {}"""
                 let roundTripped = Decode.decodeWorkflow encoded
                 let expressionTool =
                     Expect.wantSome
-                        (WorkflowStepRunOps.tryGetExpressionTool roundTripped.Steps.[1].Run)
+                        (WorkflowStepRunOps.tryGetExpressionTool (ListEntry.values roundTripped.Steps).[1].Run)
                         "Should roundtrip ExpressionTool run"
                 Expect.equal expressionTool.Expression (SchemaSaladString.Literal "$({'out': inputs.y})") "Expression preserved"
             testCase "inline ExpressionTool chain roundtrip" <| fun _ ->
                 let original = Decode.decodeWorkflow TestObjects.CWL.ExpressionTool.workflowWithInlineExpressionToolChainFile
                 let encoded = Encode.encodeWorkflowDescription original
                 let roundTripped = Decode.decodeWorkflow encoded
-                Expect.equal roundTripped.Steps.Count 3 ""
+                Expect.equal (ListEntry.values roundTripped.Steps).Count 3 ""
                 for i in 0..2 do
                     let originalTool =
                         Expect.wantSome
-                            (WorkflowStepRunOps.tryGetExpressionTool original.Steps.[i].Run)
+                            (WorkflowStepRunOps.tryGetExpressionTool (ListEntry.values original.Steps).[i].Run)
                             $"Original step {i} should be ExpressionTool"
                     let roundTrippedTool =
                         Expect.wantSome
-                            (WorkflowStepRunOps.tryGetExpressionTool roundTripped.Steps.[i].Run)
+                            (WorkflowStepRunOps.tryGetExpressionTool (ListEntry.values roundTripped.Steps).[i].Run)
                             $"Roundtripped step {i} should be ExpressionTool"
                     Expect.equal roundTrippedTool.Expression originalTool.Expression $"Step {i} expression should be preserved"
                     let originalInputs = originalTool.Inputs |> Option.defaultValue (ResizeArray())
@@ -960,7 +1177,7 @@ steps:
 
                 let expressionTool =
                     Expect.wantSome
-                        (WorkflowStepRunOps.tryGetExpressionTool roundTripped.Steps.[0].Run)
+                        (WorkflowStepRunOps.tryGetExpressionTool (ListEntry.values roundTripped.Steps).[0].Run)
                         "Should roundtrip multiline inline ExpressionTool run"
 
                 Expect.stringContains expressionTool.Expression.Value "return" "Expression should decode after roundtrip."
@@ -983,7 +1200,7 @@ let testWorkflowUnionPortRoundTrip =
         let output = CWLWorkflowDescription.getOutputs workflow |> Seq.find (fun o -> o.Name = name)
         Expect.wantSome output.Type_ $"Output {name} should have a type."
 
-    let enumOf (symbols: string list) = Enum (InputEnumSchema(ResizeArray symbols))
+    let enumOf (symbols: string list) = Enum (InputEnumSchema(ResizeArray (List.map SchemaSaladString.Literal symbols)))
 
     testList "Union port types roundtrip" [
         testCase "unions of null with an enum, a record or an array decode, encode and decode again" <| fun _ ->
@@ -998,7 +1215,7 @@ let testWorkflowUnionPortRoundTrip =
                     Expect.equal members.[0] Null "The first member should be null."
                     match members.[1] with
                     | Record schema ->
-                        let fields = Expect.wantSome schema.Fields "The record should keep its fields."
+                        let fields = Expect.wantSome schema.Fields "The record should keep its fields." |> ListEntry.values
                         Expect.sequenceEqual (fields |> Seq.map (fun f -> f.Name)) [ "data_folder"; "db_file" ] "Record fields should keep their order."
                     | other -> failwithf "Expected a record member but got %A" other
                 | other -> failwithf "Expected a union but got %A" other
@@ -1008,8 +1225,8 @@ let testWorkflowUnionPortRoundTrip =
                 Expect.isFalse (flagOf "threshold") "A union without null is not optional."
                 assertTypesEqual (optionalOf (CWLType.File)) (outputTypeOf workflow "chosen") "chosen"
                 assertTypesEqual (Union (ResizeArray [ CWLType.File; CWLType.Directory ])) (outputTypeOf workflow "summary") "summary"
-                let expressionTool = Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool workflow.Steps.[0].Run) "The inline ExpressionTool should decode."
-                let toolInput = (Expect.wantSome expressionTool.Inputs "The inline tool should keep its inputs.") |> Seq.find (fun i -> i.Name = "mode_string")
+                let expressionTool = Expect.wantSome (WorkflowStepRunOps.tryGetExpressionTool (ListEntry.values workflow.Steps).[0].Run) "The inline ExpressionTool should decode."
+                let toolInput = (Expect.wantSome expressionTool.Inputs "The inline tool should keep its inputs.") |> ListEntry.values |> Seq.find (fun i -> i.Name = "mode_string")
                 assertTypesEqual (optionalOf (enumOf [ "alpha"; "delta"; "beta"; "gamma" ])) (Expect.wantSome toolInput.Type_ "Inline input type") "inline mode_string"
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.UnionPorts.typeListWorkflow
             check decoded
@@ -1082,7 +1299,7 @@ let testPackedDocuments =
             Expect.equal shout.CWLVersion "v1.2" "The tool uses the version of the root."
         testCase "a step keeps the reference to a process of the graph as its run string" <| fun _ ->
             let main = workflowOf (graphOf fixture).Processes.[0]
-            Expect.equal main.Steps.[0].Run (RunString "#shout") "The run field stays the reference."
+            Expect.equal (ListEntry.values main.Steps).[0].Run (RunString "#shout") "The run field stays the reference."
         testCase "the other keys of the root stay on the graph" <| fun _ ->
             let graph = graphOf fixture
             let namespaces = Expect.wantSome (DynObj.tryGetTypedPropertyValue<DynamicObj> "$namespaces" graph) "The graph keeps $namespaces."
@@ -1097,7 +1314,7 @@ let testPackedDocuments =
             let roundTripped = graphOf encoded
             Expect.equal roundTripped.CWLVersion "v1.2" "The version survives the round trip."
             Expect.equal roundTripped.Processes.Count 2 "Both processes survive the round trip."
-            Expect.equal (workflowOf roundTripped.Processes.[0]).Steps.[0].Run (RunString "#shout") "The reference survives the round trip."
+            Expect.equal (ListEntry.values (workflowOf roundTripped.Processes.[0]).Steps).[0].Run (RunString "#shout") "The reference survives the round trip."
             Expect.equal (toolOf roundTripped.Processes.[1]).CWLVersion "v1.2" "The tool uses the version of the root again."
             Expect.isSome (DynObj.tryGetTypedPropertyValue<DynamicObj> "$namespaces" roundTripped) "$namespaces survives the round trip."
             Expect.equal (Encode.encodeCWLDocument (CWLDocument.Graph roundTripped)) encoded "A second pass writes the same text."
@@ -1113,13 +1330,13 @@ let testPackedDocuments =
             let graph = graphOf fixture
             let main = workflowOf graph.Processes.[0]
             let shout = toolOf graph.Processes.[1]
-            main.Steps.[0].ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromTool shout) }
+            (ListEntry.values main.Steps).[0].ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromTool shout) }
             Expect.equal (graphOf (Encode.encodeCWLGraph graph)) (graphOf fixture) "In the graph the step runs the process by its id."
             let plain = Encode.encodeProcessingUnit (Workflow main)
             Expect.isFalse (plain.Contains "#shout") "The plain file has no reference to the graph."
             match Decode.decodeCWLDocument plain with
             | CWLDocument.Process (Workflow written) ->
-                Expect.equal (WorkflowStepRunOps.tryGetTool written.Steps.[0].Run |> Option.bind (fun tool -> tool.BaseCommand) |> Option.map Seq.toList) (Some [ "echo" ]) "The plain file holds the tool inside the step."
+                Expect.equal (WorkflowStepRunOps.tryGetTool (ListEntry.values written.Steps).[0].Run |> Option.bind (fun tool -> tool.BaseCommand) |> Option.map Seq.toList) (Some [ (SchemaSaladString.Literal "echo") ]) "The plain file holds the tool inside the step."
             | other -> failwith $"Expected a plain workflow but got %A{other}"
         testCase "a step that runs a process of the graph without a resolved process cannot be written as a plain file" <| fun _ ->
             let main = workflowOf (graphOf fixture).Processes.[0]
@@ -1128,8 +1345,8 @@ let testPackedDocuments =
             Expect.stringContains error.Message "#shout" "The error names the reference."
         testCase "a step that runs a file keeps the reference in a plain file even with a resolved process" <| fun _ ->
             let step = WorkflowStep.fromRunPath(id = "s", in_ = ResizeArray(), out_ = ResizeArray(), runPath = "./tool.cwl")
-            step.ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromTool (CWLToolDescription(outputs = ResizeArray(), baseCommand = ResizeArray [ "echo" ]))) }
-            let workflow = CWLWorkflowDescription(steps = ResizeArray [ step ], inputs = ResizeArray(), outputs = ResizeArray())
+            step.ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromTool (CWLToolDescription(outputs = ResizeArray(), baseCommand = ResizeArray [ (SchemaSaladString.Literal "echo") ]))) }
+            let workflow = CWLWorkflowDescription(steps = ListEntry.ofValues [ step ], inputs = ResizeArray(), outputs = ResizeArray())
             let plain = Encode.encodeProcessingUnit (Workflow workflow)
             Expect.stringContains plain "run: ./tool.cwl" "The file reference stays."
             Expect.isFalse (plain.Contains "baseCommand") "The tool is not inlined."
@@ -1153,7 +1370,7 @@ let testPackedDocuments =
                 for processingUnit in graph.Processes do
                     match processingUnit with
                     | Workflow workflow ->
-                        for step in workflow.Steps do
+                        for step in (ListEntry.values workflow.Steps) do
                             match step.Run with
                             | RunString reference when reference.StartsWith "#" ->
                                 CWLGraph.tryFindProcess reference graph
@@ -1174,7 +1391,7 @@ let testPackedDocuments =
             let renamedGraph, renamedMain = renamed (Some "renamed")
             let unnamedGraph, unnamedMain = renamed None
             let cases =
-                [ "a new process with the id main", graph, CommandLineTool (CWLToolDescription(outputs = ResizeArray(), baseCommand = ResizeArray [ "date" ], id = "main"))
+                [ "a new process with the id main", graph, CommandLineTool (CWLToolDescription(outputs = ResizeArray(), baseCommand = ResizeArray [ (SchemaSaladString.Literal "date") ], id = "main"))
                   "another process of the graph", graph, graph.Processes.[1]
                   "the process main after a rename", renamedGraph, renamedMain
                   "the process main after its id was removed", unnamedGraph, unnamedMain
@@ -1185,7 +1402,7 @@ let testPackedDocuments =
                 match Decode.decodeCWLDocument written with
                 | CWLDocument.Process _ -> ()
                 | other -> failwith $"{name}: expected a plain process but got %A{other}"
-            let withoutId = CWLToolDescription(outputs = ResizeArray(), baseCommand = ResizeArray [ "date" ])
+            let withoutId = CWLToolDescription(outputs = ResizeArray(), baseCommand = ResizeArray [ (SchemaSaladString.Literal "date") ])
             Encode.encodeProcessingUnitInGraph (Some graph) (CommandLineTool withoutId) |> ignore
             Expect.isNone withoutId.Id "Writing does not give a process an id."
         testCase "a graph with a cycle of run references is a decode error at the run field that closes the cycle" <| fun _ ->
@@ -1303,9 +1520,9 @@ $graph: main"""
         testCase "a type is named through the id of another process of the graph" <| fun _ ->
             let graph = graphOf TestObjects.CWL.Workflow.PackedDocument.typesFile
             let place = toolOf graph.Processes.[1]
-            Expect.equal place.Inputs.Value.[0].Type_ (Some (Reference "#main/Point")) "The tool names the type of the workflow."
+            Expect.equal (ListEntry.values place.Inputs.Value).[0].Type_ (Some (Reference "#main/Point")) "The tool names the type of the workflow."
             let main = workflowOf graph.Processes.[0]
-            Expect.equal main.Inputs.[0].Type_ (Some (Reference "#main/Point")) "The workflow names its own type the same way."
+            Expect.equal (ListEntry.values main.Inputs).[0].Type_ (Some (Reference "#main/Point")) "The workflow names its own type the same way."
         testCase "a document without a graph decodes as a single process" <| fun _ ->
             let yaml = TestObjects.CWL.CommandLineTool.StreamTypes.cwlFile
             match Decode.decodeCWLDocument yaml with
@@ -1329,7 +1546,7 @@ steps:
     run: "#tool"
     in: {}
     out: []"""
-            Expect.equal (Decode.decodeWorkflow yaml).Steps.[0].Run (RunString "#tool") "Nothing names a process, so the reference is kept."
+            Expect.equal (ListEntry.values (Decode.decodeWorkflow yaml).Steps).[0].Run (RunString "#tool") "Nothing names a process, so the reference is kept."
     ]
 
 let main =
@@ -1338,4 +1555,7 @@ let main =
         testCWLWorkflowDescriptionEncode
         testWorkflowUnionPortRoundTrip
         testPackedDocuments
+        testImportedRun
+        testImportedEntries
+        testImportedStepPorts
     ]

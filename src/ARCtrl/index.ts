@@ -22,7 +22,7 @@ export { FileSystemTree } from './ts/FileSystem/FileSystemTree.js'
 
 /// CWL
 import { CWLProcessingUnit, CWLDocument, CWLGraph } from './ts/CWL/CWLProcessingUnit.js'
-import { CWLType, SchemaSaladString, FileInstance, DirectoryInstance, DirentInstance, InputEnumSchema, InputRecordField, InputRecordSchema, InputArraySchema, SchemaDefinition, SoftwarePackage } from './ts/CWL/CWLTypes.js'
+import { CWLType, SchemaSaladString, DocText, ListEntry$1 as ListEntry, FileInstance, DirectoryInstance, DirentInstance, InputEnumSchema, InputRecordField, InputRecordSchema, InputArraySchema, SchemaDefinition, SoftwarePackage } from './ts/CWL/CWLTypes.js'
 import { CWLParameterValue, CWLParameterRecordField } from './ts/CWL/ParameterValue.js'
 import { CWLParameterReference } from './ts/CWL/ParameterReference.js'
 import { CWLInput, InputBinding, InputFormat, BindingPosition } from './ts/CWL/Inputs.js'
@@ -38,6 +38,8 @@ export const CWL = {
     CWLGraph,
     CWLType,
     SchemaSaladString,
+    DocText,
+    ListEntry,
     FileInstance,
     DirectoryInstance,
     DirentInstance,

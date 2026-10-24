@@ -66,12 +66,3 @@ module ReferenceParsing =
                     PortId = portId
                     Raw = source
                 }
-
-    /// <summary>
-    /// Extracts the output ID string from a StepOutput discriminated union value.
-    /// </summary>
-    /// <param name="output">The StepOutput to extract the ID from.</param>
-    let extractStepOutputId (output: StepOutput) : string =
-        match output with
-        | StepOutputString id -> id
-        | StepOutputRecord record -> record.Id

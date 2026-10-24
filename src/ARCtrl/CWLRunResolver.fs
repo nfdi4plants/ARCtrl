@@ -99,9 +99,11 @@ let rec resolveWorkflowRunsRecursiveWithResolver
     (workflow: CWL.CWLWorkflowDescription)
     (tryResolveRunPath: string -> CWL.CWLProcessingUnit option)
     : unit =
-    for step in workflow.Steps do
+    // An imported step stands for steps of a file that the decoder does not read, so it has no run to resolve.
+    for step in CWL.CWLWorkflowDescription.getSteps workflow do
         match step.Run with
-        | CWL.RunString runPath when step.ResolvedRun.Run.IsNone ->
+        | CWL.RunString runPath
+        | CWL.RunImport runPath when step.ResolvedRun.Run.IsNone ->
             step.ResolvedRun <-
                 { Run = resolveRunReferenceWithResolver workflowFilePath activePathKeys state runPath tryResolveRunPath }
         | CWL.RunWorkflow _ ->
@@ -211,7 +213,8 @@ let resolveRunReferencesOfDocument (filePath: string) (document: CWL.CWLDocument
 let resolveWorkflowStepFromLookup (workflowFilePath: string) (step: CWL.WorkflowStep) (tryResolveRunPath: string -> CWL.CWLProcessingUnit option) : unit =
     let state = { Cache = Map.empty }
     match step.Run with
-    | CWL.RunString runPath ->
+    | CWL.RunString runPath
+    | CWL.RunImport runPath ->
         step.ResolvedRun <-
             { Run = resolveRunReferenceWithResolver workflowFilePath Set.empty state runPath tryResolveRunPath }
     | CWL.RunWorkflow _ ->

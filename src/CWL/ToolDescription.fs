@@ -5,45 +5,45 @@ open Fable.Core
 
 [<AttachMembers>]
 type CWLToolDescription (
-        outputs: ResizeArray<CWLOutput>,
+        outputs: ResizeArray<ListEntry<CWLOutput>>,
         ?cwlVersion: string,
-        ?baseCommand: ResizeArray<string>,
+        ?baseCommand: ResizeArray<SchemaSaladString>,
         ?arguments: RawYaml,
-        ?stdin: string,
-        ?stderr: string,
-        ?stdout: string,
+        ?stdin: SchemaSaladString,
+        ?stderr: SchemaSaladString,
+        ?stdout: SchemaSaladString,
         ?successCodes: ResizeArray<int>,
         ?temporaryFailCodes: ResizeArray<int>,
         ?permanentFailCodes: ResizeArray<int>,
         ?requirements: ResizeArray<Requirement>,
         ?hints: ResizeArray<HintEntry>,
         ?intent: ResizeArray<string>,
-        ?inputs: ResizeArray<CWLInput>,
+        ?inputs: ResizeArray<ListEntry<CWLInput>>,
         ?metadata: DynamicObj,
-        ?label: string,
-        ?doc: string,
+        ?label: SchemaSaladString,
+        ?doc: DocText,
         ?id: string
     ) =
     inherit DynamicObj ()
 
     let mutable _id: string option = id
     let mutable _cwlVersion: string = cwlVersion |> Option.defaultValue "v1.2"
-    let mutable _outputs: ResizeArray<CWLOutput> = outputs
-    let mutable _baseCommand: ResizeArray<string> option = baseCommand
+    let mutable _outputs: ResizeArray<ListEntry<CWLOutput>> = outputs
+    let mutable _baseCommand: ResizeArray<SchemaSaladString> option = baseCommand
     let mutable _arguments: RawYaml option = arguments
-    let mutable _stdin: string option = stdin
-    let mutable _stderr: string option = stderr
-    let mutable _stdout: string option = stdout
+    let mutable _stdin: SchemaSaladString option = stdin
+    let mutable _stderr: SchemaSaladString option = stderr
+    let mutable _stdout: SchemaSaladString option = stdout
     let mutable _successCodes: ResizeArray<int> option = successCodes
     let mutable _temporaryFailCodes: ResizeArray<int> option = temporaryFailCodes
     let mutable _permanentFailCodes: ResizeArray<int> option = permanentFailCodes
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<HintEntry> option = hints
     let mutable _intent: ResizeArray<string> option = intent
-    let mutable _inputs: ResizeArray<CWLInput> option = inputs
+    let mutable _inputs: ResizeArray<ListEntry<CWLInput>> option = inputs
     let mutable _metadata: DynamicObj option = metadata
-    let mutable _label: string option = label
-    let mutable _doc: string option = doc
+    let mutable _label: SchemaSaladString option = label
+    let mutable _doc: DocText option = doc
     let mutable _sourceNodes = SourceNodes.Empty
 
     member this.Id
@@ -127,15 +127,15 @@ type CWLToolDescription (
     static member KnownFieldNames =
         CWLKnownFieldNames.toolDescription
 
-    /// Returns the tool's inputs or an empty ResizeArray if None.
-    static member getInputsOrEmpty (tool: CWLToolDescription) =
-        tool.Inputs |> Option.defaultValue (ResizeArray())
+    /// Returns the inputs of the tool, or an empty list. The imports are left out, and the list is a new one.
+    static member getInputsOrEmpty (tool: CWLToolDescription) : ResizeArray<CWLInput> =
+        tool.Inputs |> Option.map ListEntry.values |> Option.defaultValue (ResizeArray())
 
-    /// Returns the tool's outputs.
-    static member getOutputs (tool: CWLToolDescription) =
-        tool.Outputs
+    /// Returns the outputs of the tool. The imports are left out, and the list is a new one.
+    static member getOutputs (tool: CWLToolDescription) : ResizeArray<CWLOutput> =
+        ListEntry.values tool.Outputs
 
-    /// Returns the tool's inputs, creating and assigning a new empty ResizeArray if None.
+    /// Returns the entries of the tool's inputs, creating and assigning a new empty ResizeArray if None.
     static member getOrCreateInputs (tool: CWLToolDescription) =
         match tool.Inputs with
         | Some inputs -> inputs

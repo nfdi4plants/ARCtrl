@@ -62,7 +62,7 @@ type WorkflowConversion =
                     |> Option.bind (function
                         | CWL.BindingPosition.Number number -> Some number
                         | CWL.BindingPosition.Expression _ -> None)
-                WorkflowConversion.composeFormalParamInputIdentifiers ib.Prefix position
+                WorkflowConversion.composeFormalParamInputIdentifiers (ib.Prefix |> Option.bind CWL.SchemaSaladString.tryLiteral) position
             )
         LDFormalParameter.create(
             additionalType = additionalType,
@@ -79,7 +79,7 @@ type WorkflowConversion =
         | None, None -> None
         | _ ->
             CWL.InputBinding.create(
-                ?prefix = prefix,
+                ?prefix = (prefix |> Option.map CWL.SchemaSaladString.Literal),
                 ?position = (position |> Option.map CWL.BindingPosition.Number)
             )
             |> Some
@@ -98,7 +98,9 @@ type WorkflowConversion =
         match glob with
         | Some globs ->
             globs.AsValues()
-            |> ResizeArray.map (fun g -> LDPropertyValue.createGlob(g))
+            |> Seq.choose CWL.SchemaSaladString.tryLiteral
+            |> Seq.map (fun g -> LDPropertyValue.createGlob(g))
+            |> ResizeArray
             |> Some
         | None -> None
 
@@ -125,8 +127,8 @@ type WorkflowConversion =
         let globs = identifiers |> Seq.choose (fun n -> LDPropertyValue.tryGetAsGlob(n, ?context = context)) |> ResizeArray
         match globs.Count with
         | 0 -> CWL.OutputBinding.create()
-        | 1 -> CWL.OutputBinding.create(glob = CWL.OutputGlob.Single globs.[0])
-        | _ -> CWL.OutputBinding.create(glob = CWL.OutputGlob.Multiple globs)
+        | 1 -> CWL.OutputBinding.create(glob = CWL.OutputGlob.Single (CWL.SchemaSaladString.Literal globs.[0]))
+        | _ -> CWL.OutputBinding.create(glob = CWL.OutputGlob.Multiple (globs |> ResizeArray.map CWL.SchemaSaladString.Literal))
 
     static member decomposeOutputFromFormalParameter(outp : LDNode, ?context : LDContext, ?graph : LDGraph) =
         let t = outp.AdditionalType |> Seq.exactlyOne |> WorkflowConversion.decomposeAdditionalType
@@ -185,7 +187,9 @@ type WorkflowConversion =
     /// <param name="run">Workflow step run payload.</param>
     static member runToIdentifier (run : CWL.WorkflowStepRun) : string =
         match run with
-        | CWL.RunString runPath -> runPath
+        | CWL.RunString runPath
+        | CWL.RunImport runPath -> runPath
+        | CWL.RunMixed _ -> "inline:Mixed"
         | CWL.RunCommandLineTool _ -> "inline:CommandLineTool"
         | CWL.RunWorkflow _ -> "inline:Workflow"
         | CWL.RunExpressionTool _ -> "inline:ExpressionTool"
@@ -244,9 +248,9 @@ type WorkflowConversion =
     static member composeWorkflowProtocolFromToolDescription (filePath : string, workflow : CWL.CWLToolDescription, ?workflowName : string, ?runName : string) =
         let inputs =
             workflow.Inputs
-            |> Option.map (ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName)))
+            |> Option.map (CWL.ListEntry.values >> ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName)))
         let outputs =
-            workflow.Outputs
+            CWL.ListEntry.values workflow.Outputs
             |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
         LDWorkflowProtocol.create(
             id = filePath,
@@ -265,8 +269,8 @@ type WorkflowConversion =
             LDComputationalWorkflow.getOutputsAsFormalParameter(protocol, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun o -> WorkflowConversion.decomposeOutputFromFormalParameter(o, ?context = context, ?graph = graph))
         CWL.CWLToolDescription(
-            outputs = outputs,
-            inputs = inputs
+            outputs = CWL.ListEntry.ofValues outputs,
+            inputs = CWL.ListEntry.ofValues inputs
         )
 
     /// <summary>
@@ -280,9 +284,9 @@ type WorkflowConversion =
     static member composeWorkflowProtocolFromExpressionToolDescription (filePath : string, expressionTool : CWL.CWLExpressionToolDescription, ?workflowName : string, ?runName : string) =
         let inputs =
             expressionTool.Inputs
-            |> Option.map (ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName)))
+            |> Option.map (CWL.ListEntry.values >> ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName)))
         let outputs =
-            expressionTool.Outputs
+            CWL.ListEntry.values expressionTool.Outputs
             |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
         let protocol =
             LDWorkflowProtocol.create(
@@ -317,17 +321,17 @@ type WorkflowConversion =
             // Keep deserialization resilient for externally produced or incomplete crates.
             |> Option.defaultValue "$(null)"
         CWL.CWLExpressionToolDescription(
-            outputs = outputs,
+            outputs = CWL.ListEntry.ofValues outputs,
             expression = CWL.SchemaSaladString.Literal expression,
-            inputs = inputs
+            inputs = CWL.ListEntry.ofValues inputs
         )
 
     static member composeWorkflowProtocolFromOperationDescription (filePath : string, operation : CWL.CWLOperationDescription, ?workflowName : string, ?runName : string) =
         let inputs =
-            operation.Inputs
+            CWL.ListEntry.values operation.Inputs
             |> ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName))
         let outputs =
-            operation.Outputs
+            CWL.ListEntry.values operation.Outputs
             |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
         LDWorkflowProtocol.create(
             id = filePath,
@@ -346,8 +350,8 @@ type WorkflowConversion =
             LDComputationalWorkflow.getOutputsAsFormalParameter(protocol, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun o -> WorkflowConversion.decomposeOutputFromFormalParameter(o, ?context = context, ?graph = graph))
         CWL.CWLOperationDescription(
-            inputs = inputs,
-            outputs = outputs
+            inputs = CWL.ListEntry.ofValues inputs,
+            outputs = CWL.ListEntry.ofValues outputs
         )
 
     static member composeWorkflowStep (step : CWL.WorkflowStep, workflowID) =
@@ -359,13 +363,13 @@ type WorkflowConversion =
 
     static member composeWorkflowProtocolFromWorkflow (filePath : string, workflow : CWL.CWLWorkflowDescription, ?workflowName : string, ?runName : string) =
         let inputs =
-            workflow.Inputs
+            CWL.ListEntry.values workflow.Inputs
             |> ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName))
         let outputs =
-            workflow.Outputs
+            CWL.ListEntry.values workflow.Outputs
             |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
         let steps =
-            workflow.Steps
+            CWL.ListEntry.values workflow.Steps
             |> ResizeArray.map (fun s -> WorkflowConversion.composeWorkflowStep(s, filePath))
         LDWorkflowProtocol.create(
             id = filePath,
@@ -384,7 +388,7 @@ type WorkflowConversion =
     /// </summary>
     /// <param name="step">Workflow step LD node.</param>
     /// <param name="workflowFilePath">Optional workflow file path used for resolving relative run references.</param>
-    /// <param name="resolveRunReferences">If true, attempts graph-backed run resolution; otherwise the step has no resolved run.</param>
+    /// <param name="resolveRunReferences">If true and a workflow file path is given, the step resolves its run through the graph. Otherwise the step has no resolved run.</param>
     /// <param name="context">Optional LDContext for node property access.</param>
     /// <param name="graph">Optional LDGraph used for run reference resolution.</param>
     static member decomposeWorkflowStep (step : LDNode, ?workflowFilePath: string, ?resolveRunReferences: bool, ?context : LDContext, ?graph : LDGraph) =
@@ -437,9 +441,9 @@ type WorkflowConversion =
                 )
             )
         CWL.CWLWorkflowDescription(
-            steps = steps,
-            inputs = inputs,
-            outputs = outputs
+            steps = CWL.ListEntry.ofValues steps,
+            inputs = CWL.ListEntry.ofValues inputs,
+            outputs = CWL.ListEntry.ofValues outputs
         )
 
     /// <summary>

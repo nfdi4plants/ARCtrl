@@ -177,20 +177,27 @@ module Decode =
         with YamlDecodeException error ->
             raise (YamlDecodeException { error with Path = name :: error.Path })
 
+    /// Run a decoder with the segments of a path in front of the path of its errors.
+    let private atPath (path: string list) (decode: unit -> 'T) : 'T =
+        List.foldBack (fun segment inner -> (fun () -> atField segment inner)) path decode ()
+
+    /// What a plain scalar is when the core schema reads it as null, a bool, an int or a float, as it stands in a message.
+    /// A quoted scalar, a block scalar and a scalar under !!str are strings, and so is any node that is no scalar.
+    let private notAString (node: YamlNode) : string option =
+        let plain (typeName: string) = Some ("the plain scalar " + Decode.string node + ", which the core schema reads as " + typeName)
+        match node with
+        | CoreNull -> Some "null"
+        | CoreBool _ -> plain "a bool"
+        | CoreInt _ -> plain "an int"
+        | CoreFloat _ -> plain "a float"
+        | CoreText -> None
+
     /// The text of a CWL string field. CWL types these fields as strings, so a plain scalar that the core schema reads
     /// as null, a bool, an int or a float is a decode error at the field, as cwltool reports it. Every other scalar is
     /// a string, for example a quoted one or one tagged !!str. A collection and an alias are errors too.
     let stringDecoder (node: YamlNode) : string =
-        let typeName =
-            match node with
-            | CoreNull -> Some "null"
-            | CoreBool _ -> Some "a bool"
-            | CoreInt _ -> Some "an int"
-            | CoreFloat _ -> Some "a float"
-            | CoreText -> None
-        match typeName with
-        | Some name ->
-            let found = if name = "null" then "null" else "the plain scalar " + Decode.string node + ", which the core schema reads as " + name
+        match notAString node with
+        | Some found ->
             raise (
                 YamlDecodeException
                     { Message = "Expected a string, found " + found + ". Write it in quotes to make it a string."
@@ -262,25 +269,6 @@ module Decode =
     let tryGetYamlField (fieldName: string) (value: YamlNode) : RawYaml option =
         tryGetPresentField fieldName (fun node -> { Node = node }) value
 
-    /// Decode the doc and the label of a mapping, each with the node that it was read from. The texts go to the
-    /// Doc and Label properties of an object, and the nodes go to its SourceNodes, so that the encoder can write the
-    /// layout of the author again. A field with a null value counts as missing, as it does for the other fields.
-    /// A doc and a label are strings in CWL, so a plain scalar that the core schema reads as a number or a bool is a
-    /// decode error at the field. Every other scalar is a string, for example a quoted one or one tagged !!str. A doc
-    /// may also be a list of strings, which Schema Salad concatenates without a separator, and its node is the
-    /// sequence.
-    let internal docAndLabelDecoder (value: YamlNode) : string option * string option * SourceNodes =
-        let label (node: YamlNode) = stringDecoder node, node
-        let doc (node: YamlNode) =
-            match node.Kind with
-            | YamlNodeKind.Sequence collection ->
-                let parts = collection.Items |> List.mapi (fun index item -> atField $"[{index}]" (fun () -> stringDecoder item.Node))
-                String.concat "" parts, node
-            | _ -> stringDecoder node, node
-        let docField = tryGetPresentField "doc" doc value
-        let labelField = tryGetPresentField "label" label value
-        Option.map fst docField, Option.map fst labelField, { Doc = Option.map snd docField; Label = Option.map snd labelField }
-
     let tryGetIntArrayField (fieldName: string) (value: YamlNode) =
         tryGetPresentField fieldName (Decode.resizearray Decode.int) value
 
@@ -345,9 +333,116 @@ module Decode =
         overflowIntoDynamicObj directory (DirectoryInstance.KnownFieldNames |> Seq.toList) element |> ignore
         directory
 
+    /// The text of a scalar node, and none for any other node.
+    let private scalarTextOf (node: YamlNode) : string option =
+        match node.Kind with
+        | YamlNodeKind.Scalar scalar -> Some scalar.Value
+        | _ -> None
+
+    /// What a node is at a place that reads a Schema Salad directive.
+    type private DirectiveReading =
+        /// A node without a directive key. The caller decides what the node is.
+        | NotDirective
+        /// A directive on its own that names a file: $include, $import or $mixin.
+        | DirectiveRead of SchemaSaladString
+        /// A $mixin beside other fields, with the path of its file. The file completes the object that the fields make.
+        | MixinBeside of string
+        /// A mapping with a directive key that is no directive: the path to the place of the problem inside the node, the
+        /// message, and the node to point at.
+        | Malformed of string list * string * YamlNode
+
+    /// Read a node as a Schema Salad directive. A directive is a mapping with exactly one field, $import, $include or
+    /// $mixin, and the path of a file as its value. $import takes the data of the file, and $include takes its text.
+    /// $mixin takes the data of the file like $import and joins it with the fields beside the directive, so it may stand
+    /// beside other fields. Schema Salad resolves the ids of a mixin against the document that holds it, and those of an
+    /// import against the imported file, so they are separate kinds. The reader is pure, so the scans of the raw nodes can
+    /// use it.
+    let private readDirective (node: YamlNode) : DirectiveReading =
+        match node.Kind with
+        | YamlNodeKind.Mapping collection ->
+            let keyOf (entry: MappingEntry) = scalarTextOf entry.Key
+            let directiveEntries = collection.Items |> List.filter (fun entry -> List.contains (keyOf entry |> Option.defaultValue "") [ "$import"; "$include"; "$mixin" ])
+            let pathOf (entry: MappingEntry) (key: string) : DirectiveReading =
+                match entry.Value.Kind with
+                | YamlNodeKind.Scalar _ ->
+                    match notAString entry.Value with
+                    | Some found ->
+                        Malformed ([ key ], "Expected the path of the " + key + " directive to be a string, found " + found + ". Write it in quotes to make it a string.", entry.Value)
+                    | None ->
+                        let path = Decode.string entry.Value
+                        if path.Trim() = "" then
+                            Malformed ([ key ], "The path of the " + key + " directive is empty.", entry.Value)
+                        elif key = "$include" then
+                            DirectiveRead (SchemaSaladString.Include path)
+                        elif key = "$mixin" then
+                            DirectiveRead (SchemaSaladString.Mixin path)
+                        else
+                            DirectiveRead (SchemaSaladString.Import path)
+                | _ -> Malformed ([ key ], "Expected the path of the " + key + " directive to be a string, found " + describeNode entry.Value + ".", entry.Value)
+            match directiveEntries, collection.Items with
+            | [], _ -> NotDirective
+            | [ entry ], [ _ ] ->
+                match keyOf entry with
+                | Some key -> pathOf entry key
+                | None -> NotDirective
+            | [ entry ], _ when keyOf entry = Some "$mixin" ->
+                match pathOf entry "$mixin" with
+                | DirectiveRead mixin -> MixinBeside mixin.Value
+                | malformed -> malformed
+            | _ ->
+                let names = collection.Items |> List.map (fun entry -> keyOf entry |> Option.defaultValue "?") |> String.concat ", "
+                Malformed ([], "A directive has exactly one field, but this mapping has the fields " + names + ".", node)
+        | _ -> NotDirective
+
+    /// Raise the problem of a malformed directive at its place.
+    let private failMalformed (path: string list) (message: string) (at: YamlNode) : 'T =
+        atPath path (fun () -> failAt at message)
+
+    /// Read a directive at a place that takes a string. The directive stays a case of SchemaSaladString, so the encoder
+    /// writes the mapping again. A mapping with a directive key that is no directive is an error, and a node without a
+    /// directive key is none.
+    let tryDirective (node: YamlNode) : SchemaSaladString option =
+        match readDirective node with
+        | NotDirective -> None
+        | DirectiveRead directive -> Some directive
+        | MixinBeside _ -> failAt node "A $mixin beside other fields completes an object, but this place takes a string."
+        | Malformed (path, message, at) -> failMalformed path message at
+
+    /// Read a directive at a place that takes the whole of a list. Only $import can stand there, because an $include
+    /// yields the text of a file and a $mixin completes an object with the fields beside it. The result is the path of
+    /// the imported file, and none for a node without a directive key. The text names what the place takes, as in the
+    /// types field.
+    let importOnly (what: string) (node: YamlNode) : string option =
+        match readDirective node with
+        | NotDirective -> None
+        | DirectiveRead (SchemaSaladString.Import path) -> Some path
+        | DirectiveRead (SchemaSaladString.Mixin _)
+        | MixinBeside _ -> failAt node ("A $mixin completes an object with the fields beside it, and " + what + " is no object. Write an $import for a file that holds it.")
+        | DirectiveRead _ -> failAt node ("An $include yields the text of a file, but " + what + " takes an object. Write an $import for a file that holds the object.")
+        | Malformed (path, message, at) -> failMalformed path message at
+
+    /// What a mapping with a directive stands for at a place that takes an object.
+    type ObjectDirective =
+        /// An $import of a file that holds the object or a list of objects.
+        | ImportedFile of string
+        /// A $mixin, alone or beside the fields that complete the object. The mapping is kept as it was written, because
+        /// the file may supply fields that the model cannot leave out.
+        | MixedMapping of RawYaml
+
+    /// Read a directive at a place that takes an object. An $import and a $mixin can stand there, because an $include
+    /// yields the text of a file. The result is none for a node without a directive key. The text names what the place
+    /// takes, as in an entry of the types field.
+    let objectDirective (what: string) (node: YamlNode) : ObjectDirective option =
+        match readDirective node with
+        | NotDirective -> None
+        | DirectiveRead (SchemaSaladString.Import path) -> Some (ImportedFile path)
+        | DirectiveRead (SchemaSaladString.Mixin _)
+        | MixinBeside _ -> Some (MixedMapping { Node = node })
+        | DirectiveRead _ -> failAt node ("An $include yields the text of a file, but " + what + " takes an object. Write an $import for a file that holds the object.")
+        | Malformed (path, message, at) -> failMalformed path message at
+
     /// Decode a string field that may hold a Schema Salad directive. A scalar is the literal text. A mapping with the
-    /// single key $include or $import names the file whose text or data takes the place of the mapping. The directive
-    /// stays a case of the result, so the encoder writes the mapping again.
+    /// single key $include, $import or $mixin names the file whose text or data takes the place of the mapping.
     let decodeSchemaSaladString (node: YamlNode) : SchemaSaladString =
         let unexpected () : SchemaSaladString =
             failAt node ("Expected a string or a mapping with the single key $include or $import, found " + describeNode node + ".")
@@ -356,13 +451,10 @@ module Decode =
             // Common path: scalar values become literal schema-salad strings. YAMLicious folds the
             // line breaks of a multi-line plain scalar into spaces, as YAML 1.2.2 requires.
             SchemaSaladString.Literal (Decode.nonNull stringDecoder node)
-        | YamlNodeKind.Mapping collection ->
-            match collection.Items with
-            | [ entry ] when (YamlNode.tryScalar entry.Value).IsSome && entryName entry = "$include" ->
-                SchemaSaladString.Include (Decode.nonNull stringDecoder entry.Value)
-            | [ entry ] when (YamlNode.tryScalar entry.Value).IsSome && entryName entry = "$import" ->
-                SchemaSaladString.Import (Decode.nonNull stringDecoder entry.Value)
-            | _ -> unexpected ()
+        | YamlNodeKind.Mapping _ ->
+            match tryDirective node with
+            | Some directive -> directive
+            | None -> unexpected ()
         | _ -> unexpected ()
 
     /// Decode a list of schema-salad strings.
@@ -375,15 +467,39 @@ module Decode =
         | _ ->
             failAt value ("Expected a list of strings, found " + describeNode value + ".")
 
+    /// Decode the doc and the label of a mapping, each with the node that it was read from. The values go to the Doc and
+    /// Label properties of an object, and the nodes go to its SourceNodes, so that the encoder can write the layout of
+    /// the author again. A field with a null value counts as missing, as it does for the other fields. A doc and a label
+    /// are strings in CWL, so a plain scalar that the core schema reads as a number or a bool is a decode error at the
+    /// field. Every other scalar is a string, for example a quoted one or one tagged !!str, and a directive names a file
+    /// with the text. A doc may also be a list of strings, which Schema Salad concatenates without a separator. A list of
+    /// plain strings is one text, and a list with a directive keeps its parts, because the model does not hold the text
+    /// of the file. The node of a doc may be the sequence.
+    let internal docAndLabelDecoder (value: YamlNode) : DocText option * SchemaSaladString option * SourceNodes =
+        let label (node: YamlNode) = decodeSchemaSaladString node, node
+        let doc (node: YamlNode) =
+            match node.Kind with
+            | YamlNodeKind.Sequence collection ->
+                let parts = collection.Items |> List.mapi (fun index item -> atField $"[{index}]" (fun () -> decodeSchemaSaladString item.Node))
+                let texts = parts |> List.choose SchemaSaladString.tryLiteral
+                if texts.Length = parts.Length then
+                    DocText.Text (SchemaSaladString.Literal (String.concat "" texts)), node
+                else
+                    DocText.Parts (ResizeArray parts), node
+            | _ -> DocText.Text (decodeSchemaSaladString node), node
+        let docField = tryGetPresentField "doc" doc value
+        let labelField = tryGetPresentField "label" label value
+        Option.map fst docField, Option.map fst labelField, { SourceNodes.Empty with Doc = Option.map snd docField; Label = Option.map snd labelField }
+
     /// Decode the glob of an output binding: one pattern or a list of patterns, kept as it was written.
     let outputGlobDecoder (node: YamlNode) : OutputGlob =
         match node.Kind with
         | YamlNodeKind.Sequence collection ->
             collection.Items
-            |> List.mapi (fun index item -> atField $"[{index}]" (fun () -> Decode.nonNull stringDecoder item.Node))
+            |> List.mapi (fun index item -> atField $"[{index}]" (fun () -> decodeSchemaSaladString item.Node))
             |> ResizeArray
             |> OutputGlob.Multiple
-        | _ -> OutputGlob.Single (stringDecoder node)
+        | _ -> OutputGlob.Single (decodeSchemaSaladString node)
 
     /// Decode a YamlNode into a glob search pattern for output binding
     let outputBindingGlobDecoder: (YamlNode -> OutputBinding) =
@@ -397,7 +513,7 @@ module Decode =
                         ?glob = glob,
                         ?loadContents = get.Optional.Field "loadContents" Decode.bool,
                         ?loadListing = tryGetLoadListingField "loadListing" value,
-                        ?outputEval = get.Optional.Field "outputEval" stringDecoder
+                        ?outputEval = get.Optional.Field "outputEval" decodeSchemaSaladString
                     )
                 overflowIntoDynamicObj binding (OutputBinding.KnownFieldNames |> Seq.toList) value |> ignore
                 binding
@@ -465,10 +581,11 @@ module Decode =
                     DirectoryEntry (decodeDirectoryInstanceFields value)
                 | _, items when items |> List.exists (fun entry -> entryName entry = "entry") ->
                     DirentEntry (direntDecoder value)
-                | _, [ entry ] when entryName entry = "$include" || entryName entry = "$import" ->
-                    StringEntry (decodeSchemaSaladString value)
                 | _ ->
-                    failAt value "Expected a Dirent with an entry field, a File or a Directory with a class field, or an $include or $import directive in the listing, found a mapping."
+                    match tryDirective value with
+                    | Some directive -> StringEntry directive
+                    | None ->
+                        failAt value "Expected a Dirent with an entry field, a File or a Directory with a class field, or an $include or $import directive in the listing, found a mapping."
             | YamlNodeKind.Scalar _ ->
                 match value with
                 | CoreNull -> NullEntry
@@ -580,6 +697,10 @@ module Decode =
           /// the document itself. A type name in a port is relative to the id of the port, which Schema Salad
           /// resolves two levels up (refScope 2), so DocId is the base of every lookup of a name.
           DocId: string
+          /// The paths of the files with requirements or hints that the processes and steps around the place import, with the
+          /// . and .. segments resolved. A file may hold a SchemaDefRequirement, and a type of that file is named by the path
+          /// in front of a #.
+          ImportedRequirements: Set<string>
           /// The ids of the named record and enum schemas that the ports of the process around the place write inline,
           /// without the leading #. Any port of the process may name them, whatever SchemaDefRequirement applies.
           PortIds: Set<string>
@@ -602,6 +723,7 @@ module Decode =
           InForce = { Ids = Set.empty; Imports = Set.empty }
           Later = Set.empty
           DocId = ""
+          ImportedRequirements = Set.empty
           PortIds = Set.empty
           GraphIds = None
           DefaultCwlVersion = None }
@@ -626,12 +748,56 @@ module Decode =
         | YamlNodeKind.Sequence collection -> collection.Items |> List.map (fun item -> item.Node)
         | _ -> []
 
-    /// The path that an entry of the types field of a SchemaDefRequirement imports, as written. The entry is a
-    /// mapping with the $import directive only. The types field can be such a mapping as a whole too.
+    /// The path of the file that an entry of the types field of a SchemaDefRequirement brings in, as written. The entry is
+    /// a mapping with the $import directive only, or a mapping with a $mixin. The types field can be an $import mapping
+    /// as a whole too. A mixin names a file like an import does, and the decoder reads neither.
     let private importedPathOf (entry: YamlNode) : string option =
-        match entriesOf entry with
-        | [ single ] when scalarText single.Key = Some "$import" -> scalarText single.Value
+        match readDirective entry with
+        | DirectiveRead (SchemaSaladString.Import path)
+        | DirectiveRead (SchemaSaladString.Mixin path)
+        | MixinBeside path -> Some path
         | _ -> None
+
+    /// The names among the given fields that the node writes as one directive, as in requirements: {$import: path}.
+    let private wholeDirectiveFields (fields: string list) (node: YamlNode) : Set<string> =
+        fields
+        |> List.filter (fun field ->
+            match valueOf field node with
+            | Some value ->
+                match value.Kind with
+                | YamlNodeKind.Mapping _ -> (importedPathOf value).IsSome
+                | _ -> false
+            | None -> false)
+        |> Set.ofList
+
+    /// Fail when the value of an entry of an id map is a directive. Schema Salad adds the key of the entry as a field of the
+    /// loaded object, and an $import or an $include has no other field, so cwltool rejects the document. A list holds the
+    /// directive instead.
+    let private rejectDirectiveValue (what: string) (entry: MappingEntry) : unit =
+        let hasDirective =
+            entriesOf entry.Value
+            |> List.exists (fun field -> scalarText field.Key = Some "$import" || scalarText field.Key = Some "$include")
+        if hasDirective then
+            failAt entry.Value ("A directive cannot stand for the value of " + what + ", because Schema Salad adds the key as a field of the loaded object. Write the field as a list.")
+
+    /// The entry of a list for an entry of an id map whose value holds a $mixin. Schema Salad adds the key of the map
+    /// entry as a field of the loaded object, so the entry is the mapping with that field in front. The id key names
+    /// the field. The result is none for a value without a $mixin.
+    let private mixedEntryOfMapValue (idKey: string) (key: string) (value: YamlNode) : RawYaml option =
+        match readDirective value, value.Kind with
+        | (DirectiveRead (SchemaSaladString.Mixin _) | MixinBeside _), YamlNodeKind.Mapping collection ->
+            let idEntry = YamlNode.entry (YamlNode.plain idKey) (Encode.string key)
+            Some { Node = { value with Kind = YamlNodeKind.Mapping { collection with Items = idEntry :: collection.Items } } }
+        | Malformed (path, message, at), _ -> failMalformed path message at
+        | _ -> None
+
+    /// Read a directive at an entry of a list of ports or step inputs. A mapping with an id and a $mixin is the object
+    /// that the id names, completed by the file, and the model leaves what the file supplies open. Any other mapping with
+    /// a directive stands for an entry of its own, as objectDirective reads it.
+    let private namedObjectDirective (what: string) (node: YamlNode) : ObjectDirective option =
+        match readDirective node with
+        | MixinBeside _ when (valueOf "id" node).IsSome -> None
+        | _ -> objectDirective what node
 
     /// The path of an imported file with its . and .. segments resolved, so that ./shapes.yml, a/../shapes.yml and
     /// shapes.yml name one file. Schema Salad resolves the path of the import and the path in front of the # of a type
@@ -772,6 +938,19 @@ module Decode =
     let private entryIds (holderId: string) (entry: YamlNode) : string list =
         if (importedPathOf entry).IsSome then [] else namedSchemaIds holderId entry
 
+    /// The paths of the files that the requirements and the hints of a process or a step import, as written. An entry of the
+    /// list is a mapping with the $import directive only, and the field can be such a mapping as a whole.
+    let private importedRequirementPathsOf (holder: YamlNode) : string list =
+        [ "requirements"; "hints" ]
+        |> List.collect (fun field ->
+            match valueOf field holder with
+            | Some entries ->
+                match entries.Kind with
+                | YamlNodeKind.Sequence _ -> itemsOf entries |> List.choose importedPathOf
+                | YamlNodeKind.Mapping _ -> importedPathOf entries |> Option.toList
+                | _ -> []
+            | None -> [])
+
     /// The entries of the types field of the SchemaDefRequirements in the requirements and the hints of a process or
     /// a step.
     let private typeEntriesOf (holder: YamlNode) : YamlNode list =
@@ -791,6 +970,8 @@ module Decode =
                 match importedPathOf entry with
                 | Some path -> imports.Add (normalizedPath path)
                 | None -> definitions.AddRange (entryIds holderId entry)
+            for path in importedRequirementPathsOf holder do
+                imports.Add (normalizedPath path)
         let rec addProcess (id: string) (processNode: YamlNode) =
             addHolder id processNode
             definitions.AddRange (portSchemaIds id processNode)
@@ -857,7 +1038,8 @@ module Decode =
             chains
             |> List.map appliedBy
             |> List.reduce (fun left right -> { Ids = Set.intersect left.Ids right.Ids; Imports = Set.intersect left.Imports right.Imports })
-        { scope with Chains = chains; InForce = inForce }
+        let imported = importedRequirementPathsOf holder |> List.map normalizedPath |> Set.ofList
+        { scope with Chains = chains; InForce = inForce; ImportedRequirements = Set.union scope.ImportedRequirements imported }
 
     /// The id that a link names among the given type ids, and none when it names no id. A link that starts with # is
     /// the absolute id in the document. Any other link is relative to the id of the port or of the record field that
@@ -885,7 +1067,11 @@ module Decode =
     /// innermost SchemaDefRequirement defines that id. A name behind a path needs the import in that requirement.
     let private isDefinedReference (scope: DecodeScope) (name: string) : bool =
         match importedPathOfName name with
-        | Some path -> Set.contains path scope.InForce.Imports
+        | Some path ->
+            // A path with a scheme, such as file:///work/shapes.yml#Name, names the file by an address that the decoder cannot
+            // compare with the path of an import. It counts when the document imports a file at all.
+            Set.contains path scope.InForce.Imports || Set.contains path scope.ImportedRequirements
+            || (path.Contains "://" && not (Set.isEmpty scope.InForce.Imports && Set.isEmpty scope.ImportedRequirements))
         | None -> resolveLink scope scope.Definitions name |> Option.exists (fun id -> Set.contains id scope.InForce.Ids || Set.contains id scope.PortIds)
 
     /// True when a Reference can spell the name: it is not empty, holds no whitespace and none of the characters [ ] ?
@@ -986,6 +1172,14 @@ module Decode =
     let private withChildId (name: string) (scope: DecodeScope) : DecodeScope =
         { scope with DocId = scopedId scope.DocId name }
 
+    /// Decode the symbols of an enum. A symbol is a string or a directive. An $import mapping as the whole field stands
+    /// for the symbols of a file, so the field holds one imported symbol.
+    let private enumSymbolsDecoder (node: YamlNode) : ResizeArray<SchemaSaladString> =
+        match node.Kind with
+        | YamlNodeKind.Mapping _ when (importOnly "the symbols field of an enum" node).IsSome ->
+            ResizeArray [ SchemaSaladString.Import (importOnly "the symbols field of an enum" node).Value ]
+        | _ -> decodeSchemaSaladStringArray node
+
     /// Decode an InputArraySchema from a YamlNode
     let rec inputArraySchemaDecoder (scope: DecodeScope) : (YamlNode -> InputArraySchema) =
         fun value ->
@@ -1025,23 +1219,32 @@ module Decode =
             let name = value |> Decode.object (fun get -> get.Required.Field "name" (Decode.nonNull stringDecoder))
             atField name (fun () -> inputRecordFieldObject scope name value)
 
-    /// Decode fields as an array: [{name: x, type: y}]
-    and decodeFieldsAsArray (scope: DecodeScope) (element: YamlNode) : ResizeArray<InputRecordField> =
-        Decode.resizearray (inputRecordFieldDecoder scope) element
+    /// Decode fields as an array: [{name: x, type: y}]. An $import stands for the fields of a file.
+    and decodeFieldsAsArray (scope: DecodeScope) (element: YamlNode) : ResizeArray<ListEntry<InputRecordField>> =
+        let decodeEntry (item: YamlNode) : ListEntry<InputRecordField> =
+            match objectDirective "an entry of the fields field of a record" item with
+            | Some (ImportedFile importPath) -> ListEntry.Imported importPath
+            | Some (MixedMapping raw) -> ListEntry.Mixed raw
+            | None -> ListEntry.Value (inputRecordFieldDecoder scope item)
+        Decode.resizearray decodeEntry element
 
     /// Decode fields as a map: {fieldName: type} or {fieldName: {type: ..., inputBinding: ...}}
-    and decodeFieldsAsMap (scope: DecodeScope) (element: YamlNode) : ResizeArray<InputRecordField> =
-        let fields = ResizeArray<InputRecordField>()
+    and decodeFieldsAsMap (scope: DecodeScope) (element: YamlNode) : ResizeArray<ListEntry<InputRecordField>> =
+        let fields = ResizeArray<ListEntry<InputRecordField>>()
         for entry in mappingEntries element do
             // Map-style record fields use the mapping key as the field name. A mapping is the field object, with the
             // type and the other properties of the field. Any other value is the type itself.
             let name = idMapKey entry
             let field =
                 atField name (fun () ->
-                    match entry.Value.Kind with
-                    | YamlNodeKind.Mapping _ -> inputRecordFieldObject scope name entry.Value
-                    | _ -> InputRecordField(name, cwlTypeDecoderAt (scope |> withChildId name |> withShorthand true) entry.Value))
-            fields.Add(field)
+                    rejectDirectiveValue "an entry of the fields field of a record" entry
+                    match mixedEntryOfMapValue "name" name entry.Value with
+                    | Some raw -> ListEntry.Mixed raw
+                    | None ->
+                        match entry.Value.Kind with
+                        | YamlNodeKind.Mapping _ -> ListEntry.Value (inputRecordFieldObject scope name entry.Value)
+                        | _ -> ListEntry.Value (InputRecordField(name, cwlTypeDecoderAt (scope |> withChildId name |> withShorthand true) entry.Value)))
+            fields.Add field
         fields
 
     /// Decode an InputRecordSchema from a YamlNode
@@ -1059,12 +1262,16 @@ module Decode =
                 match fieldsElement with
                 | Some element when (YamlNode.tryMapping element |> Option.exists (fun mapping -> mapping.Items.IsEmpty)) ->
                     // An empty mapping, fields: {}, has no fields. An empty list, fields: [], takes the array path below.
-                    Some (ResizeArray<InputRecordField>())
+                    Some (ResizeArray<ListEntry<InputRecordField>>())
                 | Some element ->
-                    // A list holds field objects with their names, and a mapping holds the fields under their names.
+                    // A list holds field objects with their names, and a mapping holds the fields under their names. A
+                    // mapping with the $import directive only is the field as a whole, and it stands for the fields of
+                    // a file.
                     atField "fields" (fun () ->
                         match element.Kind with
                         | YamlNodeKind.Sequence _ -> Some (decodeFieldsAsArray scope element)
+                        | YamlNodeKind.Mapping _ when (importOnly "the fields field of a record" element).IsSome ->
+                            Some (ResizeArray [ ListEntry.Imported (importOnly "the fields field of a record" element).Value ])
                         | YamlNodeKind.Mapping _ -> Some (decodeFieldsAsMap scope element)
                         | _ ->
                             raise (
@@ -1085,7 +1292,7 @@ module Decode =
                     ?doc = doc,
                     ?name = recordName
                 )
-            schema.SourceNodes <- sourceNodes
+            schema.SourceNodes <- { sourceNodes with WholeFields = wholeDirectiveFields [ "fields" ] value }
             overflowIntoDynamicObj schema (InputRecordSchema.KnownFieldNames |> Seq.toList) value |> ignore
             schema
         ) value
@@ -1094,7 +1301,7 @@ module Decode =
     and inputEnumSchemaDecoder: (YamlNode -> InputEnumSchema) =
         fun value ->
         Decode.object (fun get ->
-            let symbols = get.Required.Field "symbols" (Decode.resizearray (Decode.nonNull stringDecoder))
+            let symbols = get.Required.Field "symbols" enumSymbolsDecoder
 
             let doc, label, sourceNodes = docAndLabelDecoder value
             let schema =
@@ -1104,7 +1311,7 @@ module Decode =
                     ?doc = doc,
                     ?name = get.Optional.Field "name" stringDecoder
                 )
-            schema.SourceNodes <- sourceNodes
+            schema.SourceNodes <- { sourceNodes with WholeFields = wholeDirectiveFields [ "symbols" ] value }
             overflowIntoDynamicObj schema (InputEnumSchema.KnownFieldNames |> Seq.toList) value |> ignore
             schema
         ) value
@@ -1132,6 +1339,15 @@ module Decode =
                 |> ResizeArray
             Union types
         | YamlNodeKind.Mapping _ ->
+            // A type is a name, and the text of a file can be one, so an $include can stand in the place of a type.
+            match readDirective element with
+            | Malformed (path, message, at) -> failMalformed path message at
+            | DirectiveRead (SchemaSaladString.Include path) -> IncludedType path
+            | DirectiveRead (SchemaSaladString.Import path) -> ImportedType path
+            | DirectiveRead (SchemaSaladString.Mixin _)
+            | MixinBeside _ -> MixedType { Node = element }
+            | DirectiveRead (SchemaSaladString.Literal _)
+            | NotDirective ->
             // Complex type - check for type field
             Decode.object (fun get ->
                 match get.Optional.Field "type" Decode.node with
@@ -1234,6 +1450,11 @@ module Decode =
             cwlTypeDecoderAt scope value
         | _ -> cwlTypeDecoder scope value
 
+    /// Decode the type of a port. A port with a $mixin and no type of its own takes the type from the file, so its type
+    /// is none.
+    let portTypeOrMixin (scope: DecodeScope) (value: YamlNode) : CWLType option =
+        if (valueOf "$mixin" value).IsSome && (valueOf "type" value).IsNone then None else Some (portTypeDecoder scope value)
+
     /// The entry of a mapping with the given key, and none for any other node.
     let private fieldEntry (key: string) (node: YamlNode) : MappingEntry option =
         entriesOf node |> List.tryFind (fun entry -> scalarText entry.Key = Some key)
@@ -1277,7 +1498,7 @@ module Decode =
         // and object forms share the same object initialization path.
         let outputBinding = outputBindingDecoder value
         let outputSourceValues = outputSourceDecoder value
-        let cwlType = portTypeDecoder (withChildId name scope) value
+        let cwlType = portTypeOrMixin (withChildId name scope) value
         // The tool writes the file of a stream output itself, so a binding has nothing to bind.
         let streamWithBinding (typeName: string) : unit =
             raise (
@@ -1287,8 +1508,8 @@ module Decode =
                       Span = value.Span }
             )
         match cwlType, outputBinding with
-        | Stdout, Some _ -> streamWithBinding "stdout"
-        | Stderr, Some _ -> streamWithBinding "stderr"
+        | Some Stdout, Some _ -> streamWithBinding "stdout"
+        | Some Stderr, Some _ -> streamWithBinding "stderr"
         | _ -> ()
         let doc, label, sourceNodes = docAndLabelDecoder value
         // Optional presentation and behavior fields are read directly from the
@@ -1296,12 +1517,12 @@ module Decode =
         let output =
             CWLOutput(
                 name,
-                cwlType,
+                ?type_ = cwlType,
                 ?label = label,
                 ?secondaryFiles = tryGetYamlField "secondaryFiles" value,
                 ?streamable = tryGetBoolField "streamable" value,
                 ?doc = doc,
-                ?format = tryGetStringField "format" value
+                ?format = tryGetPresentField "format" decodeSchemaSaladString value
         )
         output.SourceNodes <- sourceNodes
         output.OutputBinding <- outputBinding
@@ -1336,8 +1557,9 @@ module Decode =
             addWarning warnings $"{path}[{index}]" "Skipped malformed unnamed CWL output entry." (Some item)
             None
 
-    /// Decode a YamlNode into an Output Array
-    let outputArrayDecoderWithWarnings (warnings: WarningSink) (scope: DecodeScope) (path: string) : (YamlNode -> ResizeArray<CWLOutput>) =
+    /// Decode a YamlNode into an Output Array. An $import stands for the outputs of a file, in the list or as the whole
+    /// field.
+    let outputArrayDecoderWithWarnings (warnings: WarningSink) (scope: DecodeScope) (path: string) : (YamlNode -> ResizeArray<ListEntry<CWLOutput>>) =
         fun value ->
             match value.Kind with
             | YamlNodeKind.Sequence collection ->
@@ -1345,28 +1567,36 @@ module Decode =
                 // items are the tolerant path and produce warnings.
                 warnRepeatedIds warnings path (collection.Items |> List.map (fun item -> item.Node))
                 collection.Items
-                |> List.mapi (fun index item -> decodeOutputSequenceItem warnings scope path index item.Node)
+                |> List.mapi (fun index item ->
+                    match atField $"[{index}]" (fun () -> namedObjectDirective "an entry of the outputs" item.Node) with
+                    | Some (ImportedFile importPath) -> Some (ListEntry.Imported importPath)
+                    | Some (MixedMapping raw) -> Some (ListEntry.Mixed raw)
+                    | None -> decodeOutputSequenceItem warnings scope path index item.Node |> Option.map ListEntry.Value)
                 |> List.choose id
                 |> ResizeArray
+            | YamlNodeKind.Mapping _ when (importOnly "the outputs field" value).IsSome ->
+                ResizeArray [ ListEntry.Imported (importOnly "the outputs field" value).Value ]
             | _ ->
                 // Map-form ports use the map key as the port name.
                 [|
                     for entry in mappingEntries value do
                         let name = idMapKey entry
-                        atField name (fun () -> decodeNamedOutput scope name entry.Value)
+                        atField name (fun () ->
+                            rejectDirectiveValue "an entry of the outputs" entry
+                            ListEntry.Value (decodeNamedOutput scope name entry.Value))
                 |]
                 |> ResizeArray
 
-    let outputArrayDecoder: (YamlNode -> ResizeArray<CWLOutput>) =
+    let outputArrayDecoder: (YamlNode -> ResizeArray<ListEntry<CWLOutput>>) =
         outputArrayDecoderWithWarnings None rootScope "outputs"
 
     /// Access the outputs field and decode a YamlNode into an Output Array
-    let outputsDecoderWithWarnings (warnings: WarningSink) (scope: DecodeScope) : (YamlNode -> ResizeArray<CWLOutput>) =
+    let outputsDecoderWithWarnings (warnings: WarningSink) (scope: DecodeScope) : (YamlNode -> ResizeArray<ListEntry<CWLOutput>>) =
         Decode.object (fun get ->
             get.Required.Field "outputs" (outputArrayDecoderWithWarnings warnings scope "outputs")
         )
 
-    let outputsDecoder: (YamlNode -> ResizeArray<CWLOutput>) =
+    let outputsDecoder: (YamlNode -> ResizeArray<ListEntry<CWLOutput>>) =
         outputsDecoderWithWarnings None rootScope
 
     /// Decode a YamlNode into a DockerRequirement
@@ -1377,18 +1607,19 @@ module Decode =
         // Constructor normalization gives dockerFileReference precedence over the
         // legacy plain dockerFile argument.
         DockerRequirement.create(
-            ?dockerPull = get.Optional.Field "dockerPull" stringDecoder,
+            ?dockerPull = get.Optional.Field "dockerPull" decodeSchemaSaladString,
             ?dockerFileReference = dockerFile,
-            ?dockerImageId = get.Optional.Field "dockerImageId" stringDecoder,
-            ?dockerLoad = get.Optional.Field "dockerLoad" stringDecoder,
-            ?dockerImport = get.Optional.Field "dockerImport" stringDecoder,
-            ?dockerOutputDirectory = get.Optional.Field "dockerOutputDirectory" stringDecoder,
+            ?dockerImageId = get.Optional.Field "dockerImageId" decodeSchemaSaladString,
+            ?dockerLoad = get.Optional.Field "dockerLoad" decodeSchemaSaladString,
+            ?dockerImport = get.Optional.Field "dockerImport" decodeSchemaSaladString,
+            ?dockerOutputDirectory = get.Optional.Field "dockerOutputDirectory" decodeSchemaSaladString,
             ?dockerRunOptions = get.Optional.Field "cwltool:dockerRunOptions" decodeStringArrayOrScalar
         )
 
     /// Decode a YamlNode into an EnvVarRequirement array.
-    /// Supports both array form and map shorthand form (envName -> envValue).
-    let envVarRequirementDecoder (get: Decode.IGetters): ResizeArray<EnvironmentDef> =
+    /// Supports both array form and map shorthand form (envName -> envValue). An $import stands for the definitions of
+    /// a file, in the list and as the whole field.
+    let envVarRequirementDecoder (get: Decode.IGetters): ResizeArray<ListEntry<EnvironmentDef>> =
         // Env var values are strings by CWL semantics. The scalar text is already unquoted, so
         // a quoted "true" and a plain true both decode to the string true.
         let decodeEnvValue = decodeSchemaSaladString
@@ -1399,22 +1630,32 @@ module Decode =
                 // Standard CWL form: envDef is an array of {envName, envValue} objects.
                 Decode.resizearray
                     (fun value ->
-                        Decode.object (fun get2 ->
-                            let env =
-                                EnvironmentDef(
-                                    get2.Required.Field "envName" (Decode.nonNull stringDecoder),
-                                    get2.Required.Field "envValue" decodeEnvValue
-                                )
-                            overflowIntoDynamicObj env (EnvironmentDef.KnownFieldNames |> Seq.toList) value |> ignore
-                            env
-                        ) value)
+                        match objectDirective "an entry of the envDef field" value with
+                        | Some (ImportedFile importPath) -> ListEntry.Imported importPath
+                        | Some (MixedMapping raw) -> ListEntry.Mixed raw
+                        | None ->
+                            Decode.object (fun get2 ->
+                                let env =
+                                    EnvironmentDef(
+                                        get2.Required.Field "envName" (Decode.nonNull stringDecoder),
+                                        get2.Required.Field "envValue" decodeEnvValue
+                                    )
+                                overflowIntoDynamicObj env (EnvironmentDef.KnownFieldNames |> Seq.toList) value |> ignore
+                                ListEntry.Value env
+                            ) value)
                     envDefElement
+            | YamlNodeKind.Mapping _ when (importOnly "the envDef field" envDefElement).IsSome ->
+                ResizeArray [ ListEntry.Imported (importOnly "the envDef field" envDefElement).Value ]
             | YamlNodeKind.Mapping _ ->
                 // Shorthand form: envDef is a map from variable name to value.
                 mappingEntries envDefElement
                 |> List.map (fun entry ->
                     let name = idMapKey entry
-                    EnvironmentDef(name, atField name (fun () -> decodeEnvValue entry.Value)))
+                    atField name (fun () ->
+                        rejectDirectiveValue "an entry of the envDef field" entry
+                        match mixedEntryOfMapValue "envName" name entry.Value with
+                        | Some raw -> ListEntry.Mixed raw
+                        | None -> ListEntry.Value (EnvironmentDef(name, decodeEnvValue entry.Value))))
                 |> ResizeArray
             | _ ->
                 failAt envDefElement ("Expected a list or a mapping for envDef, found " + describeNode envDefElement + "."))
@@ -1485,9 +1726,14 @@ module Decode =
                 InitialWorkDirRequirement (Decode.resizearray initialWorkDirEntryDecoder listingElement)
             | YamlNodeKind.Scalar _ ->
                 match stringDecoder listingElement with
-                | text when containsExpression text -> InitialWorkDirExpressionRequirement text
+                | text when containsExpression text -> InitialWorkDirExpressionRequirement (SchemaSaladString.Literal text)
                 | _ ->
                     failAt listingElement ("Expected a list of entries or an expression for the listing, found " + describeNode listingElement + ". An expression holds $( or ${.")
+            | YamlNodeKind.Mapping _ ->
+                // A directive names a file with the text of the listing, and the decoder reads no file.
+                match tryDirective listingElement with
+                | Some directive -> InitialWorkDirExpressionRequirement directive
+                | None -> failAt listingElement ("Expected a list of entries or an expression for the listing, found " + describeNode listingElement + ".")
             | _ ->
                 failAt listingElement ("Expected a list of entries or an expression for the listing, found " + describeNode listingElement + "."))
 
@@ -1545,8 +1791,9 @@ module Decode =
 
     /// Decode an entry of the types field: a file to import, as {$import: path}, or a type to define.
     let schemaDefEntryDecoder (scope: DecodeScope) (value: YamlNode) : SchemaDefEntry =
-        match importedPathOf value with
-        | Some path -> Imported path
+        match objectDirective "an entry of the types field" value with
+        | Some (ImportedFile path) -> Imported path
+        | Some (MixedMapping raw) -> Mixed raw
         | None -> Defined (schemaDefinitionDecoder scope value)
 
     /// Decode a YamlNode into a SchemaDefEntry array. A SchemaDefRequirement processes its types in the order listed
@@ -1559,7 +1806,8 @@ module Decode =
             let isEntryList =
                 match typesNode.Kind with
                 | YamlNodeKind.Sequence _ -> true
-                | _ -> (importedPathOf typesNode).IsSome
+                | YamlNodeKind.Mapping _ -> (importOnly "the types field" typesNode).IsSome
+                | _ -> false
             if isEntryList then
                 let entries = typeEntriesIn typesNode
                 let ids = entries |> List.map (entryIds scope.DocId)
@@ -1677,7 +1925,8 @@ module Decode =
         | _ -> ()
 
     /// Decode requirements from either sequence syntax or class-name map syntax. The field is the name of the field that
-    /// holds them in the process, as it stands in the path of a warning.
+    /// holds them in the process, as it stands in the path of a warning. An $import stands for the requirements of a
+    /// file, and the field may be that directive as a whole.
     let requirementArrayDecoderWithScope (warnings: WarningSink) (field: string) (scope: DecodeScope) : YamlNode -> ResizeArray<Requirement> =
         fun yEle ->
             // helper: decode a single requirement object that contain 'class' field
@@ -1699,14 +1948,21 @@ module Decode =
                 collection.Items
                 |> List.mapi (fun index item ->
                     atField $"[{index}]" (fun () ->
-                        let requirement = decodeSingleRequirementObject item.Node
-                        warnAboutRequirement warnings $"{field}[{index}]" item.Node requirement
-                        requirement))
+                        match objectDirective "an entry of the requirements" item.Node with
+                        | Some (ImportedFile path) -> ImportedRequirement path
+                        | Some (MixedMapping raw) -> MixedRequirement raw
+                        | None ->
+                            let requirement = decodeSingleRequirementObject item.Node
+                            warnAboutRequirement warnings $"{field}[{index}]" item.Node requirement
+                            requirement))
                 |> ResizeArray
 
             // II:  OBJECT/MAP SYNTAX (also covers flow/JSON-style mapping)
                 // requirements:
                 //   DockerRequirement: { ... }
+            | YamlNodeKind.Mapping _ when (importOnly "the requirements field" yEle).IsSome ->
+                // The field is one directive, as in requirements: {$import: path}.
+                ResizeArray [ ImportedRequirement (importOnly "the requirements field" yEle).Value ]
             | YamlNodeKind.Mapping _ ->
                 mappingEntries yEle
                 |> List.map (fun entry ->
@@ -1714,6 +1970,10 @@ module Decode =
                     // and the mapping value as that requirement's payload.
                     let name = idMapKey entry
                     atField name (fun () ->
+                        rejectDirectiveValue "an entry of the requirements" entry
+                        match mixedEntryOfMapValue "class" name entry.Value with
+                        | Some raw -> MixedRequirement raw
+                        | None ->
                         let requirement =
                             Decode.object (fun get ->
                                 match tryRequirementFromTypeName scope name get with
@@ -1731,9 +1991,14 @@ module Decode =
     let requirementArrayDecoder : YamlNode -> ResizeArray<Requirement> =
         requirementArrayDecoderWithScope None "requirements" rootScope
 
-    /// Decode one hint. A hint of a class that the model knows decodes with the decoder of the requirement of that
-    /// class and fails with the same errors. A hint of any other class stays as it was written.
+    /// Decode one hint. An $import stands for the hints of a file, and the decoder checks for it before it reads the class,
+    /// because the directive has none. A hint of a class that the model knows decodes with the decoder of the requirement of
+    /// that class and fails with the same errors. A hint of any other class stays as it was written.
     let decodeHintElement (scope: DecodeScope) (element: YamlNode) : HintEntry =
+        match objectDirective "an entry of the hints" element with
+        | Some (ImportedFile path) -> ImportedHint path
+        | Some (MixedMapping raw) -> MixedHint raw
+        | None ->
         Decode.object (fun get ->
             let cls = get.Required.Field "class" (Decode.nonNull stringDecoder)
             // A requirement of the same class overrides a SchemaDefRequirement hint in every chain, so no runner applies
@@ -1752,7 +2017,9 @@ module Decode =
     let private warnAboutHint (warnings: WarningSink) (path: string) (node: YamlNode) (hint: HintEntry) : HintEntry =
         match hint with
         | KnownHint requirement -> warnAboutRequirement warnings path node requirement
-        | UnknownHint _ -> ()
+        | UnknownHint _
+        | ImportedHint _
+        | MixedHint _ -> ()
         hint
 
     /// Decode hints from sequence syntax or class-name map syntax while preserving unknown hints.
@@ -1765,14 +2032,21 @@ module Decode =
                 collection.Items
                 |> List.mapi (fun index item -> atField $"[{index}]" (fun () -> decodeHintElement scope item.Node |> warnAboutHint warnings $"hints[{index}]" item.Node))
                 |> ResizeArray
+            | YamlNodeKind.Mapping _ when (importOnly "the hints field" yEle).IsSome ->
+                // The field is one directive, as in hints: {$import: path}.
+                ResizeArray [ ImportedHint (importOnly "the hints field" yEle).Value ]
             | YamlNodeKind.Mapping _ ->
                 mappingEntries yEle
                 |> List.map (fun entry ->
                     let hintName = idMapKey entry
                     atField hintName (fun () ->
+                        rejectDirectiveValue "an entry of the hints" entry
                         // A hint without a payload has the same meaning as a hint with an empty one.
                         let payload = if YamlNode.isMissingValue entry.Value then YamlNode.flowMapping [] else entry.Value
-                        match payload.Kind with
+                        match mixedEntryOfMapValue "class" hintName payload, payload.Kind with
+                        | Some raw, _ -> MixedHint raw
+                        | None, kind ->
+                        match kind with
                         | YamlNodeKind.Mapping collection ->
                             let hasClass =
                                 // If map-style hint payload already has class,
@@ -1838,12 +2112,12 @@ module Decode =
                 // behavior fields. Absent fields remain None.
                 let binding =
                     InputBinding(
-                        ?prefix = get'.Optional.Field "prefix" stringDecoder,
+                        ?prefix = get'.Optional.Field "prefix" decodeSchemaSaladString,
                         ?position = get'.Optional.Field "position" bindingPositionDecoder,
-                        ?itemSeparator = get'.Optional.Field "itemSeparator" stringDecoder,
+                        ?itemSeparator = get'.Optional.Field "itemSeparator" decodeSchemaSaladString,
                         ?separate = get'.Optional.Field "separate" Decode.bool,
                         ?loadContents = get'.Optional.Field "loadContents" Decode.bool,
-                        ?valueFrom = get'.Optional.Field "valueFrom" stringDecoder,
+                        ?valueFrom = get'.Optional.Field "valueFrom" decodeSchemaSaladString,
                         ?shellQuote = get'.Optional.Field "shellQuote" Decode.bool
                     )
                 overflowIntoDynamicObj binding (InputBinding.KnownFieldNames |> Seq.toList) value |> ignore
@@ -1857,10 +2131,10 @@ module Decode =
         match node.Kind with
         | YamlNodeKind.Sequence collection ->
             collection.Items
-            |> List.mapi (fun index item -> atField $"[{index}]" (fun () -> Decode.nonNull stringDecoder item.Node))
+            |> List.mapi (fun index item -> atField $"[{index}]" (fun () -> decodeSchemaSaladString item.Node))
             |> ResizeArray
             |> InputFormat.Multiple
-        | _ -> InputFormat.Single (stringDecoder node)
+        | _ -> InputFormat.Single (decodeSchemaSaladString node)
 
     /// Decode a named input from map shorthand or full object form, preserving optionality and extensions.
     let decodeNamedInput (scope: DecodeScope) (name: string) (value: YamlNode) =
@@ -1882,9 +2156,9 @@ module Decode =
         // inputBinding is nested and decoded separately so both shorthand and object
         // input definitions can share the same construction flow.
         let inputBinding = inputBindingDecoder value
-        let cwlType = portTypeDecoder (withChildId name scope) value
+        let cwlType = portTypeOrMixin (withChildId name scope) value
         match cwlType, inputBinding with
-        | Stdin, Some _ ->
+        | Some Stdin, Some _ ->
             // The tool reads a stdin input from its standard input, so a binding has nothing to bind.
             raise (
                 YamlDecodeException
@@ -1899,7 +2173,7 @@ module Decode =
         let input =
             CWLInput(
                 name,
-                cwlType,
+                ?type_ = cwlType,
                 ?label = label,
                 ?secondaryFiles = tryGetYamlField "secondaryFiles" value,
                 ?streamable = tryGetBoolField "streamable" value,
@@ -1922,41 +2196,50 @@ module Decode =
             addWarning warnings $"{path}[{index}]" "Skipped malformed unnamed CWL input entry." (Some item)
             None
 
-    /// Decode a YamlNode into an Input array
-    let inputArrayDecoderWithWarnings (warnings: WarningSink) (scope: DecodeScope) (path: string) : (YamlNode -> ResizeArray<CWLInput>) =
+    /// Decode a YamlNode into an Input array. An $import stands for the inputs of a file, in the list or as the whole
+    /// field.
+    let inputArrayDecoderWithWarnings (warnings: WarningSink) (scope: DecodeScope) (path: string) : (YamlNode -> ResizeArray<ListEntry<CWLInput>>) =
         fun value ->
             match value.Kind with
             | YamlNodeKind.Sequence collection ->
                 // Sequence-form inputs must carry an id on each object item.
                 warnRepeatedIds warnings path (collection.Items |> List.map (fun item -> item.Node))
                 collection.Items
-                |> List.mapi (fun index item -> decodeInputSequenceItem warnings scope path index item.Node)
+                |> List.mapi (fun index item ->
+                    match atField $"[{index}]" (fun () -> namedObjectDirective "an entry of the inputs" item.Node) with
+                    | Some (ImportedFile importPath) -> Some (ListEntry.Imported importPath)
+                    | Some (MixedMapping raw) -> Some (ListEntry.Mixed raw)
+                    | None -> decodeInputSequenceItem warnings scope path index item.Node |> Option.map ListEntry.Value)
                 |> List.choose id
                 |> ResizeArray
+            | YamlNodeKind.Mapping _ when (importOnly "the inputs field" value).IsSome ->
+                ResizeArray [ ListEntry.Imported (importOnly "the inputs field" value).Value ]
             | _ ->
                 // Map-form inputs use the map key as the input name.
                 [|
                     for entry in mappingEntries value do
                         let name = idMapKey entry
-                        atField name (fun () -> decodeNamedInput scope name entry.Value)
+                        atField name (fun () ->
+                            rejectDirectiveValue "an entry of the inputs" entry
+                            ListEntry.Value (decodeNamedInput scope name entry.Value))
                 |]
                 |> ResizeArray
 
-    let inputArrayDecoder: (YamlNode -> ResizeArray<CWLInput>) =
+    let inputArrayDecoder: (YamlNode -> ResizeArray<ListEntry<CWLInput>>) =
         inputArrayDecoderWithWarnings None rootScope "inputs"
 
     /// Access the inputs field and decode the YamlNodes into an Input array
-    let inputsDecoderWithWarnings (warnings: WarningSink) (scope: DecodeScope) : (YamlNode -> ResizeArray<CWLInput> option) =
+    let inputsDecoderWithWarnings (warnings: WarningSink) (scope: DecodeScope) : (YamlNode -> ResizeArray<ListEntry<CWLInput>> option) =
         Decode.object (fun get ->
             get.Optional.Field "inputs" (inputArrayDecoderWithWarnings warnings scope "inputs")
         )
 
-    let inputsDecoder: (YamlNode -> ResizeArray<CWLInput> option) =
+    let inputsDecoder: (YamlNode -> ResizeArray<ListEntry<CWLInput>> option) =
         inputsDecoderWithWarnings None rootScope
 
     /// Decode the inputs of a process. CWL requires them for every class, so a missing inputs field is a decode error
     /// at the place of the process.
-    let private requiredInputsDecoder (warnings: WarningSink) (scope: DecodeScope) (what: string) (yamlCWL: YamlNode) : ResizeArray<CWLInput> =
+    let private requiredInputsDecoder (warnings: WarningSink) (scope: DecodeScope) (what: string) (yamlCWL: YamlNode) : ResizeArray<ListEntry<CWLInput>> =
         match inputsDecoderWithWarnings warnings scope yamlCWL with
         | Some inputs -> inputs
         | None ->
@@ -1968,18 +2251,21 @@ module Decode =
             )
 
     /// Decode baseCommand from CWL's scalar or array forms.
-    let baseCommandDecoder: (YamlNode -> ResizeArray<string> option) =
+    let baseCommandDecoder: (YamlNode -> ResizeArray<SchemaSaladString> option) =
         Decode.object (fun get ->
             get.Optional.Field "baseCommand" (fun baseCommandField ->
                 match baseCommandField.Kind with
                 | YamlNodeKind.Scalar _ ->
                     // Single string value
-                    ResizeArray([stringDecoder baseCommandField])
+                    ResizeArray([ decodeSchemaSaladString baseCommandField ])
                 | YamlNodeKind.Sequence _ ->
                     // Array of strings
-                    Decode.resizearray (Decode.nonNull stringDecoder) baseCommandField
+                    Decode.resizearray decodeSchemaSaladString baseCommandField
                 | _ ->
-                    failAt baseCommandField ("Expected a string or a list of strings for baseCommand, found " + describeNode baseCommandField + ".")))
+                    // A directive yields the string, and any other mapping is none.
+                    match (match baseCommandField.Kind with YamlNodeKind.Mapping _ -> tryDirective baseCommandField | _ -> None) with
+                    | Some directive -> ResizeArray([ directive ])
+                    | None -> failAt baseCommandField ("Expected a string or a list of strings for baseCommand, found " + describeNode baseCommandField + ".")))
 
     let stringOptionFieldDecoder field : (YamlNode -> string option) =
         tryGetPresentField field stringDecoder
@@ -2072,7 +2358,7 @@ module Decode =
                 id,
                 ?source = source,
                 ?defaultValue = rawYamlOptionFieldDecoder "default" value,
-                ?valueFrom = stringOptionFieldDecoder "valueFrom" value,
+                ?valueFrom = expressionStringOptionFieldDecoder "valueFrom" value,
                 ?linkMerge = linkMergeFieldDecoder "linkMerge" value,
                 ?pickValue = pickValueFieldDecoder "pickValue" value,
                 ?doc = doc,
@@ -2089,12 +2375,14 @@ module Decode =
         stepInput
 
     /// Decode map-form step inputs where the map key supplies the step input id.
-    let decodeStepInputsFromMap (value: YamlNode) : ResizeArray<StepInput> =
+    let decodeStepInputsFromMap (value: YamlNode) : ResizeArray<ListEntry<StepInput>> =
         [|
             for entry in mappingEntries value do
                 // A step input in map form needs a source or a mapping. A key without a value has neither.
                 let name = idMapKey entry
-                atField name (fun () -> decodeStepInputFromValue name (Decode.nonNull Decode.node entry.Value) true)
+                atField name (fun () ->
+                    rejectDirectiveValue "an entry of the in field" entry
+                    ListEntry.Value (decodeStepInputFromValue name (Decode.nonNull Decode.node entry.Value) true))
         |]
         |> ResizeArray
 
@@ -2103,46 +2391,65 @@ module Decode =
         let id = stringFieldDecoder "id" item
         decodeStepInputFromValue id item false
 
-    /// Decode sequence-form step inputs, warning and skipping only malformed unnamed entries.
-    let decodeStepInputsFromArrayWithWarnings (warnings: WarningSink) (path: string) (items: YamlNode list) : ResizeArray<StepInput> =
+    /// Decode sequence-form step inputs, warning and skipping only malformed unnamed entries. An $import stands for the
+    /// step inputs of a file.
+    let decodeStepInputsFromArrayWithWarnings (warnings: WarningSink) (path: string) (items: YamlNode list) : ResizeArray<ListEntry<StepInput>> =
         warnRepeatedIds warnings path items
         items
         |> List.mapi (fun index item ->
-            match tryGetStringField "id" item with
-            // Items with ids are considered intended CWL step inputs and decode strictly.
-            | Some id -> Some (atField id (fun () -> decodeStepInputFromArrayItem item))
+            match atField $"[{index}]" (fun () -> namedObjectDirective "an entry of the in field" item) with
+            | Some (ImportedFile importPath) -> Some (ListEntry.Imported importPath)
+            | Some (MixedMapping raw) -> Some (ListEntry.Mixed raw)
             | None ->
-                // Unnamed malformed entries are public-workflow tolerance cases.
-                addWarning warnings $"{path}[{index}]" "Skipped malformed unnamed CWL step input entry." (Some item)
-                None)
+                match tryGetStringField "id" item with
+                // Items with ids are considered intended CWL step inputs and decode strictly.
+                | Some id -> Some (ListEntry.Value (atField id (fun () -> decodeStepInputFromArrayItem item)))
+                | None ->
+                    // Unnamed malformed entries are public-workflow tolerance cases.
+                    addWarning warnings $"{path}[{index}]" "Skipped malformed unnamed CWL step input entry." (Some item)
+                    None)
         |> List.choose id
         |> ResizeArray
 
-    let decodeStepInputsFromArray (items: YamlNode list) : ResizeArray<StepInput> =
+    let decodeStepInputsFromArray (items: YamlNode list) : ResizeArray<ListEntry<StepInput>> =
         decodeStepInputsFromArrayWithWarnings None "in" items
 
-    /// Select the step input decoder based on CWL map-form versus sequence-form syntax.
-    let inputStepDecoderWithWarnings (warnings: WarningSink) (path: string) : (YamlNode -> ResizeArray<StepInput>) =
+    /// Select the step input decoder based on CWL map-form versus sequence-form syntax. An $import mapping as the whole
+    /// field stands for the step inputs of a file.
+    let inputStepDecoderWithWarnings (warnings: WarningSink) (path: string) : (YamlNode -> ResizeArray<ListEntry<StepInput>>) =
         fun value ->
             match value.Kind with
             | YamlNodeKind.Sequence collection ->
                 decodeStepInputsFromArrayWithWarnings warnings path (collection.Items |> List.map (fun item -> item.Node))
+            | YamlNodeKind.Mapping _ when (importOnly "the in field of a step" value).IsSome ->
+                ResizeArray [ ListEntry.Imported (importOnly "the in field of a step" value).Value ]
             | _ ->
                 decodeStepInputsFromMap value
 
-    let inputStepDecoder: (YamlNode -> ResizeArray<StepInput>) =
+    let inputStepDecoder: (YamlNode -> ResizeArray<ListEntry<StepInput>>) =
         inputStepDecoderWithWarnings None "in"
 
-    /// Decode step outputs from scalar shorthand or record form with extension fields.
+    /// Decode a step output from the scalar shorthand or from the record form with extension fields. A directive stands
+    /// for a file. A record with an id and a $mixin is the output that the id names, and a $mixin without an id stands
+    /// for an entry of its own.
     let decodeStepOutputItem (value: YamlNode) : StepOutput =
-        match value.Kind with
-        | YamlNodeKind.Scalar _ ->
-            StepOutputString (Decode.nonNull stringDecoder value)
-        | _ ->
+        let record () =
             let id = stringFieldDecoder "id" value
             let output = StepOutputParameter.create id
             overflowIntoDynamicObj output (StepOutputParameter.KnownFieldNames |> Seq.toList) value |> ignore
             StepOutputRecord output
+        match value.Kind with
+        | YamlNodeKind.Scalar _ ->
+            StepOutputString (Decode.nonNull stringDecoder value)
+        | _ when (valueOf "$mixin" value).IsSome ->
+            if (valueOf "id" value).IsSome then record () else StepOutputMixed { Node = value }
+        | _ ->
+            match tryDirective value with
+            | Some (SchemaSaladString.Include path) -> StepOutputInclude path
+            | Some (SchemaSaladString.Import path) -> StepOutputImport path
+            | Some (SchemaSaladString.Literal id) -> StepOutputString id
+            | Some (SchemaSaladString.Mixin _) -> StepOutputMixed { Node = value }
+            | None -> record ()
 
     /// Decode workflow step out values, treating CWL empty forms as an empty output list.
     let outputStepsDecoder: (YamlNode -> ResizeArray<StepOutput>) =
@@ -2155,6 +2462,8 @@ module Decode =
                     collection.Items
                     |> List.mapi (fun index item -> atField $"[{index}]" (fun () -> decodeStepOutputItem item.Node))
                     |> ResizeArray
+                | YamlNodeKind.Mapping _ when (importOnly "the out field of a step" outField).IsSome ->
+                    ResizeArray [ StepOutputImport (importOnly "the out field of a step" outField).Value ]
                 | _ ->
                     failAt outField ("Expected a list of outputs, found " + describeNode outField + "."))
         )
@@ -2182,10 +2491,6 @@ module Decode =
             match scope.DefaultCwlVersion with
             | Some defaultCwlVersion -> defaultCwlVersion
             | None -> Decode.object (fun get -> get.Required.Field "cwlVersion" (Decode.nonNull Decode.string)) node
-
-    /// Run a decoder with the segments of a path in front of the path of its errors.
-    let private atPath (path: string list) (decode: unit -> 'T) : 'T =
-        List.foldBack (fun segment inner -> (fun () -> atField segment inner)) path decode ()
 
     /// The name of an id as cwltool compares the outputs of a step with the outputs of its process: the part behind the
     /// last / of the fragment. The names r, #r and s/r stand for one output.
@@ -2222,15 +2527,28 @@ module Decode =
                 atPath ("out" :: entryPath) (fun () ->
                     failAt node ("The out field lists the output " + id + ", and the process that the step runs has no output of that name. " + available))
 
+    /// The outputs of a process, and none when an import stands among them, because the file that it names holds outputs
+    /// that the decoder does not read.
+    let private knownOutputs (processingUnit: CWLProcessingUnit) : ResizeArray<CWLOutput> option =
+        let entries =
+            match processingUnit with
+            | CommandLineTool tool -> tool.Outputs
+            | Workflow workflow -> workflow.Outputs
+            | ExpressionTool tool -> tool.Outputs
+            | Operation operation -> operation.Outputs
+        if entries |> Seq.forall (fun entry -> (ListEntry.tryValue entry).IsSome) then Some (ListEntry.values entries) else None
+
     /// The outputs of the process that a run holds inline, and none for a reference to a file or to a process of the
     /// document.
     let private inlineRunOutputs (run: WorkflowStepRun) : ResizeArray<CWLOutput> option =
         match run with
-        | RunString _ -> None
-        | RunCommandLineTool _ -> WorkflowStepRunOps.tryGetTool run |> Option.map (fun tool -> CWLProcessingUnit.getOutputs (CommandLineTool tool))
-        | RunWorkflow _ -> WorkflowStepRunOps.tryGetWorkflow run |> Option.map (fun workflow -> CWLProcessingUnit.getOutputs (Workflow workflow))
-        | RunExpressionTool _ -> WorkflowStepRunOps.tryGetExpressionTool run |> Option.map (fun tool -> CWLProcessingUnit.getOutputs (ExpressionTool tool))
-        | RunOperation _ -> WorkflowStepRunOps.tryGetOperation run |> Option.map (fun operation -> CWLProcessingUnit.getOutputs (Operation operation))
+        | RunString _
+        | RunImport _
+        | RunMixed _ -> None
+        | RunCommandLineTool _ -> WorkflowStepRunOps.tryGetTool run |> Option.bind (fun tool -> knownOutputs (CommandLineTool tool))
+        | RunWorkflow _ -> WorkflowStepRunOps.tryGetWorkflow run |> Option.bind (fun workflow -> knownOutputs (Workflow workflow))
+        | RunExpressionTool _ -> WorkflowStepRunOps.tryGetExpressionTool run |> Option.bind (fun tool -> knownOutputs (ExpressionTool tool))
+        | RunOperation _ -> WorkflowStepRunOps.tryGetOperation run |> Option.bind (fun operation -> knownOutputs (Operation operation))
 
     /// Decode a workflow step run as either a path string or an inline CWL processing unit.
     let rec workflowStepRunDecoder (warnings: WarningSink) (scope: DecodeScope) (runValue: YamlNode) : WorkflowStepRun =
@@ -2249,6 +2567,10 @@ module Decode =
                 )
             | _ -> RunString reference
         | YamlNodeKind.Mapping _ ->
+            match objectDirective "the run field of a step" runValue with
+            | Some (ImportedFile path) -> RunImport path
+            | Some (MixedMapping raw) -> RunMixed raw
+            | None ->
             // Inline run objects are full CWL processing units and can themselves
             // contain tolerant ports/steps, so the same warning sink is threaded in.
             // An inline run without a cwlVersion takes the one of the scope. Its id is relative to the id of the step.
@@ -2298,7 +2620,7 @@ module Decode =
                 ?scatterMethod = scatterMethod,
                 ?when_ = when_
             )
-        wfStep.SourceNodes <- sourceNodes
+        wfStep.SourceNodes <- { sourceNodes with WholeFields = wholeDirectiveFields [ "requirements"; "hints"; "in"; "out" ] value }
         if requirements.IsSome then
             wfStep.Requirements <- requirements
         if hints.IsSome then
@@ -2327,26 +2649,36 @@ module Decode =
             None
 
     /// Decode workflow steps from sequence-form or map-form syntax with version-aware inline runs.
-    and stepArrayDecoderWithScope (warnings: WarningSink) (scope: DecodeScope) : (YamlNode -> ResizeArray<WorkflowStep>) =
+    and stepArrayDecoderWithScope (warnings: WarningSink) (scope: DecodeScope) : (YamlNode -> ResizeArray<ListEntry<WorkflowStep>>) =
         fun value ->
             match value.Kind with
             | YamlNodeKind.Sequence collection ->
                 // Sequence-form steps carry id in each item.
                 warnRepeatedIds warnings "steps" (collection.Items |> List.map (fun item -> item.Node))
                 collection.Items
-                |> List.mapi (fun index item -> decodeWorkflowStepFromArrayItemWithWarnings warnings scope index item.Node)
+                |> List.mapi (fun index item ->
+                    match atField $"[{index}]" (fun () -> objectDirective "an entry of the steps" item.Node) with
+                    | Some (ImportedFile importPath) -> Some (ListEntry.Imported importPath)
+                    | Some (MixedMapping raw) -> Some (ListEntry.Mixed raw)
+                    | None -> decodeWorkflowStepFromArrayItemWithWarnings warnings scope index item.Node |> Option.map ListEntry.Value)
                 |> List.choose id
                 |> ResizeArray
+            | YamlNodeKind.Mapping _ when (importOnly "the steps field" value).IsSome ->
+                ResizeArray [ ListEntry.Imported (importOnly "the steps field" value).Value ]
             | _ ->
                 // Map-form steps use the map key as the step id.
                 [|
                     for entry in mappingEntries value do
                         let key = idMapKey entry
-                        atField key (fun () -> decodeWorkflowStepFromValueWithId warnings scope $"steps.{key}" key entry.Value)
+                        atField key (fun () ->
+                            rejectDirectiveValue "an entry of the steps" entry
+                            match mixedEntryOfMapValue "id" key entry.Value with
+                            | Some raw -> ListEntry.Mixed raw
+                            | None -> ListEntry.Value (decodeWorkflowStepFromValueWithId warnings scope $"steps.{key}" key entry.Value))
                 |]
                 |> ResizeArray
 
-    and stepsDecoderWithScope (warnings: WarningSink) (scope: DecodeScope) : (YamlNode -> ResizeArray<WorkflowStep>) =
+    and stepsDecoderWithScope (warnings: WarningSink) (scope: DecodeScope) : (YamlNode -> ResizeArray<ListEntry<WorkflowStep>>) =
         Decode.object (fun get ->
             get.Required.Field "steps" (stepArrayDecoderWithScope warnings scope)
         )
@@ -2362,7 +2694,7 @@ module Decode =
         let inputs = requiredInputsDecoder warnings { scope with StreamTypes = InputStreams } "a command line tool" yamlCWL
         // A stdin input reads the standard input, so the tool must not name a file for it as well.
         match tryGetPresentField "stdin" id yamlCWL with
-        | Some stdinNode when inputs |> Seq.exists (fun input -> input.Type_ = Some Stdin) ->
+        | Some stdinNode when inputs |> Seq.exists (fun input -> ListEntry.tryValue input |> Option.exists (fun port -> port.Type_ = Some Stdin)) ->
             atField "stdin" (fun () ->
                 raise (
                     YamlDecodeException
@@ -2384,9 +2716,9 @@ module Decode =
                 ?cwlVersion = Some cwlVersion,
                 ?id = idDecoder yamlCWL,
                 ?arguments = tryGetYamlField "arguments" yamlCWL,
-                ?stdin = tryGetStringField "stdin" yamlCWL,
-                ?stderr = tryGetStringField "stderr" yamlCWL,
-                ?stdout = tryGetStringField "stdout" yamlCWL,
+                ?stdin = tryGetPresentField "stdin" decodeSchemaSaladString yamlCWL,
+                ?stderr = tryGetPresentField "stderr" decodeSchemaSaladString yamlCWL,
+                ?stdout = tryGetPresentField "stdout" decodeSchemaSaladString yamlCWL,
                 ?successCodes = tryGetIntArrayField "successCodes" yamlCWL,
                 ?temporaryFailCodes = tryGetIntArrayField "temporaryFailCodes" yamlCWL,
                 ?permanentFailCodes = tryGetIntArrayField "permanentFailCodes" yamlCWL
@@ -2415,7 +2747,7 @@ module Decode =
             description.Doc <- doc
         if label.IsSome then
             description.Label <- label
-        description.SourceNodes <- sourceNodes
+        description.SourceNodes <- { sourceNodes with WholeFields = wholeDirectiveFields [ "requirements"; "hints"; "inputs"; "outputs" ] yamlCWL }
         if metadata.GetProperties(false) |> Seq.length > 0 then
             description.Metadata <- Some metadata
         description
@@ -2463,7 +2795,7 @@ module Decode =
             description.Doc <- doc
         if label.IsSome then
             description.Label <- label
-        description.SourceNodes <- sourceNodes
+        description.SourceNodes <- { sourceNodes with WholeFields = wholeDirectiveFields [ "requirements"; "hints"; "inputs"; "outputs" ] yamlCWL }
         if metadata.GetProperties(false) |> Seq.length > 0 then
             description.Metadata <- Some metadata
         description
@@ -2506,7 +2838,7 @@ module Decode =
             description.Doc <- doc
         if label.IsSome then
             description.Label <- label
-        description.SourceNodes <- sourceNodes
+        description.SourceNodes <- { sourceNodes with WholeFields = wholeDirectiveFields [ "requirements"; "hints"; "inputs"; "outputs" ] yamlCWL }
         if metadata.GetProperties(false) |> Seq.length > 0 then
             description.Metadata <- Some metadata
         description
@@ -2553,7 +2885,7 @@ module Decode =
             description.Doc <- doc
         if label.IsSome then
             description.Label <- label
-        description.SourceNodes <- sourceNodes
+        description.SourceNodes <- { sourceNodes with WholeFields = wholeDirectiveFields [ "requirements"; "hints"; "inputs"; "outputs"; "steps" ] yamlCWL }
         if metadata.GetProperties(false) |> Seq.length > 0 then
             description.Metadata <- Some metadata
         description
@@ -2824,8 +3156,10 @@ module Decode =
                 | [] -> ()
                 | targets ->
                     let stepPath = run.RunPath |> List.take (run.RunPath.Length - 1)
-                    let outputs = targets |> Seq.collect (fun target -> CWLProcessingUnit.getOutputs processes.[target]) |> ResizeArray
-                    atPath ([ "$graph"; $"[{index}]" ] @ stepPath) (fun () -> checkStepOutputs outputs run.Step)
+                    let known = targets |> List.map (fun target -> knownOutputs processes.[target])
+                    if known |> List.forall Option.isSome then
+                        let outputs = known |> Seq.collect Option.get |> ResizeArray
+                        atPath ([ "$graph"; $"[{index}]" ] @ stepPath) (fun () -> checkStepOutputs outputs run.Step)
         let graph = CWLGraph(processes, cwlVersion = cwlVersion)
         overflowIntoDynamicObj graph (CWLGraph.KnownFieldNames |> Seq.toList) yamlCWL |> ignore
         graph

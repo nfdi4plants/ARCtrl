@@ -127,6 +127,57 @@ let tests_builderCore =
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference) graph) 0 ""
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference) graph) 0 ""
 
+        testCase "an imported run resolved to commandlinetool node like a run string" <| fun () ->
+            let yaml = TestObjects.CWL.WorkflowGraph.singleStepToolRunWorkflowFile.Replace("run: ./tool.cwl", "run: {$import: ./tool.cwl}")
+            let resolvedTool = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFile
+            let options =
+                WorkflowGraphBuildOptions.defaultOptions
+                |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "workflow.cwl")
+                |> WorkflowGraphBuildOptions.withTryResolveRunPath (Some (fun path ->
+                    if path.EndsWith("tool.cwl") then Some (CommandLineTool resolvedTool) else None
+                ))
+            let graph = yaml |> decodeProcessingUnit |> Builder.buildWith options
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool) graph) 1 ""
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference) graph) 0 ""
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference) graph) 0 ""
+
+        testCase "imports among the inputs, outputs and steps stand for nothing the graph can draw" <| fun () ->
+            let yaml =
+                String.concat "
+"
+                    [ "cwlVersion: v1.2"; "class: Workflow"
+                      "inputs:"; "  - {$import: ports.yml}"; "  - id: a"; "    type: string"
+                      "outputs:"; "  - id: o"; "    type: string"; "    outputSource: s/out"; "  - {$import: outputs.yml}"
+                      "steps:"; "  - {$import: steps.yml}"; "  - id: s"; "    run: ./tool.cwl"; "    in: {}"; "    out: [out]"; "" ]
+            let graph = yaml |> decodeProcessingUnit |> Builder.build
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.StepNode) graph) 1 "Only the step that the document holds is a node."
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.PortNode PortDirection.Input) graph) 1 "Only the input that the document holds is a port."
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.PortNode PortDirection.Output) graph) 2 "Only the output of the workflow that the document holds and the output of its step are ports."
+
+        testCase "imports among the step inputs and outputs get no port and the other entries do" <| fun () ->
+            let yaml =
+                String.concat "\n"
+                    [ "cwlVersion: v1.2"; "class: Workflow"; "inputs:"; "  a: string"; "outputs: {}"
+                      "steps:"; "  s:"; "    run: ./tool.cwl"
+                      "    in:"; "      - {$import: more-in.yml}"; "      - id: x"; "        source: a"
+                      "    out:"; "      - r"; "      - {$import: more-out.yml}"; "      - {$include: id.txt}"; "" ]
+            let graph = yaml |> decodeProcessingUnit |> Builder.build
+            let stepNodeId = GraphId.stepNodeId "root" "s"
+            Expect.isTrue (hasNode (GraphId.portNodeId stepNodeId PortDirection.Input "x") graph) "The step input x is a port."
+            Expect.isTrue (hasNode (GraphId.portNodeId stepNodeId PortDirection.Output "r") graph) "The output r is a port."
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.PortNode PortDirection.Input) graph) 2 "The workflow input and the step input are the ports of inputs."
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.PortNode PortDirection.Output) graph) 1 "Only the output r is a port of outputs."
+            Expect.equal (countEdges EdgeKind.BindsWorkflowInput graph) 1 "The step input x reads the workflow input."
+
+        testCase "a run that a mixin completes is an external reference that the graph cannot follow" <| fun () ->
+            let yaml =
+                String.concat "\n"
+                    [ "cwlVersion: v1.2"; "class: Workflow"; "inputs: {}"; "outputs: {}"
+                      "steps:"; "  s:"; "    run: {$mixin: tool.cwl}"; "    in: {}"; "    out: []"; "" ]
+            let graph = yaml |> decodeProcessingUnit |> Builder.build
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference) graph) 1 "The mixin is one external reference."
+            Expect.equal (countEdges EdgeKind.Calls graph) 1 "The step calls it."
+
         testCase "RunString resolved to operation node" <| fun () ->
             let yaml = TestObjects.CWL.WorkflowGraph.singleStepToolRunWorkflowFile
             let resolvedOperation = Decode.decodeOperation TestObjects.CWL.Operation.minimalOperationFile
@@ -205,7 +256,7 @@ let tests_builderCore =
                 match decodeProcessingUnit TestObjects.CWL.CommandLineTool.cwlFile with
                 | CommandLineTool tool -> tool
                 | other -> failwith $"Expected a tool but got %A{other}"
-            workflow.Steps.[0].ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromTool tool) }
+            (ListEntry.values workflow.Steps).[0].ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromTool tool) }
             let graph = Builder.build (Workflow workflow)
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool) graph) 1 "The tool is a node."
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference) graph) 0 "The reference is not left over."

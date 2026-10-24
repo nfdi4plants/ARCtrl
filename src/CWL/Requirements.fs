@@ -5,12 +5,12 @@ open Fable.Core
 
 [<AttachMembers>]
 type DockerRequirement (
-    ?dockerPull: string,
+    ?dockerPull: SchemaSaladString,
     ?dockerFile: SchemaSaladString,
-    ?dockerImageId: string,
-    ?dockerLoad: string,
-    ?dockerImport: string,
-    ?dockerOutputDirectory: string,
+    ?dockerImageId: SchemaSaladString,
+    ?dockerLoad: SchemaSaladString,
+    ?dockerImport: SchemaSaladString,
+    ?dockerOutputDirectory: SchemaSaladString,
     ?dockerRunOptions: ResizeArray<string>
 ) =
     inherit DynamicObj ()
@@ -65,20 +65,20 @@ type DockerRequirement (
         | _ -> false
 
     override this.GetHashCode() =
-        hash (
-            this.DockerPull,
-            this.DockerFile,
-            this.DockerImageId,
-            this.DockerLoad,
-            this.DockerImport,
-            this.DockerOutputDirectory,
-            HashHelpers.hashOptionSeq this.DockerRunOptions,
-            DynamicObjHelpers.hashDynamicProperties this
-        )
+        HashHelpers.hashFields [
+            box this.DockerPull
+            box this.DockerFile
+            box this.DockerImageId
+            box this.DockerLoad
+            box this.DockerImport
+            box this.DockerOutputDirectory
+            box (HashHelpers.hashOptionSeq this.DockerRunOptions)
+            box (DynamicObjHelpers.hashDynamicProperties this)
+        ]
 
     /// Create a DockerRequirement from a plain docker file path or explicit schema-salad reference.
     /// If both `dockerFileReference` and `dockerFile` are provided, `dockerFileReference` takes precedence.
-    static member create(?dockerPull, ?dockerFile: string, ?dockerFileReference: SchemaSaladString, ?dockerImageId, ?dockerLoad, ?dockerImport, ?dockerOutputDirectory, ?dockerRunOptions: ResizeArray<string>) =
+    static member create(?dockerPull: SchemaSaladString, ?dockerFile: string, ?dockerFileReference: SchemaSaladString, ?dockerImageId: SchemaSaladString, ?dockerLoad: SchemaSaladString, ?dockerImport: SchemaSaladString, ?dockerOutputDirectory: SchemaSaladString, ?dockerRunOptions: ResizeArray<string>) =
         let resolvedDockerFile =
             match dockerFileReference, dockerFile with
             | Some referenceValue, _ -> Some referenceValue
@@ -379,6 +379,9 @@ type ResourceRequirementInstance (
 type SchemaDefEntry =
     | Defined of SchemaDefinition
     | Imported of string
+    /// A mapping with a $mixin directive, kept as it was written. The file may define the types of the entry, so the
+    /// decoder cannot tell which types the document defines.
+    | Mixed of RawYaml
 
 /// A File or a Directory, the only items that an array inside the listing of an InitialWorkDirRequirement may hold.
 type FileOrDirectory =
@@ -494,10 +497,14 @@ type Requirement =
     /// Define a list of files and subdirectories that must be created by the workflow platform in the designated output directory prior to executing the command line tool.
     /// CWL supports string/expression entries and Dirent objects.
     | InitialWorkDirRequirement of ResizeArray<InitialWorkDirEntry>
-    /// Expression form of the InitialWorkDirRequirement listing, as in listing: $(inputs.directory.listing).
-    | InitialWorkDirExpressionRequirement of string
+    /// Expression form of the InitialWorkDirRequirement listing, as in listing: $(inputs.directory.listing). A directive
+    /// names a file with the expression.
+    | InitialWorkDirExpressionRequirement of SchemaSaladString
     /// Define a list of environment variables which will be set in the execution environment of the tool. See EnvironmentDef for details.
-    | EnvVarRequirement of ResizeArray<EnvironmentDef>
+    /// An entry is a definition, or the import of a file that holds a definition or a list of definitions. The decoder
+    /// reads no file, so the import stays an entry of its own, in its place. A document that writes the whole field as one
+    /// $import gets the list with that one import, and the encoder writes it as a list.
+    | EnvVarRequirement of ResizeArray<ListEntry<EnvironmentDef>>
     /// Modify the behavior of CommandLineTool to generate a single string containing a shell command line.
     | ShellCommandRequirement
     /// Specify basic hardware resource requirements.
@@ -522,6 +529,12 @@ type Requirement =
     | MultipleInputFeatureRequirement
     /// Indicate that the workflow platform must support the valueFrom field of WorkflowStepInput.
     | StepInputExpressionRequirement
+    /// A file of requirements that the document imports, as {$import: path}. The decoder reads no file, so the entry
+    /// stands for the requirements that the file holds. A list in the file adds its requirements to the list.
+    | ImportedRequirement of string
+    /// A mapping with a $mixin directive, as in {$mixin: path, class: NetworkAccess}. The file may supply the fields of the
+    /// requirement, so the mapping is kept as it was written.
+    | MixedRequirement of RawYaml
 
     with
     override this.Equals(o: obj) =
@@ -548,6 +561,8 @@ type Requirement =
             | ScatterFeatureRequirement, ScatterFeatureRequirement -> true
             | MultipleInputFeatureRequirement, MultipleInputFeatureRequirement -> true
             | StepInputExpressionRequirement, StepInputExpressionRequirement -> true
+            | ImportedRequirement left, ImportedRequirement right -> left = right
+            | MixedRequirement left, MixedRequirement right -> left.Equals right
             | _ -> false
         | _ -> false
 
@@ -573,6 +588,8 @@ type Requirement =
         | MultipleInputFeatureRequirement -> 18
         | StepInputExpressionRequirement -> 19
         | InitialWorkDirExpressionRequirement value -> HashHelpers.mergeHashes 20 (hash value)
+        | ImportedRequirement value -> HashHelpers.mergeHashes 21 (hash value)
+        | MixedRequirement value -> HashHelpers.mergeHashes 22 (hash value)
 
     static member defaultInlineJavascriptRequirement =
         InlineJavascriptRequirement InlineJavascriptRequirementValue.defaultEmpty
@@ -595,6 +612,11 @@ type Requirement =
 type HintEntry =
     | KnownHint of Requirement
     | UnknownHint of HintUnknownValue
+    /// A file of hints that the document imports, as {$import: path}. The entry stands for the hints that the file holds,
+    /// and the decoder cannot tell whether they are known.
+    | ImportedHint of string
+    /// A mapping with a $mixin directive, kept as it was written. The file may supply the class and the fields.
+    | MixedHint of RawYaml
 
     /// Wraps a known requirement as a known hint entry.
     static member ofRequirement (requirement: Requirement) =
@@ -609,5 +631,7 @@ type HintEntry =
     /// Returns the underlying requirement for KnownHint values.
     static member tryAsRequirement = function
         | KnownHint requirement -> Some requirement
-        | UnknownHint _ -> None
+        | UnknownHint _
+        | ImportedHint _
+        | MixedHint _ -> None
 

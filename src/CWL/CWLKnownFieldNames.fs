@@ -138,4 +138,3 @@ module internal CWLKnownFieldNames =
 
     let workflowStep =
         Set [ "id"; "run"; "in"; "out"; "requirements"; "hints"; "label"; "doc"; "scatter"; "scatterMethod"; "when" ]
-

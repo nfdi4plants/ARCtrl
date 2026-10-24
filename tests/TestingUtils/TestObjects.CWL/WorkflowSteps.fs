@@ -24,3 +24,31 @@ let workflowStepsFileContent ="""steps:
         valueFrom: "output" 
     out: [dir1, dir2]"""
 
+
+/// A workflow with a step whose input sets every field of a step input, for the tests of equality and hash.
+module AllFields =
+
+    let workflowFile = """cwlVersion: v1.2
+class: Workflow
+requirements:
+  StepInputExpressionRequirement: {}
+  MultipleInputFeatureRequirement: {}
+inputs: {}
+outputs: {}
+steps:
+  s:
+    run: t.cwl
+    in:
+      x:
+        source: [a, b]
+        default: dflt
+        valueFrom: $(self)
+        linkMerge: merge_flattened
+        pickValue: first_non_null
+        doc: first
+        loadContents: false
+        loadListing: no_listing
+        label: lab
+        arc:note: n1
+    out: []
+"""

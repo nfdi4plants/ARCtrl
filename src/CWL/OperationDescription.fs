@@ -5,29 +5,29 @@ open Fable.Core
 
 [<AttachMembers>]
 type CWLOperationDescription(
-    inputs: ResizeArray<CWLInput>,
-    outputs: ResizeArray<CWLOutput>,
+    inputs: ResizeArray<ListEntry<CWLInput>>,
+    outputs: ResizeArray<ListEntry<CWLOutput>>,
     ?cwlVersion: string,
     ?requirements: ResizeArray<Requirement>,
     ?hints: ResizeArray<HintEntry>,
     ?intent: ResizeArray<string>,
     ?metadata: DynamicObj,
-    ?label: string,
-    ?doc: string,
+    ?label: SchemaSaladString,
+    ?doc: DocText,
     ?id: string
 ) =
     inherit DynamicObj()
 
     let mutable _id: string option = id
     let mutable _cwlVersion: string = cwlVersion |> Option.defaultValue "v1.2"
-    let mutable _inputs: ResizeArray<CWLInput> = inputs
-    let mutable _outputs: ResizeArray<CWLOutput> = outputs
+    let mutable _inputs: ResizeArray<ListEntry<CWLInput>> = inputs
+    let mutable _outputs: ResizeArray<ListEntry<CWLOutput>> = outputs
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<HintEntry> option = hints
     let mutable _intent: ResizeArray<string> option = intent
     let mutable _metadata: DynamicObj option = metadata
-    let mutable _label: string option = label
-    let mutable _doc: string option = doc
+    let mutable _label: SchemaSaladString option = label
+    let mutable _doc: DocText option = doc
     let mutable _sourceNodes = SourceNodes.Empty
 
     member this.Id
@@ -79,11 +79,13 @@ type CWLOperationDescription(
     static member KnownFieldNames =
         CWLKnownFieldNames.operationDescription
 
-    static member getInputs (operation: CWLOperationDescription) =
-        operation.Inputs
+    /// Returns the inputs of the operation. The imports are left out, and the list is a new one.
+    static member getInputs (operation: CWLOperationDescription) : ResizeArray<CWLInput> =
+        ListEntry.values operation.Inputs
 
-    static member getOutputs (operation: CWLOperationDescription) =
-        operation.Outputs
+    /// Returns the outputs of the operation. The imports are left out, and the list is a new one.
+    static member getOutputs (operation: CWLOperationDescription) : ResizeArray<CWLOutput> =
+        ListEntry.values operation.Outputs
 
     static member getRequirementsOrEmpty (operation: CWLOperationDescription) =
         operation.Requirements |> Option.defaultValue (ResizeArray())

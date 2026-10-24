@@ -39,14 +39,15 @@ let decodeTests =
     testList "Decode" [
         testCase "label" <| fun _ ->
             let actual = (toolWith TestObjects.CWL.Descriptions.label).Label
-            Expect.equal actual (Some "An example tool demonstrating metadata.") ""
+            Expect.equal actual (Some (SchemaSaladString.Literal "An example tool demonstrating metadata.")) ""
         testCase "doc simple" <| fun _ ->
             let actual = (toolWith TestObjects.CWL.Descriptions.docSimple).Doc
             let expected = "Note that this is an example and the metadata is not necessarily consistent."
-            Expect.equal actual (Some expected) ""
+            Expect.equal actual (Some (DocText.literal expected)) ""
         testCase "doc block" <| fun _ ->
             let actual =
                 (toolWith TestObjects.CWL.Descriptions.descriptionFileContentComplex).Doc
+                |> Option.bind (fun doc -> doc.TryText)
                 |> Option.map normalizeDocBlockContent
             let expected =
                 TestObjects.CWL.Descriptions.descriptionFileContentComplexDecoded
@@ -72,17 +73,18 @@ let encodeTests =
     testList "Encode" [
         testCase "label" <| fun _ ->
             let expected = normalizeNewLines TestObjects.CWL.Descriptions.label
-            let actual = Encode.encodeLabel "An example tool demonstrating metadata." |> encodeToString
+            let actual = Encode.encodeLabel (SchemaSaladString.Literal "An example tool demonstrating metadata.") |> encodeToString
             Expect.equal actual expected ""
         testCase "doc simple" <| fun _ ->
             let expected = normalizeNewLines TestObjects.CWL.Descriptions.docSimple
-            let actual = Encode.encodeDoc "Note that this is an example and the metadata is not necessarily consistent." |> encodeToString
+            let actual = Encode.encodeDoc (DocText.literal "Note that this is an example and the metadata is not necessarily consistent.") |> encodeToString
             Expect.equal actual expected ""
         testCase "doc block" <| fun _ ->
             let complexDoc = stripDocContent TestObjects.CWL.Descriptions.descriptionFileContentComplex
-            let actual = Encode.encodeDoc complexDoc |> encodeToString
+            let actual = Encode.encodeDoc (DocText.literal complexDoc) |> encodeToString
             let decoded =
                 (toolWith actual).Doc
+                |> Option.bind (fun doc -> doc.TryText)
                 |> Option.map normalizeDocBlockContent
             let expected = normalizeDocBlockContent complexDoc
             Expect.equal decoded (Some expected) "Encoded block doc should decode back to original content."

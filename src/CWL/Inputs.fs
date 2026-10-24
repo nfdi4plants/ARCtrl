@@ -12,12 +12,12 @@ type BindingPosition =
 
 [<AttachMembers>]
 type InputBinding (
-    ?prefix: string,
+    ?prefix: SchemaSaladString,
     ?position: BindingPosition,
-    ?itemSeparator: string,
+    ?itemSeparator: SchemaSaladString,
     ?separate: bool,
     ?loadContents: bool,
-    ?valueFrom: string,
+    ?valueFrom: SchemaSaladString,
     ?shellQuote: bool
 ) =
     inherit DynamicObj ()
@@ -78,40 +78,40 @@ type InputBinding (
         | _ -> false
 
     override this.GetHashCode() =
-        hash (
-            this.Prefix,
-            this.Position,
-            this.ItemSeparator,
-            this.Separate,
-            this.LoadContents,
-            this.ValueFrom,
-            this.ShellQuote,
-            DynamicObjHelpers.hashDynamicProperties this
-        )
+        HashHelpers.hashFields [
+            box this.Prefix
+            box this.Position
+            box this.ItemSeparator
+            box this.Separate
+            box this.LoadContents
+            box this.ValueFrom
+            box this.ShellQuote
+            box (DynamicObjHelpers.hashDynamicProperties this)
+        ]
 
     static member KnownFieldNames =
         CWLKnownFieldNames.inputBinding
 
     static member create
         (
-            ?prefix: string,
+            ?prefix: SchemaSaladString,
             ?position: BindingPosition,
-            ?itemSeparator: string,
+            ?itemSeparator: SchemaSaladString,
             ?separate: bool,
             ?loadContents: bool,
-            ?valueFrom: string,
+            ?valueFrom: SchemaSaladString,
             ?shellQuote: bool
         ) =
         InputBinding(?prefix = prefix, ?position = position, ?itemSeparator = itemSeparator, ?separate = separate, ?loadContents = loadContents, ?valueFrom = valueFrom, ?shellQuote = shellQuote)
 
-/// The format of an input, as a single name or as a list of names. A name is an IRI or an expression. A single name
-/// differs from a list of one name, and the empty list stays an empty list, because CWL keeps the spellings apart. The
-/// lists compare by their elements, because a ResizeArray compares references. The format of an output is a single
-/// name only.
+/// The format of an input, as a single name or as a list of names. A name is an IRI or an expression, and a directive
+/// names a file with the text of the name. A single name differs from a list of one name, and the empty list stays an
+/// empty list, because CWL keeps the spellings apart. The lists compare by their elements, because a ResizeArray
+/// compares references. The format of an output is a single name only.
 [<RequireQualifiedAccess; CustomEquality; NoComparison; AttachMembers>]
 type InputFormat =
-    | Single of string
-    | Multiple of ResizeArray<string>
+    | Single of SchemaSaladString
+    | Multiple of ResizeArray<SchemaSaladString>
     with
     member this.AsValues() =
         match this with
@@ -140,10 +140,10 @@ type CWLInput (
     ?type_: CWLType,
     ?inputBinding: InputBinding,
     ?optional: bool,
-    ?label: string,
+    ?label: SchemaSaladString,
     ?secondaryFiles: RawYaml,
     ?streamable: bool,
-    ?doc: string,
+    ?doc: DocText,
     ?format: InputFormat,
     ?loadContents: bool,
     ?loadListing: LoadListingEnum,
@@ -242,20 +242,20 @@ type CWLInput (
         | _ -> false
 
     override this.GetHashCode() =
-        hash (
-            this.Name,
-            this.Type_,
-            this.InputBinding,
-            this.Label,
-            this.SecondaryFiles,
-            this.Streamable,
-            this.Doc,
-            this.Format,
-            this.LoadContents,
-            this.LoadListing,
-            this.DefaultValue,
-            DynamicObjHelpers.hashDynamicProperties this
-        )
+        HashHelpers.hashFields [
+            box this.Name
+            box this.Type_
+            box this.InputBinding
+            box this.Label
+            box this.SecondaryFiles
+            box this.Streamable
+            box this.Doc
+            box this.Format
+            box this.LoadContents
+            box this.LoadListing
+            box this.DefaultValue
+            box (DynamicObjHelpers.hashDynamicProperties this)
+        ]
 
     static member KnownFieldNames =
         CWLKnownFieldNames.cwlInput

@@ -10,6 +10,7 @@ let decodeWorkflowStep =
     TestObjects.CWL.WorkflowSteps.workflowStepsFileContent
     |> Decode.readYaml
     |> Decode.stepsDecoder
+    |> ListEntry.values
 
 let tryYamlScalarString (y: RawYaml) =
     match y.Node.Kind with
@@ -59,7 +60,7 @@ let testWorkflowStep =
                         mkStepInput "stageDirectory" (Some (ResizeArray [|"stage"|])) None None None
                         mkStepInput "inputDirectory" (Some (ResizeArray [|"inputMzML"|])) None None None 
                     |]
-                let actual = decodeWorkflowStep.[0].In
+                let actual = WorkflowStep.getInputs decodeWorkflowStep.[0]
                 Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
                     Expect.equal actual.Id expected.Id ""
                     Expect.sequenceEqual actual.Source.Value expected.Source.Value ""
@@ -81,9 +82,9 @@ let testWorkflowStep =
                         mkStepInput "stageDirectory" (Some (ResizeArray [|"stage"|])) None None None
                         mkStepInput "inputDirectory" (Some (ResizeArray [|"MzMLToMzlite/dir1"; "MzMLToMzlite/dir2"|])) None None (Some MergeFlattened)
                         mkStepInput "parallelismLevel" None (Some { Node = YamlNode.plain "8" }) None None
-                        mkStepInput "outputDirectory" None None (Some "output") None
+                        mkStepInput "outputDirectory" None None (Some (SchemaSaladString.Literal "output")) None
                     |]
-                let actual = decodeWorkflowStep.[1].In
+                let actual = WorkflowStep.getInputs decodeWorkflowStep.[1]
                 Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
                     Expect.equal actual.Id expected.Id ""
                     if expected.Source.IsSome then
@@ -121,6 +122,7 @@ let testWorkflowStep =
                 validSteps
                 |> Decode.readYaml
                 |> Decode.stepsDecoder
+                |> ListEntry.values
             let step = decoded.[0]
             Expect.equal step.In.Count 0 "Explicit empty object for `in` should decode to an empty input collection."
             Expect.equal step.Out.Count 0 "Explicit empty list for `out` should decode to an empty output collection."
@@ -133,6 +135,7 @@ let testWorkflowStep =
                 invalidSteps
                 |> Decode.readYaml
                 |> Decode.stepsDecoder
+                |> ListEntry.values
                 |> ignore
             Expect.throws decodeInvalid "Missing required `in` field should fail decoding."
         testCase "missing out field fails decode" <| fun _ ->
@@ -144,6 +147,7 @@ let testWorkflowStep =
                 invalidSteps
                 |> Decode.readYaml
                 |> Decode.stepsDecoder
+                |> ListEntry.values
                 |> ignore
             Expect.throws decodeInvalid "Missing required `out` field should fail decoding."
         testCase "invalid linkMerge fails decode" <| fun _ ->
@@ -159,6 +163,7 @@ let testWorkflowStep =
                 invalidSteps
                 |> Decode.readYaml
                 |> Decode.stepsDecoder
+                |> ListEntry.values
                 |> ignore
             Expect.throws decodeInvalid "Invalid linkMerge should fail decoding"
         testCase "step output record requires id" <| fun _ ->
@@ -172,6 +177,7 @@ let testWorkflowStep =
                 invalidSteps
                 |> Decode.readYaml
                 |> Decode.stepsDecoder
+                |> ListEntry.values
                 |> ignore
             Expect.throws decodeInvalid "Step output record without id should fail decoding"
         testCase "step output parameter known fields are typed fields, not dynamic overflow" <| fun _ ->
@@ -217,7 +223,7 @@ let testWorkflowStep =
 let testWorkflowStepOps =
     testList "WorkflowStep Operations" [
         testCase "StepInput.updateAt throws for out-of-range index" <| fun _ ->
-            let inputs = ResizeArray [| StepInput.create("input1") |]
+            let inputs = ListEntry.ofValues [ StepInput.create("input1") ]
             let act () = StepInput.updateAt 5 id inputs
             Expect.throws act "Out-of-range StepInput index should raise invalidArg."
 
@@ -225,7 +231,7 @@ let testWorkflowStepOps =
             let step =
                 WorkflowStep.fromRunPath(
                     id = "step1",
-                    in_ = ResizeArray [| StepInput.create("input1", source = ResizeArray [| "old" |]) |],
+                    in_ = ListEntry.ofValues [ StepInput.create("input1", source = ResizeArray [| "old" |]) ],
                     out_ = ResizeArray [| StepOutputString "out" |],
                     runPath = "./tool.cwl"
                 )
@@ -234,75 +240,101 @@ let testWorkflowStepOps =
                 i.Source <- Some (ResizeArray [| "new" |])
                 i
             ) step
-            Expect.sequenceEqual step.In.[0].Source.Value (ResizeArray [| "new" |]) "Input source should be updated."
+            Expect.sequenceEqual (WorkflowStep.getInputs step).[0].Source.Value (ResizeArray [| "new" |]) "Input source should be updated."
 
         testCase "updateInputById updates only matching input" <| fun _ ->
             let step =
                 WorkflowStep.fromRunPath(
                     id = "step1",
                     in_ =
-                        ResizeArray [|
+                        ListEntry.ofValues [
                             StepInput.create("first", source = ResizeArray [| "a" |])
                             StepInput.create("second", source = ResizeArray [| "b" |])
-                        |],
+                        ],
                     out_ = ResizeArray [| StepOutputString "out" |],
                     runPath = "./tool.cwl"
                 )
 
             WorkflowStep.updateInputById "second" (fun i ->
-                i.ValueFrom <- Some "$(self)"
+                i.ValueFrom <- Some (SchemaSaladString.Literal "$(self)")
                 i
             ) step
-            Expect.isNone step.In.[0].ValueFrom "First input should remain unchanged."
-            Expect.equal step.In.[1].ValueFrom (Some "$(self)") "Second input should be updated."
+            Expect.isNone (WorkflowStep.getInputs step).[0].ValueFrom "First input should remain unchanged."
+            Expect.equal (WorkflowStep.getInputs step).[1].ValueFrom (Some (SchemaSaladString.Literal "$(self)")) "Second input should be updated."
 
         testCase "updateInputById with missing id is a no-op" <| fun _ ->
             let step =
                 WorkflowStep.fromRunPath(
                     id = "step1",
-                    in_ = ResizeArray [| StepInput.create("first"); StepInput.create("second") |],
+                    in_ = ListEntry.ofValues [ StepInput.create("first"); StepInput.create("second") ],
                     out_ = ResizeArray [| StepOutputString "out" |],
                     runPath = "./tool.cwl"
                 )
 
             WorkflowStep.updateInputById "missing" (fun i ->
-                i.ValueFrom <- Some "$(self)"
+                i.ValueFrom <- Some (SchemaSaladString.Literal "$(self)")
                 i
             ) step
-            Expect.isNone step.In.[0].ValueFrom "First input should remain unchanged."
-            Expect.isNone step.In.[1].ValueFrom "Second input should remain unchanged."
+            Expect.isNone (WorkflowStep.getInputs step).[0].ValueFrom "First input should remain unchanged."
+            Expect.isNone (WorkflowStep.getInputs step).[1].ValueFrom "Second input should remain unchanged."
 
         testCase "addInput appends new input" <| fun _ ->
             let step =
                 WorkflowStep.fromRunPath(
                     id = "step1",
-                    in_ = ResizeArray [| StepInput.create("first") |],
+                    in_ = ListEntry.ofValues [ StepInput.create("first") ],
                     out_ = ResizeArray [| StepOutputString "out" |],
                     runPath = "./tool.cwl"
                 )
 
-            WorkflowStep.addInput (StepInput.create("second", valueFrom = "$(self)")) step
+            WorkflowStep.addInput (StepInput.create("second", valueFrom = (SchemaSaladString.Literal "$(self)"))) step
             Expect.equal step.In.Count 2 "A new input should be appended."
-            Expect.equal step.In.[1].Id "second" "Appended input should be the second entry."
-            Expect.equal step.In.[1].ValueFrom (Some "$(self)") "Appended input content should be preserved."
+            Expect.equal (WorkflowStep.getInputs step).[1].Id "second" "Appended input should be the second entry."
+            Expect.equal (WorkflowStep.getInputs step).[1].ValueFrom (Some (SchemaSaladString.Literal "$(self)")) "Appended input content should be preserved."
 
         testCase "removeInputsById removes matching entries" <| fun _ ->
             let step =
                 WorkflowStep.fromRunPath(
                     id = "step1",
                     in_ =
-                        ResizeArray [|
+                        ListEntry.ofValues [
                             StepInput.create("dup")
                             StepInput.create("keep")
                             StepInput.create("dup")
-                        |],
+                        ],
                     out_ = ResizeArray [| StepOutputString "out" |],
                     runPath = "./tool.cwl"
                 )
 
             WorkflowStep.removeInputsById "dup" step
             Expect.equal step.In.Count 1 "Only one input should remain."
-            Expect.equal step.In.[0].Id "keep" "Non-matching input should remain."
+            Expect.equal (WorkflowStep.getInputs step).[0].Id "keep" "Non-matching input should remain."
+
+        testCase "the helpers pass over an import among the step inputs and keep it" <| fun _ ->
+            let importedFirst () =
+                WorkflowStep.fromRunPath(
+                    id = "step1",
+                    in_ = ResizeArray [ ListEntry.Imported "more.yml"; ListEntry.Value (StepInput.create("dup")); ListEntry.Value (StepInput.create("keep")) ],
+                    out_ = ResizeArray [| StepOutputString "out" |],
+                    runPath = "./tool.cwl"
+                )
+            let step = importedFirst ()
+            WorkflowStep.removeInputsById "dup" step
+            Expect.equal (List.ofSeq step.In |> List.map (ListEntry.map (fun input -> input.Id))) [ ListEntry.Imported "more.yml"; ListEntry.Value "keep" ] "The import stays, and the matching input goes."
+            let updated = importedFirst ()
+            WorkflowStep.updateInputById "keep" (fun i -> i.ValueFrom <- Some (SchemaSaladString.Literal "$(self)"); i) updated
+            Expect.equal (WorkflowStep.getInputs updated).[1].ValueFrom (Some (SchemaSaladString.Literal "$(self)")) "The input behind the import is updated."
+            Expect.equal updated.In.[0] (ListEntry.Imported "more.yml") "The import is as it was."
+            Expect.throws (fun () -> WorkflowStep.updateInputAt 0 id (importedFirst ())) "An import has no input to update."
+            let added = importedFirst ()
+            WorkflowStep.addInput (StepInput.create("last")) added
+            Expect.equal added.In.[3] (ListEntry.Value (StepInput.create("last"))) "A new input is a value entry at the end."
+
+        testCase "StepOutput.tryId gives the id of an id and of an object and none for a directive" <| fun _ ->
+            Expect.equal (StepOutput.tryId (StepOutputString "dir")) (Some "dir") "The id of a string."
+            Expect.equal (StepOutput.tryId (StepOutputRecord (StepOutputParameter.create "dir"))) (Some "dir") "The id of an object."
+            Expect.equal (StepOutput.tryId (StepOutputInclude "id.txt")) None "The id is in the file."
+            Expect.equal (StepOutput.tryId (StepOutputImport "outputs.yml")) None "The outputs are in the file."
     ]
 
 let private toolStep () =
@@ -314,7 +346,7 @@ let private toolStep () =
     )
 
 let private echoTool () =
-    CWLToolDescription(outputs = ResizeArray(), baseCommand = ResizeArray [ "echo" ])
+    CWLToolDescription(outputs = ResizeArray(), baseCommand = ResizeArray [ (SchemaSaladString.Literal "echo") ])
 
 let testResolvedRun =
     testList "ResolvedRun" [
@@ -352,7 +384,7 @@ let testResolvedRun =
         testCase "the encoder writes the reference of a step with a resolved run" <| fun _ ->
             let step = toolStep ()
             step.ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromTool (echoTool ())) }
-            let workflow = CWLWorkflowDescription(steps = ResizeArray [ step ], inputs = ResizeArray(), outputs = ResizeArray())
+            let workflow = CWLWorkflowDescription(steps = ListEntry.ofValues [ step ], inputs = ResizeArray(), outputs = ResizeArray())
             let written = Encode.encodeWorkflowDescription workflow
             Expect.stringContains written "run: ./tool.cwl" "The file refers to the tool."
             Expect.isFalse (written.Contains "baseCommand") "The tool stays in its own file."

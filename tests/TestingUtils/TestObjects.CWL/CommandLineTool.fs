@@ -11,8 +11,7 @@ requirements:
   - class: InitialWorkDirRequirement
     listing:
       - entryname: script.fsx
-        entry:
-          $include: script.fsx
+        entry: {$include: script.fsx}
   - class: EnvVarRequirement
     envDef:
       - envName: DOTNET_NOLOGO
@@ -51,24 +50,24 @@ outputs:
 
 module Basic =
 
-    let baseCommand = ResizeArray ["dotnet"; "fsi"; "script.fsx"]
+    let baseCommand = ResizeArray [(SchemaSaladString.Literal "dotnet"); (SchemaSaladString.Literal "fsi"); (SchemaSaladString.Literal "script.fsx")]
 
     let cwlTool =
         CWLToolDescription(
-            outputs = ResizeArray [Outputs.CSV.outputCSV],
-            inputs = ResizeArray [Inputs.File.inputFirstArg; Inputs.String.inputSecondArg])
+            outputs = ListEntry.ofValues [Outputs.CSV.outputCSV],
+            inputs = ListEntry.ofValues [Inputs.File.inputFirstArg; Inputs.String.inputSecondArg])
 
     let processingUnit = CWLProcessingUnit.CommandLineTool cwlTool
 
 module WithRequirements =
 
-    let baseCommand = ResizeArray ["dotnet"; "fsi"; "script.fsx"]
+    let baseCommand = ResizeArray [(SchemaSaladString.Literal "dotnet"); (SchemaSaladString.Literal "fsi"); (SchemaSaladString.Literal "script.fsx")]
 
     let cwlTool =
         CWLToolDescription(
-            outputs = ResizeArray [Outputs.CSV.outputCSV],
+            outputs = ListEntry.ofValues [Outputs.CSV.outputCSV],
             requirements = ResizeArray [Requirements.Docker.requirement],
-            inputs = ResizeArray [Inputs.File.inputFirstArg; Inputs.String.inputSecondArg])
+            inputs = ListEntry.ofValues [Inputs.File.inputFirstArg; Inputs.String.inputSecondArg])
 
     let processingUnit = CWLProcessingUnit.CommandLineTool cwlTool
 

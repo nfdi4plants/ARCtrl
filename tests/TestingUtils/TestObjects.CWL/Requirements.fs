@@ -98,7 +98,7 @@ requirements: { SubworkflowFeatureRequirement: {} }
 
 module Docker =
 
-    let dockerRequirement = DockerRequirement.create (dockerImageId = "devcontainer", dockerFileReference = Include "FSharpArcCapsule/Dockerfile")
+    let dockerRequirement = DockerRequirement.create (dockerImageId = SchemaSaladString.Literal "devcontainer", dockerFileReference = Include "FSharpArcCapsule/Dockerfile")
 
     let requirement = Requirement.DockerRequirement dockerRequirement
 

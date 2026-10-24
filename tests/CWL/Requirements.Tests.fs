@@ -242,7 +242,7 @@ outputs: {}"""
                 let dockerItem = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
                 let expected =
                     Requirement.DockerRequirement (
-                        DockerRequirement.create(dockerImageId = "devcontainer", dockerFileReference = SchemaSaladString.Include "FSharpArcCapsule/Dockerfile")
+                        DockerRequirement.create(dockerImageId = (SchemaSaladString.Literal "devcontainer"), dockerFileReference = SchemaSaladString.Include "FSharpArcCapsule/Dockerfile")
                     )
                 let actual = dockerItem
                 Expect.equal actual expected "Mismatch or Wrong requirement type: Type get of Decode Class Syntax for DockerRequirement, can only be DockerRequirement"
@@ -251,7 +251,7 @@ outputs: {}"""
                 let dockerItem = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
                 let expected =
                     Requirement.DockerRequirement (
-                        DockerRequirement.create(dockerImageId = "devcontainer", dockerFileReference = SchemaSaladString.Include "FSharpArcCapsule/Dockerfile")
+                        DockerRequirement.create(dockerImageId = (SchemaSaladString.Literal "devcontainer"), dockerFileReference = SchemaSaladString.Include "FSharpArcCapsule/Dockerfile")
                     )
                 let actual = dockerItem
                 Expect.equal actual expected "Mismatch or Wrong requirement type: Type get of Decode Mapping Syntax for DockerRequirement, can only be DockerRequirement"
@@ -260,7 +260,7 @@ outputs: {}"""
                 let dockerItem = findRequirement reqs (function DockerRequirement _ -> true | _ -> false)
                 let expected =
                     Requirement.DockerRequirement (
-                        DockerRequirement.create(dockerImageId = "devcontainer", dockerFileReference = SchemaSaladString.Include "FSharpArcCapsule/Dockerfile")
+                        DockerRequirement.create(dockerImageId = (SchemaSaladString.Literal "devcontainer"), dockerFileReference = SchemaSaladString.Include "FSharpArcCapsule/Dockerfile")
                     )
                 let actual = dockerItem
                 Expect.equal actual expected "Mismatch or Wrong requirement type: Type get of Decode Json Syntax for DockerRequirement, can only be DockerRequirement"
@@ -384,7 +384,7 @@ outputs: {}"""
     listing: $(inputs.stageDirectory)"""
                 let reqs = decodeRequirements yaml
                 let initialWorkDirItem = findRequirement reqs (function InitialWorkDirExpressionRequirement _ -> true | _ -> false)
-                Expect.equal initialWorkDirItem (InitialWorkDirExpressionRequirement "$(inputs.stageDirectory)") "Scalar listing form should decode to the expression."
+                Expect.equal initialWorkDirItem (InitialWorkDirExpressionRequirement (SchemaSaladString.Literal "$(inputs.stageDirectory)")) "Scalar listing form should decode to the expression."
             testCase "Object listing entry without entry field decodes as StringEntry" <| fun _ ->
                 let yaml = """requirements:
   - class: InitialWorkDirRequirement
@@ -461,7 +461,7 @@ outputs: {}"""
             testCase "Class Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsClassFileContent
                 let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
-                let expected = EnvVarRequirement (ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", SchemaSaladString.Literal "true"); EnvironmentDef("TEST", SchemaSaladString.Literal "false") |])
+                let expected = EnvVarRequirement (ListEntry.ofValues [| EnvironmentDef("DOTNET_NOLOGO", SchemaSaladString.Literal "true"); EnvironmentDef("TEST", SchemaSaladString.Literal "false") |])
                 let actual = envVarItem
                 match actual, expected with
                 | EnvVarRequirement a, EnvVarRequirement e ->
@@ -471,7 +471,7 @@ outputs: {}"""
             testCase "Mapping Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsMappingFileContent
                 let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
-                let expected = EnvVarRequirement (ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", SchemaSaladString.Literal "true"); EnvironmentDef("TEST", SchemaSaladString.Literal "false") |])
+                let expected = EnvVarRequirement (ListEntry.ofValues [| EnvironmentDef("DOTNET_NOLOGO", SchemaSaladString.Literal "true"); EnvironmentDef("TEST", SchemaSaladString.Literal "false") |])
                 let actual = envVarItem
                 match actual, expected with
                 | EnvVarRequirement a, EnvVarRequirement e ->
@@ -481,7 +481,7 @@ outputs: {}"""
             testCase "Json Syntax" <| fun _ ->
                 let reqs = decodeRequirements TestObjects.CWL.Requirements.requirementsJSONFileContent
                 let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
-                let expected = EnvVarRequirement (ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", SchemaSaladString.Literal "true"); EnvironmentDef("TEST", SchemaSaladString.Literal "false") |])
+                let expected = EnvVarRequirement (ListEntry.ofValues [| EnvironmentDef("DOTNET_NOLOGO", SchemaSaladString.Literal "true"); EnvironmentDef("TEST", SchemaSaladString.Literal "false") |])
                 let actual = envVarItem
                 match actual, expected with
                 | EnvVarRequirement a, EnvVarRequirement e ->
@@ -500,7 +500,7 @@ outputs: {}"""
                 match envVarItem with
                 | EnvVarRequirement envs ->
                     let expected = ResizeArray [| EnvironmentDef("DOTNET_NOLOGO", SchemaSaladString.Literal "true"); EnvironmentDef("TEST", SchemaSaladString.Literal "false") |]
-                    Expect.sequenceEqual envs expected "EnvVar map shorthand should decode to normalized EnvironmentDef list."
+                    Expect.sequenceEqual (ListEntry.values envs) expected "EnvVar map shorthand should decode to normalized EnvironmentDef list."
                 | _ ->
                     failwith "Wrong requirement type: expected EnvVarRequirement"
 
@@ -519,8 +519,8 @@ outputs: {}"""
                 match envVarItem with
                 | EnvVarRequirement envs ->
                     Expect.equal envs.Count 1 "Expected one map-shorthand environment definition"
-                    Expect.equal envs.[0].EnvName "FLAG" "Map key should decode as env name"
-                    Expect.equal envs.[0].EnvValue (SchemaSaladString.Literal "true") "A quoted YAML boolean should decode to a string value"
+                    Expect.equal (ListEntry.values envs).[0].EnvName "FLAG" "Map key should decode as env name"
+                    Expect.equal (ListEntry.values envs).[0].EnvValue (SchemaSaladString.Literal "true") "A quoted YAML boolean should decode to a string value"
                 | _ ->
                     failwith "Wrong requirement type: expected EnvVarRequirement"
 
@@ -551,7 +551,7 @@ outputs: {}"""
                         EnvironmentDef("F", SchemaSaladString.Literal "\"inner quotes\"")
                     |]
                 let yaml =
-                    YAMLicious.Encode.object [ "requirements", YamlNode.sequence [ YamlNode.item (Encode.encodeRequirement (EnvVarRequirement envs)) ] ]
+                    YAMLicious.Encode.object [ "requirements", YamlNode.sequence [ YamlNode.item (Encode.encodeRequirement (EnvVarRequirement (ListEntry.ofValues envs))) ] ]
                     |> Encode.writeYaml
                 Expect.stringContains yaml "envValue: \"1.0\"" "A string that reads as a float needs quotes."
                 Expect.stringContains yaml "envValue: \"null\"" "A string that reads as null needs quotes."
@@ -560,7 +560,7 @@ outputs: {}"""
                 let reqs = decodeRequirements yaml
                 match findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false) with
                 | EnvVarRequirement decoded ->
-                    Expect.sequenceEqual decoded envs "Env values must survive the roundtrip unchanged, including literal quote characters."
+                    Expect.sequenceEqual (ListEntry.values decoded) envs "Env values must survive the roundtrip unchanged, including literal quote characters."
                 | _ ->
                     failwith "Wrong requirement type: expected EnvVarRequirement"
 
@@ -741,12 +741,12 @@ outputs: {}"""
                 let expected =
                     Requirement.DockerRequirement (
                         DockerRequirement.create(
-                            dockerPull = "ghcr.io/example/tool:1.0.0",
+                            dockerPull = (SchemaSaladString.Literal "ghcr.io/example/tool:1.0.0"),
                             dockerFileReference = SchemaSaladString.Literal "./Dockerfile",
-                            dockerImageId = "tool-image",
-                            dockerLoad = "docker-archive:///tmp/tool.tar",
-                            dockerImport = "https://example.org/images/tool.sif",
-                            dockerOutputDirectory = "/work/out"
+                            dockerImageId = (SchemaSaladString.Literal "tool-image"),
+                            dockerLoad = (SchemaSaladString.Literal "docker-archive:///tmp/tool.tar"),
+                            dockerImport = (SchemaSaladString.Literal "https://example.org/images/tool.sif"),
+                            dockerOutputDirectory = (SchemaSaladString.Literal "/work/out")
                         )
                     )
                 Expect.equal dockerItem expected "Canonical docker fields should decode into the typed DockerRequirement model."
@@ -1113,7 +1113,7 @@ outputs: {}"""
                     Expect.equal (nameOf (definedOf defs.[0])) (Some "SampleRecord") "Schema definition name should be preserved."
                     match definedOf defs.[0] with
                     | SchemaDefinition.Record recordSchema ->
-                        let fields = Expect.wantSome recordSchema.Fields "Record schema should keep fields."
+                        let fields = Expect.wantSome recordSchema.Fields "Record schema should keep fields." |> ListEntry.values
                         Expect.equal fields.Count 1 "Record schema should contain one field."
                         Expect.equal fields.[0].Name "sampleName" "Field name should decode."
                         Expect.equal fields.[0].Type CWLType.String "Field type should decode."
@@ -1151,13 +1151,13 @@ baseCommand: echo
             Expect.equal (fieldType "waypoints") (Some (Array (InputArraySchema(point)))) "A name with [] is an array of the reference."
         testCase "ports name the defined types as a type, a type object, an optional type and an array" <| fun _ ->
             let decoded = Decode.decodeCommandLineTool TestObjects.CWL.Requirements.SchemaDefTypes.toolFile
-            let inputs = decoded.Inputs.Value
+            let inputs = (ListEntry.values decoded.Inputs.Value)
             Expect.equal (inputTypeOf inputs "start") (Some point) "A port can name a type."
             Expect.equal (inputTypeOf inputs "anchor") (Some (Reference "#Point")) "A port can name a type with #."
             Expect.equal (inputTypeOf inputs "route") (Some (Reference "Segment")) "A port can name the second type."
             Expect.equal (inputTypeOf inputs "corners") (Some (Array (InputArraySchema(point)))) "A port can name an array of a type."
             Expect.equal (inputTypeOf inputs "spare") (Some (Union (ResizeArray [ Null; point ]))) "A port can name an optional type."
-            Expect.equal decoded.Outputs.[0].Type_ (Some (Reference "Segment")) "An output can name a type in object form."
+            Expect.equal (ListEntry.values decoded.Outputs).[0].Type_ (Some (Reference "Segment")) "An output can name a type in object form."
         testCase "references are written as their names and read back" <| fun _ ->
             let decoded = Decode.decodeCommandLineTool TestObjects.CWL.Requirements.SchemaDefTypes.toolFile
             let encoded = Encode.encodeToolDescription decoded
@@ -1165,24 +1165,24 @@ baseCommand: echo
             Expect.stringContains encoded "corners: Point[]\n" "An array of a reference is written with the shorthand."
             Expect.stringContains encoded "spare: Point?\n" "An optional reference is written with the shorthand."
             let roundTripped = Decode.decodeCommandLineTool encoded
-            for input in decoded.Inputs.Value do
-                Expect.equal (inputTypeOf roundTripped.Inputs.Value input.Name) input.Type_ $"The type of {input.Name} survives the round trip."
+            for input in (ListEntry.values decoded.Inputs.Value) do
+                Expect.equal (inputTypeOf (ListEntry.values roundTripped.Inputs.Value) input.Name) input.Type_ $"The type of {input.Name} survives the round trip."
             Expect.sequenceEqual roundTripped.Requirements.Value decoded.Requirements.Value "The definitions survive the round trip."
         testCase "the requirements in map syntax define names for the inline runs of the steps" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Requirements.SchemaDefTypes.workflowFile
-            Expect.equal (inputTypeOf decoded.Inputs "origin") (Some (Reference "#pipeline/Point")) "The workflow names a type that its map syntax defines."
-            let inlineToolOf (index: int) = Expect.wantSome (WorkflowStepRunOps.tryGetTool decoded.Steps.[index].Run) "The step runs an inline tool."
-            Expect.equal (inputTypeOf (inlineToolOf 0).Inputs.Value "from") (Some point) "The inline tool of move names a type of the workflow."
-            Expect.equal (inputTypeOf (inlineToolOf 1).Inputs.Value "by") (Some (Union (ResizeArray [ Null; Reference "Offset" ]))) "The inline tool of shift names a type of its step."
+            Expect.equal (inputTypeOf (ListEntry.values decoded.Inputs) "origin") (Some (Reference "#pipeline/Point")) "The workflow names a type that its map syntax defines."
+            let inlineToolOf (index: int) = Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values decoded.Steps).[index].Run) "The step runs an inline tool."
+            Expect.equal (inputTypeOf (ListEntry.values (inlineToolOf 0).Inputs.Value) "from") (Some point) "The inline tool of move names a type of the workflow."
+            Expect.equal (inputTypeOf (ListEntry.values (inlineToolOf 1).Inputs.Value) "by") (Some (Union (ResizeArray [ Null; Reference "Offset" ]))) "The inline tool of shift names a type of its step."
         testCase "a type is named through the id of the enclosing process" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Requirements.SchemaDefTypes.workflowFile
-            let inlineTool = Expect.wantSome (WorkflowStepRunOps.tryGetTool decoded.Steps.[0].Run) "The step runs an inline tool."
-            Expect.equal (inputTypeOf inlineTool.Inputs.Value "again") (Some (Reference "#pipeline/Point")) "The id of the workflow and the name make the reference."
+            let inlineTool = Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values decoded.Steps).[0].Run) "The step runs an inline tool."
+            Expect.equal (inputTypeOf (ListEntry.values inlineTool.Inputs.Value) "again") (Some (Reference "#pipeline/Point")) "The id of the workflow and the name make the reference."
         testCase "the inline runs of nested steps find the type of the workflow by walking up the ids" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Requirements.SchemaDefTypes.nestedWorkflowFile
-            let sub = Expect.wantSome (WorkflowStepRunOps.tryGetWorkflow decoded.Steps.[0].Run) "The step runs an inline workflow."
-            let deep = Expect.wantSome (WorkflowStepRunOps.tryGetTool sub.Steps.[0].Run) "The inner step runs an inline tool."
-            Expect.equal (inputTypeOf deep.Inputs.Value "p") (Some point) "The tool two steps down names the type of the workflow."
+            let sub = Expect.wantSome (WorkflowStepRunOps.tryGetWorkflow (ListEntry.values decoded.Steps).[0].Run) "The step runs an inline workflow."
+            let deep = Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values sub.Steps).[0].Run) "The inner step runs an inline tool."
+            Expect.equal (inputTypeOf (ListEntry.values deep.Inputs.Value) "p") (Some point) "The tool two steps down names the type of the workflow."
         testCase "a process with an id names its types with the id, absolute or relative" <| fun _ ->
             let yaml = tool """id: t
 requirements:
@@ -1197,7 +1197,7 @@ inputs:
   b: t/Point
   c: "#t/Point[]"
 outputs: {}"""
-            let inputs = (Decode.decodeCommandLineTool yaml).Inputs.Value
+            let inputs = (ListEntry.values (Decode.decodeCommandLineTool yaml).Inputs.Value)
             Expect.equal (inputTypeOf inputs "a") (Some (Reference "#t/Point")) "The absolute id is a reference."
             Expect.equal (inputTypeOf inputs "b") (Some (Reference "t/Point")) "The id behind the root is a reference."
             Expect.equal (inputTypeOf inputs "c") (Some (Array (InputArraySchema(Reference "#t/Point")))) "The shorthand works with an absolute id."
@@ -1214,7 +1214,7 @@ inputs:
   a: "#Point"
   b: Point
 outputs: {}"""
-            let inputs = (Decode.decodeCommandLineTool yaml).Inputs.Value
+            let inputs = (ListEntry.values (Decode.decodeCommandLineTool yaml).Inputs.Value)
             Expect.equal (inputTypeOf inputs "a") (Some (Reference "#Point")) "The absolute name is a reference."
             Expect.equal (inputTypeOf inputs "b") (Some point) "The bare name finds the type at the root of the document."
         testCase "the processes of a packed document name each other's types by id" <| fun _ ->
@@ -1224,8 +1224,8 @@ outputs: {}"""
             let other = match graph.Processes.[1] with
                         | CommandLineTool tool -> tool
                         | unit -> failwith $"Expected a command line tool but got %A{unit}"
-            Expect.equal (inputTypeOf other.Inputs.Value "absolute") (Some (Reference "#main/Point")) "The absolute id is a reference."
-            Expect.equal (inputTypeOf other.Inputs.Value "relative") (Some (Reference "main/Point")) "The id behind the root is a reference."
+            Expect.equal (inputTypeOf (ListEntry.values other.Inputs.Value) "absolute") (Some (Reference "#main/Point")) "The absolute id is a reference."
+            Expect.equal (inputTypeOf (ListEntry.values other.Inputs.Value) "relative") (Some (Reference "main/Point")) "The id behind the root is a reference."
         testCase "a process of a packed document that no step runs may name the types of its siblings" <| fun _ ->
             let graph = match Decode.decodeCWLDocument TestObjects.CWL.Workflow.PackedDocument.unreachedMemberNamesSiblingTypeFile with
                         | CWLDocument.Graph graph -> graph
@@ -1233,7 +1233,7 @@ outputs: {}"""
             let place = match CWLGraph.tryFindProcess "place" graph with
                         | Some (CommandLineTool tool) -> tool
                         | other -> failwith $"Expected the tool place but got %A{other}"
-            Expect.equal (inputTypeOf place.Inputs.Value "at") (Some (Reference "#other/Q")) "A runner may start with place, so the tool may name any type of the document."
+            Expect.equal (inputTypeOf (ListEntry.values place.Inputs.Value) "at") (Some (Reference "#other/Q")) "A runner may start with place, so the tool may name any type of the document."
         testCase "a process that only a process other than main runs may name the types of its siblings" <| fun _ ->
             let graph = match Decode.decodeCWLDocument TestObjects.CWL.Workflow.PackedDocument.unreachedWorkflowRunsMemberNamesSiblingTypeFile with
                         | CWLDocument.Graph graph -> graph
@@ -1241,7 +1241,7 @@ outputs: {}"""
             let place = match CWLGraph.tryFindProcess "place" graph with
                         | Some (CommandLineTool tool) -> tool
                         | other -> failwith $"Expected the tool place but got %A{other}"
-            Expect.equal (inputTypeOf place.Inputs.Value "at") (Some (Reference "#shift/Offset")) "A runner may start with extra, so its steps take the types of the whole document."
+            Expect.equal (inputTypeOf (ListEntry.values place.Inputs.Value) "at") (Some (Reference "#shift/Offset")) "A runner may start with extra, so its steps take the types of the whole document."
         testCase "a process of a packed document names the types in force at the steps that run it" <| fun _ ->
             let cases =
                 [ "a step of main", TestObjects.CWL.Workflow.PackedDocument.typesFile
@@ -1254,7 +1254,7 @@ outputs: {}"""
                             | CWLDocument.Graph graph -> graph
                             | other -> failwith $"{name}: expected a packed document but got %A{other}"
                 match CWLGraph.tryFindProcess "place" graph with
-                | Some (CommandLineTool place) -> Expect.equal (inputTypeOf place.Inputs.Value "at") (Some (Reference "#main/Point")) $"{name}: the tool names the type of main."
+                | Some (CommandLineTool place) -> Expect.equal (inputTypeOf (ListEntry.values place.Inputs.Value) "at") (Some (Reference "#main/Point")) $"{name}: the tool names the type of main."
                 | other -> failwith $"{name}: expected the tool place but got %A{other}"
         testCase "a bare name finds no type behind the id of its process" <| fun _ ->
             let withId (portType: string) =
@@ -1330,24 +1330,24 @@ steps:
                 | None -> failwith $"{name} must fail"
         testCase "the innermost SchemaDefRequirement of a list applies" <| fun _ ->
             let decoded = Decode.decodeCommandLineTool TestObjects.CWL.Requirements.SchemaDefOverride.twoRequirementsFile
-            Expect.equal (inputTypeOf decoded.Inputs.Value "y") (Some (Reference "B")) "The port names the type of the second requirement."
+            Expect.equal (inputTypeOf (ListEntry.values decoded.Inputs.Value) "y") (Some (Reference "B")) "The port names the type of the second requirement."
         testCase "a requirement overrides a hint, and a hint applies where no requirement overrides it" <| fun _ ->
             let named = TestObjects.CWL.Requirements.SchemaDefOverride.requirementAndHintFile.Replace("y: B", "y: A")
             let tool = Decode.decodeCommandLineTool named
-            Expect.equal (inputTypeOf tool.Inputs.Value "y") (Some (Reference "A")) "The port names the type of the requirement."
+            Expect.equal (inputTypeOf (ListEntry.values tool.Inputs.Value) "y") (Some (Reference "A")) "The port names the type of the requirement."
             let inlineToolOf (yaml: string) =
                 let workflow = Decode.decodeWorkflow yaml
-                Expect.wantSome (WorkflowStepRunOps.tryGetTool workflow.Steps.[0].Run) "The step runs an inline tool."
+                Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values workflow.Steps).[0].Run) "The step runs an inline tool."
             let optional (name: string) = Some (Union (ResizeArray [ Null; Reference name ]))
             let outer = TestObjects.CWL.Requirements.SchemaDefOverride.outerRequirementInnerHintFile.Replace("p: run/B?", "p: A?")
-            Expect.equal (inputTypeOf (inlineToolOf outer).Inputs.Value "p") (optional "A") "The requirement of the workflow reaches the inline tool."
+            Expect.equal (inputTypeOf (ListEntry.values (inlineToolOf outer).Inputs.Value) "p") (optional "A") "The requirement of the workflow reaches the inline tool."
             let inner = TestObjects.CWL.Requirements.SchemaDefOverride.innerHintFile.Replace("p: A?", "p: run/B?")
-            Expect.equal (inputTypeOf (inlineToolOf inner).Inputs.Value "p") (optional "run/B") "The hint of the tool applies, because no requirement overrides it."
+            Expect.equal (inputTypeOf (ListEntry.values (inlineToolOf inner).Inputs.Value) "p") (optional "run/B") "The hint of the tool applies, because no requirement overrides it."
         testCase "the requirement of a process overrides the one of its step" <| fun _ ->
             let yaml = TestObjects.CWL.Requirements.SchemaDefOverride.runOverridesStepFile.Replace("p: \"#wf/s/Offset?\"", "p: run/Foo?")
             let workflow = Decode.decodeWorkflow yaml
-            let tool = Expect.wantSome (WorkflowStepRunOps.tryGetTool workflow.Steps.[0].Run) "The step runs an inline tool."
-            Expect.equal (inputTypeOf tool.Inputs.Value "p") (Some (Union (ResizeArray [ Null; Reference "run/Foo" ]))) "The tool names the type of its own requirement."
+            let tool = Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values workflow.Steps).[0].Run) "The step runs an inline tool."
+            Expect.equal (inputTypeOf (ListEntry.values tool.Inputs.Value) "p") (Some (Union (ResizeArray [ Null; Reference "run/Foo" ]))) "The tool names the type of its own requirement."
         testCase "a type that another SchemaDefRequirement defines is a decode error where the innermost one applies" <| fun _ ->
             let over = TestObjects.CWL.Requirements.SchemaDefOverride.twoRequirementsFile
             let cases =
@@ -1381,9 +1381,9 @@ steps:
             let file = TestObjects.CWL.Requirements.SchemaDefNested.nestedWorkflowsFile.Replace("\r\n", "\n")
             let decode (reference: string) = Decode.decodeWorkflow (file.Replace("{0}", reference))
             let innerTool (workflow: CWLWorkflowDescription) =
-                let innerWorkflow = Expect.wantSome (WorkflowStepRunOps.tryGetWorkflow workflow.Steps.[0].Run) "The step runs an inline workflow."
-                Expect.wantSome (WorkflowStepRunOps.tryGetTool innerWorkflow.Steps.[0].Run) "The inner step runs an inline tool."
-            Expect.equal (inputTypeOf (innerTool (decode "#wf/Outer")).Inputs.Value "p") (Some (Reference "#wf/Outer")) "The tool below both workflows names the type of the outermost one."
+                let innerWorkflow = Expect.wantSome (WorkflowStepRunOps.tryGetWorkflow (ListEntry.values workflow.Steps).[0].Run) "The step runs an inline workflow."
+                Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values innerWorkflow.Steps).[0].Run) "The inner step runs an inline tool."
+            Expect.equal (inputTypeOf (ListEntry.values (innerTool (decode "#wf/Outer")).Inputs.Value) "p") (Some (Reference "#wf/Outer")) "The tool below both workflows names the type of the outermost one."
             match decodeError (fun () -> decode "#wf/s/run/Inner" |> ignore) with
             | Some error ->
                 Expect.equal (DecodeError.pathText error) "steps.s.run.steps.t.run.inputs.p" "The error shows the port of the tool."
@@ -1394,9 +1394,9 @@ steps:
             let withStepTypes = file.Replace("          in:\n            p:\n              default: a\n          out: []\n", "          requirements:\n            - class: SchemaDefRequirement\n              types:\n                - name: Step\n                  type: enum\n                  symbols: [a]\n          in:\n            p:\n              default: a\n          out: []\n")
             Expect.equal (withStepTypes.Contains "name: Step") true "The fixture holds the requirement of the step."
             let innerTool (workflow: CWLWorkflowDescription) =
-                let innerWorkflow = Expect.wantSome (WorkflowStepRunOps.tryGetWorkflow workflow.Steps.[0].Run) "The step runs an inline workflow."
-                Expect.wantSome (WorkflowStepRunOps.tryGetTool innerWorkflow.Steps.[0].Run) "The inner step runs an inline tool."
-            Expect.equal (inputTypeOf (innerTool (Decode.decodeWorkflow (withStepTypes.Replace("{0}", "#wf/s/run/t/Step")))).Inputs.Value "p") (Some (Reference "#wf/s/run/t/Step")) "The tool names the type of its step."
+                let innerWorkflow = Expect.wantSome (WorkflowStepRunOps.tryGetWorkflow (ListEntry.values workflow.Steps).[0].Run) "The step runs an inline workflow."
+                Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values innerWorkflow.Steps).[0].Run) "The inner step runs an inline tool."
+            Expect.equal (inputTypeOf (ListEntry.values (innerTool (Decode.decodeWorkflow (withStepTypes.Replace("{0}", "#wf/s/run/t/Step")))).Inputs.Value) "p") (Some (Reference "#wf/s/run/t/Step")) "The tool names the type of its step."
             match decodeError (fun () -> Decode.decodeWorkflow (withStepTypes.Replace("{0}", "#wf/Outer")) |> ignore) with
             | Some error -> Expect.equal (DecodeError.pathText error) "steps.s.run.steps.t.run.inputs.p" "The requirement of the step replaces the one of the outer workflow."
             | None -> failwith "The requirement of the step replaces the one of the workflow."
@@ -1413,7 +1413,7 @@ steps:
                 | SchemaDefinition.Array schema ->
                     Expect.equal schema.Name (Some "Ints") "The array keeps its name."
                     Expect.equal schema.Items Int "The array keeps its items."
-                    Expect.equal schema.Label (Some "some numbers") "The array keeps its label."
+                    Expect.equal schema.Label (Some (SchemaSaladString.Literal "some numbers")) "The array keeps its label."
                     Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" schema) (Some "kept") "The array keeps its extension fields."
                 | other -> failwith $"Expected an array definition but got %A{other}"
             | other -> failwith $"Expected a SchemaDefRequirement but got %A{other}"
@@ -1429,11 +1429,11 @@ steps:
             let file = TestObjects.CWL.Requirements.SchemaDefNested.portSchemaFile.Replace("\r\n", "\n")
             let decode (second: string) (output: string) = Decode.decodeCommandLineTool (file.Replace("{0}", second).Replace("{1}", output))
             let decoded = decode "#a/Color" "#a/Color"
-            Expect.equal (inputTypeOf decoded.Inputs.Value "b") (Some (Reference "#a/Color")) "The second port names the enum of the first one by its id."
-            Expect.equal (decoded.Outputs |> Seq.find (fun output -> output.Name = "o")).Type_ (Some (Reference "#a/Color")) "An output names it too."
+            Expect.equal (inputTypeOf (ListEntry.values decoded.Inputs.Value) "b") (Some (Reference "#a/Color")) "The second port names the enum of the first one by its id."
+            Expect.equal ((ListEntry.values decoded.Outputs) |> Seq.find (fun output -> output.Name = "o")).Type_ (Some (Reference "#a/Color")) "An output names it too."
             Expect.equal (Decode.decodeCommandLineTool (Encode.encodeToolDescription decoded)) decoded "The written text should decode to the same tool."
             let withId = Decode.decodeCommandLineTool ((file.Replace("{0}", "#t/a/Color").Replace("{1}", "#t/a/Color")).Replace("baseCommand: echo\n", "id: t\nbaseCommand: echo\n"))
-            Expect.equal (inputTypeOf withId.Inputs.Value "b") (Some (Reference "#t/a/Color")) "The id of the process leads the id."
+            Expect.equal (inputTypeOf (ListEntry.values withId.Inputs.Value) "b") (Some (Reference "#t/a/Color")) "The id of the process leads the id."
             for (name, second) in [ "a bare name", "Color"; "the name below the wrong port", "#b/Color"; "an unknown name", "#a/Shade" ] do
                 match decodeError (fun () -> decode second "#a/Color" |> ignore) with
                 | Some error ->
@@ -1443,8 +1443,8 @@ steps:
         testCase "the id of an inline run lies below run, and only that spelling names its types" <| fun _ ->
             let file = TestObjects.CWL.Requirements.SchemaDefIds.inlineRunWithIdFile
             let workflow = Decode.decodeWorkflow file
-            let inlineTool = Expect.wantSome (WorkflowStepRunOps.tryGetTool workflow.Steps.[0].Run) "The step runs an inline tool."
-            Expect.equal (inputTypeOf inlineTool.Inputs.Value "x") (Some (Union (ResizeArray [ Null; Reference "#wf/s/run/inner/Point" ]))) "The id of the tool starts with the id of the step and run."
+            let inlineTool = Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values workflow.Steps).[0].Run) "The step runs an inline tool."
+            Expect.equal (inputTypeOf (ListEntry.values inlineTool.Inputs.Value) "x") (Some (Union (ResizeArray [ Null; Reference "#wf/s/run/inner/Point" ]))) "The id of the tool starts with the id of the step and run."
             let cases =
                 [ "a bare name", "Point?"
                   "the id of the tool without the step", "\"#inner/Point?\""
@@ -1465,9 +1465,9 @@ steps:
                   "pick", "#Outer/pick/Pick"
                   "kind", "#Listed/item/Kind" ]
             for (port, id) in expected do
-                Expect.equal (inputTypeOf decoded.Inputs.Value port) (Some (Union (ResizeArray [ Null; Reference id ]))) $"The port {port} names the schema by {id}."
+                Expect.equal (inputTypeOf (ListEntry.values decoded.Inputs.Value) port) (Some (Union (ResizeArray [ Null; Reference id ]))) $"The port {port} names the schema by {id}."
             let withProcessId = Decode.decodeCommandLineTool TestObjects.CWL.Requirements.SchemaDefIds.nestedNamedInProcessWithIdFile
-            Expect.equal (inputTypeOf withProcessId.Inputs.Value "c") (Some (Union (ResizeArray [ Null; Reference "#t/Outer/inner/Color" ]))) "The id of the process leads the id."
+            Expect.equal (inputTypeOf (ListEntry.values withProcessId.Inputs.Value) "c") (Some (Union (ResizeArray [ Null; Reference "#t/Outer/inner/Color" ]))) "The id of the process leads the id."
         testCase "a nested schema is no name of its own and its id needs the id of the process" <| fun _ ->
             let nested = TestObjects.CWL.Requirements.SchemaDefIds.nestedNamedFile
             let cases =
@@ -1486,7 +1486,7 @@ steps:
                 | SchemaDefRequirement entries -> entries |> Seq.map definedOf |> Seq.toList
                 | other -> failwith $"Expected a SchemaDefRequirement but got %A{other}"
             Expect.equal (definitions |> List.map nameOf) [ Some "Point"; None; None ] "Only the first definition has a name."
-            Expect.equal (inputTypeOf decoded.Inputs.Value "x") (Some (Union (ResizeArray [ Null; Reference "Point" ]))) "The named record is a type."
+            Expect.equal (inputTypeOf (ListEntry.values decoded.Inputs.Value) "x") (Some (Union (ResizeArray [ Null; Reference "Point" ]))) "The named record is a type."
             let encoded = Encode.encodeToolDescription decoded
             Expect.isFalse (encoded.Contains "name: null" || encoded.Contains "name: \"\"") "An unnamed schema writes no name."
             Expect.sequenceEqual (Decode.decodeCommandLineTool encoded).Requirements.Value decoded.Requirements.Value "The definitions survive the round trip."
@@ -1512,7 +1512,7 @@ outputs: {}"""
                 | SchemaDefinition.Record schema -> schema
                 | other -> failwith $"Expected a record but got %A{other}"
             Expect.equal (InputRecordSchema.tryGetFieldType "next" node) (Some (Union (ResizeArray [ Null; Reference "Node" ]))) "The field names its own record."
-            Expect.equal (inputTypeOf decoded.Inputs.Value "head") (Some (Reference "Node")) "The port names the record."
+            Expect.equal (inputTypeOf (ListEntry.values decoded.Inputs.Value) "head") (Some (Reference "Node")) "The port names the record."
         testCase "a definition that names a type defined further down is a decode error at the type" <| fun _ ->
             let cases =
                 [ "a record before the record that it names", "requirements[0].types[0].fields.from", "Invalid CWL type: Point. The SchemaDefRequirement defines this type further down.", tool """requirements:
@@ -1565,7 +1565,7 @@ outputs: {}""" ]
                 | None -> failwith $"{name} must fail"
         testCase "a type that the hints define can be named" <| fun _ ->
             let decoded = Decode.decodeCommandLineTool TestObjects.CWL.Requirements.SchemaDefTypes.hintsFile
-            Expect.equal decoded.Inputs.Value.[0].Type_ (Some (Reference "Tag")) "The hint defines Tag."
+            Expect.equal (ListEntry.values decoded.Inputs.Value).[0].Type_ (Some (Reference "Tag")) "The hint defines Tag."
         testCase "an imported file defines the names behind its path" <| fun _ ->
             let yaml = tool """requirements:
   - class: SchemaDefRequirement
@@ -1576,7 +1576,7 @@ inputs:
 outputs: {}"""
             let decoded = Decode.decodeCommandLineTool yaml
             Expect.equal decoded.Requirements.Value.[0] (SchemaDefRequirement (ResizeArray [ Imported "shapes.yml" ])) "The import is an entry of the requirement."
-            Expect.equal decoded.Inputs.Value.[0].Type_ (Some (Reference "shapes.yml#Circle")) "The name behind the path is a reference."
+            Expect.equal (ListEntry.values decoded.Inputs.Value).[0].Type_ (Some (Reference "shapes.yml#Circle")) "The name behind the path is a reference."
             let encoded = Encode.encodeToolDescription decoded
             Expect.stringContains encoded "$import: shapes.yml" "The import is written as a directive."
             Expect.stringContains encoded "shape: shapes.yml#Circle" "The reference is written as it was read."
@@ -1599,7 +1599,7 @@ outputs: {}""")
                   "./sub/./shapes.yml", "sub/shapes.yml#Circle" ]
             for (imported, name) in sameFile do
                 let decoded = Decode.decodeCommandLineTool (withPaths imported name)
-                Expect.equal decoded.Inputs.Value.[0].Type_ (Some (Reference name)) $"{imported} and {name} name one file."
+                Expect.equal (ListEntry.values decoded.Inputs.Value).[0].Type_ (Some (Reference name)) $"{imported} and {name} name one file."
                 Expect.equal decoded.Requirements.Value.[0] (SchemaDefRequirement (ResizeArray [ Imported imported ])) $"The import {imported} stays as written."
             for (imported, name) in [ "sub/shapes.yml", "shapes.yml#Circle"; "../shapes.yml", "shapes.yml#Circle" ] do
                 match decodeError (fun () -> Decode.decodeCommandLineTool (withPaths imported name) |> ignore) with
@@ -1624,10 +1624,10 @@ inputs:
 outputs: {}"""
             let decoded = Decode.decodeCommandLineTool whole
             Expect.equal decoded.Requirements.Value.[0] (SchemaDefRequirement (ResizeArray [ Imported "shapes.yml" ])) "The field is one import."
-            Expect.equal decoded.Inputs.Value.[0].Type_ (Some (Reference "shapes.yml#Circle")) "The name behind the path is a reference."
+            Expect.equal (ListEntry.values decoded.Inputs.Value).[0].Type_ (Some (Reference "shapes.yml#Circle")) "The name behind the path is a reference."
             Expect.sequenceEqual decoded.Requirements.Value (Decode.decodeCommandLineTool inList).Requirements.Value "Both spellings give one model."
             let encoded = Encode.encodeToolDescription decoded
-            Expect.stringContains encoded "- $import: shapes.yml" "The encoder writes the list."
+            Expect.stringContains encoded "- {$import: shapes.yml}" "The encoder writes the list."
             Expect.sequenceEqual (Decode.decodeCommandLineTool encoded).Requirements.Value decoded.Requirements.Value "The import survives the round trip."
         testCase "a types field that is a mapping with more than the import is a decode error" <| fun _ ->
             let yaml = tool """requirements:
@@ -1708,11 +1708,11 @@ outputs: {}"""
             Expect.equal (hash (Reference "Point")) (hash (Reference "Point")) "The same name gives the same hash."
             Expect.notEqual (Reference "Point") (Reference "#Point") "The name counts as it is written."
             Expect.notEqual (Reference "String") String "A reference is no builtin type."
-            let tag = SchemaDefinition.Enum (InputEnumSchema(ResizeArray [ "a" ]))
+            let tag = SchemaDefinition.Enum (InputEnumSchema(ResizeArray [ SchemaSaladString.Literal "a" ]))
             Expect.notEqual (Defined tag) (Imported "Point") "A definition differs from an import."
         testCase "definitions compare and hash by their schemas" <| fun _ ->
-            let enumOf (symbols: string list) = SchemaDefinition.Enum (InputEnumSchema(ResizeArray symbols))
-            let recordOf (name: string) = SchemaDefinition.Record (InputRecordSchema(fields = ResizeArray [ InputRecordField("x", Int) ], name = name))
+            let enumOf (symbols: string list) = SchemaDefinition.Enum (InputEnumSchema(ResizeArray (List.map SchemaSaladString.Literal symbols)))
+            let recordOf (name: string) = SchemaDefinition.Record (InputRecordSchema(fields = ListEntry.ofValues [ InputRecordField("x", Int) ], name = name))
             Expect.equal (enumOf [ "a" ]) (enumOf [ "a" ]) "The same symbols are the same definition."
             Expect.equal (hash (enumOf [ "a" ])) (hash (enumOf [ "a" ])) "The same definition gives the same hash."
             Expect.notEqual (enumOf [ "a" ]) (enumOf [ "b" ]) "Other symbols are another definition."
@@ -1921,12 +1921,12 @@ let testRequirementEncode =
                 let requirement =
                     Requirement.DockerRequirement (
                         DockerRequirement.create(
-                            dockerPull = "ghcr.io/example/tool:1.0.0",
+                            dockerPull = (SchemaSaladString.Literal "ghcr.io/example/tool:1.0.0"),
                             dockerFileReference = SchemaSaladString.Literal "./Dockerfile",
-                            dockerImageId = "tool-image",
-                            dockerLoad = "docker-archive:///tmp/tool.tar",
-                            dockerImport = "https://example.org/images/tool.sif",
-                            dockerOutputDirectory = "/work/out"
+                            dockerImageId = (SchemaSaladString.Literal "tool-image"),
+                            dockerLoad = (SchemaSaladString.Literal "docker-archive:///tmp/tool.tar"),
+                            dockerImport = (SchemaSaladString.Literal "https://example.org/images/tool.sif"),
+                            dockerOutputDirectory = (SchemaSaladString.Literal "/work/out")
                         )
                     )
                 let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
@@ -1986,7 +1986,7 @@ let testRequirementEncode =
                     |> Option.get
                 Expect.equal decoded.[0] requirement "Expression timelimit should roundtrip."
             testCase "SchemaDefRequirement roundtrips with explicit typed representation" <| fun _ ->
-                let recordSchema = InputRecordSchema(fields = ResizeArray [| InputRecordField("sampleName", CWLType.String) |], name = "SampleRecord")
+                let recordSchema = InputRecordSchema(fields = ListEntry.ofValues [| InputRecordField("sampleName", CWLType.String) |], name = "SampleRecord")
                 let requirement =
                     SchemaDefRequirement (ResizeArray [| Defined (SchemaDefinition.Record recordSchema) |])
                 let yaml = Encode.encodeRequirement requirement |> Encode.writeYaml
@@ -2108,7 +2108,7 @@ let testInitialWorkDirListingForms =
         testCase "an expression as the listing stays an expression" <| fun _ ->
             let yaml = "requirements:\n  - class: InlineJavascriptRequirement\n  - class: InitialWorkDirRequirement\n    listing: $(inputs.directory.listing)"
             let requirement = (decodeRequirements yaml).[1]
-            Expect.equal requirement (InitialWorkDirExpressionRequirement "$(inputs.directory.listing)") "The scalar listing is the expression."
+            Expect.equal requirement (InitialWorkDirExpressionRequirement (SchemaSaladString.Literal "$(inputs.directory.listing)")) "The scalar listing is the expression."
             let written, again = encodeAndDecodeAgain requirement
             Expect.stringContains written "listing: $(inputs.directory.listing)" "The expression is written as a string."
             Expect.isFalse (written.Contains "[") "The expression is no list."
@@ -2119,7 +2119,7 @@ let testInitialWorkDirListingForms =
             | InitialWorkDirRequirement listing ->
                 Expect.sequenceEqual listing (ResizeArray [ StringEntry (SchemaSaladString.Literal "$(inputs.directory.listing)") ]) "The list keeps its one entry."
             | other -> failwithf "Expected an InitialWorkDirRequirement, found %A" other
-            Expect.notEqual (InitialWorkDirExpressionRequirement "$(x)") (InitialWorkDirRequirement (ResizeArray [ StringEntry (SchemaSaladString.Literal "$(x)") ])) "The two spellings are two requirements."
+            Expect.notEqual (InitialWorkDirExpressionRequirement (SchemaSaladString.Literal "$(x)")) (InitialWorkDirRequirement (ResizeArray [ StringEntry (SchemaSaladString.Literal "$(x)") ])) "The two spellings are two requirements."
         testCase "a listing or an item that is a text without an expression is a decode error" <| fun _ ->
             let cases =
                 [ "a text as the listing", "requirements[0].listing", "requirements:\n  - class: InitialWorkDirRequirement\n    listing: abc", "Expected a list of entries or an expression for the listing, found the text \"abc\". An expression holds $( or ${."
@@ -2156,7 +2156,7 @@ let testInitialWorkDirListingForms =
                                    StringEntry (SchemaSaladString.Import "other.yml") ])
                     "The expressions stay as written, and the text of a directive is not known to the decoder."
             | other -> failwithf "Expected an InitialWorkDirRequirement, found %A" other
-            Expect.equal (decodeRequirements "requirements:\n  - class: InitialWorkDirRequirement\n    listing: \"${ return []; }\"").[0] (InitialWorkDirExpressionRequirement "${ return []; }") "A script as the listing is an expression."
+            Expect.equal (decodeRequirements "requirements:\n  - class: InitialWorkDirRequirement\n    listing: \"${ return []; }\"").[0] (InitialWorkDirExpressionRequirement (SchemaSaladString.Literal "${ return []; }")) "A script as the listing is an expression."
         testCase "a mapping as the listing is a decode error at the listing" <| fun _ ->
             let yaml = "requirements:\n  - class: InitialWorkDirRequirement\n    listing:\n      class: File\n      location: a.txt"
             match decodeError (fun () -> decodeRequirements yaml |> ignore) with
@@ -2197,22 +2197,62 @@ let testSchemaSaladDirectivesInRequirements =
                 Expect.sequenceEqual value.ExpressionLib.Value (ResizeArray [ include' "lib.js"; SchemaSaladString.Literal "var x = 1;"; SchemaSaladString.Import "more.yml" ]) "The entries are a directive, a literal and a directive."
             | other -> failwithf "Expected an InlineJavascriptRequirement, found %A" other
             let written, again = writeAndRead requirement
-            Expect.stringContains written "- $include: lib.js" "The include is written as a mapping."
+            Expect.stringContains written "- {$include: lib.js}" "The include is written as a flow mapping."
             Expect.isFalse (written.Contains "\"$include") "No entry is the text of a directive."
             Expect.equal again requirement "The written text should decode to the same requirement."
-        testCase "envValue keeps a directive in the list form and in the map form" <| fun _ ->
+        testCase "envValue keeps a directive in the list form" <| fun _ ->
             let listForm = requirementsOf [ "  - class: EnvVarRequirement"; "    envDef:"; "      - envName: A"; "        envValue:"; "          $include: a.txt"; "      - envName: B"; "        envValue: plain" ]
-            let mapForm = requirementsOf [ "  - class: EnvVarRequirement"; "    envDef:"; "      A:"; "        $include: a.txt"; "      B: plain" ]
-            for name, yaml in [ "list", listForm; "map", mapForm ] do
-                let requirement = (decodeRequirements yaml).[0]
-                match requirement with
-                | EnvVarRequirement envs ->
-                    Expect.equal envs.[0].EnvValue (include' "a.txt") (sprintf "%s form: the include is kept" name)
-                    Expect.equal envs.[1].EnvValue (SchemaSaladString.Literal "plain") (sprintf "%s form: the literal is kept" name)
-                | other -> failwithf "Expected an EnvVarRequirement, found %A" other
-                let written, again = writeAndRead requirement
-                Expect.stringContains written "$include: a.txt" (sprintf "%s form: the include is written as a mapping" name)
-                Expect.equal again requirement (sprintf "%s form: the written text should decode to the same requirement" name)
+            let requirement = (decodeRequirements listForm).[0]
+            match requirement with
+            | EnvVarRequirement envs ->
+                Expect.equal (ListEntry.values envs).[0].EnvValue (include' "a.txt") "The include is kept."
+                Expect.equal (ListEntry.values envs).[1].EnvValue (SchemaSaladString.Literal "plain") "The literal is kept."
+            | other -> failwithf "Expected an EnvVarRequirement, found %A" other
+            let written, again = writeAndRead requirement
+            Expect.stringContains written "$include: a.txt" "The include is written as a mapping."
+            Expect.equal again requirement "The written text should decode to the same requirement."
+        testCase "a directive cannot stand for the value of a map entry of envDef, as cwltool rejects it" <| fun _ ->
+            for (name, line) in [ "an include", "A: {$include: a.txt}"; "an import", "A: {$import: env.yml}" ] do
+                let yaml = requirementsOf [ "  - class: EnvVarRequirement"; "    envDef:"; "      " + line ]
+                match (try decodeRequirements yaml |> ignore; None with YamlDecodeException error -> Some error) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) "requirements[0].envDef.A" (sprintf "%s: the error should show the entry" name)
+                    Expect.stringContains error.Message "A directive cannot stand for the value of an entry of the envDef field" (sprintf "%s: the error should say what is wrong" name)
+                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+                | None -> failwith (sprintf "%s must fail" name)
+        testCase "an import stands in its place among the envDef entries, is written back there and reads back equal" <| fun _ ->
+            let yaml = requirementsOf [ "  - class: EnvVarRequirement"; "    envDef:"; "      - {$import: more-env.yml}"; "      - envName: A"; "        envValue: b"; "      - {$import: last-env.yml}" ]
+            let requirement = (decodeRequirements yaml).[0]
+            match requirement with
+            | EnvVarRequirement envs ->
+                Expect.equal (List.ofSeq envs |> List.map (ListEntry.map (fun env -> env.EnvName))) [ ListEntry.Imported "more-env.yml"; ListEntry.Value "A"; ListEntry.Imported "last-env.yml" ] "The imports stand around the definition."
+                Expect.equal (ListEntry.values envs |> Seq.map (fun env -> env.EnvName) |> List.ofSeq) [ "A" ] "The values leave the imports out."
+            | other -> failwithf "Expected an EnvVarRequirement, found %A" other
+            let written, again = writeAndRead requirement
+            Expect.isTrue (written.IndexOf "more-env.yml" < written.IndexOf "envName: A" && written.IndexOf "envName: A" < written.IndexOf "last-env.yml") "The entries keep their order."
+            Expect.stringContains written "- {$import: more-env.yml}" "The import is written as an entry."
+            Expect.equal again requirement "The written text should decode to the same requirement."
+        testCase "envDef as one import holds that import and is written as a list, as in the types of a SchemaDefRequirement" <| fun _ ->
+            let whole = (decodeRequirements (requirementsOf [ "  - class: EnvVarRequirement"; "    envDef: {$import: envs.yml}" ])).[0]
+            let listed = (decodeRequirements (requirementsOf [ "  - class: EnvVarRequirement"; "    envDef: [{$import: envs.yml}]" ])).[0]
+            match whole with
+            | EnvVarRequirement envs -> Expect.equal (List.ofSeq envs) [ ListEntry.Imported "envs.yml" ] "The field holds the import."
+            | other -> failwithf "Expected an EnvVarRequirement, found %A" other
+            Expect.equal whole listed "Both spellings are the same requirement."
+            let written, again = writeAndRead whole
+            Expect.stringContains written "- {$import: envs.yml}" "The import is written as a list entry."
+            Expect.equal again whole "The written text should decode to the same requirement."
+        testCase "an include or a directive with another field cannot stand for an envDef entry" <| fun _ ->
+            for (name, line, path, message) in
+                [ "an include", "    envDef: [{$include: a.txt}]", "requirements[0].envDef[0]", "An $include yields the text of a file, but an entry of the envDef field takes an object."
+                  "an import with another field", "    envDef: [{$import: a.yml, envName: A}]", "requirements[0].envDef[0]", "A directive has exactly one field"
+                  "an include as the whole field", "    envDef: {$include: a.txt}", "requirements[0].envDef", "An $include yields the text of a file, but the envDef field takes an object." ] do
+                match (try decodeRequirements (requirementsOf [ "  - class: EnvVarRequirement"; line ]) |> ignore; None with YamlDecodeException error -> Some error) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the entry" name)
+                    Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
+                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+                | None -> failwith (sprintf "%s must fail" name)
         testCase "the expression of WorkReuse, NetworkAccess and ToolTimeLimit keeps a directive" <| fun _ ->
             let cases =
                 [ "WorkReuse", "enableReuse", WorkReuseExpressionRequirement (include' "reuse.txt")
@@ -2243,7 +2283,6 @@ let testSchemaSaladDirectivesInRequirements =
         testCase "a mapping that is no directive is a decode error at its place" <| fun _ ->
             let cases =
                 [ "an entry of expressionLib", "requirements[0].expressionLib[1]", requirementsOf [ "  - class: InlineJavascriptRequirement"; "    expressionLib:"; "      - var x = 1;"; "      - foo: bar" ]
-                  "an envValue", "requirements[0].envDef[0].envValue", requirementsOf [ "  - class: EnvVarRequirement"; "    envDef:"; "      - envName: A"; "        envValue:"; "          $include: a.txt"; "          other: b" ]
                   "an enableReuse", "requirements[0].enableReuse", requirementsOf [ "  - class: WorkReuse"; "    enableReuse:"; "      foo: bar" ]
                   "a timelimit with a list", "requirements[0].timelimit", requirementsOf [ "  - class: ToolTimeLimit"; "    timelimit: [1, 2]" ]
                   "a resource", "requirements[0].coresMin", requirementsOf [ "  - class: ResourceRequirement"; "    coresMin:"; "      foo: bar" ] ]
@@ -2253,6 +2292,162 @@ let testSchemaSaladDirectivesInRequirements =
                     Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the place" name)
                     Expect.stringContains error.Message "Expected a string or a mapping with the single key $include or $import, found" (sprintf "%s: the error should say what is wrong" name)
                     Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+                | None -> failwith (sprintf "%s must fail" name)
+        testCase "a directive has exactly one field" <| fun _ ->
+            let cases =
+                [ "an import with another field in a listing", "requirements[0].listing[0]", requirementsOf [ "  - class: InitialWorkDirRequirement"; "    listing:"; "      - {$import: a.yml, extra: 1}" ]
+                  "an include with another field in an envValue", "requirements[0].envDef[0].envValue", requirementsOf [ "  - class: EnvVarRequirement"; "    envDef:"; "      - envName: A"; "        envValue: {$include: a.txt, other: b}" ]
+                  "an include and an import", "requirements[0].dockerFile", requirementsOf [ "  - class: DockerRequirement"; "    dockerFile: {$include: a, $import: b}" ]
+                  "an import with another field in the types", "requirements[0].types[0]", requirementsOf [ "  - class: SchemaDefRequirement"; "    types:"; "      - {$import: t.yml, class: X}" ]
+                  "an import with another field as the types", "requirements[0].types", requirementsOf [ "  - class: SchemaDefRequirement"; "    types: {$import: t.yml, extra: 1}" ] ]
+            for (name, path, yaml) in cases do
+                match decodeError (fun () -> decodeRequirements yaml |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the place" name)
+                    Expect.stringContains error.Message "A directive has exactly one field" (sprintf "%s: the error should say what is wrong" name)
+                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+                | None -> failwith (sprintf "%s must fail" name)
+        testCase "the path of a directive is a string" <| fun _ ->
+            let dockerFile (directive: string) = requirementsOf [ "  - class: DockerRequirement"; "    dockerFile: " + directive ]
+            for (name, directive, message) in
+                [ "an int", "{$import: 42}", "Expected the path of the $import directive to be a string, found the plain scalar 42, which the core schema reads as an int."
+                  "a bool", "{$include: true}", "Expected the path of the $include directive to be a string, found the plain scalar true"
+                  "a list", "{$import: [a.yml]}", "Expected the path of the $import directive to be a string, found a list."
+                  "a mapping", "{$import: {a: b}}", "Expected the path of the $import directive to be a string, found a mapping."
+                  "a null", "{$include: }", "Expected the path of the $include directive to be a string, found null."
+                  "an empty string", "{$import: \"\"}", "The path of the $import directive is empty." ] do
+                match decodeError (fun () -> decodeRequirements (dockerFile directive) |> ignore) with
+                | Some error ->
+                    let key = if directive.Contains "$include" then "$include" else "$import"
+                    Expect.equal (DecodeError.pathText error) ("requirements[0].dockerFile." + key) (sprintf "%s: the error should show the path field" name)
+                    Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
+                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+                | None -> failwith (sprintf "%s must fail" name)
+            match (decodeRequirements (dockerFile "{$import: \"42\"}")).[0] with
+            | DockerRequirement docker -> Expect.equal docker.DockerFile (Some (SchemaSaladString.Import "42")) "A quoted number is a path."
+            | other -> failwithf "Expected a DockerRequirement, found %A" other
+        testCase "a mixin is a directive of its own, which stands for a string and for an object that a file completes" <| fun _ ->
+            let docker = decodeRequirements (requirementsOf [ "  - class: DockerRequirement"; "    dockerFile: {$mixin: Dockerfile}" ])
+            match docker.[0] with
+            | DockerRequirement docker -> Expect.equal docker.DockerFile (Some (SchemaSaladString.Mixin "Dockerfile")) "A mixin on its own is a mixin, and not an import."
+            | other -> failwithf "Expected a DockerRequirement, found %A" other
+            Expect.notEqual (SchemaSaladString.Mixin "a") (SchemaSaladString.Import "a") "A mixin differs from an import of the same path."
+            let written, again = writeAndRead docker.[0]
+            Expect.stringContains written "dockerFile: {$mixin: Dockerfile}" "The mixin is written back as a mixin."
+            Expect.equal again docker.[0] "The written text should decode to the same requirement."
+            let requirements = decodeRequirements (requirementsOf [ "  - {$mixin: req1.yml, class: NetworkAccess, networkAccess: true}" ])
+            match requirements.[0] with
+            | MixedRequirement _ -> ()
+            | other -> failwithf "Expected a mixed requirement, found %A" other
+            let writtenMixed, againMixed = writeAndRead requirements.[0]
+            Expect.stringContains writtenMixed "$mixin: req1.yml" "The mixin is written back."
+            Expect.stringContains writtenMixed "class: NetworkAccess" "The fields beside the mixin are written back."
+            Expect.equal againMixed requirements.[0] "The written text should decode to the same requirement."
+            match decodeError (fun () -> decodeRequirements (requirementsOf [ "  - class: DockerRequirement"; "    dockerFile: {$mixin: Dockerfile, extra: 1}" ]) |> ignore) with
+            | Some error ->
+                Expect.equal (DecodeError.pathText error) "requirements[0].dockerFile" "The error shows the field."
+                Expect.stringContains error.Message "A $mixin beside other fields completes an object, but this place takes a string." "A mixin with other fields is no string."
+            | None -> failwith "A mixin with other fields cannot stand for a string."
+        testCase "an include cannot stand where CWL takes an object" <| fun _ ->
+            let cases =
+                [ "an entry of the types", "requirements[0].types[0]", requirementsOf [ "  - class: SchemaDefRequirement"; "    types:"; "      - {$include: t.yml}" ]
+                  "the types as a whole", "requirements[0].types", requirementsOf [ "  - class: SchemaDefRequirement"; "    types: {$include: t.yml}" ] ]
+            for (name, path, yaml) in cases do
+                match decodeError (fun () -> decodeRequirements yaml |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the place" name)
+                    Expect.stringContains error.Message "An $include yields the text of a file, but" (sprintf "%s: the error should say what is wrong" name)
+                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+                | None -> failwith (sprintf "%s must fail" name)
+        testCase "a path that YAML needs quoted is written quoted and reads back" <| fun _ ->
+            for path in [ "a b.txt"; "x, y.txt"; "k: v.txt"; "q\"uote.txt"; "#hash.txt"; "[list].txt"; "{map}.txt"; "42" ] do
+                for directive in [ SchemaSaladString.Include path; SchemaSaladString.Import path ] do
+                    let requirement = DockerRequirement (DockerRequirement.create(dockerFileReference = directive))
+                    let written = Encode.encodeRequirement requirement |> Encode.writeYaml
+                    Expect.stringContains written "dockerFile: {$" (sprintf "%s: the directive is a flow mapping" path)
+                    let again = (decodeRequirements ("requirements:\n  - " + written.Replace("\n", "\n    ").TrimEnd())).[0]
+                    Expect.equal again requirement (sprintf "%s: the written directive reads back as the same requirement" path)
+        testCase "an import in the requirements stands in its place and the field may be the import as a whole" <| fun _ ->
+            let toolWith (lines: string list) =
+                "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs: {}\noutputs: {}\n" + String.concat "\n" lines + "\n"
+            let inList = Decode.decodeCommandLineTool (toolWith [ "requirements:"; "  - {$import: req.yml}"; "  - class: InlineJavascriptRequirement" ])
+            Expect.equal inList.Requirements.Value.[0] (ImportedRequirement "req.yml") "The import is the first entry."
+            Expect.equal inList.Requirements.Value.[1] (InlineJavascriptRequirement (InlineJavascriptRequirementValue())) "The requirement behind it stays."
+            let written = Encode.encodeToolDescription inList
+            Expect.stringContains written "requirements:\n  - {$import: req.yml}\n  - class: InlineJavascriptRequirement" "The import stays in its place."
+            Expect.equal (Decode.decodeCommandLineTool written) inList "The written text should decode to the same tool."
+            let whole = Decode.decodeCommandLineTool (toolWith [ "requirements: {$import: reqs.yml}" ])
+            Expect.sequenceEqual whole.Requirements.Value [ ImportedRequirement "reqs.yml" ] "The field is a list with one import."
+            Expect.stringContains (Encode.encodeToolDescription whole) "requirements: {$import: reqs.yml}\n" "The field is written as the directive again."
+            Expect.equal (Decode.decodeCommandLineTool (Encode.encodeToolDescription whole)) whole "The written text should decode to the same tool."
+            let asList = Decode.decodeCommandLineTool (toolWith [ "requirements:"; "  - {$import: reqs.yml}" ])
+            Expect.equal whole asList "The two spellings are one model."
+            Expect.stringContains (Encode.encodeToolDescription asList) "requirements:\n  - {$import: reqs.yml}" "A list stays a list."
+            whole.Requirements.Value.Add(ShellCommandRequirement)
+            let extended = Encode.encodeToolDescription whole
+            Expect.stringContains extended "requirements:\n  - {$import: reqs.yml}\n  - class: ShellCommandRequirement" "A list with more than the import is written as a list."
+            Expect.equal (Decode.decodeCommandLineTool extended).Requirements.Value.Count 2 "The longer list reads back."
+        testCase "an import in the hints is an imported hint and never an unknown one" <| fun _ ->
+            let hints = decodeHints "hints:\n  - {$import: hints.yml}\n  - class: acme:Thing\n    value: 1"
+            Expect.equal hints.[0] (ImportedHint "hints.yml") "The import is an imported hint."
+            Expect.isTrue (match hints.[1] with UnknownHint _ -> true | _ -> false) "A hint of another class stays unknown."
+            Expect.isNone (HintEntry.tryAsRequirement hints.[0]) "An imported hint is no requirement."
+            let tool = Decode.decodeCommandLineTool "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs: {}\noutputs: {}\nhints: {$import: hints.yml}\n"
+            Expect.sequenceEqual tool.Hints.Value [ ImportedHint "hints.yml" ] "The field is a list with one imported hint."
+            let written = Encode.encodeToolDescription tool
+            Expect.stringContains written "hints: {$import: hints.yml}\n" "The field is written as the directive again."
+            Expect.equal (Decode.decodeCommandLineTool written) tool "The written text should decode to the same tool."
+        testCase "the requirements and the hints of a step keep an import as a whole" <| fun _ ->
+            let yaml = "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  s:\n    run: t.cwl\n    in: {}\n    out: []\n    requirements: {$import: reqs.yml}\n    hints:\n      - {$import: hints.yml}\n"
+            let workflow = Decode.decodeWorkflow yaml
+            Expect.sequenceEqual (ListEntry.values workflow.Steps).[0].Requirements.Value [ ImportedRequirement "reqs.yml" ] "The step has the imported requirements."
+            Expect.sequenceEqual (ListEntry.values workflow.Steps).[0].Hints.Value [ ImportedHint "hints.yml" ] "The step has the imported hints."
+            let written = Encode.encodeWorkflowDescription workflow
+            Expect.stringContains written "requirements: {$import: reqs.yml}" "The requirements are the directive again."
+            Expect.stringContains written "- {$import: hints.yml}" "The hints stay a list."
+            Expect.equal (Decode.decodeWorkflow written) workflow "The written text should decode to the same workflow."
+        testCase "a directive cannot stand for the value of an entry of the requirements or the hints in map form" <| fun _ ->
+            let cases =
+                [ "an import as a requirement", "requirements[0].InlineJavascriptRequirement", "requirements:\n  InlineJavascriptRequirement: {$import: req.yml}"
+                  "an include as a requirement", "requirements[0].InlineJavascriptRequirement", "requirements:\n  InlineJavascriptRequirement: {$include: req.yml}"
+                  "an import as a hint", "hints[0].InlineJavascriptRequirement", "hints:\n  InlineJavascriptRequirement: {$import: req.yml}" ]
+            for (name, _, yaml) in cases do
+                match decodeError (fun () -> Decode.decodeCommandLineTool ("cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs: {}\noutputs: {}\n" + yaml + "\n") |> ignore) with
+                | Some error ->
+                    Expect.stringContains error.Message "A directive cannot stand for the value of an entry of the" (sprintf "%s: the error should say what is wrong" name)
+                    Expect.stringContains error.Message "Write the field as a list." (sprintf "%s: the error should say what to write" name)
+                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+                | None -> failwith (sprintf "%s must fail" name)
+            let mixin' = decodeRequirements "requirements:\n  InlineJavascriptRequirement: {$mixin: req.yml}"
+            Expect.equal mixin'.Count 1 "A mixin as the value is a requirement of its own, as cwltool reads it."
+            match mixin'.[0] with
+            | MixedRequirement _ -> ()
+            | other -> failwithf "Expected a mixed requirement, found %A" other
+        testCase "an include cannot stand for a requirement or a hint" <| fun _ ->
+            let tool (field: string) = "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs: {}\noutputs: {}\n" + field + "\n"
+            let cases =
+                [ "an entry of the requirements", "requirements[0]", tool "requirements:\n  - {$include: r.yml}", "an entry of the requirements"
+                  "an entry of the hints", "hints[0]", tool "hints:\n  - {$include: h.yml}", "an entry of the hints"
+                  "the requirements as a whole", "requirements", tool "requirements: {$include: r.yml}", "the requirements field"
+                  "the hints as a whole", "hints", tool "hints: {$include: h.yml}", "the hints field" ]
+            for (name, path, yaml, what) in cases do
+                match decodeError (fun () -> Decode.decodeCommandLineTool yaml |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the place" name)
+                    Expect.stringContains error.Message ("An $include yields the text of a file, but " + what + " takes an object.") (sprintf "%s: the error should say what is wrong" name)
+                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+                | None -> failwith (sprintf "%s must fail" name)
+        testCase "a type of an imported file of requirements is named by the path of the file" <| fun _ ->
+            let tool (reference: string) =
+                "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\nrequirements:\n  - {$import: sd.yml}\ninputs:\n  a: " + reference + "\noutputs: {}\n"
+            Expect.equal (ListEntry.values (Decode.decodeCommandLineTool (tool "sd.yml#Color")).Inputs.Value).[0].Type_ (Some (Reference "sd.yml#Color")) "The path of the import and the name are the reference."
+            Expect.equal (ListEntry.values (Decode.decodeCommandLineTool (tool "sd.yml#Color?")).Inputs.Value).[0].Type_ (Some (Union (ResizeArray [ Null; Reference "sd.yml#Color" ]))) "The optional spelling reads too."
+            Expect.equal (ListEntry.values (Decode.decodeCommandLineTool (tool "\"file:///work/sd.yml#Color\"")).Inputs.Value).[0].Type_ (Some (Reference "file:///work/sd.yml#Color")) "An address with a scheme counts when the document imports a file."
+            for (name, reference) in [ "a bare name", "Color"; "a name behind another path", "other.yml#Color"; "the name with a hash in front", "\"#sd.yml#Color\"" ] do
+                match decodeError (fun () -> Decode.decodeCommandLineTool (tool reference) |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) "inputs.a" (sprintf "%s: the error should show the port" name)
+                    Expect.stringContains error.Message "Invalid CWL type" (sprintf "%s: the error should say that the type is invalid" name)
                 | None -> failwith (sprintf "%s must fail" name)
         testCase "a field that holds no directive is a decode error for a mapping" <| fun _ ->
             let yaml = requirementsOf [ "  - class: DockerRequirement"; "    cwltool:dockerRunOptions:"; "      - $include: options.txt" ]
@@ -2316,10 +2511,10 @@ let testInvalidRequirementsAndHints =
 let testDynamicPayloadModel =
     testList "DynamicObj payload model" [
         testCase "CWL schema payloads keep known fields typed and overflow dynamic" <| fun _ ->
-            let field = InputRecordField("sampleName", CWLType.String, doc = "field docs", label = "Sample")
-            let recordSchema = InputRecordSchema(fields = ResizeArray [| field |], doc = "record docs", name = "SampleRecord")
-            let arraySchema = InputArraySchema(CWLType.Record recordSchema, label = "array label")
-            let enumSchema = InputEnumSchema(ResizeArray [| "A"; "B" |], name = "Choice")
+            let field = InputRecordField("sampleName", CWLType.String, doc = (DocText.literal "field docs"), label = (SchemaSaladString.Literal "Sample"))
+            let recordSchema = InputRecordSchema(fields = ListEntry.ofValues [| field |], doc = (DocText.literal "record docs"), name = "SampleRecord")
+            let arraySchema = InputArraySchema(CWLType.Record recordSchema, label = (SchemaSaladString.Literal "array label"))
+            let enumSchema = InputEnumSchema(ResizeArray [| SchemaSaladString.Literal "A"; SchemaSaladString.Literal "B" |], name = "Choice")
             let dirent = DirentInstance(SchemaSaladString.Literal "$(inputs.sample)", entryname = SchemaSaladString.Literal "sample.txt")
             let package = SoftwarePackage("samtools", version = ResizeArray [| "1.19" |])
 
@@ -2344,7 +2539,7 @@ let testDynamicPayloadModel =
                 Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" dynObj) (Some "keep me") "Unknown fields should stay in dynamic overflow."
 
         testCase "requirement payloads keep known fields typed and overflow dynamic" <| fun _ ->
-            let docker = DockerRequirement.create(dockerPull = "ubuntu:24.04")
+            let docker = DockerRequirement.create(dockerPull = (SchemaSaladString.Literal "ubuntu:24.04"))
             let env = EnvironmentDef("PATH", SchemaSaladString.Literal "/usr/bin")
             let loadListing = LoadListingRequirementValue(DeepListing)
             let workReuse = WorkReuseRequirementValue(false)
@@ -2415,7 +2610,7 @@ let testRequirementDynamicOverflowRoundtrip =
 
             let recordField = InputRecordField("sample", CWLType.String)
             DynObj.setProperty "arc:field note" "field" recordField
-            let recordSchema = InputRecordSchema(fields = ResizeArray [| recordField |], name = "SampleRecord")
+            let recordSchema = InputRecordSchema(fields = ListEntry.ofValues [| recordField |], name = "SampleRecord")
             DynObj.setProperty "arc:record note" "record" recordSchema
             let schemaDef = SchemaDefinition.Record recordSchema
 
@@ -2448,9 +2643,9 @@ let testRequirementDynamicOverflowRoundtrip =
                             | DirentEntry value -> DynObj.tryGetTypedPropertyValue<string> "arc:dirent note" value
                             | _ -> None
                         | _ -> None
-                    EnvVarRequirement (ResizeArray [| env |]), fun requirement ->
+                    EnvVarRequirement (ListEntry.ofValues [| env |]), fun requirement ->
                         match requirement with
-                        | EnvVarRequirement envs -> DynObj.tryGetTypedPropertyValue<string> "arc:env note" envs.[0]
+                        | EnvVarRequirement envs -> DynObj.tryGetTypedPropertyValue<string> "arc:env note" (ListEntry.values envs).[0]
                         | _ -> None
                     SoftwareRequirement (ResizeArray [| package |]), fun requirement ->
                         match requirement with
@@ -2461,7 +2656,7 @@ let testRequirementDynamicOverflowRoundtrip =
                         | SchemaDefRequirement definitions ->
                             match definedOf definitions.[0] with
                             | SchemaDefinition.Record schema ->
-                                let field = schema.Fields.Value.[0]
+                                let field = (InputRecordSchema.getFieldsOrEmpty schema).[0]
                                 let schemaOverflow = DynObj.tryGetTypedPropertyValue<string> "arc:record note" schema
                                 let fieldOverflow = DynObj.tryGetTypedPropertyValue<string> "arc:field note" field
                                 if schemaOverflow = Some "record" && fieldOverflow = Some "field" then Some "schema"

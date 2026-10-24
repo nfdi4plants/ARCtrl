@@ -50,24 +50,8 @@ let tests_relativeId =
             Expect.equal (ReferenceParsing.relativeId None "#main/msg") "#main/msg" ""
     ]
 
-let tests_extractStepOutputId =
-    testList "extractStepOutputId" [
-        testCase "StepOutputString" <| fun () ->
-            let actual =
-                StepOutputString "dir"
-                |> ReferenceParsing.extractStepOutputId
-            Expect.equal actual "dir" ""
-
-        testCase "StepOutputRecord" <| fun () ->
-            let actual =
-                StepOutputRecord (StepOutputParameter.create "dir")
-                |> ReferenceParsing.extractStepOutputId
-            Expect.equal actual "dir" ""
-    ]
-
 let main =
     testList "ReferenceParsing" [
         tests_parseSourceReference
         tests_relativeId
-        tests_extractStepOutputId
     ]

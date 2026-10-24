@@ -5,6 +5,11 @@ open YAMLicious
 let mergeHashes (hash1 : int) (hash2 : int) : int =
     0x9e3779b9 + hash2 + (hash1 <<< 6) + (hash1 >>> 2)
 
+/// The hash of the given values taken in order. The hash of a tuple on .NET covers its last eight items only, so an
+/// object with more fields hashes them through this list, which has no limit. A missing value hashes to 0.
+let hashFields (fields: obj list) : int =
+    fields |> List.fold (fun acc field -> mergeHashes acc (hash field)) 0
+
 let hashDateTime (dt : System.DateTime) : int =
     let mutable acc = 0
     acc <- mergeHashes acc dt.Year

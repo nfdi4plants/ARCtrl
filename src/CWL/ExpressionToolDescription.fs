@@ -5,31 +5,31 @@ open Fable.Core
 
 [<AttachMembers>]
 type CWLExpressionToolDescription (
-        outputs: ResizeArray<CWLOutput>,
+        outputs: ResizeArray<ListEntry<CWLOutput>>,
         expression: SchemaSaladString,
         ?cwlVersion: string,
         ?requirements: ResizeArray<Requirement>,
         ?hints: ResizeArray<HintEntry>,
         ?intent: ResizeArray<string>,
-        ?inputs: ResizeArray<CWLInput>,
+        ?inputs: ResizeArray<ListEntry<CWLInput>>,
         ?metadata: DynamicObj,
-        ?label: string,
-        ?doc: string,
+        ?label: SchemaSaladString,
+        ?doc: DocText,
         ?id: string
     ) =
     inherit DynamicObj ()
 
     let mutable _id: string option = id
     let mutable _cwlVersion: string = cwlVersion |> Option.defaultValue "v1.2"
-    let mutable _outputs: ResizeArray<CWLOutput> = outputs
+    let mutable _outputs: ResizeArray<ListEntry<CWLOutput>> = outputs
     let mutable _expression: SchemaSaladString = expression
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<HintEntry> option = hints
     let mutable _intent: ResizeArray<string> option = intent
-    let mutable _inputs: ResizeArray<CWLInput> option = inputs
+    let mutable _inputs: ResizeArray<ListEntry<CWLInput>> option = inputs
     let mutable _metadata: DynamicObj option = metadata
-    let mutable _label: string option = label
-    let mutable _doc: string option = doc
+    let mutable _label: SchemaSaladString option = label
+    let mutable _doc: DocText option = doc
     let mutable _sourceNodes = SourceNodes.Empty
 
     member this.Id
@@ -85,15 +85,15 @@ type CWLExpressionToolDescription (
     static member KnownFieldNames =
         CWLKnownFieldNames.expressionToolDescription
 
-    /// Returns the expression tool's inputs or an empty ResizeArray if None.
-    static member getInputsOrEmpty (tool: CWLExpressionToolDescription) =
-        tool.Inputs |> Option.defaultValue (ResizeArray())
+    /// Returns the inputs of the expression tool, or an empty list. The imports are left out, and the list is a new one.
+    static member getInputsOrEmpty (tool: CWLExpressionToolDescription) : ResizeArray<CWLInput> =
+        tool.Inputs |> Option.map ListEntry.values |> Option.defaultValue (ResizeArray())
 
-    /// Returns expression tool outputs.
-    static member getOutputs (tool: CWLExpressionToolDescription) =
-        tool.Outputs
+    /// Returns the outputs of the expression tool. The imports are left out, and the list is a new one.
+    static member getOutputs (tool: CWLExpressionToolDescription) : ResizeArray<CWLOutput> =
+        ListEntry.values tool.Outputs
 
-    /// Returns the expression tool's inputs, creating and assigning a new empty ResizeArray if None.
+    /// Returns the entries of the expression tool's inputs, creating and assigning a new empty ResizeArray if None.
     static member getOrCreateInputs (tool: CWLExpressionToolDescription) =
         match tool.Inputs with
         | Some inputs -> inputs

@@ -28,7 +28,7 @@ module File =
 
     let inputFilePosition = 1
 
-    let inputFileBinding = InputBinding.create(position = BindingPosition.Number inputFilePosition, prefix = inputFilePrefix)
+    let inputFileBinding = InputBinding.create(position = BindingPosition.Number inputFilePosition, prefix = SchemaSaladString.Literal inputFilePrefix)
 
     let inputFirstArg = CWLInput(inputFileName, inputFileType, inputBinding = inputFileBinding)
 
@@ -86,3 +86,27 @@ inputs:
     type: File
     format: []
 outputs: []"""
+
+/// A tool with one input that sets every field of an input, for the tests of equality and hash.
+module AllFields =
+
+    let toolFile = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs:
+  x:
+    type: string
+    inputBinding:
+      prefix: -a
+      position: 1
+    label: lab
+    secondaryFiles: .idx
+    streamable: true
+    doc: first
+    format: edam:format_1
+    loadContents: false
+    loadListing: no_listing
+    default: dflt
+    arc:note: n1
+outputs: {}
+"""

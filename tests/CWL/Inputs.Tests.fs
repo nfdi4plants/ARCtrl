@@ -9,6 +9,7 @@ let decodeInput =
     TestObjects.CWL.Inputs.inputsFileContent
     |> Decode.readYaml
     |> Decode.inputsDecoder
+    |> Option.map ListEntry.values
     |>fun i ->i.Value
 
 let testInput =
@@ -23,7 +24,7 @@ let testInput =
             let fileItem = decodeInput.[1]
             testCase "Name" <| fun _ -> Expect.equal "firstArg"  fileItem.Name ""
             testCase "Type" <| fun _ -> Expect.equal (File)  fileItem.Type_.Value ""
-            testCase "InputBinding" <| fun _ -> Expect.equal (Some (InputBinding.create(position = BindingPosition.Number 1, prefix = "--example"))) fileItem.InputBinding ""
+            testCase "InputBinding" <| fun _ -> Expect.equal (Some (InputBinding.create(position = BindingPosition.Number 1, prefix = (SchemaSaladString.Literal "--example")))) fileItem.InputBinding ""
         ]
         testList "File optional" [
             let fileItem = decodeInput.[2]
@@ -60,10 +61,10 @@ let testInputMutationApi =
         testCase "typed setters roundtrip values" <| fun _ ->
             let input = CWLInput("arg")
             input.Type_ <- Some CWLType.String
-            input.InputBinding <- Some (InputBinding.create(prefix = "--arg", position = BindingPosition.Number 1, separate = true))
+            input.InputBinding <- Some (InputBinding.create(prefix = (SchemaSaladString.Literal "--arg"), position = BindingPosition.Number 1, separate = true))
 
             Expect.equal input.Type_ (Some CWLType.String) "Type_ setter should write DynamicObj-backed value."
-            Expect.equal input.InputBinding (Some (InputBinding.create(prefix = "--arg", position = BindingPosition.Number 1, separate = true))) "InputBinding setter should write value."
+            Expect.equal input.InputBinding (Some (InputBinding.create(prefix = (SchemaSaladString.Literal "--arg"), position = BindingPosition.Number 1, separate = true))) "InputBinding setter should write value."
             Expect.isFalse input.Optional "A string is no optional type."
 
         testCase "typed setters can clear optional values" <| fun _ ->
@@ -76,16 +77,16 @@ let testInputMutationApi =
             Expect.isNone input.InputBinding "InputBinding should be removable."
 
         testCase "known fields are typed fields, not dynamic overflow" <| fun _ ->
-            let binding = InputBinding.create(prefix = "--arg", position = BindingPosition.Number 1, itemSeparator = ",", separate = true, loadContents = true, valueFrom = "$(self)", shellQuote = false)
+            let binding = InputBinding.create(prefix = (SchemaSaladString.Literal "--arg"), position = BindingPosition.Number 1, itemSeparator = (SchemaSaladString.Literal ","), separate = true, loadContents = true, valueFrom = (SchemaSaladString.Literal "$(self)"), shellQuote = false)
             let input =
                 CWLInput(
                     "arg",
                     type_ = CWLType.String,
                     inputBinding = binding,
                     optional = true,
-                    label = "Argument",
-                    doc = "Argument docs",
-                    format = InputFormat.Single "edam:format_2330",
+                    label = (SchemaSaladString.Literal "Argument"),
+                    doc = (DocText.literal "Argument docs"),
+                    format = InputFormat.Single (SchemaSaladString.Literal "edam:format_2330"),
                     loadContents = true,
                     loadListing = LoadListingEnum.ShallowListing,
                     streamable = false
@@ -111,7 +112,7 @@ let testInputMutationApi =
             Expect.stringContains yaml "arc:note" "Unknown overflow should still be encoded."
 
         testCase "missing optional inputBinding fields are not encoded as defaults" <| fun _ ->
-            let binding = InputBinding.create(prefix = "--arg")
+            let binding = InputBinding.create(prefix = (SchemaSaladString.Literal "--arg"))
 
             let yaml =
                 binding
@@ -128,18 +129,19 @@ let testInputMutationApi =
                 TestObjects.CWL.Inputs.specInputFieldsDecodeFileContent
                 |> Decode.readYaml
                 |> Decode.inputsDecoder
+                |> Option.map ListEntry.values
                 |> Option.get
                 |> fun inputs -> inputs.[0]
 
-            Expect.equal input.Label (Some "Sample") "label should decode to a typed field."
-            Expect.equal input.Doc (Some "Sample input docs") "doc should decode to a typed field."
-            Expect.equal input.Format (Some (InputFormat.Single "edam:format_2330")) "format should decode to a typed field."
+            Expect.equal input.Label (Some (SchemaSaladString.Literal "Sample")) "label should decode to a typed field."
+            Expect.equal input.Doc (Some (DocText.literal "Sample input docs")) "doc should decode to a typed field."
+            Expect.equal input.Format (Some (InputFormat.Single (SchemaSaladString.Literal "edam:format_2330"))) "format should decode to a typed field."
             Expect.equal input.LoadContents (Some true) "loadContents should decode to a typed field."
             Expect.equal input.LoadListing (Some LoadListingEnum.ShallowListing) "loadListing should decode to a typed field."
             Expect.equal input.Streamable (Some false) "streamable should decode to a typed field."
             Expect.isSome input.DefaultValue "default should decode to a typed field."
             Expect.isSome input.SecondaryFiles "secondaryFiles should decode to a typed field."
-            Expect.equal input.InputBinding.Value.ValueFrom (Some "$(self.path)") "inputBinding.valueFrom should decode to a typed field."
+            Expect.equal input.InputBinding.Value.ValueFrom (Some (SchemaSaladString.Literal "$(self.path)")) "inputBinding.valueFrom should decode to a typed field."
             Expect.equal input.InputBinding.Value.LoadContents (Some true) "inputBinding.loadContents should decode to a typed field."
             Expect.equal input.InputBinding.Value.ShellQuote (Some false) "inputBinding.shellQuote should decode to a typed field."
             Expect.isEmpty (input |> DynamicObjHelpers.dynamicPropertiesSnapshot) "Known input fields should not be overflow."
@@ -147,16 +149,16 @@ let testInputMutationApi =
 
 let testInputFormat =
     let decodedTool () = Decode.decodeCommandLineTool TestObjects.CWL.Inputs.formatFormsFileContent
-    let decodedInputs () = (decodedTool ()).Inputs.Value
+    let decodedInputs () = (ListEntry.values (decodedTool ()).Inputs.Value)
     let formatOf (inputs: ResizeArray<CWLInput>) (name: string) =
         (inputs |> Seq.find (fun input -> input.Name = name)).Format
 
     testList "Input format" [
         testCase "a name, a list of names, a list of one name and the empty list decode into their own forms" <| fun _ ->
             let inputs = decodedInputs ()
-            Expect.equal (formatOf inputs "single") (Some (InputFormat.Single "edam:format_2330")) "A name is a single format."
-            Expect.equal (formatOf inputs "several") (Some (InputFormat.Multiple (ResizeArray [ "edam:format_2330"; "edam:format_1930" ]))) "A list keeps its names in order."
-            Expect.equal (formatOf inputs "one_in_list") (Some (InputFormat.Multiple (ResizeArray [ "edam:format_2330" ]))) "A list of one name is a list."
+            Expect.equal (formatOf inputs "single") (Some (InputFormat.Single (SchemaSaladString.Literal "edam:format_2330"))) "A name is a single format."
+            Expect.equal (formatOf inputs "several") (Some (InputFormat.Multiple (ResizeArray [ (SchemaSaladString.Literal "edam:format_2330"); (SchemaSaladString.Literal "edam:format_1930") ]))) "A list keeps its names in order."
+            Expect.equal (formatOf inputs "one_in_list") (Some (InputFormat.Multiple (ResizeArray [ (SchemaSaladString.Literal "edam:format_2330") ]))) "A list of one name is a list."
             Expect.equal (formatOf inputs "empty") (Some (InputFormat.Multiple (ResizeArray()))) "The empty list stays a list."
             Expect.notEqual (formatOf inputs "single") (formatOf inputs "one_in_list") "A name differs from a list of that name."
 
@@ -168,7 +170,7 @@ let testInputFormat =
             Expect.stringContains encoded "format: [edam:format_2330, edam:format_1930]\n" "A list is written as a list."
             Expect.stringContains encoded "format: [edam:format_2330]\n" "A list of one name stays a list."
             Expect.stringContains encoded "format: []\n" "The empty list stays an empty list."
-            let roundTripped = (Decode.decodeCommandLineTool encoded).Inputs.Value
+            let roundTripped = (ListEntry.values (Decode.decodeCommandLineTool encoded).Inputs.Value)
             for input in inputs do
                 Expect.equal (formatOf roundTripped input.Name) input.Format $"The format of {input.Name} survives the round trip."
 
@@ -196,12 +198,12 @@ let testInputFormat =
             | None -> failwith "A list as the format of an output must fail."
 
         testCase "formats compare and hash by their names" <| fun _ ->
-            let several = InputFormat.Multiple (ResizeArray [ "a"; "b" ])
-            Expect.equal several (InputFormat.Multiple (ResizeArray [ "a"; "b" ])) "Lists with the same names are equal."
-            Expect.equal (hash several) (hash (InputFormat.Multiple (ResizeArray [ "a"; "b" ]))) "Equal lists have the same hash."
-            Expect.notEqual several (InputFormat.Multiple (ResizeArray [ "b"; "a" ])) "The order of the names counts."
-            let values = (InputFormat.Single "a").AsValues()
-            Expect.sequenceEqual values (ResizeArray [ "a" ]) "A name reads as a list of one name."
+            let several = InputFormat.Multiple (ResizeArray [ (SchemaSaladString.Literal "a"); (SchemaSaladString.Literal "b") ])
+            Expect.equal several (InputFormat.Multiple (ResizeArray [ (SchemaSaladString.Literal "a"); (SchemaSaladString.Literal "b") ])) "Lists with the same names are equal."
+            Expect.equal (hash several) (hash (InputFormat.Multiple (ResizeArray [ (SchemaSaladString.Literal "a"); (SchemaSaladString.Literal "b") ]))) "Equal lists have the same hash."
+            Expect.notEqual several (InputFormat.Multiple (ResizeArray [ (SchemaSaladString.Literal "b"); (SchemaSaladString.Literal "a") ])) "The order of the names counts."
+            let values = (InputFormat.Single (SchemaSaladString.Literal "a")).AsValues()
+            Expect.sequenceEqual values (ResizeArray [ SchemaSaladString.Literal "a" ]) "A name reads as a list of one name."
     ]
 
 let testProcessingUnitInputOps =
@@ -209,7 +211,7 @@ let testProcessingUnitInputOps =
         testCase "getOrCreateToolInputs creates missing collection" <| fun _ ->
             let tool = CWLToolDescription(outputs = ResizeArray())
             let created = CWLToolDescription.getOrCreateInputs tool
-            created.Add(CWLInput("x"))
+            created.Add(ListEntry.Value (CWLInput("x")))
             Expect.isSome tool.Inputs "Inputs should be initialized."
             Expect.equal tool.Inputs.Value.Count 1 "Created collection should be stored on tool."
 
@@ -222,49 +224,51 @@ let testProcessingUnitInputOps =
         testCase "getOrCreateExpressionToolInputs creates missing collection" <| fun _ ->
             let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = SchemaSaladString.Literal "$(null)")
             let created = CWLExpressionToolDescription.getOrCreateInputs expressionTool
-            created.Add(CWLInput("arg"))
+            created.Add(ListEntry.Value (CWLInput("arg")))
             Expect.isSome expressionTool.Inputs "Inputs should be initialized."
-            Expect.equal expressionTool.Inputs.Value.Count 1 "Created collection should be stored on expression tool."
+            Expect.equal (ListEntry.values expressionTool.Inputs.Value).Count 1 "Created collection should be stored on expression tool."
 
-        testCase "getToolInputsOrEmpty returns existing collection when inputs are present" <| fun _ ->
+        testCase "getToolInputsOrEmpty returns the inputs of the tool when they are present" <| fun _ ->
             let existing = ResizeArray [| CWLInput("existing") |]
-            let tool = CWLToolDescription(outputs = ResizeArray(), inputs = existing)
+            let tool = CWLToolDescription(outputs = ResizeArray(), inputs = ListEntry.ofValues existing)
             let actual = CWLToolDescription.getInputsOrEmpty tool
-            Expect.isTrue (obj.ReferenceEquals(actual, existing)) "Existing tool input collection should be returned unchanged."
+            Expect.sequenceEqual actual existing "The inputs of the tool should be returned."
+            actual.Add(CWLInput("other"))
+            Expect.equal tool.Inputs.Value.Count 1 "The list is a new one, so adding to it leaves the tool as it was."
 
-        testCase "getExpressionToolInputsOrEmpty returns existing collection when inputs are present" <| fun _ ->
+        testCase "getExpressionToolInputsOrEmpty returns the inputs of the expression tool when they are present" <| fun _ ->
             let existing = ResizeArray [| CWLInput("existing") |]
-            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = SchemaSaladString.Literal "$(null)", inputs = existing)
+            let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = SchemaSaladString.Literal "$(null)", inputs = ListEntry.ofValues existing)
             let actual = CWLExpressionToolDescription.getInputsOrEmpty expressionTool
-            Expect.isTrue (obj.ReferenceEquals(actual, existing)) "Existing expression tool input collection should be returned unchanged."
+            Expect.sequenceEqual actual existing "The inputs of the expression tool should be returned."
 
         testCase "getOrCreateToolInputs returns existing collection when already initialized" <| fun _ ->
-            let existing = ResizeArray [| CWLInput("existing") |]
+            let existing = ListEntry.ofValues [ CWLInput("existing") ]
             let tool = CWLToolDescription(outputs = ResizeArray(), inputs = existing)
             let actual = CWLToolDescription.getOrCreateInputs tool
             Expect.isTrue (obj.ReferenceEquals(actual, existing)) "Existing collection should be reused."
 
         testCase "getOrCreateExpressionToolInputs returns existing collection when already initialized" <| fun _ ->
-            let existing = ResizeArray [| CWLInput("existing") |]
+            let existing = ListEntry.ofValues [ CWLInput("existing") ]
             let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray(), expression = SchemaSaladString.Literal "$(null)", inputs = existing)
             let actual = CWLExpressionToolDescription.getOrCreateInputs expressionTool
             Expect.isTrue (obj.ReferenceEquals(actual, existing)) "Existing collection should be reused."
 
         testCase "getInputs returns Operation inputs" <| fun _ ->
             let inputs = ResizeArray [| CWLInput("opIn") |]
-            let operation = CWLOperationDescription(inputs = inputs, outputs = ResizeArray())
+            let operation = CWLOperationDescription(inputs = ListEntry.ofValues inputs, outputs = ResizeArray())
             let pu = CWLProcessingUnit.Operation operation
             let actual = CWLProcessingUnit.getInputs pu
-            Expect.isTrue (obj.ReferenceEquals(actual, inputs)) "Operation inputs should be returned unchanged."
+            Expect.sequenceEqual actual inputs "Operation inputs should be returned."
     ]
 
 let testProcessingUnitOutputOps =
     testList "CWLProcessingUnit Outputs" [
         testCase "getOutputs returns CommandLineTool outputs" <| fun _ ->
             let outputs = ResizeArray [| CWLOutput("toolOut") |]
-            let pu = CWLProcessingUnit.CommandLineTool (CWLToolDescription(outputs = outputs))
+            let pu = CWLProcessingUnit.CommandLineTool (CWLToolDescription(outputs = ListEntry.ofValues outputs))
             let actual = CWLProcessingUnit.getOutputs pu
-            Expect.isTrue (obj.ReferenceEquals(actual, outputs)) "CommandLineTool outputs should be returned unchanged."
+            Expect.sequenceEqual actual outputs "CommandLineTool outputs should be returned."
 
         testCase "getOutputs returns Workflow outputs" <| fun _ ->
             let outputs = ResizeArray [| CWLOutput("wfOut") |]
@@ -272,24 +276,24 @@ let testProcessingUnitOutputOps =
                 CWLWorkflowDescription(
                     steps = ResizeArray(),
                     inputs = ResizeArray(),
-                    outputs = outputs
+                    outputs = ListEntry.ofValues outputs
                 )
             let pu = CWLProcessingUnit.Workflow workflow
             let actual = CWLProcessingUnit.getOutputs pu
-            Expect.isTrue (obj.ReferenceEquals(actual, outputs)) "Workflow outputs should be returned unchanged."
+            Expect.sequenceEqual actual outputs "Workflow outputs should be returned."
 
         testCase "getOutputs returns ExpressionTool outputs" <| fun _ ->
             let outputs = ResizeArray [| CWLOutput("expOut") |]
-            let pu = CWLProcessingUnit.ExpressionTool (CWLExpressionToolDescription(outputs = outputs, expression = SchemaSaladString.Literal "$(null)"))
+            let pu = CWLProcessingUnit.ExpressionTool (CWLExpressionToolDescription(outputs = ListEntry.ofValues outputs, expression = SchemaSaladString.Literal "$(null)"))
             let actual = CWLProcessingUnit.getOutputs pu
-            Expect.isTrue (obj.ReferenceEquals(actual, outputs)) "ExpressionTool outputs should be returned unchanged."
+            Expect.sequenceEqual actual outputs "ExpressionTool outputs should be returned."
 
         testCase "getOutputs returns Operation outputs" <| fun _ ->
             let outputs = ResizeArray [| CWLOutput("opOut") |]
-            let operation = CWLOperationDescription(inputs = ResizeArray(), outputs = outputs)
+            let operation = CWLOperationDescription(inputs = ResizeArray(), outputs = ListEntry.ofValues outputs)
             let pu = CWLProcessingUnit.Operation operation
             let actual = CWLProcessingUnit.getOutputs pu
-            Expect.isTrue (obj.ReferenceEquals(actual, outputs)) "Operation outputs should be returned unchanged."
+            Expect.sequenceEqual actual outputs "Operation outputs should be returned."
     ]
 
 let testProcessingUnitRequirementOps =
@@ -498,20 +502,20 @@ let testProcessingUnitIntentOps =
 
 let testInputOptional =
     let tool (inputs: CWLInput list) =
-        CWLToolDescription(ResizeArray [], inputs = ResizeArray inputs, baseCommand = ResizeArray [ "echo" ])
+        CWLToolDescription(ResizeArray [], inputs = ListEntry.ofValues inputs, baseCommand = ResizeArray [ (SchemaSaladString.Literal "echo") ])
 
     testList "Optional input" [
         testCase "optional = true with an int is written as int? and reads back equal" <| fun _ ->
             let hand = tool [ CWLInput("x", CWLType.Int, optional = true) ]
-            Expect.equal hand.Inputs.Value.[0].Type_ (Some (Union (ResizeArray [ Null; CWLType.Int ]))) "The optional int is the union of null and int."
-            Expect.isTrue hand.Inputs.Value.[0].Optional "The input is optional."
+            Expect.equal (ListEntry.values hand.Inputs.Value).[0].Type_ (Some (Union (ResizeArray [ Null; CWLType.Int ]))) "The optional int is the union of null and int."
+            Expect.isTrue (ListEntry.values hand.Inputs.Value).[0].Optional "The input is optional."
             let encoded = Encode.encodeToolDescription hand
             Expect.stringContains encoded "  x: int?\n" "The optional int is the shorthand."
             Expect.equal (Decode.decodeCommandLineTool encoded) hand "The written text should read back as the same tool."
         testCase "the input decoded from the shorthand equals the input built with optional = true" <| fun _ ->
             let decoded = Decode.decodeCommandLineTool "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n  x: int?\noutputs: []\n"
-            Expect.equal decoded.Inputs.Value.[0] (CWLInput("x", CWLType.Int, optional = true)) "Both inputs have the union of null and int."
-            Expect.equal decoded.Inputs.Value.[0] (CWLInput("x", Union (ResizeArray [ Null; CWLType.Int ]))) "A union with null is optional without the parameter."
+            Expect.equal (ListEntry.values decoded.Inputs.Value).[0] (CWLInput("x", CWLType.Int, optional = true)) "Both inputs have the union of null and int."
+            Expect.equal (ListEntry.values decoded.Inputs.Value).[0] (CWLInput("x", Union (ResizeArray [ Null; CWLType.Int ]))) "A union with null is optional without the parameter."
         testCase "the parameter adds null to a type that has none and changes no other type" <| fun _ ->
             Expect.equal (CWLInput("a", Union (ResizeArray [ CWLType.String; CWLType.Int ]), optional = true)).Type_ (Some (Union (ResizeArray [ Null; CWLType.String; CWLType.Int ]))) "The members of a union stay the members of one union."
             Expect.equal (CWLInput("b", Union (ResizeArray [ CWLType.String; Null ]), optional = true)).Type_ (Some (Union (ResizeArray [ CWLType.String; Null ]))) "A union with null stays as it is."
@@ -531,7 +535,7 @@ let testInputOptional =
             input.Type_ <- Some Null
             Expect.isFalse input.Optional "The bare type null is no union."
             let decoded = Decode.decodeCommandLineTool "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n  x: [string, int, \"null\"]\noutputs: []\n"
-            Expect.isTrue decoded.Inputs.Value.[0].Optional "A decoded union that contains null is optional."
+            Expect.isTrue (ListEntry.values decoded.Inputs.Value).[0].Optional "A decoded union that contains null is optional."
         testCase "inputs of equal types are equal whether the type was given or came from the parameter" <| fun _ ->
             Expect.equal (hash (CWLInput("x", CWLType.Int, optional = true))) (hash (CWLInput("x", Union (ResizeArray [ Null; CWLType.Int ])))) "Equal inputs hash alike."
             Expect.notEqual (CWLInput("x", CWLType.Int)) (CWLInput("x", CWLType.Int, optional = true)) "An optional int differs from an int."
@@ -540,7 +544,7 @@ let testInputOptional =
 let testBindingPosition =
     let tool (position: string) =
         String.concat "\n" [ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo"; "inputs:"; "  x:"; "    type: string"; "    inputBinding:"; "      position: " + position; "outputs: []"; "" ]
-    let positionOf (decoded: CWLToolDescription) = decoded.Inputs.Value.[0].InputBinding.Value.Position
+    let positionOf (decoded: CWLToolDescription) = (ListEntry.values decoded.Inputs.Value).[0].InputBinding.Value.Position
 
     testList "Binding position" [
         testCase "an int is a number and an expression is an expression, and both are written as they were" <| fun _ ->

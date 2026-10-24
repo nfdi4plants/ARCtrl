@@ -43,7 +43,7 @@ module Encode =
         | Stdin -> PrimitiveType "stdin"
         // Schemas and general unions require structured YAML unless a later
         // optional-union special case handles them.
-        | Record _ | Enum _ | Union _ -> ComplexType
+        | Record _ | Enum _ | Union _ | ImportedType _ | IncludedType _ | MixedType _ -> ComplexType
         | Array arraySchema ->
             // Arrays are primitive only if their items are primitive
             match arraySchema.Items with
@@ -78,7 +78,7 @@ module Encode =
     /// Determine if a type requires full YAML serialization (complex type)
     let rec isComplexType (t: CWLType) : bool =
         match t with
-        | Record _ | Enum _ -> true
+        | Record _ | Enum _ | ImportedType _ | IncludedType _ | MixedType _ -> true
         | Array _ ->
             // Complex if array doesn't have shorthand (array of record/enum, or an array with more than its items)
             tryGetArrayShorthand t |> Option.isNone
@@ -116,6 +116,7 @@ module Encode =
         match source with
         | Some node ->
             match node.Kind with
+            | YamlNodeKind.Scalar _ -> YamlNode.withScalarValue text node
             | YamlNodeKind.Sequence collection ->
                 let concatenated =
                     collection.Items
@@ -125,7 +126,7 @@ module Encode =
                         | _ -> "")
                     |> String.concat ""
                 if concatenated = text then node else encodeString text
-            | _ -> YamlNode.withScalarValue text node
+            | _ -> encodeString text
         | None -> encodeString text
 
     /// True when the node is a block collection without properties and the trivia stand in front of its first entry
@@ -177,23 +178,26 @@ module Encode =
         else
             YamlNode.sequence (items |> List.map blockItem)
 
+    /// The object of an entry of an id list: the fields of the entry after its id. The id key names the field that holds
+    /// the id, and the value key names the field of an entry that is no mapping.
+    let private idObject (idKey: string) (valueKey: string) (id: string, node: YamlNode) : YamlNode =
+        let fields =
+            match node.Kind with
+            | YamlNodeKind.Mapping collection -> collection.Items |> List.map (fun entry -> Decode.entryName entry, entry.Value)
+            | _ -> [ valueKey, node ]
+        Encode.object ((idKey, Encode.string id) :: fields)
+
     /// Encode the entries of an id map, such as the step inputs. The map names each entry by its id, and a mapping holds
     /// a key once. Entries with a repeated id are written as a list of objects that carry their ids, so no entry is
-    /// lost. The value key names the field of an entry that is no mapping, as the source of a step input written as its
-    /// source alone.
-    let encodeIdMapOrList (valueKey: string) (entries: (string * YamlNode) list) : YamlNode =
+    /// lost. The id key names the field that holds the id in such an object, as name does for the fields of a record. The
+    /// value key names the field of an entry that is no mapping, as the source of a step input written as its source
+    /// alone.
+    let encodeIdMapOrList (idKey: string) (valueKey: string) (entries: (string * YamlNode) list) : YamlNode =
         let ids = entries |> List.map fst
         if (List.distinct ids).Length = ids.Length then
             Encode.object entries
         else
-            entries
-            |> List.map (fun (id, node) ->
-                let fields =
-                    match node.Kind with
-                    | YamlNodeKind.Mapping collection -> collection.Items |> List.map (fun entry -> Decode.entryName entry, entry.Value)
-                    | _ -> [ valueKey, node ]
-                Encode.object (("id", Encode.string id) :: fields))
-            |> encodeSequence
+            entries |> List.map (idObject idKey valueKey) |> encodeSequence
 
     // ------------------------------
     // Helper append functions for ordered construction
@@ -272,12 +276,37 @@ module Encode =
             // Single-line expressions are quoted for parser safety.
             YamlNode.scalar ScalarStyle.DoubleQuoted normalized
 
+    /// Encode a Schema Salad directive as a flow mapping, as in {$import: path}. The path is written as it was read.
+    let directive (key: string) (path: string) : YamlNode =
+        YamlNode.flowMapping [ YamlNode.entry (Encode.string key) (encodeString path) ]
+
+    /// Encode the entries of an id list, such as the inputs, the outputs, the steps or the fields of a record. Entries
+    /// with a distinct id go into a map, as in encodeIdMapOrList. An import has no id to be a key, so a list that holds
+    /// one is written as a list in which the import stands in its place. A field that the document wrote as one
+    /// directive gets the directive again while the list holds that one import.
+    let encodeIdEntries (idKey: string) (valueKey: string) (whole: bool) (entries: ListEntry<string * YamlNode> list) : YamlNode =
+        match whole, entries with
+        | true, [ ListEntry.Imported path ] -> directive "$import" path
+        | _ ->
+            let named = entries |> List.choose ListEntry.tryValue
+            if named.Length = entries.Length then
+                encodeIdMapOrList idKey valueKey named
+            else
+                entries
+                |> List.map (fun entry ->
+                    match entry with
+                    | ListEntry.Imported path -> directive "$import" path
+                    | ListEntry.Mixed raw -> raw.Node
+                    | ListEntry.Value named -> idObject idKey valueKey named)
+                |> encodeSequence
+
     /// Encode schema-salad strings as literals or directive mappings. The function encodes the text of a literal.
     let encodeSchemaSaladStringWith (encodeLiteral: string -> YamlNode) (value: SchemaSaladString) : YamlNode =
         match value with
         | SchemaSaladString.Literal text -> encodeLiteral text
-        | SchemaSaladString.Include path -> Encode.object [ "$include", encodeString path ]
-        | SchemaSaladString.Import path -> Encode.object [ "$import", encodeString path ]
+        | SchemaSaladString.Include path -> directive "$include" path
+        | SchemaSaladString.Import path -> directive "$import" path
+        | SchemaSaladString.Mixin path -> directive "$mixin" path
 
     /// Encode schema-salad strings as literals or directive mappings.
     let encodeSchemaSaladString (value: SchemaSaladString) : YamlNode =
@@ -321,15 +350,38 @@ module Encode =
           "packages", packagesMap ]
         |> Encode.object
 
-    let encodeLabel (label:string) : (string * YamlNode) =
-        "label", encodeString label
+    /// The label of an object. The node that a literal label was read from keeps its layout, and a directive is written
+    /// as a mapping.
+    let encodeLabelValue (source: YamlNode option) (label: SchemaSaladString) : YamlNode =
+        match label with
+        | SchemaSaladString.Literal text -> encodeSourceText source text
+        | directive -> encodeSchemaSaladString directive
+
+    let encodeLabel (label: SchemaSaladString) : (string * YamlNode) =
+        "label", encodeLabelValue None label
 
     /// The text of a doc. The line breaks are line feeds, and the node that the text was read from keeps its layout.
     let encodeDocText (source: YamlNode option) (doc: string) : YamlNode =
         encodeSourceText source (normalizeDocString doc)
 
-    let encodeDoc (doc:string) : (string * YamlNode) =
-        "doc", encodeDocText None doc
+    /// The doc of an object. The function writes the text of a literal. The node that a literal doc was read from keeps
+    /// its layout, a directive is written as a mapping, and the parts of a list are written as a list.
+    let private encodeDocWith (encodeText: YamlNode option -> string -> YamlNode) (source: YamlNode option) (doc: DocText) : YamlNode =
+        match doc with
+        | DocText.Text (SchemaSaladString.Literal text) -> encodeText source text
+        | DocText.Text directive -> encodeSchemaSaladString directive
+        | DocText.Parts parts -> parts |> Seq.map encodeSchemaSaladString |> List.ofSeq |> encodeSequence
+
+    /// The doc of a port, a step, a schema or a field, written with the characters of the text.
+    let encodeDocValue (source: YamlNode option) (doc: DocText) : YamlNode =
+        encodeDocWith encodeSourceText source doc
+
+    /// The doc of a process, written with line feeds for the line breaks.
+    let encodeProcessDocValue (source: YamlNode option) (doc: DocText) : YamlNode =
+        encodeDocWith encodeDocText source doc
+
+    let encodeDoc (doc: DocText) : (string * YamlNode) =
+        "doc", encodeDocValue None doc
 
     let encodeIntent (intent: ResizeArray<string>) : (string * YamlNode) =
         "intent", (intent |> Seq.map encodeString |> List.ofSeq |> encodeSequence)
@@ -395,6 +447,9 @@ module Encode =
         | Boolean -> encodeString "boolean"
         | Any -> encodeString "Any"
         | Reference name -> encodeString name
+        | ImportedType path -> directive "$import" path
+        | IncludedType path -> directive "$include" path
+        | MixedType raw -> raw.Node
         | Stdout -> encodeString "stdout"
         | Stderr -> encodeString "stderr"
         | Stdin -> encodeString "stdin"
@@ -451,8 +506,8 @@ module Encode =
             // The field name is emitted as the mapping key, so the nested value only
             // contains field payload such as type/doc/label/extensions.
             [ "type", encodeCWLType field.Type ]
-            |> appendOpt "doc" (encodeSourceText field.SourceNodes.Doc) field.Doc
-            |> appendOpt "label" (encodeSourceText field.SourceNodes.Label) field.Label
+            |> appendOpt "doc" (encodeDocValue field.SourceNodes.Doc) field.Doc
+            |> appendOpt "label" (encodeLabelValue field.SourceNodes.Label) field.Label
             |> appendDynamicPropertiesExcept InputRecordField.KnownFieldNames field
         field.Name, Encode.object pairs
 
@@ -465,15 +520,18 @@ module Encode =
         let fieldsElement =
             match schema.Fields with
             | Some fs ->
-                // Record fields are written in map form for stable names and compact YAML.
-                let fieldPairs = fs |> Seq.map encodeInputRecordField |> Seq.toList
-                Encode.object fieldPairs
+                // Record fields are written in map form for stable names and compact YAML. A list with an import or with
+                // a repeated name is written as a list.
+                fs
+                |> Seq.map (ListEntry.map encodeInputRecordField)
+                |> Seq.toList
+                |> encodeIdEntries "name" "type" (schema.SourceNodes.WholeFields.Contains "fields")
             | None ->
                 // Missing fields are emitted as an empty map to keep the schema object valid.
                 Encode.object []
         [ "type", encodeString "record"; "fields", fieldsElement ]
-        |> appendOpt "label" (encodeSourceText schema.SourceNodes.Label) schema.Label
-        |> appendOpt "doc" (encodeSourceText schema.SourceNodes.Doc) schema.Doc
+        |> appendOpt "label" (encodeLabelValue schema.SourceNodes.Label) schema.Label
+        |> appendOpt "doc" (encodeDocValue schema.SourceNodes.Doc) schema.Doc
         |> appendOpt "name" encodeString schema.Name
         |> appendDynamicPropertiesExcept InputRecordSchema.KnownFieldNames schema
 
@@ -484,13 +542,17 @@ module Encode =
     /// The entries of an enum schema.
     and inputEnumSchemaPairs (schema:InputEnumSchema) : (string * YamlNode) list =
         let pairs =
-            // Symbol order is semantically significant, so emit the ResizeArray order.
-            [ "type", encodeString "enum" ]
-            @ [ "symbols", (schema.Symbols |> Seq.map encodeString |> List.ofSeq |> encodeSequence) ]
+            // Symbol order is semantically significant, so emit the ResizeArray order. A document that wrote the field as
+            // one directive gets the directive again while the list holds that one import.
+            let symbols =
+                match schema.SourceNodes.WholeFields.Contains "symbols", Seq.toList schema.Symbols with
+                | true, [ SchemaSaladString.Import path ] -> directive "$import" path
+                | _ -> schema.Symbols |> Seq.map encodeSchemaSaladString |> List.ofSeq |> encodeSequence
+            [ "type", encodeString "enum"; "symbols", symbols ]
 
         pairs
-        |> appendOpt "label" (encodeSourceText schema.SourceNodes.Label) schema.Label
-        |> appendOpt "doc" (encodeSourceText schema.SourceNodes.Doc) schema.Doc
+        |> appendOpt "label" (encodeLabelValue schema.SourceNodes.Label) schema.Label
+        |> appendOpt "doc" (encodeDocValue schema.SourceNodes.Doc) schema.Doc
         |> appendOpt "name" encodeString schema.Name
         |> appendDynamicPropertiesExcept InputEnumSchema.KnownFieldNames schema
 
@@ -501,8 +563,8 @@ module Encode =
     /// The entries of an array schema.
     and inputArraySchemaPairs (schema:InputArraySchema) : (string * YamlNode) list =
         [ "type", encodeString "array"; "items", encodeSchemaType schema.Items ]
-        |> appendOpt "label" (encodeSourceText schema.SourceNodes.Label) schema.Label
-        |> appendOpt "doc" (encodeSourceText schema.SourceNodes.Doc) schema.Doc
+        |> appendOpt "label" (encodeLabelValue schema.SourceNodes.Label) schema.Label
+        |> appendOpt "doc" (encodeDocValue schema.SourceNodes.Doc) schema.Doc
         |> appendOpt "name" encodeString schema.Name
         |> appendDynamicPropertiesExcept InputArraySchema.KnownFieldNames schema
 
@@ -513,8 +575,8 @@ module Encode =
     /// Encode the glob of an output binding in the form that it holds, so a list of one pattern stays a list.
     let encodeOutputGlob (glob: OutputGlob) : YamlNode =
         match glob with
-        | OutputGlob.Single value -> encodeString value
-        | OutputGlob.Multiple values -> values |> Seq.map encodeString |> List.ofSeq |> encodeSequence
+        | OutputGlob.Single value -> encodeSchemaSaladString value
+        | OutputGlob.Multiple values -> values |> Seq.map encodeSchemaSaladString |> List.ofSeq |> encodeSequence
 
     /// Encode outputBinding fields and preserved extension properties.
     let encodeOutputBinding (ob:OutputBinding) : YamlNode =
@@ -522,7 +584,7 @@ module Encode =
         |> appendOpt "glob" encodeOutputGlob ob.Glob
         |> appendOpt "loadContents" Encode.bool ob.LoadContents
         |> appendOpt "loadListing" (LoadListingEnum.toCwlString >> encodeString) ob.LoadListing
-        |> appendOpt "outputEval" encodeString ob.OutputEval
+        |> appendOpt "outputEval" encodeSchemaSaladString ob.OutputEval
         |> appendDynamicPropertiesExcept OutputBinding.KnownFieldNames ob
         |> Encode.object
 
@@ -584,11 +646,11 @@ module Encode =
             | _ -> None
 
         []
-        |> appendOpt "label" (encodeSourceText o.SourceNodes.Label) o.Label
+        |> appendOpt "label" (encodeLabelValue o.SourceNodes.Label) o.Label
         |> appendOpt "secondaryFiles" rawYamlNode o.SecondaryFiles
         |> appendOpt "streamable" Encode.bool o.Streamable
-        |> appendOpt "doc" (encodeSourceText o.SourceNodes.Doc) o.Doc
-        |> appendOpt "format" encodeString o.Format
+        |> appendOpt "doc" (encodeDocValue o.SourceNodes.Doc) o.Doc
+        |> appendOpt "format" encodeSchemaSaladString o.Format
         |> appendOpt "outputBinding" encodeOutputBinding o.OutputBinding
         |> appendOpt "outputSource" id outputSourceElement
         |> appendDynamicPropertiesExcept CWLOutput.KnownFieldNames o
@@ -604,11 +666,11 @@ module Encode =
     let encodeInputBinding (ib:InputBinding) : YamlNode =
         []
         |> appendOpt "loadContents" Encode.bool ib.LoadContents
-        |> appendOpt "prefix" encodeString ib.Prefix
+        |> appendOpt "prefix" encodeSchemaSaladString ib.Prefix
         |> appendOpt "position" encodeBindingPosition ib.Position
-        |> appendOpt "itemSeparator" encodeString ib.ItemSeparator
+        |> appendOpt "itemSeparator" encodeSchemaSaladString ib.ItemSeparator
         |> appendOpt "separate" Encode.bool ib.Separate
-        |> appendOpt "valueFrom" encodeString ib.ValueFrom
+        |> appendOpt "valueFrom" encodeSchemaSaladString ib.ValueFrom
         |> appendOpt "shellQuote" Encode.bool ib.ShellQuote
         |> appendDynamicPropertiesExcept InputBinding.KnownFieldNames ib
         |> Encode.object
@@ -616,17 +678,17 @@ module Encode =
     /// Encode the format of an input in the form that it holds, so a list of one name stays a list.
     let encodeInputFormat (format: InputFormat) : YamlNode =
         match format with
-        | InputFormat.Single value -> encodeString value
-        | InputFormat.Multiple values -> values |> Seq.map encodeString |> List.ofSeq |> encodeSequence
+        | InputFormat.Single value -> encodeSchemaSaladString value
+        | InputFormat.Multiple values -> values |> Seq.map encodeSchemaSaladString |> List.ofSeq |> encodeSequence
 
     /// Encode a workflow or tool input, choosing shorthand only when type is the sole field.
     let encodeCWLInput (i:CWLInput) : (string * YamlNode) =
         // Build object-form fields in CWL's conventional order.
         []
-        |> appendOpt "label" (encodeSourceText i.SourceNodes.Label) i.Label
+        |> appendOpt "label" (encodeLabelValue i.SourceNodes.Label) i.Label
         |> appendOpt "secondaryFiles" rawYamlNode i.SecondaryFiles
         |> appendOpt "streamable" Encode.bool i.Streamable
-        |> appendOpt "doc" (encodeSourceText i.SourceNodes.Doc) i.Doc
+        |> appendOpt "doc" (encodeDocValue i.SourceNodes.Doc) i.Doc
         |> appendOpt "format" encodeInputFormat i.Format
         |> appendOpt "loadContents" Encode.bool i.LoadContents
         |> appendOpt "loadListing" (LoadListingEnum.toCwlString >> encodeString) i.LoadListing
@@ -670,18 +732,19 @@ module Encode =
             let encodeEntry (entry: SchemaDefEntry) =
                 match entry with
                 | Defined schema -> encodeSchemaDefinition schema
-                | Imported path -> Encode.object [ "$import", encodeString path ]
+                | Imported path -> directive "$import" path
+                | Mixed raw -> raw.Node
             [ "class", encodeString "SchemaDefRequirement";
               "types", (types |> Seq.map encodeEntry |> List.ofSeq |> encodeSequence) ] |> Encode.object
         | DockerRequirement dr ->
             // Docker fields are optional and emitted only when present.
             [ "class", encodeString "DockerRequirement" ]
-            |> appendOpt "dockerPull" encodeString dr.DockerPull
+            |> appendOpt "dockerPull" encodeSchemaSaladString dr.DockerPull
             |> appendOpt "dockerFile" encodeSchemaSaladString dr.DockerFile
-            |> appendOpt "dockerImageId" encodeString dr.DockerImageId
-            |> appendOpt "dockerLoad" encodeString dr.DockerLoad
-            |> appendOpt "dockerImport" encodeString dr.DockerImport
-            |> appendOpt "dockerOutputDirectory" encodeString dr.DockerOutputDirectory
+            |> appendOpt "dockerImageId" encodeSchemaSaladString dr.DockerImageId
+            |> appendOpt "dockerLoad" encodeSchemaSaladString dr.DockerLoad
+            |> appendOpt "dockerImport" encodeSchemaSaladString dr.DockerImport
+            |> appendOpt "dockerOutputDirectory" encodeSchemaSaladString dr.DockerOutputDirectory
             |> appendOpt "cwltool:dockerRunOptions" (fun values -> values |> Seq.map encodeString |> List.ofSeq |> encodeSequence) dr.DockerRunOptions
             |> appendDynamicPropertiesExcept DockerRequirement.KnownFieldNames dr
             |> Encode.object
@@ -704,7 +767,7 @@ module Encode =
             |> appendDynamicPropertiesExcept LoadListingRequirementValue.KnownFieldNames loadListing
             |> Encode.object
         | InitialWorkDirRequirement listing ->
-            // File/Directory listing entries use class, not type, as discriminator.
+            // File and Directory listing entries carry their kind in the class field.
             let encodeFileOrDirectory = function
                 | FileItem file -> encodeFilePairs "class" "File" file |> Encode.object
                 | DirectoryItem directory -> encodeDirectoryPairs "class" "Directory" directory |> Encode.object
@@ -729,7 +792,7 @@ module Encode =
               "listing", (listing |> Seq.map encodeInitialWorkDirEntry |> List.ofSeq |> encodeSequence) ] |> Encode.object
         | InitialWorkDirExpressionRequirement expression ->
             [ "class", encodeString "InitialWorkDirRequirement"
-              "listing", encodeString expression ]
+              "listing", encodeSchemaSaladString expression ]
             |> Encode.object
         | EnvVarRequirement envs ->
             let encodeEnv (e:EnvironmentDef) =
@@ -737,8 +800,13 @@ module Encode =
                 [ "envName", encodeString e.EnvName; "envValue", encodeSchemaSaladString e.EnvValue ]
                 |> appendDynamicPropertiesExcept EnvironmentDef.KnownFieldNames e
                 |> Encode.object
+            let encodeEntry (entry: ListEntry<EnvironmentDef>) =
+                match entry with
+                | ListEntry.Value env -> encodeEnv env
+                | ListEntry.Imported path -> directive "$import" path
+                | ListEntry.Mixed raw -> raw.Node
             [ "class", encodeString "EnvVarRequirement";
-              "envDef", (envs |> Seq.map encodeEnv |> List.ofSeq |> encodeSequence) ] |> Encode.object
+              "envDef", (envs |> Seq.map encodeEntry |> List.ofSeq |> encodeSequence) ] |> Encode.object
         | ShellCommandRequirement -> [ "class", encodeString "ShellCommandRequirement" ] |> Encode.object
         | ResourceRequirement rr ->
             let tryEncodeScalar (key: string) (value: obj) =
@@ -811,12 +879,41 @@ module Encode =
         | ScatterFeatureRequirement -> [ "class", encodeString "ScatterFeatureRequirement" ] |> Encode.object
         | MultipleInputFeatureRequirement -> [ "class", encodeString "MultipleInputFeatureRequirement" ] |> Encode.object
         | StepInputExpressionRequirement -> [ "class", encodeString "StepInputExpressionRequirement" ] |> Encode.object
+        | ImportedRequirement path -> directive "$import" path
+        | MixedRequirement raw -> raw.Node
 
     /// Encode known hints as requirements and unknown hints as their original raw YAML.
     let encodeHintEntry (hint: HintEntry) : YamlNode =
         match hint with
         | KnownHint requirement -> encodeRequirement requirement
         | UnknownHint unknownHint -> unknownHint.Raw.Node
+        | ImportedHint path -> directive "$import" path
+        | MixedHint raw -> raw.Node
+
+    /// The requirements or the hints of an object as the value of their field. A document that wrote the field as one
+    /// directive gets the directive again while the list holds that one import. Any other list is a sequence.
+    let private encodeEntryList (whole: bool) (encodeEntry: 'a -> YamlNode) (importedPath: 'a -> string option) (entries: ResizeArray<'a>) : YamlNode =
+        match whole, Seq.toList entries with
+        | true, [ single ] when (importedPath single).IsSome -> directive "$import" (importedPath single).Value
+        | _ -> entries |> Seq.map encodeEntry |> List.ofSeq |> encodeSequence
+
+    let private importedRequirementPath (requirement: Requirement) : string option =
+        match requirement with
+        | ImportedRequirement path -> Some path
+        | _ -> None
+
+    let private importedHintPath (hint: HintEntry) : string option =
+        match hint with
+        | ImportedHint path -> Some path
+        | _ -> None
+
+    /// The value of the hints field of an object with these source nodes.
+    let private encodeHintsField (sourceNodes: SourceNodes) (hints: ResizeArray<HintEntry>) : YamlNode =
+        encodeEntryList (sourceNodes.WholeFields.Contains "hints") encodeHintEntry importedHintPath hints
+
+    /// The value of the requirements field of an object with these source nodes.
+    let private encodeRequirementsField (sourceNodes: SourceNodes) (requirements: ResizeArray<Requirement>) : YamlNode =
+        encodeEntryList (sourceNodes.WholeFields.Contains "requirements") encodeRequirement importedRequirementPath requirements
 
     // ------------------------------
     // Workflow step encoders
@@ -850,13 +947,13 @@ module Encode =
             []
             |> appendOpt "source" encodeSourceArray si.Source
             |> appendOpt "default" rawYamlNode si.DefaultValue
-            |> appendOpt "valueFrom" encodeString si.ValueFrom
+            |> appendOpt "valueFrom" encodeSchemaSaladString si.ValueFrom
             |> appendOpt "linkMerge" encodeLinkMergeMethod si.LinkMerge
             |> appendOpt "pickValue" encodePickValueMethod si.PickValue
-            |> appendOpt "doc" (encodeSourceText si.SourceNodes.Doc) si.Doc
+            |> appendOpt "doc" (encodeDocValue si.SourceNodes.Doc) si.Doc
             |> appendOpt "loadContents" Encode.bool si.LoadContents
             |> appendOpt "loadListing" (LoadListingEnum.toCwlString >> encodeString) si.LoadListing
-            |> appendOpt "label" (encodeSourceText si.SourceNodes.Label) si.Label
+            |> appendOpt "label" (encodeLabelValue si.SourceNodes.Label) si.Label
             |> appendDynamicPropertiesExcept StepInput.KnownFieldNames si
         match pairs with
         | [ ("source", s) ]
@@ -872,12 +969,13 @@ module Encode =
             si.Id, s
         | _ -> si.Id, Encode.object pairs
 
-    /// Encode all step inputs in map form keyed by step input id.
-    let encodeStepInputs (inputs:ResizeArray<StepInput>) : YamlNode =
+    /// Encode all step inputs in map form keyed by step input id. A list with an import is written as a list, as in
+    /// encodeIdEntries. The flag tells that the document wrote the field as one directive.
+    let encodeStepInputs (whole: bool) (inputs:ResizeArray<ListEntry<StepInput>>) : YamlNode =
         inputs
-        |> Seq.map encodeStepInput
+        |> Seq.map (ListEntry.map encodeStepInput)
         |> Seq.toList
-        |> encodeIdMapOrList "source"
+        |> encodeIdEntries "id" "source" whole
 
     /// Encode record-form step output parameters, including extension fields.
     let encodeStepOutputParameter (so: StepOutputParameter) : YamlNode =
@@ -885,16 +983,23 @@ module Encode =
         |> appendDynamicPropertiesExcept StepOutputParameter.KnownFieldNames so
         |> Encode.object
 
-    /// Encode step outputs as either scalar ids or record-form output parameters.
-    let encodeStepOutputs (outputs: ResizeArray<StepOutput>) : YamlNode =
-        outputs
-        |> Seq.map (fun output ->
-            match output with
-            | StepOutputString id -> encodeString id
-            | StepOutputRecord outputParameter -> encodeStepOutputParameter outputParameter
-        )
-        |> List.ofSeq
-        |> encodeSequence
+    /// Encode step outputs as scalar ids or record-form output parameters. A directive entry stands in its place. A
+    /// document that wrote the field as one directive gets the directive again while the list holds that one import.
+    let encodeStepOutputs (whole: bool) (outputs: ResizeArray<StepOutput>) : YamlNode =
+        match whole, Seq.toList outputs with
+        | true, [ StepOutputImport path ] -> directive "$import" path
+        | _ ->
+            outputs
+            |> Seq.map (fun output ->
+                match output with
+                | StepOutputString id -> encodeString id
+                | StepOutputRecord outputParameter -> encodeStepOutputParameter outputParameter
+                | StepOutputInclude path -> directive "$include" path
+                | StepOutputImport path -> directive "$import" path
+                | StepOutputMixed raw -> raw.Node
+            )
+            |> List.ofSeq
+            |> encodeSequence
 
     /// Encode scatter as scalar shorthand for one item or a sequence for multiple items.
     let encodeScatter (scatter: ResizeArray<string>) : YamlNode =
@@ -913,6 +1018,12 @@ module Encode =
         | RunString runPath ->
             // External run reference.
             encodeString runPath
+        | RunImport runPath ->
+            // The process of a file that the document imports.
+            directive "$import" runPath
+        | RunMixed raw ->
+            // The process of a file that the document completes with the fields beside the directive.
+            raw.Node
         | RunCommandLineTool toolObj ->
             // Inline CommandLineTool run; validate the object payload before encoding.
             match WorkflowStepRunOps.tryGetTool run with
@@ -946,44 +1057,44 @@ module Encode =
             cwlVersionPairs includeCwlVersion td.CWLVersion
             @ [ "class", encodeString "CommandLineTool" ]
             |> appendOptPair (td.Id |> Option.map (fun id -> "id", encodeString id))
-            |> appendOpt "label" (encodeSourceText td.SourceNodes.Label) td.Label
-            |> appendOpt "doc" (encodeDocText td.SourceNodes.Doc) td.Doc
+            |> appendOpt "label" (encodeLabelValue td.SourceNodes.Label) td.Label
+            |> appendOpt "doc" (encodeProcessDocValue td.SourceNodes.Doc) td.Doc
             |> appendOptPair (td.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
         let withHints =
             match td.Hints with
             | Some h when h.Count > 0 ->
                 // Hints are emitted before requirements to match existing fixtures.
-                basePairs @ [ "hints", (h |> Seq.map encodeHintEntry |> List.ofSeq |> encodeSequence) ]
+                basePairs @ [ "hints", (encodeHintsField td.SourceNodes h) ]
             | _ -> basePairs
         let withRequirements =
             match td.Requirements with
             | Some r when r.Count > 0 ->
                 // Requirements are omitted when absent or empty.
-                withHints @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> encodeSequence) ]
+                withHints @ [ "requirements", (encodeRequirementsField td.SourceNodes r) ]
             | _ -> withHints
         let withBaseCommand =
             match td.BaseCommand with
             | Some bc when bc.Count > 0 ->
                 // baseCommand is always emitted as a sequence here.
-                withRequirements @ [ "baseCommand", (bc |> Seq.map encodeString |> List.ofSeq |> encodeSequence) ]
+                withRequirements @ [ "baseCommand", (bc |> Seq.map encodeSchemaSaladString |> List.ofSeq |> encodeSequence) ]
             | _ -> withRequirements
         let withCommandFields =
             // Command-line execution fields belong near baseCommand before ports.
             withBaseCommand
             |> appendOpt "arguments" rawYamlNode td.Arguments
-            |> appendOpt "stdin" encodeString td.Stdin
-            |> appendOpt "stderr" encodeString td.Stderr
-            |> appendOpt "stdout" encodeString td.Stdout
+            |> appendOpt "stdin" encodeSchemaSaladString td.Stdin
+            |> appendOpt "stderr" encodeSchemaSaladString td.Stderr
+            |> appendOpt "stdout" encodeSchemaSaladString td.Stdout
             |> appendOpt "successCodes" (fun codes -> codes |> Seq.map Encode.int |> List.ofSeq |> encodeSequence) td.SuccessCodes
             |> appendOpt "temporaryFailCodes" (fun codes -> codes |> Seq.map Encode.int |> List.ofSeq |> encodeSequence) td.TemporaryFailCodes
             |> appendOpt "permanentFailCodes" (fun codes -> codes |> Seq.map Encode.int |> List.ofSeq |> encodeSequence) td.PermanentFailCodes
         let withInputs =
             // CWL requires inputs, so a tool without inputs writes the empty map, as outputs do.
-            let inputs = td.Inputs |> Option.defaultValue (ResizeArray<CWLInput>())
-            withCommandFields @ [ "inputs", (inputs |> Seq.map encodeCWLInput |> Seq.toList |> encodeIdMapOrList "type") ]
+            let inputs = td.Inputs |> Option.defaultValue (ResizeArray<ListEntry<CWLInput>>())
+            withCommandFields @ [ "inputs", (inputs |> Seq.map (ListEntry.map encodeCWLInput) |> Seq.toList |> encodeIdEntries "id" "type" (td.SourceNodes.WholeFields.Contains "inputs")) ]
         let withOutputs =
             // Outputs are required by the model and always emitted.
-            withInputs @ [ "outputs", (td.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> encodeIdMapOrList "type") ]
+            withInputs @ [ "outputs", (td.Outputs |> Seq.map (ListEntry.map encodeCWLOutput) |> Seq.toList |> encodeIdEntries "id" "type" (td.SourceNodes.WholeFields.Contains "outputs")) ]
         let withMetadata =
             match td.Metadata with
             | Some md ->
@@ -1003,25 +1114,25 @@ module Encode =
             cwlVersionPairs includeCwlVersion et.CWLVersion
             @ [ "class", encodeString "ExpressionTool" ]
             |> appendOptPair (et.Id |> Option.map (fun id -> "id", encodeString id))
-            |> appendOpt "label" (encodeSourceText et.SourceNodes.Label) et.Label
-            |> appendOpt "doc" (encodeDocText et.SourceNodes.Doc) et.Doc
+            |> appendOpt "label" (encodeLabelValue et.SourceNodes.Label) et.Label
+            |> appendOpt "doc" (encodeProcessDocValue et.SourceNodes.Doc) et.Doc
             |> appendOptPair (et.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
         let withHints =
             match et.Hints with
             | Some h when h.Count > 0 ->
-                basePairs @ [ "hints", (h |> Seq.map encodeHintEntry |> List.ofSeq |> encodeSequence) ]
+                basePairs @ [ "hints", (encodeHintsField et.SourceNodes h) ]
             | _ -> basePairs
         let withRequirements =
             match et.Requirements with
             | Some r when r.Count > 0 ->
-                withHints @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> encodeSequence) ]
+                withHints @ [ "requirements", (encodeRequirementsField et.SourceNodes r) ]
             | _ -> withHints
         let withInputs =
             // CWL requires inputs, so a tool without inputs writes the empty map, as outputs do.
-            let inputs = et.Inputs |> Option.defaultValue (ResizeArray<CWLInput>())
-            withRequirements @ [ "inputs", (inputs |> Seq.map encodeCWLInput |> Seq.toList |> encodeIdMapOrList "type") ]
+            let inputs = et.Inputs |> Option.defaultValue (ResizeArray<ListEntry<CWLInput>>())
+            withRequirements @ [ "inputs", (inputs |> Seq.map (ListEntry.map encodeCWLInput) |> Seq.toList |> encodeIdEntries "id" "type" (et.SourceNodes.WholeFields.Contains "inputs")) ]
         let withOutputs =
-            withInputs @ [ "outputs", (et.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> encodeIdMapOrList "type") ]
+            withInputs @ [ "outputs", (et.Outputs |> Seq.map (ListEntry.map encodeCWLOutput) |> Seq.toList |> encodeIdEntries "id" "type" (et.SourceNodes.WholeFields.Contains "outputs")) ]
         let withExpression =
             // Expression is required and written after ports.
             withOutputs @ [ "expression", encodeSchemaSaladStringWith encodeExpressionScalar et.Expression ]
@@ -1044,25 +1155,25 @@ module Encode =
             cwlVersionPairs includeCwlVersion op.CWLVersion
             @ [ "class", encodeString "Operation" ]
             |> appendOptPair (op.Id |> Option.map (fun id -> "id", encodeString id))
-            |> appendOpt "label" (encodeSourceText op.SourceNodes.Label) op.Label
-            |> appendOpt "doc" (encodeDocText op.SourceNodes.Doc) op.Doc
+            |> appendOpt "label" (encodeLabelValue op.SourceNodes.Label) op.Label
+            |> appendOpt "doc" (encodeProcessDocValue op.SourceNodes.Doc) op.Doc
             |> appendOptPair (op.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
         let withHints =
             match op.Hints with
             | Some h when h.Count > 0 ->
-                basePairs @ [ "hints", (h |> Seq.map encodeHintEntry |> List.ofSeq |> encodeSequence) ]
+                basePairs @ [ "hints", (encodeHintsField op.SourceNodes h) ]
             | _ -> basePairs
         let withRequirements =
             match op.Requirements with
             | Some r when r.Count > 0 ->
-                withHints @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> encodeSequence) ]
+                withHints @ [ "requirements", (encodeRequirementsField op.SourceNodes r) ]
             | _ -> withHints
         let withInputs =
             // Operation inputs are required by the model.
-            withRequirements @ [ "inputs", (op.Inputs |> Seq.map encodeCWLInput |> Seq.toList |> encodeIdMapOrList "type") ]
+            withRequirements @ [ "inputs", (op.Inputs |> Seq.map (ListEntry.map encodeCWLInput) |> Seq.toList |> encodeIdEntries "id" "type" (op.SourceNodes.WholeFields.Contains "inputs")) ]
         let withOutputs =
             // Operation outputs are required by the model.
-            withInputs @ [ "outputs", (op.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> encodeIdMapOrList "type") ]
+            withInputs @ [ "outputs", (op.Outputs |> Seq.map (ListEntry.map encodeCWLOutput) |> Seq.toList |> encodeIdEntries "id" "type" (op.SourceNodes.WholeFields.Contains "outputs")) ]
         let withMetadata =
             match op.Metadata with
             | Some md ->
@@ -1082,28 +1193,28 @@ module Encode =
             cwlVersionPairs includeCwlVersion wd.CWLVersion
             @ [ "class", encodeString "Workflow" ]
             |> appendOptPair (wd.Id |> Option.map (fun id -> "id", encodeString id))
-            |> appendOpt "label" (encodeSourceText wd.SourceNodes.Label) wd.Label
-            |> appendOpt "doc" (encodeDocText wd.SourceNodes.Doc) wd.Doc
+            |> appendOpt "label" (encodeLabelValue wd.SourceNodes.Label) wd.Label
+            |> appendOpt "doc" (encodeProcessDocValue wd.SourceNodes.Doc) wd.Doc
             |> appendOptPair (wd.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
         let withHints =
             match wd.Hints with
             | Some h when h.Count > 0 ->
-                basePairs @ [ "hints", (h |> Seq.map encodeHintEntry |> List.ofSeq |> encodeSequence) ]
+                basePairs @ [ "hints", (encodeHintsField wd.SourceNodes h) ]
             | _ -> basePairs
         let withRequirements =
             match wd.Requirements with
             | Some r when r.Count > 0 ->
-                withHints @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> encodeSequence) ]
+                withHints @ [ "requirements", (encodeRequirementsField wd.SourceNodes r) ]
             | _ -> withHints
         let withInputs =
             // Workflow inputs are required and emitted before steps.
-            withRequirements @ [ "inputs", (wd.Inputs |> Seq.map encodeCWLInput |> Seq.toList |> encodeIdMapOrList "type") ]
+            withRequirements @ [ "inputs", (wd.Inputs |> Seq.map (ListEntry.map encodeCWLInput) |> Seq.toList |> encodeIdEntries "id" "type" (wd.SourceNodes.WholeFields.Contains "inputs")) ]
         let withSteps =
             // Steps are map entries keyed by step id.
-            withInputs @ [ "steps", (wd.Steps |> Seq.map (encodeWorkflowStep inGraph) |> Seq.toList |> encodeIdMapOrList "run") ]
+            withInputs @ [ "steps", (wd.Steps |> Seq.map (ListEntry.map (encodeWorkflowStep inGraph)) |> Seq.toList |> encodeIdEntries "id" "run" (wd.SourceNodes.WholeFields.Contains "steps")) ]
         let withOutputs =
             // Outputs follow steps for scan-friendly workflow YAML.
-            withSteps @ [ "outputs", (wd.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> encodeIdMapOrList "type") ]
+            withSteps @ [ "outputs", (wd.Outputs |> Seq.map (ListEntry.map encodeCWLOutput) |> Seq.toList |> encodeIdEntries "id" "type" (wd.SourceNodes.WholeFields.Contains "outputs")) ]
         let withMetadata =
             match wd.Metadata with
             | Some md ->
@@ -1130,10 +1241,10 @@ module Encode =
         let basePairs =
             // Required step fields are emitted first.
             [ "run", encodeWorkflowStepRun inGraph run
-              "in", encodeStepInputs ws.In
-              "out", encodeStepOutputs ws.Out ]
-            |> appendOpt "label" (encodeSourceText ws.SourceNodes.Label) ws.Label
-            |> appendOpt "doc" (encodeSourceText ws.SourceNodes.Doc) ws.Doc
+              "in", encodeStepInputs (ws.SourceNodes.WholeFields.Contains "in") ws.In
+              "out", encodeStepOutputs (ws.SourceNodes.WholeFields.Contains "out") ws.Out ]
+            |> appendOpt "label" (encodeLabelValue ws.SourceNodes.Label) ws.Label
+            |> appendOpt "doc" (encodeDocValue ws.SourceNodes.Doc) ws.Doc
             |> appendOpt "scatter" encodeScatter ws.Scatter
             |> appendOpt "scatterMethod" encodeScatterMethod ws.ScatterMethod
             |> appendOpt "when" encodeSchemaSaladString ws.When_
@@ -1141,12 +1252,12 @@ module Encode =
         let withHints =
             match ws.Hints with
             // Step-local hints are included only when non-empty.
-            | Some h when h.Count > 0 -> basePairs @ [ "hints", (h |> Seq.map encodeHintEntry |> List.ofSeq |> encodeSequence) ]
+            | Some h when h.Count > 0 -> basePairs @ [ "hints", (encodeHintsField ws.SourceNodes h) ]
             | _ -> basePairs
         let withReq =
             match ws.Requirements with
             // Step-local requirements follow hints.
-            | Some r when r.Count > 0 -> withHints @ [ "requirements", (r |> Seq.map encodeRequirement |> List.ofSeq |> encodeSequence) ]
+            | Some r when r.Count > 0 -> withHints @ [ "requirements", (encodeRequirementsField ws.SourceNodes r) ]
             | _ -> withHints
         ws.Id, Encode.object withReq
 
@@ -1437,13 +1548,17 @@ module Encode =
                 match recordSchema.Fields with
                 | Some fs ->
                     fs
-                    |> Seq.map (fun field -> flowObject [ "name", Encode.string field.Name; "type", encodeCWLTypeFlow field.Type ])
+                    |> Seq.map (fun entry ->
+                        match entry with
+                        | ListEntry.Value field -> flowObject [ "name", Encode.string field.Name; "type", encodeCWLTypeFlow field.Type ]
+                        | ListEntry.Imported path -> directive "$import" path
+                        | ListEntry.Mixed raw -> raw.Node)
                     |> Seq.toList
                 | None -> []
             flowObject [ "type", Encode.string "record"; "fields", flowList fields ]
         | Enum enumSchema ->
             // Symbols are emitted in stored order.
-            flowObject [ "type", Encode.string "enum"; "symbols", enumSchema.Symbols |> Seq.map Encode.string |> Seq.toList |> flowList ]
+            flowObject [ "type", Encode.string "enum"; "symbols", enumSchema.Symbols |> Seq.map (encodeSchemaSaladStringWith Encode.string) |> Seq.toList |> flowList ]
         | _ ->
             // Simple type - just the type name. The null type comes out quoted, because
             // Encode.string quotes the text null.

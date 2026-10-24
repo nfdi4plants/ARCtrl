@@ -62,13 +62,13 @@ type StepInput (
     id: string,
     ?source: ResizeArray<string>,
     ?defaultValue: RawYaml,
-    ?valueFrom: string,
+    ?valueFrom: SchemaSaladString,
     ?linkMerge: LinkMergeMethod,
     ?pickValue: PickValueMethod,
-    ?doc: string,
+    ?doc: DocText,
     ?loadContents: bool,
     ?loadListing: LoadListingEnum,
-    ?label: string
+    ?label: SchemaSaladString
 ) =
     inherit DynamicObj ()
 
@@ -147,31 +147,31 @@ type StepInput (
         | _ -> false
 
     override this.GetHashCode() =
-        hash (
-            this.Id,
-            HashHelpers.hashOptionSeq this.Source,
-            this.DefaultValue,
-            this.ValueFrom,
-            this.LinkMerge,
-            this.PickValue,
-            this.Doc,
-            this.LoadContents,
-            this.LoadListing,
-            this.Label,
-            DynamicObjHelpers.hashDynamicProperties this
-        )
+        HashHelpers.hashFields [
+            box this.Id
+            box (HashHelpers.hashOptionSeq this.Source)
+            box this.DefaultValue
+            box this.ValueFrom
+            box this.LinkMerge
+            box this.PickValue
+            box this.Doc
+            box this.LoadContents
+            box this.LoadListing
+            box this.Label
+            box (DynamicObjHelpers.hashDynamicProperties this)
+        ]
 
     static member create(
         id: string,
         ?source: ResizeArray<string>,
         ?defaultValue: RawYaml,
-        ?valueFrom: string,
+        ?valueFrom: SchemaSaladString,
         ?linkMerge: LinkMergeMethod,
         ?pickValue: PickValueMethod,
-        ?doc: string,
+        ?doc: DocText,
         ?loadContents: bool,
         ?loadListing: LoadListingEnum,
-        ?label: string
+        ?label: SchemaSaladString
     ) =
         StepInput(
             id,
@@ -189,11 +189,14 @@ type StepInput (
     static member KnownFieldNames =
         CWLKnownFieldNames.stepInput
 
-    /// Updates a StepInput at the given index.
-    static member updateAt (index: int) (f: StepInput -> StepInput) (inputs: ResizeArray<StepInput>) =
+    /// Updates the StepInput at the given index of the entries. An import and a mixin have no StepInput to update.
+    static member updateAt (index: int) (f: StepInput -> StepInput) (inputs: ResizeArray<ListEntry<StepInput>>) =
         if index < 0 || index >= inputs.Count then
             invalidArg (nameof index) $"StepInput index {index} is out of range."
-        inputs.[index] <- f inputs.[index]
+        match inputs.[index] with
+        | ListEntry.Value input -> inputs.[index] <- ListEntry.Value (f input)
+        | ListEntry.Imported _
+        | ListEntry.Mixed _ -> invalidArg (nameof index) $"StepInput index {index} is an import or a mixin."
 
 [<AttachMembers>]
 type StepOutputParameter (id: string) =
@@ -221,14 +224,40 @@ type StepOutputParameter (id: string) =
     static member KnownFieldNames =
         CWLKnownFieldNames.stepOutputParameter
 
+/// An entry of the out field of a step. An entry is the id of an output or an object with the id. A document can write
+/// a directive in its place, and Schema Salad replaces the directive with the file. An $include yields the text of the
+/// file, which is an id. An $import yields the data of the file, which is an output or a list of outputs. The decoder
+/// reads no file, so a directive stays an entry of its own, in its place.
 [<AttachMembers>]
 type StepOutput =
     | StepOutputString of string
     | StepOutputRecord of StepOutputParameter
+    /// The text of a file as the id of an output, as in out: [{$include: path}].
+    | StepOutputInclude of string
+    /// The data of a file as an output or a list of outputs, as in out: [{$import: path}].
+    | StepOutputImport of string
+    /// A mapping with a $mixin directive, kept as it was written. The file may supply the id.
+    | StepOutputMixed of RawYaml
+
+    /// The id of an output that the document writes out, and none for an entry that names a file, because the id is in
+    /// the file.
+    static member tryId (output: StepOutput) : string option =
+        match output with
+        | StepOutputString id -> Some id
+        | StepOutputRecord record -> Some record.Id
+        | StepOutputInclude _
+        | StepOutputImport _
+        | StepOutputMixed _ -> None
 
 [<AttachMembers>]
 type WorkflowStepRun =
     | RunString of string
+    /// A process that the document imports, as run: {$import: path}. The path names the file like a RunString does, and
+    /// the decoder reads no file.
+    | RunImport of string
+    /// A process that a file completes through $mixin, as run: {$mixin: path}. The mapping is kept as it was written, and the
+    /// decoder reads no file.
+    | RunMixed of RawYaml
     | RunCommandLineTool of obj
     | RunWorkflow of obj
     | RunExpressionTool of obj
@@ -257,11 +286,11 @@ type ResolvedRun =
 [<AttachMembers>]
 type WorkflowStep (
     id: string,
-    in_: ResizeArray<StepInput>,
+    in_: ResizeArray<ListEntry<StepInput>>,
     out_: ResizeArray<StepOutput>,
     run: WorkflowStepRun,
-    ?label: string,
-    ?doc: string,
+    ?label: SchemaSaladString,
+    ?doc: DocText,
     ?scatter: ResizeArray<string>,
     ?scatterMethod: ScatterMethod,
     ?when_: SchemaSaladString,
@@ -271,11 +300,11 @@ type WorkflowStep (
     inherit DynamicObj ()
 
     let mutable _id: string = id
-    let mutable _in: ResizeArray<StepInput> = in_
+    let mutable _in: ResizeArray<ListEntry<StepInput>> = in_
     let mutable _out: ResizeArray<StepOutput> = out_
     let mutable _run: WorkflowStepRun = run
-    let mutable _label: string option = label
-    let mutable _doc: string option = doc
+    let mutable _label: SchemaSaladString option = label
+    let mutable _doc: DocText option = doc
     let mutable _scatter: ResizeArray<string> option = scatter
     let mutable _scatterMethod: ScatterMethod option = scatterMethod
     let mutable _when: SchemaSaladString option = when_
@@ -346,11 +375,11 @@ type WorkflowStep (
 
     static member fromRunPath(
         id: string,
-        in_: ResizeArray<StepInput>,
+        in_: ResizeArray<ListEntry<StepInput>>,
         out_: ResizeArray<StepOutput>,
         runPath: string,
-        ?label: string,
-        ?doc: string,
+        ?label: SchemaSaladString,
+        ?doc: DocText,
         ?scatter: ResizeArray<string>,
         ?scatterMethod: ScatterMethod,
         ?when_: SchemaSaladString,
@@ -379,26 +408,35 @@ type WorkflowStep (
     static member getResolvedRun (step: WorkflowStep) : WorkflowStepRun =
         defaultArg step.ResolvedRun.Run step.Run
 
-    /// Updates a workflow step input by index.
+    /// Returns the inputs of the step. The imports are left out, and the list is a new one.
+    static member getInputs (step: WorkflowStep) : ResizeArray<StepInput> =
+        ListEntry.values step.In
+
+    /// Returns the outputs of the step that the document writes out as an id or an object. The directives are left out,
+    /// and the list is a new one.
+    static member getOutputs (step: WorkflowStep) : ResizeArray<StepOutput> =
+        step.Out |> Seq.filter (fun output -> (StepOutput.tryId output).IsSome) |> ResizeArray
+
+    /// Updates a workflow step input by the index of its entry. An import has no input to update.
     static member updateInputAt (index: int) (f: StepInput -> StepInput) (step: WorkflowStep) =
         StepInput.updateAt index f step.In
 
     /// Adds a new StepInput to a workflow step.
     static member addInput (input: StepInput) (step: WorkflowStep) =
-        step.In.Add input
+        step.In.Add (ListEntry.Value input)
 
-    /// Removes all StepInputs matching the provided id.
+    /// Removes all StepInputs matching the provided id. The imports stay.
     /// Reassigns step.In to a new filtered ResizeArray.
     static member removeInputsById (id: string) (step: WorkflowStep) =
         step.In
-        |> Seq.filter (fun i -> i.Id <> id)
+        |> Seq.filter (fun entry -> ListEntry.tryValue entry |> Option.forall (fun i -> i.Id <> id))
         |> ResizeArray
         |> fun remaining -> step.In <- remaining
 
     /// Updates the first StepInput matching the provided id.
     static member updateInputById (id: string) (f: StepInput -> StepInput) (step: WorkflowStep) =
         step.In
-        |> Seq.tryFindIndex (fun i -> i.Id = id)
+        |> Seq.tryFindIndex (fun entry -> ListEntry.tryValue entry |> Option.exists (fun i -> i.Id = id))
         |> Option.iter (fun i -> StepInput.updateAt i f step.In)
 
 
