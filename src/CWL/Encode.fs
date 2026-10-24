@@ -177,6 +177,24 @@ module Encode =
         else
             YamlNode.sequence (items |> List.map blockItem)
 
+    /// Encode the entries of an id map, such as the step inputs. The map names each entry by its id, and a mapping holds
+    /// a key once. Entries with a repeated id are written as a list of objects that carry their ids, so no entry is
+    /// lost. The value key names the field of an entry that is no mapping, as the source of a step input written as its
+    /// source alone.
+    let encodeIdMapOrList (valueKey: string) (entries: (string * YamlNode) list) : YamlNode =
+        let ids = entries |> List.map fst
+        if (List.distinct ids).Length = ids.Length then
+            Encode.object entries
+        else
+            entries
+            |> List.map (fun (id, node) ->
+                let fields =
+                    match node.Kind with
+                    | YamlNodeKind.Mapping collection -> collection.Items |> List.map (fun entry -> Decode.entryName entry, entry.Value)
+                    | _ -> [ valueKey, node ]
+                Encode.object (("id", Encode.string id) :: fields))
+            |> encodeSequence
+
     // ------------------------------
     // Helper append functions for ordered construction
     // ------------------------------
@@ -629,6 +647,7 @@ module Encode =
             match definition with
             | SchemaDefinition.Record schema -> inputRecordSchemaPairs schema
             | SchemaDefinition.Enum schema -> inputEnumSchemaPairs schema
+            | SchemaDefinition.Array schema -> inputArraySchemaPairs schema
         let name, others = schemaPairs |> List.partition (fun (key, _) -> key = "name")
         name @ others |> Encode.object
 
@@ -786,13 +805,7 @@ module Encode =
             let timelimit =
                 match tl with
                 | ToolTimeLimitSeconds seconds -> Encode.int64 seconds
-                | ToolTimeLimitExpression (SchemaSaladString.Literal expression) ->
-                    // The decoder takes a float as an expression, because the time limit is a long or a string. A float
-                    // that stays a plain scalar is the number that the file held. Every other text is a string.
-                    match YamlNode.plain expression with
-                    | Decode.CoreFloat _ -> YamlNode.plain expression
-                    | _ -> encodeString expression
-                | ToolTimeLimitExpression directive -> encodeSchemaSaladString directive
+                | ToolTimeLimitExpression expression -> encodeSchemaSaladString expression
             [ "class", encodeString "ToolTimeLimit"; "timelimit", timelimit ] |> Encode.object
         | SubworkflowFeatureRequirement -> [ "class", encodeString "SubworkflowFeatureRequirement" ] |> Encode.object
         | ScatterFeatureRequirement -> [ "class", encodeString "ScatterFeatureRequirement" ] |> Encode.object
@@ -864,7 +877,7 @@ module Encode =
         inputs
         |> Seq.map encodeStepInput
         |> Seq.toList
-        |> Encode.object
+        |> encodeIdMapOrList "source"
 
     /// Encode record-form step output parameters, including extension fields.
     let encodeStepOutputParameter (so: StepOutputParameter) : YamlNode =
@@ -967,10 +980,10 @@ module Encode =
         let withInputs =
             // CWL requires inputs, so a tool without inputs writes the empty map, as outputs do.
             let inputs = td.Inputs |> Option.defaultValue (ResizeArray<CWLInput>())
-            withCommandFields @ [ "inputs", (inputs |> Seq.map encodeCWLInput |> Seq.toList |> Encode.object) ]
+            withCommandFields @ [ "inputs", (inputs |> Seq.map encodeCWLInput |> Seq.toList |> encodeIdMapOrList "type") ]
         let withOutputs =
             // Outputs are required by the model and always emitted.
-            withInputs @ [ "outputs", (td.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> Encode.object) ]
+            withInputs @ [ "outputs", (td.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> encodeIdMapOrList "type") ]
         let withMetadata =
             match td.Metadata with
             | Some md ->
@@ -1006,9 +1019,9 @@ module Encode =
         let withInputs =
             // CWL requires inputs, so a tool without inputs writes the empty map, as outputs do.
             let inputs = et.Inputs |> Option.defaultValue (ResizeArray<CWLInput>())
-            withRequirements @ [ "inputs", (inputs |> Seq.map encodeCWLInput |> Seq.toList |> Encode.object) ]
+            withRequirements @ [ "inputs", (inputs |> Seq.map encodeCWLInput |> Seq.toList |> encodeIdMapOrList "type") ]
         let withOutputs =
-            withInputs @ [ "outputs", (et.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> Encode.object) ]
+            withInputs @ [ "outputs", (et.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> encodeIdMapOrList "type") ]
         let withExpression =
             // Expression is required and written after ports.
             withOutputs @ [ "expression", encodeSchemaSaladStringWith encodeExpressionScalar et.Expression ]
@@ -1046,10 +1059,10 @@ module Encode =
             | _ -> withHints
         let withInputs =
             // Operation inputs are required by the model.
-            withRequirements @ [ "inputs", (op.Inputs |> Seq.map encodeCWLInput |> Seq.toList |> Encode.object) ]
+            withRequirements @ [ "inputs", (op.Inputs |> Seq.map encodeCWLInput |> Seq.toList |> encodeIdMapOrList "type") ]
         let withOutputs =
             // Operation outputs are required by the model.
-            withInputs @ [ "outputs", (op.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> Encode.object) ]
+            withInputs @ [ "outputs", (op.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> encodeIdMapOrList "type") ]
         let withMetadata =
             match op.Metadata with
             | Some md ->
@@ -1084,13 +1097,13 @@ module Encode =
             | _ -> withHints
         let withInputs =
             // Workflow inputs are required and emitted before steps.
-            withRequirements @ [ "inputs", (wd.Inputs |> Seq.map encodeCWLInput |> Seq.toList |> Encode.object) ]
+            withRequirements @ [ "inputs", (wd.Inputs |> Seq.map encodeCWLInput |> Seq.toList |> encodeIdMapOrList "type") ]
         let withSteps =
             // Steps are map entries keyed by step id.
-            withInputs @ [ "steps", (wd.Steps |> Seq.map (encodeWorkflowStep inGraph) |> Seq.toList |> Encode.object) ]
+            withInputs @ [ "steps", (wd.Steps |> Seq.map (encodeWorkflowStep inGraph) |> Seq.toList |> encodeIdMapOrList "run") ]
         let withOutputs =
             // Outputs follow steps for scan-friendly workflow YAML.
-            withSteps @ [ "outputs", (wd.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> Encode.object) ]
+            withSteps @ [ "outputs", (wd.Outputs |> Seq.map encodeCWLOutput |> Seq.toList |> encodeIdMapOrList "type") ]
         let withMetadata =
             match wd.Metadata with
             | Some md ->
@@ -1377,18 +1390,7 @@ module Encode =
     /// Encode a packed document: the cwlVersion of the root and the processes under $graph. The processes use the
     /// version of the root, so they write none of their own. The other keys of the root follow the graph. A step that
     /// runs one of the processes of the graph holds the reference to it, as in run: "#shout", and writes it as it is.
-    /// A member without an id, or with the id of an earlier member, has no text that the decoder reads back, so the
-    /// encoder refuses the graph.
     let encodeCWLGraph (graph: CWLGraph) : string =
-        let seen = System.Collections.Generic.HashSet<string>()
-        graph.Processes
-        |> Seq.iteri (fun index processingUnit ->
-            match CWLProcessingUnit.tryGetId processingUnit |> Option.map LocalReference.withoutHash with
-            | None | Some "" ->
-                raise (System.ArgumentException($"The member {index} of the graph has no id. Every process of a packed document needs one."))
-            | Some id ->
-                if not (seen.Add id) then
-                    raise (System.ArgumentException($"The member {index} of the graph has the id {id}, which an earlier member has too. An id must be unique in the document.")))
         let encodeMember (processingUnit: CWLProcessingUnit) : YamlNode =
             match processingUnit with
             | CommandLineTool td -> encodeToolDescriptionElement false td

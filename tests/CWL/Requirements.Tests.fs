@@ -45,6 +45,7 @@ let nameOf (definition: SchemaDefinition) : string option =
     match definition with
     | SchemaDefinition.Record schema -> schema.Name
     | SchemaDefinition.Enum schema -> schema.Name
+    | SchemaDefinition.Array schema -> schema.Name
 
 let testRequirementDecode =
     testList "Decode" [
@@ -429,23 +430,30 @@ outputs: {}"""
                 | _ ->
                     failwith "Wrong requirement type: expected InitialWorkDirRequirement"
 
-            testCase "Entry field takes precedence over class field" <| fun _ ->
+            testCase "Class field takes precedence over entry field" <| fun _ ->
                 let yaml = """requirements:
   - class: InitialWorkDirRequirement
     listing:
       - class: File
+        location: a.txt
         entry: $(inputs.arcDirectory)
-        writable: true"""
+        writable: true
+      - class: Directory
+        location: d
+        entry: b"""
                 let reqs = decodeRequirements yaml
                 let initialWorkDirItem = findRequirement reqs (function InitialWorkDirRequirement _ -> true | _ -> false)
                 match initialWorkDirItem with
                 | InitialWorkDirRequirement listing ->
-                    Expect.equal listing.Count 1 "Expected one listing entry"
-                    match listing.[0] with
-                    | DirentEntry dirent ->
-                        Expect.equal dirent.Entry (SchemaSaladString.Literal "$(inputs.arcDirectory)") "entry should decode as Dirent entry"
-                    | _ ->
-                        failwith "Expected DirentEntry when both entry and class are present"
+                    Expect.equal listing.Count 2 "Expected two listing entries"
+                    match listing.[0], listing.[1] with
+                    | FileEntry file, DirectoryEntry directory ->
+                        Expect.equal file.Location (Some "a.txt") "The File keeps its location."
+                        Expect.equal (DynObj.tryGetTypedPropertyValue<string> "entry" file) (Some "$(inputs.arcDirectory)") "The File keeps entry as an extension field."
+                        Expect.equal (DynObj.tryGetTypedPropertyValue<bool> "writable" file) (Some true) "The File keeps writable as an extension field."
+                        Expect.equal (DynObj.tryGetTypedPropertyValue<string> "entry" directory) (Some "b") "The Directory keeps entry as an extension field."
+                    | other ->
+                        failwithf "Expected a FileEntry and a DirectoryEntry when class and entry are present, found %A" other
                 | _ ->
                     failwith "Wrong requirement type: expected InitialWorkDirRequirement"
         ]
@@ -496,18 +504,23 @@ outputs: {}"""
                 | _ ->
                     failwith "Wrong requirement type: expected EnvVarRequirement"
 
-            testCase "Map shorthand unquoted boolean decodes as string literal" <| fun _ ->
-                let yaml = """requirements:
+            testCase "Map shorthand unquoted boolean is a decode error and a quoted one is a string" <| fun _ ->
+                let plain = """requirements:
   - class: EnvVarRequirement
     envDef:
       FLAG: true"""
+                Expect.throws (fun _ -> decodeRequirements plain |> ignore) "cwltool rejects a plain bool for the string field envValue."
+                let yaml = """requirements:
+  - class: EnvVarRequirement
+    envDef:
+      FLAG: 'true'"""
                 let reqs = decodeRequirements yaml
                 let envVarItem = findRequirement reqs (function EnvVarRequirement _ -> true | _ -> false)
                 match envVarItem with
                 | EnvVarRequirement envs ->
                     Expect.equal envs.Count 1 "Expected one map-shorthand environment definition"
                     Expect.equal envs.[0].EnvName "FLAG" "Map key should decode as env name"
-                    Expect.equal envs.[0].EnvValue (SchemaSaladString.Literal "true") "Unquoted YAML boolean should normalize to string value"
+                    Expect.equal envs.[0].EnvValue (SchemaSaladString.Literal "true") "A quoted YAML boolean should decode to a string value"
                 | _ ->
                     failwith "Wrong requirement type: expected EnvVarRequirement"
 
@@ -909,16 +922,17 @@ outputs: {}"""
                 let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
                 Expect.stringContains encoded "timelimit: 300" "Numeric timelimit should encode as integer scalar"
 
-            testCase "Decode float timelimit as expression fallback" <| fun _ ->
+            testCase "A float timelimit is a decode error because CWL types it as long or string" <| fun _ ->
                 let yaml = """requirements:
   - class: ToolTimeLimit
     timelimit: 3.5"""
-                let reqs = decodeRequirements yaml
-                let requirement = findRequirement reqs (function ToolTimeLimitRequirement _ -> true | _ -> false)
-                let expected = ToolTimeLimitRequirement (ToolTimeLimitExpression (SchemaSaladString.Literal "3.5"))
-                Expect.equal requirement expected "Float timelimit should decode via expression fallback."
-            testCase "A float timelimit is written as the number and a quoted number stays a string" <| fun _ ->
-                for (text, expected) in [ "3.5", "timelimit: 3.5"; "\"5\"", "timelimit: \"5\""; "\"3.5\"", "timelimit: 3.5" ] do
+                Expect.throws (fun _ -> decodeRequirements yaml |> ignore) "cwltool rejects a float for the long or expression timelimit."
+            testCase "A plain bool timelimit is a decode error because CWL types it as long or string" <| fun _ ->
+                for text in [ "true"; "false" ] do
+                    let yaml = "requirements:\n  - class: ToolTimeLimit\n    timelimit: " + text
+                    Expect.throws (fun _ -> decodeRequirements yaml |> ignore) (sprintf "A bool is no number of seconds (%s)." text)
+            testCase "A quoted number timelimit stays a string through a write and a read" <| fun _ ->
+                for (text, expected) in [ "\"5\"", "timelimit: \"5\""; "\"3.5\"", "timelimit: \"3.5\"" ] do
                     let yaml = "requirements:\n  - class: ToolTimeLimit\n    timelimit: " + text
                     let requirement = findRequirement (decodeRequirements yaml) (function ToolTimeLimitRequirement _ -> true | _ -> false)
                     let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
@@ -926,13 +940,19 @@ outputs: {}"""
                     let writtenLine = encoded.Split('\n') |> Array.find (fun line -> line.StartsWith "timelimit:")
                     let again = findRequirement (decodeRequirements ("requirements:\n  - class: ToolTimeLimit\n    " + writtenLine)) (function ToolTimeLimitRequirement _ -> true | _ -> false)
                     Expect.equal again requirement (sprintf "The time limit %s should read back as the same requirement." text)
-            testCase "Decode negative numeric timelimit fails" <| fun _ ->
-                let yaml = """requirements:
-  - class: ToolTimeLimit
-    timelimit: -1"""
-                Expect.throws
-                    (fun _ -> decodeRequirements yaml |> ignore)
-                    "Negative ToolTimeLimit value should fail decoding."
+            testCase "A negative numeric timelimit decodes with a warning, as a requirement and as a hint" <| fun _ ->
+                for (field, path) in [ "requirements", "requirements[0].timelimit"; "hints", "hints[0].timelimit" ] do
+                    let yaml = "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\n" + field + ":\n  - class: ToolTimeLimit\n    timelimit: -1\ninputs: {}\noutputs: {}\n"
+                    let decoded = Decode.decodeCommandLineToolWithWarnings yaml
+                    let requirement =
+                        match field with
+                        | "requirements" -> decoded.Value.Requirements.Value.[0]
+                        | _ -> (HintEntry.tryAsRequirement decoded.Value.Hints.Value.[0]).Value
+                    Expect.equal requirement (ToolTimeLimitRequirement (ToolTimeLimitSeconds -1L)) $"A negative timelimit in {field} is kept as it is."
+                    Expect.equal (decoded.Warnings |> Seq.map (fun warning -> warning.Path) |> List.ofSeq) [ path ] $"The warning for {field} shows the timelimit."
+                    Expect.stringContains decoded.Warnings.[0].Message "negative timelimit" "The warning says what is wrong."
+                    Expect.isSome decoded.Warnings.[0].Raw "The warning shows the requirement."
+                    Expect.equal (Decode.decodeCommandLineTool (Encode.encodeToolDescription decoded.Value)) decoded.Value $"The written {field} should decode to the same tool."
         ]
         testList "ResourceRequirement" [
             testCase "Decode int long float and expression resource scalars" <| fun _ ->
@@ -1066,9 +1086,6 @@ outputs: {}"""
         type: string"""
                       "a name of a file type", "found type: File", requirement """      - name: Reads
         type: File"""
-                      "an array schema", "found type: array", requirement """      - name: Ints
-        type: array
-        items: int"""
                       "a union", "found a type that is no name", requirement """      - name: Either
         type: [string, int]"""
                       "an entry without a type", "Expected a type field", requirement """      - name: Tag
@@ -1359,6 +1376,69 @@ steps:
                     Expect.equal (DecodeError.pathText error) path $"{name}: the error should show the place of the type."
                     Expect.stringContains error.Message "The innermost SchemaDefRequirement applies" $"{name}: the error should say why the type does not apply."
                     Expect.isSome error.Span $"{name}: the error should have the place in the text."
+                | None -> failwith $"{name} must fail"
+        testCase "the first SchemaDefRequirement of the workflows around a tool reaches it and the requirement of an inner workflow keeps to its own ports" <| fun _ ->
+            let file = TestObjects.CWL.Requirements.SchemaDefNested.nestedWorkflowsFile.Replace("\r\n", "\n")
+            let decode (reference: string) = Decode.decodeWorkflow (file.Replace("{0}", reference))
+            let innerTool (workflow: CWLWorkflowDescription) =
+                let innerWorkflow = Expect.wantSome (WorkflowStepRunOps.tryGetWorkflow workflow.Steps.[0].Run) "The step runs an inline workflow."
+                Expect.wantSome (WorkflowStepRunOps.tryGetTool innerWorkflow.Steps.[0].Run) "The inner step runs an inline tool."
+            Expect.equal (inputTypeOf (innerTool (decode "#wf/Outer")).Inputs.Value "p") (Some (Reference "#wf/Outer")) "The tool below both workflows names the type of the outermost one."
+            match decodeError (fun () -> decode "#wf/s/run/Inner" |> ignore) with
+            | Some error ->
+                Expect.equal (DecodeError.pathText error) "steps.s.run.steps.t.run.inputs.p" "The error shows the port of the tool."
+                Expect.stringContains error.Message "A nested workflow hands its steps the SchemaDefRequirement that it inherited, the outermost one." "The error says why the type does not apply."
+            | None -> failwith "The tool below the nested workflow cannot name the type of the nested workflow."
+        testCase "a requirement of a step or a tool replaces the one that a nested workflow hands down" <| fun _ ->
+            let file = TestObjects.CWL.Requirements.SchemaDefNested.nestedWorkflowsFile.Replace("\r\n", "\n")
+            let withStepTypes = file.Replace("          in:\n            p:\n              default: a\n          out: []\n", "          requirements:\n            - class: SchemaDefRequirement\n              types:\n                - name: Step\n                  type: enum\n                  symbols: [a]\n          in:\n            p:\n              default: a\n          out: []\n")
+            Expect.equal (withStepTypes.Contains "name: Step") true "The fixture holds the requirement of the step."
+            let innerTool (workflow: CWLWorkflowDescription) =
+                let innerWorkflow = Expect.wantSome (WorkflowStepRunOps.tryGetWorkflow workflow.Steps.[0].Run) "The step runs an inline workflow."
+                Expect.wantSome (WorkflowStepRunOps.tryGetTool innerWorkflow.Steps.[0].Run) "The inner step runs an inline tool."
+            Expect.equal (inputTypeOf (innerTool (Decode.decodeWorkflow (withStepTypes.Replace("{0}", "#wf/s/run/t/Step")))).Inputs.Value "p") (Some (Reference "#wf/s/run/t/Step")) "The tool names the type of its step."
+            match decodeError (fun () -> Decode.decodeWorkflow (withStepTypes.Replace("{0}", "#wf/Outer")) |> ignore) with
+            | Some error -> Expect.equal (DecodeError.pathText error) "steps.s.run.steps.t.run.inputs.p" "The requirement of the step replaces the one of the outer workflow."
+            | None -> failwith "The requirement of the step replaces the one of the workflow."
+            let withToolTypes = file.Replace("            baseCommand: x\n", "            baseCommand: x\n            requirements:\n              - class: SchemaDefRequirement\n                types:\n                  - name: Mine\n                    type: enum\n                    symbols: [a]\n")
+            match decodeError (fun () -> Decode.decodeWorkflow (withToolTypes.Replace("{0}", "#wf/Outer")) |> ignore) with
+            | Some error -> Expect.equal (DecodeError.pathText error) "steps.s.run.steps.t.run.inputs.p" "The requirement of the tool replaces the one that the nested workflow hands down."
+            | None -> failwith "The requirement of the tool replaces the one of the workflow."
+        testCase "an array definition of a SchemaDefRequirement decodes, reads back equal and no port can name it" <| fun _ ->
+            let yaml = tool "requirements:\n  - class: SchemaDefRequirement\n    types:\n      - name: Ints\n        type: array\n        items: int\n        label: some numbers\n        arc:note: kept\ninputs: {}\noutputs: {}\n"
+            let decoded = Decode.decodeCommandLineTool yaml
+            match decoded.Requirements.Value.[0] with
+            | SchemaDefRequirement types ->
+                match definedOf types.[0] with
+                | SchemaDefinition.Array schema ->
+                    Expect.equal schema.Name (Some "Ints") "The array keeps its name."
+                    Expect.equal schema.Items Int "The array keeps its items."
+                    Expect.equal schema.Label (Some "some numbers") "The array keeps its label."
+                    Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" schema) (Some "kept") "The array keeps its extension fields."
+                | other -> failwith $"Expected an array definition but got %A{other}"
+            | other -> failwith $"Expected a SchemaDefRequirement but got %A{other}"
+            let written = Encode.encodeToolDescription decoded
+            Expect.stringContains written "type: array" "The array definition is written as a schema."
+            Expect.equal (Decode.decodeCommandLineTool written) decoded "The written text should decode to the same tool."
+            match decodeError (fun () -> Decode.decodeCommandLineTool (yaml.Replace("inputs: {}", "inputs:\n  s: Ints")) |> ignore) with
+            | Some error ->
+                Expect.equal (DecodeError.pathText error) "inputs.s" "The error shows the port that names the array."
+                Expect.stringContains error.Message "Invalid CWL type: Ints" "cwltool knows no type of that name."
+            | None -> failwith "A port cannot name an array definition."
+        testCase "a named schema in the type of a port is a type of the process that other ports name by its id" <| fun _ ->
+            let file = TestObjects.CWL.Requirements.SchemaDefNested.portSchemaFile.Replace("\r\n", "\n")
+            let decode (second: string) (output: string) = Decode.decodeCommandLineTool (file.Replace("{0}", second).Replace("{1}", output))
+            let decoded = decode "#a/Color" "#a/Color"
+            Expect.equal (inputTypeOf decoded.Inputs.Value "b") (Some (Reference "#a/Color")) "The second port names the enum of the first one by its id."
+            Expect.equal (decoded.Outputs |> Seq.find (fun output -> output.Name = "o")).Type_ (Some (Reference "#a/Color")) "An output names it too."
+            Expect.equal (Decode.decodeCommandLineTool (Encode.encodeToolDescription decoded)) decoded "The written text should decode to the same tool."
+            let withId = Decode.decodeCommandLineTool ((file.Replace("{0}", "#t/a/Color").Replace("{1}", "#t/a/Color")).Replace("baseCommand: echo\n", "id: t\nbaseCommand: echo\n"))
+            Expect.equal (inputTypeOf withId.Inputs.Value "b") (Some (Reference "#t/a/Color")) "The id of the process leads the id."
+            for (name, second) in [ "a bare name", "Color"; "the name below the wrong port", "#b/Color"; "an unknown name", "#a/Shade" ] do
+                match decodeError (fun () -> decode second "#a/Color" |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) "inputs.b.type" $"{name}: the error should show the type of the port."
+                    Expect.stringContains error.Message "Invalid CWL type" $"{name}: the error should say that the type is invalid."
                 | None -> failwith $"{name} must fail"
         testCase "the id of an inline run lies below run, and only that spelling names its types" <| fun _ ->
             let file = TestObjects.CWL.Requirements.SchemaDefIds.inlineRunWithIdFile
@@ -2040,6 +2120,43 @@ let testInitialWorkDirListingForms =
                 Expect.sequenceEqual listing (ResizeArray [ StringEntry (SchemaSaladString.Literal "$(inputs.directory.listing)") ]) "The list keeps its one entry."
             | other -> failwithf "Expected an InitialWorkDirRequirement, found %A" other
             Expect.notEqual (InitialWorkDirExpressionRequirement "$(x)") (InitialWorkDirRequirement (ResizeArray [ StringEntry (SchemaSaladString.Literal "$(x)") ])) "The two spellings are two requirements."
+        testCase "a listing or an item that is a text without an expression is a decode error" <| fun _ ->
+            let cases =
+                [ "a text as the listing", "requirements[0].listing", "requirements:\n  - class: InitialWorkDirRequirement\n    listing: abc", "Expected a list of entries or an expression for the listing, found the text \"abc\". An expression holds $( or ${."
+                  "an empty string as the listing", "requirements[0].listing", "requirements:\n  - class: InitialWorkDirRequirement\n    listing: \"\"", "Expected a list of entries or an expression for the listing"
+                  "a text with a dollar and no bracket as the listing", "requirements[0].listing", "requirements:\n  - class: InitialWorkDirRequirement\n    listing: \"$x\"", "An expression holds $( or ${."
+                  "a text as an item", "requirements[0].listing[1]", listingOf [ "- $(inputs.x)"; "- abc" ], "Expected an expression, a Dirent, a File or a Directory as an entry of the listing, found the text \"abc\". An expression holds $( or ${."
+                  "a quoted text as an item", "requirements[0].listing[0]", listingOf [ "- \"null\"" ], "Expected an expression, a Dirent, a File or a Directory as an entry of the listing"
+                  "a text as an item of a hint", "hints[0].listing[0]", "hints:\n  - class: InitialWorkDirRequirement\n    listing:\n      - abc", "Expected an expression, a Dirent, a File or a Directory as an entry of the listing" ]
+            for (name, path, yaml, message) in cases do
+                let decode () = if yaml.StartsWith "hints" then decodeHints yaml |> ignore else decodeRequirements yaml |> ignore
+                match decodeError decode with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the place" name)
+                    Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
+                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+                | None -> failwith (sprintf "%s must fail" name)
+        testCase "a text with a parameter reference or a script is an expression, and so are the directives that name a file" <| fun _ ->
+            let yaml =
+                listingOf [ "- $(inputs.x)"
+                            "- \"text $(inputs.x)\""
+                            "- \"${ return 1; }\""
+                            "- \"$(\""
+                            "- {$include: notes.txt}"
+                            "- {$import: other.yml}" ]
+            match (decodeRequirements yaml).[0] with
+            | InitialWorkDirRequirement listing ->
+                Expect.sequenceEqual
+                    listing
+                    (ResizeArray [ StringEntry (SchemaSaladString.Literal "$(inputs.x)")
+                                   StringEntry (SchemaSaladString.Literal "text $(inputs.x)")
+                                   StringEntry (SchemaSaladString.Literal "${ return 1; }")
+                                   StringEntry (SchemaSaladString.Literal "$(")
+                                   StringEntry (SchemaSaladString.Include "notes.txt")
+                                   StringEntry (SchemaSaladString.Import "other.yml") ])
+                    "The expressions stay as written, and the text of a directive is not known to the decoder."
+            | other -> failwithf "Expected an InitialWorkDirRequirement, found %A" other
+            Expect.equal (decodeRequirements "requirements:\n  - class: InitialWorkDirRequirement\n    listing: \"${ return []; }\"").[0] (InitialWorkDirExpressionRequirement "${ return []; }") "A script as the listing is an expression."
         testCase "a mapping as the listing is a decode error at the listing" <| fun _ ->
             let yaml = "requirements:\n  - class: InitialWorkDirRequirement\n    listing:\n      class: File\n      location: a.txt"
             match decodeError (fun () -> decodeRequirements yaml |> ignore) with
@@ -2182,10 +2299,9 @@ let testInvalidRequirementsAndHints =
                     Expect.stringContains error.Message "Expected a mapping for the hint DockerRequirement" (sprintf "payload %s: the error says what is wrong" payload)
                     Expect.isSome error.Span (sprintf "payload %s: the error has the place in the text" payload)
                 | None -> failwith (sprintf "payload %s must fail" payload)
-        testCase "a negative time limit, a loadListing that is no symbol, and an envDef or packages field of another shape are decode errors at the field" <| fun _ ->
+        testCase "a loadListing that is no symbol, and an envDef or packages field of another shape are decode errors at the field" <| fun _ ->
             let cases =
-                [ "a negative time limit", "requirements[0].timelimit", "The timelimit of a ToolTimeLimit must not be negative", "requirements:\n  - class: ToolTimeLimit\n    timelimit: -1"
-                  "a loadListing that is no symbol", "requirements[0].loadListing", "Expected one of no_listing, shallow_listing and deep_listing", "requirements:\n  - class: LoadListingRequirement\n    loadListing: some"
+                [ "a loadListing that is no symbol", "requirements[0].loadListing", "Expected one of no_listing, shallow_listing and deep_listing", "requirements:\n  - class: LoadListingRequirement\n    loadListing: some"
                   "an envDef that is a number", "requirements[0].envDef", "Expected a list or a mapping for envDef", "requirements:\n  - class: EnvVarRequirement\n    envDef: 5"
                   "a packages field that is a number", "requirements[0].packages", "Expected a list or a mapping for packages", "requirements:\n  - class: SoftwareRequirement\n    packages: 5" ]
             for name, path, message, yaml in cases do

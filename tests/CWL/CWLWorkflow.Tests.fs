@@ -475,7 +475,6 @@ steps:
             let step = decoded.Steps |> Seq.find (fun step -> step.Id = "step1")
             let stepInput = step.In |> Seq.find (fun input -> input.Id = "sample")
             let inputBinding = Expect.wantSome input.InputBinding "Input binding should decode."
-            let outputBinding = Expect.wantSome output.OutputBinding "Output binding should decode."
             Expect.equal
                 (DynObj.tryGetTypedPropertyValue<string> "arc:note" input)
                 (Some "keep input note")
@@ -493,13 +492,6 @@ steps:
                 (Some "keep output note")
                 "Unknown output fields should be preserved."
             Expect.equal output.Type_ (Some CWLType.File) "The result output should decode as File."
-            Expect.isNone
-                (DynObj.tryGetTypedPropertyValue<string> "arc:binding note" output)
-                "Unknown output binding fields should not be flattened onto the output."
-            Expect.equal
-                (DynObj.tryGetTypedPropertyValue<string> "arc:binding note" outputBinding)
-                (Some "keep output binding note")
-                "Unknown output binding fields should be preserved on the binding."
             Expect.equal
                 (DynObj.tryGetTypedPropertyValue<string> "arc:step note" step)
                 (Some "keep step note")
@@ -789,7 +781,6 @@ let testCWLWorkflowDescriptionEncode =
                 let step = roundTripped.Steps |> Seq.find (fun step -> step.Id = "step1")
                 let stepInput = step.In |> Seq.find (fun input -> input.Id = "sample")
                 let inputBinding = Expect.wantSome input.InputBinding "Input binding should survive roundtrip."
-                let outputBinding = Expect.wantSome output.OutputBinding "Output binding should survive roundtrip."
 
                 Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" input) (Some "keep input note") "Input overflow should roundtrip."
                 Expect.equal input.Type_ (Some CWLType.File) "The input type should roundtrip."
@@ -797,7 +788,6 @@ let testCWLWorkflowDescriptionEncode =
 
                 Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" output) (Some "keep output note") "Output overflow should roundtrip."
                 Expect.equal output.Type_ (Some CWLType.File) "The output type should roundtrip."
-                Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:binding note" outputBinding) (Some "keep output binding note") "Output binding overflow should roundtrip."
 
                 Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:step note" step) (Some "keep step note") "Workflow step overflow should roundtrip."
                 Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:step input note" stepInput) (Some "keep step input note") "Step input overflow should roundtrip."
@@ -1246,7 +1236,7 @@ $graph:
     outputs: {}"""
             for (name, field) in [ "no value", ""; "an older version", " v1.0"; "a draft", " draft-3"; "the version itself", " v1.2"; "a newer version", " v1.3"; "a text that is no version", " banana" ] do
                 Expect.equal (toolOf (graphOf (head + field + tail)).Processes.[0]).CWLVersion "v1.2" $"{name}: the process uses the version of the root."
-        testCase "a process of a packed document without an id is a decode error at its place" <| fun _ ->
+        testCase "a process of a packed document without an id or with an empty id decodes, and the id is written as it was" <| fun _ ->
             let yaml = """cwlVersion: v1.2
 $graph:
   - id: main
@@ -1257,13 +1247,17 @@ $graph:
   - class: CommandLineTool
     baseCommand: cat
     inputs: {}
+    outputs: {}
+  - id: ""
+    class: CommandLineTool
+    baseCommand: ls
+    inputs: {}
     outputs: {}"""
-            match decodeError (fun () -> Decode.decodeCWLDocument yaml |> ignore) with
-            | Some error ->
-                Expect.equal (DecodeError.pathText error) "$graph[1]" "The error shows the process."
-                Expect.stringContains error.Message "Expected an id field" "The error says that the id is missing."
-                Expect.isSome error.Span "The error has the place in the text."
-            | None -> failwith "A process without an id must fail."
+            let graph = graphOf yaml
+            Expect.equal (graph.Processes |> Seq.map CWLProcessingUnit.tryGetId |> List.ofSeq) [ Some "main"; None; Some "" ] "The second process has no id and the third has the empty one."
+            let written = Encode.encodeCWLDocument (CWLDocument.Graph graph)
+            Expect.equal (graphOf written) graph "The written text should decode to the same graph."
+            Expect.equal (CWLProcessingUnit.tryGetId (graphOf written).Processes.[1]) None "The process without an id stays without one."
         testCase "a packed document with a class at the root is a decode error at the root" <| fun _ ->
             let yaml = """cwlVersion: v1.2
 class: Workflow
@@ -1279,17 +1273,20 @@ $graph:
                 Expect.stringContains error.Message "no class field" "The error names the field."
                 Expect.isSome error.Span "The error has the place in the text."
             | None -> failwith "A class at the root of a packed document must fail."
-        testCase "two processes of a packed document with one id are a decode error at the second" <| fun _ ->
+        testCase "two processes of a packed document with one id decode with a warning at the second and are written back" <| fun _ ->
             let cases =
                 [ "the same id", TestObjects.CWL.Workflow.PackedDocument.duplicateIdsFile
                   "the same id with and without the #", TestObjects.CWL.Workflow.PackedDocument.duplicateIdsWithHashFile ]
             for (name, yaml) in cases do
-                match decodeError (fun () -> Decode.decodeCWLDocument yaml |> ignore) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) "$graph[1]" $"{name}: the error should show the second process."
-                    Expect.stringContains error.Message "The id main" $"{name}: the error should name the id."
-                    Expect.isSome error.Span $"{name}: the error should have the place in the text."
-                | None -> failwith $"{name} must fail"
+                let decoded = Decode.decodeCWLDocumentWithWarnings yaml
+                let graph = match decoded.Value with CWLDocument.Graph graph -> graph | other -> failwith $"Expected a packed document but got %A{other}"
+                Expect.equal graph.Processes.Count 2 $"{name}: both processes stay in the graph."
+                Expect.equal decoded.Warnings.Count 1 $"{name}: the repeated id is one warning."
+                Expect.equal decoded.Warnings.[0].Path "$graph[1]" $"{name}: the warning should show the second process."
+                Expect.stringContains decoded.Warnings.[0].Message "The id main" $"{name}: the warning should name the id."
+                Expect.isSome decoded.Warnings.[0].Raw $"{name}: the warning should show the process."
+                Expect.equal (CWLGraph.tryFindProcess "main" graph |> Option.map (fun processingUnit -> processingUnit = graph.Processes.[0])) (Some true) $"{name}: the lookup finds the first process."
+                Expect.equal (graphOf (Encode.encodeCWLDocument decoded.Value)) graph $"{name}: the written text should decode to the same graph."
         testCase "a $graph that is no list is a decode error that names the kind of the value" <| fun _ ->
             let mapping = """cwlVersion: v1.2
 $graph:

@@ -190,6 +190,32 @@ outputs: {}"""
             Expect.equal actual expected ""
     ]
 
+let testToolOutputBindingExtensions =
+    let yaml = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs: {}
+outputs:
+  result:
+    type: File
+    outputBinding:
+      glob: result.txt
+      arc:binding note: keep output binding note
+    arc:note: keep output note
+"""
+    testList "Output binding extensions" [
+        testCase "unknown fields of the output binding of a tool output stay on the binding and round trip" <| fun _ ->
+            let check (tool: CWLToolDescription) =
+                let output = tool.Outputs.[0]
+                let outputBinding = Expect.wantSome output.OutputBinding "Output binding should decode."
+                Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" output) (Some "keep output note") "Unknown output fields should be preserved."
+                Expect.isNone (DynObj.tryGetTypedPropertyValue<string> "arc:binding note" output) "Unknown output binding fields should not be flattened onto the output."
+                Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:binding note" outputBinding) (Some "keep output binding note") "Unknown output binding fields should be preserved on the binding."
+            let decoded = Decode.decodeCommandLineTool yaml
+            check decoded
+            check (Decode.decodeCommandLineTool (Encode.encodeToolDescription decoded))
+    ]
+
 let testCWLToolDescriptionMetadata =
     testList "Decode with Metadata" [
         testCase "CWLVersion" <| fun _ ->
@@ -1382,7 +1408,7 @@ steps:
                   "steps.s.run", emptyStepRun
                   "steps.s.out", steps [ "    in: {}"; "    out:" ]
                   "steps.s.in.x", steps [ "    in:"; "      x:"; "    out: []" ]
-                  "steps.s.in.x[1]", steps [ "    in:"; "      - id: x"; "        source:"; "          - a"; "          -"; "    out: []" ]
+                  "steps.s.in.x.source[1]", steps [ "    in:"; "      - id: x"; "        source:"; "          - a"; "          -"; "    out: []" ]
                   "steps.s.out[0].id", steps [ "    in: {}"; "    out:"; "      - id:" ] ]
             for (path, yaml) in cases do
                 match decodeError (fun () -> Decode.decodeCWLProcessingUnit yaml |> ignore) with
@@ -2119,7 +2145,8 @@ let private layoutPieces =
       Spelled("      ", "doc", [ "first line of the tool text"; "second line of the tool text" ])
       Fixed "      baseCommand: [echo]"
       Fixed "      inputs: {}"
-      Fixed "      outputs: {}"
+      Fixed "      outputs:"
+      Fixed "        done: string"
       Fixed "    in:"
       Fixed "      value:"
       Fixed "        source:"
@@ -2849,13 +2876,117 @@ let testInvalidDocuments =
                 Decode.decodeExpressionTool (String.concat "\n" [ "cwlVersion: v1.2"; "class: ExpressionTool"; "inputs: {}"; "outputs:"; "  o:"; "    type: string"; "    outputSource: s/o"; "expression: $(1)"; "" ]) |> ignore)
             let decoded = Decode.decodeWorkflow (workflow [ "inputs:"; "  x: string"; "outputs:"; "  o:"; "    type: string"; "    outputSource: x"; "steps: {}" ])
             Expect.equal decoded.Outputs.[0].OutputSource (Some (OutputSource.Single "x")) "A workflow output names its source."
-        testCase "an id that occurs twice in the list form of inputs, outputs or steps is a decode error at the second" <| fun _ ->
-            expectError "inputs" "inputs[2].id" "The id x belongs to an earlier entry of the list too" (fun () ->
-                Decode.decodeCommandLineTool (tool [ "inputs:"; "  - id: x"; "    type: string"; "  - id: y"; "    type: int"; "  - id: x"; "    type: int"; "outputs: []" ]) |> ignore)
-            expectError "outputs" "outputs[1].id" "The id o belongs to an earlier entry of the list too" (fun () ->
-                Decode.decodeCommandLineTool (tool [ "inputs: []"; "outputs:"; "  - id: o"; "    type: string"; "  - id: o"; "    type: int" ]) |> ignore)
-            expectError "steps" "steps[1].id" "The id s belongs to an earlier entry of the list too" (fun () ->
-                Decode.decodeWorkflow (workflow [ "inputs: {}"; "outputs: {}"; "steps:"; "  - id: s"; "    run: t.cwl"; "    in: {}"; "    out: []"; "  - id: s"; "    run: t.cwl"; "    in: {}"; "    out: []" ]) |> ignore)
+        testCase "outputBinding belongs to the output of a command line tool only" <| fun _ ->
+            let output (extra: string) = [ "outputs:"; "  o:"; "    type: string"; "    " + extra ]
+            let expressionTool (extra: string) = String.concat "\n" ([ "cwlVersion: v1.2"; "class: ExpressionTool"; "inputs: {}" ] @ output extra @ [ "expression: $(1)"; "" ])
+            let operation (extra: string) = String.concat "\n" ([ "cwlVersion: v1.2"; "class: Operation"; "inputs: {}" ] @ output extra @ [ "" ])
+            let binding = "outputBinding: {glob: a}"
+            expectError "a workflow" "outputs.o.outputBinding" "An output of a workflow has no outputBinding. Only an output of a command line tool binds files." (fun () ->
+                Decode.decodeWorkflow (workflow ([ "inputs: {}"; "steps: {}" ] @ output binding)) |> ignore)
+            expectError "an expression tool" "outputs.o.outputBinding" "An output of an expression tool has no outputBinding" (fun () -> Decode.decodeExpressionTool (expressionTool binding) |> ignore)
+            expectError "an operation" "outputs.o.outputBinding" "An output of an operation has no outputBinding" (fun () -> Decode.decodeOperation (operation binding) |> ignore)
+            // The rules are those of v1.2 whatever cwlVersion says, so an older or a later version changes nothing.
+            for version in [ "v1.0"; "v1.3" ] do
+                expectError ("a workflow of " + version) "outputs.o.outputBinding" "An output of a workflow has no outputBinding" (fun () ->
+                    Decode.decodeWorkflow ((workflow ([ "inputs: {}"; "steps: {}" ] @ output binding)).Replace("cwlVersion: v1.2", "cwlVersion: " + version)) |> ignore)
+            let decoded = Decode.decodeCommandLineTool (tool ([ "inputs: {}" ] @ output binding))
+            Expect.equal decoded.Outputs.[0].OutputBinding (Some (OutputBinding(glob = OutputGlob.Single "a"))) "A tool output binds files."
+        testCase "linkMerge and pickValue belong to the output of a workflow only" <| fun _ ->
+            let output (extra: string) = [ "outputs:"; "  o:"; "    type: string"; "    " + extra ]
+            let expressionTool (extra: string) = String.concat "\n" ([ "cwlVersion: v1.2"; "class: ExpressionTool"; "inputs: {}" ] @ output extra @ [ "expression: $(1)"; "" ])
+            let operation (extra: string) = String.concat "\n" ([ "cwlVersion: v1.2"; "class: Operation"; "inputs: {}" ] @ output extra @ [ "" ])
+            for field in [ "linkMerge: merge_nested"; "pickValue: first_non_null" ] do
+                let key = field.Substring(0, field.IndexOf ':')
+                let path = "outputs.o." + key
+                expectError ("a tool, " + key) path ("An output of a command line tool has no " + key) (fun () -> Decode.decodeCommandLineTool (tool ([ "inputs: {}" ] @ output field)) |> ignore)
+                expectError ("an expression tool, " + key) path ("An output of an expression tool has no " + key) (fun () -> Decode.decodeExpressionTool (expressionTool field) |> ignore)
+                expectError ("an operation, " + key) path ("An output of an operation has no " + key) (fun () -> Decode.decodeOperation (operation field) |> ignore)
+            for version in [ "v1.0"; "v1.2" ] do
+                expectError ("a tool of " + version + ", linkMerge") "outputs.o.linkMerge" "An output of a command line tool has no linkMerge" (fun () ->
+                    Decode.decodeCommandLineTool ((tool ([ "inputs: {}" ] @ output "linkMerge: merge_nested")).Replace("cwlVersion: v1.2", "cwlVersion: " + version)) |> ignore)
+            let yaml = workflow [ "inputs:"; "  x: string"; "steps: {}"; "outputs:"; "  o:"; "    type: string[]"; "    outputSource: [x, x]"; "    linkMerge: merge_flattened"; "    pickValue: all_non_null" ]
+            let decoded = Decode.decodeWorkflow yaml
+            Expect.equal decoded.Outputs.[0].OutputSource (Some (OutputSource.Multiple (ResizeArray [ "x"; "x" ]))) "A workflow output names its sources."
+            let written = Encode.encodeWorkflowDescription decoded
+            Expect.stringContains written "linkMerge: merge_flattened" "The workflow output keeps its linkMerge."
+            Expect.stringContains written "pickValue: all_non_null" "The workflow output keeps its pickValue."
+            Expect.equal (Decode.decodeWorkflow written) decoded "The written text should decode to the same workflow."
+        testCase "an id that occurs twice in the list form of step inputs is a warning and both entries are written back as a list" <| fun _ ->
+            let yaml = workflow [ "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run: t.cwl"; "    in:"; "      - id: a"; "        source: x"; "      - id: b"; "        source: y"; "      - id: a"; "        source: [y, z]"; "    out: []" ]
+            let decoded = Decode.decodeWorkflowWithWarnings yaml
+            Expect.equal (decoded.Value.Steps.[0].In |> Seq.map (fun input -> input.Id) |> List.ofSeq) [ "a"; "b"; "a" ] "Every entry stays in the list, in order."
+            Expect.equal decoded.Warnings.Count 1 "The repeated id is one warning."
+            Expect.equal decoded.Warnings.[0].Path "steps.s.in[2]" "The warning shows the repeated entry."
+            Expect.stringContains decoded.Warnings.[0].Message "The id a belongs to an earlier entry of the list too" "The warning names the id."
+            Expect.isSome decoded.Warnings.[0].Raw "The warning shows the entry."
+            let written = Encode.encodeWorkflowDescription decoded.Value
+            Expect.stringContains written "- id: a" "The inputs are written as a list of objects with their ids."
+            Expect.equal (Decode.decodeWorkflow written) decoded.Value "The written text should decode to the same workflow."
+            let plain = Decode.decodeWorkflow (workflow [ "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run: t.cwl"; "    in:"; "      a: x"; "      b: [y, z]"; "    out: []" ])
+            Expect.stringContains (Encode.encodeWorkflowDescription plain) "a: x" "Distinct ids are written as a map."
+        testCase "the out field of a step lists outputs of the inline process that the step runs" <| fun _ ->
+            let inlineStep (run: string list) (outLines: string list) =
+                workflow ([ "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run:" ] @ (run |> List.map (fun line -> "      " + line)) @ [ "    in: {}" ] @ outLines)
+            let toolRun = [ "class: CommandLineTool"; "baseCommand: echo"; "inputs: {}"; "outputs:"; "  r: string"; "  q: string" ]
+            let workflowRun = [ "class: Workflow"; "inputs: {}"; "steps: {}"; "outputs:"; "  w:"; "    type: string"; "    outputSource: x" ]
+            let expressionRun = [ "class: ExpressionTool"; "expression: $(1)"; "inputs: {}"; "outputs:"; "  e: int" ]
+            let operationRun = [ "class: Operation"; "inputs: {}"; "outputs:"; "  o: string" ]
+            let message = "The out field lists the output nope, and the process that the step runs has no output of that name."
+            expectError "a tool" "steps.s.out[1]" (message + " The process has the outputs r, q.") (fun () ->
+                Decode.decodeWorkflow (inlineStep toolRun [ "    out: [r, nope]" ]) |> ignore)
+            expectError "a workflow" "steps.s.out[0]" (message + " The process has the outputs w.") (fun () ->
+                Decode.decodeWorkflow (inlineStep workflowRun [ "    out: [nope]" ]) |> ignore)
+            expectError "an expression tool" "steps.s.out[0]" (message + " The process has the outputs e.") (fun () ->
+                Decode.decodeWorkflow (inlineStep expressionRun [ "    out: [nope]" ]) |> ignore)
+            expectError "an operation" "steps.s.out[0]" (message + " The process has the outputs o.") (fun () ->
+                Decode.decodeWorkflow (inlineStep operationRun [ "    out: [nope]" ]) |> ignore)
+            expectError "an entry in the object form" "steps.s.out[0].id" message (fun () ->
+                Decode.decodeWorkflow (inlineStep toolRun [ "    out:"; "      - id: nope" ]) |> ignore)
+            expectError "a process without outputs" "steps.s.out[0]" "The process has no outputs." (fun () ->
+                Decode.decodeWorkflow (inlineStep [ "class: CommandLineTool"; "baseCommand: echo"; "inputs: {}"; "outputs: {}" ] [ "    out: [nope]" ]) |> ignore)
+            expectError "a step in a list" "steps.s.out[0]" message (fun () ->
+                Decode.decodeWorkflow (workflow ([ "inputs: {}"; "outputs: {}"; "steps:"; "  - id: s"; "    run:" ] @ (toolRun |> List.map (fun line -> "      " + line)) @ [ "    in: {}"; "    out: [nope]" ])) |> ignore)
+            // cwltool compares the short names of the ids, so a name with a hash or with a step in front of it names the output too.
+            for name in [ "r"; "\"#r\""; "s/r"; "\"#q\"" ] do
+                let decoded = Decode.decodeWorkflow (inlineStep toolRun [ "    out: [" + name + "]" ])
+                Expect.equal decoded.Steps.[0].Out.Count 1 (sprintf "The name %s lists an output of the tool." name)
+            Expect.equal (Decode.decodeWorkflow (inlineStep toolRun [ "    out: []" ])).Steps.[0].Out.Count 0 "A step lists no output at all."
+            Expect.equal (Decode.decodeWorkflow (inlineStep toolRun [ "    out: [r, r]" ])).Steps.[0].Out.Count 2 "A step may list an output twice, as cwltool accepts it."
+        testCase "the out field of a step that runs a process of a packed document by #id lists outputs of that process and a file is not read" <| fun _ ->
+            let packed (outEntries: string) (stepFirst: bool) =
+                let mainProcess = [ "  - id: main"; "    class: Workflow"; "    inputs: {}"; "    outputs: {}"; "    steps:"; "      s:"; "        run: \"#tool\""; "        in: {}"; "        out: [" + outEntries + "]" ]
+                let toolProcess = [ "  - id: tool"; "    class: CommandLineTool"; "    baseCommand: echo"; "    inputs: {}"; "    outputs:"; "      r: string" ]
+                String.concat "\n" ([ "cwlVersion: v1.2"; "$graph:" ] @ (if stepFirst then mainProcess @ toolProcess else toolProcess @ mainProcess)) + "\n"
+            for (name, path, stepFirst) in [ "a process behind the step", "$graph[0].steps.s.out[1]", true; "a process before the step", "$graph[1].steps.s.out[1]", false ] do
+                expectError name path "The out field lists the output nope, and the process that the step runs has no output of that name. The process has the outputs r." (fun () ->
+                    Decode.decodeCWLDocument (packed "r, nope" stepFirst) |> ignore)
+            for name in [ "r"; "\"#r\""; "tool/r" ] do
+                Expect.isTrue (match Decode.decodeCWLDocument (packed name true) with CWLDocument.Graph graph -> graph.Processes.Count = 2 | _ -> false) (sprintf "The name %s lists the output of the tool." name)
+            let viaFile = workflow [ "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run: tool.cwl"; "    in: {}"; "    out: [anything]" ]
+            Expect.equal (Decode.decodeWorkflow viaFile).Steps.[0].Out.Count 1 "The decoder reads no file, so the out field of a step that runs a file stays as written."
+        testCase "an id that occurs twice in the list form of inputs, outputs or steps is a warning at the second and the list is written back" <| fun _ ->
+            let inputs = Decode.decodeCommandLineToolWithWarnings (tool [ "inputs:"; "  - id: x"; "    type: string"; "  - id: y"; "    type: int"; "  - id: x"; "    type: int"; "outputs: []" ])
+            Expect.equal (inputs.Value.Inputs.Value |> Seq.map (fun input -> input.Name, input.Type_) |> List.ofSeq) [ "x", Some String; "y", Some Int; "x", Some Int ] "Every input stays in the list, in order."
+            Expect.equal (inputs.Warnings |> Seq.map (fun warning -> warning.Path) |> List.ofSeq) [ "inputs[2]" ] "The warning shows the repeated entry."
+            Expect.stringContains inputs.Warnings.[0].Message "The id x belongs to an earlier entry of the list too" "The warning names the id."
+            let hashed = Decode.decodeCommandLineToolWithWarnings (tool [ "inputs:"; "  - id: x"; "    type: string"; "  - id: \"#x\""; "    type: int"; "outputs: []" ])
+            Expect.equal (hashed.Warnings |> Seq.map (fun warning -> warning.Path) |> List.ofSeq) [ "inputs[1]" ] "An id with a hash is the id without the hash."
+            let outputs = Decode.decodeCommandLineToolWithWarnings (tool [ "inputs: []"; "outputs:"; "  - id: o"; "    type: string"; "  - id: o"; "    type: int" ])
+            Expect.equal (outputs.Value.Outputs |> Seq.map (fun output -> output.Name) |> List.ofSeq) [ "o"; "o" ] "Both outputs stay in the list."
+            Expect.equal (outputs.Warnings |> Seq.map (fun warning -> warning.Path) |> List.ofSeq) [ "outputs[1]" ] "The warning shows the repeated entry."
+            let steps = Decode.decodeWorkflowWithWarnings (workflow [ "inputs: {}"; "outputs: {}"; "steps:"; "  - id: s"; "    run: t.cwl"; "    in: {}"; "    out: []"; "  - id: s"; "    run: u.cwl"; "    in: {}"; "    out: []" ])
+            Expect.equal (steps.Value.Steps |> Seq.map (fun step -> step.Id, step.Run) |> List.ofSeq) [ "s", RunString "t.cwl"; "s", RunString "u.cwl" ] "Both steps stay in the list."
+            Expect.equal (steps.Warnings |> Seq.map (fun warning -> warning.Path) |> List.ofSeq) [ "steps[1]" ] "The warning shows the repeated entry."
+            // A mapping holds a key once, so the lists with a repeated id are written as lists and read back equal.
+            let writtenInputs = Encode.encodeToolDescription inputs.Value
+            Expect.stringContains writtenInputs "- id: x" "The inputs are written as a list of objects with their ids."
+            Expect.equal (Decode.decodeCommandLineTool writtenInputs) inputs.Value "The written inputs should decode to the same tool."
+            let writtenOutputs = Encode.encodeToolDescription outputs.Value
+            Expect.equal (Decode.decodeCommandLineTool writtenOutputs) outputs.Value "The written outputs should decode to the same tool."
+            let writtenSteps = Encode.encodeWorkflowDescription steps.Value
+            Expect.stringContains writtenSteps "- id: s" "The steps are written as a list of objects with their ids."
+            Expect.equal (Decode.decodeWorkflow writtenSteps) steps.Value "The written steps should decode to the same workflow."
+            Expect.isFalse ((Encode.encodeToolDescription (Decode.decodeCommandLineTool (tool [ "inputs:"; "  x: string"; "  y: int"; "outputs: []" ]))).Contains "- id:") "Distinct ids are written as a map."
             Expect.equal (Decode.decodeCommandLineTool (tool [ "inputs:"; "  - id: x"; "    type: string"; "  - id: y"; "    type: int"; "outputs: []" ])).Inputs.Value.Count 2 "Distinct ids are valid."
         testCase "a value of an enum field that CWL does not know, an unknown class and a run of another shape are decode errors with a place" <| fun _ ->
             let step (lines: string list) = stepWith ([ "    in:"; "      x:"; "        source: a" ] @ lines @ [ "    out: []" ])
@@ -2872,16 +3003,135 @@ let testInvalidDocuments =
         testCase "the fields of a record that are no list and no mapping are reported without a dump of the node" <| fun _ ->
             let yaml = tool [ "inputs:"; "  r:"; "    type:"; "      type: record"; "      fields: abc"; "outputs: []" ]
             expectError "fields" "inputs.r.type.fields" "Expected a list of fields or a mapping of fields, found the text \"abc\"." (fun () -> Decode.decodeCommandLineTool yaml |> ignore)
-        testCase "the encoder refuses a packed document with a member without an id or with a repeated id" <| fun _ ->
+        testCase "the encoder writes a packed document with a member without an id or with a repeated id and it reads back" <| fun _ ->
             let member' (id: string option) =
                 CWLProcessingUnit.CommandLineTool (CWLToolDescription(ResizeArray [], baseCommand = ResizeArray [ "echo" ], inputs = ResizeArray [], ?id = id))
-            let encode (members: CWLProcessingUnit list) = Encode.encodeCWLGraph (CWLGraph(ResizeArray members, cwlVersion = "v1.2")) |> ignore
-            Expect.throws (fun () -> encode [ member' (Some "t"); member' (Some "t") ]) "Two members with one id cannot be read back."
-            Expect.throws (fun () -> encode [ member' (Some "t"); member' (Some "#t") ]) "The hash in front of an id does not make it another id."
-            Expect.throws (fun () -> encode [ member' None ]) "A member without an id cannot be read back."
-            Expect.throws (fun () -> encode [ member' (Some "") ]) "An empty id is no id."
-            let written = Encode.encodeCWLGraph (CWLGraph(ResizeArray [ member' (Some "a"); member' (Some "b") ], cwlVersion = "v1.2"))
-            Expect.equal (match Decode.decodeCWLDocument written with CWLDocument.Graph graph -> graph.Processes.Count | _ -> -1) 2 "A graph with distinct ids is written and read back."
+            for (name, members) in [ "two members with one id", [ member' (Some "t"); member' (Some "t") ]
+                                     "a repeated id with a hash", [ member' (Some "t"); member' (Some "#t") ]
+                                     "a member without an id", [ member' None ]
+                                     "a member with an empty id", [ member' (Some "") ]
+                                     "distinct ids", [ member' (Some "a"); member' (Some "b") ] ] do
+                let graph = CWLGraph(ResizeArray members, cwlVersion = "v1.2")
+                let written = Encode.encodeCWLGraph graph
+                match Decode.decodeCWLDocument written with
+                | CWLDocument.Graph again -> Expect.equal again graph (sprintf "%s: the written graph should decode to the same graph." name)
+                | other -> failwith (sprintf "%s: expected a packed document but got %A" name other)
+    ]
+
+let testStrictStrings =
+    let decodeError (yaml: string) =
+        try
+            Decode.decodeCWLDocument yaml |> ignore
+            None
+        with YamlDecodeException error -> Some error
+    let toolHead = "cwlVersion: v1.2\nclass: CommandLineTool\n"
+    let tool (lines: string list) = toolHead + String.concat "\n" lines + "\n"
+    let workflow (lines: string list) = "cwlVersion: v1.2\nclass: Workflow\n" + String.concat "\n" lines + "\n"
+    let step (stepLines: string list) =
+        workflow ([ "inputs: {}"; "outputs: {}"; "steps:"; "  s:" ] @ (stepLines |> List.map (fun line -> "    " + line)))
+
+    testList "Strict string fields" [
+        testCase "a plain int, bool or float in a string field is a decode error at the field and a quoted spelling is a string" <| fun _ ->
+            let port (field: string) = tool [ "baseCommand: cat"; "inputs:"; "  x:"; "    type: string"; "    " + field; "outputs: {}" ]
+            let output (field: string) = tool [ "baseCommand: cat"; "inputs: {}"; "outputs:"; "  o:"; "    type: File"; "    " + field ]
+            let requirement (lines: string list) = tool ([ "baseCommand: cat"; "inputs: {}"; "outputs: {}"; "requirements:" ] @ lines)
+            // The path of the error, the document with {0} where the scalar stands, and whether the quoted spelling decodes.
+            let cases =
+                [ "outputs.o.outputBinding.glob", output "outputBinding: {glob: {0}}", true
+                  "outputs.o.outputBinding.glob[1]", output "outputBinding: {glob: [a, {0}]}", true
+                  "outputs.o.outputBinding.outputEval", output "outputBinding: {outputEval: {0}}", true
+                  "outputs.o.format", output "format: {0}", true
+                  "inputs.x.inputBinding.prefix", port "inputBinding: {prefix: {0}}", true
+                  "inputs.x.inputBinding.itemSeparator", port "inputBinding: {itemSeparator: {0}}", true
+                  "inputs.x.inputBinding.valueFrom", port "inputBinding: {valueFrom: {0}}", true
+                  "inputs.x.format", port "format: {0}", true
+                  "inputs.x.format[1]", port "format: [a, {0}]", true
+                  "baseCommand", tool [ "baseCommand: {0}"; "inputs: {}"; "outputs: {}" ], true
+                  "baseCommand[1]", tool [ "baseCommand: [echo, {0}]"; "inputs: {}"; "outputs: {}" ], true
+                  "stdin", tool [ "baseCommand: cat"; "stdin: {0}"; "inputs: {}"; "outputs: {}" ], true
+                  "stdout", tool [ "baseCommand: cat"; "stdout: {0}"; "inputs: {}"; "outputs: {}" ], true
+                  "stderr", tool [ "baseCommand: cat"; "stderr: {0}"; "inputs: {}"; "outputs: {}" ], true
+                  "intent[1]", tool [ "baseCommand: cat"; "intent: [a, {0}]"; "inputs: {}"; "outputs: {}" ], true
+                  "id", tool [ "id: {0}"; "baseCommand: cat"; "inputs: {}"; "outputs: {}" ], true
+                  "class", "cwlVersion: v1.2\nclass: {0}\ninputs: {}\noutputs: {}\n", false
+                  "requirements[0].class", requirement [ "  - {class: {0}}" ], false
+                  "requirements[0].dockerPull", requirement [ "  - {class: DockerRequirement, dockerPull: {0}}" ], true
+                  "requirements[0].dockerImageId", requirement [ "  - {class: DockerRequirement, dockerImageId: {0}}" ], true
+                  "requirements[0].envDef[0].envName", requirement [ "  - class: EnvVarRequirement"; "    envDef: [{envName: {0}, envValue: a}]" ], true
+                  "requirements[0].envDef[0].envValue", requirement [ "  - class: EnvVarRequirement"; "    envDef: [{envName: A, envValue: {0}}]" ], true
+                  "requirements[0].packages[0].package", requirement [ "  - class: SoftwareRequirement"; "    packages: [{package: {0}}]" ], true
+                  "requirements[0].packages[0].version[0]", requirement [ "  - class: SoftwareRequirement"; "    packages: [{package: p, version: [{0}]}]" ], true
+                  "requirements[0].packages[0].specs[0]", requirement [ "  - class: SoftwareRequirement"; "    packages: [{package: p, specs: [{0}]}]" ], true
+                  "requirements[0].expressionLib[0]", requirement [ "  - {class: InlineJavascriptRequirement, expressionLib: [{0}]}" ], true
+                  "steps.s.scatter", step [ "run: t.cwl"; "in: {}"; "out: []"; "scatter: {0}" ], true
+                  "steps.s.scatter[0]", step [ "run: t.cwl"; "in: {}"; "out: []"; "scatter: [{0}]" ], true
+                  "steps.s.when", step [ "run: t.cwl"; "in: {}"; "out: []"; "when: {0}" ], true
+                  "steps.s.out[0]", step [ "run: t.cwl"; "in: {}"; "out: [{0}]" ], true
+                  "steps.s.run", step [ "run: {0}"; "in: {}"; "out: []" ], true
+                  "steps.s.in.x", step [ "run: t.cwl"; "in: {x: {0}}"; "out: []" ], true
+                  "steps.s.in.x.source", step [ "run: t.cwl"; "in: {x: {source: {0}}}"; "out: []" ], true
+                  "steps.s.in.x.source[1]", step [ "run: t.cwl"; "in: {x: {source: [a, {0}]}}"; "out: []" ], true
+                  "steps.s.in.x.valueFrom", step [ "run: t.cwl"; "in: {x: {valueFrom: {0}}}"; "out: []" ], true
+                  "outputs.o.outputSource", workflow [ "inputs: {}"; "steps: {}"; "outputs:"; "  o:"; "    type: string"; "    outputSource: {0}" ], true ]
+            for (path, template, quotedDecodes) in cases do
+                for text in [ "5"; "true"; "1.5" ] do
+                    match decodeError (template.Replace("{0}", text)) with
+                    | Some error ->
+                        Expect.equal (DecodeError.pathText error) path (sprintf "The error for %s should show the field:\n%s" text template)
+                        Expect.stringContains error.Message "Expected a string, found the plain scalar" (sprintf "The error for %s at %s should say what CWL expects." text path)
+                        Expect.isSome error.Span (sprintf "The error for %s at %s should have the place in the text." text path)
+                    | None -> failwith (sprintf "A plain %s at %s must fail:\n%s" text path template)
+                if quotedDecodes then
+                    Expect.isNone (decodeError (template.Replace("{0}", "\"5\""))) (sprintf "A quoted 5 at %s is a string." path)
+        testCase "a plain scalar key of an id map is a decode error at the key and a quoted key is a name" <| fun _ ->
+            let cases =
+                [ "inputs", tool [ "baseCommand: cat"; "inputs:"; "  {0}: string"; "outputs: {}" ]
+                  "outputs", tool [ "baseCommand: cat"; "inputs: {}"; "outputs:"; "  {0}: string" ]
+                  "requirements", tool [ "baseCommand: cat"; "inputs: {}"; "outputs: {}"; "requirements:"; "  {0}: {}" ]
+                  "hints", tool [ "baseCommand: cat"; "inputs: {}"; "outputs: {}"; "hints:"; "  {0}: {}" ]
+                  "requirements[0].envDef", tool [ "baseCommand: cat"; "inputs: {}"; "outputs: {}"; "requirements:"; "  - class: EnvVarRequirement"; "    envDef:"; "      {0}: a" ]
+                  "requirements[0].packages", tool [ "baseCommand: cat"; "inputs: {}"; "outputs: {}"; "requirements:"; "  - class: SoftwareRequirement"; "    packages:"; "      {0}: []" ]
+                  "inputs.x.type.fields", tool [ "baseCommand: cat"; "inputs:"; "  x:"; "    type:"; "      type: record"; "      fields:"; "        {0}: string"; "outputs: {}" ]
+                  "steps", workflow [ "inputs: {}"; "outputs: {}"; "steps:"; "  {0}:"; "    run: t.cwl"; "    in: {}"; "    out: []" ]
+                  "steps.s.in", step [ "run: t.cwl"; "in:"; "  {0}: a"; "out: []" ] ]
+            for (path, template) in cases do
+                for text in [ "5"; "true"; "1.5"; "null" ] do
+                    match decodeError (template.Replace("{0}", text)) with
+                    | Some error ->
+                        Expect.equal (DecodeError.pathText error) path (sprintf "The error for the key %s should show the map:\n%s" text template)
+                        Expect.stringContains error.Message "Expected a string, found" (sprintf "The error for the key %s at %s should say what CWL expects." text path)
+                    | None -> failwith (sprintf "A plain %s as a key at %s must fail:\n%s" text path template)
+                // A quoted key of requirements is a class name, and no class is called 5.
+                if path <> "requirements" then
+                    Expect.isNone (decodeError (template.Replace("{0}", "\"5\""))) (sprintf "A quoted 5 as a key at %s is a name." path)
+        testCase "a plain bool where CWL asks for a number is a decode error at the field" <| fun _ ->
+            let cases =
+                [ "requirements[0].timelimit", [ "  - class: ToolTimeLimit"; "    timelimit: true" ]
+                  "requirements[0].coresMin", [ "  - class: ResourceRequirement"; "    coresMin: true" ]
+                  "requirements[0].ramMin", [ "  - class: ResourceRequirement"; "    ramMin: false" ] ]
+            for (path, lines) in cases do
+                match decodeError (tool ([ "baseCommand: cat"; "inputs: {}"; "outputs: {}"; "requirements:" ] @ lines)) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path "The error should show the field."
+                    Expect.isSome error.Span "The error should have the place in the text."
+                | None -> failwith (sprintf "A plain bool at %s must fail." path)
+        testCase "a float, a quoted number or a bool in a list of codes is a decode error at the code" <| fun _ ->
+            for (path, yaml) in [ "successCodes[0]", tool [ "baseCommand: cat"; "successCodes: [1.5]"; "inputs: {}"; "outputs: {}" ]
+                                  "successCodes[0]", tool [ "baseCommand: cat"; "successCodes: [\"0\"]"; "inputs: {}"; "outputs: {}" ]
+                                  "successCodes[0]", tool [ "baseCommand: cat"; "successCodes: [true, 0, 3]"; "inputs: {}"; "outputs: {}" ]
+                                  "temporaryFailCodes[0]", tool [ "baseCommand: cat"; "temporaryFailCodes: [false]"; "inputs: {}"; "outputs: {}" ] ] do
+                match decodeError yaml with
+                | Some error -> Expect.equal (DecodeError.pathText error) path "A float, a quoted number or a bool is no int."
+                | None -> failwith (sprintf "%s must fail:\n%s" path yaml)
+        testCase "a plain int or float where CWL asks for a bool or an expression is a decode error" <| fun _ ->
+            for (path, template) in [ "requirements[0].enableReuse", "  - {class: WorkReuse, enableReuse: {0}}"; "requirements[0].networkAccess", "  - {class: NetworkAccess, networkAccess: {0}}" ] do
+                for text in [ "5"; "1.5" ] do
+                    let yaml = tool [ "baseCommand: cat"; "inputs: {}"; "outputs: {}"; "requirements:"; template.Replace("{0}", text) ]
+                    match decodeError yaml with
+                    | Some error ->
+                        Expect.equal (DecodeError.pathText error) path (sprintf "The error for %s should show the field." text)
+                        Expect.stringContains error.Message "Expected a string, found the plain scalar" (sprintf "The error for %s at %s should say what CWL expects." text path)
+                    | None -> failwith (sprintf "A plain %s at %s must fail." text path)
     ]
 
 let main =
@@ -2890,6 +3140,7 @@ let main =
         testCWLToolDescriptionEncode
         testEncodeNormalizeEdgeCases
         testCWLToolDescriptionMetadata
+        testToolOutputBindingExtensions
         testNestedArrayDecoding
         testUnionArrayItemDecoding
         testStringScalars
@@ -2898,6 +3149,7 @@ let main =
         testStreamTypes
         testYamlReaderAndWriter
         testDocAndLabelLayout
+        testStrictStrings
         testEqualityOfDecodedObjects
         testExpressionTool
         testOperation

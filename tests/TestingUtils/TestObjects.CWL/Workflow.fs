@@ -172,7 +172,8 @@ steps:
       class: ExpressionTool
       cwlVersion: v1.2
       inputs: {}
-      outputs: {}
+      outputs:
+        out: string
       expression: $(null)
     in: {}
     out: [out]"""
@@ -942,9 +943,6 @@ outputs:
 - id: result
   type: File
   outputSource: step1/out
-  outputBinding:
-    glob: result.txt
-    arc:binding note: keep output binding note
   arc:note: keep output note
 steps:
 - id: step1

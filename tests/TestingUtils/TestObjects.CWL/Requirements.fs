@@ -660,3 +660,71 @@ inputs:
   x: Point?
 outputs: []
 """
+
+/// Documents with SchemaDefRequirements at several levels of nested workflows. cwltool hands the steps of a workflow the
+/// first SchemaDefRequirement of the requirements that it holds, so the outermost one reaches a tool below nested
+/// workflows, and a requirement of the tool replaces it.
+module SchemaDefNested =
+
+    /// A workflow with the type Outer, a nested workflow with the type Inner, and a tool below both that names the type
+    /// through the {0} placeholder.
+    let nestedWorkflowsFile = """cwlVersion: v1.2
+class: Workflow
+id: wf
+requirements:
+  - class: SubworkflowFeatureRequirement
+  - class: SchemaDefRequirement
+    types:
+      - name: Outer
+        type: enum
+        symbols: [a]
+inputs: {}
+outputs: {}
+steps:
+  s:
+    run:
+      class: Workflow
+      requirements:
+        - class: SchemaDefRequirement
+          types:
+            - name: Inner
+              type: enum
+              symbols: [a]
+      inputs: {}
+      outputs: {}
+      steps:
+        t:
+          run:
+            class: CommandLineTool
+            baseCommand: x
+            inputs:
+              p: "{0}"
+            outputs: {}
+          in:
+            p:
+              default: a
+          out: []
+    in: {}
+    out: []
+"""
+
+    /// A tool with a port in the type of an inline enum, and a second port that names the enum by its id.
+    let portSchemaFile = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs:
+  a:
+    type:
+      type: enum
+      name: Color
+      symbols: [red]
+    default: red
+  b:
+    type: "{0}"
+    default: red
+outputs:
+  o:
+    type: "{1}"
+    outputBinding:
+      glob: out.txt
+"""

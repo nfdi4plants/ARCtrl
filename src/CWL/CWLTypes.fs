@@ -552,14 +552,16 @@ and [<CustomEquality; NoComparison>] CWLType =
         | Stdin -> hash 17
         | Reference name -> hash (18, name)
 
-/// The schema that a SchemaDefRequirement defines. CWL admits record and enum schemas there and no other type, so an
-/// alias for a builtin type and an array schema have no case. A union of the two schema classes holds that rule in the
-/// type itself, and no place has to check it. The schema keeps its own name, which is optional, and its own extension
-/// fields.
+/// The schema that a SchemaDefRequirement defines. CWL admits record, enum and array schemas there and no other type,
+/// so an alias for a builtin type has no case. A union of the three schema classes holds that rule in the type itself,
+/// and no place has to check it. The schema keeps its own name, which is optional, and its own extension fields. A port
+/// cannot name an array definition, because cwltool reports its name as an unknown type, so the case only holds the
+/// definition of a document that never uses it.
 [<RequireQualifiedAccess; CustomEquality; NoComparison; AttachMembers>]
 type SchemaDefinition =
     | Record of InputRecordSchema
     | Enum of InputEnumSchema
+    | Array of InputArraySchema
     with
     override this.Equals(o: obj) =
         match o with
@@ -567,6 +569,7 @@ type SchemaDefinition =
             match this, other with
             | Record left, Record right -> left.Equals(right)
             | Enum left, Enum right -> left.Equals(right)
+            | Array left, Array right -> left.Equals(right)
             | _ -> false
         | _ -> false
 
@@ -574,6 +577,7 @@ type SchemaDefinition =
         match this with
         | Record schema -> hash (0, schema)
         | Enum schema -> hash (1, schema)
+        | Array schema -> hash (2, schema)
 
 
 [<AttachMembers>]
