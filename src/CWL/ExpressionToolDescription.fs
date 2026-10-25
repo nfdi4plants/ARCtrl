@@ -10,7 +10,7 @@ type CWLExpressionToolDescription (
         ?cwlVersion: string,
         ?requirements: ResizeArray<Requirement>,
         ?hints: ResizeArray<HintEntry>,
-        ?intent: ResizeArray<string>,
+        ?intent: ResizeArray<SchemaSaladString>,
         ?inputs: ResizeArray<ListEntry<CWLInput>>,
         ?metadata: DynamicObj,
         ?label: SchemaSaladString,
@@ -25,7 +25,7 @@ type CWLExpressionToolDescription (
     let mutable _expression: SchemaSaladString = expression
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<HintEntry> option = hints
-    let mutable _intent: ResizeArray<string> option = intent
+    let mutable _intent: ResizeArray<SchemaSaladString> option = intent
     let mutable _inputs: ResizeArray<ListEntry<CWLInput>> option = inputs
     let mutable _metadata: DynamicObj option = metadata
     let mutable _label: SchemaSaladString option = label
@@ -85,12 +85,14 @@ type CWLExpressionToolDescription (
     static member KnownFieldNames =
         CWLKnownFieldNames.expressionToolDescription
 
-    /// Returns the inputs of the expression tool, or an empty list. The imports are left out, and the list is a new one.
-    static member getInputsOrEmpty (tool: CWLExpressionToolDescription) : ResizeArray<CWLInput> =
+    /// Returns a new list of the inputs of the expression tool that are objects, or an empty list. The imports and the
+    /// mixins are left out, so a change of the list changes nothing in the tool. The entries of the tool are in Inputs.
+    static member getInputValuesOrEmpty (tool: CWLExpressionToolDescription) : ResizeArray<CWLInput> =
         tool.Inputs |> Option.map ListEntry.values |> Option.defaultValue (ResizeArray())
 
-    /// Returns the outputs of the expression tool. The imports are left out, and the list is a new one.
-    static member getOutputs (tool: CWLExpressionToolDescription) : ResizeArray<CWLOutput> =
+    /// Returns a new list of the outputs of the expression tool that are objects. The imports and the mixins are left out,
+    /// so a change of the list changes nothing in the tool. The entries of the tool are in Outputs.
+    static member getOutputValues (tool: CWLExpressionToolDescription) : ResizeArray<CWLOutput> =
         ListEntry.values tool.Outputs
 
     /// Returns the entries of the expression tool's inputs, creating and assigning a new empty ResizeArray if None.

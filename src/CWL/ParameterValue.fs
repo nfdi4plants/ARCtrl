@@ -74,7 +74,7 @@ module CWLParameterValue =
         let tryConvert (convert: unit -> int64) =
             try Some (convert()) with _ -> None
         match value with
-        | :? int as value -> Some (int64 value)
+        | :? int as value -> IntegerOf.tryNumber (float value)
         | :? int64 as value -> Some value
         | :? decimal as value ->
             tryConvert (fun () ->

@@ -1842,7 +1842,7 @@ let tests_FormalParameter =
             testCase "Simple_Optional" (fun () ->
                 let name = "MyInput"
                 let t = CWLType.String
-                let input = CWL.CWLInput(name = name, type_ = t, optional = true)
+                let input = CWL.CWLInput(name = name, type_ = CWL.CWLType.makeOptional t)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
                 Expect.equal name' name "FormalParameter name should match input name"
@@ -1874,6 +1874,18 @@ let tests_FormalParameter =
                 Expect.isTrue (LDPropertyValue.validatePosition id) "Identifier should be a position"
                 let position = Expect.wantSome (LDPropertyValue.tryGetValueAsString id) "Identifier should have a position"
                 Expect.equal position "1" "Position should match input binding" 
+            )
+            testCase "A position that is an expression or a directive has no identifier" (fun () ->
+                for position in [ BindingPosition.Expression "$(1 + 1)"; BindingPosition.Imported "p.yml"; BindingPosition.Included "p.txt"; BindingPosition.Mixed { Node = YAMLicious.Reader.readRoot "{$mixin: p.yml}" } ] do
+                    let binding = InputBinding.create(position = position)
+                    let input = CWL.CWLInput(name = "MyInput", type_ = CWLType.String, inputBinding = binding)
+                    let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+                    Expect.hasLength (LDFormalParameter.getIdentifiers formalParameter) 0 (sprintf "%A: the position has no number to write." position)
+                let withPrefix = InputBinding.create(prefix = (SchemaSaladString.Literal "--x"), position = BindingPosition.Imported "p.yml")
+                let formalParameter = WorkflowConversion.composeFormalParameterFromInput (CWL.CWLInput(name = "MyInput", type_ = CWLType.String, inputBinding = withPrefix))
+                let identifiers = LDFormalParameter.getIdentifiers formalParameter
+                Expect.hasLength identifiers 1 "The prefix stays and the directive position is left out."
+                Expect.isTrue (LDPropertyValue.validatePrefix identifiers.[0]) "The identifier is the prefix."
             )
             testCase "PrefixPosition" (fun () ->
                 let name = "MyInput"
@@ -2381,7 +2393,7 @@ let tests_AdditionalTypeErrorHandling =
                 let result = WorkflowConversion.decomposeAdditionalType recordWithoutFields
                 match result with
                 | CWLType.Record schema -> 
-                    Expect.isTrue (schema.Fields.IsNone || (InputRecordSchema.getFieldsOrEmpty schema).Count = 0) "Should create empty record"
+                    Expect.isTrue (schema.Fields.IsNone || (InputRecordSchema.getFieldValuesOrEmpty schema).Count = 0) "Should create empty record"
                 | _ -> failwith "Should decode as record type"
             )
             testCase "MalformedEnum_MissingSymbols" (fun () ->
@@ -2888,6 +2900,7 @@ let tests_ArcWorkflow =
                 match step.Run with
                 | CWL.RunString runPath
                 | CWL.RunImport runPath -> runPath
+                | CWL.RunMixed raw -> raw.MixinPath
                 | CWL.RunCommandLineTool _ -> "inline:CommandLineTool"
                 | CWL.RunWorkflow _ -> "inline:Workflow"
                 | CWL.RunExpressionTool _ -> "inline:ExpressionTool"
@@ -3028,7 +3041,7 @@ let tests_ArcWorkflow =
 
             let commandLineToolSignatures (tool: CWL.CWLToolDescription) =
                 let inputSignatures =
-                    CWL.CWLToolDescription.getInputsOrEmpty tool
+                    CWL.CWLToolDescription.getInputValuesOrEmpty tool
                     |> Seq.map inputSignature
                     |> Seq.sortBy (fun (name, _, _, _) -> name)
                     |> Seq.toList
@@ -3113,6 +3126,21 @@ let tests_ArcWorkflow =
                     Expect.isTrue false $"Expected RunString marker but got %A{other}"
             | other ->
                 Expect.isTrue false $"Expected Workflow but got %A{other}"
+        )
+        testCase "Tool_WithMixedPorts_ConvertsTheTypedPortsOnly" (fun () ->
+            let tool =
+                CWL.Decode.decodeCommandLineTool "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n  x: {$mixin: mix.yml}\n  y: string\n  z: {type: int, $mixin: typed.yml}\noutputs:\n  - {id: o, $mixin: out.yml}\n  - {id: p, type: stdout}\n"
+            Expect.equal tool.Inputs.Value.Count 3 "The three inputs stay in the tool."
+            let protocol = WorkflowConversion.composeWorkflowProtocolFromToolDescription("tools/mixed.cwl", tool)
+            let roundTripped = WorkflowConversion.decomposeWorkflowProtocolToToolDescription protocol
+            Expect.equal (CWL.ListEntry.values roundTripped.Inputs.Value |> Seq.map (fun input -> input.Name) |> List.ofSeq) [ "y" ] "Only the typed input is converted, because the file of a mixin holds the type of the others."
+            Expect.equal (CWL.ListEntry.values roundTripped.Outputs |> Seq.map (fun output -> output.Name) |> List.ofSeq) [ "p" ] "Only the typed output is converted."
+        )
+        testCase "Workflow_WithMixedRun_UsesThePathOfTheMixinAsIdentifier" (fun () ->
+            let workflow =
+                CWL.Decode.decodeWorkflow "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  s:\n    run: {$mixin: tools/echo.cwl}\n    in: {}\n    out: []\n"
+            let step = (CWL.ListEntry.values workflow.Steps).[0]
+            Expect.equal (WorkflowConversion.runToIdentifier step.Run) "tools/echo.cwl" "The identifier is the path of the mixin, as it is the path of an import."
         )
     ]
 
@@ -3432,7 +3460,7 @@ let tests_ArcRun =
 
             let toolSignatures (tool: CWL.CWLToolDescription) =
                 let inputSignatures =
-                    CWL.CWLToolDescription.getInputsOrEmpty tool
+                    CWL.CWLToolDescription.getInputValuesOrEmpty tool
                     |> Seq.map workflowInputSignature
                     |> Seq.sortBy (fun (name, _, _, _) -> name)
                     |> Seq.toList

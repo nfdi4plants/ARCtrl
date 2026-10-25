@@ -3,15 +3,27 @@ namespace ARCtrl.CWL
 open DynamicObj
 open Fable.Core
 
+/// How a step input merges the values of several sources. A directive stands for the name of the symbol, and the decoder
+/// reads no file, so it stays as written. An $import and a $mixin take the data of a file, and an $include takes its
+/// text, which is the name of the symbol.
 [<AttachMembers>]
 type LinkMergeMethod =
     | MergeNested
     | MergeFlattened
+    | ImportedLinkMerge of string
+    | IncludedLinkMerge of string
+    /// A mapping with a $mixin directive, alone or beside other fields, kept as it was written.
+    | MixedLinkMerge of RawYaml
     with
+    /// The name of the symbol as a document spells it, and for a directive the text with the directive in front of the
+    /// path. The text of a directive serves for display, because the encoder writes the directive as a mapping.
     member this.AsCwlString =
         match this with
         | MergeNested -> "merge_nested"
         | MergeFlattened -> "merge_flattened"
+        | ImportedLinkMerge path -> (SchemaSaladString.Import path).AsDirectiveString
+        | IncludedLinkMerge path -> (SchemaSaladString.Include path).AsDirectiveString
+        | MixedLinkMerge raw -> (SchemaSaladString.Mixed raw).AsDirectiveString
 
     static member tryParse(value: string) =
         match value with
@@ -19,17 +31,28 @@ type LinkMergeMethod =
         | "merge_flattened" -> Some MergeFlattened
         | _ -> None
 
+/// Which of the values of several sources a step input or a workflow output picks. A directive stands for the name of
+/// the symbol, as in LinkMergeMethod.
 [<AttachMembers>]
 type PickValueMethod =
     | FirstNonNull
     | TheOnlyNonNull
     | AllNonNull
+    | ImportedPickValue of string
+    | IncludedPickValue of string
+    /// A mapping with a $mixin directive, alone or beside other fields, kept as it was written.
+    | MixedPickValue of RawYaml
     with
+    /// The name of the symbol as a document spells it, and for a directive the text with the directive in front of the
+    /// path. The text of a directive serves for display, because the encoder writes the directive as a mapping.
     member this.AsCwlString =
         match this with
         | FirstNonNull -> "first_non_null"
         | TheOnlyNonNull -> "the_only_non_null"
         | AllNonNull -> "all_non_null"
+        | ImportedPickValue path -> (SchemaSaladString.Import path).AsDirectiveString
+        | IncludedPickValue path -> (SchemaSaladString.Include path).AsDirectiveString
+        | MixedPickValue raw -> (SchemaSaladString.Mixed raw).AsDirectiveString
 
     static member tryParse(value: string) =
         match value with
@@ -38,17 +61,27 @@ type PickValueMethod =
         | "all_non_null" -> Some AllNonNull
         | _ -> None
 
+/// How a scattered step combines its inputs. A directive stands for the name of the symbol, as in LinkMergeMethod.
 [<AttachMembers>]
 type ScatterMethod =
     | DotProduct
     | NestedCrossProduct
     | FlatCrossProduct
+    | ImportedScatterMethod of string
+    | IncludedScatterMethod of string
+    /// A mapping with a $mixin directive, alone or beside other fields, kept as it was written.
+    | MixedScatterMethod of RawYaml
     with
+    /// The name of the symbol as a document spells it, and for a directive the text with the directive in front of the
+    /// path. The text of a directive serves for display, because the encoder writes the directive as a mapping.
     member this.AsCwlString =
         match this with
         | DotProduct -> "dotproduct"
         | NestedCrossProduct -> "nested_crossproduct"
         | FlatCrossProduct -> "flat_crossproduct"
+        | ImportedScatterMethod path -> (SchemaSaladString.Import path).AsDirectiveString
+        | IncludedScatterMethod path -> (SchemaSaladString.Include path).AsDirectiveString
+        | MixedScatterMethod raw -> (SchemaSaladString.Mixed raw).AsDirectiveString
 
     static member tryParse(value: string) =
         match value with
@@ -60,13 +93,13 @@ type ScatterMethod =
 [<AttachMembers>]
 type StepInput (
     id: string,
-    ?source: ResizeArray<string>,
+    ?source: ResizeArray<SchemaSaladString>,
     ?defaultValue: RawYaml,
     ?valueFrom: SchemaSaladString,
     ?linkMerge: LinkMergeMethod,
     ?pickValue: PickValueMethod,
     ?doc: DocText,
-    ?loadContents: bool,
+    ?loadContents: SchemaSaladBool,
     ?loadListing: LoadListingEnum,
     ?label: SchemaSaladString
 ) =
@@ -163,13 +196,13 @@ type StepInput (
 
     static member create(
         id: string,
-        ?source: ResizeArray<string>,
+        ?source: ResizeArray<SchemaSaladString>,
         ?defaultValue: RawYaml,
         ?valueFrom: SchemaSaladString,
         ?linkMerge: LinkMergeMethod,
         ?pickValue: PickValueMethod,
         ?doc: DocText,
-        ?loadContents: bool,
+        ?loadContents: SchemaSaladBool,
         ?loadListing: LoadListingEnum,
         ?label: SchemaSaladString
     ) =
@@ -291,7 +324,7 @@ type WorkflowStep (
     run: WorkflowStepRun,
     ?label: SchemaSaladString,
     ?doc: DocText,
-    ?scatter: ResizeArray<string>,
+    ?scatter: ResizeArray<SchemaSaladString>,
     ?scatterMethod: ScatterMethod,
     ?when_: SchemaSaladString,
     ?requirements: ResizeArray<Requirement>,
@@ -305,7 +338,7 @@ type WorkflowStep (
     let mutable _run: WorkflowStepRun = run
     let mutable _label: SchemaSaladString option = label
     let mutable _doc: DocText option = doc
-    let mutable _scatter: ResizeArray<string> option = scatter
+    let mutable _scatter: ResizeArray<SchemaSaladString> option = scatter
     let mutable _scatterMethod: ScatterMethod option = scatterMethod
     let mutable _when: SchemaSaladString option = when_
     let mutable _requirements: ResizeArray<Requirement> option = requirements
@@ -380,7 +413,7 @@ type WorkflowStep (
         runPath: string,
         ?label: SchemaSaladString,
         ?doc: DocText,
-        ?scatter: ResizeArray<string>,
+        ?scatter: ResizeArray<SchemaSaladString>,
         ?scatterMethod: ScatterMethod,
         ?when_: SchemaSaladString,
         ?requirements: ResizeArray<Requirement>,
@@ -408,16 +441,17 @@ type WorkflowStep (
     static member getResolvedRun (step: WorkflowStep) : WorkflowStepRun =
         defaultArg step.ResolvedRun.Run step.Run
 
-    /// Returns the inputs of the step. The imports are left out, and the list is a new one.
-    static member getInputs (step: WorkflowStep) : ResizeArray<StepInput> =
+    /// Returns a new list of the inputs of the step that are objects. The imports and the mixins are left out, so a change
+    /// of the list changes nothing in the step. The entries of the step are in In.
+    static member getInputValues (step: WorkflowStep) : ResizeArray<StepInput> =
         ListEntry.values step.In
 
-    /// Returns the outputs of the step that the document writes out as an id or an object. The directives are left out,
-    /// and the list is a new one.
-    static member getOutputs (step: WorkflowStep) : ResizeArray<StepOutput> =
+    /// Returns a new list of the outputs of the step that the document writes out as an id or an object. The directives
+    /// are left out, so a change of the list changes nothing in the step. The entries of the step are in Out.
+    static member getOutputValues (step: WorkflowStep) : ResizeArray<StepOutput> =
         step.Out |> Seq.filter (fun output -> (StepOutput.tryId output).IsSome) |> ResizeArray
 
-    /// Updates a workflow step input by the index of its entry. An import has no input to update.
+    /// Updates a workflow step input by the index of its entry. An import and a mixin have no input to update.
     static member updateInputAt (index: int) (f: StepInput -> StepInput) (step: WorkflowStep) =
         StepInput.updateAt index f step.In
 
@@ -425,7 +459,7 @@ type WorkflowStep (
     static member addInput (input: StepInput) (step: WorkflowStep) =
         step.In.Add (ListEntry.Value input)
 
-    /// Removes all StepInputs matching the provided id. The imports stay.
+    /// Removes all StepInputs matching the provided id. The imports and the mixins stay.
     /// Reassigns step.In to a new filtered ResizeArray.
     static member removeInputsById (id: string) (step: WorkflowStep) =
         step.In

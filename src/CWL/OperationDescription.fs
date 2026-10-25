@@ -10,7 +10,7 @@ type CWLOperationDescription(
     ?cwlVersion: string,
     ?requirements: ResizeArray<Requirement>,
     ?hints: ResizeArray<HintEntry>,
-    ?intent: ResizeArray<string>,
+    ?intent: ResizeArray<SchemaSaladString>,
     ?metadata: DynamicObj,
     ?label: SchemaSaladString,
     ?doc: DocText,
@@ -24,7 +24,7 @@ type CWLOperationDescription(
     let mutable _outputs: ResizeArray<ListEntry<CWLOutput>> = outputs
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<HintEntry> option = hints
-    let mutable _intent: ResizeArray<string> option = intent
+    let mutable _intent: ResizeArray<SchemaSaladString> option = intent
     let mutable _metadata: DynamicObj option = metadata
     let mutable _label: SchemaSaladString option = label
     let mutable _doc: DocText option = doc
@@ -79,12 +79,14 @@ type CWLOperationDescription(
     static member KnownFieldNames =
         CWLKnownFieldNames.operationDescription
 
-    /// Returns the inputs of the operation. The imports are left out, and the list is a new one.
-    static member getInputs (operation: CWLOperationDescription) : ResizeArray<CWLInput> =
+    /// Returns a new list of the inputs of the operation that are objects. The imports and the mixins are left out, so a
+    /// change of the list changes nothing in the operation. The entries of the operation are in Inputs.
+    static member getInputValues (operation: CWLOperationDescription) : ResizeArray<CWLInput> =
         ListEntry.values operation.Inputs
 
-    /// Returns the outputs of the operation. The imports are left out, and the list is a new one.
-    static member getOutputs (operation: CWLOperationDescription) : ResizeArray<CWLOutput> =
+    /// Returns a new list of the outputs of the operation that are objects. The imports and the mixins are left out, so a
+    /// change of the list changes nothing in the operation. The entries of the operation are in Outputs.
+    static member getOutputValues (operation: CWLOperationDescription) : ResizeArray<CWLOutput> =
         ListEntry.values operation.Outputs
 
     static member getRequirementsOrEmpty (operation: CWLOperationDescription) =

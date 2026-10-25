@@ -100,7 +100,7 @@ type DockerRequirement (
 
 /// Define an environment variable that will be set in the runtime environment by the workflow platform when executing the command line tool.
 [<AttachMembers>]
-type EnvironmentDef (envName: string, envValue: SchemaSaladString) =
+type EnvironmentDef (envName: SchemaSaladString, envValue: SchemaSaladString) =
     inherit DynamicObj ()
 
     let mutable _envName = envName
@@ -128,15 +128,27 @@ type EnvironmentDef (envName: string, envValue: SchemaSaladString) =
     static member KnownFieldNames =
         CWLKnownFieldNames.environmentDef
 
+/// How much of a directory a port lists. A directive stands for the name of the symbol, and the decoder reads no file, so
+/// it stays as written. An $import and a $mixin take the data of a file, and an $include takes its text, which is the
+/// name of the symbol.
 type LoadListingEnum =
     | NoListing
     | ShallowListing
     | DeepListing
+    | ImportedLoadListing of string
+    | IncludedLoadListing of string
+    /// A mapping with a $mixin directive, alone or beside other fields, kept as it was written.
+    | MixedLoadListing of RawYaml
 
+    /// The name of the symbol as a document spells it, and for a directive the text with the directive in front of the
+    /// path. The text of a directive serves for display, because the encoder writes the directive as a mapping.
     static member toCwlString = function
         | NoListing -> "no_listing"
         | ShallowListing -> "shallow_listing"
         | DeepListing -> "deep_listing"
+        | ImportedLoadListing path -> (SchemaSaladString.Import path).AsDirectiveString
+        | IncludedLoadListing path -> (SchemaSaladString.Include path).AsDirectiveString
+        | MixedLoadListing raw -> (SchemaSaladString.Mixed raw).AsDirectiveString
 
     static member tryParse (value: string) =
         match value with
@@ -224,7 +236,7 @@ type NetworkAccessRequirementValue (networkAccess: bool) =
         CWLKnownFieldNames.networkAccessRequirementValue
 
 [<AttachMembers>]
-type InplaceUpdateRequirementValue (inplaceUpdate: bool) =
+type InplaceUpdateRequirementValue (inplaceUpdate: SchemaSaladBool) =
     inherit DynamicObj ()
 
     let mutable _inplaceUpdate = inplaceUpdate
@@ -244,7 +256,7 @@ type InplaceUpdateRequirementValue (inplaceUpdate: bool) =
         hash (this.InplaceUpdate, DynamicObjHelpers.hashDynamicProperties this)
 
     static member defaultEnabled =
-        InplaceUpdateRequirementValue(true)
+        InplaceUpdateRequirementValue(SchemaSaladBool.Value true)
 
     static member KnownFieldNames =
         CWLKnownFieldNames.inplaceUpdateRequirementValue
@@ -258,7 +270,8 @@ type ToolTimeLimitValue =
 /// If a job attempts to exceed its "max" resource allocation, an implementation may deny additional resources, which may result in job failure.
 /// If "min" is specified but "max" is not, then "max" == "min" If "max" is specified by "min" is not, then "min" == "max".
 /// It is an error if max < min.
-/// It is an error if the value of any of these fields is negative.
+/// It is an error if the value of any of these fields is negative. cwltool accepts a negative value, so the decoder reads
+/// it and warns.
 /// If neither "min" nor "max" is specified for a resource, default values are used.
 [<AttachMembers>]
 type ResourceRequirementInstance (
@@ -326,11 +339,14 @@ type ResourceRequirementInstance (
         | "outdirMax" -> this.OutdirMax
         | _ -> None
 
+    /// The value as an int64, and none for a value that holds no integer. A float that holds a whole number, such as 4.0,
+    /// is an integer value on every target, because JavaScript has one number type for both.
     member this.TryGetInt64(name: string) =
         this.TryGetKnownField(name)
         |> Option.bind (function
             | :? int64 as value -> Some value
-            | :? int as value -> Some (int64 value)
+            | :? int as value -> IntegerOf.tryNumber (float value)
+            | :? float as value -> IntegerOf.tryNumber value
             | _ -> None)
 
     member this.TryGetFloat(name: string) =
@@ -490,8 +506,11 @@ type Requirement =
     | SchemaDefRequirement of ResizeArray<SchemaDefEntry>
     /// Indicates that a workflow component should be run in a Docker or Docker-compatible (such as Singularity and udocker) container environment and specifies how to fetch or build the image.
     | DockerRequirement of DockerRequirement
-    /// A list of software packages that should be configured in the environment of the defined process.
-    | SoftwareRequirement of ResizeArray<SoftwarePackage>
+    /// A list of software packages that should be configured in the environment of the defined process. An entry is a
+    /// package, or the import of a file that holds a package or a list of packages. The decoder reads no file, so the
+    /// import stays an entry of its own, in its place. A document that writes the whole field as one $import gets the list
+    /// with that one import, and the encoder writes it as a list.
+    | SoftwareRequirement of ResizeArray<ListEntry<SoftwarePackage>>
     /// Configure how directory listings are loaded for File/Directory inputs.
     | LoadListingRequirement of LoadListingRequirementValue
     /// Define a list of files and subdirectories that must be created by the workflow platform in the designated output directory prior to executing the command line tool.

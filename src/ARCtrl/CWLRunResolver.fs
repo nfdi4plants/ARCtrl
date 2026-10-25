@@ -32,12 +32,13 @@ let lookupEntriesOfDocument (path: string) (document: CWL.CWLDocument) : (string
         [ pathKey path, processingUnit ]
     | CWL.CWLDocument.Graph graph ->
         [
-            match CWL.CWLGraph.tryFindProcess "main" graph with
+            match CWL.CWLGraph.tryFindMain graph with
             | Some main -> yield pathKey path, main
             | None -> ()
-            for processingUnit in graph.Processes do
-                match CWL.CWLProcessingUnit.tryGetId processingUnit with
-                | Some id -> yield pathKey (packedProcessPath path id), processingUnit
+            // A run of the form #id reaches the last process with the id, so a process that a later one replaces has no entry.
+            for id in graph.Processes |> Seq.choose CWL.CWLProcessingUnit.tryGetId |> Seq.distinct do
+                match CWL.CWLGraph.tryFindProcess id graph with
+                | Some processingUnit -> yield pathKey (packedProcessPath path id), processingUnit
                 | None -> ()
         ]
 
@@ -100,7 +101,7 @@ let rec resolveWorkflowRunsRecursiveWithResolver
     (tryResolveRunPath: string -> CWL.CWLProcessingUnit option)
     : unit =
     // An imported step stands for steps of a file that the decoder does not read, so it has no run to resolve.
-    for step in CWL.CWLWorkflowDescription.getSteps workflow do
+    for step in CWL.CWLWorkflowDescription.getStepValues workflow do
         match step.Run with
         | CWL.RunString runPath
         | CWL.RunImport runPath when step.ResolvedRun.Run.IsNone ->
@@ -192,7 +193,7 @@ let resolveRunReferencesOfDocument (filePath: string) (document: CWL.CWLDocument
     | CWL.CWLDocument.Process processingUnit ->
         resolveRunReferencesFromLookup filePath processingUnit tryResolveRunPath, None
     | CWL.CWLDocument.Graph graph ->
-        match CWL.CWLGraph.tryFindProcess "main" graph with
+        match CWL.CWLGraph.tryFindMain graph with
         | None ->
             failwith $"The packed CWL document {filePath} has no process with the id main."
         | Some main ->

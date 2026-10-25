@@ -129,7 +129,7 @@ module Builder =
             createMetadata [
                 "when", step.When_ |> Option.map (fun expression -> box expression.AsDirectiveString)
                 "scatterMethod", step.ScatterMethod |> Option.map (fun sm -> sm.AsCwlString |> box)
-                "scatter", step.Scatter |> Option.map (fun values -> values |> Seq.toArray |> box)
+                "scatter", step.Scatter |> Option.map (fun values -> values |> Seq.map (fun value -> value.AsDirectiveString) |> Seq.toArray |> box)
             ]
         let node =
             WorkflowGraphNode.create
@@ -142,37 +142,38 @@ module Builder =
     let addWorkflowPorts (state: BuildState) (workflowNodeId: WorkflowGraphNodeId) (workflow: CWLWorkflowDescription) =
         let relative = ReferenceParsing.relativeId workflow.Id
         // An import stands for the ports of a file that the decoder does not read, so it gets no node.
-        CWLWorkflowDescription.getInputs workflow
+        CWLWorkflowDescription.getInputValues workflow
         |> Seq.iter (fun input -> addPortNode state workflowNodeId PortDirection.Input (relative input.Name) (relative input.Name) |> ignore)
-        CWLWorkflowDescription.getOutputs workflow
+        CWLWorkflowDescription.getOutputValues workflow
         |> Seq.iter (fun output -> addPortNode state workflowNodeId PortDirection.Output (relative output.Name) (relative output.Name) |> ignore)
 
     /// Adds all input and output port nodes for a CWL CommandLineTool.
     let addToolPorts (state: BuildState) (toolNodeId: WorkflowGraphNodeId) (tool: CWLToolDescription) =
-        CWLToolDescription.getInputsOrEmpty tool
+        CWLToolDescription.getInputValuesOrEmpty tool
         |> Seq.iter (fun input -> addPortNode state toolNodeId PortDirection.Input input.Name input.Name |> ignore)
-        CWLToolDescription.getOutputs tool
+        CWLToolDescription.getOutputValues tool
         |> Seq.iter (fun output -> addPortNode state toolNodeId PortDirection.Output output.Name output.Name |> ignore)
 
     /// Adds all input and output port nodes for a CWL ExpressionTool.
     let addExpressionToolPorts (state: BuildState) (toolNodeId: WorkflowGraphNodeId) (tool: CWLExpressionToolDescription) =
-        CWLExpressionToolDescription.getInputsOrEmpty tool
+        CWLExpressionToolDescription.getInputValuesOrEmpty tool
         |> Seq.iter (fun input -> addPortNode state toolNodeId PortDirection.Input input.Name input.Name |> ignore)
-        CWLExpressionToolDescription.getOutputs tool
+        CWLExpressionToolDescription.getOutputValues tool
         |> Seq.iter (fun output -> addPortNode state toolNodeId PortDirection.Output output.Name output.Name |> ignore)
 
     /// Adds all input and output port nodes for a CWL Operation.
     let addOperationPorts (state: BuildState) (operationNodeId: WorkflowGraphNodeId) (operation: CWLOperationDescription) =
-        CWLOperationDescription.getInputs operation
+        CWLOperationDescription.getInputValues operation
         |> Seq.iter (fun input -> addPortNode state operationNodeId PortDirection.Input input.Name input.Name |> ignore)
-        CWLOperationDescription.getOutputs operation
+        CWLOperationDescription.getOutputValues operation
         |> Seq.iter (fun output -> addPortNode state operationNodeId PortDirection.Output output.Name output.Name |> ignore)
 
     /// Adds all input and output port nodes for a workflow step.
     let addStepPorts (state: BuildState) (stepNodeId: WorkflowGraphNodeId) (step: WorkflowStep) =
         let relative = ReferenceParsing.relativeId (Some step.Id)
-        // An import or an include stands for ports of a file that the decoder does not read, so it gets no node.
-        WorkflowStep.getInputs step
+        // An import or a mixin stands for ports of a file that the decoder does not read, and an include for the id of an output
+        // of a file, so none of them gets a node.
+        WorkflowStep.getInputValues step
         |> Seq.iter (fun input -> addPortNode state stepNodeId PortDirection.Input (relative input.Id) (relative input.Id) |> ignore)
         step.Out
         |> Seq.choose StepOutput.tryId
@@ -694,13 +695,14 @@ module Builder =
         =
         let stepNodeId = GraphId.stepNodeId scope (ReferenceParsing.relativeId workflowId step.Id)
 
-        for stepInput in WorkflowStep.getInputs step do
+        for stepInput in WorkflowStep.getInputValues step do
             let targetInputPortId = GraphId.portNodeId stepNodeId PortDirection.Input (ReferenceParsing.relativeId (Some step.Id) stepInput.Id)
             match stepInput.Source with
             | None ->
                 ()
             | Some sources ->
-                for source in sources do
+                // A directive names a file that the decoder does not read, so it gets no edge.
+                for source in sources |> Seq.choose SchemaSaladString.tryLiteral do
                     let sourceRef = ReferenceParsing.parseSourceReference (ReferenceParsing.relativeId workflowId source)
                     if System.String.IsNullOrWhiteSpace sourceRef.PortId then
                         addDiagnostic
@@ -741,7 +743,7 @@ module Builder =
         (workflowNodeId: WorkflowGraphNodeId)
         (workflow: CWLWorkflowDescription)
         =
-        for output in CWLWorkflowDescription.getOutputs workflow do
+        for output in CWLWorkflowDescription.getOutputValues workflow do
             let outputName = ReferenceParsing.relativeId workflow.Id output.Name
             let outputSources = output.GetOutputSources()
             for outputSource in outputSources do
@@ -783,7 +785,7 @@ module Builder =
         (workflowNodeId: WorkflowGraphNodeId)
         (workflow: CWLWorkflowDescription)
         =
-        let steps = CWLWorkflowDescription.getSteps workflow
+        let steps = CWLWorkflowDescription.getStepValues workflow
         for step in steps do
             let stepNodeId = addStepNode state scope workflowNodeId workflow.Id step
             addStepPorts state stepNodeId step

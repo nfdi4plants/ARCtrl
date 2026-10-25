@@ -376,7 +376,7 @@ arguments:
   # inside arguments
   - valueFrom: x # trailing
 
-  - y
+  - z
 outputs: {}
 """
 

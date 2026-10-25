@@ -297,6 +297,10 @@ module CWL =
 
     open ARCtrl.CWL
 
+    /// The literal strings for these texts, as the lists of strings in the CWL model hold them.
+    let literals (texts: string seq) : ResizeArray<SchemaSaladString> =
+        texts |> Seq.map SchemaSaladString.Literal |> ResizeArray
+
     /// Assert that encoding then decoding an entity is deterministic across two cycles.
     let assertDeterministic encode decode name (originalText:string) =
         let d1 = decode originalText
@@ -309,7 +313,7 @@ module CWL =
 
     /// Assert all outputs have outputSource present.
     let assertAllOutputsHaveSource (wf: CWLWorkflowDescription) =
-        CWLWorkflowDescription.getOutputs wf |> Seq.iter (fun o -> Expect.isSome o.OutputSource $"Output '{o.Name}' should have outputSource")
+        CWLWorkflowDescription.getOutputValues wf |> Seq.iter (fun o -> Expect.isSome o.OutputSource $"Output '{o.Name}' should have outputSource")
 
     /// Quick utility to verify requirements rendered in extended form (heuristic search for 'class:').
     let assertRequirementsExtended (text:string) =

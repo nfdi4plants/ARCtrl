@@ -9,27 +9,50 @@ module internal LocalReference =
     let withoutHash (reference: string) : string =
         if reference.StartsWith "#" then reference.Substring 1 else reference
 
+/// How a packed document finds a process, as cwltool does. A runner starts with the first process whose id is main. A
+/// run of the form #id reaches the last process with that id, because a later object of one id replaces the earlier ones.
+/// The model and the decoder find the processes of a document through these two functions only. The ids are the ids of
+/// the processes in the order of the document, with none for a process without an id.
+module GraphMembers =
+
+    let private positionsOf (wanted: string) (ids: seq<string option>) : int list =
+        ids
+        |> Seq.indexed
+        |> Seq.filter (fun (_, id) -> id |> Option.map LocalReference.withoutHash = Some wanted)
+        |> Seq.map fst
+        |> List.ofSeq
+
+    /// The position of the process that a runner starts with.
+    let tryStart (ids: seq<string option>) : int option =
+        positionsOf "main" ids |> List.tryHead
+
+    /// The position of the process that a run of the form #id reaches. The id may start with a #.
+    let tryReach (id: string) (ids: seq<string option>) : int option =
+        positionsOf (LocalReference.withoutHash id) ids |> List.tryLast
+
 type CWLProcessingUnit =
     | CommandLineTool of CWLToolDescription
     | Workflow of CWLWorkflowDescription
     | ExpressionTool of CWLExpressionToolDescription
     | Operation of CWLOperationDescription
 
-    /// Returns normalized inputs for all CWL processing unit variants.
-    static member getInputs (processingUnit: CWLProcessingUnit) : ResizeArray<CWLInput> =
+    /// Returns a new list of the inputs of the process that are objects, for every kind of process. A change of the list
+    /// changes nothing in the process.
+    static member getInputValues (processingUnit: CWLProcessingUnit) : ResizeArray<CWLInput> =
         match processingUnit with
-        | CommandLineTool tool -> CWLToolDescription.getInputsOrEmpty tool
-        | Workflow workflow -> CWLWorkflowDescription.getInputs workflow
-        | ExpressionTool tool -> CWLExpressionToolDescription.getInputsOrEmpty tool
-        | Operation operation -> CWLOperationDescription.getInputs operation
+        | CommandLineTool tool -> CWLToolDescription.getInputValuesOrEmpty tool
+        | Workflow workflow -> CWLWorkflowDescription.getInputValues workflow
+        | ExpressionTool tool -> CWLExpressionToolDescription.getInputValuesOrEmpty tool
+        | Operation operation -> CWLOperationDescription.getInputValues operation
 
-    /// Returns outputs for all CWL processing unit variants.
-    static member getOutputs (processingUnit: CWLProcessingUnit) : ResizeArray<CWLOutput> =
+    /// Returns a new list of the outputs of the process that are objects, for every kind of process. A change of the list
+    /// changes nothing in the process.
+    static member getOutputValues (processingUnit: CWLProcessingUnit) : ResizeArray<CWLOutput> =
         match processingUnit with
-        | CommandLineTool tool -> CWLToolDescription.getOutputs tool
-        | Workflow workflow -> CWLWorkflowDescription.getOutputs workflow
-        | ExpressionTool tool -> CWLExpressionToolDescription.getOutputs tool
-        | Operation operation -> CWLOperationDescription.getOutputs operation
+        | CommandLineTool tool -> CWLToolDescription.getOutputValues tool
+        | Workflow workflow -> CWLWorkflowDescription.getOutputValues workflow
+        | ExpressionTool tool -> CWLExpressionToolDescription.getOutputValues tool
+        | Operation operation -> CWLOperationDescription.getOutputValues operation
 
     /// Returns requirements for all CWL processing unit variants.
     static member getRequirements (processingUnit: CWLProcessingUnit) : ResizeArray<Requirement> =
@@ -48,7 +71,7 @@ type CWLProcessingUnit =
         | Operation operation -> CWLOperationDescription.getHintsOrEmpty operation
 
     /// Returns intent for all CWL processing unit variants.
-    static member getIntent (processingUnit: CWLProcessingUnit) : ResizeArray<string> =
+    static member getIntent (processingUnit: CWLProcessingUnit) : ResizeArray<SchemaSaladString> =
         match processingUnit with
         | CommandLineTool tool -> CWLToolDescription.getIntentOrEmpty tool
         | Workflow workflow -> CWLWorkflowDescription.getIntentOrEmpty workflow
@@ -135,18 +158,22 @@ type CWLGraph(processes: ResizeArray<CWLProcessingUnit>, ?cwlVersion: string) =
     static member KnownFieldNames =
         CWLKnownFieldNames.graph
 
-    /// Returns the process with the id. The id of a process and the id that is looked up may start with a #.
-    static member tryFindProcess (id: string) (graph: CWLGraph) : CWLProcessingUnit option =
-        let wanted = LocalReference.withoutHash id
-        graph.Processes
-        |> Seq.tryFind (fun processingUnit ->
-            CWLProcessingUnit.tryGetId processingUnit
-            |> Option.map LocalReference.withoutHash = Some wanted)
+    static member private idsOf (graph: CWLGraph) : seq<string option> =
+        graph.Processes |> Seq.map CWLProcessingUnit.tryGetId
 
-    /// True when the process is the process main of the graph: the object that the graph finds under the id main. The
-    /// id is read on each call, so renaming a process in place changes the answer.
+    /// Returns the process that a run of the form #id reaches: the last process with the id. The id of a process and the
+    /// id that is looked up may start with a #.
+    static member tryFindProcess (id: string) (graph: CWLGraph) : CWLProcessingUnit option =
+        GraphMembers.tryReach id (CWLGraph.idsOf graph) |> Option.map (fun position -> graph.Processes.[position])
+
+    /// Returns the process main of the graph, which a runner starts with: the first process with the id main.
+    static member tryFindMain (graph: CWLGraph) : CWLProcessingUnit option =
+        GraphMembers.tryStart (CWLGraph.idsOf graph) |> Option.map (fun position -> graph.Processes.[position])
+
+    /// True when the process is the process main of the graph, the object that tryFindMain finds. The id is read on each
+    /// call, so renaming a process in place changes the answer.
     static member isMain (processingUnit: CWLProcessingUnit) (graph: CWLGraph) : bool =
-        CWLGraph.tryFindProcess "main" graph |> Option.exists (CWLProcessingUnit.isSameObject processingUnit)
+        CWLGraph.tryFindMain graph |> Option.exists (CWLProcessingUnit.isSameObject processingUnit)
 
     override this.Equals(o: obj) =
         match o with
@@ -170,4 +197,4 @@ type CWLDocument =
     static member tryGetMain (document: CWLDocument) : CWLProcessingUnit option =
         match document with
         | Process processingUnit -> Some processingUnit
-        | Graph graph -> CWLGraph.tryFindProcess "main" graph
+        | Graph graph -> CWLGraph.tryFindMain graph

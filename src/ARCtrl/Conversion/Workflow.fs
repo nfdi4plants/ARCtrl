@@ -56,12 +56,15 @@ type WorkflowConversion =
         let identifiers =
             inp.InputBinding
             |> Option.bind (fun ib ->
-                // The identifiers hold a number only, so a position that is an expression has no place in them.
+                // The identifiers hold a number only, so a position that is an expression or a directive has no place in them.
                 let position =
                     ib.Position
                     |> Option.bind (function
                         | CWL.BindingPosition.Number number -> Some number
-                        | CWL.BindingPosition.Expression _ -> None)
+                        | CWL.BindingPosition.Expression _
+                        | CWL.BindingPosition.Imported _
+                        | CWL.BindingPosition.Included _
+                        | CWL.BindingPosition.Mixed _ -> None)
                 WorkflowConversion.composeFormalParamInputIdentifiers (ib.Prefix |> Option.bind CWL.SchemaSaladString.tryLiteral) position
             )
         LDFormalParameter.create(
@@ -87,12 +90,9 @@ type WorkflowConversion =
     static member decomposeInputFromFormalParameter(inp : LDNode, ?context : LDContext, ?graph : LDGraph) =
         let t = inp.AdditionalType |> Seq.exactlyOne |> WorkflowConversion.decomposeAdditionalType
         let binding = WorkflowConversion.decomposeInputBindings(LDFormalParameter.getIdentifiers(inp, ?context = context, ?graph = graph), ?context = context)
-        let optional =
-            match LDFormalParameter.tryGetValueRequiredAsBoolean(inp, ?context = context) with
-            | Some true -> None
-            | _ -> Some true
+        let required = LDFormalParameter.tryGetValueRequiredAsBoolean(inp, ?context = context) = Some true
         let name = LDFormalParameter.getNameAsString(inp, ?context = context)
-        CWL.CWLInput(name, t, ?inputBinding = binding, ?optional = optional)
+        CWL.CWLInput(name, (if required then t else CWL.CWLType.makeOptional t), ?inputBinding = binding)
 
     static member composeFormalParameterOutputIdentifiers (glob : CWL.OutputGlob option) =
         match glob with
@@ -169,7 +169,7 @@ type WorkflowConversion =
     /// </summary>
     /// <param name="pu">The processing unit to inspect.</param>
     static member getInputParametersFromProcessingUnit (pu : CWL.CWLProcessingUnit) =
-        CWL.CWLProcessingUnit.getInputs pu
+        CWL.CWLProcessingUnit.getInputValues pu
 
     
     static member toolDescriptionTypeName = "ToolDescription"
@@ -189,7 +189,7 @@ type WorkflowConversion =
         match run with
         | CWL.RunString runPath
         | CWL.RunImport runPath -> runPath
-        | CWL.RunMixed _ -> "inline:Mixed"
+        | CWL.RunMixed raw -> raw.MixinPath
         | CWL.RunCommandLineTool _ -> "inline:CommandLineTool"
         | CWL.RunWorkflow _ -> "inline:Workflow"
         | CWL.RunExpressionTool _ -> "inline:ExpressionTool"

@@ -23,28 +23,61 @@ type RawYaml =
     override this.GetHashCode() =
         HashHelpers.hashYamlNode this.Node
 
+    /// The path of the $mixin directive in a mapping that holds one, and the empty text for any other node.
+    member this.MixinPath : string =
+        match this.Node.Kind with
+        | YamlNodeKind.Mapping collection ->
+            collection.Items
+            |> List.tryPick (fun entry ->
+                match entry.Key.Kind, entry.Value.Kind with
+                | YamlNodeKind.Scalar key, YamlNodeKind.Scalar path when key.Value = "$mixin" -> Some path.Value
+                | _ -> None)
+            |> Option.defaultValue ""
+        | _ -> ""
+
+/// Reads a number that sits in an obj as the 64-bit integer that it holds. A JavaScript number is a float whether it
+/// came from an int or a float, so a type test for int matches every number there, and converting 4.5 to an int64 raises
+/// an exception. The test below keeps the numbers that are no integer out on every target.
+module internal IntegerOf =
+
+    let tryNumber (value: float) : int64 option =
+        if System.Double.IsNaN value || System.Double.IsInfinity value || value <> System.Math.Floor value then
+            None
+        elif value >= -9.2233720368547758e18 && value < 9.2233720368547758e18 then
+            Some (int64 value)
+        else
+            None
+
 type SchemaSaladString =
     | Literal of string
     | Include of string
     | Import of string
-    /// A $mixin on its own. A $mixin beside other fields completes an object, so a string has no such mixin.
+    /// A $mixin on its own.
     | Mixin of string
+    /// A $mixin beside other fields, kept as it was written. When the file holds an object, the fields complete it, and when
+    /// the file holds a string, cwltool takes the string and drops the fields. The decoder reads no file, so it cannot tell
+    /// which of the two happens.
+    | Mixed of RawYaml
     with
+    /// The text of a literal and the path of a directive.
     member this.Value =
         match this with
         | Literal value
         | Include value
         | Import value
         | Mixin value -> value
+        | Mixed raw -> raw.MixinPath
 
-    /// The text as a document spells it, with the directive in front of the path. A display of the string can use it.
-    /// The decoder and the encoder keep the directive as a case, so no field of a document holds this text.
+    /// The text as a document spells it, with the directive in front of the path. The description of an expression tool in
+    /// an RO-Crate and the properties of a node of the workflow graph show a string through it, so it is a text for display.
+    /// The decoder and the encoder keep the directive as a case, so a document never holds this text.
     member this.AsDirectiveString =
         match this with
         | Literal value -> value
         | Include value -> sprintf "$include: %s" value
         | Import value -> sprintf "$import: %s" value
         | Mixin value -> sprintf "$mixin: %s" value
+        | Mixed raw -> sprintf "$mixin: %s" raw.MixinPath
 
 module SchemaSaladString =
 
@@ -64,12 +97,13 @@ module SchemaSaladString =
         | Literal text -> Some text
         | Include _
         | Import _
-        | Mixin _ -> None
+        | Mixin _
+        | Mixed _ -> None
 
-/// An entry of a list of objects, such as the inputs, the outputs, the steps or the fields of a record. An entry is the object
-/// itself, or the import of a file that holds the object or a list of objects, as in inputs: [{$import: ports.yml}]. An
-/// object that a file completes through $mixin is a third kind, which keeps the mapping as written. The decoder reads no
-/// file, so the import and the mixin stay entries of their own, in their place.
+/// An entry of a list of objects or numbers, such as the inputs, the outputs, the steps, the fields of a record or the
+/// success codes. An entry is the value itself, or the import of a file that holds the value or a list of values, as in
+/// inputs: [{$import: ports.yml}]. A value that a file completes through $mixin is a third kind, which keeps the mapping as
+/// written. The decoder reads no file, so the import and the mixin stay entries of their own, in their place.
 [<RequireQualifiedAccess; NoComparison; AttachMembers>]
 type ListEntry<'T> =
     | Value of 'T
@@ -100,6 +134,41 @@ type ListEntry<'T> =
         | Value value -> ListEntry.Value (mapping value)
         | Imported path -> ListEntry.Imported path
         | Mixed raw -> ListEntry.Mixed raw
+
+/// A field that CWL types as a boolean: the value, or a directive that stands for it. An $import takes the data of a
+/// file, and a $mixin does the same and joins it with the fields beside the directive, so both can stand where a boolean
+/// stands. An $include yields the text of a file, which is a string, so it cannot. The decoder reads no file, so a
+/// directive stays as written and a mixin keeps its mapping. A directive is a case of its own because a value that is
+/// missing, or false, would pass for it.
+[<RequireQualifiedAccess; NoComparison; AttachMembers>]
+type SchemaSaladBool =
+    | Value of bool
+    | Imported of string
+    /// A mapping with a $mixin directive, alone or beside other fields, kept as it was written.
+    | Mixed of RawYaml
+
+    /// The boolean of a value, and none for a directive, which names a file whose data the model does not hold.
+    static member tryValue (value: SchemaSaladBool) : bool option =
+        match value with
+        | Value flag -> Some flag
+        | Imported _
+        | Mixed _ -> None
+
+/// The size of a File object in bytes: the number, or a directive that stands for it. The directives that can stand
+/// there are those of SchemaSaladBool, for the same reason.
+[<RequireQualifiedAccess; NoComparison; AttachMembers>]
+type FileSize =
+    | Bytes of int64
+    | Imported of string
+    /// A mapping with a $mixin directive, alone or beside other fields, kept as it was written.
+    | Mixed of RawYaml
+
+    /// The number of bytes of a size, and none for a directive.
+    static member tryBytes (size: FileSize) : int64 option =
+        match size with
+        | Bytes count -> Some count
+        | Imported _
+        | Mixed _ -> None
 
 /// The doc of a CWL object. CWL admits one string or a list of strings, and Schema Salad joins the items of a list
 /// without a separator. A string, a directive and a list of plain strings are each one value, so the list [a, b] and the
@@ -147,7 +216,7 @@ type FileInstance (
     ?nameroot: string,
     ?nameext: string,
     ?checksum: string,
-    ?size: int64,
+    ?size: FileSize,
     ?secondaryFiles: RawYaml,
     ?format: string,
     ?contents: string
@@ -293,7 +362,7 @@ type DirectoryInstance (
         hash (this.Location, this.Path, this.Basename, this.Listing, DynamicObjHelpers.hashDynamicProperties this)
 
 [<AttachMembers>]
-type DirentInstance (entry: SchemaSaladString, ?entryname: SchemaSaladString, ?writable: bool) =
+type DirentInstance (entry: SchemaSaladString, ?entryname: SchemaSaladString, ?writable: SchemaSaladBool) =
     inherit DynamicObj ()
 
     let mutable _entry = entry
@@ -410,9 +479,9 @@ type InputEnumSchema (symbols: ResizeArray<SchemaSaladString>, ?label: SchemaSal
     static member KnownFieldNames =
         CWLKnownFieldNames.inputEnumSchema
 
-    /// Returns the symbols that the document writes out as strings. The directives are left out, and the list is a
-    /// new one.
-    static member getSymbols (schema: InputEnumSchema) : ResizeArray<string> =
+    /// Returns a new list of the symbols that the document writes out as strings. The directives are left out, so a change
+    /// of the list changes nothing in the enum. The entries of the enum are in Symbols.
+    static member getSymbolValues (schema: InputEnumSchema) : ResizeArray<string> =
         schema.Symbols |> Seq.choose SchemaSaladString.tryLiteral |> ResizeArray
 
 /// Represents a field in an InputRecordSchema
@@ -522,9 +591,10 @@ and [<AttachMembers>] InputRecordSchema (?fields: ResizeArray<ListEntry<InputRec
     static member KnownFieldNames =
         CWLKnownFieldNames.inputRecordSchema
 
-    /// Returns the fields of the record, or an empty list for a record without fields. The imports are left out, and
-    /// the list is a new one.
-    static member getFieldsOrEmpty (schema: InputRecordSchema) : ResizeArray<InputRecordField> =
+    /// Returns a new list of the fields of the record that are objects, or an empty list for a record without fields. The
+    /// imports and the mixins are left out, so a change of the list changes nothing in the record. The entries of the
+    /// record are in Fields.
+    static member getFieldValuesOrEmpty (schema: InputRecordSchema) : ResizeArray<InputRecordField> =
         schema.Fields |> Option.map ListEntry.values |> Option.defaultValue (ResizeArray())
 
 /// Represents an array schema for workflow input parameters
@@ -699,7 +769,7 @@ type SchemaDefinition =
 
 
 [<AttachMembers>]
-type SoftwarePackage (package: string, ?version: ResizeArray<string>, ?specs: ResizeArray<string>) =
+type SoftwarePackage (package: SchemaSaladString, ?version: ResizeArray<SchemaSaladString>, ?specs: ResizeArray<SchemaSaladString>) =
     inherit DynamicObj ()
 
     let mutable _package = package
@@ -781,6 +851,7 @@ module CWLType =
                         leftField.Name = rightField.Name &&
                         typesEqual leftField.Type rightField.Type
                     | ListEntry.Imported leftPath, ListEntry.Imported rightPath -> leftPath = rightPath
+                    | ListEntry.Mixed leftRaw, ListEntry.Mixed rightRaw -> leftRaw.Equals rightRaw
                     | _ -> false
                 ) leftFields rightFields
             | _ -> false

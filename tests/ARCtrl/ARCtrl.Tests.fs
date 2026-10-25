@@ -1248,6 +1248,37 @@ outputs: {}""")
         Expect.equal (ARCtrl.CWL.ListEntry.values sub.Steps).[0].Run (ARCtrl.CWL.RunString "#main") "The run that leads back to main is not resolved, so main is not inside itself."
         Expect.isNone (ARCtrl.CWL.ListEntry.values sub.Steps).[0].ResolvedRun.Run "The reference that leads back to main resolves to nothing."
     )
+    testCase "resolveRunReferencesOfDocument_RepeatedIdsTakeTheFirstMainAndTheLastProcessOfAReference" (fun () ->
+        let text =
+            String.concat "\n" [
+                "cwlVersion: v1.2"
+                "$graph:"
+                "  - {id: tool, class: CommandLineTool, baseCommand: echo, inputs: [], outputs: {a: stdout}}"
+                "  - id: main"
+                "    class: Workflow"
+                "    inputs: []"
+                "    outputs: []"
+                "    steps:"
+                "      s: {run: '#tool', in: {}, out: [b]}"
+                "  - {id: tool, class: CommandLineTool, baseCommand: echo, inputs: [], outputs: {b: stdout}}"
+                "  - {id: main, class: CommandLineTool, baseCommand: cat, inputs: [], outputs: []}"
+                "" ]
+        let document = ARCtrl.CWL.Decode.decodeCWLDocument text
+        let graph = match document with ARCtrl.CWL.CWLDocument.Graph graph -> graph | other -> failwith $"Expected a packed document but got %A{other}"
+        let main, _ = ARCtrl.CWLRunResolver.resolveRunReferencesOfDocument "runs/r/run.cwl" document (fun _ -> None)
+        Expect.isTrue (ARCtrl.CWL.CWLProcessingUnit.isSameObject main graph.Processes.[1]) "A runner starts with the first process main."
+        let step =
+            match main with
+            | ARCtrl.CWL.Workflow workflow -> (ARCtrl.CWL.ListEntry.values workflow.Steps).[0]
+            | other -> failwith $"Expected a workflow but got %A{other}"
+        let resolved = Expect.wantSome step.ResolvedRun.Run "The step resolves its run."
+        match resolved with
+        | ARCtrl.CWL.RunCommandLineTool _ ->
+            let tool = Expect.wantSome (ARCtrl.CWL.WorkflowStepRunOps.tryGetTool resolved) "The run holds a tool."
+            Expect.equal (ARCtrl.CWL.CWLToolDescription.getOutputValues tool |> Seq.map (fun output -> output.Name) |> List.ofSeq) [ "b" ] "A run of the form #tool reaches the last process with the id."
+        | other -> failwith $"Expected a tool but got %A{other}"
+        Expect.isTrue (ARCtrl.CWL.CWLGraph.isMain (ARCtrl.CWL.CWLDocument.tryGetMain document |> Option.get) graph) "The process main is the first one."
+    )
     testCase "resolveRunReferencesFromLookup_ImportedRunResolvesToTheProcessOfTheSamePath" (fun () ->
         let workflowWith (run: string) =
             match ARCtrl.CWL.Decode.decodeCWLProcessingUnit ("cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  s:\n    run: " + run + "\n    in: {}\n    out: [out]\n") with

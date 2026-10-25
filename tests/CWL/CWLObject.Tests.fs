@@ -64,7 +64,7 @@ outputs: {}
         testCase "intent decodes as typed field, not metadata overflow" <| fun _ ->
             let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFileWithIntent
             let intent = Expect.wantSome decoded.Intent "Intent should decode on CommandLineTool."
-            Expect.sequenceEqual intent (ResizeArray [|"classification"; "quality-control"|]) ""
+            Expect.sequenceEqual intent (literals [ "classification"; "quality-control" ]) ""
             Expect.isNone decoded.Metadata "Intent should not be captured as overflow metadata."
         testCase "typed id decodes and roundtrips for command line tool" <| fun _ ->
             let yaml = """cwlVersion: v1.2
@@ -99,7 +99,7 @@ outputs: {}"""
                     Expect.sequenceEqual actualType expectedType ""
                 | _ -> failwith "This test case can only be InitialWorkDirRequirement"
             testCase "EnvVarRequirement" <| fun _ ->
-                let expected = EnvVarRequirement (ListEntry.ofValues [| EnvironmentDef("DOTNET_NOLOGO", SchemaSaladString.Literal "true") |])
+                let expected = EnvVarRequirement (ListEntry.ofValues [| EnvironmentDef(SchemaSaladString.Literal "DOTNET_NOLOGO", SchemaSaladString.Literal "true") |])
                 let actual = requirementsItem.Value.[1]
                 match actual, expected with
                 | EnvVarRequirement actualType, EnvVarRequirement expectedType ->
@@ -247,7 +247,7 @@ let testCWLToolDescriptionMetadata =
                     Expect.sequenceEqual actualType expectedType ""
                 | _ -> failwith "This test case can only be InitialWorkDirRequirement"
             testCase "EnvVarRequirement" <| fun _ ->
-                let expected = EnvVarRequirement (ListEntry.ofValues [| EnvironmentDef("DOTNET_NOLOGO", SchemaSaladString.Literal "true") |])
+                let expected = EnvVarRequirement (ListEntry.ofValues [| EnvironmentDef(SchemaSaladString.Literal "DOTNET_NOLOGO", SchemaSaladString.Literal "true") |])
                 let actual = requirementsItem.Value.[1]
                 match actual, expected with
                 | EnvVarRequirement actualType, EnvVarRequirement expectedType ->
@@ -375,7 +375,7 @@ let testCWLToolDescriptionEncode =
                 let roundTripped = Decode.decodeCommandLineTool encoded
                 Expect.stringContains encoded "intent:" "Encoded tool should contain intent."
                 let intent = Expect.wantSome roundTripped.Intent "Intent should survive roundtrip."
-                Expect.sequenceEqual intent (ResizeArray [|"classification"; "quality-control"|]) ""
+                Expect.sequenceEqual intent (literals [ "classification"; "quality-control" ]) ""
             testCase "hints emitted before requirements for both encoder variants" <| fun _ ->
                 let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFile
                 let topLevelEncoded = Encode.encodeToolDescription decoded
@@ -407,9 +407,9 @@ let testCWLToolDescriptionEncode =
                 Expect.equal decoded.Stdin (Some (SchemaSaladString.Literal "stdin.txt")) "stdin should decode to a typed field."
                 Expect.equal decoded.Stdout (Some (SchemaSaladString.Literal "stdout.txt")) "stdout should decode to a typed field."
                 Expect.equal decoded.Stderr (Some (SchemaSaladString.Literal "stderr.txt")) "stderr should decode to a typed field."
-                Expect.sequenceEqual decoded.SuccessCodes.Value (ResizeArray [| 0 |]) "successCodes should decode to a typed field."
-                Expect.sequenceEqual decoded.TemporaryFailCodes.Value (ResizeArray [| 75 |]) "temporaryFailCodes should decode to a typed field."
-                Expect.sequenceEqual decoded.PermanentFailCodes.Value (ResizeArray [| 1; 2 |]) "permanentFailCodes should decode to a typed field."
+                Expect.sequenceEqual (ListEntry.values decoded.SuccessCodes.Value) (ResizeArray [| 0 |]) "successCodes should decode to a typed field."
+                Expect.sequenceEqual (ListEntry.values decoded.TemporaryFailCodes.Value) (ResizeArray [| 75 |]) "temporaryFailCodes should decode to a typed field."
+                Expect.sequenceEqual (ListEntry.values decoded.PermanentFailCodes.Value) (ResizeArray [| 1; 2 |]) "permanentFailCodes should decode to a typed field."
                 Expect.isNone (DynObj.tryGetTypedPropertyValue<obj> "arguments" decoded) "Known fields should not be direct overflow."
                 let metadata = Expect.wantSome decoded.Metadata "Extension field should decode as metadata."
                 Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" metadata) (Some "keep overflow") "Extension field should stay in metadata."
@@ -499,7 +499,7 @@ let testExpressionTool =
         testCase "ExpressionTool intent decodes as typed field and roundtrips" <| fun _ ->
             let et = Decode.decodeExpressionTool TestObjects.CWL.ExpressionTool.expressionToolWithIntentFile
             let intent = Expect.wantSome et.Intent "Intent should decode on ExpressionTool."
-            Expect.sequenceEqual intent (ResizeArray [|"feature-generation"; "post-processing"|]) ""
+            Expect.sequenceEqual intent (literals [ "feature-generation"; "post-processing" ]) ""
             Expect.isNone et.Metadata "Intent should not be captured as overflow metadata."
             let encoded = Encode.encodeExpressionToolDescription et
             let roundTripped = Decode.decodeExpressionTool encoded
@@ -669,7 +669,7 @@ let testOperation =
         testCase "Operation intent decodes as typed field and roundtrips" <| fun _ ->
             let op = Decode.decodeOperation TestObjects.CWL.Operation.operationWithIntentFile
             let intent = Expect.wantSome op.Intent "Intent should decode on Operation."
-            Expect.sequenceEqual intent (ResizeArray [|"orchestration"; "wiring"|]) ""
+            Expect.sequenceEqual intent (literals [ "orchestration"; "wiring" ]) ""
             Expect.isNone op.Metadata "Intent should not be captured as overflow metadata."
             let encoded = Encode.encodeOperationDescription op
             let roundTripped = Decode.decodeOperation encoded
@@ -881,14 +881,14 @@ baseCommand: echo
 inputs:
   x: [string, "null"]
 outputs:
-  y: [File, "null"]
+  z: [File, "null"]
 """
             let decoded = Decode.decodeCommandLineTool yaml
             Expect.equal (ListEntry.values decoded.Inputs.Value).[0].Type_ (Some (Union (ResizeArray [ String; Null ]))) "The input type keeps the order of the list."
             Expect.equal (ListEntry.values decoded.Outputs).[0].Type_ (Some (Union (ResizeArray [ CWLType.File; Null ]))) "The output type keeps the order of the list."
             let encoded = Encode.encodeToolDescription decoded
             Expect.stringContains encoded """x: [string, "null"]""" "The input is written as a list."
-            Expect.stringContains encoded """y: [File, "null"]""" "The output is written as a list."
+            Expect.stringContains encoded """z: [File, "null"]""" "The output is written as a list."
             let roundTripped = Decode.decodeCommandLineTool encoded
             Expect.equal (ListEntry.values roundTripped.Inputs.Value).[0].Type_ (ListEntry.values decoded.Inputs.Value).[0].Type_ "The input type survives the round trip."
             Expect.equal (ListEntry.values roundTripped.Outputs).[0].Type_ (ListEntry.values decoded.Outputs).[0].Type_ "The output type survives the round trip."
@@ -899,13 +899,13 @@ baseCommand: echo
 inputs:
   x: ["null", string]
 outputs:
-  y: ["null", File]
+  z: ["null", File]
 """
             let decoded = Decode.decodeCommandLineTool yaml
             Expect.equal (ListEntry.values decoded.Inputs.Value).[0].Type_ (Some (Union (ResizeArray [ Null; String ]))) "The input type keeps the order of the list."
             let encoded = Encode.encodeToolDescription decoded
             Expect.stringContains encoded "x: string?" "The input is written as the shorthand."
-            Expect.stringContains encoded "y: File?" "The output is written as the shorthand."
+            Expect.stringContains encoded "z: File?" "The output is written as the shorthand."
             let roundTripped = Decode.decodeCommandLineTool encoded
             Expect.equal (ListEntry.values roundTripped.Inputs.Value).[0].Type_ (ListEntry.values decoded.Inputs.Value).[0].Type_ "The input type survives the round trip."
             Expect.equal (ListEntry.values roundTripped.Outputs).[0].Type_ (ListEntry.values decoded.Outputs).[0].Type_ "The output type survives the round trip."
@@ -1224,8 +1224,8 @@ outputs: {}
                 decoded.Requirements
                 |> Option.get
                 |> Seq.pick (function SoftwareRequirement packages -> Some packages | _ -> None)
-            Expect.sequenceEqual (packages |> Seq.map (fun p -> p.Package)) [ "samtools"; "bwa" ] "Both packages should decode."
-            Expect.isTrue (packages |> Seq.forall (fun p -> p.Specs.IsNone)) "Neither package has specs."
+            Expect.sequenceEqual (ListEntry.values packages |> Seq.map (fun p -> p.Package)) [ SchemaSaladString.Literal "samtools"; SchemaSaladString.Literal "bwa" ] "Both packages should decode."
+            Expect.isTrue (ListEntry.values packages |> Seq.forall (fun p -> p.Specs.IsNone)) "Neither package has specs."
 
         testCase "quoted booleans and integers in typed fields fail like schema validation" <| fun _ ->
             let tool (lines: string list) =
@@ -1501,7 +1501,7 @@ outputs: {}
             let encoded = Encode.encodeToolDescription (Decode.decodeCommandLineTool yaml)
             for comment in [ "# hint comment"; "# leading comment of a field"; "# item comment"; "# about files"; "# index"; "# class comment"; "# inside arguments"; "# trailing" ] do
                 Expect.stringContains encoded comment (sprintf "The comment %s belongs to a raw value and should be written back." comment)
-            Expect.stringContains encoded "# trailing\n\n  - y" "The blank line between the two arguments should be written back."
+            Expect.stringContains encoded "# trailing\n\n  - z" "The blank line between the two arguments should be written back."
 
         testCase "a deeply nested raw value decodes, compares, hashes and writes without a stack overflow" <| fun _ ->
             let depth = 100000
@@ -1718,7 +1718,7 @@ outputs: {}
                             let port = if isOutput then (ListEntry.values decoded.Outputs).[0].Type_ else (ListEntry.values decoded.Inputs.Value).[0].Type_
                             let recordField =
                                 match port with
-                                | Some (Record schema) -> (InputRecordSchema.getFieldsOrEmpty schema).[0]
+                                | Some (Record schema) -> (InputRecordSchema.getFieldValuesOrEmpty schema).[0]
                                 | other -> failwithf "%s: expected a record, found %A" name other
                             Expect.equal recordField.Name "f" (sprintf "%s: the field name" name)
                             match expectedType with
@@ -1745,7 +1745,7 @@ outputs: {}
                        "          type: File"
                        "          doc: object form" ]
             let decoded = Decode.decodeCommandLineTool yaml
-            let fields = match (ListEntry.values decoded.Inputs.Value).[0].Type_ with | Some (Record schema) -> (InputRecordSchema.getFieldsOrEmpty schema) | other -> failwithf "Expected a record, found %A" other
+            let fields = match (ListEntry.values decoded.Inputs.Value).[0].Type_ with | Some (Record schema) -> (InputRecordSchema.getFieldValuesOrEmpty schema) | other -> failwithf "Expected a record, found %A" other
             Expect.sequenceEqual (fields |> Seq.map (fun field -> field.Name)) [ "a"; "b"; "c"; "d" ] "The fields keep their order."
             Expect.isTrue (CWLType.typesEqual (CWLType.File) fields.[0].Type) "A field can be given as the type."
             Expect.isTrue (CWLType.typesEqual (Union (ResizeArray [ Null; CWLType.String ])) fields.[1].Type) "A field can be given as an optional type."
@@ -1863,7 +1863,7 @@ outputs:
                 match (ListEntry.values decoded.Inputs.Value).[0].Type_ with
                 | Some (Union members) ->
                     match members.[index] with
-                    | Record schema -> (InputRecordSchema.getFieldsOrEmpty schema)
+                    | Record schema -> (InputRecordSchema.getFieldValuesOrEmpty schema)
                     | other -> failwithf "Expected a record, found %A" other
                 | other -> failwithf "Expected a union, found %A" other
             let withFile = recordFields 1
@@ -1898,8 +1898,8 @@ outputs:
                   [ "  x: [string, {type: array, items: File}]" ],
                   "  x: [string, \"File[]\"]\n"
                   "type list members with the shorthand",
-                  [ "  x: [string, \"File[]\"]"; "  y: [int, \"File?\"]" ],
-                  "  x: [string, \"File[]\"]\n  y: [int, File?]\n"
+                  [ "  x: [string, \"File[]\"]"; "  z: [int, \"File?\"]" ],
+                  "  x: [string, \"File[]\"]\n  z: [int, File?]\n"
                   "optional array of arrays",
                   [ "  x:"; "    type:"; "      - \"null\""; "      - type: array"; "        items:"; "          type: array"; "          items: string" ],
                   "  x:\n    - \"null\"\n    - type: array\n      items:\n        type: array\n        items: string\n"
@@ -1907,8 +1907,8 @@ outputs:
                   [ "  x:"; "    type:"; "      type: record"; "      fields:"; "        f:"; "          type:"; "            type: array"; "            items:"; "              type: array"; "              items: string" ],
                   "        f:\n          type:\n            type: array\n            items:\n              type: array\n              items: string\n"
                   "arrays of one level keep the shorthand",
-                  [ "  x: File[]"; "  y: File[]?"; "  z: string?" ],
-                  "  x: File[]\n  y: File[]?\n  z: string?\n" ]
+                  [ "  x: File[]"; "  w: File[]?"; "  z: string?" ],
+                  "  x: File[]\n  w: File[]?\n  z: string?\n" ]
             for (name, portLines, expected) in cases do
                 let decoded = Decode.decodeCommandLineTool (tool portLines)
                 let encoded = Encode.encodeToolDescription decoded
@@ -1955,8 +1955,8 @@ outputs:
             let fieldTypes = read [ "  r:"; "    type:"; "      type: record"; "      fields:"; "        f: File[]?"; "        g:"; "          type: string[]" ]
             match fieldTypes.[0].Type_ with
             | Some (CWLType.Record schema) ->
-                Expect.equal (InputRecordSchema.getFieldsOrEmpty schema).[0].Type (optionalOf (arrayOf (CWLType.File))) "A record field reads File[]? as a type."
-                Expect.equal (InputRecordSchema.getFieldsOrEmpty schema).[1].Type (arrayOf CWLType.String) "A record field reads string[] in its type field."
+                Expect.equal (InputRecordSchema.getFieldValuesOrEmpty schema).[0].Type (optionalOf (arrayOf (CWLType.File))) "A record field reads File[]? as a type."
+                Expect.equal (InputRecordSchema.getFieldValuesOrEmpty schema).[1].Type (arrayOf CWLType.String) "A record field reads string[] in its type field."
             | other -> failwith (sprintf "Expected a record but got %A" other)
             let items = read [ "  x:"; "    type:"; "      type: array"; "      items: [string, File]" ]
             Expect.equal items.[0].Type_ (Some (arrayOf (CWLType.Union (ResizeArray [ CWLType.String; CWLType.File ])))) "A name under items needs no shorthand."
@@ -2096,14 +2096,14 @@ steps: []
                     Expect.notEqual first other (sprintf "%s in %s: a changed list makes the tools unequal" name section)
 
         testCase "requirement values compare their lists by their elements" <| fun _ ->
-            let package (version: string) = SoftwarePackage("tool", ResizeArray [ version ], ResizeArray [ "https://example.org/tool" ])
-            Expect.equal (SoftwareRequirement (ResizeArray [ package "1.0" ])) (SoftwareRequirement (ResizeArray [ package "1.0" ])) "Equal lists of equal packages are equal."
-            Expect.notEqual (SoftwareRequirement (ResizeArray [ package "1.0" ])) (SoftwareRequirement (ResizeArray [ package "2.0" ])) "A different version is a different requirement."
-            Expect.notEqual (SoftwareRequirement (ResizeArray [ package "1.0" ])) (SoftwareRequirement (ResizeArray [ package "1.0"; package "1.0" ])) "A different number of packages is a different requirement."
-            Expect.notEqual (SoftwareRequirement (ResizeArray [ package "1.0" ])) (EnvVarRequirement (ResizeArray [])) "Another kind of requirement is a different requirement."
-            Expect.equal (hash (SoftwareRequirement (ResizeArray [ package "1.0" ]))) (hash (SoftwareRequirement (ResizeArray [ package "1.0" ]))) "Equal requirements have the same hash."
-            Expect.equal (SoftwarePackage("tool")) (SoftwarePackage("tool")) "Packages without a version are equal."
-            Expect.notEqual (SoftwarePackage("tool")) (SoftwarePackage("tool", ResizeArray [ "1.0" ])) "A missing version differs from a version."
+            let package (version: string) = SoftwarePackage(SchemaSaladString.Literal "tool", literals [ version ], literals [ "https://example.org/tool" ])
+            Expect.equal (SoftwareRequirement (ListEntry.ofValues [ package "1.0" ])) (SoftwareRequirement (ListEntry.ofValues [ package "1.0" ])) "Equal lists of equal packages are equal."
+            Expect.notEqual (SoftwareRequirement (ListEntry.ofValues [ package "1.0" ])) (SoftwareRequirement (ListEntry.ofValues [ package "2.0" ])) "A different version is a different requirement."
+            Expect.notEqual (SoftwareRequirement (ListEntry.ofValues [ package "1.0" ])) (SoftwareRequirement (ListEntry.ofValues [ package "1.0"; package "1.0" ])) "A different number of packages is a different requirement."
+            Expect.notEqual (SoftwareRequirement (ListEntry.ofValues [ package "1.0" ])) (EnvVarRequirement (ResizeArray [])) "Another kind of requirement is a different requirement."
+            Expect.equal (hash (SoftwareRequirement (ListEntry.ofValues [ package "1.0" ]))) (hash (SoftwareRequirement (ListEntry.ofValues [ package "1.0" ]))) "Equal requirements have the same hash."
+            Expect.equal (SoftwarePackage(SchemaSaladString.Literal "tool")) (SoftwarePackage(SchemaSaladString.Literal "tool")) "Packages without a version are equal."
+            Expect.notEqual (SoftwarePackage(SchemaSaladString.Literal "tool")) (SoftwarePackage(SchemaSaladString.Literal "tool", literals [ "1.0" ])) "A missing version differs from a version."
     ]
 
 /// A piece of a workflow document. A spelled piece is a doc or a label that a test writes in different layouts.
@@ -2143,7 +2143,7 @@ let private layoutPieces =
       Fixed "      type: array"
       Fixed "      items:"
       Fixed "        type: enum"
-      Fixed "        symbols: [x, y]"
+      Fixed "        symbols: [x, z]"
       Spelled("      ", "label", [ "first part of the array name"; "second part of the array name" ])
       Fixed ""
       Fixed "steps:"
@@ -2228,7 +2228,7 @@ let private layoutObjects (workflow: CWLWorkflowDescription) : (string * obj) li
     @ fields
     @ ((ListEntry.values workflow.Outputs) |> Seq.map (fun output -> "output", box output) |> Seq.toList)
     @ [ "step", box step ]
-    @ (WorkflowStep.getInputs step |> Seq.map (fun input -> "step input", box input) |> Seq.toList)
+    @ (WorkflowStep.getInputValues step |> Seq.map (fun input -> "step input", box input) |> Seq.toList)
     @ (WorkflowStepRunOps.tryGetTool step.Run |> Option.map (fun tool -> "tool", box tool) |> Option.toList)
 
 /// The ways to write a doc or a label of a tool and of its first input, as a function of the indent and the key.
@@ -2534,7 +2534,7 @@ let private stepOf (text: string) : WorkflowStep =
     | Workflow workflow -> (ListEntry.values workflow.Steps).[0]
     | other -> failwith (sprintf "Expected a workflow but got %A" other)
 
-let private stepInputsOf (text: string) : StepInput list = WorkflowStep.getInputs (stepOf text) |> Seq.toList
+let private stepInputsOf (text: string) : StepInput list = WorkflowStep.getInputValues (stepOf text) |> Seq.toList
 
 let testEqualityOfDecodedObjects =
     testList "Equality of decoded objects" [
@@ -2547,8 +2547,8 @@ let testEqualityOfDecodedObjects =
             let secondInputs = stepInputsOf text
             Expect.equal firstInputs.Length 3 "The step has three inputs."
             List.iter2 (fun (a: StepInput) (b: StepInput) -> expectSame (sprintf "the step input %s" a.Id) (box a) (box b)) firstInputs secondInputs
-            Expect.equal (firstInputs.[0].Source |> Option.map Seq.toList) (Some [ "a" ]) "A single source is a list of one."
-            Expect.equal (firstInputs.[1].Source |> Option.map Seq.toList) (Some [ "a"; "b" ]) "A list of sources keeps its order."
+            Expect.equal (firstInputs.[0].Source |> Option.map Seq.toList) (Some [ SchemaSaladString.Literal "a" ]) "A single source is a list of one."
+            Expect.equal (firstInputs.[1].Source |> Option.map Seq.toList) (Some [ SchemaSaladString.Literal "a"; SchemaSaladString.Literal "b" ]) "A list of sources keeps its order."
             expectSame "the step" (box (stepOf text)) (box (stepOf text))
 
         testCase "a changed source, list order, link merge, pick value or value expression makes a step input unequal" <| fun _ ->
@@ -2578,11 +2578,11 @@ let testEqualityOfDecodedObjects =
                 | other -> failwith (sprintf "Expected a workflow but got %A" other)
             let text = outputs "[a/x, b/y]"
             List.iter2 (fun (a: CWLOutput) (b: CWLOutput) -> expectSame (sprintf "the output %s" a.Name) (box a) (box b)) (outputsOf text) (outputsOf text)
-            expectSame "multiple output sources" (box (OutputSource.Multiple (ResizeArray [ "a"; "b" ]))) (box (OutputSource.Multiple (ResizeArray [ "a"; "b" ])))
-            expectSame "a single output source" (box (OutputSource.Single "a")) (box (OutputSource.Single "a"))
-            Expect.notEqual (OutputSource.Multiple (ResizeArray [ "a"; "b" ])) (OutputSource.Multiple (ResizeArray [ "b"; "a" ])) "Another order is another list of sources."
-            Expect.notEqual (OutputSource.Multiple (ResizeArray [ "a"; "b" ])) (OutputSource.Multiple (ResizeArray [ "a" ])) "Another number of sources is another list."
-            Expect.notEqual (OutputSource.Single "a") (OutputSource.Multiple (ResizeArray [ "a" ])) "A single source stays different from a list of one source."
+            expectSame "multiple output sources" (box (OutputSource.Multiple (literals [ "a"; "b" ]))) (box (OutputSource.Multiple (literals [ "a"; "b" ])))
+            expectSame "a single output source" (box (OutputSource.Single (SchemaSaladString.Literal "a"))) (box (OutputSource.Single (SchemaSaladString.Literal "a")))
+            Expect.notEqual (OutputSource.Multiple (literals [ "a"; "b" ])) (OutputSource.Multiple (literals [ "b"; "a" ])) "Another order is another list of sources."
+            Expect.notEqual (OutputSource.Multiple (literals [ "a"; "b" ])) (OutputSource.Multiple (literals [ "a" ])) "Another number of sources is another list."
+            Expect.notEqual (OutputSource.Single (SchemaSaladString.Literal "a")) (OutputSource.Multiple (literals [ "a" ])) "A single source stays different from a list of one source."
             Expect.notEqual (outputsOf text).[0] (outputsOf (outputs "[a/x, c/z]")).[0] "A changed source makes the outputs unequal."
 
         testCase "lists of any element type in dynamic properties compare and hash by their elements" <| fun _ ->
@@ -2719,7 +2719,7 @@ let testArrayShorthand =
             let hand =
                 CWLToolDescription(
                     ResizeArray [],
-                    inputs = ListEntry.ofValues (ResizeArray [ CWLInput("a", Array labelled); CWLInput("b", Union (ResizeArray [ Null; Array labelled ]), optional = true); CWLInput("c", Array (InputArraySchema(CWLType.String))) ]),
+                    inputs = ListEntry.ofValues (ResizeArray [ CWLInput("a", Array labelled); CWLInput("b", Union (ResizeArray [ Null; Array labelled ])); CWLInput("c", Array (InputArraySchema(CWLType.String))) ]),
                     baseCommand = ResizeArray [ (SchemaSaladString.Literal "echo") ]
                 )
             let encoded = Encode.encodeToolDescription hand
@@ -2868,7 +2868,7 @@ let testSchemaSaladDirectivesInDocuments =
             match (try Decode.decodeExpressionTool (expressionTool [ "expression:"; "  foo: bar" ]) |> ignore; None with YamlDecodeException error -> Some error) with
             | Some error ->
                 Expect.equal (DecodeError.pathText error) "expression" "The error shows the field."
-                Expect.stringContains error.Message "Expected a string or a mapping with the single key $include or $import, found a mapping" "The error says what is wrong."
+                Expect.stringContains error.Message "Expected a string or a directive, found a mapping" "The error says what is wrong."
                 Expect.isSome error.Span "The error has the place in the text."
             | None -> failwith "A mapping without a directive must fail."
         testCase "the when of a step keeps an include" <| fun _ ->
@@ -2921,20 +2921,20 @@ let testInvalidDocuments =
                 expectError ("workflow, " + key) ("inputs.x.inputBinding." + key) "has loadContents only" (fun () -> Decode.decodeWorkflow (withBinding workflowHeader [ field ]) |> ignore)
                 expectError ("expression tool, " + key) ("inputs.x.inputBinding." + key) "has loadContents only" (fun () -> Decode.decodeExpressionTool (withBinding expressionHeader [ field ]) |> ignore)
             expectError "operation" "inputs.x.inputBinding" "An input of an operation has no inputBinding" (fun () -> Decode.decodeOperation (withBinding operationHeader [ "loadContents: true" ]) |> ignore)
-            Expect.equal (ListEntry.values (Decode.decodeWorkflow (withBinding workflowHeader [ "loadContents: true" ])).Inputs).[0].InputBinding.Value.LoadContents (Some true) "A workflow input may load contents."
-            Expect.equal (ListEntry.values (Decode.decodeExpressionTool (withBinding expressionHeader [ "loadContents: true" ])).Inputs.Value).[0].InputBinding.Value.LoadContents (Some true) "An expression tool input may load contents."
+            Expect.equal (ListEntry.values (Decode.decodeWorkflow (withBinding workflowHeader [ "loadContents: true" ])).Inputs).[0].InputBinding.Value.LoadContents (Some (SchemaSaladBool.Value true)) "A workflow input may load contents."
+            Expect.equal (ListEntry.values (Decode.decodeExpressionTool (withBinding expressionHeader [ "loadContents: true" ])).Inputs.Value).[0].InputBinding.Value.LoadContents (Some (SchemaSaladBool.Value true)) "An expression tool input may load contents."
             Expect.equal (ListEntry.values (Decode.decodeCommandLineTool (withBinding commandLineHeader [ "position: 1"; "prefix: -x" ])).Inputs.Value).[0].InputBinding.Value.Position (Some (BindingPosition.Number 1)) "A command line tool input has the full binding."
         testCase "the loadListing of a step input is a symbol of CWL" <| fun _ ->
             let step (loadListing: string) = stepWith [ "    in:"; "      x:"; "        default: 1"; "        loadListing: " + loadListing; "    out: []" ]
             expectError "a word" "steps.s.in.x.loadListing" "Expected one of no_listing, shallow_listing and deep_listing" (fun () -> Decode.decodeWorkflow (step "foo") |> ignore)
-            Expect.equal (WorkflowStep.getInputs (ListEntry.values (Decode.decodeWorkflow (step "deep_listing")).Steps).[0]).[0].LoadListing (Some LoadListingEnum.DeepListing) "A symbol is typed."
+            Expect.equal (WorkflowStep.getInputValues (ListEntry.values (Decode.decodeWorkflow (step "deep_listing")).Steps).[0]).[0].LoadListing (Some LoadListingEnum.DeepListing) "A symbol is typed."
         testCase "outputSource belongs to the output of a workflow only" <| fun _ ->
             let toolOutput = tool [ "inputs: {}"; "outputs:"; "  o:"; "    type: string"; "    outputSource: s/o" ]
             expectError "a tool" "outputs.o.outputSource" "An output of a command line tool has no outputSource" (fun () -> Decode.decodeCommandLineTool toolOutput |> ignore)
             expectError "an expression tool" "outputs.o.outputSource" "An output of an expression tool has no outputSource" (fun () ->
                 Decode.decodeExpressionTool (String.concat "\n" [ "cwlVersion: v1.2"; "class: ExpressionTool"; "inputs: {}"; "outputs:"; "  o:"; "    type: string"; "    outputSource: s/o"; "expression: $(1)"; "" ]) |> ignore)
             let decoded = Decode.decodeWorkflow (workflow [ "inputs:"; "  x: string"; "outputs:"; "  o:"; "    type: string"; "    outputSource: x"; "steps: {}" ])
-            Expect.equal (ListEntry.values decoded.Outputs).[0].OutputSource (Some (OutputSource.Single "x")) "A workflow output names its source."
+            Expect.equal (ListEntry.values decoded.Outputs).[0].OutputSource (Some (OutputSource.Single (SchemaSaladString.Literal "x"))) "A workflow output names its source."
         testCase "outputBinding belongs to the output of a command line tool only" <| fun _ ->
             let output (extra: string) = [ "outputs:"; "  o:"; "    type: string"; "    " + extra ]
             let expressionTool (extra: string) = String.concat "\n" ([ "cwlVersion: v1.2"; "class: ExpressionTool"; "inputs: {}" ] @ output extra @ [ "expression: $(1)"; "" ])
@@ -2965,7 +2965,7 @@ let testInvalidDocuments =
                     Decode.decodeCommandLineTool ((tool ([ "inputs: {}" ] @ output "linkMerge: merge_nested")).Replace("cwlVersion: v1.2", "cwlVersion: " + version)) |> ignore)
             let yaml = workflow [ "inputs:"; "  x: string"; "steps: {}"; "outputs:"; "  o:"; "    type: string[]"; "    outputSource: [x, x]"; "    linkMerge: merge_flattened"; "    pickValue: all_non_null" ]
             let decoded = Decode.decodeWorkflow yaml
-            Expect.equal (ListEntry.values decoded.Outputs).[0].OutputSource (Some (OutputSource.Multiple (ResizeArray [ "x"; "x" ]))) "A workflow output names its sources."
+            Expect.equal (ListEntry.values decoded.Outputs).[0].OutputSource (Some (OutputSource.Multiple (literals [ "x"; "x" ]))) "A workflow output names its sources."
             let written = Encode.encodeWorkflowDescription decoded
             Expect.stringContains written "linkMerge: merge_flattened" "The workflow output keeps its linkMerge."
             Expect.stringContains written "pickValue: all_non_null" "The workflow output keeps its pickValue."
@@ -2973,7 +2973,7 @@ let testInvalidDocuments =
         testCase "an id that occurs twice in the list form of step inputs is a warning and both entries are written back as a list" <| fun _ ->
             let yaml = workflow [ "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run: t.cwl"; "    in:"; "      - id: a"; "        source: x"; "      - id: b"; "        source: y"; "      - id: a"; "        source: [y, z]"; "    out: []" ]
             let decoded = Decode.decodeWorkflowWithWarnings yaml
-            Expect.equal (WorkflowStep.getInputs (ListEntry.values decoded.Value.Steps).[0] |> Seq.map (fun input -> input.Id) |> List.ofSeq) [ "a"; "b"; "a" ] "Every entry stays in the list, in order."
+            Expect.equal (WorkflowStep.getInputValues (ListEntry.values decoded.Value.Steps).[0] |> Seq.map (fun input -> input.Id) |> List.ofSeq) [ "a"; "b"; "a" ] "Every entry stays in the list, in order."
             Expect.equal decoded.Warnings.Count 1 "The repeated id is one warning."
             Expect.equal decoded.Warnings.[0].Path "steps.s.in[2]" "The warning shows the repeated entry."
             Expect.stringContains decoded.Warnings.[0].Message "The id a belongs to an earlier entry of the list too" "The warning names the id."
@@ -3133,7 +3133,7 @@ let testStrictStrings =
                   "steps.s.in.x.valueFrom", step [ "run: t.cwl"; "in: {x: {valueFrom: {0}}}"; "out: []" ], true
                   "outputs.o.outputSource", workflow [ "inputs: {}"; "steps: {}"; "outputs:"; "  o:"; "    type: string"; "    outputSource: {0}" ], true ]
             for (path, template, quotedDecodes) in cases do
-                for text in [ "5"; "true"; "1.5" ] do
+                for text in [ "5"; "true"; "1.5"; ".5e3"; "+.5e3"; "017"; "0o17"; "0x1F" ] do
                     match decodeError (template.Replace("{0}", text)) with
                     | Some error ->
                         Expect.equal (DecodeError.pathText error) path (sprintf "The error for %s should show the field:\n%s" text template)
@@ -3142,6 +3142,9 @@ let testStrictStrings =
                     | None -> failwith (sprintf "A plain %s at %s must fail:\n%s" text path template)
                 if quotedDecodes then
                     Expect.isNone (decodeError (template.Replace("{0}", "\"5\""))) (sprintf "A quoted 5 at %s is a string." path)
+                    // The core schema of YAML 1.2.2 reads these plain spellings as strings.
+                    for text in [ "1_000"; "0b101"; "1_0.5"; "yes"; "0X1F"; "2001-12-14"; "1:30"; "="; "<<"; "._" ] do
+                        Expect.isNone (decodeError (template.Replace("{0}", text))) (sprintf "A plain %s at %s is a string." text path)
         testCase "a plain scalar key of an id map is a decode error at the key and a quoted key is a name" <| fun _ ->
             let cases =
                 [ "inputs", tool [ "baseCommand: cat"; "inputs:"; "  {0}: string"; "outputs: {}" ]
@@ -3242,9 +3245,9 @@ let testDirectivesInStringFields =
           "the label of an output", output [ "label: {0}" ], (fun yaml -> (outputOf yaml).Label)
           "the doc of a step", step [ "doc: {0}" ], (fun yaml -> textOf (stepOf yaml).Doc)
           "the label of a step", step [ "label: {0}" ], (fun yaml -> (stepOf yaml).Label)
-          "the doc of a step input", workflow [ "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run: t.cwl"; "    in:"; "      a:"; "        source: x"; "        doc: {0}"; "    out: []" ], (fun yaml -> textOf (WorkflowStep.getInputs (stepOf yaml)).[0].Doc)
-          "the label of a step input", workflow [ "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run: t.cwl"; "    in:"; "      a:"; "        source: x"; "        label: {0}"; "    out: []" ], (fun yaml -> (WorkflowStep.getInputs (stepOf yaml)).[0].Label)
-          "the doc of a record field", tool [ "baseCommand: echo"; "inputs:"; "  x:"; "    type:"; "      type: record"; "      fields:"; "        f:"; "          type: string"; "          doc: {0}"; "outputs: {}" ], (fun yaml -> match schemaOf yaml with Record r -> textOf (InputRecordSchema.getFieldsOrEmpty r).[0].Doc | _ -> None)
+          "the doc of a step input", workflow [ "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run: t.cwl"; "    in:"; "      a:"; "        source: x"; "        doc: {0}"; "    out: []" ], (fun yaml -> textOf (WorkflowStep.getInputValues (stepOf yaml)).[0].Doc)
+          "the label of a step input", workflow [ "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run: t.cwl"; "    in:"; "      a:"; "        source: x"; "        label: {0}"; "    out: []" ], (fun yaml -> (WorkflowStep.getInputValues (stepOf yaml)).[0].Label)
+          "the doc of a record field", tool [ "baseCommand: echo"; "inputs:"; "  x:"; "    type:"; "      type: record"; "      fields:"; "        f:"; "          type: string"; "          doc: {0}"; "outputs: {}" ], (fun yaml -> match schemaOf yaml with Record r -> textOf (InputRecordSchema.getFieldValuesOrEmpty r).[0].Doc | _ -> None)
           "the label of a record", tool [ "baseCommand: echo"; "inputs:"; "  x:"; "    type:"; "      type: record"; "      fields: {}"; "      label: {0}"; "outputs: {}" ], (fun yaml -> match schemaOf yaml with Record r -> r.Label | _ -> None)
           "the doc of an enum", tool [ "baseCommand: echo"; "inputs:"; "  x:"; "    type:"; "      type: enum"; "      symbols: [a]"; "      doc: {0}"; "outputs: {}" ], (fun yaml -> match schemaOf yaml with Enum e -> textOf e.Doc | _ -> None)
           "the label of an array", tool [ "baseCommand: echo"; "inputs:"; "  x:"; "    type:"; "      type: array"; "      items: string"; "      label: {0}"; "outputs: {}" ], (fun yaml -> match schemaOf yaml with Array a -> a.Label | _ -> None)
@@ -3256,7 +3259,7 @@ let testDirectivesInStringFields =
           "the prefix of an input binding", port [ "inputBinding: {prefix: {0}}" ], (fun yaml -> (inputOf yaml).InputBinding.Value.Prefix)
           "the itemSeparator of an input binding", port [ "inputBinding: {itemSeparator: {0}}" ], (fun yaml -> (inputOf yaml).InputBinding.Value.ItemSeparator)
           "the valueFrom of an input binding", port [ "inputBinding: {valueFrom: {0}}" ], (fun yaml -> (inputOf yaml).InputBinding.Value.ValueFrom)
-          "the valueFrom of a step input", workflow [ "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run: t.cwl"; "    in:"; "      a:"; "        valueFrom: {0}"; "    out: []" ], (fun yaml -> (WorkflowStep.getInputs (stepOf yaml)).[0].ValueFrom)
+          "the valueFrom of a step input", workflow [ "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run: t.cwl"; "    in:"; "      a:"; "        valueFrom: {0}"; "    out: []" ], (fun yaml -> (WorkflowStep.getInputValues (stepOf yaml)).[0].ValueFrom)
           "the format of an input", port [ "format: {0}" ], (fun yaml -> match (inputOf yaml).Format with Some (InputFormat.Single format) -> Some format | _ -> None)
           "a format in the list of an input", port [ "format: [{0}]" ], (fun yaml -> match (inputOf yaml).Format with Some (InputFormat.Multiple formats) -> Some formats.[0] | _ -> None)
           "the format of an output", output [ "format: {0}" ], (fun yaml -> (outputOf yaml).Format)
@@ -3280,6 +3283,18 @@ let testDirectivesInStringFields =
                     Expect.stringContains written directive (sprintf "%s: the directive is written as a flow mapping.\n%s" name written)
                     Expect.equal (processOf written) (processOf yaml) (sprintf "%s: the written text should decode to the same process." name)
                     Expect.equal (read written) (Some expected) (sprintf "%s: the written directive is the string." name)
+        testCase "a mixin beside another field stands for the string in each string field, is written back as it was and reads back equal" <| fun _ ->
+            let directive = "{$mixin: notes.md, extra: 1}"
+            for (name, template, read) in cases do
+                let yaml = template.Replace("{0}", directive)
+                match read yaml with
+                | Some (SchemaSaladString.Mixed _ as mixed) -> Expect.equal mixed.Value "notes.md" (sprintf "%s: the value of the mixin is its path." name)
+                | other -> failwith (sprintf "%s: expected a mixin beside a field, found %A" name other)
+                let written = Encode.encodeCWLDocument (Decode.decodeCWLDocument yaml)
+                Expect.stringContains written directive (sprintf "%s: the mixin and its field are written as they were.\n%s" name written)
+                Expect.equal (processOf written) (processOf yaml) (sprintf "%s: the written text should decode to the same process." name)
+                let changed = template.Replace("{0}", "{$mixin: notes.md, extra: 2}")
+                Expect.notEqual (processOf changed) (processOf yaml) (sprintf "%s: another field beside the mixin makes another process." name)
         testCase "a plain number or bool and a mapping that is no directive are decode errors in each string field" <| fun _ ->
             for (name, template, _) in cases do
                 if name <> "the listing of an InitialWorkDirRequirement" then
@@ -3363,10 +3378,10 @@ let testImportedSchemaEntries =
             Expect.equal reread decoded "The written text should decode to the same tool."
             Expect.equal (Encode.encodeToolDescription reread) written "Writing again should give the same text."
         testCase "the getters give the fields and the symbols that the document writes out and leave the directives out" <| fun _ ->
-            Expect.equal (InputRecordSchema.getFieldsOrEmpty (recordOf mixedRecord) |> Seq.map (fun field -> field.Name) |> List.ofSeq) [ "f" ] "Only the field is an object."
-            Expect.equal (List.ofSeq (InputEnumSchema.getSymbols (enumOf mixedEnum))) [ "a"; "b" ] "Only the plain symbols are strings."
-            Expect.equal (InputRecordSchema.getFieldsOrEmpty (InputRecordSchema())).Count 0 "A record without fields has none."
-            let fields = InputRecordSchema.getFieldsOrEmpty (recordOf mixedRecord)
+            Expect.equal (InputRecordSchema.getFieldValuesOrEmpty (recordOf mixedRecord) |> Seq.map (fun field -> field.Name) |> List.ofSeq) [ "f" ] "Only the field is an object."
+            Expect.equal (List.ofSeq (InputEnumSchema.getSymbolValues (enumOf mixedEnum))) [ "a"; "b" ] "Only the plain symbols are strings."
+            Expect.equal (InputRecordSchema.getFieldValuesOrEmpty (InputRecordSchema())).Count 0 "A record without fields has none."
+            let fields = InputRecordSchema.getFieldValuesOrEmpty (recordOf mixedRecord)
             fields.Clear()
             Expect.equal (recordOf mixedRecord).Fields.Value.Count 3 "The list is a new one."
             Expect.equal (InputRecordSchema.tryGetFieldType "f" (recordOf mixedRecord)) (Some CWLType.String) "The field is found behind the import."
@@ -3416,7 +3431,7 @@ let testImportedSchemaEntries =
                 [ "an include among the fields", tool [ "type:"; "  type: record"; "  fields: [{$include: p.yml}]" ], "inputs.a.type.fields[0]", "An $include yields the text of a file, but an entry of the fields field of a record takes an object."
                   "an import with another field among the fields", tool [ "type:"; "  type: record"; "  fields: [{$import: p.yml, name: f}]" ], "inputs.a.type.fields[0]", "A directive has exactly one field"
                   "an include as the whole fields", tool [ "type:"; "  type: record"; "  fields: {$include: p.yml}" ], "inputs.a.type.fields", "An $include yields the text of a file, but the fields field of a record takes an object."
-                  "an include as the whole symbols", tool [ "type:"; "  type: enum"; "  symbols: {$include: p.yml}" ], "inputs.a.type.symbols", "An $include yields the text of a file, but the symbols field of an enum takes an object."
+                  "an include as the whole symbols", tool [ "type:"; "  type: enum"; "  symbols: {$include: p.yml}" ], "inputs.a.type.symbols", "An $include yields the text of a file, but the symbols field of an enum takes a list of strings."
                   "an import with another field among the symbols", tool [ "type:"; "  type: enum"; "  symbols: [{$import: p.yml, extra: 1}]" ], "inputs.a.type.symbols[0]", "A directive has exactly one field"
                   "a number among the symbols", tool [ "type:"; "  type: enum"; "  symbols: [a, 1]" ], "inputs.a.type.symbols[1]", "Expected a string" ]
             for (name, text, path, message) in cases do
@@ -3442,7 +3457,7 @@ let testEqualityAndHashOfPorts =
     let inputOf (text: string) = (ListEntry.values (Decode.decodeCommandLineTool text).Inputs.Value).[0]
     let outputOf (text: string) = (ListEntry.values (Decode.decodeCommandLineTool text).Outputs).[0]
     let workflowOutputOf (text: string) = (ListEntry.values (Decode.decodeWorkflow text).Outputs).[0]
-    let stepInputOf (text: string) = (WorkflowStep.getInputs (ListEntry.values (Decode.decodeWorkflow text).Steps).[0]).[0]
+    let stepInputOf (text: string) = (WorkflowStep.getInputValues (ListEntry.values (Decode.decodeWorkflow text).Steps).[0]).[0]
     let inputVariants =
         [ "name", "  x:\n", "  y:\n"
           "type", "type: string", "type: int"
@@ -3491,7 +3506,7 @@ let testEqualityAndHashOfPorts =
             expectVariants "step input" TestObjects.CWL.WorkflowSteps.AllFields.workflowFile stepInputOf stepInputVariants
         testCase "a file differs in equality and hash in each of its fields" <| fun _ ->
             let file () =
-                let file = FileInstance(location = "l", path = "p", basename = "b", dirname = "d", nameroot = "r", nameext = ".e", checksum = "c", size = 1L, secondaryFiles = { Node = YAMLicious.Reader.readRoot "s" }, format = "f", contents = "t")
+                let file = FileInstance(location = "l", path = "p", basename = "b", dirname = "d", nameroot = "r", nameext = ".e", checksum = "c", size = FileSize.Bytes 1L, secondaryFiles = { Node = YAMLicious.Reader.readRoot "s" }, format = "f", contents = "t")
                 DynObj.setProperty "arc:note" (box "n1") file
                 file
             let edits : (string * (FileInstance -> unit)) list =
@@ -3502,7 +3517,7 @@ let testEqualityAndHashOfPorts =
                   "nameroot", fun f -> f.Nameroot <- Some "r2"
                   "nameext", fun f -> f.Nameext <- Some ".e2"
                   "checksum", fun f -> f.Checksum <- Some "c2"
-                  "size", fun f -> f.Size <- Some 2L
+                  "size", fun f -> f.Size <- Some (FileSize.Bytes 2L)
                   "secondaryFiles", fun f -> f.SecondaryFiles <- Some { Node = YAMLicious.Reader.readRoot "s2" }
                   "format", fun f -> f.Format <- Some "f2"
                   "contents", fun f -> f.Contents <- Some "t2"
@@ -3584,19 +3599,36 @@ let testMixinDirectives =
         Expect.equal (Decode.decodeCommandLineTool encoded) decoded (sprintf "%s: the written text should decode to the same tool." name)
         Expect.equal (Encode.encodeToolDescription (Decode.decodeCommandLineTool encoded)) encoded (sprintf "%s: writing again should give the same text." name)
     testList "Mixin directives" [
-        testCase "a port with an id and a mixin is a port without the fields that the file supplies, in a list and in a map" <| fun _ ->
-            let listed = tool [ "inputs: [{id: x, $mixin: mix.yml}]"; "outputs: [{id: o, $mixin: out.yml}]" ]
-            let mapped = tool [ "inputs:"; "  x: {$mixin: mix.yml}"; "outputs:"; "  o: {$mixin: out.yml}" ]
+        testCase "the mixin path of a raw value is the path of the directive, and the empty text for any other node" <| fun _ ->
+            let raw (yaml: string) : RawYaml = { Node = Reader.readRoot yaml }
+            Expect.equal (raw "{$mixin: tool.yml}").MixinPath "tool.yml" "A mixin on its own has its path."
+            Expect.equal (raw "{$mixin: tool.yml, label: x}").MixinPath "tool.yml" "A mixin beside a field has its path."
+            Expect.equal (raw "{label: x}").MixinPath "" "A mapping without a mixin has none."
+            Expect.equal (raw "{$import: tool.yml}").MixinPath "" "An import is no mixin."
+            Expect.equal (raw "[a]").MixinPath "" "A list has none."
+            Expect.equal (raw "x").MixinPath "" "A scalar has none."
+        testCase "a port with a mixin is a mixed entry of its list, with an id or without, in a list and in a map" <| fun _ ->
+            let listed = tool [ "inputs: [{id: x, $mixin: mix.yml}, {id: y, type: int, $mixin: typed.yml}]"; "outputs: [{id: o, $mixin: out.yml}]" ]
+            let mapped = tool [ "inputs:"; "  x: {$mixin: mix.yml}"; "  y: {type: int, $mixin: typed.yml}"; "outputs:"; "  o: {$mixin: out.yml}" ]
             for (name, text) in [ "list", listed; "map", mapped ] do
                 let decoded = Decode.decodeCommandLineTool text
-                let input = (ListEntry.values decoded.Inputs.Value).[0]
-                Expect.equal input.Name "x" (sprintf "%s: the input keeps its id" name)
-                Expect.isNone input.Type_ (sprintf "%s: the file supplies the type" name)
-                Expect.equal (DynObj.tryGetTypedPropertyValue<string> "$mixin" input) (Some "mix.yml") (sprintf "%s: the mixin stays an extension field of the object" name)
-                Expect.isNone (ListEntry.values decoded.Outputs).[0].Type_ (sprintf "%s: the output has no type either" name)
-                expectRoundTrip name text [ "$mixin: mix.yml"; "$mixin: out.yml" ]
-            let typed = Decode.decodeCommandLineTool (tool [ "inputs: [{id: x, type: int, $mixin: mix.yml}]"; "outputs: []" ])
-            Expect.equal (ListEntry.values typed.Inputs.Value).[0].Type_ (Some CWLType.Int) "The type beside the mixin stays."
+                Expect.equal decoded.Inputs.Value.Count 2 (sprintf "%s: both inputs stay" name)
+                for entry in Seq.append (decoded.Inputs.Value |> Seq.map (ListEntry.map ignore)) (decoded.Outputs |> Seq.map (ListEntry.map ignore)) do
+                    match entry with
+                    | ListEntry.Mixed _ -> ()
+                    | other -> failwith (sprintf "%s: expected a mixed entry, found %A" name other)
+                Expect.isEmpty (ListEntry.values decoded.Inputs.Value) (sprintf "%s: a mixed port is no typed port" name)
+                Expect.isEmpty (ListEntry.values decoded.Outputs) (sprintf "%s: a mixed output is no typed output" name)
+                expectRoundTrip name text [ "$mixin: mix.yml"; "$mixin: typed.yml"; "$mixin: out.yml"; "type: int" ]
+        testCase "the key of a map entry replaces the field of the same name that the mixed value holds" <| fun _ ->
+            let text = tool [ "inputs:"; "  x: {id: other, $mixin: mix.yml}"; "outputs: []" ]
+            match (Decode.decodeCommandLineTool text).Inputs.Value.[0] with
+            | ListEntry.Mixed raw ->
+                let written = Encode.encodeToolDescription (Decode.decodeCommandLineTool text)
+                Expect.stringContains written "id: x" "The key is the id."
+                Expect.isFalse (written.Contains "other") "The field of the value gives way to the key."
+            | other -> failwith (sprintf "Expected a mixed entry, found %A" other)
+            expectRoundTrip "replaced" text [ "id: x" ]
         testCase "a mixin on its own or without an id is an entry of its own in a list of objects" <| fun _ ->
             let inputs = inputsOf (tool [ "inputs: [{$mixin: port.yml}, {type: int, $mixin: other.yml}, {id: a, type: int}]"; "outputs: []" ])
             Expect.equal inputs.Count 3 "Every entry stays."
@@ -3627,22 +3659,19 @@ let testMixinDirectives =
             Expect.stringContains (Encode.encodeWorkflowDescription run) "run: {$mixin: tool.cwl}" "The run is written back as a mixin."
             Expect.equal (Decode.decodeWorkflow (Encode.encodeWorkflowDescription run)) run "The written text should decode to the same workflow."
             let types = tool [ "inputs:"; "  a:"; "    type: {$mixin: t.yml}"; "  b:"; "    type: [\"null\", {$mixin: t.yml}]"; "outputs: []" ]
-            match (ListEntry.values (inputsOf types)).[0].Type_, (ListEntry.values (inputsOf types)).[1].Type_ with
-            | Some (MixedType _), Some (Union members) when members.Count = 2 && (match members.[1] with MixedType _ -> true | _ -> false) -> ()
-            | other -> failwithf "Expected mixed types, found %A" other
+            let portTypes = ListEntry.values (inputsOf types) |> Seq.map (fun input -> input.Type_) |> List.ofSeq
+            Expect.isTrue (match portTypes.[0] with Some (MixedType _) -> true | _ -> false) "The type of the first input is the mixin."
+            Expect.isTrue (match portTypes.[1] with Some (Union members) -> members.Count = 2 && (match members.[1] with MixedType _ -> true | _ -> false) | _ -> false) "The second member of the union is the mixin."
             expectRoundTrip "types" types [ "type: {$mixin: t.yml}"; "{$mixin: t.yml}" ]
             let strings = tool [ "doc: {$mixin: d.md}"; "label: {$mixin: l.yml}"; "inputs: []"; "outputs: []" ]
             let decodedStrings = Decode.decodeCommandLineTool strings
             Expect.equal decodedStrings.Doc (Some (DocText.Text (SchemaSaladString.Mixin "d.md"))) "The doc is the mixin."
             Expect.equal decodedStrings.Label (Some (SchemaSaladString.Mixin "l.yml")) "The label is the mixin."
             expectRoundTrip "strings" strings [ "doc: {$mixin: d.md}"; "label: {$mixin: l.yml}" ]
-            let requirements = tool [ "requirements:"; "  - {$mixin: req.yml}"; "  - {$mixin: body.yml, class: NetworkAccess}"; "hints:"; "  - {$mixin: hint.yml}"; "  NetworkAccess: {$mixin: body.yml}"; "inputs: []"; "outputs: []" ]
             expectRoundTrip "requirements" (tool [ "requirements:"; "  - {$mixin: req.yml}"; "  - {$mixin: body.yml, class: NetworkAccess}"; "hints:"; "  - {$mixin: hint.yml}"; "inputs: []"; "outputs: []" ]) [ "$mixin: req.yml"; "$mixin: body.yml"; "$mixin: hint.yml" ]
             let mapped = Decode.decodeCommandLineTool (tool [ "requirements:"; "  NetworkAccess: {$mixin: body.yml}"; "hints:"; "  NetworkAccess: {$mixin: body.yml}"; "inputs: []"; "outputs: []" ])
-            match mapped.Requirements.Value.[0], mapped.Hints.Value.[0] with
-            | MixedRequirement _, MixedHint _ -> ()
-            | other -> failwithf "Expected a mixed requirement and a mixed hint, found %A" other
-            ignore requirements
+            Expect.isTrue (match mapped.Requirements.Value.[0] with MixedRequirement _ -> true | _ -> false) "The map-form requirement is a mixin."
+            Expect.isTrue (match mapped.Hints.Value.[0] with MixedHint _ -> true | _ -> false) "The map-form hint is a mixin."
         testCase "a mixin stands for a field of a record, a symbol, an environment variable, a step input and an output of a step" <| fun _ ->
             expectRoundTrip "fields" (tool [ "inputs:"; "  a:"; "    type:"; "      type: record"; "      fields: [{$mixin: field.yml}, {name: f, $mixin: mix.yml}]"; "outputs: []" ]) [ "$mixin: field.yml"; "name: f" ]
             expectRoundTrip "symbols" (tool [ "inputs:"; "  a:"; "    type:"; "      type: enum"; "      symbols: [x, {$mixin: sym.yml}]"; "outputs: []" ]) [ "{$mixin: sym.yml}" ]
@@ -3651,8 +3680,8 @@ let testMixinDirectives =
             let decoded = Decode.decodeWorkflow step
             let first = (ListEntry.values decoded.Steps).[0]
             Expect.equal first.In.Count 2 "Both step inputs stay."
-            Expect.equal (WorkflowStep.getInputs first |> Seq.map (fun input -> input.Id) |> List.ofSeq) [ "a" ] "The step input with an id is typed."
-            Expect.equal (first.Out |> Seq.map StepOutput.tryId |> List.ofSeq) [ None; Some "o" ] "The output with an id is typed."
+            Expect.isEmpty (WorkflowStep.getInputValues first) "A step input with a mixin is no typed step input, with an id or without."
+            Expect.equal (first.Out |> Seq.map StepOutput.tryId |> List.ofSeq) [ None; None ] "An output with a mixin has no id of its own, with an id or without."
             let written = Encode.encodeWorkflowDescription decoded
             Expect.stringContains written "$mixin: in.yml" "The step input mixin is written back."
             Expect.stringContains written "$mixin: out.yml" "The output mixin is written back."
@@ -3661,10 +3690,742 @@ let testMixinDirectives =
             failsAt "inputs" (fun () -> Decode.decodeCommandLineTool (tool [ "inputs: {$mixin: ports.yml}"; "outputs: []" ]) |> ignore) "inputs" "A $mixin completes an object with the fields beside it, and the inputs field is no object."
             failsAt "requirements" (fun () -> Decode.decodeCommandLineTool (tool [ "requirements: {$mixin: reqs.yml}"; "inputs: []"; "outputs: []" ]) |> ignore) "requirements" "A $mixin completes an object with the fields beside it, and the requirements field is no object."
             failsAt "steps" (fun () -> Decode.decodeWorkflow (workflow [ "  $mixin: steps.yml" ]) |> ignore) "steps" "A $mixin completes an object with the fields beside it, and the steps field is no object."
-        testCase "a mixin beside a field of a string and a mixin with a bad path are decode errors" <| fun _ ->
-            failsAt "a string" (fun () -> Decode.decodeCommandLineTool (tool [ "doc: {$mixin: d.md, extra: 1}"; "inputs: []"; "outputs: []" ]) |> ignore) "doc" "A $mixin beside other fields completes an object, but this place takes a string."
+        testCase "a malformed mixin is a decode error in the step outputs and in a map of ports, as everywhere else" <| fun _ ->
+            let stepOutputs (line: string) = workflow [ "  s:"; "    run: t.cwl"; "    in: {}"; "    out: " + line ]
+            failsAt "an empty path" (fun () -> Decode.decodeWorkflow (stepOutputs "[{id: o, $mixin: \"\"}]") |> ignore) "steps.s.out[0].$mixin" "The path of the $mixin directive is empty."
+            failsAt "an import beside a mixin" (fun () -> Decode.decodeWorkflow (stepOutputs "[{$mixin: somix2.yml, $import: outs.yml}]") |> ignore) "steps.s.out[0]" "A directive has exactly one field"
+            failsAt "a list as the path" (fun () -> Decode.decodeCommandLineTool (tool [ "inputs: {x: {$mixin: [a]}}"; "outputs: []" ]) |> ignore) "inputs.x.$mixin" "Expected the path of the $mixin directive to be a string, found a list."
+            failsAt "a list as the path of an output" (fun () -> Decode.decodeCommandLineTool (tool [ "inputs: []"; "outputs: {o: {$mixin: [a]}}" ]) |> ignore) "outputs.o.$mixin" "Expected the path of the $mixin directive to be a string, found a list."
+            failsAt "a list as the path of a step input" (fun () -> Decode.decodeWorkflow (workflow [ "  s:"; "    run: t.cwl"; "    in: {a: {$mixin: [a]}}"; "    out: []" ]) |> ignore) "steps.s.in.a.$mixin" "Expected the path of the $mixin directive to be a string, found a list."
+        testCase "a mixin with a bad path and a mixin beside an import are decode errors" <| fun _ ->
             failsAt "a number" (fun () -> Decode.decodeCommandLineTool (tool [ "inputs: [{id: x, $mixin: 42}]"; "outputs: []" ]) |> ignore) "inputs[0].$mixin" "Expected the path of the $mixin directive to be a string"
             failsAt "an import beside a mixin" (fun () -> Decode.decodeCommandLineTool (tool [ "inputs: [{$import: a.yml, $mixin: b.yml}]"; "outputs: []" ]) |> ignore) "inputs[0]" "A directive has exactly one field"
+    ]
+
+let testScalarsThatCwltoolReadsAsAnotherType =
+    let tool (lines: string list) =
+        String.concat "\n" ([ "cwlVersion: v1.2"; "class: CommandLineTool" ] @ lines @ [ "" ])
+    let bigBinary = "0b" + String.replicate 70 "1"
+    let bigHex = "0x_FFFF_FFFF_FFFF_FFFF_FFFF"
+    // Strings that the core schema reads as strings and the loader of cwltool reads as other types.
+    let typed = [ "="; "<<"; bigBinary; bigHex; "yes"; "1_000"; "0b101"; "1:30" ]
+    // Strings that quotes keep apart from an int or a float of the core schema.
+    let quotedOnly = [ "0o" + String.replicate 30 "7"; "017"; ".5e3" ]
+    // Strings with the pattern of a float or an int that the loader cannot convert.
+    let unreadable = [ "._"; "-._"; "+._"; "._e+5"; ".__"; "0b_" ]
+    testList "Strings that cwltool reads as another type" [
+        testCase "a quoted text that cwltool would read as another type is written in quotes in a list of strings, an environment variable, a doc and a default" <| fun _ ->
+            for text in typed @ unreadable @ quotedOnly do
+                let documents =
+                    [ "a list of strings", tool [ "baseCommand: [echo, \"" + text + "\"]"; "inputs: []"; "outputs: []" ]
+                      "an environment variable", tool [ "baseCommand: env"; "requirements:"; "  EnvVarRequirement:"; "    envDef:"; "      A: \"" + text + "\""; "inputs: []"; "outputs: []" ]
+                      "a doc and a default", tool [ "doc: \"" + text + "\""; "baseCommand: echo"; "inputs:"; "  x:"; "    type: string"; "    default: \"" + text + "\""; "outputs: []" ] ]
+                for (place, yaml) in documents do
+                    let decoded = Decode.decodeCWLDocument yaml
+                    let written = Encode.encodeCWLDocument decoded
+                    Expect.stringContains written ("\"" + text + "\"") (sprintf "%s %s: the text is written in quotes.\n%s" place text written)
+                    Expect.equal (Decode.decodeCWLDocument written) decoded (sprintf "%s %s: the written text should decode to the same document." place text)
+        testCase "a plain text that the core schema reads as a string decodes as a string and is written in quotes" <| fun _ ->
+            for text in typed @ unreadable do
+                let yaml = tool [ "label: " + text; "baseCommand: echo"; "inputs: []"; "outputs: []" ]
+                let decoded = Decode.decodeCommandLineTool yaml
+                Expect.equal decoded.Label (Some (SchemaSaladString.Literal text)) (sprintf "The plain label %s is a string." text)
+                let written = Encode.encodeToolDescription decoded
+                Expect.stringContains written ("label: \"" + text + "\"") (sprintf "%s: the label is written in quotes.\n%s" text written)
+                Expect.equal (Decode.decodeCommandLineTool written) decoded (sprintf "%s: the written text should decode to the same tool." text)
+        testCase "a quoted text that cwltool would read as another type is written in quotes in a job file and reads back" <| fun _ ->
+            for text in typed @ unreadable @ quotedOnly do
+                let references = DecodeParameters.decodeYAMLParameterFile ("b: \"" + text + "\"\n")
+                let written = Encode.encodeYAMLParameterFile references
+                Expect.stringContains written ("b: \"" + text + "\"") (sprintf "%s: the value is written in quotes.\n%s" text written)
+                Expect.sequenceEqual (DecodeParameters.decodeYAMLParameterFile written) references (sprintf "%s: the written file should decode to the same references." text)
+        testCase "a raw value is written in the form that cwltool reads as the same data, and a read of the written text is equal" <| fun _ ->
+            let yaml = tool [ "baseCommand: echo"; "inputs:"; "  x:"; "    type: Any"; "    default:"; "      plain: 1_000"; "      list: [yes, 0b101, .5e3, +.5E3, -.5e+3]"; "      1_000: key"; "outputs: []" ]
+            let decoded = Decode.decodeCommandLineTool yaml
+            let written = Encode.encodeToolDescription decoded
+            for expected in [ "plain: \"1_000\""; "\"yes\""; "\"0b101\""; "0.5e3"; "+0.5E3"; "-.5e+3"; "\"1_000\": key" ] do
+                Expect.stringContains written expected (sprintf "%s is in the written text.\n%s" expected written)
+            Expect.equal (Decode.decodeCommandLineTool written) decoded "The written text should decode to the same tool."
+            Expect.equal (Encode.encodeToolDescription (Decode.decodeCommandLineTool written)) written "Writing again should give the same text."
+        testCase "an extension field that holds a marker is a string, written in quotes" <| fun _ ->
+            let decoded = Decode.decodeCommandLineTool (tool [ "$namespaces: {ex: http://example.org/}"; "baseCommand: echo"; "inputs: []"; "outputs: []"; "ex:marker: =" ])
+            let written = Encode.encodeToolDescription decoded
+            Expect.stringContains written "ex:marker: \"=\"" "The extension field is written in quotes."
+            Expect.equal (Decode.decodeCommandLineTool written) decoded "The written text should decode to the same tool."
+    ]
+
+let testDirectivesInExitCodes =
+    let tool (line: string) =
+        String.concat "\n" [ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo"; "inputs: {}"; "outputs: {}"; line; "" ]
+    let fields : (string * (CWLToolDescription -> ResizeArray<ListEntry<int>> option)) list =
+        [ "successCodes", (fun tool -> tool.SuccessCodes)
+          "temporaryFailCodes", (fun tool -> tool.TemporaryFailCodes)
+          "permanentFailCodes", (fun tool -> tool.PermanentFailCodes) ]
+    let failsAt (name: string) (text: string) (path: string) (message: string) =
+        match (try Decode.decodeCommandLineTool text |> ignore; None with YamlDecodeException error -> Some error) with
+        | Some error ->
+            Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the place" name)
+            Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
+            Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+        | None -> failwith (sprintf "%s must fail" name)
+    testList "Directives in the exit codes" [
+        testCase "an import stands among the codes, is written back there and reads back equal" <| fun _ ->
+            for (field, read) in fields do
+                let text = tool (field + ": [0, {$import: more.yml}, 3]")
+                let decoded = Decode.decodeCommandLineTool text
+                Expect.equal (List.ofSeq (read decoded).Value) [ ListEntry.Value 0; ListEntry.Imported "more.yml"; ListEntry.Value 3 ] (sprintf "%s: the import stands in its place." field)
+                let written = Encode.encodeToolDescription decoded
+                Expect.stringContains written (field + ":\n  - 0\n  - {$import: more.yml}\n  - 3\n") (sprintf "%s: the import is written as an entry.\n%s" field written)
+                let reread = Decode.decodeCommandLineTool written
+                Expect.equal reread decoded (sprintf "%s: the written text should decode to the same tool." field)
+                Expect.equal (Encode.encodeToolDescription reread) written (sprintf "%s: writing again should give the same text." field)
+        testCase "a mixin stands among the codes and keeps the mapping as it was written" <| fun _ ->
+            for (field, read) in fields do
+                let decoded = Decode.decodeCommandLineTool (tool (field + ": [{$mixin: m.yml}, {$mixin: n.yml, extra: 1}]"))
+                for entry in read decoded |> Option.get do
+                    match entry with
+                    | ListEntry.Mixed _ -> ()
+                    | other -> failwith (sprintf "%s: expected a mixin, found %A" field other)
+                let written = Encode.encodeToolDescription decoded
+                Expect.stringContains written "{$mixin: m.yml}" (sprintf "%s: the mixin is written back.\n%s" field written)
+                Expect.stringContains written "{$mixin: n.yml, extra: 1}" (sprintf "%s: the field beside the mixin is written back." field)
+                Expect.equal (Decode.decodeCommandLineTool written) decoded (sprintf "%s: the written text should decode to the same tool." field)
+        testCase "a field that is one directive keeps that spelling, and the list of that one import is equal" <| fun _ ->
+            for (field, read) in fields do
+                let whole = Decode.decodeCommandLineTool (tool (field + ": {$import: codes.yml}"))
+                let listed = Decode.decodeCommandLineTool (tool (field + ": [{$import: codes.yml}]"))
+                Expect.equal (List.ofSeq (read whole).Value) [ ListEntry.Imported "codes.yml" ] (sprintf "%s: the codes are the import." field)
+                Expect.equal whole listed (sprintf "%s: the spelling is layout, so the tools are equal." field)
+                Expect.stringContains (Encode.encodeToolDescription whole) (field + ": {$import: codes.yml}") (sprintf "%s: the whole field keeps its spelling." field)
+                Expect.isFalse ((Encode.encodeToolDescription listed).Contains (field + ": {$import")) (sprintf "%s: the listed spelling is written as a list." field)
+                let mixed = Decode.decodeCommandLineTool (tool (field + ": {$mixin: codes.yml, extra: 1}"))
+                Expect.stringContains (Encode.encodeToolDescription mixed) (field + ": {$mixin: codes.yml, extra: 1}") (sprintf "%s: a mixin as the whole field keeps its spelling." field)
+                Expect.equal (Decode.decodeCommandLineTool (Encode.encodeToolDescription mixed)) mixed (sprintf "%s: the written text should decode to the same tool." field)
+        testCase "an include, a text and a mapping that is no directive are decode errors in the codes" <| fun _ ->
+            for (field, _) in fields do
+                failsAt (field + " include") (tool (field + ": [{$include: c.txt}]")) (field + "[0]") ("An $include yields the text of a file, but an entry of the " + field + " field takes a number.")
+                failsAt (field + " whole include") (tool (field + ": {$include: c.txt}")) field ("An $include yields the text of a file, but the " + field + " field takes a list of numbers.")
+                failsAt (field + " text") (tool (field + ": 0")) field "Expected a list of numbers, found the text"
+                failsAt (field + " mapping") (tool (field + ": {a: b}")) field "Expected a list of numbers, found a mapping."
+                failsAt (field + " import beside a field") (tool (field + ": {$import: c.yml, extra: 1}")) field "A directive has exactly one field"
+        testCase "the plain codes still read as numbers and a quoted number is still an error" <| fun _ ->
+            let decoded = Decode.decodeCommandLineTool (tool "successCodes: [0, 1]")
+            Expect.equal (List.ofSeq (ListEntry.values decoded.SuccessCodes.Value)) [ 0; 1 ] "The numbers are the values."
+            failsAt "a quoted number" (tool "successCodes: [\"0\"]") "successCodes[0]" "Expected an int"
+    ]
+
+let testDirectivesInSoftwareAndEnvironment =
+    let tool (lines: string list) =
+        String.concat "\n" ([ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo"; "inputs: {}"; "outputs: {}" ] @ lines @ [ "" ])
+    let software (packageLines: string list) =
+        tool ([ "hints:"; "  - class: SoftwareRequirement" ] @ (packageLines |> List.map (fun line -> "    " + line)))
+    let packagesOf (text: string) =
+        match (Decode.decodeCommandLineTool text).Hints.Value.[0] with
+        | KnownHint (SoftwareRequirement packages) -> packages
+        | other -> failwith (sprintf "Expected a SoftwareRequirement but got %A" other)
+    let literal (text: string) = SchemaSaladString.Literal text
+    let roundTrip (name: string) (text: string) =
+        let decoded = Decode.decodeCommandLineTool text
+        let written = Encode.encodeToolDescription decoded
+        Expect.equal (Decode.decodeCommandLineTool written) decoded (sprintf "%s: the written text should decode to the same tool.\n%s" name written)
+        Expect.equal (Encode.encodeToolDescription (Decode.decodeCommandLineTool written)) written (sprintf "%s: writing again should give the same text." name)
+        written
+    let failsAt (name: string) (text: string) (path: string) (message: string) =
+        match (try Decode.decodeCommandLineTool text |> ignore; None with YamlDecodeException error -> Some error) with
+        | Some error ->
+            Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the place" name)
+            Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
+            Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+        | None -> failwith (sprintf "%s must fail" name)
+    testList "Directives in software packages and environment definitions" [
+        testCase "an import or a mixin stands among the packages, is written back there and reads back equal" <| fun _ ->
+            let text = software [ "packages:"; "  - {$import: more.yml}"; "  - package: git"; "  - {$mixin: m.yml, package: curl}" ]
+            let packages = packagesOf text
+            Expect.equal packages.Count 3 "Every entry stays."
+            Expect.equal packages.[0] (ListEntry.Imported "more.yml") "The import comes first."
+            Expect.equal (ListEntry.values packages |> Seq.map (fun package -> package.Package) |> List.ofSeq) [ literal "git" ] "Only the package is an object."
+            match packages.[2] with
+            | ListEntry.Mixed _ -> ()
+            | other -> failwith (sprintf "Expected a mixin, found %A" other)
+            let written = roundTrip "packages" text
+            Expect.stringContains written "- {$import: more.yml}" "The import is written as an entry."
+            Expect.stringContains written "{$mixin: m.yml, package: curl}" "The mixin is written as it was."
+        testCase "the packages as a whole may be an import, which is written as a list, and an include or a mixin there is an error" <| fun _ ->
+            let whole = software [ "packages: {$import: packages.yml}" ]
+            Expect.equal (List.ofSeq (packagesOf whole)) [ ListEntry.Imported "packages.yml" ] "The packages are the import, and not a package called $import."
+            Expect.equal (Decode.decodeCommandLineTool whole) (Decode.decodeCommandLineTool (software [ "packages: [{$import: packages.yml}]" ])) "The spelling is layout, so the tools are equal."
+            Expect.stringContains (roundTrip "whole" whole) "- {$import: packages.yml}" "The import is written as an entry."
+            failsAt "an include" (software [ "packages: {$include: p.txt}" ]) "hints[0].packages" "An $include yields the text of a file, but the packages field takes an object."
+            failsAt "a mixin" (software [ "packages: {$mixin: p.yml}" ]) "hints[0].packages" "A $mixin completes an object with the fields beside it"
+            failsAt "an include entry" (software [ "packages: [{$include: p.txt}]" ]) "hints[0].packages[0]" "An $include yields the text of a file, but an entry of the packages field takes an object."
+        testCase "a directive cannot stand for the value of a package in map form, and a mixin there gets the package name beside it" <| fun _ ->
+            failsAt "an import" (software [ "packages:"; "  git: {$import: p.yml}" ]) "hints[0].packages.git" "A directive cannot stand for the value of an entry of the packages field"
+            let mixed = software [ "packages:"; "  git: {$mixin: p.yml}" ]
+            match (packagesOf mixed).[0] with
+            | ListEntry.Mixed _ -> ()
+            | other -> failwith (sprintf "Expected a mixin, found %A" other)
+            Expect.stringContains (roundTrip "mixed" mixed) "package: git" "The key of the map entry is the package of the loaded object."
+        testCase "the package, the version and the specs take directives and a list of specs may be an import or a mixin as a whole" <| fun _ ->
+            let text = software [ "packages:"; "  - package: {$include: name.txt}"; "    version: [\"1.0\", {$import: v.yml}]"; "    specs: {$import: specs.yml}"; "  - package: {$mixin: n.yml, extra: 1}"; "    specs: {$mixin: s.yml}" ]
+            let packages = ListEntry.values (packagesOf text)
+            Expect.equal packages.[0].Package (SchemaSaladString.Include "name.txt") "The package is the include."
+            Expect.equal (List.ofSeq packages.[0].Version.Value) [ literal "1.0"; SchemaSaladString.Import "v.yml" ] "The version holds a directive among the strings."
+            Expect.equal (List.ofSeq packages.[0].Specs.Value) [ SchemaSaladString.Import "specs.yml" ] "The specs are the import."
+            Expect.equal (List.ofSeq packages.[1].Specs.Value) [ SchemaSaladString.Mixin "s.yml" ] "The specs are the mixin."
+            let written = roundTrip "fields" text
+            Expect.stringContains written "package: {$include: name.txt}" "The include is written back."
+            Expect.stringContains written "{$mixin: n.yml, extra: 1}" "The mixin beside a field is written back."
+            let mapped = software [ "packages:"; "  git: [a, {$import: s.yml}]"; "  curl: {version: [{$include: v.txt}], specs: [{$import: s.yml}]}" ]
+            let mappedPackages = ListEntry.values (packagesOf mapped)
+            Expect.equal (List.ofSeq mappedPackages.[0].Specs.Value) [ literal "a"; SchemaSaladString.Import "s.yml" ] "The specs shorthand takes a directive."
+            Expect.equal (List.ofSeq mappedPackages.[1].Version.Value) [ SchemaSaladString.Include "v.txt" ] "The version takes an include."
+            roundTrip "mapped" mapped |> ignore
+            failsAt "an include as the whole specs" (software [ "packages:"; "  - package: git"; "    specs: {$include: s.txt}" ]) "hints[0].packages[0].specs" "An $include yields the text of a file, but the specs field of a package takes a list of strings."
+            failsAt "a text as the version" (software [ "packages:"; "  - package: git"; "    version: v1" ]) "hints[0].packages[0].version" "Expected a list of strings"
+        testCase "the envName takes a directive" <| fun _ ->
+            let text = tool [ "requirements:"; "  EnvVarRequirement:"; "    envDef:"; "      - envName: {$include: name.txt}"; "        envValue: v"; "      - envName: {$mixin: n.yml, extra: 1}"; "        envValue: w" ]
+            let envs =
+                match (Decode.decodeCommandLineTool text).Requirements.Value.[0] with
+                | EnvVarRequirement envs -> ListEntry.values envs
+                | other -> failwith (sprintf "Expected an EnvVarRequirement but got %A" other)
+            Expect.equal envs.[0].EnvName (SchemaSaladString.Include "name.txt") "The name is the include."
+            Expect.stringContains (roundTrip "envName" text) "envName: {$mixin: n.yml, extra: 1}" "The mixin beside a field is written back."
+        testCase "the expressionLib of InlineJavascriptRequirement may be an import or a mixin as a whole, which is written as a list" <| fun _ ->
+            let lib (value: string) = tool [ "requirements:"; "  - class: InlineJavascriptRequirement"; "    expressionLib: " + value ]
+            let libOf (text: string) =
+                match (Decode.decodeCommandLineTool text).Requirements.Value.[0] with
+                | InlineJavascriptRequirement value -> List.ofSeq value.ExpressionLib.Value
+                | other -> failwith (sprintf "Expected an InlineJavascriptRequirement but got %A" other)
+            Expect.equal (libOf (lib "{$import: lib.yml}")) [ SchemaSaladString.Import "lib.yml" ] "The library is the import."
+            Expect.equal (libOf (lib "{$mixin: lib.yml}")) [ SchemaSaladString.Mixin "lib.yml" ] "The library is the mixin."
+            Expect.equal (Decode.decodeCommandLineTool (lib "{$import: lib.yml}")) (Decode.decodeCommandLineTool (lib "[{$import: lib.yml}]")) "The spelling is layout."
+            Expect.stringContains (roundTrip "import" (lib "{$import: lib.yml}")) "- {$import: lib.yml}" "The import is written as an entry."
+            failsAt "an include" (lib "{$include: lib.js}") "requirements[0].expressionLib" "An $include yields the text of a file, but the expressionLib field takes a list of strings."
+            failsAt "a text" (lib "var a = 1;") "requirements[0].expressionLib" "Expected a list of strings"
+    ]
+
+let testRepeatedEnumSymbols =
+    let tool (lines: string list) =
+        String.concat "\n" ([ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo" ] @ lines @ [ "" ])
+    let other (cls: string) (lines: string list) =
+        String.concat "\n" ([ "cwlVersion: v1.2"; "class: " + cls ] @ lines @ [ "" ])
+    // The place of an enum, the document with {0} where the symbols stand.
+    let places =
+        [ "the type of an input", tool [ "inputs:"; "  a:"; "    type:"; "      type: enum"; "      symbols: {0}"; "outputs: []" ]
+          "the type of an output", tool [ "inputs: []"; "outputs:"; "  o:"; "    type:"; "      type: enum"; "      symbols: {0}"; "    outputBinding: {glob: o}" ]
+          "a definition that no port uses", tool [ "requirements:"; "  SchemaDefRequirement:"; "    types:"; "      - type: enum"; "        name: E"; "        symbols: {0}"; "inputs: []"; "outputs: []" ]
+          "a definition in the hints", tool [ "hints:"; "  SchemaDefRequirement:"; "    types:"; "      - type: enum"; "        name: E"; "        symbols: {0}"; "inputs: []"; "outputs: []" ]
+          "the type of a field of a record", tool [ "inputs:"; "  a:"; "    type:"; "      type: record"; "      fields:"; "        f:"; "          type:"; "            type: enum"; "            symbols: {0}"; "outputs: []" ]
+          "the items of an array", tool [ "inputs:"; "  a:"; "    type:"; "      type: array"; "      items:"; "        type: enum"; "        symbols: {0}"; "outputs: []" ]
+          "a member of a union", tool [ "inputs:"; "  a:"; "    type:"; "      - 'null'"; "      - type: enum"; "        symbols: {0}"; "outputs: []" ]
+          "the input of a workflow", other "Workflow" [ "inputs:"; "  a:"; "    type:"; "      type: enum"; "      symbols: {0}"; "outputs: {}"; "steps: {}" ]
+          "the input of an expression tool", other "ExpressionTool" [ "inputs:"; "  a:"; "    type:"; "      type: enum"; "      symbols: {0}"; "outputs: {}"; "expression: $(1)" ]
+          "the input of an operation", other "Operation" [ "inputs:"; "  a:"; "    type:"; "      type: enum"; "      symbols: {0}"; "outputs: {}" ] ]
+    // Spellings of symbols that cwltool reads as the same symbol, with the index of the symbol that repeats.
+    let repeated =
+        [ "[a, b, a]", 2
+          "[a, a]", 1
+          "[a, \"#a\"]", 1
+          "[x/a, y/a]", 1
+          "[x#a, a]", 1
+          "[p:a, q:a]", 1
+          "[./a, a]", 1
+          "[\"http://example.org/a\", a]", 1
+          "['a/', 'b/']", 1
+          "['', '']", 1
+          "[\"a#\", a]", 1
+          "[\"x/#\", \"y/#\"]", 1
+          "[\"#\", \"#\"]", 1
+          "[\"p:a#\", a]", 1
+          "[\"a?q#\", a]", 1
+          "[\"x/a#\", \"y/a\"]", 1
+          "[a, {$import: s.yml}, a]", 2 ]
+    // Spellings that cwltool reads as different symbols, or that the decoder cannot compare.
+    let distinct =
+        [ "[a, A]"; "[x#y#a, a]"; "['', a]"; "[a, b, c]"; "[x/a, x/b]"; "[\"a#\", \"b#\"]"; "[\"http://x.org/a#\", \"http://x.org/b#\"]"; "[\"#\", a]"; "[\"#a\", \"b#\"]"; "[a, {$import: s.yml}]"; "[{$import: s.yml}, {$import: s.yml}]"; "[{$include: t.txt}, {$include: t.txt}]"; "{$import: s.yml}" ]
+    testList "Repeated enum symbols" [
+        testCase "an enum that repeats a symbol is a decode error at the repeat, whichever way the symbols are spelled" <| fun _ ->
+            for (place, template) in places do
+                for (symbols, index) in repeated do
+                    match (try Decode.decodeCWLDocument (template.Replace("{0}", symbols)) |> ignore; None with YamlDecodeException error -> Some error) with
+                    | Some error ->
+                        Expect.isTrue ((DecodeError.pathText error).EndsWith (sprintf "symbols[%d]" index)) (sprintf "%s %s: the error should show the repeat, found %s" place symbols (DecodeError.pathText error))
+                        Expect.stringContains error.Message "repeats the symbol at line" (sprintf "%s %s: the error should say what is wrong" place symbols)
+                        Expect.isSome error.Span (sprintf "%s %s: the error should have the place in the text" place symbols)
+                    | None -> failwith (sprintf "%s %s must fail" place symbols)
+        testCase "symbols that differ, and directives that stand for symbols of files, decode" <| fun _ ->
+            for (place, template) in places do
+                for symbols in distinct do
+                    Decode.decodeCWLDocument (template.Replace("{0}", symbols)) |> ignore
+        testCase "the rule holds in a document of v1.0" <| fun _ ->
+            let text = "cwlVersion: v1.0\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n  a:\n    type:\n      type: enum\n      symbols: [a, a]\noutputs: []\n"
+            match (try Decode.decodeCWLDocument text |> ignore; None with YamlDecodeException error -> Some error) with
+            | Some error -> Expect.equal (DecodeError.pathText error) "inputs.a.type.symbols[1]" "The error shows the repeat."
+            | None -> failwith "A repeated symbol must fail."
+    ]
+
+let testSchemasField =
+    let tool (schemas: string) =
+        "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs: []\noutputs: []\n$schemas:" + schemas + "\n"
+    let packed (schemas: string) =
+        "cwlVersion: v1.2\n$graph:\n  - class: CommandLineTool\n    id: main\n    baseCommand: echo\n    inputs: []\n    outputs: []\n$schemas:" + schemas + "\n"
+    testList "The $schemas field" [
+        testCase "a path or a list of paths is kept as an extension field and written back" <| fun _ ->
+            for schemas in [ " []"; " schema.rdf"; " [schema.rdf]"; " [a.rdf, b.rdf]"; " \"2\"" ] do
+                let decoded = Decode.decodeCommandLineTool (tool schemas)
+                Expect.isSome decoded.Metadata (sprintf "%s: the field is an extension field." schemas)
+                Expect.equal (Decode.decodeCommandLineTool (Encode.encodeToolDescription decoded)) decoded (sprintf "%s: the written text should decode to the same tool." schemas)
+                Decode.decodeCWLDocument (packed schemas) |> ignore
+        testCase "a directive, a mapping, a nested list, a number and null are decode errors, as cwltool refuses them" <| fun _ ->
+            let cases =
+                [ "an import in a list", " [{$import: a.yml}]", "$schemas[0]", "Expected the path of a schema file as a string, found a mapping."
+                  "an include in a list", " [{$include: a.txt}]", "$schemas[0]", "Expected the path of a schema file as a string, found a mapping."
+                  "an import as the whole field", " {$import: a.yml}", "$schemas", "Expected the path of a schema file or a list of paths, found a mapping."
+                  "a mapping", " {a: b}", "$schemas", "Expected the path of a schema file or a list of paths, found a mapping."
+                  "a nested list", " [[a]]", "$schemas[0]", "Expected the path of a schema file as a string, found a list."
+                  "a number in a list", " [1]", "$schemas[0]", "Expected a string, found the plain scalar 1"
+                  "null", "", "$schemas", "Expected a string, found null" ]
+            for (name, schemas, path, message) in cases do
+                for (kind, text) in [ "tool", tool schemas; "packed", packed schemas ] do
+                    match (try Decode.decodeCWLDocument text |> ignore; None with YamlDecodeException error -> Some error) with
+                    | Some error ->
+                        Expect.equal (DecodeError.pathText error) path (sprintf "%s, %s: the error should show the field" name kind)
+                        Expect.stringContains error.Message message (sprintf "%s, %s: the error should say what is wrong" name kind)
+                        Expect.isSome error.Span (sprintf "%s, %s: the error should have the place in the text" name kind)
+                    | None -> failwith (sprintf "%s, %s must fail" name kind)
+    ]
+
+let testKeysAndIdsThatCwltoolReadsAsAnotherType =
+    let tool (lines: string list) =
+        String.concat "\n" ([ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo" ] @ lines @ [ "" ])
+    let workflow (stepLines: string list) =
+        String.concat "\n" ([ "cwlVersion: v1.2"; "class: Workflow"; "inputs:"; "  a: string"; "outputs: {}"; "steps:" ] @ stepLines @ [ "" ])
+    // The place of a key or an id, and the document with {0} where the quoted text stands.
+    let places =
+        [ "the key of an input", tool [ "inputs:"; "  \"{0}\": string"; "outputs: []" ]
+          "the key of an output", tool [ "inputs: []"; "outputs:"; "  \"{0}\": {type: File, outputBinding: {glob: x}}" ]
+          "the id of an input beside an import", tool [ "inputs:"; "  - $import: ins.yml"; "  - id: \"{0}\""; "    type: string"; "outputs: []" ]
+          "the key of a field of a record", tool [ "inputs:"; "  r:"; "    type:"; "      type: record"; "      fields:"; "        \"{0}\": string"; "outputs: []" ]
+          "the name of a field of a record in a list", tool [ "inputs:"; "  r:"; "    type:"; "      type: record"; "      fields:"; "        - {name: \"{0}\", type: string}"; "outputs: []" ]
+          "the key of an environment variable", tool [ "requirements:"; "  EnvVarRequirement:"; "    envDef:"; "      \"{0}\": v"; "inputs: []"; "outputs: []" ]
+          "the key of a package", tool [ "hints:"; "  SoftwareRequirement:"; "    packages:"; "      \"{0}\": {}"; "inputs: []"; "outputs: []" ]
+          "the key of a hint of an unknown class", tool [ "hints:"; "  \"{0}\": {x: 1}"; "inputs: []"; "outputs: []" ]
+          "the key of a step", workflow [ "  \"{0}\":"; "    run: t.cwl"; "    in: {x: a}"; "    out: [o]" ]
+          "the key of a step input", workflow [ "  s:"; "    run: t.cwl"; "    in: {\"{0}\": a}"; "    out: [o]" ]
+          "the key of a step with a mixin", workflow [ "  \"{0}\":"; "    $mixin: stepmix.yml" ] ]
+    let keys = [ "1_000"; "0b1"; "1_0"; "0x1F"; "1e3"; "1_0.5"; "0o7"; "="; "<<"; "yes"; "017"; "._" ]
+    testList "Keys and ids that cwltool reads as another type" [
+        testCase "a key or an id that cwltool would read as another type is written in quotes, and the written text reads back equal" <| fun _ ->
+            for (place, template) in places do
+                for key in keys do
+                    let text = template.Replace("{0}", key)
+                    let decoded = Decode.decodeCWLDocument text
+                    let written = Encode.encodeCWLDocument decoded
+                    Expect.stringContains written ("\"" + key + "\"") (sprintf "%s %s: the text is written in quotes.\n%s" place key written)
+                    let reread = Decode.decodeCWLDocument written
+                    Expect.equal reread decoded (sprintf "%s %s: the written text should decode to the same document." place key)
+                    Expect.equal (Encode.encodeCWLDocument reread) written (sprintf "%s %s: writing again should give the same text." place key)
+        testCase "a key that is plain text stays plain" <| fun _ ->
+            let written = Encode.encodeCWLDocument (Decode.decodeCWLDocument (tool [ "inputs:"; "  input_1: string"; "outputs: []" ]))
+            Expect.stringContains written "  input_1: string" "A key that no reader takes for another type needs no quotes."
+        testCase "the key of an entry of a job file is written in quotes when cwltool would read another type" <| fun _ ->
+            for key in keys do
+                let references = DecodeParameters.decodeYAMLParameterFile ("\"" + key + "\": a\n")
+                let written = Encode.encodeYAMLParameterFile references
+                Expect.stringContains written ("\"" + key + "\": a") (sprintf "%s: the key is written in quotes.\n%s" key written)
+                Expect.sequenceEqual (DecodeParameters.decodeYAMLParameterFile written) references (sprintf "%s: the written file should decode to the same references." key)
+    ]
+
+/// A place in a document that holds one field: the document with a given text as the value of the field, the way to read
+/// the document and write it, and the way to read the field from the decoded object.
+type private FieldPosition<'T> =
+    { Name: string
+      /// The path of the field in the errors.
+      Path: string
+      Document: string -> string
+      Decode: string -> obj
+      Encode: obj -> string
+      Read: obj -> 'T option }
+
+let testDirectivesInBoolIntAndEnumFields =
+    let toolOf (lines: string list) =
+        String.concat "\n" ([ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo" ] @ lines @ [ "" ])
+    let workflowOf (lines: string list) =
+        String.concat "\n" ([ "cwlVersion: v1.2"; "class: Workflow" ] @ lines @ [ "" ])
+    let stepWorkflow (stepLines: string list) (inputLines: string list) =
+        workflowOf (
+            [ "inputs:"; "  x: string"; "outputs: {}"; "steps:"; "  s:"; "    run:"; "      class: CommandLineTool"; "      baseCommand: echo"; "      inputs:"; "        a: string"; "      outputs: []" ]
+            @ (stepLines |> List.map (fun line -> "    " + line))
+            @ [ "    in:"; "      a:" ]
+            @ (inputLines |> List.map (fun line -> "        " + line))
+            @ [ "    out: []" ])
+    let toolPosition (name: string) (path: string) (lines: string -> string list) (read: CWLToolDescription -> 'T option) : FieldPosition<'T> =
+        { Name = name
+          Path = path
+          Document = fun value -> toolOf (lines value)
+          Decode = fun text -> box (Decode.decodeCommandLineTool text)
+          Encode = fun decoded -> Encode.encodeToolDescription (unbox<CWLToolDescription> decoded)
+          Read = fun decoded -> read (unbox<CWLToolDescription> decoded) }
+    let workflowPosition (name: string) (path: string) (lines: string -> string list) (read: CWLWorkflowDescription -> 'T option) : FieldPosition<'T> =
+        { Name = name
+          Path = path
+          Document = fun value -> workflowOf (lines value)
+          Decode = fun text -> box (Decode.decodeWorkflow text)
+          Encode = fun decoded -> Encode.encodeWorkflowDescription (unbox<CWLWorkflowDescription> decoded)
+          Read = fun decoded -> read (unbox<CWLWorkflowDescription> decoded) }
+    let stepPosition (name: string) (path: string) (document: string -> string) (read: WorkflowStep -> 'T option) : FieldPosition<'T> =
+        { Name = name
+          Path = path
+          Document = document
+          Decode = fun text -> box (Decode.decodeWorkflow text)
+          Encode = fun decoded -> Encode.encodeWorkflowDescription (unbox<CWLWorkflowDescription> decoded)
+          Read = fun decoded -> read (ListEntry.values (unbox<CWLWorkflowDescription> decoded).Steps).[0] }
+    let firstInput (tool: CWLToolDescription) = (ListEntry.values tool.Inputs.Value).[0]
+    let firstOutput (tool: CWLToolDescription) = (ListEntry.values tool.Outputs).[0]
+    let firstStepInput (step: WorkflowStep) = (WorkflowStep.getInputValues step).[0]
+    let mixed (text: string) = { Node = YAMLicious.Reader.readRoot text }
+    let failsAt (name: string) (decode: unit -> unit) (path: string) (message: string) =
+        match (try decode (); None with YamlDecodeException error -> Some error) with
+        | Some error ->
+            Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the place" name)
+            Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
+            Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+        | None -> failwith (sprintf "%s must fail" name)
+    let fieldOf (position: FieldPosition<'T>) = position.Path.Substring(position.Path.LastIndexOf '.' + 1)
+    let expectDirectives (position: FieldPosition<'T>) (variants: (string * 'T) list) =
+        for (value, expected) in variants do
+            let decoded = position.Decode (position.Document value)
+            Expect.equal (position.Read decoded) (Some expected) (sprintf "%s: %s should decode to a directive of its own." position.Name value)
+            let written = position.Encode decoded
+            if value.StartsWith "{" then
+                Expect.stringContains written value (sprintf "%s: %s should be written back as it was.\n%s" position.Name value written)
+            let reread = position.Decode written
+            Expect.equal reread decoded (sprintf "%s: the written text of %s should decode to the same object." position.Name value)
+            Expect.equal (position.Encode reread) written (sprintf "%s: writing again should give the same text." position.Name)
+    let expectFailures (position: FieldPosition<'T>) (failures: (string * string) list) =
+        for (value, message) in failures do
+            failsAt (position.Name + " " + value) (fun () -> position.Decode (position.Document value) |> ignore) position.Path message
+
+    let boolPositions : FieldPosition<SchemaSaladBool> list =
+        let binding (field: string) (itype: string) (value: string) =
+            [ "inputs:"; "  x:"; "    type: " + itype; "    inputBinding: {" + field + ": " + value + "}"; "outputs: {}" ]
+        let port (field: string) (value: string) =
+            [ "inputs:"; "  x:"; "    type: File"; "    " + field + ": " + value; "outputs: {}" ]
+        [ toolPosition "the loadContents of an inputBinding" "inputs.x.inputBinding.loadContents" (binding "loadContents" "File") (fun tool -> (firstInput tool).InputBinding.Value.LoadContents)
+          toolPosition "the separate of an inputBinding" "inputs.x.inputBinding.separate" (binding "separate" "string") (fun tool -> (firstInput tool).InputBinding.Value.Separate)
+          toolPosition "the shellQuote of an inputBinding" "inputs.x.inputBinding.shellQuote" (binding "shellQuote" "string") (fun tool -> (firstInput tool).InputBinding.Value.ShellQuote)
+          toolPosition "the loadContents of an input" "inputs.x.loadContents" (port "loadContents") (fun tool -> (firstInput tool).LoadContents)
+          toolPosition "the streamable of an input" "inputs.x.streamable" (port "streamable") (fun tool -> (firstInput tool).Streamable)
+          toolPosition "the loadContents of an outputBinding" "outputs.o.outputBinding.loadContents"
+              (fun value -> [ "inputs: {}"; "outputs:"; "  o:"; "    type: File"; "    outputBinding: {glob: o.txt, loadContents: " + value + "}" ])
+              (fun tool -> (firstOutput tool).OutputBinding.Value.LoadContents)
+          toolPosition "the streamable of an output" "outputs.o.streamable"
+              (fun value -> [ "inputs: {}"; "outputs:"; "  o:"; "    type: File"; "    streamable: " + value ])
+              (fun tool -> (firstOutput tool).Streamable)
+          toolPosition "the inplaceUpdate of the requirement" "requirements[0].inplaceUpdate"
+              (fun value -> [ "requirements:"; "  - class: InplaceUpdateRequirement"; "    inplaceUpdate: " + value; "inputs: {}"; "outputs: {}" ])
+              (fun tool ->
+                  match tool.Requirements.Value.[0] with
+                  | InplaceUpdateRequirement requirement -> Some requirement.InplaceUpdate
+                  | _ -> None)
+          toolPosition "the writable of a Dirent" "requirements[0].listing[0].writable"
+              (fun value -> [ "requirements:"; "  - class: InitialWorkDirRequirement"; "    listing:"; "      - entryname: a.txt"; "        entry: x"; "        writable: " + value; "inputs: {}"; "outputs: {}" ])
+              (fun tool ->
+                  match tool.Requirements.Value.[0] with
+                  | InitialWorkDirRequirement entries ->
+                      match entries.[0] with
+                      | DirentEntry dirent -> dirent.Writable
+                      | _ -> None
+                  | _ -> None)
+          workflowPosition "the streamable of a workflow input" "inputs.x.streamable"
+              (fun value -> [ "inputs:"; "  x:"; "    type: File"; "    streamable: " + value; "outputs: {}"; "steps: {}" ])
+              (fun workflow -> (ListEntry.values workflow.Inputs).[0].Streamable)
+          stepPosition "the loadContents of a step input" "steps.s.in.a.loadContents"
+              (fun value -> stepWorkflow [] [ "source: x"; "loadContents: " + value ])
+              (fun step -> (firstStepInput step).LoadContents) ]
+
+    let loadListingPositions : FieldPosition<LoadListingEnum> list =
+        [ toolPosition "the loadListing of an input" "inputs.x.loadListing"
+              (fun value -> [ "inputs:"; "  x:"; "    type: Directory"; "    loadListing: " + value; "outputs: {}" ])
+              (fun tool -> (firstInput tool).LoadListing)
+          toolPosition "the loadListing of an outputBinding" "outputs.o.outputBinding.loadListing"
+              (fun value -> [ "inputs: {}"; "outputs:"; "  o:"; "    type: Directory"; "    outputBinding: {glob: o, loadListing: " + value + "}" ])
+              (fun tool -> (firstOutput tool).OutputBinding.Value.LoadListing)
+          toolPosition "the loadListing of the requirement" "requirements[0].loadListing"
+              (fun value -> [ "requirements:"; "  - class: LoadListingRequirement"; "    loadListing: " + value; "inputs: {}"; "outputs: {}" ])
+              (fun tool ->
+                  match tool.Requirements.Value.[0] with
+                  | LoadListingRequirement requirement -> Some requirement.LoadListing
+                  | _ -> None)
+          stepPosition "the loadListing of a step input" "steps.s.in.a.loadListing"
+              (fun value -> stepWorkflow [] [ "source: x"; "loadListing: " + value ])
+              (fun step -> (firstStepInput step).LoadListing) ]
+    let linkMergePosition =
+        stepPosition "the linkMerge of a step input" "steps.s.in.a.linkMerge"
+            (fun value -> stepWorkflow [] [ "source: [x, x]"; "linkMerge: " + value ])
+            (fun step -> (firstStepInput step).LinkMerge)
+    let pickValuePosition =
+        stepPosition "the pickValue of a step input" "steps.s.in.a.pickValue"
+            (fun value -> stepWorkflow [] [ "source: [x, x]"; "pickValue: " + value ])
+            (fun step -> (firstStepInput step).PickValue)
+    let scatterMethodPosition =
+        stepPosition "the scatterMethod of a step" "steps.s.scatterMethod"
+            (fun value -> stepWorkflow [ "scatter: a"; "scatterMethod: " + value ] [ "source: x" ])
+            (fun step -> step.ScatterMethod)
+    let positionPosition =
+        toolPosition "the position of an inputBinding" "inputs.x.inputBinding.position"
+            (fun value -> [ "inputs:"; "  x:"; "    type: string"; "    inputBinding: {position: " + value + "}"; "outputs: {}" ])
+            (fun tool -> (firstInput tool).InputBinding.Value.Position)
+    let sizePosition =
+        toolPosition "the size of a File in a listing" "requirements[0].listing[0].size"
+            (fun value -> [ "requirements:"; "  - class: InitialWorkDirRequirement"; "    listing:"; "      - class: File"; "        location: f.txt"; "        size: " + value; "inputs: {}"; "outputs: {}" ])
+            (fun tool ->
+                match tool.Requirements.Value.[0] with
+                | InitialWorkDirRequirement entries ->
+                    match entries.[0] with
+                    | FileEntry file -> file.Size
+                    | _ -> None
+                | _ -> None)
+
+    testList "Directives in the bool, int and enum fields" [
+        testCase "an import or a mixin stands for the bool of every bool field, is written back as it was and reads back equal" <| fun _ ->
+            for position in boolPositions do
+                expectDirectives position [ "{$import: b.yml}", SchemaSaladBool.Imported "b.yml"
+                                            "{$mixin: b.yml}", SchemaSaladBool.Mixed (mixed "{$mixin: b.yml}")
+                                            "{$mixin: b.yml, extra: 1}", SchemaSaladBool.Mixed (mixed "{$mixin: b.yml, extra: 1}") ]
+        testCase "a plain bool is still a value, and an include, a text or a mapping that is no directive are decode errors" <| fun _ ->
+            for position in boolPositions do
+                expectDirectives position [ "true", SchemaSaladBool.Value true; "false", SchemaSaladBool.Value false ]
+                expectFailures position [ "{$include: b.txt}", "An $include yields the text of a file, but the " + fieldOf position + " field takes a boolean. Write an $import for a file that holds the boolean."
+                                          "{$import: b.yml, extra: 1}", "A directive has exactly one field"
+                                          "{a: b}", "Expected a bool, found a mapping."
+                                          "\"true\"", "Expected a bool" ]
+        testCase "a directive is no bool value: it differs from true, from false and from a missing field" <| fun _ ->
+            let position = List.head boolPositions
+            let withValue (value: string) = position.Decode (position.Document value)
+            Expect.notEqual (withValue "{$import: b.yml}") (withValue "true") "An import is no true."
+            Expect.notEqual (withValue "{$import: b.yml}") (withValue "false") "An import is no false."
+            Expect.notEqual (withValue "{$import: b.yml}") (withValue "{$import: c.yml}") "Two imports differ by path."
+            Expect.notEqual (withValue "{$import: b.yml}") (withValue "{$mixin: b.yml}") "An import and a mixin differ."
+            Expect.equal (SchemaSaladBool.tryValue (SchemaSaladBool.Value false)) (Some false) "A value gives its bool."
+            Expect.isNone (SchemaSaladBool.tryValue (SchemaSaladBool.Imported "b.yml")) "An import gives no bool."
+            Expect.isNone (SchemaSaladBool.tryValue (SchemaSaladBool.Mixed (mixed "{$mixin: b.yml}"))) "A mixin gives no bool."
+            let missing = Decode.decodeCommandLineTool (toolOf [ "inputs:"; "  x:"; "    type: File"; "outputs: {}" ])
+            Expect.isNone (firstInput missing).LoadContents "A missing field is none."
+        testCase "the position of an inputBinding may be a directive, and an include stands for an expression" <| fun _ ->
+            expectDirectives positionPosition [ "{$import: p.yml}", BindingPosition.Imported "p.yml"
+                                                "{$include: p.txt}", BindingPosition.Included "p.txt"
+                                                "{$mixin: p.yml}", BindingPosition.Mixed (mixed "{$mixin: p.yml}")
+                                                "{$mixin: p.yml, extra: 1}", BindingPosition.Mixed (mixed "{$mixin: p.yml, extra: 1}")
+                                                "3", BindingPosition.Number 3
+                                                "\"$(1 + 1)\"", BindingPosition.Expression "$(1 + 1)" ]
+            expectFailures positionPosition [ "{$import: p.yml, extra: 1}", "A directive has exactly one field"
+                                              "{a: b}", "Expected an int or an expression, found a mapping."
+                                              "\"abc\"", "Expected an int or an expression" ]
+            Expect.notEqual (BindingPosition.Imported "p.yml") (BindingPosition.Included "p.yml") "An import and an include differ."
+            Expect.notEqual (BindingPosition.Imported "p.yml") (BindingPosition.Expression "p.yml") "An import is no expression."
+        testCase "the loadListing of an input, an outputBinding, the requirement and a step input may be a directive" <| fun _ ->
+            for position in loadListingPositions do
+                expectDirectives position [ "{$import: l.yml}", ImportedLoadListing "l.yml"
+                                            "{$include: l.txt}", IncludedLoadListing "l.txt"
+                                            "{$mixin: l.yml}", MixedLoadListing (mixed "{$mixin: l.yml}")
+                                            "{$mixin: l.yml, extra: 1}", MixedLoadListing (mixed "{$mixin: l.yml, extra: 1}")
+                                            "deep_listing", DeepListing ]
+                expectFailures position [ "{$import: l.yml, extra: 1}", "A directive has exactly one field"
+                                          "{a: b}", "Expected a string, found a mapping."
+                                          "foo", "Expected one of no_listing, shallow_listing and deep_listing" ]
+        testCase "the linkMerge, the pickValue and the scatterMethod may be a directive" <| fun _ ->
+            expectDirectives linkMergePosition [ "{$import: m.yml}", ImportedLinkMerge "m.yml"
+                                                 "{$include: m.txt}", IncludedLinkMerge "m.txt"
+                                                 "{$mixin: m.yml, extra: 1}", MixedLinkMerge (mixed "{$mixin: m.yml, extra: 1}")
+                                                 "merge_flattened", MergeFlattened ]
+            expectDirectives pickValuePosition [ "{$import: m.yml}", ImportedPickValue "m.yml"
+                                                 "{$include: m.txt}", IncludedPickValue "m.txt"
+                                                 "{$mixin: m.yml}", MixedPickValue (mixed "{$mixin: m.yml}")
+                                                 "all_non_null", AllNonNull ]
+            expectDirectives scatterMethodPosition [ "{$import: m.yml}", ImportedScatterMethod "m.yml"
+                                                     "{$include: m.txt}", IncludedScatterMethod "m.txt"
+                                                     "{$mixin: m.yml, extra: 1}", MixedScatterMethod (mixed "{$mixin: m.yml, extra: 1}")
+                                                     "flat_crossproduct", FlatCrossProduct ]
+            expectFailures linkMergePosition [ "{$import: m.yml, extra: 1}", "A directive has exactly one field"; "merge_all", "Invalid linkMerge value: merge_all" ]
+            expectFailures pickValuePosition [ "{$import: m.yml, extra: 1}", "A directive has exactly one field"; "any", "Invalid pickValue value: any" ]
+            expectFailures scatterMethodPosition [ "{$import: m.yml, extra: 1}", "A directive has exactly one field"; "cross", "Invalid scatterMethod value: cross" ]
+        testCase "a directive in an enum shows as the directive in the text of the symbol and differs from every symbol" <| fun _ ->
+            Expect.equal (LoadListingEnum.toCwlString (ImportedLoadListing "l.yml")) "$import: l.yml" "The import shows with its directive."
+            Expect.equal (LoadListingEnum.toCwlString (IncludedLoadListing "l.txt")) "$include: l.txt" "The include shows with its directive."
+            Expect.equal (LoadListingEnum.toCwlString (MixedLoadListing (mixed "{$mixin: l.yml, extra: 1}"))) "$mixin: l.yml" "The mixin shows with its path."
+            Expect.equal (ImportedScatterMethod "m.yml").AsCwlString "$import: m.yml" "The scatterMethod shows the import."
+            Expect.equal (IncludedPickValue "m.txt").AsCwlString "$include: m.txt" "The pickValue shows the include."
+            Expect.equal (ImportedLinkMerge "m.yml").AsCwlString "$import: m.yml" "The linkMerge shows the import."
+            Expect.notEqual (ImportedLoadListing "deep_listing") DeepListing "An import of a file called deep_listing is no deep listing."
+            Expect.notEqual (ImportedLoadListing "l.yml") (IncludedLoadListing "l.yml") "An import and an include differ."
+            Expect.isNone (LoadListingEnum.tryParse "$import: l.yml") "The text of a directive is no symbol."
+        testCase "the size of a File in a listing may be a directive" <| fun _ ->
+            expectDirectives sizePosition [ "{$import: s.yml}", FileSize.Imported "s.yml"
+                                            "{$mixin: s.yml}", FileSize.Mixed (mixed "{$mixin: s.yml}")
+                                            "{$mixin: s.yml, extra: 1}", FileSize.Mixed (mixed "{$mixin: s.yml, extra: 1}")
+                                            "42", FileSize.Bytes 42L ]
+            expectFailures sizePosition [ "{$include: s.txt}", "An $include yields the text of a file, but the size field takes a number. Write an $import for a file that holds the number."
+                                          "{$import: s.yml, extra: 1}", "A directive has exactly one field"
+                                          "{a: b}", "Expected an int"
+                                          "\"42\"", "Expected an int" ]
+            Expect.equal (FileSize.tryBytes (FileSize.Bytes 3L)) (Some 3L) "A size gives its bytes."
+            Expect.isNone (FileSize.tryBytes (FileSize.Imported "s.yml")) "An import gives no bytes."
+            Expect.notEqual (FileSize.Imported "s.yml") (FileSize.Bytes 0L) "An import is no size of zero."
+    ]
+
+let testSmallRejectionsOfCwltool =
+    let tool (lines: string list) =
+        String.concat "\n" ([ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo" ] @ lines) + "\n"
+    let failsAt (name: string) (decode: unit -> unit) (path: string) (message: string) =
+        match (try decode (); None with YamlDecodeException error -> Some error) with
+        | Some error ->
+            Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the place" name)
+            Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
+            Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+        | None -> failwith (sprintf "%s must fail" name)
+    testList "Small rejections of cwltool" [
+        testCase "a $namespaces that is no mapping is a decode error at the field, wherever an object of the document holds it" <| fun _ ->
+            let decodeTool (text: string) = Decode.decodeCommandLineTool text |> ignore
+            let message = "The field $namespaces takes a mapping of prefixes to IRIs"
+            failsAt "a list at the root" (fun () -> decodeTool (tool [ "inputs: []"; "outputs: []"; "$namespaces: [ex]" ])) "$namespaces" (message + ", found a list.")
+            failsAt "a text at the root" (fun () -> decodeTool (tool [ "inputs: []"; "outputs: []"; "$namespaces: x" ])) "$namespaces" (message + ", found the text")
+            failsAt "a number at the root" (fun () -> decodeTool (tool [ "inputs: []"; "outputs: []"; "$namespaces: 5" ])) "$namespaces" message
+            failsAt "null at the root" (fun () -> decodeTool (tool [ "inputs: []"; "outputs: []"; "$namespaces:" ])) "$namespaces" message
+            failsAt "a list of mappings" (fun () -> decodeTool (tool [ "inputs: []"; "outputs: []"; "$namespaces: [{ex: 'http://example.org/'}]" ])) "$namespaces" message
+            failsAt "an empty list" (fun () -> decodeTool (tool [ "inputs: []"; "outputs: []"; "$namespaces: []" ])) "$namespaces" message
+            failsAt "an input" (fun () -> decodeTool (tool [ "inputs:"; "  x:"; "    type: string"; "    $namespaces: [ex]"; "outputs: []" ])) "inputs.x.$namespaces" message
+            failsAt "a requirement" (fun () -> decodeTool (tool [ "requirements:"; "  - class: ShellCommandRequirement"; "    $namespaces: [ex]"; "inputs: []"; "outputs: []" ])) "requirements[0].$namespaces" message
+            failsAt "a default value" (fun () -> decodeTool (tool [ "inputs:"; "  x:"; "    type: Any"; "    default:"; "      a:"; "        - $namespaces: x"; "outputs: []" ])) "inputs.x.default.a[0].$namespaces" message
+            failsAt "an unknown hint" (fun () -> decodeTool (tool [ "hints:"; "  - class: ex:Hint"; "    payload:"; "      $namespaces: [ex]"; "inputs: []"; "outputs: []" ])) "hints[0].payload.$namespaces" message
+            failsAt "an inline run" (fun () ->
+                Decode.decodeWorkflow (String.concat "\n" [ "cwlVersion: v1.2"; "class: Workflow"; "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run:"; "      $namespaces: [ex]"; "      class: CommandLineTool"; "      baseCommand: echo"; "      inputs: []"; "      outputs: []"; "    in: {}"; "    out: []"; "" ]) |> ignore) "steps.s.run.$namespaces" message
+            failsAt "a process of a packed document" (fun () ->
+                Decode.decodeCWLDocument (String.concat "\n" [ "cwlVersion: v1.2"; "$graph:"; "  - id: main"; "    $namespaces: [ex]"; "    class: CommandLineTool"; "    baseCommand: echo"; "    inputs: []"; "    outputs: []"; "" ]) |> ignore) "$graph[0].$namespaces" message
+            failsAt "a job file" (fun () -> DecodeParameters.decodeYAMLParameterFile "x: a\n$namespaces: [ex]\n" |> ignore) "$namespaces" message
+        testCase "a $namespaces that is a mapping or a directive decodes, whatever its values are" <| fun _ ->
+            for value in [ "{ex: 'http://example.org/'}"; "{}"; "{ex: 1}"; "{ex: true}"; "{ex: }"; "{ex: [a]}"; "{ex: {a: b}}"; "{1: 'http://example.org/'}"; "{$import: a.yml}"; "{$include: a.yml}"; "{$mixin: a.yml}" ] do
+                let text = tool [ "inputs: []"; "outputs: []"; "$namespaces: " + value ]
+                let decoded = Decode.decodeCommandLineTool text
+                let written = Encode.encodeToolDescription decoded
+                Expect.equal (Decode.decodeCommandLineTool written) decoded (sprintf "%s: the written text should decode to the same tool." value)
+            Decode.decodeCommandLineTool (tool [ "inputs:"; "  x:"; "    type: string"; "    $namespaces: {ex: 'http://example.org/'}"; "outputs: []" ]) |> ignore
+            DecodeParameters.decodeYAMLParameterFile "x: a\n$namespaces: {ex: 'http://example.org/'}\n" |> ignore
+        testCase "an $include where an inputBinding or an outputBinding stands is a decode error, and an import and a mixin are not" <| fun _ ->
+            let withInputBinding (value: string) = tool [ "inputs:"; "  x:"; "    type: string"; "    inputBinding: " + value; "outputs: []" ]
+            let withOutputBinding (value: string) = tool [ "inputs: []"; "outputs:"; "  o:"; "    type: string"; "    outputBinding: " + value ]
+            failsAt "an inputBinding include" (fun () -> Decode.decodeCommandLineTool (withInputBinding "{$include: f.txt}") |> ignore) "inputs.x.inputBinding" "An $include yields the text of a file, but the inputBinding field takes an object. Write an $import for a file that holds the object."
+            failsAt "an outputBinding include" (fun () -> Decode.decodeCommandLineTool (withOutputBinding "{$include: f.txt}") |> ignore) "outputs.o.outputBinding" "An $include yields the text of a file, but the outputBinding field takes an object. Write an $import for a file that holds the object."
+            failsAt "an inputBinding include beside a field" (fun () -> Decode.decodeCommandLineTool (withInputBinding "{$include: f.txt, prefix: -x}") |> ignore) "inputs.x.inputBinding" "A directive has exactly one field"
+            failsAt "an outputBinding import beside a field" (fun () -> Decode.decodeCommandLineTool (withOutputBinding "{$import: f.yml, glob: o.txt}") |> ignore) "outputs.o.outputBinding" "A directive has exactly one field"
+            for (value, written) in [ "{$import: f.yml}", "$import: f.yml"; "{$mixin: f.yml}", "$mixin: f.yml"; "{$mixin: f.yml, prefix: -x}", "$mixin: f.yml" ] do
+                let decoded = Decode.decodeCommandLineTool (withInputBinding value)
+                Expect.isSome (ListEntry.values decoded.Inputs.Value).[0].InputBinding (sprintf "%s: the binding stays." value)
+                Expect.stringContains (Encode.encodeToolDescription decoded) written (sprintf "%s: the directive is written back." value)
+            for (value, written) in [ "{$import: f.yml}", "$import: f.yml"; "{$mixin: f.yml}", "$mixin: f.yml"; "{$mixin: f.yml, glob: o.txt}", "$mixin: f.yml" ] do
+                let decoded = Decode.decodeCommandLineTool (withOutputBinding value)
+                Expect.isSome (ListEntry.values decoded.Outputs).[0].OutputBinding (sprintf "%s: the binding stays." value)
+                Expect.stringContains (Encode.encodeToolDescription decoded) written (sprintf "%s: the directive is written back." value)
+    ]
+
+let testIntsBeyond64BitsInNumberPositions =
+    let tool (lines: string list) =
+        String.concat "\n" ([ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo" ] @ lines @ [ "" ])
+    let resource (field: string) (value: string) =
+        tool [ "requirements:"; "  - class: ResourceRequirement"; "    " + field + ": " + value; "inputs: []"; "outputs: []" ]
+    let failsAt (name: string) (decode: unit -> unit) (path: string) (message: string) =
+        match (try decode (); None with YamlDecodeException error -> Some error) with
+        | Some error ->
+            Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the place" name)
+            Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
+            Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+        | None -> failwith (sprintf "%s must fail" name)
+    let coresMinOf (tool: CWLToolDescription) : obj option =
+        match tool.Requirements.Value.[0] with
+        | ResourceRequirement resources -> resources.CoresMin
+        | other -> failwith (sprintf "Expected a ResourceRequirement, found %A" other)
+    let powerOfTwo (exponent: int) =
+        let mutable value = 1.0
+        for _ in 1 .. exponent do
+            value <- value * 2.0
+        value
+    let bigDecimal = "100000000000000000000000000000"
+    testList "Ints beyond 64 bits in the number positions" [
+        testCase "an int beyond 64 bits is the nearest float in a resource field, in every base of the core schema, and it is written back as a float" <| fun _ ->
+            for (text, expected) in
+                [ bigDecimal, 1e29
+                  "-" + bigDecimal, -1e29
+                  "+9223372036854775808", 9223372036854775808.0
+                  "-9223372036854775809", -9223372036854775808.0
+                  "0x8000000000000000", powerOfTwo 63
+                  "0x400000000000000000", powerOfTwo 70
+                  "0x10000000000000800", 18446744073709551616.0
+                  "0x10000000000000801", 18446744073709555712.0
+                  "0x10000000000001800", 18446744073709559808.0
+                  "0o7777777777777777777777777", powerOfTwo 75 ] do
+                let decoded = Decode.decodeCommandLineTool (resource "coresMin" text)
+                Expect.equal (coresMinOf decoded) (Some (box expected)) (sprintf "%s: the int is the float that it converts to." text)
+                let written = Encode.encodeToolDescription decoded
+                Expect.isFalse (written.Contains "0x" || written.Contains "0o") (sprintf "%s: the float is written as a float.\n%s" text written)
+                let reread = Decode.decodeCommandLineTool written
+                Expect.equal reread decoded (sprintf "%s: the written text should decode to the same tool." text)
+                Expect.equal (Encode.encodeToolDescription reread) written (sprintf "%s: writing again should give the same text." text)
+        testCase "an int beyond 64 bits is the float in every resource field, in a hint and in the map form" <| fun _ ->
+            for field in [ "coresMin"; "coresMax"; "ramMin"; "ramMax"; "tmpdirMin"; "tmpdirMax"; "outdirMin"; "outdirMax" ] do
+                Decode.decodeCommandLineTool (resource field bigDecimal) |> ignore
+            for lines in [ [ "hints:"; "  - class: ResourceRequirement"; "    ramMin: " + bigDecimal ]; [ "hints:"; "  ResourceRequirement:"; "    ramMin: " + bigDecimal ]; [ "requirements:"; "  ResourceRequirement:"; "    ramMin: " + bigDecimal ] ] do
+                let decoded = Decode.decodeCommandLineTool (tool (lines @ [ "inputs: []"; "outputs: []" ]))
+                Expect.equal (Decode.decodeCommandLineTool (Encode.encodeToolDescription decoded)) decoded "The written text should decode to the same tool."
+        testCase "an int beyond the largest float is a decode error at the resource field, and the largest long stays a long" <| fun _ ->
+            let beyondFloat = "1" + String.replicate 400 "0"
+            failsAt "a decimal beyond the float range" (fun () -> Decode.decodeCommandLineTool (resource "coresMin" beyondFloat) |> ignore) "requirements[0].coresMin" "is beyond the largest float"
+            failsAt "a hexadecimal beyond the float range" (fun () -> Decode.decodeCommandLineTool (resource "ramMax" ("0x1" + String.replicate 300 "0")) |> ignore) "requirements[0].ramMax" "is beyond the largest float"
+            Expect.equal (coresMinOf (Decode.decodeCommandLineTool (resource "coresMin" "0x7FFFFFFFFFFFFFFF"))) (Some (box System.Int64.MaxValue)) "The largest long is a long."
+            Expect.equal (coresMinOf (Decode.decodeCommandLineTool (resource "coresMin" "9223372036854775807"))) (Some (box System.Int64.MaxValue)) "The largest long in decimal is a long."
+        testCase "the other number positions refuse an int beyond 64 bits and a float" <| fun _ ->
+            for text in [ bigDecimal; "0x8000000000000000"; "1.5" ] do
+                failsAt ("timelimit " + text) (fun () -> Decode.decodeCommandLineTool (tool [ "requirements:"; "  - class: ToolTimeLimit"; "    timelimit: " + text; "inputs: []"; "outputs: []" ]) |> ignore) "requirements[0].timelimit" "Expected a string, found the plain scalar"
+                failsAt ("position " + text) (fun () -> Decode.decodeCommandLineTool (tool [ "inputs:"; "  x:"; "    type: string"; "    inputBinding: {position: " + text + "}"; "outputs: []" ]) |> ignore) "inputs.x.inputBinding.position" "Expected an int or an expression"
+                failsAt ("success code " + text) (fun () -> Decode.decodeCommandLineTool (tool [ "successCodes: [" + text + "]"; "inputs: []"; "outputs: []" ]) |> ignore) "successCodes[0]" "Expected an int"
+                failsAt ("file size " + text) (fun () -> Decode.decodeCommandLineTool (tool [ "requirements:"; "  - class: InitialWorkDirRequirement"; "    listing:"; "      - class: File"; "        location: f.txt"; "        size: " + text; "inputs: []"; "outputs: []" ]) |> ignore) "requirements[0].listing[0].size" "Expected an int64"
+            failsAt "an int beyond 32 bits" (fun () -> Decode.decodeCommandLineTool (tool [ "successCodes: [2147483648]"; "inputs: []"; "outputs: []" ]) |> ignore) "successCodes[0]" "Expected an int"
+        testCase "an int of the core schema is a number in every number position, and a spelling that only YAML 1.1 reads as an int is a string" <| fun _ ->
+            let decoded = Decode.decodeCommandLineTool (tool [ "successCodes: [0o17, 0x1F, 017, 5]"; "requirements:"; "  - class: ToolTimeLimit"; "    timelimit: 0o17"; "  - class: InitialWorkDirRequirement"; "    listing:"; "      - {class: File, location: f.txt, size: 0x10}"; "inputs:"; "  x:"; "    type: string"; "    inputBinding: {position: 0o11}"; "outputs: []" ])
+            Expect.sequenceEqual (ListEntry.values decoded.SuccessCodes.Value) [ 15; 31; 17; 5 ] "The success codes are the numbers."
+            Expect.equal (ListEntry.values decoded.Inputs.Value).[0].InputBinding.Value.Position (Some (BindingPosition.Number 9)) "The position is the number."
+            match decoded.Requirements.Value.[0] with
+            | ToolTimeLimitRequirement (ToolTimeLimitSeconds seconds) -> Expect.equal seconds 15L "The time limit is the number."
+            | other -> failwith (sprintf "Expected a ToolTimeLimit, found %A" other)
+            match decoded.Requirements.Value.[1] with
+            | InitialWorkDirRequirement entries ->
+                match entries.[0] with
+                | FileEntry file -> Expect.equal file.Size (Some (FileSize.Bytes 16L)) "The size is the number."
+                | other -> failwith (sprintf "Expected a file entry, found %A" other)
+            | other -> failwith (sprintf "Expected an InitialWorkDirRequirement, found %A" other)
+            Expect.equal (Decode.decodeCommandLineTool (Encode.encodeToolDescription decoded)) decoded "The written text should decode to the same tool."
+            for text in [ "0b101"; "1_000"; "-0x10"; "0b_" ] do
+                failsAt ("success code " + text) (fun () -> Decode.decodeCommandLineTool (tool [ "successCodes: [" + text + "]"; "inputs: []"; "outputs: []" ]) |> ignore) "successCodes[0]" "Expected an int"
+        testCase "a job file refuses an int beyond 64 bits, and the markers = and << are text" <| fun _ ->
+            for text in [ bigDecimal; "0x8000000000000000"; "-9223372036854775809" ] do
+                match (try DecodeParameters.decodeYAMLParameterFile ("x: " + text + "\n") |> ignore; None with YamlDecodeException error -> Some error) with
+                | Some error ->
+                    Expect.stringContains error.Message "beyond 64 bits" (sprintf "%s: the error should say what is wrong" text)
+                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" text)
+                | None -> failwith (sprintf "The job file with %s must fail" text)
+            let references = DecodeParameters.decodeYAMLParameterFile "z: =\nw: <<\nv: 9223372036854775807\nu: -9223372036854775808\n"
+            Expect.equal references.[0].Value (Some (CWLParameterValue.String "=")) "The marker is a text."
+            Expect.equal references.[1].Value (Some (CWLParameterValue.String "<<")) "The marker is a text."
+            Expect.equal references.[2].Value (Some (CWLParameterValue.Int System.Int64.MaxValue)) "The largest long is a long."
+            Expect.equal references.[3].Value (Some (CWLParameterValue.Int System.Int64.MinValue)) "The lowest long is a long."
+            let written = Encode.encodeYAMLParameterFile references
+            Expect.sequenceEqual (DecodeParameters.decodeYAMLParameterFile written) references "The written file should decode to the same references."
+        testCase "an extension field and a default keep an int beyond 64 bits as it was written" <| fun _ ->
+            let decoded = Decode.decodeCommandLineTool (tool [ "$namespaces: {ex: http://example.org/}"; "ex:big: " + bigDecimal; "inputs:"; "  x:"; "    type: Any"; "    default: 0x8000000000000000"; "  y:"; "    type: Any"; "    default: -" + bigDecimal; "outputs: []" ])
+            let written = Encode.encodeToolDescription decoded
+            Expect.stringContains written ("ex:big: " + bigDecimal) "The extension field is written as it was, not as a float."
+            Expect.stringContains written "default: 0x8000000000000000" "The default is written as it was."
+            Expect.stringContains written ("default: -" + bigDecimal) "The decimal default is written as it was."
+            Expect.equal (Decode.decodeCommandLineTool written) decoded "The written text should decode to the same tool."
     ]
 
 let main =
@@ -3683,6 +4444,7 @@ let main =
         testYamlReaderAndWriter
         testDocAndLabelLayout
         testStrictStrings
+        testScalarsThatCwltoolReadsAsAnotherType
         testDirectivesInStringFields
         testEqualityOfDecodedObjects
         testExpressionTool
@@ -3697,6 +4459,14 @@ let main =
         testEqualityAndHashOfPorts
         testEqualityAndHashOfProcesses
         testMixinDirectives
+        testDirectivesInExitCodes
+        testDirectivesInSoftwareAndEnvironment
+        testRepeatedEnumSymbols
+        testSchemasField
+        testKeysAndIdsThatCwltoolReadsAsAnotherType
+        testDirectivesInBoolIntAndEnumFields
+        testSmallRejectionsOfCwltool
+        testIntsBeyond64BitsInNumberPositions
         testInvalidDocuments
     ]
 

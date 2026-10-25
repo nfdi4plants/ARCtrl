@@ -99,16 +99,17 @@ module Encode =
 
     /// A string that spans lines is written as a literal block scalar, so a doc text or an expression stays
     /// readable. Any other string goes through Encode.string, which double-quotes text that a core schema
-    /// reader takes for a bool, a number or null.
+    /// reader takes for a bool, a number or null, and then through ScalarQuoting.keepAsText, which quotes what the loader of
+    /// cwltool reads as another type.
     let encodeString (value: string) : YamlNode =
         if value.Contains("\n") then
             literalBlock value
         else
-            Encode.string value
+            ScalarQuoting.textNode value
 
     /// The text of a doc or a label. The node that the text was read from, when there is one, takes the current text
     /// with YamlNode.withScalarValue. It comes back unchanged while the text is the same, and an edited text keeps the
-    /// style of the node and the lines that still fit. withScalarValue quotes an edited text that a core schema reader
+    /// style of the node and the lines that still fit. withScalarValue and ScalarQuoting.keepAsText quote an edited text that a reader
     /// would take for another type than a string, so the text stays a string. The node of a doc may be a list of
     /// strings, which comes back unchanged while the text is the concatenation of its items and is a string after an
     /// edit. A text without a node is spelled by encodeString.
@@ -116,7 +117,7 @@ module Encode =
         match source with
         | Some node ->
             match node.Kind with
-            | YamlNodeKind.Scalar _ -> YamlNode.withScalarValue text node
+            | YamlNodeKind.Scalar _ -> ScalarQuoting.keepAsText (YamlNode.withScalarValue text node)
             | YamlNodeKind.Sequence collection ->
                 let concatenated =
                     collection.Items
@@ -125,7 +126,7 @@ module Encode =
                         | YamlNodeKind.Scalar scalar -> scalar.Value
                         | _ -> "")
                     |> String.concat ""
-                if concatenated = text then node else encodeString text
+                if concatenated = text then ScalarQuoting.normalizeTree node else encodeString text
             | _ -> encodeString text
         | None -> encodeString text
 
@@ -178,6 +179,15 @@ module Encode =
         else
             YamlNode.sequence (items |> List.map blockItem)
 
+    /// A mapping of keys and values. The keys are text of a document, such as the id of a port or the name of a field, so a
+    /// key that the loader of cwltool reads as another type than a string, such as 1_000, gets quotes.
+    let encodeObject (pairs: (string * YamlNode) list) : YamlNode =
+        let node = Encode.object pairs
+        match node.Kind with
+        | YamlNodeKind.Mapping collection ->
+            { node with Kind = YamlNodeKind.Mapping { collection with Items = collection.Items |> List.map (fun entry -> { entry with Key = ScalarQuoting.keepAsText entry.Key }) } }
+        | _ -> node
+
     /// The object of an entry of an id list: the fields of the entry after its id. The id key names the field that holds
     /// the id, and the value key names the field of an entry that is no mapping.
     let private idObject (idKey: string) (valueKey: string) (id: string, node: YamlNode) : YamlNode =
@@ -185,7 +195,7 @@ module Encode =
             match node.Kind with
             | YamlNodeKind.Mapping collection -> collection.Items |> List.map (fun entry -> Decode.entryName entry, entry.Value)
             | _ -> [ valueKey, node ]
-        Encode.object ((idKey, Encode.string id) :: fields)
+        encodeObject ((idKey, ScalarQuoting.textNode id) :: fields)
 
     /// Encode the entries of an id map, such as the step inputs. The map names each entry by its id, and a mapping holds
     /// a key once. Entries with a repeated id are written as a list of objects that carry their ids, so no entry is
@@ -195,15 +205,16 @@ module Encode =
     let encodeIdMapOrList (idKey: string) (valueKey: string) (entries: (string * YamlNode) list) : YamlNode =
         let ids = entries |> List.map fst
         if (List.distinct ids).Length = ids.Length then
-            Encode.object entries
+            encodeObject entries
         else
             entries |> List.map (idObject idKey valueKey) |> encodeSequence
 
     // ------------------------------
     // Helper append functions for ordered construction
     // ------------------------------
-    /// The YAML of a raw value that a CWL object keeps.
-    let rawYamlNode (raw: RawYaml) : YamlNode = raw.Node
+    /// The YAML of a raw value that a CWL object keeps. The scalars are in the form that cwltool reads as written (see
+    /// ScalarQuoting.normalizeScalar), and RawYaml compares that form.
+    let rawYamlNode (raw: RawYaml) : YamlNode = ScalarQuoting.normalizeTree raw.Node
 
     let inline appendOpt name (encoder:'a -> YamlNode) (value:'a option) acc =
         match value with
@@ -222,8 +233,8 @@ module Encode =
         | :? int as i -> Some (Encode.int i)
         | :? int64 as i -> Some (Encode.int64 i)
         // Already-parsed YAML is written back without reinterpretation.
-        | :? RawYaml as raw -> Some raw.Node
-        | :? YamlNode as y -> Some y
+        | :? RawYaml as raw -> Some (rawYamlNode raw)
+        | :? YamlNode as y -> Some (ScalarQuoting.normalizeTree y)
         // Nested DynamicObj extension payloads become nested YAML mappings.
         | :? DynamicObj as dynObj -> Some (encodeDynamicObj dynObj)
         | :? System.Collections.IEnumerable as values ->
@@ -242,7 +253,7 @@ module Encode =
         DynamicObjHelpers.dynamicPropertiesExcept Set.empty dynObj
         |> Seq.choose (fun kvp -> encodeDynamicValue kvp.Value |> Option.map (fun encoded -> kvp.Key, encoded))
         |> Seq.toList
-        |> Encode.object
+        |> encodeObject
 
     /// Append encodable dynamic extension fields while excluding typed CWL fields.
     let appendDynamicPropertiesExcept (knownFieldNames: Set<string>) (dynObj: DynamicObj) acc =
@@ -307,48 +318,42 @@ module Encode =
         | SchemaSaladString.Include path -> directive "$include" path
         | SchemaSaladString.Import path -> directive "$import" path
         | SchemaSaladString.Mixin path -> directive "$mixin" path
+        | SchemaSaladString.Mixed raw -> raw.Node
 
     /// Encode schema-salad strings as literals or directive mappings.
     let encodeSchemaSaladString (value: SchemaSaladString) : YamlNode =
         encodeSchemaSaladStringWith encodeString value
 
-    /// Encode EnvVarRequirement using compact map shorthand (envName -> envValue).
-    let encodeEnvVarRequirementCompactMap (envs: ResizeArray<EnvironmentDef>) : YamlNode =
-        let envDefMap =
-            // Compact map form writes env names as keys. Env values are strings, and encodeString
-            // quotes the ones that a YAML reader would take for a bool, a number or null.
-            envs
-            |> Seq.map (fun env -> env.EnvName, encodeSchemaSaladString env.EnvValue)
-            |> Seq.toList
-            |> Encode.object
-        [ "class", encodeString "EnvVarRequirement"
-          "envDef", envDefMap ]
-        |> Encode.object
+    /// Encode a boolean field, and a directive as a mapping.
+    let encodeSchemaSaladBool (value: SchemaSaladBool) : YamlNode =
+        match value with
+        | SchemaSaladBool.Value flag -> Encode.bool flag
+        | SchemaSaladBool.Imported path -> directive "$import" path
+        | SchemaSaladBool.Mixed raw -> raw.Node
 
-    /// Encode SoftwareRequirement using compact map shorthand.
-    let encodeSoftwareRequirementCompactMap (packages: ResizeArray<SoftwarePackage>) : YamlNode =
-        let encodePackageValue (package: SoftwarePackage) =
-            match package.Version, package.Specs with
-            // Empty object means package present with no version/specs constraints.
-            | None, None -> Encode.object []
-            // Specs-only packages can use sequence shorthand.
-            | None, Some specs -> specs |> Seq.map encodeString |> Seq.toList |> encodeSequence
-            | _ ->
-                // Full package object keeps version and specs separate.
-                []
-                |> appendOpt "version" (fun values -> values |> Seq.map encodeString |> Seq.toList |> encodeSequence) package.Version
-                |> appendOpt "specs" (fun values -> values |> Seq.map encodeString |> Seq.toList |> encodeSequence) package.Specs
-                |> Encode.object
+    /// Encode the size of a File, and a directive as a mapping.
+    let encodeFileSize (size: FileSize) : YamlNode =
+        match size with
+        | FileSize.Bytes count -> Encode.int64 count
+        | FileSize.Imported path -> directive "$import" path
+        | FileSize.Mixed raw -> raw.Node
 
-        let packagesMap =
-            packages
-            |> Seq.map (fun package -> package.Package, encodePackageValue package)
-            |> Seq.toList
-            |> Encode.object
+    /// Encode a loadListing symbol, and a directive as a mapping.
+    let encodeLoadListing (value: LoadListingEnum) : YamlNode =
+        match value with
+        | ImportedLoadListing path -> directive "$import" path
+        | IncludedLoadListing path -> directive "$include" path
+        | MixedLoadListing raw -> raw.Node
+        | NoListing
+        | ShallowListing
+        | DeepListing -> encodeString (LoadListingEnum.toCwlString value)
 
-        [ "class", encodeString "SoftwareRequirement"
-          "packages", packagesMap ]
-        |> Encode.object
+    /// The value of a field that holds a list of strings. A document that wrote the field as one directive gets the
+    /// directive again while the list holds that one directive. Any other list is a sequence.
+    let encodeStringList (whole: bool) (entries: ResizeArray<SchemaSaladString>) : YamlNode =
+        match whole, Seq.toList entries with
+        | true, [ (SchemaSaladString.Import _ | SchemaSaladString.Mixin _ | SchemaSaladString.Mixed _) as single ] -> encodeSchemaSaladString single
+        | _ -> entries |> Seq.map encodeSchemaSaladString |> List.ofSeq |> encodeSequence
 
     /// The label of an object. The node that a literal label was read from keeps its layout, and a directive is written
     /// as a mapping.
@@ -383,8 +388,25 @@ module Encode =
     let encodeDoc (doc: DocText) : (string * YamlNode) =
         "doc", encodeDocValue None doc
 
-    let encodeIntent (intent: ResizeArray<string>) : (string * YamlNode) =
-        "intent", (intent |> Seq.map encodeString |> List.ofSeq |> encodeSequence)
+    /// The value of a field that holds a list of numbers. A document that wrote the field as one directive gets the
+    /// directive again while the list holds that one directive. Any other list is a sequence.
+    let encodeIntList (whole: bool) (codes: ResizeArray<ListEntry<int>>) : YamlNode =
+        match whole, Seq.toList codes with
+        | true, [ ListEntry.Imported path ] -> directive "$import" path
+        | true, [ ListEntry.Mixed raw ] -> raw.Node
+        | _ ->
+            codes
+            |> Seq.map (fun code ->
+                match code with
+                | ListEntry.Value number -> Encode.int number
+                | ListEntry.Imported path -> directive "$import" path
+                | ListEntry.Mixed raw -> raw.Node)
+            |> List.ofSeq
+            |> encodeSequence
+
+    /// The intent of a process. The flag tells that the document wrote the field as one directive.
+    let encodeIntent (whole: bool) (intent: ResizeArray<SchemaSaladString>) : (string * YamlNode) =
+        "intent", encodeStringList whole intent
 
     let inline appendOptPair pairOpt acc =
         match pairOpt with
@@ -404,7 +426,7 @@ module Encode =
         |> appendOpt "nameroot" encodeString file.Nameroot
         |> appendOpt "nameext" encodeString file.Nameext
         |> appendOpt "checksum" encodeString file.Checksum
-        |> appendOpt "size" Encode.int64 file.Size
+        |> appendOpt "size" encodeFileSize file.Size
         |> appendOpt "secondaryFiles" rawYamlNode file.SecondaryFiles
         |> appendOpt "format" encodeString file.Format
         |> appendOpt "contents" encodeString file.Contents
@@ -509,11 +531,11 @@ module Encode =
             |> appendOpt "doc" (encodeDocValue field.SourceNodes.Doc) field.Doc
             |> appendOpt "label" (encodeLabelValue field.SourceNodes.Label) field.Label
             |> appendDynamicPropertiesExcept InputRecordField.KnownFieldNames field
-        field.Name, Encode.object pairs
+        field.Name, encodeObject pairs
 
     /// Encode record schemas with map-form fields and preserved schema metadata.
     and encodeInputRecordSchema (schema:InputRecordSchema) : YamlNode =
-        inputRecordSchemaPairs schema |> Encode.object
+        inputRecordSchemaPairs schema |> encodeObject
 
     /// The entries of a record schema.
     and inputRecordSchemaPairs (schema:InputRecordSchema) : (string * YamlNode) list =
@@ -528,7 +550,7 @@ module Encode =
                 |> encodeIdEntries "name" "type" (schema.SourceNodes.WholeFields.Contains "fields")
             | None ->
                 // Missing fields are emitted as an empty map to keep the schema object valid.
-                Encode.object []
+                encodeObject []
         [ "type", encodeString "record"; "fields", fieldsElement ]
         |> appendOpt "label" (encodeLabelValue schema.SourceNodes.Label) schema.Label
         |> appendOpt "doc" (encodeDocValue schema.SourceNodes.Doc) schema.Doc
@@ -537,18 +559,13 @@ module Encode =
 
     /// Encode enum schemas while preserving symbol order and schema metadata.
     and encodeInputEnumSchema (schema:InputEnumSchema) : YamlNode =
-        inputEnumSchemaPairs schema |> Encode.object
+        inputEnumSchemaPairs schema |> encodeObject
 
     /// The entries of an enum schema.
     and inputEnumSchemaPairs (schema:InputEnumSchema) : (string * YamlNode) list =
         let pairs =
-            // Symbol order is semantically significant, so emit the ResizeArray order. A document that wrote the field as
-            // one directive gets the directive again while the list holds that one import.
-            let symbols =
-                match schema.SourceNodes.WholeFields.Contains "symbols", Seq.toList schema.Symbols with
-                | true, [ SchemaSaladString.Import path ] -> directive "$import" path
-                | _ -> schema.Symbols |> Seq.map encodeSchemaSaladString |> List.ofSeq |> encodeSequence
-            [ "type", encodeString "enum"; "symbols", symbols ]
+            // Symbol order is semantically significant, so emit the ResizeArray order.
+            [ "type", encodeString "enum"; "symbols", encodeStringList (schema.SourceNodes.WholeFields.Contains "symbols") schema.Symbols ]
 
         pairs
         |> appendOpt "label" (encodeLabelValue schema.SourceNodes.Label) schema.Label
@@ -558,7 +575,7 @@ module Encode =
 
     /// Encode array schemas with their item type and preserved schema metadata.
     and encodeInputArraySchema (schema:InputArraySchema) : YamlNode =
-        inputArraySchemaPairs schema |> Encode.object
+        inputArraySchemaPairs schema |> encodeObject
 
     /// The entries of an array schema.
     and inputArraySchemaPairs (schema:InputArraySchema) : (string * YamlNode) list =
@@ -582,19 +599,20 @@ module Encode =
     let encodeOutputBinding (ob:OutputBinding) : YamlNode =
         []
         |> appendOpt "glob" encodeOutputGlob ob.Glob
-        |> appendOpt "loadContents" Encode.bool ob.LoadContents
-        |> appendOpt "loadListing" (LoadListingEnum.toCwlString >> encodeString) ob.LoadListing
+        |> appendOpt "loadContents" encodeSchemaSaladBool ob.LoadContents
+        |> appendOpt "loadListing" encodeLoadListing ob.LoadListing
         |> appendOpt "outputEval" encodeSchemaSaladString ob.OutputEval
         |> appendDynamicPropertiesExcept OutputBinding.KnownFieldNames ob
-        |> Encode.object
+        |> encodeObject
 
-    /// Encode one source value as a scalar and multiple source values as a sequence.
-    let encodeStringArrayOrScalar (values: ResizeArray<string>) : YamlNode =
+    /// Encode one source value as a scalar and multiple source values as a sequence. A directive on its own is written in
+    /// the place of the scalar, where it stands for the string or the list of a file.
+    let encodeStringArrayOrScalar (values: ResizeArray<SchemaSaladString>) : YamlNode =
         if values.Count = 1 then
-            encodeString values.[0]
+            encodeSchemaSaladString values.[0]
         else
             values
-            |> Seq.map encodeString
+            |> Seq.map encodeSchemaSaladString
             |> List.ofSeq
             |> encodeSequence
 
@@ -607,10 +625,10 @@ module Encode =
         | CWLParameterValue.Boolean value -> Encode.bool value
         | CWLParameterValue.File file ->
             encodeFilePairs "class" "File" file
-            |> Encode.object
+            |> encodeObject
         | CWLParameterValue.Directory directory ->
             encodeDirectoryPairs "class" "Directory" directory
-            |> Encode.object
+            |> encodeObject
         | CWLParameterValue.Array values ->
             values
             |> Seq.map encodeCWLParameterValue
@@ -620,7 +638,7 @@ module Encode =
             fields
             |> Seq.map (fun field -> field.Name, encodeCWLParameterValue field.Value)
             |> Seq.toList
-            |> Encode.object
+            |> encodeObject
 
     /// A port as a map entry. The type comes first, and a port without other fields is written as the type alone, as
     /// in outputName: File. The map value is the port itself when it is a mapping, so a schema without other fields
@@ -630,10 +648,10 @@ module Encode =
         match type_ |> Option.map encodeCWLType, otherPairs with
         | Some typeNode, [] ->
             match typeNode.Kind with
-            | YamlNodeKind.Mapping _ -> name, Encode.object [ "type", typeNode ]
+            | YamlNodeKind.Mapping _ -> name, encodeObject [ "type", typeNode ]
             | _ -> name, typeNode
         | typeNode, _ ->
-            name, Encode.object (Option.toList (typeNode |> Option.map (fun node -> "type", node)) @ otherPairs)
+            name, encodeObject (Option.toList (typeNode |> Option.map (fun node -> "type", node)) @ otherPairs)
 
     /// Encode a workflow or tool output, choosing shorthand only when type is the sole field.
     let encodeCWLOutput (o:CWLOutput) : (string * YamlNode) =
@@ -641,14 +659,14 @@ module Encode =
             // Keep scalar outputSource compact, but use a sequence when multiple
             // upstream step outputs feed this workflow output.
             match o.OutputSource with
-            | Some (OutputSource.Single value) -> Some (encodeString value)
+            | Some (OutputSource.Single value) -> Some (encodeSchemaSaladString value)
             | Some (OutputSource.Multiple values) when values.Count > 0 -> Some (encodeStringArrayOrScalar values)
             | _ -> None
 
         []
         |> appendOpt "label" (encodeLabelValue o.SourceNodes.Label) o.Label
         |> appendOpt "secondaryFiles" rawYamlNode o.SecondaryFiles
-        |> appendOpt "streamable" Encode.bool o.Streamable
+        |> appendOpt "streamable" encodeSchemaSaladBool o.Streamable
         |> appendOpt "doc" (encodeDocValue o.SourceNodes.Doc) o.Doc
         |> appendOpt "format" encodeSchemaSaladString o.Format
         |> appendOpt "outputBinding" encodeOutputBinding o.OutputBinding
@@ -656,24 +674,27 @@ module Encode =
         |> appendDynamicPropertiesExcept CWLOutput.KnownFieldNames o
         |> encodePortEntry o.Name o.Type_
 
-    /// Encode the position of an input binding: a number, or an expression.
+    /// Encode the position of an input binding: a number or an expression, and a directive as a mapping.
     let encodeBindingPosition (position: BindingPosition) : YamlNode =
         match position with
         | BindingPosition.Number value -> Encode.int value
         | BindingPosition.Expression value -> encodeString value
+        | BindingPosition.Imported path -> directive "$import" path
+        | BindingPosition.Included path -> directive "$include" path
+        | BindingPosition.Mixed raw -> raw.Node
 
     /// Encode inputBinding fields and preserved extension properties.
     let encodeInputBinding (ib:InputBinding) : YamlNode =
         []
-        |> appendOpt "loadContents" Encode.bool ib.LoadContents
+        |> appendOpt "loadContents" encodeSchemaSaladBool ib.LoadContents
         |> appendOpt "prefix" encodeSchemaSaladString ib.Prefix
         |> appendOpt "position" encodeBindingPosition ib.Position
         |> appendOpt "itemSeparator" encodeSchemaSaladString ib.ItemSeparator
-        |> appendOpt "separate" Encode.bool ib.Separate
+        |> appendOpt "separate" encodeSchemaSaladBool ib.Separate
         |> appendOpt "valueFrom" encodeSchemaSaladString ib.ValueFrom
-        |> appendOpt "shellQuote" Encode.bool ib.ShellQuote
+        |> appendOpt "shellQuote" encodeSchemaSaladBool ib.ShellQuote
         |> appendDynamicPropertiesExcept InputBinding.KnownFieldNames ib
-        |> Encode.object
+        |> encodeObject
 
     /// Encode the format of an input in the form that it holds, so a list of one name stays a list.
     let encodeInputFormat (format: InputFormat) : YamlNode =
@@ -687,11 +708,11 @@ module Encode =
         []
         |> appendOpt "label" (encodeLabelValue i.SourceNodes.Label) i.Label
         |> appendOpt "secondaryFiles" rawYamlNode i.SecondaryFiles
-        |> appendOpt "streamable" Encode.bool i.Streamable
+        |> appendOpt "streamable" encodeSchemaSaladBool i.Streamable
         |> appendOpt "doc" (encodeDocValue i.SourceNodes.Doc) i.Doc
         |> appendOpt "format" encodeInputFormat i.Format
-        |> appendOpt "loadContents" Encode.bool i.LoadContents
-        |> appendOpt "loadListing" (LoadListingEnum.toCwlString >> encodeString) i.LoadListing
+        |> appendOpt "loadContents" encodeSchemaSaladBool i.LoadContents
+        |> appendOpt "loadListing" encodeLoadListing i.LoadListing
         |> appendOpt "default" rawYamlNode i.DefaultValue
         |> appendOpt "inputBinding" encodeInputBinding i.InputBinding
         |> appendDynamicPropertiesExcept CWLInput.KnownFieldNames i
@@ -711,7 +732,7 @@ module Encode =
             | SchemaDefinition.Enum schema -> inputEnumSchemaPairs schema
             | SchemaDefinition.Array schema -> inputArraySchemaPairs schema
         let name, others = schemaPairs |> List.partition (fun (key, _) -> key = "name")
-        name @ others |> Encode.object
+        name @ others |> encodeObject
 
     /// Encode known CWL requirements in extended form while preserving requirement extensions.
     let encodeRequirement (r:Requirement) : YamlNode =
@@ -725,7 +746,7 @@ module Encode =
             [ "class", encodeString "InlineJavascriptRequirement" ]
             |> appendOpt "expressionLib" (fun entries -> entries |> Seq.map encodeSchemaSaladString |> List.ofSeq |> encodeSequence) expressionLib
             |> appendDynamicPropertiesExcept InlineJavascriptRequirementValue.KnownFieldNames value
-            |> Encode.object
+            |> encodeObject
         | SchemaDefRequirement types ->
             // SchemaDefRequirement contains schema entries that already preserve their
             // own extension fields. An imported file is a mapping with the $import directive.
@@ -735,7 +756,7 @@ module Encode =
                 | Imported path -> directive "$import" path
                 | Mixed raw -> raw.Node
             [ "class", encodeString "SchemaDefRequirement";
-              "types", (types |> Seq.map encodeEntry |> List.ofSeq |> encodeSequence) ] |> Encode.object
+              "types", (types |> Seq.map encodeEntry |> List.ofSeq |> encodeSequence) ] |> encodeObject
         | DockerRequirement dr ->
             // Docker fields are optional and emitted only when present.
             [ "class", encodeString "DockerRequirement" ]
@@ -747,39 +768,44 @@ module Encode =
             |> appendOpt "dockerOutputDirectory" encodeSchemaSaladString dr.DockerOutputDirectory
             |> appendOpt "cwltool:dockerRunOptions" (fun values -> values |> Seq.map encodeString |> List.ofSeq |> encodeSequence) dr.DockerRunOptions
             |> appendDynamicPropertiesExcept DockerRequirement.KnownFieldNames dr
-            |> Encode.object
+            |> encodeObject
         | SoftwareRequirement pkgs ->
             let encodePkg (p:SoftwarePackage) =
                 // Extended package form is used here so version/specs/extensions all
                 // have explicit keys.
                 []
-                |> fun acc -> acc @ [ "package", encodeString p.Package ]
-                |> appendOpt "version" (fun vs -> vs |> Seq.map encodeString |> List.ofSeq |> encodeSequence) p.Version
-                |> appendOpt "specs" (fun vs -> vs |> Seq.map encodeString |> List.ofSeq |> encodeSequence) p.Specs
+                |> fun acc -> acc @ [ "package", encodeSchemaSaladString p.Package ]
+                |> appendOpt "version" (fun vs -> vs |> Seq.map encodeSchemaSaladString |> List.ofSeq |> encodeSequence) p.Version
+                |> appendOpt "specs" (fun vs -> vs |> Seq.map encodeSchemaSaladString |> List.ofSeq |> encodeSequence) p.Specs
                 |> appendDynamicPropertiesExcept SoftwarePackage.KnownFieldNames p
-                |> Encode.object
+                |> encodeObject
+            let encodeEntry (entry: ListEntry<SoftwarePackage>) =
+                match entry with
+                | ListEntry.Value package -> encodePkg package
+                | ListEntry.Imported path -> directive "$import" path
+                | ListEntry.Mixed raw -> raw.Node
             [ "class", encodeString "SoftwareRequirement";
-              "packages", (pkgs |> Seq.map encodePkg |> List.ofSeq |> encodeSequence) ] |> Encode.object
+              "packages", (pkgs |> Seq.map encodeEntry |> List.ofSeq |> encodeSequence) ] |> encodeObject
         | LoadListingRequirement loadListing ->
             // Always emit the concrete loadListing value instead of relying on decoder defaults.
             [ "class", encodeString "LoadListingRequirement"
-              "loadListing", encodeString (LoadListingEnum.toCwlString loadListing.LoadListing) ]
+              "loadListing", encodeLoadListing loadListing.LoadListing ]
             |> appendDynamicPropertiesExcept LoadListingRequirementValue.KnownFieldNames loadListing
-            |> Encode.object
+            |> encodeObject
         | InitialWorkDirRequirement listing ->
             // File and Directory listing entries carry their kind in the class field.
             let encodeFileOrDirectory = function
-                | FileItem file -> encodeFilePairs "class" "File" file |> Encode.object
-                | DirectoryItem directory -> encodeDirectoryPairs "class" "Directory" directory |> Encode.object
+                | FileItem file -> encodeFilePairs "class" "File" file |> encodeObject
+                | DirectoryItem directory -> encodeDirectoryPairs "class" "Directory" directory |> encodeObject
             let encodeInitialWorkDirEntry = function
                 | DirentEntry d ->
                     // Dirent entries use their own object form.
                     [ ]
                     |> appendOpt "entryname" encodeSchemaSaladString d.Entryname
                     |> fun acc -> acc @ [ "entry", encodeSchemaSaladString d.Entry ]
-                    |> appendOpt "writable" Encode.bool d.Writable
+                    |> appendOpt "writable" encodeSchemaSaladBool d.Writable
                     |> appendDynamicPropertiesExcept DirentInstance.KnownFieldNames d
-                    |> Encode.object
+                    |> encodeObject
                 | StringEntry s ->
                     // String/expression listing entries stay scalar/directive form.
                     encodeSchemaSaladString s
@@ -789,25 +815,25 @@ module Encode =
                 | FilesEntry items -> items |> Seq.map encodeFileOrDirectory |> List.ofSeq |> encodeSequence
 
             [ "class", encodeString "InitialWorkDirRequirement";
-              "listing", (listing |> Seq.map encodeInitialWorkDirEntry |> List.ofSeq |> encodeSequence) ] |> Encode.object
+              "listing", (listing |> Seq.map encodeInitialWorkDirEntry |> List.ofSeq |> encodeSequence) ] |> encodeObject
         | InitialWorkDirExpressionRequirement expression ->
             [ "class", encodeString "InitialWorkDirRequirement"
               "listing", encodeSchemaSaladString expression ]
-            |> Encode.object
+            |> encodeObject
         | EnvVarRequirement envs ->
             let encodeEnv (e:EnvironmentDef) =
                 // Env var values are strings, and encodeString quotes values such as true or 1.
-                [ "envName", encodeString e.EnvName; "envValue", encodeSchemaSaladString e.EnvValue ]
+                [ "envName", encodeSchemaSaladString e.EnvName; "envValue", encodeSchemaSaladString e.EnvValue ]
                 |> appendDynamicPropertiesExcept EnvironmentDef.KnownFieldNames e
-                |> Encode.object
+                |> encodeObject
             let encodeEntry (entry: ListEntry<EnvironmentDef>) =
                 match entry with
                 | ListEntry.Value env -> encodeEnv env
                 | ListEntry.Imported path -> directive "$import" path
                 | ListEntry.Mixed raw -> raw.Node
             [ "class", encodeString "EnvVarRequirement";
-              "envDef", (envs |> Seq.map encodeEntry |> List.ofSeq |> encodeSequence) ] |> Encode.object
-        | ShellCommandRequirement -> [ "class", encodeString "ShellCommandRequirement" ] |> Encode.object
+              "envDef", (envs |> Seq.map encodeEntry |> List.ofSeq |> encodeSequence) ] |> encodeObject
+        | ShellCommandRequirement -> [ "class", encodeString "ShellCommandRequirement" ] |> encodeObject
         | ResourceRequirement rr ->
             let tryEncodeScalar (key: string) (value: obj) =
                 // Resource fields can be numeric, boolean, or expression strings.
@@ -844,41 +870,41 @@ module Encode =
                     | directValue ->
                         tryEncodeScalar kvp.Key directValue)
                 |> Seq.toList
-            [ "class", encodeString "ResourceRequirement" ] @ knownPairs @ dynamicPairs |> Encode.object
+            [ "class", encodeString "ResourceRequirement" ] @ knownPairs @ dynamicPairs |> encodeObject
         // Canonicalize class names to short CWL forms where applicable.
         | WorkReuseRequirement workReuse ->
             [ "class", encodeString "WorkReuse"
               "enableReuse", Encode.bool workReuse.EnableReuse ]
             |> appendDynamicPropertiesExcept WorkReuseRequirementValue.KnownFieldNames workReuse
-            |> Encode.object
+            |> encodeObject
         | WorkReuseExpressionRequirement expression ->
             [ "class", encodeString "WorkReuse"
               "enableReuse", encodeSchemaSaladString expression ]
-            |> Encode.object
+            |> encodeObject
         | NetworkAccessRequirement networkAccess ->
             [ "class", encodeString "NetworkAccess"
               "networkAccess", Encode.bool networkAccess.NetworkAccess ]
             |> appendDynamicPropertiesExcept NetworkAccessRequirementValue.KnownFieldNames networkAccess
-            |> Encode.object
+            |> encodeObject
         | NetworkAccessExpressionRequirement expression ->
             [ "class", encodeString "NetworkAccess"
               "networkAccess", encodeSchemaSaladString expression ]
-            |> Encode.object
+            |> encodeObject
         | InplaceUpdateRequirement inplaceUpdate ->
             [ "class", encodeString "InplaceUpdateRequirement"
-              "inplaceUpdate", Encode.bool inplaceUpdate.InplaceUpdate ]
+              "inplaceUpdate", encodeSchemaSaladBool inplaceUpdate.InplaceUpdate ]
             |> appendDynamicPropertiesExcept InplaceUpdateRequirementValue.KnownFieldNames inplaceUpdate
-            |> Encode.object
+            |> encodeObject
         | ToolTimeLimitRequirement tl ->
             let timelimit =
                 match tl with
                 | ToolTimeLimitSeconds seconds -> Encode.int64 seconds
                 | ToolTimeLimitExpression expression -> encodeSchemaSaladString expression
-            [ "class", encodeString "ToolTimeLimit"; "timelimit", timelimit ] |> Encode.object
-        | SubworkflowFeatureRequirement -> [ "class", encodeString "SubworkflowFeatureRequirement" ] |> Encode.object
-        | ScatterFeatureRequirement -> [ "class", encodeString "ScatterFeatureRequirement" ] |> Encode.object
-        | MultipleInputFeatureRequirement -> [ "class", encodeString "MultipleInputFeatureRequirement" ] |> Encode.object
-        | StepInputExpressionRequirement -> [ "class", encodeString "StepInputExpressionRequirement" ] |> Encode.object
+            [ "class", encodeString "ToolTimeLimit"; "timelimit", timelimit ] |> encodeObject
+        | SubworkflowFeatureRequirement -> [ "class", encodeString "SubworkflowFeatureRequirement" ] |> encodeObject
+        | ScatterFeatureRequirement -> [ "class", encodeString "ScatterFeatureRequirement" ] |> encodeObject
+        | MultipleInputFeatureRequirement -> [ "class", encodeString "MultipleInputFeatureRequirement" ] |> encodeObject
+        | StepInputExpressionRequirement -> [ "class", encodeString "StepInputExpressionRequirement" ] |> encodeObject
         | ImportedRequirement path -> directive "$import" path
         | MixedRequirement raw -> raw.Node
 
@@ -919,27 +945,44 @@ module Encode =
     // Workflow step encoders
     // ------------------------------
     
-    /// Encode a ResizeArray<string> as either a single string or a sequence
-    let encodeSourceArray (sources:ResizeArray<string>) : YamlNode =
+    /// Encode the sources as either a single string or a sequence
+    let encodeSourceArray (sources:ResizeArray<SchemaSaladString>) : YamlNode =
         match sources.Count with
         | 1 ->
             // CWL source shorthand: source: input_id
-            encodeString sources.[0]
+            encodeSchemaSaladString sources.[0]
         | _ -> 
             // Several sources are always written as a block sequence.
             sources
-            |> Seq.map (fun s -> YamlNode.item (encodeString s))
+            |> Seq.map (fun s -> YamlNode.item (encodeSchemaSaladString s))
             |> List.ofSeq
             |> YamlNode.sequence
 
     let encodeLinkMergeMethod (linkMerge: LinkMergeMethod) : YamlNode =
-        encodeString linkMerge.AsCwlString
+        match linkMerge with
+        | ImportedLinkMerge path -> directive "$import" path
+        | IncludedLinkMerge path -> directive "$include" path
+        | MixedLinkMerge raw -> raw.Node
+        | MergeNested
+        | MergeFlattened -> encodeString linkMerge.AsCwlString
 
     let encodePickValueMethod (pickValue: PickValueMethod) : YamlNode =
-        encodeString pickValue.AsCwlString
+        match pickValue with
+        | ImportedPickValue path -> directive "$import" path
+        | IncludedPickValue path -> directive "$include" path
+        | MixedPickValue raw -> raw.Node
+        | FirstNonNull
+        | TheOnlyNonNull
+        | AllNonNull -> encodeString pickValue.AsCwlString
 
     let encodeScatterMethod (scatterMethod: ScatterMethod) : YamlNode =
-        encodeString scatterMethod.AsCwlString
+        match scatterMethod with
+        | ImportedScatterMethod path -> directive "$import" path
+        | IncludedScatterMethod path -> directive "$include" path
+        | MixedScatterMethod raw -> raw.Node
+        | DotProduct
+        | NestedCrossProduct
+        | FlatCrossProduct -> encodeString scatterMethod.AsCwlString
 
     /// Encode a step input using scalar source shorthand only when no other fields exist.
     let encodeStepInput (si:StepInput) : (string * YamlNode) =
@@ -951,14 +994,16 @@ module Encode =
             |> appendOpt "linkMerge" encodeLinkMergeMethod si.LinkMerge
             |> appendOpt "pickValue" encodePickValueMethod si.PickValue
             |> appendOpt "doc" (encodeDocValue si.SourceNodes.Doc) si.Doc
-            |> appendOpt "loadContents" Encode.bool si.LoadContents
-            |> appendOpt "loadListing" (LoadListingEnum.toCwlString >> encodeString) si.LoadListing
+            |> appendOpt "loadContents" encodeSchemaSaladBool si.LoadContents
+            |> appendOpt "loadListing" encodeLoadListing si.LoadListing
             |> appendOpt "label" (encodeLabelValue si.SourceNodes.Label) si.Label
             |> appendDynamicPropertiesExcept StepInput.KnownFieldNames si
         match pairs with
         | [ ("source", s) ]
             when
-                si.DefaultValue.IsNone
+                // A directive on its own cannot stand for the value of a map entry, because Schema Salad adds the key to it as a field.
+                (match s.Kind with YamlNodeKind.Mapping _ -> false | _ -> true)
+                && si.DefaultValue.IsNone
                 && si.ValueFrom.IsNone
                 && si.LinkMerge.IsNone
                 && si.PickValue.IsNone
@@ -967,7 +1012,7 @@ module Encode =
                 && si.LoadListing.IsNone
                 && si.Label.IsNone ->
             si.Id, s
-        | _ -> si.Id, Encode.object pairs
+        | _ -> si.Id, encodeObject pairs
 
     /// Encode all step inputs in map form keyed by step input id. A list with an import is written as a list, as in
     /// encodeIdEntries. The flag tells that the document wrote the field as one directive.
@@ -981,7 +1026,7 @@ module Encode =
     let encodeStepOutputParameter (so: StepOutputParameter) : YamlNode =
         [ "id", encodeString so.Id ]
         |> appendDynamicPropertiesExcept StepOutputParameter.KnownFieldNames so
-        |> Encode.object
+        |> encodeObject
 
     /// Encode step outputs as scalar ids or record-form output parameters. A directive entry stands in its place. A
     /// document that wrote the field as one directive gets the directive again while the list holds that one import.
@@ -1002,10 +1047,10 @@ module Encode =
             |> encodeSequence
 
     /// Encode scatter as scalar shorthand for one item or a sequence for multiple items.
-    let encodeScatter (scatter: ResizeArray<string>) : YamlNode =
+    let encodeScatter (scatter: ResizeArray<SchemaSaladString>) : YamlNode =
         match scatter.Count with
-        | 1 -> encodeString scatter.[0]
-        | _ -> scatter |> Seq.map encodeString |> List.ofSeq |> encodeSequence
+        | 1 -> encodeSchemaSaladString scatter.[0]
+        | _ -> scatter |> Seq.map encodeSchemaSaladString |> List.ofSeq |> encodeSequence
 
     /// The cwlVersion entry of a process. A process that takes the version of its enclosing document writes none.
     let private cwlVersionPairs (includeCwlVersion: bool) (version: string) : (string * YamlNode) list =
@@ -1059,7 +1104,7 @@ module Encode =
             |> appendOptPair (td.Id |> Option.map (fun id -> "id", encodeString id))
             |> appendOpt "label" (encodeLabelValue td.SourceNodes.Label) td.Label
             |> appendOpt "doc" (encodeProcessDocValue td.SourceNodes.Doc) td.Doc
-            |> appendOptPair (td.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
+            |> appendOptPair (td.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map (encodeIntent (td.SourceNodes.WholeFields.Contains "intent")))
         let withHints =
             match td.Hints with
             | Some h when h.Count > 0 ->
@@ -1085,9 +1130,9 @@ module Encode =
             |> appendOpt "stdin" encodeSchemaSaladString td.Stdin
             |> appendOpt "stderr" encodeSchemaSaladString td.Stderr
             |> appendOpt "stdout" encodeSchemaSaladString td.Stdout
-            |> appendOpt "successCodes" (fun codes -> codes |> Seq.map Encode.int |> List.ofSeq |> encodeSequence) td.SuccessCodes
-            |> appendOpt "temporaryFailCodes" (fun codes -> codes |> Seq.map Encode.int |> List.ofSeq |> encodeSequence) td.TemporaryFailCodes
-            |> appendOpt "permanentFailCodes" (fun codes -> codes |> Seq.map Encode.int |> List.ofSeq |> encodeSequence) td.PermanentFailCodes
+            |> appendOpt "successCodes" (encodeIntList (td.SourceNodes.WholeFields.Contains "successCodes")) td.SuccessCodes
+            |> appendOpt "temporaryFailCodes" (encodeIntList (td.SourceNodes.WholeFields.Contains "temporaryFailCodes")) td.TemporaryFailCodes
+            |> appendOpt "permanentFailCodes" (encodeIntList (td.SourceNodes.WholeFields.Contains "permanentFailCodes")) td.PermanentFailCodes
         let withInputs =
             // CWL requires inputs, so a tool without inputs writes the empty map, as outputs do.
             let inputs = td.Inputs |> Option.defaultValue (ResizeArray<ListEntry<CWLInput>>())
@@ -1104,7 +1149,7 @@ module Encode =
         withMetadata
         // Also include dynamic fields attached directly to the tool object.
         |> appendDynamicPropertiesExcept CWLToolDescription.KnownFieldNames td
-        |> Encode.object
+        |> encodeObject
 
     /// Encode an ExpressionTool element with ordered sections and preserved metadata. The flag tells whether the element
     /// writes its cwlVersion.
@@ -1116,7 +1161,7 @@ module Encode =
             |> appendOptPair (et.Id |> Option.map (fun id -> "id", encodeString id))
             |> appendOpt "label" (encodeLabelValue et.SourceNodes.Label) et.Label
             |> appendOpt "doc" (encodeProcessDocValue et.SourceNodes.Doc) et.Doc
-            |> appendOptPair (et.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
+            |> appendOptPair (et.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map (encodeIntent (et.SourceNodes.WholeFields.Contains "intent")))
         let withHints =
             match et.Hints with
             | Some h when h.Count > 0 ->
@@ -1145,7 +1190,7 @@ module Encode =
         withMetadata
         // Include dynamic fields attached directly to the expression tool object.
         |> appendDynamicPropertiesExcept CWLExpressionToolDescription.KnownFieldNames et
-        |> Encode.object
+        |> encodeObject
 
     /// Encode an Operation element with ordered sections and preserved metadata. The flag tells whether the element
     /// writes its cwlVersion.
@@ -1157,7 +1202,7 @@ module Encode =
             |> appendOptPair (op.Id |> Option.map (fun id -> "id", encodeString id))
             |> appendOpt "label" (encodeLabelValue op.SourceNodes.Label) op.Label
             |> appendOpt "doc" (encodeProcessDocValue op.SourceNodes.Doc) op.Doc
-            |> appendOptPair (op.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
+            |> appendOptPair (op.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map (encodeIntent (op.SourceNodes.WholeFields.Contains "intent")))
         let withHints =
             match op.Hints with
             | Some h when h.Count > 0 ->
@@ -1183,7 +1228,7 @@ module Encode =
         withMetadata
         // Include dynamic fields attached directly to the operation object.
         |> appendDynamicPropertiesExcept CWLOperationDescription.KnownFieldNames op
-        |> Encode.object
+        |> encodeObject
 
     /// Encode a Workflow element with ordered sections and preserved metadata. The first flag tells whether the element
     /// is written inside the $graph of a packed document, and the second whether it writes its cwlVersion.
@@ -1195,7 +1240,7 @@ module Encode =
             |> appendOptPair (wd.Id |> Option.map (fun id -> "id", encodeString id))
             |> appendOpt "label" (encodeLabelValue wd.SourceNodes.Label) wd.Label
             |> appendOpt "doc" (encodeProcessDocValue wd.SourceNodes.Doc) wd.Doc
-            |> appendOptPair (wd.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map encodeIntent)
+            |> appendOptPair (wd.Intent |> Option.filter (fun intent -> intent.Count > 0) |> Option.map (encodeIntent (wd.SourceNodes.WholeFields.Contains "intent")))
         let withHints =
             match wd.Hints with
             | Some h when h.Count > 0 ->
@@ -1224,7 +1269,7 @@ module Encode =
         withMetadata
         // Include dynamic fields attached directly to the workflow object.
         |> appendDynamicPropertiesExcept CWLWorkflowDescription.KnownFieldNames wd
-        |> Encode.object
+        |> encodeObject
 
     /// Encode one workflow step as a map entry keyed by step id. A run of the form #id refers to a process of the packed
     /// document that holds the step. Outside of a $graph, the file has no such process, so the step writes its resolved
@@ -1259,7 +1304,7 @@ module Encode =
             // Step-local requirements follow hints.
             | Some r when r.Count > 0 -> withHints @ [ "requirements", (encodeRequirementsField ws.SourceNodes r) ]
             | _ -> withHints
-        ws.Id, Encode.object withReq
+        ws.Id, encodeObject withReq
 
     // ------------------------------
     // Top-level encoders
@@ -1396,7 +1441,7 @@ module Encode =
         references
         |> Seq.map encodeCWLParameterReference
         |> Seq.toList
-        |> Encode.object
+        |> encodeObject
         |> writeYaml
 
     /// Render top-level CWL sections in a stable order while keeping metadata as a final block. The document is
@@ -1511,7 +1556,7 @@ module Encode =
         [ "cwlVersion", encodeString graph.CWLVersion
           "$graph", (graph.Processes |> Seq.map encodeMember |> List.ofSeq |> encodeSequence) ]
         |> appendDynamicPropertiesExcept CWLGraph.KnownFieldNames graph
-        |> Encode.object
+        |> encodeObject
         |> renderTopLevelElement ["cwlVersion"] ["$graph"]
 
     /// Encode a CWL document, which is a process or a packed document.
@@ -1533,7 +1578,7 @@ module Encode =
     /// Unions are lists, and schemas are mappings with their fields in the array form.
     let rec encodeCWLTypeFlow (t: CWLType) : YamlNode =
         let flowObject (pairs: (string * YamlNode) list) =
-            YamlNode.flowMapping [ for (name, value) in pairs -> YamlNode.entry (Encode.string name) value ]
+            YamlNode.flowMapping [ for (name, value) in pairs -> YamlNode.entry (ScalarQuoting.textNode name) value ]
         let flowList (nodes: YamlNode list) =
             YamlNode.flowSequence (nodes |> List.map YamlNode.item)
         match t with
@@ -1550,7 +1595,7 @@ module Encode =
                     fs
                     |> Seq.map (fun entry ->
                         match entry with
-                        | ListEntry.Value field -> flowObject [ "name", Encode.string field.Name; "type", encodeCWLTypeFlow field.Type ]
+                        | ListEntry.Value field -> flowObject [ "name", ScalarQuoting.textNode field.Name; "type", encodeCWLTypeFlow field.Type ]
                         | ListEntry.Imported path -> directive "$import" path
                         | ListEntry.Mixed raw -> raw.Node)
                     |> Seq.toList
@@ -1558,7 +1603,7 @@ module Encode =
             flowObject [ "type", Encode.string "record"; "fields", flowList fields ]
         | Enum enumSchema ->
             // Symbols are emitted in stored order.
-            flowObject [ "type", Encode.string "enum"; "symbols", enumSchema.Symbols |> Seq.map (encodeSchemaSaladStringWith Encode.string) |> Seq.toList |> flowList ]
+            flowObject [ "type", Encode.string "enum"; "symbols", enumSchema.Symbols |> Seq.map (encodeSchemaSaladStringWith ScalarQuoting.textNode) |> Seq.toList |> flowList ]
         | _ ->
             // Simple type - just the type name. The null type comes out quoted, because
             // Encode.string quotes the text null.

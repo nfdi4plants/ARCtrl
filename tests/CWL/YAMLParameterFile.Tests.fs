@@ -249,7 +249,83 @@ files:
             | other -> failwithf "Expected an array of files but got %A" other
     ]
 
-let main = 
+let testScalarsOfJobFiles =
+    let valueOf (text: string) =
+        let reference = Expect.wantExactlyOne (DecodeParameters.decodeYAMLParameterFile ("x: " + text + "\n")) "Expected one parameter reference."
+        Expect.wantSome reference.Value (sprintf "%s should hold a value" text)
+    testList "Plain scalars of a job file" [
+        testCase "a plain scalar of a job file has the type that the core schema gives it" <| fun _ ->
+            let cases =
+                [ ".5e3", CWLParameterValue.Float 500.0
+                  "+.5e3", CWLParameterValue.Float 500.0
+                  ".5e+3", CWLParameterValue.Float 500.0
+                  ".5", CWLParameterValue.Float 0.5
+                  "5.", CWLParameterValue.Float 5.0
+                  "1e3", CWLParameterValue.Float 1000.0
+                  "1.e3", CWLParameterValue.Float 1000.0
+                  "-.5E-3", CWLParameterValue.Float -0.0005
+                  ".inf", CWLParameterValue.Float infinity
+                  "-.Inf", CWLParameterValue.Float -infinity
+                  "0o17", CWLParameterValue.Int 15L
+                  "017", CWLParameterValue.Int 17L
+                  "0x1F", CWLParameterValue.Int 31L
+                  "-0", CWLParameterValue.Int 0L
+                  "+1", CWLParameterValue.Int 1L
+                  "-017", CWLParameterValue.Int -17L
+                  "true", CWLParameterValue.Boolean true
+                  "True", CWLParameterValue.Boolean true
+                  "FALSE", CWLParameterValue.Boolean false
+                  "~", CWLParameterValue.Null
+                  "null", CWLParameterValue.Null
+                  "NULL", CWLParameterValue.Null
+                  "1_000", CWLParameterValue.String "1_000"
+                  "1__0", CWLParameterValue.String "1__0"
+                  "1_0.5", CWLParameterValue.String "1_0.5"
+                  "0b101", CWLParameterValue.String "0b101"
+                  "=", CWLParameterValue.String "="
+                  "<<", CWLParameterValue.String "<<"
+                  "._", CWLParameterValue.String "._"
+                  "yes", CWLParameterValue.String "yes"
+                  "on", CWLParameterValue.String "on"
+                  "2001-12-14", CWLParameterValue.String "2001-12-14"
+                  "0X1F", CWLParameterValue.String "0X1F"
+                  "0o8", CWLParameterValue.String "0o8"
+                  "1:30", CWLParameterValue.String "1:30"
+                  "_1", CWLParameterValue.String "_1"
+                  "1e", CWLParameterValue.String "1e"
+                  "1.5.5", CWLParameterValue.String "1.5.5"
+                  "\"1_000\"", CWLParameterValue.String "1_000"
+                  "'.5e+3'", CWLParameterValue.String ".5e+3" ]
+            for (text, expected) in cases do
+                Expect.equal (valueOf text) expected (sprintf "The scalar %s should have the type that the core schema gives it." text)
+            match valueOf ".NaN" with
+            | CWLParameterValue.Float parsed -> Expect.isTrue (System.Double.IsNaN parsed) ".NaN is the float that is not a number."
+            | other -> failwithf "Expected a float but got %A" other
+        testCase "a string that cwltool would read as another type is written in quotes and reads back as the string" <| fun _ ->
+            let quoted =
+                [ "1_000"; "0b101"; "1_0.5"; "1__0"; "+1_0"; "1_"; "1e3"; "5."; ".5e+3"; "0o17"; "017"; "true"; "~"; "="; "<<"; "yes"; "No"; "on"; "OFF"; "y"; "n"
+                  "1:30"; "0b_"; "0x_"; "-_"; "._"; "-._"; "._e+5"; ".__"; ".5e3" ]
+            for text in quoted do
+                let reference = CWLParameterReference(key = "x", value = CWLParameterValue.String text)
+                let written = Encode.encodeYAMLParameterFile (ResizeArray [ reference ])
+                Expect.stringContains written ("\"" + text + "\"") (sprintf "The string %s is written in quotes.\n%s" text written)
+                Expect.equal (valueOf ("\"" + text + "\"")) (CWLParameterValue.String text) (sprintf "The quoted %s is a string." text)
+                let decoded = Expect.wantExactlyOne (DecodeParameters.decodeYAMLParameterFile written) "Expected one parameter reference."
+                Expect.equal decoded.Value (Some (CWLParameterValue.String text)) (sprintf "The written %s should read back as the string." text)
+            for text in [ "0X1F"; "abc"; "2001-12-14"; "YeS"; "_1"; "_"; "NaN"; "Infinity" ] do
+                let written = Encode.encodeYAMLParameterFile (ResizeArray [ CWLParameterReference(key = "x", value = CWLParameterValue.String text) ])
+                Expect.equal written ("x: " + text + "\n") (sprintf "The string %s stays plain, because no reader takes it for another type." text)
+        testCase "an edited doc or label that cwltool would read as another type is written in quotes" <| fun _ ->
+            let tool = Decode.decodeCommandLineTool "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\nlabel: first\ninputs: {}\noutputs: {}\n"
+            for text in [ "1_000"; "0b101"; ".5e3"; "yes" ] do
+                tool.Label <- Some (SchemaSaladString.Literal text)
+                let written = Encode.encodeToolDescription tool
+                Expect.stringContains written ("label: \"" + text + "\"") (sprintf "The label %s is written in quotes." text)
+                Expect.equal (Decode.decodeCommandLineTool written).Label tool.Label "The label reads back as the string."
+    ]
+
+let main =
     testList "YAMLParameterFile" [
         testYAMLParameterFile
+        testScalarsOfJobFiles
     ]

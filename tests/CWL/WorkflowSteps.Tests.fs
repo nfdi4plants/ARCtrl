@@ -5,6 +5,7 @@ open DynamicObj
 open YAMLicious
 open YAMLicious
 open TestingUtils
+open TestingUtils.CWL
 
 let decodeWorkflowStep =
     TestObjects.CWL.WorkflowSteps.workflowStepsFileContent
@@ -17,10 +18,10 @@ let tryYamlScalarString (y: RawYaml) =
     | YamlNodeKind.Scalar scalar -> Some scalar.Value
     | _ -> None
 
-let mkStepInput id source defaultValue valueFrom linkMerge =
+let mkStepInput id (source: ResizeArray<string> option) defaultValue valueFrom linkMerge =
     StepInput.create(
         id,
-        ?source = source,
+        ?source = (source |> Option.map (fun texts -> literals texts)),
         ?defaultValue = defaultValue,
         ?valueFrom = valueFrom,
         ?linkMerge = linkMerge
@@ -60,7 +61,7 @@ let testWorkflowStep =
                         mkStepInput "stageDirectory" (Some (ResizeArray [|"stage"|])) None None None
                         mkStepInput "inputDirectory" (Some (ResizeArray [|"inputMzML"|])) None None None 
                     |]
-                let actual = WorkflowStep.getInputs decodeWorkflowStep.[0]
+                let actual = WorkflowStep.getInputValues decodeWorkflowStep.[0]
                 Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
                     Expect.equal actual.Id expected.Id ""
                     Expect.sequenceEqual actual.Source.Value expected.Source.Value ""
@@ -84,7 +85,7 @@ let testWorkflowStep =
                         mkStepInput "parallelismLevel" None (Some { Node = YamlNode.plain "8" }) None None
                         mkStepInput "outputDirectory" None None (Some (SchemaSaladString.Literal "output")) None
                     |]
-                let actual = WorkflowStep.getInputs decodeWorkflowStep.[1]
+                let actual = WorkflowStep.getInputValues decodeWorkflowStep.[1]
                 Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
                     Expect.equal actual.Id expected.Id ""
                     if expected.Source.IsSome then
@@ -231,16 +232,16 @@ let testWorkflowStepOps =
             let step =
                 WorkflowStep.fromRunPath(
                     id = "step1",
-                    in_ = ListEntry.ofValues [ StepInput.create("input1", source = ResizeArray [| "old" |]) ],
+                    in_ = ListEntry.ofValues [ StepInput.create("input1", source = literals [ "old" ]) ],
                     out_ = ResizeArray [| StepOutputString "out" |],
                     runPath = "./tool.cwl"
                 )
 
             WorkflowStep.updateInputAt 0 (fun i ->
-                i.Source <- Some (ResizeArray [| "new" |])
+                i.Source <- Some (literals [ "new" ])
                 i
             ) step
-            Expect.sequenceEqual (WorkflowStep.getInputs step).[0].Source.Value (ResizeArray [| "new" |]) "Input source should be updated."
+            Expect.sequenceEqual (WorkflowStep.getInputValues step).[0].Source.Value (literals [ "new" ]) "Input source should be updated."
 
         testCase "updateInputById updates only matching input" <| fun _ ->
             let step =
@@ -248,8 +249,8 @@ let testWorkflowStepOps =
                     id = "step1",
                     in_ =
                         ListEntry.ofValues [
-                            StepInput.create("first", source = ResizeArray [| "a" |])
-                            StepInput.create("second", source = ResizeArray [| "b" |])
+                            StepInput.create("first", source = literals [ "a" ])
+                            StepInput.create("second", source = literals [ "b" ])
                         ],
                     out_ = ResizeArray [| StepOutputString "out" |],
                     runPath = "./tool.cwl"
@@ -259,8 +260,8 @@ let testWorkflowStepOps =
                 i.ValueFrom <- Some (SchemaSaladString.Literal "$(self)")
                 i
             ) step
-            Expect.isNone (WorkflowStep.getInputs step).[0].ValueFrom "First input should remain unchanged."
-            Expect.equal (WorkflowStep.getInputs step).[1].ValueFrom (Some (SchemaSaladString.Literal "$(self)")) "Second input should be updated."
+            Expect.isNone (WorkflowStep.getInputValues step).[0].ValueFrom "First input should remain unchanged."
+            Expect.equal (WorkflowStep.getInputValues step).[1].ValueFrom (Some (SchemaSaladString.Literal "$(self)")) "Second input should be updated."
 
         testCase "updateInputById with missing id is a no-op" <| fun _ ->
             let step =
@@ -275,8 +276,8 @@ let testWorkflowStepOps =
                 i.ValueFrom <- Some (SchemaSaladString.Literal "$(self)")
                 i
             ) step
-            Expect.isNone (WorkflowStep.getInputs step).[0].ValueFrom "First input should remain unchanged."
-            Expect.isNone (WorkflowStep.getInputs step).[1].ValueFrom "Second input should remain unchanged."
+            Expect.isNone (WorkflowStep.getInputValues step).[0].ValueFrom "First input should remain unchanged."
+            Expect.isNone (WorkflowStep.getInputValues step).[1].ValueFrom "Second input should remain unchanged."
 
         testCase "addInput appends new input" <| fun _ ->
             let step =
@@ -289,8 +290,8 @@ let testWorkflowStepOps =
 
             WorkflowStep.addInput (StepInput.create("second", valueFrom = (SchemaSaladString.Literal "$(self)"))) step
             Expect.equal step.In.Count 2 "A new input should be appended."
-            Expect.equal (WorkflowStep.getInputs step).[1].Id "second" "Appended input should be the second entry."
-            Expect.equal (WorkflowStep.getInputs step).[1].ValueFrom (Some (SchemaSaladString.Literal "$(self)")) "Appended input content should be preserved."
+            Expect.equal (WorkflowStep.getInputValues step).[1].Id "second" "Appended input should be the second entry."
+            Expect.equal (WorkflowStep.getInputValues step).[1].ValueFrom (Some (SchemaSaladString.Literal "$(self)")) "Appended input content should be preserved."
 
         testCase "removeInputsById removes matching entries" <| fun _ ->
             let step =
@@ -308,7 +309,7 @@ let testWorkflowStepOps =
 
             WorkflowStep.removeInputsById "dup" step
             Expect.equal step.In.Count 1 "Only one input should remain."
-            Expect.equal (WorkflowStep.getInputs step).[0].Id "keep" "Non-matching input should remain."
+            Expect.equal (WorkflowStep.getInputValues step).[0].Id "keep" "Non-matching input should remain."
 
         testCase "the helpers pass over an import among the step inputs and keep it" <| fun _ ->
             let importedFirst () =
@@ -323,7 +324,7 @@ let testWorkflowStepOps =
             Expect.equal (List.ofSeq step.In |> List.map (ListEntry.map (fun input -> input.Id))) [ ListEntry.Imported "more.yml"; ListEntry.Value "keep" ] "The import stays, and the matching input goes."
             let updated = importedFirst ()
             WorkflowStep.updateInputById "keep" (fun i -> i.ValueFrom <- Some (SchemaSaladString.Literal "$(self)"); i) updated
-            Expect.equal (WorkflowStep.getInputs updated).[1].ValueFrom (Some (SchemaSaladString.Literal "$(self)")) "The input behind the import is updated."
+            Expect.equal (WorkflowStep.getInputValues updated).[1].ValueFrom (Some (SchemaSaladString.Literal "$(self)")) "The input behind the import is updated."
             Expect.equal updated.In.[0] (ListEntry.Imported "more.yml") "The import is as it was."
             Expect.throws (fun () -> WorkflowStep.updateInputAt 0 id (importedFirst ())) "An import has no input to update."
             let added = importedFirst ()

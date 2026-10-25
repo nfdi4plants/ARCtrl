@@ -4,21 +4,26 @@ open DynamicObj
 open Fable.Core
 
 /// The position of an input binding: a number, or an expression that evaluates to one. An expression is a string with
-/// $( or ${ in it.
-[<RequireQualifiedAccess>]
+/// $( or ${ in it. A directive stands for the number or the expression of a file. An $include yields the text of a file,
+/// which can only be an expression there. The decoder reads no file, so a directive stays as written.
+[<RequireQualifiedAccess; NoComparison>]
 type BindingPosition =
     | Number of int
     | Expression of string
+    | Imported of string
+    | Included of string
+    /// A mapping with a $mixin directive, alone or beside other fields, kept as it was written.
+    | Mixed of RawYaml
 
 [<AttachMembers>]
 type InputBinding (
     ?prefix: SchemaSaladString,
     ?position: BindingPosition,
     ?itemSeparator: SchemaSaladString,
-    ?separate: bool,
-    ?loadContents: bool,
+    ?separate: SchemaSaladBool,
+    ?loadContents: SchemaSaladBool,
     ?valueFrom: SchemaSaladString,
-    ?shellQuote: bool
+    ?shellQuote: SchemaSaladBool
 ) =
     inherit DynamicObj ()
 
@@ -97,10 +102,10 @@ type InputBinding (
             ?prefix: SchemaSaladString,
             ?position: BindingPosition,
             ?itemSeparator: SchemaSaladString,
-            ?separate: bool,
-            ?loadContents: bool,
+            ?separate: SchemaSaladBool,
+            ?loadContents: SchemaSaladBool,
             ?valueFrom: SchemaSaladString,
-            ?shellQuote: bool
+            ?shellQuote: SchemaSaladBool
         ) =
         InputBinding(?prefix = prefix, ?position = position, ?itemSeparator = itemSeparator, ?separate = separate, ?loadContents = loadContents, ?valueFrom = valueFrom, ?shellQuote = shellQuote)
 
@@ -133,29 +138,25 @@ type InputFormat =
         | Multiple values -> HashHelpers.mergeHashes 2 (HashHelpers.hashSeq values)
 
 /// An input of a process. The type tells whether the input is optional: it is when the type is a union that contains
-/// null. The parameter optional adds null to a type that has none, and it changes nothing for an input without a type.
+/// null. CWLType.makeOptional adds null to a type that has none.
 [<AttachMembers>]
 type CWLInput (
     name: string,
     ?type_: CWLType,
     ?inputBinding: InputBinding,
-    ?optional: bool,
     ?label: SchemaSaladString,
     ?secondaryFiles: RawYaml,
-    ?streamable: bool,
+    ?streamable: SchemaSaladBool,
     ?doc: DocText,
     ?format: InputFormat,
-    ?loadContents: bool,
+    ?loadContents: SchemaSaladBool,
     ?loadListing: LoadListingEnum,
     ?defaultValue: RawYaml
 ) =
     inherit DynamicObj ()
 
     let mutable _name = name
-    let mutable _type =
-        match type_, optional with
-        | Some type_, Some true -> Some (CWLType.makeOptional type_)
-        | _ -> type_
+    let mutable _type = type_
     let mutable _inputBinding = inputBinding
     let mutable _label = label
     let mutable _secondaryFiles = secondaryFiles

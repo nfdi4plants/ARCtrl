@@ -4,6 +4,7 @@ open ARCtrl.CWL
 open DynamicObj
 open YAMLicious
 open TestingUtils
+open TestingUtils.CWL
 
 let decodeOutput =
     TestObjects.CWL.Outputs.outputsFileContent
@@ -100,11 +101,11 @@ let testOutputMutationApi =
             let output = CWLOutput("result")
             output.Type_ <- Some (File)
             output.OutputBinding <- Some (OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "results/*.txt")))
-            output.OutputSource <- Some (OutputSource.Single "step/out")
+            output.OutputSource <- Some (OutputSource.Single (SchemaSaladString.Literal "step/out"))
 
             Expect.equal output.Type_ (Some (File)) "Type_ setter should write DynamicObj-backed value."
             Expect.equal output.OutputBinding (Some (OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "results/*.txt")))) "OutputBinding setter should write value."
-            Expect.equal output.OutputSource (Some (OutputSource.Single "step/out")) "OutputSource setter should write value."
+            Expect.equal output.OutputSource (Some (OutputSource.Single (SchemaSaladString.Literal "step/out"))) "OutputSource setter should write value."
 
         testCase "typed setters can clear optional values" <| fun _ ->
             let output =
@@ -112,7 +113,7 @@ let testOutputMutationApi =
                     "result",
                     type_ = CWLType.String,
                     outputBinding = OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "*.txt")),
-                    outputSource = OutputSource.Single "step/out"
+                    outputSource = OutputSource.Single (SchemaSaladString.Literal "step/out")
                 )
             output.Type_ <- None
             output.OutputBinding <- None
@@ -127,17 +128,17 @@ let testOutputMutationApi =
             Expect.isNone output.OutputSource "Empty outputSource collections should normalize to None."
 
         testCase "known fields are typed fields, not dynamic overflow" <| fun _ ->
-            let binding = OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "*.txt"), loadContents = true, loadListing = LoadListingEnum.DeepListing, outputEval = (SchemaSaladString.Literal "$(self[0])"))
+            let binding = OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "*.txt"), loadContents = SchemaSaladBool.Value true, loadListing = LoadListingEnum.DeepListing, outputEval = (SchemaSaladString.Literal "$(self[0])"))
             let output =
                 CWLOutput(
                     "result",
                     type_ = CWLType.String,
                     outputBinding = binding,
-                    outputSource = OutputSource.Single "step/out",
+                    outputSource = OutputSource.Single (SchemaSaladString.Literal "step/out"),
                     label = (SchemaSaladString.Literal "Result"),
                     doc = (DocText.literal "Result docs"),
                     format = (SchemaSaladString.Literal "edam:format_2330"),
-                    streamable = true
+                    streamable = SchemaSaladBool.Value true
                 )
 
             Expect.sequenceEqual OutputBinding.KnownFieldNames (Set [| "loadContents"; "loadListing"; "glob"; "outputEval" |]) "OutputBinding known fields should be declared on the type."
@@ -159,9 +160,9 @@ let testOutputMutationApi =
             Expect.equal output.Label (Some (SchemaSaladString.Literal "Result")) "label should decode to a typed field."
             Expect.equal output.Doc (Some (DocText.literal "Result docs")) "doc should decode to a typed field."
             Expect.equal output.Format (Some (SchemaSaladString.Literal "edam:format_2330")) "format should decode to a typed field."
-            Expect.equal output.Streamable (Some true) "streamable should decode to a typed field."
+            Expect.equal output.Streamable (Some (SchemaSaladBool.Value true)) "streamable should decode to a typed field."
             Expect.isSome output.SecondaryFiles "secondaryFiles should decode to a typed field."
-            Expect.equal output.OutputBinding.Value.LoadContents (Some true) "outputBinding.loadContents should decode to a typed field."
+            Expect.equal output.OutputBinding.Value.LoadContents (Some (SchemaSaladBool.Value true)) "outputBinding.loadContents should decode to a typed field."
             Expect.equal output.OutputBinding.Value.LoadListing (Some LoadListingEnum.DeepListing) "outputBinding.loadListing should decode to a typed field."
             Expect.equal output.OutputBinding.Value.OutputEval (Some (SchemaSaladString.Literal "$(self[0])")) "outputBinding.outputEval should decode to a typed field."
             Expect.isEmpty (output |> DynamicObjHelpers.dynamicPropertiesSnapshot) "Known output fields should not be overflow."

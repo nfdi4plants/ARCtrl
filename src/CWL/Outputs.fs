@@ -32,7 +32,7 @@ type OutputGlob =
         | Multiple values -> HashHelpers.mergeHashes 2 (HashHelpers.hashSeq values)
 
 [<AttachMembers>]
-type OutputBinding (?glob: OutputGlob, ?loadContents: bool, ?loadListing: LoadListingEnum, ?outputEval: SchemaSaladString) =
+type OutputBinding (?glob: OutputGlob, ?loadContents: SchemaSaladBool, ?loadListing: LoadListingEnum, ?outputEval: SchemaSaladString) =
     inherit DynamicObj ()
 
     let mutable _glob = glob
@@ -72,16 +72,16 @@ type OutputBinding (?glob: OutputGlob, ?loadContents: bool, ?loadListing: LoadLi
     static member KnownFieldNames =
         CWLKnownFieldNames.outputBinding
 
-    static member create(?glob: OutputGlob, ?loadContents: bool, ?loadListing: LoadListingEnum, ?outputEval: SchemaSaladString) =
+    static member create(?glob: OutputGlob, ?loadContents: SchemaSaladBool, ?loadListing: LoadListingEnum, ?outputEval: SchemaSaladString) =
         OutputBinding(?glob = glob, ?loadContents = loadContents, ?loadListing = loadListing, ?outputEval = outputEval)
 
-/// The source of an output, as a single name or as a list of names. A single name differs from a list of one name,
-/// because CWL keeps the two spellings apart. The lists compare by their elements, because a ResizeArray compares
-/// references.
+/// The source of an output, as a single name or as a list of names. A name is a string, so a directive can stand in its
+/// place. A single name differs from a list of one name, because CWL keeps the two spellings apart. The lists compare by
+/// their elements, because a ResizeArray compares references.
 [<CustomEquality; NoComparison; AttachMembers>]
 type OutputSource =
-    | Single of string
-    | Multiple of ResizeArray<string>
+    | Single of SchemaSaladString
+    | Multiple of ResizeArray<SchemaSaladString>
     with
     member this.AsValues() =
         match this with
@@ -110,7 +110,7 @@ type CWLOutput (
     ?outputSource: OutputSource,
     ?label: SchemaSaladString,
     ?secondaryFiles: RawYaml,
-    ?streamable: bool,
+    ?streamable: SchemaSaladBool,
     ?doc: DocText,
     ?format: SchemaSaladString
 ) =
@@ -174,9 +174,11 @@ type CWLOutput (
         with get() = _format
         and set(value) = _format <- value
 
-    member this.GetOutputSources() =
+    /// Returns a new list of the sources that the document writes out as ids. The directives are left out, because they
+    /// name files that the decoder does not read.
+    member this.GetOutputSources() : ResizeArray<string> =
         match this.OutputSource with
-        | Some outputSource -> outputSource.AsValues()
+        | Some outputSource -> outputSource.AsValues() |> Seq.choose SchemaSaladString.tryLiteral |> ResizeArray
         | _ ->
             ResizeArray()
 

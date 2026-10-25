@@ -4,6 +4,7 @@ open System
 open ARCtrl.CWL
 open YAMLicious
 open TestingUtils
+open TestingUtils.CWL
 
 let normalizeNewLines (text:string) =
     text.Replace("\r\n","\n").TrimEnd('\n')
@@ -58,7 +59,7 @@ let decodeTests =
                 TestObjects.CWL.Descriptions.intent
                 |> Decode.readYaml
                 |> Decode.intentDecoder
-            let expected = ResizeArray [|"classification"; "quality-control"|]
+            let expected = literals [ "classification"; "quality-control" ]
             let parsed = Expect.wantSome actual "Intent should decode as string array."
             Expect.sequenceEqual parsed expected ""
     ]
@@ -91,15 +92,15 @@ let encodeTests =
             Expect.stringContains actual "doc:" "Encoded block doc should emit doc field."
         testCase "intent roundtrip" <| fun _ ->
             let encoded =
-                ResizeArray [|"classification"; "quality-control"|]
-                |> Encode.encodeIntent
+                literals [ "classification"; "quality-control" ]
+                |> Encode.encodeIntent false
                 |> encodeToString
             let decoded =
                 encoded
                 |> Decode.readYaml
                 |> Decode.intentDecoder
             let parsed = Expect.wantSome decoded "Intent should decode after encode."
-            Expect.sequenceEqual parsed (ResizeArray [|"classification"; "quality-control"|]) ""
+            Expect.sequenceEqual parsed (literals [ "classification"; "quality-control" ]) ""
     ]
 
 let main =

@@ -71,8 +71,10 @@ let hashOptionSeq (items: ResizeArray<'a> option) : int =
 
 /// Two raw YAML nodes of a CWL object are equal when they hold the same data. They have the same shape and the same
 /// tags, and their keys and scalar texts agree in order. A plain scalar differs from a quoted one, because the core
-/// schema reads only the plain one as a number, a bool or null. Comments, blank lines, anchors, collection styles,
-/// the kind of quote and spans do not count, so the comparison ignores what a write and a read can change.
+/// schema reads only the plain one as a number, a bool or null. The scalars count in the form that the writer spells
+/// (see ScalarQuoting.normalizeScalar), so a plain 1_000, which the writer quotes, equals the quoted one that a read of
+/// the written text gives. Comments, blank lines, anchors, collection styles, the kind of quote and spans do not count,
+/// so the comparison ignores what a write and a read can change.
 let yamlNodeEqual (left: YamlNode) (right: YamlNode) : bool =
     let tagOf (node: YamlNode) = node.Properties.Tag |> Option.map YamlTag.identifier
     let isPlain (scalar: YamlScalar) =
@@ -91,7 +93,9 @@ let yamlNodeEqual (left: YamlNode) (right: YamlNode) : bool =
         else
             match leftNode.Kind, rightNode.Kind with
             | YamlNodeKind.Scalar leftScalar, YamlNodeKind.Scalar rightScalar ->
-                equal <- leftScalar.Value = rightScalar.Value && isPlain leftScalar = isPlain rightScalar
+                let leftWritten = ScalarQuoting.normalizeScalar leftScalar
+                let rightWritten = ScalarQuoting.normalizeScalar rightScalar
+                equal <- leftWritten.Value = rightWritten.Value && isPlain leftWritten = isPlain rightWritten
             | YamlNodeKind.Alias leftName, YamlNodeKind.Alias rightName ->
                 equal <- leftName = rightName
             | YamlNodeKind.Sequence leftCollection, YamlNodeKind.Sequence rightCollection ->
@@ -137,7 +141,7 @@ let hashYamlNode (root: YamlNode) : int =
         | _ -> None
     let leafHash (node: YamlNode) : int =
         match node.Kind with
-        | YamlNodeKind.Scalar scalar -> mergeHashes 1 (scalar.Value.GetHashCode())
+        | YamlNodeKind.Scalar scalar -> mergeHashes 1 ((ScalarQuoting.normalizeScalar scalar).Value.GetHashCode())
         | YamlNodeKind.Alias name -> mergeHashes 2 (name.GetHashCode())
         | _ -> 0
     // The walk keeps its own stack, so a node of any depth is safe.

@@ -12,12 +12,12 @@ type CWLToolDescription (
         ?stdin: SchemaSaladString,
         ?stderr: SchemaSaladString,
         ?stdout: SchemaSaladString,
-        ?successCodes: ResizeArray<int>,
-        ?temporaryFailCodes: ResizeArray<int>,
-        ?permanentFailCodes: ResizeArray<int>,
+        ?successCodes: ResizeArray<ListEntry<int>>,
+        ?temporaryFailCodes: ResizeArray<ListEntry<int>>,
+        ?permanentFailCodes: ResizeArray<ListEntry<int>>,
         ?requirements: ResizeArray<Requirement>,
         ?hints: ResizeArray<HintEntry>,
-        ?intent: ResizeArray<string>,
+        ?intent: ResizeArray<SchemaSaladString>,
         ?inputs: ResizeArray<ListEntry<CWLInput>>,
         ?metadata: DynamicObj,
         ?label: SchemaSaladString,
@@ -34,12 +34,12 @@ type CWLToolDescription (
     let mutable _stdin: SchemaSaladString option = stdin
     let mutable _stderr: SchemaSaladString option = stderr
     let mutable _stdout: SchemaSaladString option = stdout
-    let mutable _successCodes: ResizeArray<int> option = successCodes
-    let mutable _temporaryFailCodes: ResizeArray<int> option = temporaryFailCodes
-    let mutable _permanentFailCodes: ResizeArray<int> option = permanentFailCodes
+    let mutable _successCodes: ResizeArray<ListEntry<int>> option = successCodes
+    let mutable _temporaryFailCodes: ResizeArray<ListEntry<int>> option = temporaryFailCodes
+    let mutable _permanentFailCodes: ResizeArray<ListEntry<int>> option = permanentFailCodes
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<HintEntry> option = hints
-    let mutable _intent: ResizeArray<string> option = intent
+    let mutable _intent: ResizeArray<SchemaSaladString> option = intent
     let mutable _inputs: ResizeArray<ListEntry<CWLInput>> option = inputs
     let mutable _metadata: DynamicObj option = metadata
     let mutable _label: SchemaSaladString option = label
@@ -127,12 +127,14 @@ type CWLToolDescription (
     static member KnownFieldNames =
         CWLKnownFieldNames.toolDescription
 
-    /// Returns the inputs of the tool, or an empty list. The imports are left out, and the list is a new one.
-    static member getInputsOrEmpty (tool: CWLToolDescription) : ResizeArray<CWLInput> =
+    /// Returns a new list of the inputs of the tool that are objects, or an empty list. The imports and the mixins are left
+    /// out, so a change of the list changes nothing in the tool. The entries of the tool are in Inputs.
+    static member getInputValuesOrEmpty (tool: CWLToolDescription) : ResizeArray<CWLInput> =
         tool.Inputs |> Option.map ListEntry.values |> Option.defaultValue (ResizeArray())
 
-    /// Returns the outputs of the tool. The imports are left out, and the list is a new one.
-    static member getOutputs (tool: CWLToolDescription) : ResizeArray<CWLOutput> =
+    /// Returns a new list of the outputs of the tool that are objects. The imports and the mixins are left out, so a change
+    /// of the list changes nothing in the tool. The entries of the tool are in Outputs.
+    static member getOutputValues (tool: CWLToolDescription) : ResizeArray<CWLOutput> =
         ListEntry.values tool.Outputs
 
     /// Returns the entries of the tool's inputs, creating and assigning a new empty ResizeArray if None.
