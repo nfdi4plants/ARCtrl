@@ -2701,8 +2701,30 @@ let tests_ROCrate =
             // Data paths are read with leading ./, see https://github.com/nfdi4plants/ARCtrl/issues/615
             table.UpdateCellAt(0, 0, CompositeCell.createDataFromString("./assays/MyAssay/dataset/MyData.csv"))
             table.UpdateCellAt(0, 1, CompositeCell.createDataFromString("./assays/MyAssay/dataset/ABC.D"))
-            Expect.testFileSystemTree arc'.FileSystem.Tree arc.FileSystem.Tree 
+            Expect.testFileSystemTree arc'.FileSystem.Tree arc.FileSystem.Tree
             Expect.equal arc'.Assays[0] arc.Assays[0] "Assays should be equal"
+        // https://github.com/nfdi4plants/ARCtrl/issues/650
+        testCase "ExternalFilesNotInFilesystem" <| fun _ ->
+            let arc = ARC("MyARC", title = "MyTitle", description = "MyDescription")
+            let assay = arc.InitAssay("MyAssay")
+            arc.UpdateFileSystem()
+            arc.FileSystem <- arc.FileSystem.AddFile("assays/MyAssay/dataset/MyData.csv")
+            let table = assay.InitTable("MyTable")
+            table.AddColumn(
+                CompositeHeader.Input IOType.Data,
+                ResizeArray [
+                    CompositeCell.createDataFromString("assays/MyAssay/dataset/MyData.csv")
+                    CompositeCell.createDataFromString("https://www.ncbi.nlm.nih.gov/datasets/genome/GCF_001406875.1/")
+                ]
+            ) |> ignore
+            let roCrate = arc.ToROCrateJsonString()
+            let arc' = ARC.fromROCrateJsonString(roCrate)
+            let paths = arc'.FileSystem.Tree.ToFilePaths(true)
+            Expect.isFalse (paths |> Array.exists (fun p -> p.StartsWith "https:")) "External file should not be part of the filesystem"
+            Expect.testFileSystemTree arc'.FileSystem.Tree arc.FileSystem.Tree
+            // Data paths are read with leading ./, see https://github.com/nfdi4plants/ARCtrl/issues/615
+            table.UpdateCellAt(0, 0, CompositeCell.createDataFromString("./assays/MyAssay/dataset/MyData.csv"))
+            Expect.equal arc'.Assays[0] arc.Assays[0] "Assays should be equal, including the external file reference"
         // https://github.com/nfdi4plants/ARCtrl/issues/615
         testCase "NormalizeDataEntityIds" <| fun _ ->
             let arc = ARC("MyARC", title = "MyTitle")
