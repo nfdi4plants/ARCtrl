@@ -29,6 +29,35 @@ let private tests_checkValidCharacters = testList "checkValidCharacters" [
     testCheckInvalidCharacter "oh\no\a\windows\path"
 ]
 
+// https://github.com/nfdi4plants/ARCtrl/issues/303
+let private tests_tryCheckValidCharacters = testList "tryCheckValidCharacters" [
+    let testValid name identifier =
+        testCase ("Valid:" + name) <| fun _ ->
+            Expect.isTrue (tryCheckValidCharacters identifier) $"\"{identifier}\" should be valid"
+
+    let testInvalid name identifier =
+        testCase ("Invalid:" + name) <| fun _ ->
+            Expect.isFalse (tryCheckValidCharacters identifier) $"\"{identifier}\" should be invalid"
+
+    testValid "boundary characters" "azAZ09_-"
+    testValid "inner whitespace" "My Assay 1"
+    testValid "surrounding whitespace" "  MyAssay  "
+    testValid "surrounding tab and newline" "\tMyAssay\n"
+    testInvalid "empty" ""
+    testInvalid "whitespace only" "   "
+    testInvalid "inner tab" "My\tAssay"
+    testInvalid "inner newline" "My\nAssay"
+    testInvalid "non-ascii letter" "Mäßig"
+    testInvalid "dot" "My.Assay"
+    testInvalid "last character" "MyAssay!"
+    // The validation must not keep state between calls, e.g. lastIndex of a reused global regex in JavaScript
+    testCase "repeated calls" <| fun _ ->
+        for _ in 1 .. 3 do
+            Expect.isTrue (tryCheckValidCharacters "MyAssay") "Valid identifier should stay valid"
+            Expect.isTrue (tryCheckValidCharacters "MyAssay") "Same identifier should be valid twice in a row"
+            Expect.isFalse (tryCheckValidCharacters "My/Assay") "Invalid identifier should stay invalid"
+]
+
 let private tests_cwlFileNameFromIdentifier = testList "cwlFileNameFromIdentifier" [
     testCase "Workflow_Valid" <| fun _ ->
         let actual = Workflow.cwlFileNameFromIdentifier "MyWorkflow"
@@ -53,5 +82,6 @@ let private tests_cwlFileNameFromIdentifier = testList "cwlFileNameFromIdentifie
 let main = 
     testList "Identifier" [
         tests_checkValidCharacters
+        tests_tryCheckValidCharacters
         tests_cwlFileNameFromIdentifier
     ]
