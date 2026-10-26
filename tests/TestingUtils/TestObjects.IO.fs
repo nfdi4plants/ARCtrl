@@ -38,3 +38,5 @@ let testSimpleARCWithCWL_Output = combine testResultsFolder "TestResults/SimpleA
 
 let simpleTextFilePath = combine testObjectsBaseFolder "SimpleText.txt"
 let simpleWorkbookPath = combine testObjectsBaseFolder "TestWorkbook.xlsx"
+/// Assay workbook whose annotation table columns contain `totalsRowFormula` elements, see https://github.com/nfdi4plants/ARCtrl/issues/508
+let assayWithTotalsRowFormulaPath = combine testObjectsBaseFolder "AssayWithTotalsRowFormula.xlsx"

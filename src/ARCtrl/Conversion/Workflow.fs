@@ -504,6 +504,7 @@ type WorkflowConversion =
             |> CWL.CommandLineTool              
 
     static member composeWorkflow (workflow : ArcWorkflow, ?fs : FileSystem) =
+        BaseTypes.warnIfTitleEmpty("Workflow", workflow.Identifier, workflow.Title)
         let workflowProtocol =
             let workflowFilePath = Identifier.Workflow.cwlFileNameFromIdentifier workflow.Identifier
             match workflow.CWLDescription with
@@ -555,15 +556,18 @@ type WorkflowConversion =
             workflow.Comments
             |> ResizeArray.map (fun c -> BaseTypes.composeComment c)
             |> Option.fromSeq
-        LDDataset.createARCWorkflow(
-            identifier = workflow.Identifier,
-            mainEntities = ResizeArray.singleton workflowProtocol,
-            ?name = workflow.Title,
-            ?description = workflow.Description,
-            ?creators = creators,
-            ?hasParts = hasParts,
-            ?comments = comments
-        )
+        let arcWorkflow =
+            LDDataset.createARCWorkflow(
+                identifier = workflow.Identifier,
+                mainEntities = ResizeArray.singleton workflowProtocol,
+                ?name = workflow.Title,
+                ?description = workflow.Description,
+                ?creators = creators,
+                ?hasParts = hasParts,
+                ?comments = comments
+            )
+        fragmentDescriptors |> Option.iter (fun fds -> LDDataset.setVariableMeasuredAsPropertyValues(arcWorkflow, fds))
+        arcWorkflow
 
     static member decomposeWorkflow (workflow : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let workflowProtocol =

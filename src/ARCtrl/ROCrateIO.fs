@@ -58,7 +58,7 @@ module ARC =
             let isa = isa.ToROCrateInvestigation(?fs = fs, ?ignoreBrokenWR = ignoreBrokenWR)
             LDDataset.setSDDatePublishedAsDateTime(isa, System.DateTime.Now)
             LDDataset.setLicenseAsCreativeWork(isa, license)
-            let graph = isa.Flatten()
+            let graph = isa.Flatten() |> LDGraph.normalizeDataEntityIds
             let context = LDContext(baseContexts=ResizeArray[Context.initV1_2();Context.initBioschemasContext()])
             graph.SetContext(context)
             graph.AddNode(ROCrate.metadataFileDescriptor)
@@ -72,6 +72,7 @@ module ARC =
         /// Returns ArcInvestigation, list of file Ids, and optional License
         static member decoder : Decoder<ArcInvestigation*string ResizeArray * License option> =
             LDGraph.decoder
+            |> Decode.map LDGraph.normalizeDataEntityIds
             |> Decode.map (fun graph ->
                 match graph.TryGetNode("./") with
                 | Some node ->
@@ -108,7 +109,7 @@ module ARC =
             LDDataset.setLicenseAsCreativeWork(mainEntity, license)
             // LDDataset.setHasParts(mainEntity,(dataset.GetPropertyValues"http://schema.org/mainEntity") |> Seq.map (fun x -> x :?> LDNode) |> ResizeArray)
             // Flatten the dataset into a graph
-            let graph = mainEntity.Flatten()
+            let graph = mainEntity.Flatten() |> LDGraph.normalizeDataEntityIds
             // Add context 
             let context = LDContext(baseContexts=ResizeArray[Context.initV1_2();Context.initBioschemasContext()])
             graph.SetContext(context)

@@ -42,6 +42,45 @@ let roCrate_minimal = """{
       ]
     }"""
 
+/// Contains the same file once with and once without leading "./", see https://github.com/nfdi4plants/ARCtrl/issues/607
+let roCrate_unnormalizedDataEntityIds = """{
+      "@context": "https://w3id.org/ro/crate/1.2/context",
+      "@graph": [
+        {
+            "@id": "ro-crate-metadata.json",
+            "@type": "CreativeWork",
+            "about": {"@id": "./"},
+            "conformsTo": {"@id": "https://w3id.org/ro/crate/1.2"}
+        },
+        {
+          "@id": "./",
+          "@type": "Dataset",
+          "hasPart": [{"@id": "studies/MyStudy/"}, {"@id": "https://example.org/data.txt"}]
+        },
+        {
+          "@id": "studies/MyStudy/",
+          "@type": "Dataset",
+          "name": "My Study",
+          "hasPart": [{"@id": "studies/MyStudy/resources/data.txt"}, {"@id": "./studies/MyStudy/resources/data.txt"}]
+        },
+        {
+          "@id": "studies/MyStudy/resources/data.txt",
+          "@type": "File",
+          "name": "studies/MyStudy/resources/data.txt"
+        },
+        {
+          "@id": "./studies/MyStudy/resources/data.txt",
+          "@type": "File",
+          "name": "./studies/MyStudy/resources/data.txt"
+        },
+        {
+          "@id": "https://example.org/data.txt",
+          "@type": "File",
+          "name": "https://example.org/data.txt"
+        }
+      ]
+    }"""
+
 
 
 

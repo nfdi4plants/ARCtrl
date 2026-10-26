@@ -2558,6 +2558,50 @@ let tests_ROCrate =
                 Expect.equal arcActual.Title arcExpected.Title "Title should be equal"
                 Expect.equal arcActual.Description arcExpected.Description "Description should be equal"
                 Expect.equal arcActual.License arcExpected.License "License should be equal"
+            // https://github.com/nfdi4plants/ARCtrl/issues/651
+            testCase "Full" <| fun _ ->
+                let createDatamap() =
+                    Datamap(ResizeArray [
+                        ROCrateConversion.Tests.Helper.create_dataContextOfRow "MyFile" 1
+                        ROCrateConversion.Tests.Helper.create_dataContextOfRow "MyFile" 2
+                    ])
+                let investigation = ROCrateConversion.Tests.Helper.create_investigation_toplevel()
+                let study = ROCrateConversion.Tests.Helper.create_study_full()
+                study.Datamap <- Some (createDatamap())
+                // The full test objects use json encoded dates, which are not read from xlsx, so plain date strings are used instead
+                investigation.SubmissionDate <- Some "2024-01-01T12:00:00"
+                investigation.PublicReleaseDate <- Some "2024-02-01T12:00:00"
+                study.SubmissionDate <- Some "2024-01-01T12:00:00"
+                study.PublicReleaseDate <- Some "2024-02-01T12:00:00"
+                let assay = ROCrateConversion.Tests.Helper.create_assay_full()
+                assay.Datamap <- Some (createDatamap())
+                let workflow = ROCrateConversion.Tests.Helper.create_workflow_full()
+                workflow.Datamap <- Some (createDatamap())
+                let run = ROCrateConversion.Tests.Helper.create_run_full()
+                run.Datamap <- Some (createDatamap())
+                investigation.AddStudy(study)
+                investigation.AddAssay(assay, registerIn = ResizeArray [study])
+                investigation.AddWorkflow(workflow)
+                investigation.AddRun(run)
+                let arcExpected = ARC.fromArcInvestigation(investigation, license = License.initFulltext "CC-BY-4.0")
+                let json = arcExpected.ToROCrateJsonString()
+                let arcActual = ARC.fromROCrateJsonString(json)
+                // Data paths are read with leading ./, see https://github.com/nfdi4plants/ARCtrl/issues/615
+                for datamap in [study.Datamap; assay.Datamap; workflow.Datamap; run.Datamap] do
+                    datamap.Value.DataContexts |> Seq.iter (fun dc -> dc.FilePath <- Some ("./" + dc.FilePath.Value))
+                Expect.equal arcActual.Identifier arcExpected.Identifier "Identifier should be equal"
+                Expect.equal arcActual.Title arcExpected.Title "Title should be equal"
+                Expect.equal arcActual.Description arcExpected.Description "Description should be equal"
+                Expect.equal arcActual.SubmissionDate arcExpected.SubmissionDate "SubmissionDate should be equal"
+                Expect.equal arcActual.PublicReleaseDate arcExpected.PublicReleaseDate "PublicReleaseDate should be equal"
+                Expect.sequenceEqual arcActual.Publications arcExpected.Publications "Publications should be equal"
+                Expect.sequenceEqual arcActual.Contacts arcExpected.Contacts "Contacts should be equal"
+                Expect.sequenceEqual arcActual.Comments arcExpected.Comments "Comments should be equal"
+                Expect.equal arcActual.License arcExpected.License "License should be equal"
+                Expect.sequenceEqual arcActual.Studies arcExpected.Studies "Studies should be equal"
+                Expect.sequenceEqual arcActual.Assays arcExpected.Assays "Assays should be equal"
+                Expect.sequenceEqual arcActual.Workflows arcExpected.Workflows "Workflows should be equal"
+                Expect.sequenceEqual arcActual.Runs arcExpected.Runs "Runs should be equal"
             testCase "NoLicense" <| fun _ ->
                 let arcExpected = ARC("MyARC", title = "MyTitle", description = "MyDescription")
                 let json = arcExpected.ToROCrateJsonString()
@@ -2654,8 +2698,31 @@ let tests_ROCrate =
             ) |> ignore
             let roCrate = arc.ToROCrateJsonString()
             let arc' = ARC.fromROCrateJsonString(roCrate)
+            // Data paths are read with leading ./, see https://github.com/nfdi4plants/ARCtrl/issues/615
+            table.UpdateCellAt(0, 0, CompositeCell.createDataFromString("./assays/MyAssay/dataset/MyData.csv"))
+            table.UpdateCellAt(0, 1, CompositeCell.createDataFromString("./assays/MyAssay/dataset/ABC.D"))
             Expect.testFileSystemTree arc'.FileSystem.Tree arc.FileSystem.Tree 
             Expect.equal arc'.Assays[0] arc.Assays[0] "Assays should be equal"
+        // https://github.com/nfdi4plants/ARCtrl/issues/615
+        testCase "NormalizeDataEntityIds" <| fun _ ->
+            let arc = ARC("MyARC", title = "MyTitle")
+            let assay = arc.InitAssay("MyAssay")
+            assay.Title <- Some "My Assay"
+            let table = assay.InitTable("MyTable")
+            table.AddColumn(
+                CompositeHeader.Input IOType.Data,
+                ResizeArray [CompositeCell.createDataFromString("assays/MyAssay/dataset/MyData.csv")]
+            ) |> ignore
+            let roCrate = arc.ToROCrateJsonString()
+            // Decode without normalization, to check the written ids
+            let graph = Json.Decode.fromJsonString Json.LDGraph.decoder roCrate
+            let context = graph.TryGetContext()
+            Expect.isNone (graph.TryGetNode "assays/MyAssay/dataset/MyData.csv") "File without leading ./ should not be written"
+            let file = Expect.wantSome (graph.TryGetNode "./assays/MyAssay/dataset/MyData.csv") "File should be written with leading ./"
+            Expect.equal (ROCrate.LDFile.getNameAsString(file, ?context = context)) "./assays/MyAssay/dataset/MyData.csv" "File name should be written with leading ./"
+            Expect.isNone (graph.TryGetNode "assays/MyAssay/") "Assay dataset without leading ./ should not be written"
+            let assayNode = Expect.wantSome (graph.TryGetNode "./assays/MyAssay/") "Assay dataset should be written with leading ./"
+            Expect.equal (ROCrate.LDDataset.getNameAsString(assayNode, ?context = context)) "My Assay" "Assay name should not be changed"
         testCase "PersonGetsMergedOneORCID" <| fun _ ->
             let pWithORCID = Person(firstName = "John", lastName = "Doe", orcid = "0000-0003-3925-6778", email = "john.doe@example.com")
             let pWithoutORCID = Person(firstName = "John", lastName = "Doe", phone = "123456")
