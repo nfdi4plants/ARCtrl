@@ -917,6 +917,24 @@ reads:
         other.CWLGraph <- None
         Expect.notEqual other arc.Runs.[0] "The graph counts for the comparison."
     )
+    testCase "simpleISAWithWR_WithRunCWLOfUnknownClass_IsWrittenAsItWasRead" (fun () ->
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
+        let text = "cwlVersion: v1.2\nclass: {$import: s.yml}\nbaseCommand: echo\ninputs: []\noutputs: []\n"
+        let arc = arcWithRunCwl text
+        match Expect.wantSome arc.Runs.[0].CWLDescription "Run CWL description should be present" with
+        | ARCtrl.CWL.RawProcess raw -> Expect.equal raw { ARCtrl.CWL.RawYaml.Node = YAMLicious.Reader.readRoot text } "The run holds the process as written."
+        | other -> failwith $"Expected a process of unknown class but got %A{other}"
+        Expect.isNone arc.Runs.[0].CWLGraph "A plain file has no graph."
+        Expect.equal (writtenCwlText arc runCwlPath) text "The file is written as it was read."
+    )
+    testCase "simpleISAWithWR_WithPackedRunCWLOfUnknownClassMain_IsWrittenAsTheSamePackedDocument" (fun () ->
+        let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
+        let text = "cwlVersion: v1.2\n$graph:\n  - class: {$import: s.yml}\n    id: main\n    baseCommand: echo\n    inputs: []\n    outputs: []\n  - class: CommandLineTool\n    id: tool\n    baseCommand: cat\n    inputs: []\n    outputs: []\n"
+        let arc = arcWithRunCwl text
+        Expect.isTrue (match arc.Runs.[0].CWLDescription with Some (ARCtrl.CWL.RawProcess _) -> true | _ -> false) "The run starts with the process main, which has an unknown class."
+        Expect.isSome arc.Runs.[0].CWLGraph "The run keeps the graph beside its description."
+        Expect.equal (ARCtrl.CWL.Decode.decodeCWLDocument (writtenCwlText arc runCwlPath)) (ARCtrl.CWL.Decode.decodeCWLDocument text) "Writing an unchanged run gives the document that was read."
+    )
     testCase "simpleISAWithWR_WithPackedRunCWL_ReplacedMainWithAnotherIdIsWrittenAsPlainDocumentAndReadsBack" (fun () ->
         let runCwlPath = Identifier.Run.cwlFileNameFromIdentifier Run.Proteomics.runIdentifier
         let arc = arcWithRunCwl TestObjects.CWL.Workflow.PackedDocument.namespacedFile
@@ -1278,6 +1296,54 @@ outputs: {}""")
             Expect.equal (ARCtrl.CWL.CWLToolDescription.getOutputValues tool |> Seq.map (fun output -> output.Name) |> List.ofSeq) [ "b" ] "A run of the form #tool reaches the last process with the id."
         | other -> failwith $"Expected a tool but got %A{other}"
         Expect.isTrue (ARCtrl.CWL.CWLGraph.isMain (ARCtrl.CWL.CWLDocument.tryGetMain document |> Option.get) graph) "The process main is the first one."
+    )
+    testCase "resolveRunReferencesOfDocument_ReferenceToAProcessOfUnknownClassStaysUnresolved" (fun () ->
+        let text =
+            String.concat "\n" [
+                "cwlVersion: v1.2"
+                "$graph:"
+                "  - class: Workflow"
+                "    id: main"
+                "    inputs: []"
+                "    outputs: []"
+                "    steps:"
+                "      s: {run: '#t', in: [], out: []}"
+                "  - class: {$import: s.yml}"
+                "    id: t"
+                "    baseCommand: echo"
+                "    inputs: []"
+                "    outputs: []"
+                "" ]
+        let document = ARCtrl.CWL.Decode.decodeCWLDocument text
+        let main, graph = ARCtrl.CWLRunResolver.resolveRunReferencesOfDocument "runs/r/run.cwl" document (fun _ -> None)
+        let step =
+            match main with
+            | ARCtrl.CWL.Workflow workflow -> (ARCtrl.CWL.ListEntry.values workflow.Steps).[0]
+            | other -> failwith $"Expected a workflow but got %A{other}"
+        Expect.equal step.Run (ARCtrl.CWL.RunString "#t") "The step keeps the reference as written."
+        Expect.isNone step.ResolvedRun.Run "The process of unknown class has no run to resolve to."
+        Expect.isSome graph "The document stays a packed document."
+        Expect.isNone (ARCtrl.CWLRunResolver.tryRunFromProcessingUnit graph.Value.Processes.[1]) "No run stands for a process of unknown class."
+    )
+    testCase "resolveRunReferencesOfDocument_ProcessOfUnknownClassCanBeTheMain" (fun () ->
+        let text = "cwlVersion: v1.2\n$graph:\n  - class: {$import: s.yml}\n    id: main\n    baseCommand: echo\n    inputs: []\n    outputs: []\n"
+        let document = ARCtrl.CWL.Decode.decodeCWLDocument text
+        let main, graph = ARCtrl.CWLRunResolver.resolveRunReferencesOfDocument "runs/r/run.cwl" document (fun _ -> None)
+        Expect.isTrue (match main with ARCtrl.CWL.RawProcess _ -> true | _ -> false) "The run starts with the process of unknown class."
+        Expect.isTrue (ARCtrl.CWL.CWLGraph.isMain main graph.Value) "It is the process main of the graph."
+    )
+    testCase "resolveRunReferencesFromLookup_RunOfAFileWithAProcessOfUnknownClassStaysAReference" (fun () ->
+        let workflow =
+            match ARCtrl.CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  s:\n    run: tool.cwl\n    in: {}\n    out: [out]\n" with
+            | ARCtrl.CWL.Workflow workflow -> workflow
+            | other -> failwith $"Expected a workflow but got %A{other}"
+        let unknown = ARCtrl.CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: {$import: s.yml}\nbaseCommand: echo\ninputs: []\noutputs: []\n"
+        let toolKey = ArcPathHelper.normalizePathKey "runs/r/tool.cwl"
+        let lookup (path: string) = if ArcPathHelper.normalizePathKey path = toolKey then Some unknown else None
+        ARCtrl.CWLRunResolver.resolveRunReferencesFromLookup "runs/r/run.cwl" (ARCtrl.CWL.Workflow workflow) lookup |> ignore
+        Expect.equal (ARCtrl.CWL.ListEntry.values workflow.Steps).[0].Run (ARCtrl.CWL.RunString "tool.cwl") "The step keeps the reference as written."
+        Expect.isNone (ARCtrl.CWL.ListEntry.values workflow.Steps).[0].ResolvedRun.Run "The file holds a process of unknown class, so the step resolves to nothing."
+        Expect.equal (ARCtrl.CWLRunResolver.resolveRunReferencesFromLookup "runs/r/run.cwl" unknown lookup) unknown "A process of unknown class has no steps to resolve."
     )
     testCase "resolveRunReferencesFromLookup_ImportedRunResolvesToTheProcessOfTheSamePath" (fun () ->
         let workflowWith (run: string) =

@@ -43,7 +43,7 @@ module Encode =
         | Stdin -> PrimitiveType "stdin"
         // Schemas and general unions require structured YAML unless a later
         // optional-union special case handles them.
-        | Record _ | Enum _ | Union _ | ImportedType _ | IncludedType _ | MixedType _ -> ComplexType
+        | Record _ | Enum _ | Union _ | ImportedType _ | IncludedType _ | MixedType _ | RawType _ -> ComplexType
         | Array arraySchema ->
             // Arrays are primitive only if their items are primitive
             match arraySchema.Items with
@@ -78,7 +78,7 @@ module Encode =
     /// Determine if a type requires full YAML serialization (complex type)
     let rec isComplexType (t: CWLType) : bool =
         match t with
-        | Record _ | Enum _ | ImportedType _ | IncludedType _ | MixedType _ -> true
+        | Record _ | Enum _ | ImportedType _ | IncludedType _ | MixedType _ | RawType _ -> true
         | Array _ ->
             // Complex if array doesn't have shorthand (array of record/enum, or an array with more than its items)
             tryGetArrayShorthand t |> Option.isNone
@@ -291,6 +291,13 @@ module Encode =
     let directive (key: string) (path: string) : YamlNode =
         YamlNode.flowMapping [ YamlNode.entry (Encode.string key) (encodeString path) ]
 
+    /// Encode an entry of a list or the one object of a field, with the directive as a mapping in the place of an object.
+    let encodeListEntry (encodeValue: 'T -> YamlNode) (entry: ListEntry<'T>) : YamlNode =
+        match entry with
+        | ListEntry.Value value -> encodeValue value
+        | ListEntry.Imported path -> directive "$import" path
+        | ListEntry.Mixed raw -> raw.Node
+
     /// Encode the entries of an id list, such as the inputs, the outputs, the steps or the fields of a record. Entries
     /// with a distinct id go into a map, as in encodeIdMapOrList. An import has no id to be a key, so a list that holds
     /// one is written as a list in which the import stands in its place. A field that the document wrote as one
@@ -304,11 +311,7 @@ module Encode =
                 encodeIdMapOrList idKey valueKey named
             else
                 entries
-                |> List.map (fun entry ->
-                    match entry with
-                    | ListEntry.Imported path -> directive "$import" path
-                    | ListEntry.Mixed raw -> raw.Node
-                    | ListEntry.Value named -> idObject idKey valueKey named)
+                |> List.map (encodeListEntry (idObject idKey valueKey))
                 |> encodeSequence
 
     /// Encode schema-salad strings as literals or directive mappings. The function encodes the text of a literal.
@@ -396,11 +399,7 @@ module Encode =
         | true, [ ListEntry.Mixed raw ] -> raw.Node
         | _ ->
             codes
-            |> Seq.map (fun code ->
-                match code with
-                | ListEntry.Value number -> Encode.int number
-                | ListEntry.Imported path -> directive "$import" path
-                | ListEntry.Mixed raw -> raw.Node)
+            |> Seq.map (encodeListEntry Encode.int)
             |> List.ofSeq
             |> encodeSequence
 
@@ -419,25 +418,25 @@ module Encode =
     /// Encode the fields of a File value, led by the supplied discriminator key and value.
     let encodeFilePairs discriminatorKey discriminatorValue (file: FileInstance) =
         [ discriminatorKey, encodeString discriminatorValue ]
-        |> appendOpt "location" encodeString file.Location
-        |> appendOpt "path" encodeString file.Path
-        |> appendOpt "basename" encodeString file.Basename
-        |> appendOpt "dirname" encodeString file.Dirname
-        |> appendOpt "nameroot" encodeString file.Nameroot
-        |> appendOpt "nameext" encodeString file.Nameext
-        |> appendOpt "checksum" encodeString file.Checksum
+        |> appendOpt "location" encodeSchemaSaladString file.Location
+        |> appendOpt "path" encodeSchemaSaladString file.Path
+        |> appendOpt "basename" encodeSchemaSaladString file.Basename
+        |> appendOpt "dirname" encodeSchemaSaladString file.Dirname
+        |> appendOpt "nameroot" encodeSchemaSaladString file.Nameroot
+        |> appendOpt "nameext" encodeSchemaSaladString file.Nameext
+        |> appendOpt "checksum" encodeSchemaSaladString file.Checksum
         |> appendOpt "size" encodeFileSize file.Size
         |> appendOpt "secondaryFiles" rawYamlNode file.SecondaryFiles
-        |> appendOpt "format" encodeString file.Format
-        |> appendOpt "contents" encodeString file.Contents
+        |> appendOpt "format" encodeSchemaSaladString file.Format
+        |> appendOpt "contents" encodeSchemaSaladString file.Contents
         |> appendDynamicPropertiesExcept FileInstance.KnownFieldNames file
 
     /// Encode the fields of a Directory value, led by the supplied discriminator key and value.
     let encodeDirectoryPairs discriminatorKey discriminatorValue (directory: DirectoryInstance) =
         [ discriminatorKey, encodeString discriminatorValue ]
-        |> appendOpt "location" encodeString directory.Location
-        |> appendOpt "path" encodeString directory.Path
-        |> appendOpt "basename" encodeString directory.Basename
+        |> appendOpt "location" encodeSchemaSaladString directory.Location
+        |> appendOpt "path" encodeSchemaSaladString directory.Path
+        |> appendOpt "basename" encodeSchemaSaladString directory.Basename
         |> appendOpt "listing" rawYamlNode directory.Listing
         |> appendDynamicPropertiesExcept DirectoryInstance.KnownFieldNames directory
 
@@ -472,6 +471,7 @@ module Encode =
         | ImportedType path -> directive "$import" path
         | IncludedType path -> directive "$include" path
         | MixedType raw -> raw.Node
+        | RawType raw -> raw.Node
         | Stdout -> encodeString "stdout"
         | Stderr -> encodeString "stderr"
         | Stdin -> encodeString "stdin"
@@ -669,7 +669,7 @@ module Encode =
         |> appendOpt "streamable" encodeSchemaSaladBool o.Streamable
         |> appendOpt "doc" (encodeDocValue o.SourceNodes.Doc) o.Doc
         |> appendOpt "format" encodeSchemaSaladString o.Format
-        |> appendOpt "outputBinding" encodeOutputBinding o.OutputBinding
+        |> appendOpt "outputBinding" (encodeListEntry encodeOutputBinding) o.OutputBinding
         |> appendOpt "outputSource" id outputSourceElement
         |> appendDynamicPropertiesExcept CWLOutput.KnownFieldNames o
         |> encodePortEntry o.Name o.Type_
@@ -714,7 +714,7 @@ module Encode =
         |> appendOpt "loadContents" encodeSchemaSaladBool i.LoadContents
         |> appendOpt "loadListing" encodeLoadListing i.LoadListing
         |> appendOpt "default" rawYamlNode i.DefaultValue
-        |> appendOpt "inputBinding" encodeInputBinding i.InputBinding
+        |> appendOpt "inputBinding" (encodeListEntry encodeInputBinding) i.InputBinding
         |> appendDynamicPropertiesExcept CWLInput.KnownFieldNames i
         |> encodePortEntry i.Name i.Type_
 
@@ -755,6 +755,7 @@ module Encode =
                 | Defined schema -> encodeSchemaDefinition schema
                 | Imported path -> directive "$import" path
                 | Mixed raw -> raw.Node
+                | Raw raw -> raw.Node
             [ "class", encodeString "SchemaDefRequirement";
               "types", (types |> Seq.map encodeEntry |> List.ofSeq |> encodeSequence) ] |> encodeObject
         | DockerRequirement dr ->
@@ -779,13 +780,8 @@ module Encode =
                 |> appendOpt "specs" (fun vs -> vs |> Seq.map encodeSchemaSaladString |> List.ofSeq |> encodeSequence) p.Specs
                 |> appendDynamicPropertiesExcept SoftwarePackage.KnownFieldNames p
                 |> encodeObject
-            let encodeEntry (entry: ListEntry<SoftwarePackage>) =
-                match entry with
-                | ListEntry.Value package -> encodePkg package
-                | ListEntry.Imported path -> directive "$import" path
-                | ListEntry.Mixed raw -> raw.Node
             [ "class", encodeString "SoftwareRequirement";
-              "packages", (pkgs |> Seq.map encodeEntry |> List.ofSeq |> encodeSequence) ] |> encodeObject
+              "packages", (pkgs |> Seq.map (encodeListEntry encodePkg) |> List.ofSeq |> encodeSequence) ] |> encodeObject
         | LoadListingRequirement loadListing ->
             // Always emit the concrete loadListing value instead of relying on decoder defaults.
             [ "class", encodeString "LoadListingRequirement"
@@ -797,6 +793,9 @@ module Encode =
             let encodeFileOrDirectory = function
                 | FileItem file -> encodeFilePairs "class" "File" file |> encodeObject
                 | DirectoryItem directory -> encodeDirectoryPairs "class" "Directory" directory |> encodeObject
+                | ImportedItem path -> directive "$import" path
+                | MixedItem raw -> raw.Node
+                | RawItem raw -> raw.Node
             let encodeInitialWorkDirEntry = function
                 | DirentEntry d ->
                     // Dirent entries use their own object form.
@@ -813,6 +812,7 @@ module Encode =
                 | DirectoryEntry directory -> encodeFileOrDirectory (DirectoryItem directory)
                 | NullEntry -> Encode.nullValue
                 | FilesEntry items -> items |> Seq.map encodeFileOrDirectory |> List.ofSeq |> encodeSequence
+                | RawEntry raw -> raw.Node
 
             [ "class", encodeString "InitialWorkDirRequirement";
               "listing", (listing |> Seq.map encodeInitialWorkDirEntry |> List.ofSeq |> encodeSequence) ] |> encodeObject
@@ -826,13 +826,8 @@ module Encode =
                 [ "envName", encodeSchemaSaladString e.EnvName; "envValue", encodeSchemaSaladString e.EnvValue ]
                 |> appendDynamicPropertiesExcept EnvironmentDef.KnownFieldNames e
                 |> encodeObject
-            let encodeEntry (entry: ListEntry<EnvironmentDef>) =
-                match entry with
-                | ListEntry.Value env -> encodeEnv env
-                | ListEntry.Imported path -> directive "$import" path
-                | ListEntry.Mixed raw -> raw.Node
             [ "class", encodeString "EnvVarRequirement";
-              "envDef", (envs |> Seq.map encodeEntry |> List.ofSeq |> encodeSequence) ] |> encodeObject
+              "envDef", (envs |> Seq.map (encodeListEntry encodeEnv) |> List.ofSeq |> encodeSequence) ] |> encodeObject
         | ShellCommandRequirement -> [ "class", encodeString "ShellCommandRequirement" ] |> encodeObject
         | ResourceRequirement rr ->
             let tryEncodeScalar (key: string) (value: obj) =
@@ -907,6 +902,7 @@ module Encode =
         | StepInputExpressionRequirement -> [ "class", encodeString "StepInputExpressionRequirement" ] |> encodeObject
         | ImportedRequirement path -> directive "$import" path
         | MixedRequirement raw -> raw.Node
+        | RawRequirement raw -> raw.Node
 
     /// Encode known hints as requirements and unknown hints as their original raw YAML.
     let encodeHintEntry (hint: HintEntry) : YamlNode =
@@ -915,6 +911,7 @@ module Encode =
         | UnknownHint unknownHint -> unknownHint.Raw.Node
         | ImportedHint path -> directive "$import" path
         | MixedHint raw -> raw.Node
+        | RawHint raw -> raw.Node
 
     /// The requirements or the hints of an object as the value of their field. A document that wrote the field as one
     /// directive gets the directive again while the list holds that one import. Any other list is a sequence.
@@ -1068,6 +1065,9 @@ module Encode =
             directive "$import" runPath
         | RunMixed raw ->
             // The process of a file that the document completes with the fields beside the directive.
+            raw.Node
+        | RunRaw raw ->
+            // The process whose class is a directive.
             raw.Node
         | RunCommandLineTool toolObj ->
             // Inline CommandLineTool run; validate the object payload before encoding.
@@ -1542,6 +1542,8 @@ module Encode =
         | Workflow wd -> encodeWorkflowDescription wd
         | ExpressionTool et -> encodeExpressionToolDescription et
         | Operation op -> encodeOperationDescription op
+        // The process is written as it was read, with its own layout.
+        | RawProcess raw -> writeYaml raw.Node
 
     /// Encode a packed document: the cwlVersion of the root and the processes under $graph. The processes use the
     /// version of the root, so they write none of their own. The other keys of the root follow the graph. A step that
@@ -1553,6 +1555,7 @@ module Encode =
             | Workflow wd -> encodeWorkflowDescriptionElement true false wd
             | ExpressionTool et -> encodeExpressionToolDescriptionElement false et
             | Operation op -> encodeOperationDescriptionElement false op
+            | RawProcess raw -> raw.Node
         [ "cwlVersion", encodeString graph.CWLVersion
           "$graph", (graph.Processes |> Seq.map encodeMember |> List.ofSeq |> encodeSequence) ]
         |> appendDynamicPropertiesExcept CWLGraph.KnownFieldNames graph
@@ -1593,11 +1596,7 @@ module Encode =
                 match recordSchema.Fields with
                 | Some fs ->
                     fs
-                    |> Seq.map (fun entry ->
-                        match entry with
-                        | ListEntry.Value field -> flowObject [ "name", ScalarQuoting.textNode field.Name; "type", encodeCWLTypeFlow field.Type ]
-                        | ListEntry.Imported path -> directive "$import" path
-                        | ListEntry.Mixed raw -> raw.Node)
+                    |> Seq.map (encodeListEntry (fun field -> flowObject [ "name", ScalarQuoting.textNode field.Name; "type", encodeCWLTypeFlow field.Type ]))
                     |> Seq.toList
                 | None -> []
             flowObject [ "type", Encode.string "record"; "fields", flowList fields ]

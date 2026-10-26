@@ -34,7 +34,7 @@ module CSV =
 
     let outputCSVGlob = OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal outputCSVGlobStr))
 
-    let outputCSV = CWLOutput(outputCSVName, outputCSVType, outputBinding = outputCSVGlob)
+    let outputCSV = CWLOutput(outputCSVName, outputCSVType, outputBinding = ListEntry.Value outputCSVGlob)
 
 
 let specOutputFieldsDecodeFileContent = """outputs:

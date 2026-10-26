@@ -55,6 +55,7 @@ type WorkflowConversion =
         let id = LDFormalParameter.genID(name = inp.Name, ?workflowName = workflowName, ?runName = runName)
         let identifiers =
             inp.InputBinding
+            |> Option.bind CWL.ListEntry.tryValue
             |> Option.bind (fun ib ->
                 // The identifiers hold a number only, so a position that is an expression or a directive has no place in them.
                 let position =
@@ -92,7 +93,7 @@ type WorkflowConversion =
         let binding = WorkflowConversion.decomposeInputBindings(LDFormalParameter.getIdentifiers(inp, ?context = context, ?graph = graph), ?context = context)
         let required = LDFormalParameter.tryGetValueRequiredAsBoolean(inp, ?context = context) = Some true
         let name = LDFormalParameter.getNameAsString(inp, ?context = context)
-        CWL.CWLInput(name, (if required then t else CWL.CWLType.makeOptional t), ?inputBinding = binding)
+        CWL.CWLInput(name, (if required then t else CWL.CWLType.makeOptional t), ?inputBinding = (binding |> Option.map CWL.ListEntry.Value))
 
     static member composeFormalParameterOutputIdentifiers (glob : CWL.OutputGlob option) =
         match glob with
@@ -112,6 +113,7 @@ type WorkflowConversion =
         let id = LDFormalParameter.genID(name = out.Name, ?workflowName = workflowName, ?runName = runName)
         let identifiers =
             out.OutputBinding
+            |> Option.bind CWL.ListEntry.tryValue
             |> Option.bind (fun ob ->
                 WorkflowConversion.composeFormalParameterOutputIdentifiers ob.Glob
             )
@@ -135,7 +137,7 @@ type WorkflowConversion =
         let binding = WorkflowConversion.decomposeOutputBindings(LDFormalParameter.getIdentifiers(outp, ?context = context, ?graph = graph), ?context = context)
         let optional = LDFormalParameter.tryGetValueRequiredAsBoolean(outp, ?context = context) |> Option.map (not)
         let name = LDFormalParameter.getNameAsString(outp, ?context = context)
-        CWL.CWLOutput(name, t, binding)
+        CWL.CWLOutput(name, t, CWL.ListEntry.Value binding)
 
     static member composeComputationalTool (tool : Process.Component) =
         let n, na =
@@ -182,18 +184,20 @@ type WorkflowConversion =
 
     /// <summary>
     /// Converts a workflow step run payload to a storable dataset identifier.
-    /// String runs preserve the path, while inline runs are mapped to stable inline markers.
+    /// String runs preserve the path, while inline runs are mapped to stable inline markers. A process whose class is a
+    /// directive has no path and no marker, so it has no identifier.
     /// </summary>
     /// <param name="run">Workflow step run payload.</param>
-    static member runToIdentifier (run : CWL.WorkflowStepRun) : string =
+    static member runToIdentifier (run : CWL.WorkflowStepRun) : string option =
         match run with
         | CWL.RunString runPath
-        | CWL.RunImport runPath -> runPath
-        | CWL.RunMixed raw -> raw.MixinPath
-        | CWL.RunCommandLineTool _ -> "inline:CommandLineTool"
-        | CWL.RunWorkflow _ -> "inline:Workflow"
-        | CWL.RunExpressionTool _ -> "inline:ExpressionTool"
-        | CWL.RunOperation _ -> "inline:Operation"
+        | CWL.RunImport runPath -> Some runPath
+        | CWL.RunMixed raw -> Some raw.MixinPath
+        | CWL.RunRaw _ -> None
+        | CWL.RunCommandLineTool _ -> Some "inline:CommandLineTool"
+        | CWL.RunWorkflow _ -> Some "inline:Workflow"
+        | CWL.RunExpressionTool _ -> Some "inline:ExpressionTool"
+        | CWL.RunOperation _ -> Some "inline:Operation"
 
     /// <summary>
     /// Attempts to decode a CWL processing unit from an LDGraph node addressed by a resolved run path.
@@ -358,7 +362,7 @@ type WorkflowConversion =
         let id = $"WorkflowStep_{workflowID}_{step.Id}"
         let cw = LDComputationalWorkflow.create(id = id, name = step.Id)
         // Persist run info as identifier so decompose can reconstruct RunString or inline markers.
-        LDDataset.setIdentifierAsString(cw, WorkflowConversion.runToIdentifier step.Run)
+        WorkflowConversion.runToIdentifier step.Run |> Option.iter (fun identifier -> LDDataset.setIdentifierAsString(cw, identifier))
         cw
 
     static member composeWorkflowProtocolFromWorkflow (filePath : string, workflow : CWL.CWLWorkflowDescription, ?workflowName : string, ?runName : string) =
@@ -430,6 +434,9 @@ type WorkflowConversion =
             |> ResizeArray.map (fun o -> WorkflowConversion.decomposeOutputFromFormalParameter(o, ?context = context, ?graph = graph))
         let steps =
             LDComputationalWorkflow.getHasPart(protocol, ?graph = graph, ?context = context)
+            // A step without an identifier held a process whose class is a directive, which the crate cannot give back.
+            |> Seq.filter (fun s -> (LDDataset.tryGetIdentifierAsString(s, ?context = context)).IsSome)
+            |> ResizeArray
             |> ResizeArray.map (fun s ->
                 // Forward workflow path and options to keep step-level run resolution consistent.
                 WorkflowConversion.decomposeWorkflowStep(
@@ -464,6 +471,10 @@ type WorkflowConversion =
             WorkflowConversion.composeWorkflowProtocolFromExpressionToolDescription(filePath, et, ?workflowName = workflowName, ?runName = runName)
         | CWL.Operation op ->
             WorkflowConversion.composeWorkflowProtocolFromOperationDescription(filePath, op, ?workflowName = workflowName, ?runName = runName)
+        // The class of the process is a directive, so the crate cannot tell its kind or its ports. It holds the process as a
+        // tool without ports, which is what the decomposition makes of a protocol of unknown kind.
+        | CWL.RawProcess _ ->
+            WorkflowConversion.composeWorkflowProtocolFromToolDescription(filePath, CWL.CWLToolDescription(outputs = ResizeArray()), ?workflowName = workflowName, ?runName = runName)
 
     /// <summary>
     /// Converts a workflow protocol node back into the appropriate CWL processing unit variant.

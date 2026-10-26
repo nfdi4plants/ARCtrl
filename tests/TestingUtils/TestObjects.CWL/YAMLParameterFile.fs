@@ -19,7 +19,7 @@ module File =
     let filePath = "data/examplePath"
     let fileClass = "File"
 
-    let fileParameterReference = CWLParameterReference(key = Inputs.File.inputFileName, value = CWLParameterValue.File (FileInstance(path = filePath)))
+    let fileParameterReference = CWLParameterReference(key = Inputs.File.inputFileName, value = CWLParameterValue.File (FileInstance(path = SchemaSaladString.Literal filePath)))
 
 module String =
 

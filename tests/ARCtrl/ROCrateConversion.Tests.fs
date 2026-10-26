@@ -1853,7 +1853,7 @@ let tests_FormalParameter =
                 let name = "MyInput"
                 let t = CWLType.String
                 let binding = InputBinding.create(prefix = (SchemaSaladString.Literal "--eenput"))
-                let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
+                let input = CWL.CWLInput(name = name, type_ = t, inputBinding = CWL.ListEntry.Value binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 let identifiers = LDFormalParameter.getIdentifiers formalParameter
                 Expect.hasLength identifiers 1 "FormalParameter should have 1 identifier"
@@ -1866,7 +1866,7 @@ let tests_FormalParameter =
                 let name = "MyInput"
                 let t = CWLType.String
                 let binding = InputBinding.create(position = BindingPosition.Number 1)
-                let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
+                let input = CWL.CWLInput(name = name, type_ = t, inputBinding = CWL.ListEntry.Value binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 let identifiers = LDFormalParameter.getIdentifiers formalParameter
                 Expect.hasLength identifiers 1 "FormalParameter should have 1 identifier"
@@ -1878,20 +1878,26 @@ let tests_FormalParameter =
             testCase "A position that is an expression or a directive has no identifier" (fun () ->
                 for position in [ BindingPosition.Expression "$(1 + 1)"; BindingPosition.Imported "p.yml"; BindingPosition.Included "p.txt"; BindingPosition.Mixed { Node = YAMLicious.Reader.readRoot "{$mixin: p.yml}" } ] do
                     let binding = InputBinding.create(position = position)
-                    let input = CWL.CWLInput(name = "MyInput", type_ = CWLType.String, inputBinding = binding)
+                    let input = CWL.CWLInput(name = "MyInput", type_ = CWLType.String, inputBinding = CWL.ListEntry.Value binding)
                     let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                     Expect.hasLength (LDFormalParameter.getIdentifiers formalParameter) 0 (sprintf "%A: the position has no number to write." position)
                 let withPrefix = InputBinding.create(prefix = (SchemaSaladString.Literal "--x"), position = BindingPosition.Imported "p.yml")
-                let formalParameter = WorkflowConversion.composeFormalParameterFromInput (CWL.CWLInput(name = "MyInput", type_ = CWLType.String, inputBinding = withPrefix))
+                let formalParameter = WorkflowConversion.composeFormalParameterFromInput (CWL.CWLInput(name = "MyInput", type_ = CWLType.String, inputBinding = CWL.ListEntry.Value withPrefix))
                 let identifiers = LDFormalParameter.getIdentifiers formalParameter
                 Expect.hasLength identifiers 1 "The prefix stays and the directive position is left out."
                 Expect.isTrue (LDPropertyValue.validatePrefix identifiers.[0]) "The identifier is the prefix."
+            )
+            testCase "A binding that a file holds has no identifiers" (fun () ->
+                for binding in [ CWL.ListEntry.Imported "b.yml"; CWL.ListEntry.Mixed { Node = YAMLicious.Reader.readRoot "{$mixin: b.yml, position: 1}" } ] do
+                    let input = CWL.CWLInput(name = "MyInput", type_ = CWLType.String, inputBinding = binding)
+                    let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+                    Expect.hasLength (LDFormalParameter.getIdentifiers formalParameter) 0 (sprintf "%A: the binding of a file has no prefix and no position to write." binding)
             )
             testCase "PrefixPosition" (fun () ->
                 let name = "MyInput"
                 let t = CWLType.String
                 let binding = InputBinding.create(prefix = (SchemaSaladString.Literal "--eenput"), position = BindingPosition.Number 1)
-                let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
+                let input = CWL.CWLInput(name = name, type_ = t, inputBinding = CWL.ListEntry.Value binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 let identifiers = LDFormalParameter.getIdentifiers formalParameter
                 Expect.hasLength identifiers 2 "FormalParameter should have 2 identifiers"
@@ -1906,7 +1912,7 @@ let tests_FormalParameter =
                 let name = "MyInput"
                 let t = CWLType.String
                 let binding = InputBinding.create(prefix = (SchemaSaladString.Literal "--eenput"), position = BindingPosition.Number 1)
-                let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
+                let input = CWL.CWLInput(name = name, type_ = t, inputBinding = CWL.ListEntry.Value binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 let input' = WorkflowConversion.decomposeInputFromFormalParameter formalParameter
                 Expect.equal input' input "Input should match after roundabout"
@@ -1961,7 +1967,7 @@ let tests_FormalParameter =
                 let name = "MyOutput"
                 let t = CWLType.File
                 let binding = OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "*.txt"))
-                let output = CWL.CWLOutput(name = name, type_ = t, outputBinding = binding)
+                let output = CWL.CWLOutput(name = name, type_ = t, outputBinding = CWL.ListEntry.Value binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
                 let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
                 Expect.equal name' name "FormalParameter name should match output name"
@@ -1973,11 +1979,17 @@ let tests_FormalParameter =
                 let glob = Expect.wantSome (LDPropertyValue.tryGetValueAsString globId) "Identifier should have a glob"
                 Expect.equal glob "*.txt" "Glob should match output binding"
             )
+            testCase "An output binding that a file holds has no identifiers" (fun () ->
+                for binding in [ CWL.ListEntry.Imported "b.yml"; CWL.ListEntry.Mixed { Node = YAMLicious.Reader.readRoot "{$mixin: b.yml, glob: o.txt}" } ] do
+                    let output = CWL.CWLOutput(name = "MyOutput", type_ = CWLType.File, outputBinding = binding)
+                    let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
+                    Expect.hasLength (LDFormalParameter.getIdentifiers formalParameter) 0 (sprintf "%A: the binding of a file has no glob to write." binding)
+            )
             testCase "File_GlobBinding_Roundabout" (fun () ->
                 let name = "MyOutput"
                 let t = CWLType.File
                 let binding = OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "*.txt"))
-                let output = CWL.CWLOutput(name = name, type_ = t, outputBinding = binding)
+                let output = CWL.CWLOutput(name = name, type_ = t, outputBinding = CWL.ListEntry.Value binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
                 let output' = WorkflowConversion.decomposeOutputFromFormalParameter formalParameter
                 Expect.equal output' output "Output should match after roundabout"
@@ -2484,7 +2496,7 @@ let tests_YAMLInputValue =
             let name = "MyInput"
             let runName = "MyRun"
             let filePath = "myfile.txt"
-            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = filePath)))
+            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = CWL.SchemaSaladString.Literal filePath)))
             let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
@@ -2502,7 +2514,7 @@ let tests_YAMLInputValue =
             let name = "MyInput"
             let runName = "MyRun"
             let filePath = "myfile.txt"
-            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = filePath)))
+            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = CWL.SchemaSaladString.Literal filePath)))
             let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
@@ -2514,7 +2526,7 @@ let tests_YAMLInputValue =
             let runName = "MyRun"
             let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
-            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = "myfile.txt")))
+            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = CWL.SchemaSaladString.Literal "myfile.txt")))
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
             let decomposed = RunConversion.decomposeCWLInputValue(file, runName)
             let jobFile = CWL.Encode.encodeYAMLParameterFile (ResizeArray [ decomposed ])
@@ -2525,7 +2537,7 @@ let tests_YAMLInputValue =
             let runName = "MyRun"
             let fileName = "myfile.txt"
             let filePath = $"../../assays/MyAssay/dataset/{fileName}"
-            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = filePath)))
+            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = CWL.SchemaSaladString.Literal filePath)))
             let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
@@ -2544,7 +2556,7 @@ let tests_YAMLInputValue =
             let runName = "MyRun"
             let fileName = "myfile.txt"
             let filePath = $"../../assays/MyAssay/dataset/{fileName}"
-            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = filePath)))
+            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = CWL.SchemaSaladString.Literal filePath)))
             let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
@@ -2593,7 +2605,7 @@ let tests_YAMLInputValue =
             let value = ["a"; "b"]
             let inputBinding = CWL.InputBinding.create(itemSeparator = (SchemaSaladString.Literal ";"))
             let paramValue = CWLParameterReference(name, values = ResizeArray value)
-            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Array(InputArraySchema(CWLType.String)), inputBinding = inputBinding)
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Array(InputArraySchema(CWLType.String)), inputBinding = CWL.ListEntry.Value inputBinding)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let propValue = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
             Expect.sequenceEqual propValue.SchemaType [LDPropertyValue.schemaType] "PropertyValue should have correct schema type"
@@ -2607,7 +2619,7 @@ let tests_YAMLInputValue =
             let name = "sampleRecordFiles"
             let runName = "kallisto"
             let createFile path =
-                CWL.FileInstance(path = path, format = "edam:format_1930")
+                CWL.FileInstance(path = CWL.SchemaSaladString.Literal path, format = CWL.SchemaSaladString.Literal "edam:format_1930")
             let value =
                 CWL.CWLParameterValue.Array (ResizeArray [
                     CWL.CWLParameterValue.Array (ResizeArray [
@@ -2628,6 +2640,33 @@ let tests_YAMLInputValue =
             let graph = node.Flatten()
             let roundTripped = RunConversion.decomposeCWLInputValue(node, runName, graph = graph)
             Expect.equal roundTripped paramValue "Nested file arrays should roundtrip through RO-Crate."
+        )
+        testCase "FileWithDirectivePathOrLocation_CountsAsAbsent" (fun () ->
+            let runName = "MyRun"
+            let literal (text: string) = CWL.SchemaSaladString.Literal text
+            let fileId (file: CWL.FileInstance) = (RunConversion.composeCWLParameterValue(CWLParameterValue.File file, runName) :?> LDNode).Id
+            let directoryId (directory: CWL.DirectoryInstance) = (RunConversion.composeCWLParameterValue(CWLParameterValue.Directory directory, runName) :?> LDNode).Id
+            Expect.equal (fileId (CWL.FileInstance(path = CWL.SchemaSaladString.Import "p.yml", location = literal "data/a.txt"))) (fileId (CWL.FileInstance(location = literal "data/a.txt"))) "A path that is a directive has no text, so the location names the file."
+            Expect.equal (fileId (CWL.FileInstance(path = CWL.SchemaSaladString.Include "p.txt", location = CWL.SchemaSaladString.Import "l.yml"))) (fileId (CWL.FileInstance())) "Two directives count as a File without a path and a location."
+            Expect.equal (directoryId (CWL.DirectoryInstance(path = CWL.SchemaSaladString.Import "p.yml", location = literal "data"))) (directoryId (CWL.DirectoryInstance(location = literal "data"))) "A Directory reads the same way."
+            Expect.equal (directoryId (CWL.DirectoryInstance(location = CWL.SchemaSaladString.Include "l.txt"))) (directoryId (CWL.DirectoryInstance())) "A directive as the only name counts as absent."
+        )
+        testCase "FileWithDirectiveFormat_HasNoEncodingFormat" (fun () ->
+            let name = "MyInput"
+            let runName = "MyRun"
+            let fileOf (format: CWL.SchemaSaladString) = CWL.FileInstance(path = CWL.SchemaSaladString.Literal "myfile.txt", format = format)
+            let compose (format: CWL.SchemaSaladString) =
+                let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (fileOf format))
+                let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
+                let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
+                RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
+            Expect.equal (LDFile.tryGetEncodingFormatAsString (compose (CWL.SchemaSaladString.Literal "text/csv"))) (Some "text/csv") "A literal format is the encoding format."
+            Expect.isNone (LDFile.tryGetEncodingFormatAsString (compose (CWL.SchemaSaladString.Import "format.yml"))) "A format given by an import has no text, so the file has no encoding format."
+            Expect.isNone (LDFile.tryGetEncodingFormatAsString (compose (CWL.SchemaSaladString.Include "format.txt"))) "A format given by an include has no text, so the file has no encoding format."
+            let value = CWLParameterValue.Array (ResizeArray [ CWLParameterValue.File (fileOf (CWL.SchemaSaladString.Import "format.yml")) ])
+            let composed = RunConversion.composeCWLParameterValue(value, runName)
+            let files = composed :?> ResizeArray<obj>
+            Expect.isNone (LDFile.tryGetEncodingFormatAsString (files.[0] :?> LDNode)) "A file in an array has no encoding format either."
         )
         testCase "ReferenceTypedRecord_Roundtrip" (fun () ->
             let name = "start"
@@ -2712,6 +2751,34 @@ doc: first line of the text second line of the text
                 |> Json.Encode.toJsonString 0
             Expect.equal (json folded) (json oneLine) "The RO-Crate should not depend on the layout of the texts."
             Expect.isFalse ((json folded).ToLowerInvariant().Contains "sourcenodes") "The nodes of the texts should not reach the RO-Crate."
+        )
+    ]
+
+let tests_ProcessOfUnknownClass =
+    let unknown () =
+        CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: {$import: s.yml}\nbaseCommand: echo\ninputs: {a: string}\noutputs: {o: string}\n"
+    testList "ProcessOfUnknownClass" [
+        testCase "ComposeProtocol_HoldsAToolWithoutPorts" (fun () ->
+            let protocol = WorkflowConversion.composeWorkflowProtocolFromProcessingUnit("tools/unknown.cwl", unknown ())
+            Expect.equal (LDComputationalWorkflow.getAdditionalTypeAsString protocol) WorkflowConversion.toolDescriptionTypeName "The crate holds the process as a tool, like a protocol of unknown kind."
+            Expect.equal (LDComputationalWorkflow.getInputsAsFormalParameters protocol).Count 0 "The crate holds no inputs, because the model does not show them."
+            Expect.equal (LDComputationalWorkflow.getOutputsAsFormalParameter protocol).Count 0 "The crate holds no outputs, because the model does not show them."
+            match WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(protocol) with
+            | CWL.CommandLineTool tool -> Expect.equal (CWL.ListEntry.values tool.Outputs).Count 0 "The protocol reads back as a tool without ports."
+            | other -> failwith $"Expected a tool but got %A{other}"
+        )
+        testCase "ArcRun_ComposesAndDecomposesWithoutThePorts" (fun () ->
+            let run = ArcRun(identifier = "UnknownRun", cwlDescription = unknown ())
+            let roRun = RunConversion.composeRun run
+            match (RunConversion.decomposeRun roRun).CWLDescription with
+            | Some (CWL.CommandLineTool tool) -> Expect.equal (CWL.CWLToolDescription.getOutputValues tool).Count 0 "The run reads back with a tool without ports."
+            | other -> failwith $"Expected a tool but got %A{other}"
+        )
+        testCase "ArcWorkflow_ComposesAndDecomposesWithoutThePorts" (fun () ->
+            let workflow = ArcWorkflow(identifier = "UnknownWorkflow", cwlDescription = unknown ())
+            match (WorkflowConversion.decomposeWorkflow (WorkflowConversion.composeWorkflow workflow)).CWLDescription with
+            | Some (CWL.CommandLineTool tool) -> Expect.equal (CWL.CWLToolDescription.getOutputValues tool).Count 0 "The workflow reads back with a tool without ports."
+            | other -> failwith $"Expected a tool but got %A{other}"
         )
     ]
 
@@ -2901,6 +2968,7 @@ let tests_ArcWorkflow =
                 | CWL.RunString runPath
                 | CWL.RunImport runPath -> runPath
                 | CWL.RunMixed raw -> raw.MixinPath
+                | CWL.RunRaw _ -> failwith "A process whose class is a directive has no run identifier."
                 | CWL.RunCommandLineTool _ -> "inline:CommandLineTool"
                 | CWL.RunWorkflow _ -> "inline:Workflow"
                 | CWL.RunExpressionTool _ -> "inline:ExpressionTool"
@@ -3031,13 +3099,13 @@ let tests_ArcWorkflow =
             let inputSignature (input: CWL.CWLInput) =
                 input.Name,
                 (input.Type_ |> Option.map WorkflowConversion.composeAdditionalType),
-                (input.InputBinding |> Option.bind (fun binding -> binding.Prefix)),
-                (input.InputBinding |> Option.bind (fun binding -> binding.Position))
+                (input.InputBinding |> Option.bind CWL.ListEntry.tryValue |> Option.bind (fun binding -> binding.Prefix)),
+                (input.InputBinding |> Option.bind CWL.ListEntry.tryValue |> Option.bind (fun binding -> binding.Position))
 
             let outputSignature (output: CWL.CWLOutput) =
                 output.Name,
                 (output.Type_ |> Option.map WorkflowConversion.composeAdditionalType),
-                (output.OutputBinding |> Option.bind (fun binding -> binding.Glob))
+                (output.OutputBinding |> Option.bind CWL.ListEntry.tryValue |> Option.bind (fun binding -> binding.Glob))
 
             let commandLineToolSignatures (tool: CWL.CWLToolDescription) =
                 let inputSignatures =
@@ -3136,11 +3204,25 @@ let tests_ArcWorkflow =
             Expect.equal (CWL.ListEntry.values roundTripped.Inputs.Value |> Seq.map (fun input -> input.Name) |> List.ofSeq) [ "y" ] "Only the typed input is converted, because the file of a mixin holds the type of the others."
             Expect.equal (CWL.ListEntry.values roundTripped.Outputs |> Seq.map (fun output -> output.Name) |> List.ofSeq) [ "p" ] "Only the typed output is converted."
         )
+        testCase "Workflow_WithRawRun_HasNoIdentifierAndTheCrateGivesBackTheOtherSteps" (fun () ->
+            let workflow =
+                CWL.Decode.decodeWorkflow "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  a:\n    run: {class: {$import: c.yml}, baseCommand: echo, inputs: [], outputs: []}\n    in: {}\n    out: []\n  b:\n    run: tools/echo.cwl\n    in: {}\n    out: []\n"
+            let steps = CWL.ListEntry.values workflow.Steps
+            Expect.isNone (WorkflowConversion.runToIdentifier steps.[0].Run) "A process whose class is a directive has no path and no marker."
+            Expect.equal (WorkflowConversion.runToIdentifier steps.[1].Run) (Some "tools/echo.cwl") "A run string keeps its path."
+            let protocol = WorkflowConversion.composeWorkflowProtocolFromWorkflow("workflows/w/workflow.cwl", workflow)
+            let parts = LDComputationalWorkflow.getHasPart protocol
+            Expect.equal parts.Count 2 "Both steps are in the crate."
+            Expect.isNone (LDDataset.tryGetIdentifierAsString parts.[0]) "The step with the raw run has no identifier, and no empty one."
+            Expect.equal (LDDataset.tryGetIdentifierAsString parts.[1]) (Some "tools/echo.cwl") "The other step has its path."
+            let roundTripped = WorkflowConversion.decomposeWorkflowProtocolToWorkflow(protocol, resolveRunReferences = false)
+            Expect.equal (CWL.ListEntry.values roundTripped.Steps |> Seq.map (fun step -> step.Id) |> List.ofSeq) [ "b" ] "The crate gives back the step that it can describe."
+        )
         testCase "Workflow_WithMixedRun_UsesThePathOfTheMixinAsIdentifier" (fun () ->
             let workflow =
                 CWL.Decode.decodeWorkflow "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  s:\n    run: {$mixin: tools/echo.cwl}\n    in: {}\n    out: []\n"
             let step = (CWL.ListEntry.values workflow.Steps).[0]
-            Expect.equal (WorkflowConversion.runToIdentifier step.Run) "tools/echo.cwl" "The identifier is the path of the mixin, as it is the path of an import."
+            Expect.equal (WorkflowConversion.runToIdentifier step.Run) (Some "tools/echo.cwl") "The identifier is the path of the mixin, as it is the path of an import."
         )
     ]
 
@@ -3194,7 +3276,7 @@ let tests_ArcRun =
             )
             let ymlParam = CWLParameterReference(
                 key = TestObjects.CWL.Inputs.File.inputFileName,
-                value = CWLParameterValue.File (FileInstance(path = inputFileName))
+                value = CWLParameterValue.File (FileInstance(path = CWL.SchemaSaladString.Literal inputFileName))
             )
             let run = ArcRun(
                 "MyRun",
@@ -3437,13 +3519,13 @@ let tests_ArcRun =
             let workflowInputSignature (input: CWL.CWLInput) =
                 input.Name,
                 (input.Type_ |> Option.map WorkflowConversion.composeAdditionalType),
-                (input.InputBinding |> Option.bind (fun binding -> binding.Prefix)),
-                (input.InputBinding |> Option.bind (fun binding -> binding.Position))
+                (input.InputBinding |> Option.bind CWL.ListEntry.tryValue |> Option.bind (fun binding -> binding.Prefix)),
+                (input.InputBinding |> Option.bind CWL.ListEntry.tryValue |> Option.bind (fun binding -> binding.Position))
 
             let workflowOutputSignature (output: CWL.CWLOutput) =
                 output.Name,
                 (output.Type_ |> Option.map WorkflowConversion.composeAdditionalType),
-                (output.OutputBinding |> Option.bind (fun binding -> binding.Glob))
+                (output.OutputBinding |> Option.bind CWL.ListEntry.tryValue |> Option.bind (fun binding -> binding.Glob))
 
             let workflowSignatures (workflow: CWL.CWLWorkflowDescription) =
                 let inputSignatures =
@@ -4046,6 +4128,7 @@ let main =
         tests_YAMLInputValue
         tests_ToolDescription
         tests_OperationDescription
+        tests_ProcessOfUnknownClass
         tests_WorkflowInvocation
         tests_ArcWorkflow
         tests_ArcRun

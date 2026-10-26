@@ -365,6 +365,8 @@ module Builder =
                                 for key in candidateKeys do
                                     state.RunResolutionCache <- state.RunResolutionCache.Add(key, run)
                                 resolvedRun <- Some (run, candidate)
+                            // A step has no run for a process whose class is a directive, so the reference stays unresolved.
+                            | Some (RawProcess _)
                             | None ->
                                 ()
 
@@ -495,6 +497,16 @@ module Builder =
             if isRoot || state.Options.ExpandNestedWorkflows then
                 buildWorkflowSteps state scope workflowFilePath nodeId workflow
             nodeId
+        | RawProcess raw ->
+            // A file decides the class of the process and the decoder reads no file, so the graph shows one node without ports.
+            let label =
+                chooseLabel
+                    "Process with a directive as its class"
+                    [
+                        raw.TryScalarField "id" |> Option.bind tryBasenameNoCwlExtension
+                        workflowFilePath |> Option.bind tryBasenameNoCwlExtension
+                    ]
+            addProcessingUnitNode state scope ProcessingUnitKind.ExternalReference label ownerNodeId None None
 
     /// Resolves and builds the graph representation of a workflow step's run field.
     and buildRunNode
@@ -562,6 +574,11 @@ module Builder =
             // A file completes the process through $mixin and the decoder reads no file, so the graph cannot follow it.
             let nodeId =
                 addProcessingUnitNode state runScope ProcessingUnitKind.ExternalReference "Process with a mixin" (Some stepNodeId) None None
+            run, nodeId
+        | RunRaw raw ->
+            // A file decides the class of the process and the decoder reads no file, so the graph cannot follow it.
+            let label = chooseLabel "Process with a directive as its class" [ raw.TryScalarField "id" |> Option.bind tryBasenameNoCwlExtension ]
+            let nodeId = addProcessingUnitNode state runScope ProcessingUnitKind.ExternalReference label (Some stepNodeId) None None
             run, nodeId
         | RunCommandLineTool _ ->
             match WorkflowStepRunOps.tryGetTool run with

@@ -178,6 +178,41 @@ let tests_builderCore =
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference) graph) 1 "The mixin is one external reference."
             Expect.equal (countEdges EdgeKind.Calls graph) 1 "The step calls it."
 
+        testCase "a run whose class is a directive is an external reference that the graph cannot follow" <| fun () ->
+            let workflowWith (run: string) =
+                String.concat "\n"
+                    [ "cwlVersion: v1.2"; "class: Workflow"; "inputs: {}"; "outputs: {}"
+                      "steps:"; "  s:"; "    run: " + run; "    in: {}"; "    out: []"; "" ]
+            let reference (graph: WorkflowGraph) = graph.Nodes |> Seq.find (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference)
+            let withId = workflowWith "{class: {$import: s.yml}, id: shell, baseCommand: echo, inputs: [], outputs: []}" |> decodeProcessingUnit |> Builder.build
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference) withId) 1 "The run is one external reference."
+            Expect.equal (reference withId).Label "shell" "The label is the id of the process."
+            Expect.equal (countEdges EdgeKind.Calls withId) 1 "The step calls it."
+            let withoutId = workflowWith "{class: {$import: s.yml}, baseCommand: echo, inputs: [], outputs: []}" |> decodeProcessingUnit |> Builder.build
+            Expect.equal (reference withoutId).Label "Process with a directive as its class" "A process without an id has a plain label."
+
+        testCase "a process whose class is a directive is one external reference node without ports" <| fun () ->
+            let withId = decodeProcessingUnit "cwlVersion: v1.2\nclass: {$import: s.yml}\nid: main\nbaseCommand: echo\ninputs: {a: string}\noutputs: []\n"
+            let graph = Builder.build withId
+            Expect.equal graph.Nodes.Count 1 "The graph shows the process as one node."
+            Expect.equal graph.Nodes.[0].Kind (NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference) "The graph cannot follow the file that decides the class."
+            Expect.equal graph.Nodes.[0].Label "main" "The label is the id of the process."
+            Expect.equal graph.Diagnostics.Count 0 "The node is no failure."
+            let withoutId = decodeProcessingUnit "cwlVersion: v1.2\nclass: {$import: s.yml}\nbaseCommand: echo\ninputs: []\noutputs: []\n"
+            Expect.equal (Builder.build withoutId).Nodes.[0].Label "Process with a directive as its class" "A process without an id has a plain label."
+
+        testCase "a run whose file holds a process of unknown class is an unresolved reference" <| fun () ->
+            let yaml = TestObjects.CWL.WorkflowGraph.singleStepToolRunWorkflowFile
+            let unknown = decodeProcessingUnit "cwlVersion: v1.2\nclass: {$import: s.yml}\nbaseCommand: echo\ninputs: []\noutputs: []\n"
+            let options =
+                WorkflowGraphBuildOptions.defaultOptions
+                |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "workflow.cwl")
+                |> WorkflowGraphBuildOptions.withTryResolveRunPath (Some (fun path -> if path.EndsWith("tool.cwl") then Some unknown else None))
+            let graph = yaml |> decodeProcessingUnit |> Builder.buildWith options
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference) graph) 1 "A step has no run for such a process, so the reference stays unresolved."
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference) graph) 0 "The process is not drawn."
+            Expect.isTrue (graph.Diagnostics |> Seq.exists (fun d -> d.Kind = GraphIssueKind.ResolutionFailed)) "The failure to resolve is reported."
+
         testCase "RunString resolved to operation node" <| fun () ->
             let yaml = TestObjects.CWL.WorkflowGraph.singleStepToolRunWorkflowFile
             let resolvedOperation = Decode.decodeOperation TestObjects.CWL.Operation.minimalOperationFile

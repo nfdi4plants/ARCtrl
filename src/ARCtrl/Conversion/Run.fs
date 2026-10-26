@@ -40,7 +40,8 @@ type RunConversion =
                 file
                 |> CWL.FileInstance.pathOrLocation
                 |> fun path -> RunConversion.composeCWLInputFilePath(path, runName)
-            let encodingFormat = file.Format
+            // A format given by a directive has no text to write into the crate, so it counts as absent.
+            let encodingFormat = file.Format |> Option.bind CWL.SchemaSaladString.tryLiteral
             LDFile.create(path, ?encodingFormat = encodingFormat, ?context = context) :> obj
         | CWL.CWLParameterValue.Directory directory ->
             let path =
@@ -84,7 +85,9 @@ type RunConversion =
             let file = LDFile.createCWLParameter(path, exampleOfWork = exampleOfWork)
             match inputValue.Value with
             | Some (CWL.CWLParameterValue.File fileValue) ->
+                // A format given by a directive has no text to write into the crate, so it counts as absent.
                 fileValue.Format
+                |> Option.bind CWL.SchemaSaladString.tryLiteral
                 |> Option.iter (fun format -> LDFile.setEncodingFormatAsString(file, format))
             | _ -> ()
             file
@@ -150,20 +153,20 @@ type RunConversion =
             match value with
             | :? LDNode as node when LDFile.validate(node) ->
                 let path = RunConversion.decomposeCWLInputFilePath(node.Id, runName)
-                let format = LDFile.tryGetEncodingFormatAsString node
-                CWL.CWLParameterValue.File (CWL.FileInstance(path = path, ?format = format))
+                let format = LDFile.tryGetEncodingFormatAsString node |> Option.map CWL.SchemaSaladString.Literal
+                CWL.CWLParameterValue.File (CWL.FileInstance(path = CWL.SchemaSaladString.Literal path, ?format = format))
             | :? string as path ->
                 let path = RunConversion.decomposeCWLInputFilePath(path, runName)
-                CWL.CWLParameterValue.File (CWL.FileInstance(path = path))
+                CWL.CWLParameterValue.File (CWL.FileInstance(path = CWL.SchemaSaladString.Literal path))
             | _ -> CWL.CWLParameterValue.String (string value)
         | Some CWL.CWLType.Directory ->
             match value with
             | :? LDNode as node when LDFile.validate(node) ->
                 let path = RunConversion.decomposeCWLInputFilePath(node.Id, runName)
-                CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = path))
+                CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = CWL.SchemaSaladString.Literal path))
             | :? string as path ->
                 let path = RunConversion.decomposeCWLInputFilePath(path, runName)
-                CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = path))
+                CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = CWL.SchemaSaladString.Literal path))
             | _ -> CWL.CWLParameterValue.String (string value)
         | Some CWL.CWLType.String ->
             match value with
@@ -217,8 +220,8 @@ type RunConversion =
             | :? bool as value -> CWL.CWLParameterValue.Boolean value
             | :? LDNode as node when LDFile.validate(node) ->
                 let path = RunConversion.decomposeCWLInputFilePath(node.Id, runName)
-                let format = LDFile.tryGetEncodingFormatAsString node
-                CWL.CWLParameterValue.File (CWL.FileInstance(path = path, ?format = format))
+                let format = LDFile.tryGetEncodingFormatAsString node |> Option.map CWL.SchemaSaladString.Literal
+                CWL.CWLParameterValue.File (CWL.FileInstance(path = CWL.SchemaSaladString.Literal path, ?format = format))
             | :? System.Collections.IEnumerable as values ->
                 values
                 |> Seq.cast<obj>
@@ -251,7 +254,7 @@ type RunConversion =
             let path = RunConversion.decomposeCWLInputFilePath(inputValue.Id, runName)
             CWL.CWLParameterReference(
                 key = key,
-                value = CWL.CWLParameterValue.File (CWL.FileInstance(path = path))
+                value = CWL.CWLParameterValue.File (CWL.FileInstance(path = CWL.SchemaSaladString.Literal path))
             )
         else if LDPropertyValue.validateCWLParameter(inputValue, ?context = context) then
             let valueObject = LDPropertyValue.getValueObject(inputValue, ?context = context)

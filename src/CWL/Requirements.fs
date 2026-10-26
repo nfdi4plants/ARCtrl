@@ -398,11 +398,24 @@ type SchemaDefEntry =
     /// A mapping with a $mixin directive, kept as it was written. The file may define the types of the entry, so the
     /// decoder cannot tell which types the document defines.
     | Mixed of RawYaml
+    /// A schema whose type is a directive, as in {type: {$import: path}, name: Shape}, kept as it was written. The file
+    /// decides which kind of schema it is, and the decoder reads no file.
+    | Raw of RawYaml
 
-/// A File or a Directory, the only items that an array inside the listing of an InitialWorkDirRequirement may hold.
+/// A File or a Directory, the only items that an array inside the listing of an InitialWorkDirRequirement may hold, or
+/// the directive that stands for one. The decoder reads no file, so a directive stays an item of its own, in its place.
 type FileOrDirectory =
     | FileItem of FileInstance
     | DirectoryItem of DirectoryInstance
+    /// A file that the array imports, as {$import: path}. The file holds one File or Directory or a list of them, and a
+    /// list takes the place of the item.
+    | ImportedItem of string
+    /// A mapping with a $mixin directive, alone or beside the fields that complete the File or the Directory of the file.
+    /// The mapping is kept as it was written.
+    | MixedItem of RawYaml
+    /// A File or a Directory whose class is a directive, as in {class: {$import: path}, location: a.txt}, kept as it was
+    /// written. The file decides which of the two it is, and the decoder reads no file.
+    | RawItem of RawYaml
 
 /// Entry in InitialWorkDirRequirement listing.
 /// CWL allows null, a Dirent object, a string/expression entry, a File, a Directory and an array of Files and
@@ -417,6 +430,9 @@ type InitialWorkDirEntry =
     | NullEntry
     /// An array of Files and Directories as one item.
     | FilesEntry of ResizeArray<FileOrDirectory>
+    /// A File or a Directory whose class is a directive, kept as it was written. The file decides which of the two it is, and
+    /// the decoder reads no file.
+    | RawEntry of RawYaml
 
     with
     override this.Equals(o: obj) =
@@ -429,6 +445,7 @@ type InitialWorkDirEntry =
             | DirectoryEntry left, DirectoryEntry right -> left.Equals right
             | NullEntry, NullEntry -> true
             | FilesEntry left, FilesEntry right -> HashHelpers.seqEqual left right
+            | RawEntry left, RawEntry right -> left.Equals right
             | _ -> false
         | _ -> false
 
@@ -440,6 +457,7 @@ type InitialWorkDirEntry =
         | DirectoryEntry value -> HashHelpers.mergeHashes 4 (hash value)
         | NullEntry -> 5
         | FilesEntry values -> HashHelpers.mergeHashes 6 (HashHelpers.hashSeq values)
+        | RawEntry value -> HashHelpers.mergeHashes 7 (hash value)
 
 [<AttachMembers>]
 type InlineJavascriptRequirementValue (?expressionLib: ResizeArray<SchemaSaladString>) =
@@ -554,6 +572,9 @@ type Requirement =
     /// A mapping with a $mixin directive, as in {$mixin: path, class: NetworkAccess}. The file may supply the fields of the
     /// requirement, so the mapping is kept as it was written.
     | MixedRequirement of RawYaml
+    /// A requirement whose class is a directive, as in {class: {$import: path}}, kept as it was written. The file decides
+    /// the class, and the decoder reads no file.
+    | RawRequirement of RawYaml
 
     with
     override this.Equals(o: obj) =
@@ -582,6 +603,7 @@ type Requirement =
             | StepInputExpressionRequirement, StepInputExpressionRequirement -> true
             | ImportedRequirement left, ImportedRequirement right -> left = right
             | MixedRequirement left, MixedRequirement right -> left.Equals right
+            | RawRequirement left, RawRequirement right -> left.Equals right
             | _ -> false
         | _ -> false
 
@@ -609,6 +631,7 @@ type Requirement =
         | InitialWorkDirExpressionRequirement value -> HashHelpers.mergeHashes 20 (hash value)
         | ImportedRequirement value -> HashHelpers.mergeHashes 21 (hash value)
         | MixedRequirement value -> HashHelpers.mergeHashes 22 (hash value)
+        | RawRequirement value -> HashHelpers.mergeHashes 23 (hash value)
 
     static member defaultInlineJavascriptRequirement =
         InlineJavascriptRequirement InlineJavascriptRequirementValue.defaultEmpty
@@ -636,6 +659,8 @@ type HintEntry =
     | ImportedHint of string
     /// A mapping with a $mixin directive, kept as it was written. The file may supply the class and the fields.
     | MixedHint of RawYaml
+    /// A hint whose class is a directive, kept as it was written. The file decides the class, and the decoder reads no file.
+    | RawHint of RawYaml
 
     /// Wraps a known requirement as a known hint entry.
     static member ofRequirement (requirement: Requirement) =
@@ -652,5 +677,6 @@ type HintEntry =
         | KnownHint requirement -> Some requirement
         | UnknownHint _
         | ImportedHint _
-        | MixedHint _ -> None
+        | MixedHint _
+        | RawHint _ -> None
 

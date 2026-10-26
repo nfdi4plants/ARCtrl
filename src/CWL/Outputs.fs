@@ -102,11 +102,13 @@ type OutputSource =
         | Single value -> HashHelpers.mergeHashes 1 (hash value)
         | Multiple values -> HashHelpers.mergeHashes 2 (HashHelpers.hashSeq values)
 
+/// An output of a process. The outputBinding is the binding itself, or the directive that stands for the binding of a
+/// file.
 [<AttachMembers>]
 type CWLOutput (
     name: string,
     ?type_: CWLType,
-    ?outputBinding: OutputBinding,
+    ?outputBinding: ListEntry<OutputBinding>,
     ?outputSource: OutputSource,
     ?label: SchemaSaladString,
     ?secondaryFiles: RawYaml,

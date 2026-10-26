@@ -138,12 +138,13 @@ type InputFormat =
         | Multiple values -> HashHelpers.mergeHashes 2 (HashHelpers.hashSeq values)
 
 /// An input of a process. The type tells whether the input is optional: it is when the type is a union that contains
-/// null. CWLType.makeOptional adds null to a type that has none.
+/// null. CWLType.makeOptional adds null to a type that has none. The inputBinding is the binding itself, or the directive
+/// that stands for the binding of a file.
 [<AttachMembers>]
 type CWLInput (
     name: string,
     ?type_: CWLType,
-    ?inputBinding: InputBinding,
+    ?inputBinding: ListEntry<InputBinding>,
     ?label: SchemaSaladString,
     ?secondaryFiles: RawYaml,
     ?streamable: SchemaSaladBool,

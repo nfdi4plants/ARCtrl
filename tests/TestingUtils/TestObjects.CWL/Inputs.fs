@@ -30,7 +30,7 @@ module File =
 
     let inputFileBinding = InputBinding.create(position = BindingPosition.Number inputFilePosition, prefix = SchemaSaladString.Literal inputFilePrefix)
 
-    let inputFirstArg = CWLInput(inputFileName, inputFileType, inputBinding = inputFileBinding)
+    let inputFirstArg = CWLInput(inputFileName, inputFileType, inputBinding = ListEntry.Value inputFileBinding)
 
 
 module String =
@@ -43,7 +43,7 @@ module String =
 
     let inputStringBinding = InputBinding.create(position = BindingPosition.Number inputStringPosition)
 
-    let inputSecondArg = CWLInput(inputStringName, inputStringType, inputBinding = inputStringBinding)
+    let inputSecondArg = CWLInput(inputStringName, inputStringType, inputBinding = ListEntry.Value inputStringBinding)
 
 
 let specInputFieldsDecodeFileContent = """inputs:

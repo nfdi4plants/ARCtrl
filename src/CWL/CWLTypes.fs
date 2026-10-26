@@ -35,6 +35,17 @@ type RawYaml =
             |> Option.defaultValue ""
         | _ -> ""
 
+    /// The text of a field of a mapping when the field holds a scalar with a value, and none otherwise.
+    member this.TryScalarField (field: string) : string option =
+        match this.Node.Kind with
+        | YamlNodeKind.Mapping collection ->
+            collection.Items
+            |> List.tryPick (fun entry ->
+                match entry.Key.Kind, entry.Value.Kind with
+                | YamlNodeKind.Scalar key, YamlNodeKind.Scalar value when key.Value = field && not (YamlNode.isMissingValue entry.Value) -> Some value.Value
+                | _ -> None)
+        | _ -> None
+
 /// Reads a number that sits in an obj as the 64-bit integer that it holds. A JavaScript number is a float whether it
 /// came from an int or a float, so a type test for int matches every number there, and converting 4.5 to an int64 raises
 /// an exception. The test below keeps the numbers that are no integer out on every target.
@@ -103,7 +114,8 @@ module SchemaSaladString =
 /// An entry of a list of objects or numbers, such as the inputs, the outputs, the steps, the fields of a record or the
 /// success codes. An entry is the value itself, or the import of a file that holds the value or a list of values, as in
 /// inputs: [{$import: ports.yml}]. A value that a file completes through $mixin is a third kind, which keeps the mapping as
-/// written. The decoder reads no file, so the import and the mixin stay entries of their own, in their place.
+/// written. The decoder reads no file, so the import and the mixin stay entries of their own, in their place. The same
+/// union serves the entries of a list and the one object of a field, such as the inputBinding of an input.
 [<RequireQualifiedAccess; NoComparison; AttachMembers>]
 type ListEntry<'T> =
     | Value of 'T
@@ -136,10 +148,10 @@ type ListEntry<'T> =
         | Mixed raw -> ListEntry.Mixed raw
 
 /// A field that CWL types as a boolean: the value, or a directive that stands for it. An $import takes the data of a
-/// file, and a $mixin does the same and joins it with the fields beside the directive, so both can stand where a boolean
-/// stands. An $include yields the text of a file, which is a string, so it cannot. The decoder reads no file, so a
-/// directive stays as written and a mixin keeps its mapping. A directive is a case of its own because a value that is
-/// missing, or false, would pass for it.
+/// file, and a $mixin does the same, so both can stand where a boolean stands. The file holds a boolean, so the fields
+/// beside a mixin drop out. An $include yields the text of a file, which is a string, so it cannot. The decoder reads no
+/// file, so a directive stays as written and a mixin keeps its mapping. A directive is a case of its own because a value
+/// that is missing, or false, would pass for it.
 [<RequireQualifiedAccess; NoComparison; AttachMembers>]
 type SchemaSaladBool =
     | Value of bool
@@ -155,7 +167,7 @@ type SchemaSaladBool =
         | Mixed _ -> None
 
 /// The size of a File object in bytes: the number, or a directive that stands for it. The directives that can stand
-/// there are those of SchemaSaladBool, for the same reason.
+/// there are an $import and a $mixin, as in SchemaSaladBool. The file holds a number, so the fields beside a mixin drop out.
 [<RequireQualifiedAccess; NoComparison; AttachMembers>]
 type FileSize =
     | Bytes of int64
@@ -207,19 +219,22 @@ type DocText =
         | Text value -> SchemaSaladString.tryLiteral value
         | Parts _ -> None
 
+/// A File value. Its string fields take a directive, as the strings of a process do. cwltool accepts a directive in the
+/// location and the path when the file holds an absolute URL and refuses it for a relative text. The verdict depends on the
+/// file, so the decoder keeps the directive.
 [<AttachMembers>]
 type FileInstance (
-    ?location: string,
-    ?path: string,
-    ?basename: string,
-    ?dirname: string,
-    ?nameroot: string,
-    ?nameext: string,
-    ?checksum: string,
+    ?location: SchemaSaladString,
+    ?path: SchemaSaladString,
+    ?basename: SchemaSaladString,
+    ?dirname: SchemaSaladString,
+    ?nameroot: SchemaSaladString,
+    ?nameext: SchemaSaladString,
+    ?checksum: SchemaSaladString,
     ?size: FileSize,
     ?secondaryFiles: RawYaml,
-    ?format: string,
-    ?contents: string
+    ?format: SchemaSaladString,
+    ?contents: SchemaSaladString
 ) =
     inherit DynamicObj ()
 
@@ -315,11 +330,12 @@ type FileInstance (
             DynamicObjHelpers.dynamicPropertiesEqual this o
         | _ -> false
 
+/// A Directory value. Its string fields take a directive like the strings of a File.
 [<AttachMembers>]
 type DirectoryInstance (
-    ?location: string,
-    ?path: string,
-    ?basename: string,
+    ?location: SchemaSaladString,
+    ?path: SchemaSaladString,
+    ?basename: SchemaSaladString,
     ?listing: RawYaml
 ) =
     inherit DynamicObj ()
@@ -680,6 +696,9 @@ and [<CustomEquality; NoComparison>] CWLType =
     /// A type that a file completes through $mixin, as type: {$mixin: path}. The mapping is kept as it was written, and the
     /// type stays unresolved like an import.
     | MixedType of RawYaml
+    /// A schema whose type is a directive, as in {type: {$import: path}, symbols: [a]}, kept as it was written. The file
+    /// decides the kind of schema, so the type stays unresolved like an import.
+    | RawType of RawYaml
     | Null
     | Array of InputArraySchema
     | Record of InputRecordSchema
@@ -706,6 +725,7 @@ and [<CustomEquality; NoComparison>] CWLType =
             | ImportedType left, ImportedType right -> left = right
             | IncludedType left, IncludedType right -> left = right
             | MixedType left, MixedType right -> left.Equals(right)
+            | RawType left, RawType right -> left.Equals(right)
             | Null, Null -> true
             | Array a1, Array a2 -> a1.Equals(a2)
             | Record r1, Record r2 -> r1.Equals(r2)
@@ -738,6 +758,7 @@ and [<CustomEquality; NoComparison>] CWLType =
         | Reference name -> hash (18, name)
         | ImportedType path -> hash (19, path)
         | MixedType raw -> hash (20, raw)
+        | RawType raw -> hash (22, raw)
         | IncludedType path -> hash (21, path)
 
 /// The schema that a SchemaDefRequirement defines. CWL admits record, enum and array schemas there and no other type,
@@ -805,16 +826,21 @@ type SoftwarePackage (package: SchemaSaladString, ?version: ResizeArray<SchemaSa
 
 module FileInstance =
 
+    /// The text of the path, or of the location when the path has none. The empty text stands when neither is a literal. A
+    /// directive names a file whose text the model does not hold, so it counts as absent.
     let pathOrLocation (value: FileInstance) =
         value.Path
-        |> Option.orElse value.Location
+        |> Option.bind SchemaSaladString.tryLiteral
+        |> Option.orElse (value.Location |> Option.bind SchemaSaladString.tryLiteral)
         |> Option.defaultValue ""
 
 module DirectoryInstance =
 
+    /// The text of the path, or of the location when the path has none. The empty text stands when neither is a literal.
     let pathOrLocation (value: DirectoryInstance) =
         value.Path
-        |> Option.orElse value.Location
+        |> Option.bind SchemaSaladString.tryLiteral
+        |> Option.orElse (value.Location |> Option.bind SchemaSaladString.tryLiteral)
         |> Option.defaultValue ""
 
 module InputRecordSchema =

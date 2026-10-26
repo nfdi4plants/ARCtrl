@@ -25,7 +25,7 @@ let testInput =
             let fileItem = decodeInput.[1]
             testCase "Name" <| fun _ -> Expect.equal "firstArg"  fileItem.Name ""
             testCase "Type" <| fun _ -> Expect.equal (File)  fileItem.Type_.Value ""
-            testCase "InputBinding" <| fun _ -> Expect.equal (Some (InputBinding.create(position = BindingPosition.Number 1, prefix = (SchemaSaladString.Literal "--example")))) fileItem.InputBinding ""
+            testCase "InputBinding" <| fun _ -> Expect.equal (Some (ListEntry.Value (InputBinding.create(position = BindingPosition.Number 1, prefix = (SchemaSaladString.Literal "--example"))))) fileItem.InputBinding ""
         ]
         testList "File optional" [
             let fileItem = decodeInput.[2]
@@ -51,7 +51,7 @@ let testInput =
                 let actual = stringItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "InputBinding" <| fun _ ->
-                let expected = Some (InputBinding.create(position = BindingPosition.Number 2, separate = SchemaSaladBool.Value false))
+                let expected = Some (ListEntry.Value (InputBinding.create(position = BindingPosition.Number 2, separate = SchemaSaladBool.Value false)))
                 let actual = stringItem.InputBinding
                 Expect.equal actual expected ""
         ]
@@ -62,10 +62,10 @@ let testInputMutationApi =
         testCase "typed setters roundtrip values" <| fun _ ->
             let input = CWLInput("arg")
             input.Type_ <- Some CWLType.String
-            input.InputBinding <- Some (InputBinding.create(prefix = (SchemaSaladString.Literal "--arg"), position = BindingPosition.Number 1, separate = SchemaSaladBool.Value true))
+            input.InputBinding <- Some (ListEntry.Value (InputBinding.create(prefix = (SchemaSaladString.Literal "--arg"), position = BindingPosition.Number 1, separate = SchemaSaladBool.Value true)))
 
             Expect.equal input.Type_ (Some CWLType.String) "Type_ setter should write DynamicObj-backed value."
-            Expect.equal input.InputBinding (Some (InputBinding.create(prefix = (SchemaSaladString.Literal "--arg"), position = BindingPosition.Number 1, separate = SchemaSaladBool.Value true))) "InputBinding setter should write value."
+            Expect.equal input.InputBinding (Some (ListEntry.Value (InputBinding.create(prefix = (SchemaSaladString.Literal "--arg"), position = BindingPosition.Number 1, separate = SchemaSaladBool.Value true)))) "InputBinding setter should write value."
             Expect.isFalse input.Optional "A string is no optional type."
 
         testCase "typed setters can clear optional values" <| fun _ ->
@@ -83,7 +83,7 @@ let testInputMutationApi =
                 CWLInput(
                     "arg",
                     type_ = CWLType.makeOptional CWLType.String,
-                    inputBinding = binding,
+                    inputBinding = ListEntry.Value binding,
                     label = (SchemaSaladString.Literal "Argument"),
                     doc = (DocText.literal "Argument docs"),
                     format = InputFormat.Single (SchemaSaladString.Literal "edam:format_2330"),
@@ -141,9 +141,9 @@ let testInputMutationApi =
             Expect.equal input.Streamable (Some (SchemaSaladBool.Value false)) "streamable should decode to a typed field."
             Expect.isSome input.DefaultValue "default should decode to a typed field."
             Expect.isSome input.SecondaryFiles "secondaryFiles should decode to a typed field."
-            Expect.equal input.InputBinding.Value.ValueFrom (Some (SchemaSaladString.Literal "$(self.path)")) "inputBinding.valueFrom should decode to a typed field."
-            Expect.equal input.InputBinding.Value.LoadContents (Some (SchemaSaladBool.Value true)) "inputBinding.loadContents should decode to a typed field."
-            Expect.equal input.InputBinding.Value.ShellQuote (Some (SchemaSaladBool.Value false)) "inputBinding.shellQuote should decode to a typed field."
+            Expect.equal (inputBindingOf input).ValueFrom (Some (SchemaSaladString.Literal "$(self.path)")) "inputBinding.valueFrom should decode to a typed field."
+            Expect.equal (inputBindingOf input).LoadContents (Some (SchemaSaladBool.Value true)) "inputBinding.loadContents should decode to a typed field."
+            Expect.equal (inputBindingOf input).ShellQuote (Some (SchemaSaladBool.Value false)) "inputBinding.shellQuote should decode to a typed field."
             Expect.isEmpty (input |> DynamicObjHelpers.dynamicPropertiesSnapshot) "Known input fields should not be overflow."
     ]
 
@@ -566,7 +566,7 @@ let testInputOptional =
 let testBindingPosition =
     let tool (position: string) =
         String.concat "\n" [ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo"; "inputs:"; "  x:"; "    type: string"; "    inputBinding:"; "      position: " + position; "outputs: []"; "" ]
-    let positionOf (decoded: CWLToolDescription) = (ListEntry.values decoded.Inputs.Value).[0].InputBinding.Value.Position
+    let positionOf (decoded: CWLToolDescription) = (inputBindingOf (ListEntry.values decoded.Inputs.Value).[0]).Position
 
     testList "Binding position" [
         testCase "an int is a number and an expression is an expression, and both are written as they were" <| fun _ ->

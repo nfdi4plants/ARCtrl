@@ -301,6 +301,18 @@ module CWL =
     let literals (texts: string seq) : ResizeArray<SchemaSaladString> =
         texts |> Seq.map SchemaSaladString.Literal |> ResizeArray
 
+    /// The binding that an input holds. An input without a binding and an input with a directive in its place fail the test.
+    let inputBindingOf (input: CWLInput) : InputBinding =
+        match input.InputBinding with
+        | Some (ListEntry.Value binding) -> binding
+        | other -> failwith (sprintf "Expected the input %s to hold a binding of its own, found %A" input.Name other)
+
+    /// The binding that an output holds, as inputBindingOf does for an input.
+    let outputBindingOf (output: CWLOutput) : OutputBinding =
+        match output.OutputBinding with
+        | Some (ListEntry.Value binding) -> binding
+        | other -> failwith (sprintf "Expected the output %s to hold a binding of its own, found %A" output.Name other)
+
     /// Assert that encoding then decoding an entity is deterministic across two cycles.
     let assertDeterministic encode decode name (originalText:string) =
         let d1 = decode originalText

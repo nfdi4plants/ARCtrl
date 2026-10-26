@@ -83,12 +83,15 @@ let getRunNodeCandidates (workflowFilePath: string) (runPath: string) : string [
 let cacheResolvedProcessingUnit (state: RunResolutionState) (key: string) (processingUnit: CWL.CWLProcessingUnit) =
     state.Cache <- state.Cache.Add(key, processingUnit)
 
-let runFromProcessingUnit (processingUnit: CWL.CWLProcessingUnit) =
+/// The run of a step that stands for the process. A process whose class is a directive has none, because the file that
+/// decides its class is not read, so a reference to it stays unresolved.
+let tryRunFromProcessingUnit (processingUnit: CWL.CWLProcessingUnit) : CWL.WorkflowStepRun option =
     match processingUnit with
-    | CWL.CommandLineTool tool -> CWL.WorkflowStepRunOps.fromTool tool
-    | CWL.Workflow workflow -> CWL.WorkflowStepRunOps.fromWorkflow workflow
-    | CWL.ExpressionTool expressionTool -> CWL.WorkflowStepRunOps.fromExpressionTool expressionTool
-    | CWL.Operation operation -> CWL.WorkflowStepRunOps.fromOperation operation
+    | CWL.CommandLineTool tool -> Some (CWL.WorkflowStepRunOps.fromTool tool)
+    | CWL.Workflow workflow -> Some (CWL.WorkflowStepRunOps.fromWorkflow workflow)
+    | CWL.ExpressionTool expressionTool -> Some (CWL.WorkflowStepRunOps.fromExpressionTool expressionTool)
+    | CWL.Operation operation -> Some (CWL.WorkflowStepRunOps.fromOperation operation)
+    | CWL.RawProcess _ -> None
 
 /// Resolves the run reference of each step of a workflow and of each workflow nested inline in it. A step keeps its
 /// run as it is written and receives the process in its ResolvedRun. A step that holds a process already keeps it,
@@ -137,16 +140,16 @@ and resolveRunReferenceWithResolver
             else
                 match state.Cache.TryFind key with
                 | Some cached ->
-                    Some (runFromProcessingUnit cached)
+                    tryRunFromProcessingUnit cached
                 | None ->
-                    match tryResolveRunPath candidate with
-                    | Some processingUnit ->
+                    match tryResolveRunPath candidate |> Option.bind (fun found -> tryRunFromProcessingUnit found |> Option.map (fun run -> found, run)) with
+                    | Some (processingUnit, run) ->
                         match processingUnit with
                         | CWL.Workflow workflow ->
                             resolveWorkflowRunsRecursiveWithResolver candidate (activePathKeys.Add key) state workflow tryResolveRunPath
                         | _ -> ()
                         cacheResolvedProcessingUnit state key processingUnit
-                        Some (runFromProcessingUnit processingUnit)
+                        Some run
                     | None ->
                         tryResolveCandidate (index + 1)
     tryResolveCandidate 0
@@ -175,6 +178,8 @@ let resolveRunReferencesFromLookup (workflowFilePath: string) (processingUnit: C
     | CWL.ExpressionTool _ ->
         processingUnit
     | CWL.Operation _ ->
+        processingUnit
+    | CWL.RawProcess _ ->
         processingUnit
 
 /// <summary>

@@ -35,6 +35,10 @@ type CWLProcessingUnit =
     | Workflow of CWLWorkflowDescription
     | ExpressionTool of CWLExpressionToolDescription
     | Operation of CWLOperationDescription
+    /// A process whose class is a directive, as in class: {$import: path}. The file decides which of the four processes
+    /// this is, and the decoder reads no file, so the mapping is kept as it was written. The inputs, outputs, requirements
+    /// and hints of such a process are empty here, because the model cannot tell where they stand.
+    | RawProcess of RawYaml
 
     /// Returns a new list of the inputs of the process that are objects, for every kind of process. A change of the list
     /// changes nothing in the process.
@@ -44,6 +48,7 @@ type CWLProcessingUnit =
         | Workflow workflow -> CWLWorkflowDescription.getInputValues workflow
         | ExpressionTool tool -> CWLExpressionToolDescription.getInputValuesOrEmpty tool
         | Operation operation -> CWLOperationDescription.getInputValues operation
+        | RawProcess _ -> ResizeArray()
 
     /// Returns a new list of the outputs of the process that are objects, for every kind of process. A change of the list
     /// changes nothing in the process.
@@ -53,6 +58,7 @@ type CWLProcessingUnit =
         | Workflow workflow -> CWLWorkflowDescription.getOutputValues workflow
         | ExpressionTool tool -> CWLExpressionToolDescription.getOutputValues tool
         | Operation operation -> CWLOperationDescription.getOutputValues operation
+        | RawProcess _ -> ResizeArray()
 
     /// Returns requirements for all CWL processing unit variants.
     static member getRequirements (processingUnit: CWLProcessingUnit) : ResizeArray<Requirement> =
@@ -61,6 +67,7 @@ type CWLProcessingUnit =
         | Workflow workflow -> CWLWorkflowDescription.getRequirementsOrEmpty workflow
         | ExpressionTool tool -> CWLExpressionToolDescription.getRequirementsOrEmpty tool
         | Operation operation -> CWLOperationDescription.getRequirementsOrEmpty operation
+        | RawProcess _ -> ResizeArray()
 
     /// Returns hints for all CWL processing unit variants.
     static member getHints (processingUnit: CWLProcessingUnit) : ResizeArray<HintEntry> =
@@ -69,6 +76,7 @@ type CWLProcessingUnit =
         | Workflow workflow -> CWLWorkflowDescription.getHintsOrEmpty workflow
         | ExpressionTool tool -> CWLExpressionToolDescription.getHintsOrEmpty tool
         | Operation operation -> CWLOperationDescription.getHintsOrEmpty operation
+        | RawProcess _ -> ResizeArray()
 
     /// Returns intent for all CWL processing unit variants.
     static member getIntent (processingUnit: CWLProcessingUnit) : ResizeArray<SchemaSaladString> =
@@ -77,6 +85,7 @@ type CWLProcessingUnit =
         | Workflow workflow -> CWLWorkflowDescription.getIntentOrEmpty workflow
         | ExpressionTool tool -> CWLExpressionToolDescription.getIntentOrEmpty tool
         | Operation operation -> CWLOperationDescription.getIntentOrEmpty operation
+        | RawProcess _ -> ResizeArray()
 
     /// Returns known requirement hints only, dropping unknown extension hints.
     static member getKnownHints (processingUnit: CWLProcessingUnit) : ResizeArray<Requirement> =
@@ -84,13 +93,15 @@ type CWLProcessingUnit =
         |> Seq.choose HintEntry.tryAsRequirement
         |> ResizeArray
 
-    /// Returns the id of the process of any variant, as it is written.
+    /// Returns the id of the process of any variant, as it is written. The id of a process whose class is a directive is
+    /// the plain text of its id field, and none when the field is missing or holds anything else.
     static member tryGetId (processingUnit: CWLProcessingUnit) : string option =
         match processingUnit with
         | CommandLineTool tool -> tool.Id
         | Workflow workflow -> workflow.Id
         | ExpressionTool tool -> tool.Id
         | Operation operation -> operation.Id
+        | RawProcess raw -> raw.TryScalarField "id"
 
     /// True when both values wrap the same description object. Two union values around one object are the same process.
     static member isSameObject (left: CWLProcessingUnit) (right: CWLProcessingUnit) : bool =
@@ -99,6 +110,7 @@ type CWLProcessingUnit =
         | Workflow leftWorkflow, Workflow rightWorkflow -> System.Object.ReferenceEquals(leftWorkflow, rightWorkflow)
         | ExpressionTool leftTool, ExpressionTool rightTool -> System.Object.ReferenceEquals(leftTool, rightTool)
         | Operation leftOperation, Operation rightOperation -> System.Object.ReferenceEquals(leftOperation, rightOperation)
+        | RawProcess leftRaw, RawProcess rightRaw -> System.Object.ReferenceEquals(leftRaw, rightRaw)
         | _ -> false
 
 [<RequireQualifiedAccess>]

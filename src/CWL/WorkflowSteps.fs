@@ -291,6 +291,9 @@ type WorkflowStepRun =
     /// A process that a file completes through $mixin, as run: {$mixin: path}. The mapping is kept as it was written, and the
     /// decoder reads no file.
     | RunMixed of RawYaml
+    /// A process whose class is a directive, as in run: {class: {$import: path}, baseCommand: echo}, kept as it was written.
+    /// The file decides which process it is, and the decoder reads no file.
+    | RunRaw of RawYaml
     | RunCommandLineTool of obj
     | RunWorkflow of obj
     | RunExpressionTool of obj

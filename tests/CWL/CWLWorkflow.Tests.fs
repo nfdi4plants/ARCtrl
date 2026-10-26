@@ -812,7 +812,7 @@ steps:
             let output = (ListEntry.values decoded.Outputs) |> Seq.find (fun output -> output.Name = "result")
             let step = (ListEntry.values decoded.Steps) |> Seq.find (fun step -> step.Id = "step1")
             let stepInput = WorkflowStep.getInputValues step |> Seq.find (fun input -> input.Id = "sample")
-            let inputBinding = Expect.wantSome input.InputBinding "Input binding should decode."
+            let inputBinding = inputBindingOf input
             Expect.equal
                 (DynObj.tryGetTypedPropertyValue<string> "arc:note" input)
                 (Some "keep input note")
@@ -1118,7 +1118,7 @@ let testCWLWorkflowDescriptionEncode =
                 let output = (ListEntry.values roundTripped.Outputs) |> Seq.find (fun output -> output.Name = "result")
                 let step = (ListEntry.values roundTripped.Steps) |> Seq.find (fun step -> step.Id = "step1")
                 let stepInput = WorkflowStep.getInputValues step |> Seq.find (fun input -> input.Id = "sample")
-                let inputBinding = Expect.wantSome input.InputBinding "Input binding should survive roundtrip."
+                let inputBinding = inputBindingOf input
 
                 Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:note" input) (Some "keep input note") "Input overflow should roundtrip."
                 Expect.equal input.Type_ (Some CWLType.File) "The input type should roundtrip."

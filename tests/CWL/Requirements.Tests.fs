@@ -40,6 +40,7 @@ let definedOf (entry: SchemaDefEntry) : SchemaDefinition =
     | Defined definition -> definition
     | Imported path -> failwith $"Expected a defined type but got the import of {path}"
     | SchemaDefEntry.Mixed _ -> failwith "Expected a defined type but got a mixin"
+    | SchemaDefEntry.Raw _ -> failwith "Expected a defined type but got a schema of unknown kind"
 
 /// The name that a definition holds, and none for an unnamed one.
 let nameOf (definition: SchemaDefinition) : string option =
@@ -117,7 +118,7 @@ let testRequirementDecode =
                 let yaml = "hints:\n  - class: InitialWorkDirRequirement\n    listing:\n      - null\n      - [{class: File, location: a.txt}]"
                 match (decodeHints yaml).[0] with
                 | KnownHint (InitialWorkDirRequirement listing) ->
-                    Expect.sequenceEqual listing (ResizeArray [ NullEntry; FilesEntry (ResizeArray [ FileItem (FileInstance(location = "a.txt")) ]) ]) "The listing keeps the null item and the array."
+                    Expect.sequenceEqual listing (ResizeArray [ NullEntry; FilesEntry (ResizeArray [ FileItem (FileInstance(location = SchemaSaladString.Literal "a.txt")) ]) ]) "The listing keeps the null item and the array."
                 | other -> failwithf "Expected a known InitialWorkDirRequirement hint, found %A" other
 
             testCase "A hint without a class is a decode error" <| fun _ ->
@@ -837,19 +838,23 @@ outputs: {}"""
                     |> String.concat "\n"
                 Expect.stringContains encoded "$(inputs.enable_reuse)" "WorkReuse expression payload should survive decode/encode."
                 Expect.stringContains encoded "$(inputs.enable_network)" "NetworkAccess expression payload should survive decode/encode."
-            testCase "A quoted bool of WorkReuse and NetworkAccess is a string and stays quoted" <| fun _ ->
+            testCase "A quoted bool of WorkReuse and NetworkAccess is a text without an expression and a decode error" <| fun _ ->
+                for (cls, field, text) in [ "WorkReuse", "enableReuse", "\"false\""; "NetworkAccess", "networkAccess", "'true'" ] do
+                    let yaml = "requirements:\n  - class: " + cls + "\n    " + field + ": " + text
+                    Expect.throws (fun _ -> decodeRequirements yaml |> ignore) (sprintf "The quoted %s of %s holds no expression." field cls)
+            testCase "An expression for WorkReuse and NetworkAccess is a string that reads back as the same expression" <| fun _ ->
                 let yaml = """requirements:
   - class: WorkReuse
-    enableReuse: "false"
+    enableReuse: "$(inputs.reuse)"
   - class: NetworkAccess
-    networkAccess: 'true'"""
+    networkAccess: '$(inputs.network)'"""
                 let reqs = decodeRequirements yaml
                 let workReuse = findRequirement reqs (function WorkReuseExpressionRequirement _ -> true | _ -> false)
                 let network = findRequirement reqs (function NetworkAccessExpressionRequirement _ -> true | _ -> false)
-                Expect.equal workReuse (WorkReuseExpressionRequirement (SchemaSaladString.Literal "false")) "A quoted false is the text false."
-                Expect.equal network (NetworkAccessExpressionRequirement (SchemaSaladString.Literal "true")) "A quoted true is the text true."
+                Expect.equal workReuse (WorkReuseExpressionRequirement (SchemaSaladString.Literal "$(inputs.reuse)")) "The expression is the text."
+                Expect.equal network (NetworkAccessExpressionRequirement (SchemaSaladString.Literal "$(inputs.network)")) "The expression is the text."
                 let encoded = Encode.encodeRequirement workReuse |> Encode.writeYaml
-                Expect.stringContains encoded "enableReuse: \"false\"" "The text should be written quoted, so that it reads back as the same text."
+                Expect.equal (findRequirement (decodeRequirements ("requirements:\n  - " + encoded.Replace("\n", "\n    ").TrimEnd())) (function WorkReuseExpressionRequirement _ -> true | _ -> false)) workReuse "The written expression reads back as the same requirement."
             testCase "WorkReuse and NetworkAccess decode every core schema spelling of a bool" <| fun _ ->
                 let yaml = """requirements:
   - class: WorkReuse
@@ -901,12 +906,14 @@ outputs: {}"""
                 for text in [ "true"; "false" ] do
                     let yaml = "requirements:\n  - class: ToolTimeLimit\n    timelimit: " + text
                     Expect.throws (fun _ -> decodeRequirements yaml |> ignore) (sprintf "A bool is no number of seconds (%s)." text)
-            testCase "A quoted number timelimit stays a string through a write and a read" <| fun _ ->
-                for (text, expected) in [ "\"5\"", "timelimit: \"5\""; "\"3.5\"", "timelimit: \"3.5\"" ] do
+            testCase "A quoted number timelimit is a text without an expression and a decode error, and an expression survives a write and a read" <| fun _ ->
+                for text in [ "\"5\""; "\"3.5\"" ] do
+                    let yaml = "requirements:\n  - class: ToolTimeLimit\n    timelimit: " + text
+                    Expect.throws (fun _ -> decodeRequirements yaml |> ignore) (sprintf "The quoted time limit %s holds no expression." text)
+                for text in [ "\"$(5)\""; "'${return 5;}'" ] do
                     let yaml = "requirements:\n  - class: ToolTimeLimit\n    timelimit: " + text
                     let requirement = findRequirement (decodeRequirements yaml) (function ToolTimeLimitRequirement _ -> true | _ -> false)
                     let encoded = Encode.encodeRequirement requirement |> Encode.writeYaml
-                    Expect.stringContains encoded expected (sprintf "The time limit %s should be written as %s." text expected)
                     let writtenLine = encoded.Split('\n') |> Array.find (fun line -> line.StartsWith "timelimit:")
                     let again = findRequirement (decodeRequirements ("requirements:\n  - class: ToolTimeLimit\n    " + writtenLine)) (function ToolTimeLimitRequirement _ -> true | _ -> false)
                     Expect.equal again requirement (sprintf "The time limit %s should read back as the same requirement." text)
@@ -983,14 +990,14 @@ outputs: {}"""
                 let resource = """requirements:
   - class: ResourceRequirement
     coresMin: 0x10
-    ramMin: "1024"
+    ramMin: "$(inputs.ram)"
     ramMax: 1024
     tmpdirMin: .inf
     outdirMin: 1e3"""
                 match findRequirement (decodeRequirements resource) (function ResourceRequirement _ -> true | _ -> false) with
                 | ResourceRequirement resourceRequirement ->
                     Expect.equal (resourceRequirement.TryGetInt64("coresMin")) (Some 16L) "A plain hexadecimal number is an int."
-                    Expect.equal (resourceRequirement.TryGetExpression("ramMin")) (Some (SchemaSaladString.Literal "1024")) "A quoted number is a string."
+                    Expect.equal (resourceRequirement.TryGetExpression("ramMin")) (Some (SchemaSaladString.Literal "$(inputs.ram)")) "A quoted expression is a string."
                     Expect.equal (resourceRequirement.TryGetInt64("ramMax")) (Some 1024L) "A plain number is an int."
                     Expect.equal (resourceRequirement.TryGetFloat("tmpdirMin")) (Some System.Double.PositiveInfinity) "The core schema spells infinity .inf."
                     Expect.equal (resourceRequirement.TryGetFloat("outdirMin")) (Some 1000.0) "An exponent number is a float."
@@ -1000,9 +1007,8 @@ outputs: {}"""
                     let yaml = "requirements:\n  - class: ToolTimeLimit\n    timelimit: " + value
                     findRequirement (decodeRequirements yaml) (function ToolTimeLimitRequirement _ -> true | _ -> false)
                 Expect.equal (limit "0x3C") (ToolTimeLimitRequirement (ToolTimeLimitSeconds 60L)) "A plain hexadecimal number is the number of seconds."
-                Expect.equal (limit "\"60\"") (ToolTimeLimitRequirement (ToolTimeLimitExpression (SchemaSaladString.Literal "60"))) "A quoted number is a string and stays an expression."
-                let encoded = Encode.encodeRequirement (limit "\"60\"") |> Encode.writeYaml
-                Expect.stringContains encoded "timelimit: \"60\"" "The string must stay quoted so that it does not read back as a number."
+                Expect.equal (limit "\"$(60)\"") (ToolTimeLimitRequirement (ToolTimeLimitExpression (SchemaSaladString.Literal "$(60)"))) "A quoted expression is a string and stays an expression."
+                Expect.throws (fun _ -> limit "\"60\"" |> ignore) "A quoted number holds no expression."
 
             testCase "the typed getters give none for a number of another kind, and a fractional number is no integer on any target" <| fun _ ->
                 let decoded = decodeRequirements "requirements:\n  - class: ResourceRequirement\n    coresMin: 4.5\n    coresMax: 4\n    ramMax: $(inputs.m)\n"
@@ -2071,8 +2077,8 @@ let testInitialWorkDirFileDirectoryEntries =
                 failwith "Wrong requirement type: expected InitialWorkDirRequirement"
 
         testCase "Encode mixed listing with File and Directory entries" <| fun _ ->
-            let file = FileInstance(path = "/tmp/input.txt", basename = "input.txt")
-            let directory = DirectoryInstance(path = "/tmp/output", basename = "output")
+            let file = FileInstance(path = SchemaSaladString.Literal "/tmp/input.txt", basename = SchemaSaladString.Literal "input.txt")
+            let directory = DirectoryInstance(path = SchemaSaladString.Literal "/tmp/output", basename = SchemaSaladString.Literal "output")
             let requirement =
                 InitialWorkDirRequirement (
                     ResizeArray [|
@@ -2092,12 +2098,12 @@ let testInitialWorkDirFileDirectoryEntries =
             | InitialWorkDirRequirement listing ->
                 match listing.[0], listing.[1] with
                 | FileEntry file, DirectoryEntry directory ->
-                    Expect.equal file.Path (Some "/tmp/in.txt") "File path should decode as a typed field."
-                    Expect.equal file.Basename (Some "in.txt") "File basename should decode as a typed field."
-                    Expect.equal file.Checksum (Some "sha1$abc") "File checksum should decode as a typed field."
+                    Expect.equal file.Path (Some (SchemaSaladString.Literal "/tmp/in.txt")) "File path should decode as a typed field."
+                    Expect.equal file.Basename (Some (SchemaSaladString.Literal "in.txt")) "File basename should decode as a typed field."
+                    Expect.equal file.Checksum (Some (SchemaSaladString.Literal "sha1$abc")) "File checksum should decode as a typed field."
                     Expect.equal file.Size (Some (FileSize.Bytes 42L)) "File size should decode as a typed field."
-                    Expect.equal directory.Path (Some "/tmp/out") "Directory path should decode as a typed field."
-                    Expect.equal directory.Basename (Some "out") "Directory basename should decode as a typed field."
+                    Expect.equal directory.Path (Some (SchemaSaladString.Literal "/tmp/out")) "Directory path should decode as a typed field."
+                    Expect.equal directory.Basename (Some (SchemaSaladString.Literal "out")) "Directory basename should decode as a typed field."
                     Expect.isSome directory.Listing "Directory listing should decode as a typed field."
                     Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:file note" file) (Some "keep file overflow") "File extension should remain overflow."
                     Expect.equal (DynObj.tryGetTypedPropertyValue<string> "arc:dir note" directory) (Some "keep dir overflow") "Directory extension should remain overflow."
@@ -2132,7 +2138,7 @@ let testInitialWorkDirListingForms =
                 Expect.equal listing.Count 4 "Expected four entries."
                 Expect.equal listing.[0] NullEntry "A null item is a NullEntry."
                 Expect.equal listing.[1] (DirentEntry (DirentInstance(SchemaSaladString.Literal "hello", entryname = SchemaSaladString.Literal "a.txt"))) "A Dirent stays a DirentEntry."
-                Expect.equal listing.[2] (FilesEntry (ResizeArray [ FileItem (FileInstance(location = "a.txt")); DirectoryItem (DirectoryInstance(location = "d")) ])) "An array holds its File and its Directory."
+                Expect.equal listing.[2] (FilesEntry (ResizeArray [ FileItem (FileInstance(location = SchemaSaladString.Literal "a.txt")); DirectoryItem (DirectoryInstance(location = SchemaSaladString.Literal "d")) ])) "An array holds its File and its Directory."
                 Expect.equal listing.[3] (FilesEntry (ResizeArray [])) "An empty array is an entry."
             | other -> failwithf "Expected an InitialWorkDirRequirement, found %A" other
             let written, again = encodeAndDecodeAgain requirement
@@ -2140,7 +2146,7 @@ let testInitialWorkDirListingForms =
             Expect.stringContains written "- - class: File" "The array is written as an array."
             Expect.equal again.[0] requirement "The written text should decode to the same requirement."
         testCase "the entries of an array compare by their elements" <| fun _ ->
-            let files (location: string) = FilesEntry (ResizeArray [ FileItem (FileInstance(location = location)) ])
+            let files (location: string) = FilesEntry (ResizeArray [ FileItem (FileInstance(location = SchemaSaladString.Literal location)) ])
             Expect.equal (files "a.txt") (files "a.txt") "Arrays with equal items are equal."
             Expect.notEqual (files "a.txt") (files "b.txt") "Arrays with different items differ."
             Expect.equal (hash (files "a.txt")) (hash (files "a.txt")) "Equal arrays hash alike."
