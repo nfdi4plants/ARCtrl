@@ -78,6 +78,19 @@ let private tests_AbsoluteFilePath = testList "AbsoluteFilePath" [
         let absolute = d.GetAbsolutePathForAssay(assayName)
         let expected = $"assays/{assayName}/dataset/MyFile"
         Expect.equal absolute expected "Absolute path should match expected path"
+    // https://github.com/nfdi4plants/ARCtrl/issues/593
+    testCase "Study_EmptyPath" <| fun _ ->
+        let d = Data(name = "")
+        let absolute = d.GetAbsolutePathForStudy("MyStudy")
+        Expect.equal absolute "" "Empty path should not be resolved to the resources folder"
+    testCase "Assay_EmptyPath" <| fun _ ->
+        let d = Data(name = "")
+        let absolute = d.GetAbsolutePathForAssay("MyAssay")
+        Expect.equal absolute "" "Empty path should not be resolved to the dataset folder"
+    testCase "Assay_WhitespacePath" <| fun _ ->
+        let d = Data(name = "  ")
+        let absolute = d.GetAbsolutePathForAssay("MyAssay")
+        Expect.equal absolute "  " "Whitespace path should not be resolved into the dataset folder"
     // https://github.com/nfdi4plants/ARCtrl/issues/629
     testCase "Workflow_Relative" <| fun _ ->
         let fileName = "MyFile"

@@ -2725,6 +2725,24 @@ let tests_ROCrate =
             // Data paths are read with leading ./, see https://github.com/nfdi4plants/ARCtrl/issues/615
             table.UpdateCellAt(0, 0, CompositeCell.createDataFromString("./assays/MyAssay/dataset/MyData.csv"))
             Expect.equal arc'.Assays[0] arc.Assays[0] "Assays should be equal, including the external file reference"
+        // https://github.com/nfdi4plants/ARCtrl/issues/593
+        testCase "EmptyDataCellNotMadeAbsolute" <| fun _ ->
+            let arc = ARC("MyARC", title = "MyTitle")
+            let assay = arc.InitAssay("MyAssay")
+            assay.Title <- Some "My Assay"
+            let table = assay.InitTable("MyTable")
+            table.AddColumn(
+                CompositeHeader.Input IOType.Data,
+                ResizeArray [
+                    CompositeCell.createDataFromString("assays/MyAssay/dataset/MyData.csv")
+                    CompositeCell.createDataFromString("")
+                ]
+            ) |> ignore
+            let roCrate = arc.ToROCrateJsonString()
+            Expect.equal (table.GetCellAt(0, 1).AsData.FilePath) (Some "") "Empty data cell should not be changed by writing"
+            let graph = Json.Decode.fromJsonString Json.LDGraph.decoder roCrate
+            Expect.isNone (graph.TryGetNode "./assays/MyAssay/dataset/") "Empty data cell should not result in a dataset folder entity"
+            Expect.isNone (graph.TryGetNode "assays/MyAssay/dataset/") "Empty data cell should not result in a dataset folder entity"
         // https://github.com/nfdi4plants/ARCtrl/issues/615
         testCase "NormalizeDataEntityIds" <| fun _ ->
             let arc = ARC("MyARC", title = "MyTitle")

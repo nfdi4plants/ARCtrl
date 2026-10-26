@@ -110,6 +110,8 @@ type Data(?id,?name : string,?dataType,?format,?selectorFormat,?comments) =
         let isOnlineRessource (p : string) =
             p.StartsWith("http:") || p.StartsWith("https:")
         match this.FilePath with
+        // Blank paths (e.g. from empty data cells) don't point to a file, so they should not be resolved to the folder
+        | Some p when System.String.IsNullOrWhiteSpace p -> p
         | Some p ->
             let p = p.TrimStart('/') |> trimStart "./"
             if checkExistenceFromRoot p || isPartOfSubFolder p || isOnlineRessource p then
