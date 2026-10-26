@@ -2216,8 +2216,12 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
 
         // - Assay API - CRUD //
     member this.SetAssay(assayIdentifier: string, assay: ArcAssay) =
-        let index = this.GetAssayIndex(assayIdentifier)
-        this.SetAssayAt(index, assay)
+        let index = this.Assays.FindIndex (fun a -> a.Identifier = assayIdentifier)
+        // Add the assay, if none with the given identifier exists yet
+        if index = -1 then
+            this.AddAssay(assay)
+        else
+            this.SetAssayAt(index, assay)
 
     static member setAssay(assayIdentifier: string, assay: ArcAssay) =
         fun (inv:ArcInvestigation) ->
@@ -2471,8 +2475,12 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
 
     // - Study API - CRUD //
     member this.SetStudy(studyIdentifier: string, study: ArcStudy) =
-        let index = this.GetStudyIndex studyIdentifier
-        this.SetStudyAt(index,study)
+        let index = this.Studies.FindIndex (fun s -> s.Identifier = studyIdentifier)
+        // Add the study, if none with the given identifier exists yet
+        if index = -1 then
+            this.AddStudy(study)
+        else
+            this.SetStudyAt(index,study)
 
     static member setStudy(studyIdentifier: string, study: ArcStudy) =
         fun (inv: ArcInvestigation) ->
@@ -2700,8 +2708,12 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         this.Workflows.[index] <- workflow
 
     member this.SetWorkflow(workflowIdentifier: string, workflow: ArcWorkflow) =
-        let index = this.GetWorkflowIndex(workflowIdentifier)
-        this.SetWorkflowAt(index, workflow)
+        let index = this.Workflows.FindIndex (fun w -> w.Identifier = workflowIdentifier)
+        // Add the workflow, if none with the given identifier exists yet
+        if index = -1 then
+            this.AddWorkflow(workflow)
+        else
+            this.SetWorkflowAt(index, workflow)
 
     static member setWorkflow(workflowIdentifier: string, workflow: ArcWorkflow) =
         fun (inv: ArcInvestigation) ->
@@ -2809,8 +2821,12 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         this.Runs.[index] <- run
 
     member this.SetRun(runIdentifier: string, run: ArcRun) =
-        let index = this.GetRunIndex(runIdentifier)
-        this.SetRunAt(index, run)
+        let index = this.Runs.FindIndex (fun r -> r.Identifier = runIdentifier)
+        // Add the run, if none with the given identifier exists yet
+        if index = -1 then
+            this.AddRun(run)
+        else
+            this.SetRunAt(index, run)
 
     static member setRunAt(index: int, run: ArcRun) =
         fun (inv: ArcInvestigation) ->
