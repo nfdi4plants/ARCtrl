@@ -19,11 +19,12 @@ let [<Literal>] ValidWorkflowFileNamePattern = @"^(workflows(\/|\\))?(?<identifi
 
 let [<Literal>] ValidRunFileNamePattern = @"^(runs(\/|\\))?(?<identifier>" + InnerValidCharactersPattern + @")((\/|\\)isa.run.xlsx)?$"
 
+// Created once, as creating the regex on every call is slow, especially in Python
+let private validIdentifierRegex = System.Text.RegularExpressions.Regex(ValidIdentifierPattern)
+
 // Function to check if a string contains only valid characters
 let tryCheckValidCharacters (identifier: string) =
-    match identifier with
-    | Regex ValidIdentifierPattern _ -> true
-    | _ -> false
+    validIdentifierRegex.IsMatch(identifier.Trim())
 
 // Function to check if a string contains only valid characters
 let checkValidCharacters (identifier: string) =

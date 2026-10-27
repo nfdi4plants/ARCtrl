@@ -469,6 +469,15 @@ let tests_Study = testList "CRUD Study" [
             Expect.equal i.StudyCount 2 "StudyCount"
             Expect.equal (i.Studies.[0].Identifier) study_identifier "Correct study set, ident"
             Expect.equal (i.Studies.[0].Title) (Some study_title) "Correct study set, title"
+        // https://github.com/nfdi4plants/ARCtrl/issues/565
+        testCase "by identifier, not existing, adds" <| fun _ ->
+            let i = createExampleInvestigation()
+            let study_identifier = "New Awesome Study"
+            let expected = ArcStudy.create(study_identifier, title = "New Study")
+            i.SetStudy(study_identifier, expected)
+            Expect.equal i.StudyCount 3 "StudyCount"
+            Expect.equal i.Studies.[2] expected "Study should be added"
+            Expect.isTrue (expected.Investigation.IsSome) "Study should reference investigation"
         testCase "by index" <| fun _ ->
             let i = createExampleInvestigation()
             let study_identifier = "New Awesome Study"
@@ -566,6 +575,23 @@ let tests_Assay = testList "CRUD Assay" [
             Expect.equal s.RegisteredAssayCount 1 "Registered AssayCount. should be 1 less due to different identifier"
             let actual = i.Assays.[1]
             Expect.equal actual expected "equal"
+        // https://github.com/nfdi4plants/ARCtrl/issues/565
+        testCase "by identifier, not existing, adds" <| fun _ ->
+            let i = createExampleInvestigation()
+            let assay_ident = "New Assay"
+            let expected = ArcAssay(assay_ident, technologyPlatform = OntologyAnnotation("Assay Tech"))
+            i.SetAssay(assay_ident, expected)
+            Expect.equal i.StudyCount 2 "StudyCount"
+            Expect.equal i.AssayCount 3 "AssayCount"
+            Expect.equal i.Assays.[2] expected "Assay should be added"
+            Expect.isTrue (expected.Investigation.IsSome) "Assay should reference investigation"
+            let s = i.Studies.Item 0
+            Expect.equal s.RegisteredAssayCount 2 "Registered assays should not change"
+        testCase "by identifier, not existing, duplicate identifier throws" <| fun _ ->
+            let i = createExampleInvestigation()
+            let func = fun () -> i.SetAssay("New Assay", ArcAssay("Assay 1"))
+            Expect.throws func "Should throw when adding an assay with an already existing identifier"
+            Expect.equal i.AssayCount 2 "AssayCount should not change"
     ]
     testList "GetAssay" [ 
         testCase "not existing, throws" <| fun _ ->
@@ -653,6 +679,15 @@ let tests_Workflow = testList "CRUD_Workflow" [
             Expect.equal i.WorkflowCount 2 "Workflow"
             let actual = i.Workflows.[1]
             Expect.equal actual expected "equal"
+        // https://github.com/nfdi4plants/ARCtrl/issues/565
+        testCase "by identifier, not existing, adds" <| fun _ ->
+            let i = createExampleInvestigation()
+            let workflow_ident = "New Workflow"
+            let expected = ArcWorkflow(workflow_ident, version = "0.0.1")
+            i.SetWorkflow(workflow_ident, expected)
+            Expect.equal i.WorkflowCount 3 "Workflow"
+            Expect.equal i.Workflows.[2] expected "Workflow should be added"
+            Expect.isTrue (expected.Investigation.IsSome) "Workflow should reference investigation"
     ]
     testList "GetWorkflow" [
         testCase "not existing, throws" <| fun _ ->
@@ -749,6 +784,15 @@ let tests_Run = testList "CRUD Run" [
             Expect.equal i.RunCount 2 "Run"
             let actual = i.Runs.[1]
             Expect.equal actual expected "equal"
+        // https://github.com/nfdi4plants/ARCtrl/issues/565
+        testCase "by identifier, not existing, adds" <| fun _ ->
+            let i = createExampleInvestigation()
+            let run_ident = "New Run"
+            let expected = ArcRun(run_ident, description = "So good")
+            i.SetRun(run_ident, expected)
+            Expect.equal i.RunCount 3 "Run"
+            Expect.equal i.Runs.[2] expected "Run should be added"
+            Expect.isTrue (expected.Investigation.IsSome) "Run should reference investigation"
     ]
     testList "GetRun" [
         testCase "not existing, throws" <| fun _ ->

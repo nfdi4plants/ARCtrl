@@ -76,10 +76,13 @@ module ARC =
             |> Decode.map (fun graph ->
                 match graph.TryGetNode("./") with
                 | Some node ->
+                    // Files referenced by URL are online resources and not part of the ARC filesystem
+                    let isOnlineRessource (id : string) =
+                        id.StartsWith("http:") || id.StartsWith("https:")
                     let files =
                         graph.Nodes
                         |> ResizeArray.choose (fun n ->
-                            if LDFile.validate(n, ?context = graph.TryGetContext()) && n.Id.Contains "#" |> not && n.HasType(LDDataset.schemaType, ?context = graph.TryGetContext()) |> not then
+                            if LDFile.validate(n, ?context = graph.TryGetContext()) && n.Id.Contains "#" |> not && isOnlineRessource n.Id |> not && n.HasType(LDDataset.schemaType, ?context = graph.TryGetContext()) |> not then
                                 Some n.Id
                             else
                                 None

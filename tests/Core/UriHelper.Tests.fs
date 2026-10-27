@@ -13,12 +13,14 @@ let private tests_createUri =
             let expectedUri = @"http://purl.org/nfdi4plants/ontology/dpbo/DPBO_0002006"
             Expect.equal uri expectedUri ""
         )
+        // https://github.com/nfdi4plants/ARCtrl/issues/551
+        // https://github.com/nfdi4plants/ARCtrl/issues/391
         testCase "MS" (fun () ->
             let tsr = "MS"
             let localTan = "1000121"
 
             let uri = Helper.Url.createOAUri tsr localTan
-            let expectedUri = @"https://www.ebi.ac.uk/ols4/ontologies/ms/classes/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FMS_1000121"
+            let expectedUri = @"http://purl.obolibrary.org/obo/MS_1000121"
             Expect.equal uri expectedUri ""
         )
         testCase "PO" (fun () ->
@@ -26,7 +28,7 @@ let private tests_createUri =
             let localTan = "0007033"
 
             let uri = Helper.Url.createOAUri tsr localTan
-            let expectedUri = @"https://www.ebi.ac.uk/ols4/ontologies/po/classes/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FPO_0007033"
+            let expectedUri = @"http://purl.obolibrary.org/obo/PO_0007033"
             Expect.equal uri expectedUri ""
         )
         testCase "RO" (fun () ->
@@ -34,7 +36,7 @@ let private tests_createUri =
             let localTan = "0002533"
 
             let uri = Helper.Url.createOAUri tsr localTan
-            let expectedUri = @"https://www.ebi.ac.uk/ols4/ontologies/ro/classes/http%253A%252F%252Fpurl.obolibrary.org%252Fobo%252FRO_0002533"
+            let expectedUri = @"http://purl.obolibrary.org/obo/RO_0002533"
             Expect.equal uri expectedUri ""
         )
         testCase "EFO" (fun () ->
