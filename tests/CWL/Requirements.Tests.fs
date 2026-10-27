@@ -128,22 +128,6 @@ let testRequirementDecode =
                     Expect.stringContains error.Message "class" "The error names the missing field."
                 | None -> failwith "A hint without a class must fail."
 
-            testCase "A SchemaDefRequirement hint that a requirement overrides keeps type names that do not resolve" <| fun _ ->
-                let tool (hintFields: string) (requirement: bool) =
-                    let header = [ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo" ]
-                    let overriding = [ "requirements:"; "  - class: SchemaDefRequirement"; "    types:"; "      - name: A"; "        type: enum"; "        symbols: [x]" ]
-                    let hint = [ "hints:"; "  - class: SchemaDefRequirement"; "    types:"; "      - name: B"; "        type: record"; "        fields:"; "          a: " + hintFields ]
-                    String.concat "\n" (header @ (if requirement then overriding else []) @ hint @ [ "inputs: {}"; "outputs: {}"; "" ])
-                let overridden = Decode.decodeCommandLineTool (tool "Nope" true)
-                // Asserted through a bool, because the Python backend drops an empty branch of a match in statement position.
-                let isKnownSchemaDef = match overridden.Hints.Value.[0] with | KnownHint (SchemaDefRequirement _) -> true | _ -> false
-                Expect.isTrue isKnownSchemaDef "The hint is a known SchemaDefRequirement."
-                match decodeError (fun () -> Decode.decodeCommandLineTool (tool "Nope" false) |> ignore) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) "hints[0].types[0].fields.a" "The error shows the type of the field."
-                    Expect.stringContains error.Message "Invalid CWL type: Nope" "The error names the type."
-                | None -> failwith "A hint that applies must name types that resolve."
-
             testCase "Unknown requirement class still fails for requirements" <| fun _ ->
                 let yaml = """requirements:
   - class: CustomVendorRequirement
@@ -1214,243 +1198,7 @@ baseCommand: echo
             for input in (ListEntry.values decoded.Inputs.Value) do
                 Expect.equal (inputTypeOf (ListEntry.values roundTripped.Inputs.Value) input.Name) input.Type_ $"The type of {input.Name} survives the round trip."
             Expect.sequenceEqual roundTripped.Requirements.Value decoded.Requirements.Value "The definitions survive the round trip."
-        testCase "the requirements in map syntax define names for the inline runs of the steps" <| fun _ ->
-            let decoded = Decode.decodeWorkflow TestObjects.CWL.Requirements.SchemaDefTypes.workflowFile
-            Expect.equal (inputTypeOf (ListEntry.values decoded.Inputs) "origin") (Some (Reference "#pipeline/Point")) "The workflow names a type that its map syntax defines."
-            let inlineToolOf (index: int) = Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values decoded.Steps).[index].Run) "The step runs an inline tool."
-            Expect.equal (inputTypeOf (ListEntry.values (inlineToolOf 0).Inputs.Value) "from") (Some point) "The inline tool of move names a type of the workflow."
-            Expect.equal (inputTypeOf (ListEntry.values (inlineToolOf 1).Inputs.Value) "by") (Some (Union (ResizeArray [ Null; Reference "Offset" ]))) "The inline tool of shift names a type of its step."
-        testCase "a type is named through the id of the enclosing process" <| fun _ ->
-            let decoded = Decode.decodeWorkflow TestObjects.CWL.Requirements.SchemaDefTypes.workflowFile
-            let inlineTool = Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values decoded.Steps).[0].Run) "The step runs an inline tool."
-            Expect.equal (inputTypeOf (ListEntry.values inlineTool.Inputs.Value) "again") (Some (Reference "#pipeline/Point")) "The id of the workflow and the name make the reference."
-        testCase "the inline runs of nested steps find the type of the workflow by walking up the ids" <| fun _ ->
-            let decoded = Decode.decodeWorkflow TestObjects.CWL.Requirements.SchemaDefTypes.nestedWorkflowFile
-            let sub = Expect.wantSome (WorkflowStepRunOps.tryGetWorkflow (ListEntry.values decoded.Steps).[0].Run) "The step runs an inline workflow."
-            let deep = Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values sub.Steps).[0].Run) "The inner step runs an inline tool."
-            Expect.equal (inputTypeOf (ListEntry.values deep.Inputs.Value) "p") (Some point) "The tool two steps down names the type of the workflow."
-        testCase "a process with an id names its types with the id, absolute or relative" <| fun _ ->
-            let yaml = tool """id: t
-requirements:
-  - class: SchemaDefRequirement
-    types:
-      - name: Point
-        type: record
-        fields:
-          x: int
-inputs:
-  a: "#t/Point"
-  b: t/Point
-  c: "#t/Point[]"
-outputs: {}"""
-            let inputs = (ListEntry.values (Decode.decodeCommandLineTool yaml).Inputs.Value)
-            Expect.equal (inputTypeOf inputs "a") (Some (Reference "#t/Point")) "The absolute id is a reference."
-            Expect.equal (inputTypeOf inputs "b") (Some (Reference "t/Point")) "The id behind the root is a reference."
-            Expect.equal (inputTypeOf inputs "c") (Some (Array (InputArraySchema(Reference "#t/Point")))) "The shorthand works with an absolute id."
-        testCase "a name that starts a type definition is absolute in the document" <| fun _ ->
-            let yaml = tool """id: t
-requirements:
-  - class: SchemaDefRequirement
-    types:
-      - name: "#Point"
-        type: record
-        fields:
-          x: int
-inputs:
-  a: "#Point"
-  b: Point
-outputs: {}"""
-            let inputs = (ListEntry.values (Decode.decodeCommandLineTool yaml).Inputs.Value)
-            Expect.equal (inputTypeOf inputs "a") (Some (Reference "#Point")) "The absolute name is a reference."
-            Expect.equal (inputTypeOf inputs "b") (Some point) "The bare name finds the type at the root of the document."
-        testCase "the processes of a packed document name each other's types by id" <| fun _ ->
-            let graph = match Decode.decodeCWLDocument TestObjects.CWL.Workflow.PackedDocument.siblingTypesFile with
-                        | CWLDocument.Graph graph -> graph
-                        | other -> failwith $"Expected a packed document but got %A{other}"
-            let other = match graph.Processes.[1] with
-                        | CommandLineTool tool -> tool
-                        | unit -> failwith $"Expected a command line tool but got %A{unit}"
-            Expect.equal (inputTypeOf (ListEntry.values other.Inputs.Value) "absolute") (Some (Reference "#main/Point")) "The absolute id is a reference."
-            Expect.equal (inputTypeOf (ListEntry.values other.Inputs.Value) "relative") (Some (Reference "main/Point")) "The id behind the root is a reference."
-        testCase "a process of a packed document that no step runs may name the types of its siblings" <| fun _ ->
-            let graph = match Decode.decodeCWLDocument TestObjects.CWL.Workflow.PackedDocument.unreachedMemberNamesSiblingTypeFile with
-                        | CWLDocument.Graph graph -> graph
-                        | other -> failwith $"Expected a packed document but got %A{other}"
-            let place = match CWLGraph.tryFindProcess "place" graph with
-                        | Some (CommandLineTool tool) -> tool
-                        | other -> failwith $"Expected the tool place but got %A{other}"
-            Expect.equal (inputTypeOf (ListEntry.values place.Inputs.Value) "at") (Some (Reference "#other/Q")) "A runner may start with place, so the tool may name any type of the document."
-        testCase "a process that only a process other than main runs may name the types of its siblings" <| fun _ ->
-            let graph = match Decode.decodeCWLDocument TestObjects.CWL.Workflow.PackedDocument.unreachedWorkflowRunsMemberNamesSiblingTypeFile with
-                        | CWLDocument.Graph graph -> graph
-                        | other -> failwith $"Expected a packed document but got %A{other}"
-            let place = match CWLGraph.tryFindProcess "place" graph with
-                        | Some (CommandLineTool tool) -> tool
-                        | other -> failwith $"Expected the tool place but got %A{other}"
-            Expect.equal (inputTypeOf (ListEntry.values place.Inputs.Value) "at") (Some (Reference "#shift/Offset")) "A runner may start with extra, so its steps take the types of the whole document."
-        testCase "a process of a packed document names the types in force at the steps that run it" <| fun _ ->
-            let cases =
-                [ "a step of main", TestObjects.CWL.Workflow.PackedDocument.typesFile
-                  "two steps that share the requirement of main", TestObjects.CWL.Workflow.PackedDocument.memberRunByTwoStepsWithSharedTypesFile
-                  "a hint of the tool, which the requirement of main overrides", TestObjects.CWL.Workflow.PackedDocument.memberWithOwnHintFile
-                  "a step of a workflow that main runs", TestObjects.CWL.Workflow.PackedDocument.nestedMemberFile
-                  "a step of an inline workflow", TestObjects.CWL.Workflow.PackedDocument.memberRunFromInlineWorkflowFile ]
-            for (name, yaml) in cases do
-                let graph = match Decode.decodeCWLDocument yaml with
-                            | CWLDocument.Graph graph -> graph
-                            | other -> failwith $"{name}: expected a packed document but got %A{other}"
-                match CWLGraph.tryFindProcess "place" graph with
-                | Some (CommandLineTool place) -> Expect.equal (inputTypeOf (ListEntry.values place.Inputs.Value) "at") (Some (Reference "#main/Point")) $"{name}: the tool names the type of main."
-                | other -> failwith $"{name}: expected the tool place but got %A{other}"
-        testCase "a bare name finds no type behind the id of its process" <| fun _ ->
-            let withId (portType: string) =
-                tool ("""id: t
-requirements:
-  - class: SchemaDefRequirement
-    types:
-      - name: Point
-        type: record
-        fields:
-          x: int
-inputs:
-  p: """ + portType + """
-outputs: {}""")
-            let siblingStep = """cwlVersion: v1.2
-class: Workflow
-id: wf
-inputs: {}
-outputs: {}
-steps:
-  one:
-    requirements:
-      - class: SchemaDefRequirement
-        types:
-          - name: Offset
-            type: enum
-            symbols: [a]
-    run: one.cwl
-    in: {}
-    out: []
-  two:
-    run:
-      class: CommandLineTool
-      baseCommand: x
-      inputs:
-        p: Offset
-      outputs: {}
-    in: {}
-    out: []"""
-            let ownDefinition = """cwlVersion: v1.2
-class: Workflow
-id: wf
-inputs: {}
-outputs: {}
-steps:
-  move:
-    run:
-      class: CommandLineTool
-      baseCommand: x
-      requirements:
-        - class: SchemaDefRequirement
-          types:
-            - name: Foo
-              type: enum
-              symbols: [a]
-      inputs:
-        p: Foo
-      outputs: {}
-    in: {}
-    out: []"""
-            let cases =
-                [ "a bare name in a process with an id", "inputs.p", "Invalid CWL type: Point", withId "Point", false
-                  "a name with # and no id in a process with an id", "inputs.p", "Invalid CWL type: #Point", withId "\"#Point\"", false
-                  "a bare name for the type of another step", "steps.two.run.inputs.p", "Invalid CWL type: Offset", siblingStep, false
-                  "a bare name for a type that the inline run defines itself", "steps.move.run.inputs.p", "Invalid CWL type: Foo", ownDefinition, false
-                  "a bare name in a sibling process of a packed document", "$graph[1].inputs.absolute", "Invalid CWL type: Point", TestObjects.CWL.Workflow.PackedDocument.siblingTypesFile.Replace("\"#main/Point\"", "Point"), true ]
-            for (name, path, message, yaml, packed) in cases do
-                match decodeError (fun () -> (if packed then Decode.decodeCWLDocument yaml |> ignore else Decode.decodeCWLProcessingUnit yaml |> ignore)) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) path $"{name}: the error should show the place of the type."
-                    Expect.stringContains error.Message message $"{name}: the error should say what is wrong."
-                    Expect.isSome error.Span $"{name}: the error should have the place in the text."
-                | None -> failwith $"{name} must fail"
-        testCase "the innermost SchemaDefRequirement of a list applies" <| fun _ ->
-            let decoded = Decode.decodeCommandLineTool TestObjects.CWL.Requirements.SchemaDefOverride.twoRequirementsFile
-            Expect.equal (inputTypeOf (ListEntry.values decoded.Inputs.Value) "y") (Some (Reference "B")) "The port names the type of the second requirement."
-        testCase "a requirement overrides a hint, and a hint applies where no requirement overrides it" <| fun _ ->
-            let named = TestObjects.CWL.Requirements.SchemaDefOverride.requirementAndHintFile.Replace("y: B", "y: A")
-            let tool = Decode.decodeCommandLineTool named
-            Expect.equal (inputTypeOf (ListEntry.values tool.Inputs.Value) "y") (Some (Reference "A")) "The port names the type of the requirement."
-            let inlineToolOf (yaml: string) =
-                let workflow = Decode.decodeWorkflow yaml
-                Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values workflow.Steps).[0].Run) "The step runs an inline tool."
-            let optional (name: string) = Some (Union (ResizeArray [ Null; Reference name ]))
-            let outer = TestObjects.CWL.Requirements.SchemaDefOverride.outerRequirementInnerHintFile.Replace("p: run/B?", "p: A?")
-            Expect.equal (inputTypeOf (ListEntry.values (inlineToolOf outer).Inputs.Value) "p") (optional "A") "The requirement of the workflow reaches the inline tool."
-            let inner = TestObjects.CWL.Requirements.SchemaDefOverride.innerHintFile.Replace("p: A?", "p: run/B?")
-            Expect.equal (inputTypeOf (ListEntry.values (inlineToolOf inner).Inputs.Value) "p") (optional "run/B") "The hint of the tool applies, because no requirement overrides it."
-        testCase "the requirement of a process overrides the one of its step" <| fun _ ->
-            let yaml = TestObjects.CWL.Requirements.SchemaDefOverride.runOverridesStepFile.Replace("p: \"#wf/s/Offset?\"", "p: run/Foo?")
-            let workflow = Decode.decodeWorkflow yaml
-            let tool = Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values workflow.Steps).[0].Run) "The step runs an inline tool."
-            Expect.equal (inputTypeOf (ListEntry.values tool.Inputs.Value) "p") (Some (Union (ResizeArray [ Null; Reference "run/Foo" ]))) "The tool names the type of its own requirement."
-        testCase "a type that another SchemaDefRequirement defines is a decode error where the innermost one applies" <| fun _ ->
-            let over = TestObjects.CWL.Requirements.SchemaDefOverride.twoRequirementsFile
-            let cases =
-                [ "a port names the type of a hint that a requirement overrides", "inputs.y", TestObjects.CWL.Requirements.SchemaDefOverride.requirementAndHintFile
-                  "a port names the type of the first of two requirements", "inputs.y", over.Replace("y: B", "y: A")
-                  "the second of two requirements names the type of the first", "requirements[1].types[0].fields.a", TestObjects.CWL.Requirements.SchemaDefOverride.secondRequirementNamesFirstFile
-                  "the requirement of a step names the type of its workflow", "steps.move.requirements[0].types[0].fields.a", TestObjects.CWL.Requirements.SchemaDefOverride.stepOverridesWorkflowFile
-                  "a tool names the type of the hint of its workflow, which its own hint overrides", "steps.s.run.inputs.p", TestObjects.CWL.Requirements.SchemaDefOverride.innerHintFile
-                  "a tool names the type of its own hint, which the requirement of its workflow overrides", "steps.s.run.inputs.p", TestObjects.CWL.Requirements.SchemaDefOverride.outerRequirementInnerHintFile
-                  "a workflow port names the type of a step", "inputs.o", TestObjects.CWL.Requirements.SchemaDefOverride.workflowPortStepTypeFile
-                  "a tool names the type of its step, which its own requirement overrides", "steps.s.run.inputs.p", TestObjects.CWL.Requirements.SchemaDefOverride.runOverridesStepFile
-                  "a port names a file that an overridden requirement imports", "inputs.x", TestObjects.CWL.Requirements.SchemaDefOverride.importInOverriddenRequirementFile
-                  "a port names a file that an overridden hint imports", "inputs.x", TestObjects.CWL.Requirements.SchemaDefOverride.importInOverriddenHintFile
-                  "a process of a packed document names a type of main, and its own requirement overrides the types of main", "$graph[1].inputs.at", TestObjects.CWL.Workflow.PackedDocument.memberWithOwnTypesFile
-                  "a process that a step runs names a type that only a sibling defines", "$graph[1].inputs.at", TestObjects.CWL.Workflow.PackedDocument.reachedMemberNamesSiblingTypeFile
-                  "a process that two steps run names a type that the requirement of one step overrides", "$graph[1].inputs.at", TestObjects.CWL.Workflow.PackedDocument.memberRunByTwoStepsFile
-                  "a process names the type of its own hint, which the requirement of the workflow that runs it overrides", "$graph[1].inputs.at", TestObjects.CWL.Workflow.PackedDocument.memberWithOwnHintFile.Replace("at: \"#main/Point\"", "at: \"#place/Other\"")
-                  "a process two workflows down names a type that only a sibling defines", "$graph[2].inputs.at", TestObjects.CWL.Workflow.PackedDocument.nestedMemberNamesSiblingTypeFile
-                  "a process that an inline workflow runs names a type that the requirement of the step overrides", "$graph[1].inputs.at", TestObjects.CWL.Workflow.PackedDocument.memberRunFromInlineWorkflowWithStepTypesFile
-                  "the process main names a type that only a sibling defines", "$graph[0].inputs.at.type", TestObjects.CWL.Workflow.PackedDocument.mainNamesSiblingTypeFile
-                  "a process that main runs names a type that only a sibling defines", "$graph[1].inputs.at", TestObjects.CWL.Workflow.PackedDocument.mainRunsMemberNamesSiblingTypeFile
-                  "a process that a workflow of main runs names a type that only a sibling defines", "$graph[2].inputs.at", TestObjects.CWL.Workflow.PackedDocument.mainReachesMemberThroughWorkflowNamesSiblingTypeFile ]
-            for (name, path, yaml) in cases do
-                match decodeError (fun () -> Decode.decodeCWLDocument yaml |> ignore) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) path $"{name}: the error should show the place of the type."
-                    Expect.stringContains error.Message "The innermost SchemaDefRequirement applies" $"{name}: the error should say why the type does not apply."
-                    Expect.isSome error.Span $"{name}: the error should have the place in the text."
-                | None -> failwith $"{name} must fail"
-        testCase "the first SchemaDefRequirement of the workflows around a tool reaches it and the requirement of an inner workflow keeps to its own ports" <| fun _ ->
-            let file = TestObjects.CWL.Requirements.SchemaDefNested.nestedWorkflowsFile.Replace("\r\n", "\n")
-            let decode (reference: string) = Decode.decodeWorkflow (file.Replace("{0}", reference))
-            let innerTool (workflow: CWLWorkflowDescription) =
-                let innerWorkflow = Expect.wantSome (WorkflowStepRunOps.tryGetWorkflow (ListEntry.values workflow.Steps).[0].Run) "The step runs an inline workflow."
-                Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values innerWorkflow.Steps).[0].Run) "The inner step runs an inline tool."
-            Expect.equal (inputTypeOf (ListEntry.values (innerTool (decode "#wf/Outer")).Inputs.Value) "p") (Some (Reference "#wf/Outer")) "The tool below both workflows names the type of the outermost one."
-            match decodeError (fun () -> decode "#wf/s/run/Inner" |> ignore) with
-            | Some error ->
-                Expect.equal (DecodeError.pathText error) "steps.s.run.steps.t.run.inputs.p" "The error shows the port of the tool."
-                Expect.stringContains error.Message "A nested workflow hands its steps the SchemaDefRequirement that it inherited, the outermost one." "The error says why the type does not apply."
-            | None -> failwith "The tool below the nested workflow cannot name the type of the nested workflow."
-        testCase "a requirement of a step or a tool replaces the one that a nested workflow hands down" <| fun _ ->
-            let file = TestObjects.CWL.Requirements.SchemaDefNested.nestedWorkflowsFile.Replace("\r\n", "\n")
-            let withStepTypes = file.Replace("          in:\n            p:\n              default: a\n          out: []\n", "          requirements:\n            - class: SchemaDefRequirement\n              types:\n                - name: Step\n                  type: enum\n                  symbols: [a]\n          in:\n            p:\n              default: a\n          out: []\n")
-            Expect.equal (withStepTypes.Contains "name: Step") true "The fixture holds the requirement of the step."
-            let innerTool (workflow: CWLWorkflowDescription) =
-                let innerWorkflow = Expect.wantSome (WorkflowStepRunOps.tryGetWorkflow (ListEntry.values workflow.Steps).[0].Run) "The step runs an inline workflow."
-                Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values innerWorkflow.Steps).[0].Run) "The inner step runs an inline tool."
-            Expect.equal (inputTypeOf (ListEntry.values (innerTool (Decode.decodeWorkflow (withStepTypes.Replace("{0}", "#wf/s/run/t/Step")))).Inputs.Value) "p") (Some (Reference "#wf/s/run/t/Step")) "The tool names the type of its step."
-            match decodeError (fun () -> Decode.decodeWorkflow (withStepTypes.Replace("{0}", "#wf/Outer")) |> ignore) with
-            | Some error -> Expect.equal (DecodeError.pathText error) "steps.s.run.steps.t.run.inputs.p" "The requirement of the step replaces the one of the outer workflow."
-            | None -> failwith "The requirement of the step replaces the one of the workflow."
-            let withToolTypes = file.Replace("            baseCommand: x\n", "            baseCommand: x\n            requirements:\n              - class: SchemaDefRequirement\n                types:\n                  - name: Mine\n                    type: enum\n                    symbols: [a]\n")
-            match decodeError (fun () -> Decode.decodeWorkflow (withToolTypes.Replace("{0}", "#wf/Outer")) |> ignore) with
-            | Some error -> Expect.equal (DecodeError.pathText error) "steps.s.run.steps.t.run.inputs.p" "The requirement of the tool replaces the one that the nested workflow hands down."
-            | None -> failwith "The requirement of the tool replaces the one of the workflow."
-        testCase "an array definition of a SchemaDefRequirement decodes, reads back equal and no port can name it" <| fun _ ->
+        testCase "an array definition of a SchemaDefRequirement decodes and reads back equal" <| fun _ ->
             let yaml = tool "requirements:\n  - class: SchemaDefRequirement\n    types:\n      - name: Ints\n        type: array\n        items: int\n        label: some numbers\n        arc:note: kept\ninputs: {}\noutputs: {}\n"
             let decoded = Decode.decodeCommandLineTool yaml
             match decoded.Requirements.Value.[0] with
@@ -1466,66 +1214,7 @@ steps:
             let written = Encode.encodeToolDescription decoded
             Expect.stringContains written "type: array" "The array definition is written as a schema."
             Expect.equal (Decode.decodeCommandLineTool written) decoded "The written text should decode to the same tool."
-            match decodeError (fun () -> Decode.decodeCommandLineTool (yaml.Replace("inputs: {}", "inputs:\n  s: Ints")) |> ignore) with
-            | Some error ->
-                Expect.equal (DecodeError.pathText error) "inputs.s" "The error shows the port that names the array."
-                Expect.stringContains error.Message "Invalid CWL type: Ints" "cwltool knows no type of that name."
-            | None -> failwith "A port cannot name an array definition."
-        testCase "a named schema in the type of a port is a type of the process that other ports name by its id" <| fun _ ->
-            let file = TestObjects.CWL.Requirements.SchemaDefNested.portSchemaFile.Replace("\r\n", "\n")
-            let decode (second: string) (output: string) = Decode.decodeCommandLineTool (file.Replace("{0}", second).Replace("{1}", output))
-            let decoded = decode "#a/Color" "#a/Color"
-            Expect.equal (inputTypeOf (ListEntry.values decoded.Inputs.Value) "b") (Some (Reference "#a/Color")) "The second port names the enum of the first one by its id."
-            Expect.equal ((ListEntry.values decoded.Outputs) |> Seq.find (fun output -> output.Name = "o")).Type_ (Some (Reference "#a/Color")) "An output names it too."
-            Expect.equal (Decode.decodeCommandLineTool (Encode.encodeToolDescription decoded)) decoded "The written text should decode to the same tool."
-            let withId = Decode.decodeCommandLineTool ((file.Replace("{0}", "#t/a/Color").Replace("{1}", "#t/a/Color")).Replace("baseCommand: echo\n", "id: t\nbaseCommand: echo\n"))
-            Expect.equal (inputTypeOf (ListEntry.values withId.Inputs.Value) "b") (Some (Reference "#t/a/Color")) "The id of the process leads the id."
-            for (name, second) in [ "a bare name", "Color"; "the name below the wrong port", "#b/Color"; "an unknown name", "#a/Shade" ] do
-                match decodeError (fun () -> decode second "#a/Color" |> ignore) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) "inputs.b.type" $"{name}: the error should show the type of the port."
-                    Expect.stringContains error.Message "Invalid CWL type" $"{name}: the error should say that the type is invalid."
-                | None -> failwith $"{name} must fail"
-        testCase "the id of an inline run lies below run, and only that spelling names its types" <| fun _ ->
-            let file = TestObjects.CWL.Requirements.SchemaDefIds.inlineRunWithIdFile
-            let workflow = Decode.decodeWorkflow file
-            let inlineTool = Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values workflow.Steps).[0].Run) "The step runs an inline tool."
-            Expect.equal (inputTypeOf (ListEntry.values inlineTool.Inputs.Value) "x") (Some (Union (ResizeArray [ Null; Reference "#wf/s/run/inner/Point" ]))) "The id of the tool starts with the id of the step and run."
-            let cases =
-                [ "a bare name", "Point?"
-                  "the id of the tool without the step", "\"#inner/Point?\""
-                  "the id of the tool below the step", "\"#wf/s/inner/Point?\"" ]
-            for (name, port) in cases do
-                match decodeError (fun () -> Decode.decodeWorkflow (file.Replace("x: \"#wf/s/run/inner/Point?\"", "x: " + port)) |> ignore) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) "steps.s.run.inputs.x" $"{name}: the error should show the place of the type."
-                    Expect.stringContains error.Message "Invalid CWL type" $"{name}: the error should say that the type is invalid."
-                | None -> failwith $"{name} must fail"
-        testCase "named schemas inside a definition get ids below the id of their field" <| fun _ ->
-            let decoded = Decode.decodeCommandLineTool TestObjects.CWL.Requirements.SchemaDefIds.nestedNamedFile
-            let expected =
-                [ "color", "#Outer/inner/Color"
-                  "shade", "#Outer/list/Shade"
-                  "leaf", "#Outer/deep/Mid/leaf/Leaf"
-                  "mid", "#Outer/deep/Mid"
-                  "pick", "#Outer/pick/Pick"
-                  "kind", "#Listed/item/Kind" ]
-            for (port, id) in expected do
-                Expect.equal (inputTypeOf (ListEntry.values decoded.Inputs.Value) port) (Some (Union (ResizeArray [ Null; Reference id ]))) $"The port {port} names the schema by {id}."
-            let withProcessId = Decode.decodeCommandLineTool TestObjects.CWL.Requirements.SchemaDefIds.nestedNamedInProcessWithIdFile
-            Expect.equal (inputTypeOf (ListEntry.values withProcessId.Inputs.Value) "c") (Some (Union (ResizeArray [ Null; Reference "#t/Outer/inner/Color" ]))) "The id of the process leads the id."
-        testCase "a nested schema is no name of its own and its id needs the id of the process" <| fun _ ->
-            let nested = TestObjects.CWL.Requirements.SchemaDefIds.nestedNamedFile
-            let cases =
-                [ "a bare name of a nested schema", "inputs.color", nested.Replace("color: \"#Outer/inner/Color?\"", "color: Color?")
-                  "an id without the id of the process", "inputs.c", TestObjects.CWL.Requirements.SchemaDefIds.nestedNamedInProcessWithIdFile.Replace("\"#t/Outer/inner/Color?\"", "\"#Outer/inner/Color?\"") ]
-            for (name, path, yaml) in cases do
-                match decodeError (fun () -> Decode.decodeCommandLineTool yaml |> ignore) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) path $"{name}: the error should show the place of the type."
-                    Expect.stringContains error.Message "Invalid CWL type" $"{name}: the error should say that the type is invalid."
-                | None -> failwith $"{name} must fail"
-        testCase "an unnamed definition decodes with its own name, adds no id and reads back equal" <| fun _ ->
+        testCase "an unnamed definition decodes without a name and reads back equal" <| fun _ ->
             let decoded = Decode.decodeCommandLineTool TestObjects.CWL.Requirements.SchemaDefIds.unnamedDefinitionsFile
             let definitions =
                 match decoded.Requirements.Value.[0] with
@@ -1559,59 +1248,21 @@ outputs: {}"""
                 | other -> failwith $"Expected a record but got %A{other}"
             Expect.equal (InputRecordSchema.tryGetFieldType "next" node) (Some (Union (ResizeArray [ Null; Reference "Node" ]))) "The field names its own record."
             Expect.equal (inputTypeOf (ListEntry.values decoded.Inputs.Value) "head") (Some (Reference "Node")) "The port names the record."
-        testCase "a definition that names a type defined further down is a decode error at the type" <| fun _ ->
+        testCase "a type name is a reference as written, whatever SchemaDefRequirement defines it, and reads back equal" <| fun _ ->
+            // The decoder resolves no name, so a name that cwltool finds nowhere decodes as well as one that it finds.
             let cases =
-                [ "a record before the record that it names", "requirements[0].types[0].fields.from", "Invalid CWL type: Point. The SchemaDefRequirement defines this type further down.", tool """requirements:
-  - class: SchemaDefRequirement
-    types:
-      - name: Segment
-        type: record
-        fields:
-          from: Point
-      - name: Point
-        type: record
-        fields:
-          x: int
-inputs:
-  s: Segment
-outputs: {}"""
-                  "two records that name each other", "requirements[0].types[0].fields.b", "Invalid CWL type: B. The SchemaDefRequirement defines this type further down.", tool """requirements:
-  - class: SchemaDefRequirement
-    types:
-      - name: A
-        type: record
-        fields:
-          b: B?
-      - name: B
-        type: record
-        fields:
-          a: A?
-inputs:
-  x: A
-outputs: {}"""
-                  "an array of a type further down", "requirements[0].types[0].fields.all", "Invalid CWL type: Point. The SchemaDefRequirement defines this type further down.", tool """requirements:
-  - class: SchemaDefRequirement
-    types:
-      - name: Cloud
-        type: record
-        fields:
-          all: Point[]
-      - name: Point
-        type: record
-        fields:
-          x: int
-inputs: {}
-outputs: {}""" ]
-            for (name, path, message, yaml) in cases do
-                match decodeError (fun () -> Decode.decodeCommandLineTool yaml |> ignore) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) path $"{name}: the error should show the place of the type."
-                    Expect.stringContains error.Message message $"{name}: the error should say that the definition comes later."
-                    Expect.isSome error.Span $"{name}: the error should have the place in the text."
-                | None -> failwith $"{name} must fail"
-        testCase "a type that the hints define can be named" <| fun _ ->
-            let decoded = Decode.decodeCommandLineTool TestObjects.CWL.Requirements.SchemaDefTypes.hintsFile
-            Expect.equal (ListEntry.values decoded.Inputs.Value).[0].Type_ (Some (Reference "Tag")) "The hint defines Tag."
+                [ "a name that nothing defines", tool "inputs:\n  x: Missing\noutputs: {}\n", "Missing"
+                  "a name that the requirement defines further down", tool "requirements:\n  - class: SchemaDefRequirement\n    types:\n      - {name: A, type: record, fields: {b: B}}\n      - {name: B, type: enum, symbols: [x]}\ninputs:\n  x: A\noutputs: {}\n", "A"
+                  "a name behind a file that is not imported", tool "requirements:\n  - class: SchemaDefRequirement\n    types:\n      - $import: shapes.yml\ninputs:\n  x: other.yml#Circle\noutputs: {}\n", "other.yml#Circle"
+                  "a name of a hint that a requirement overrides", tool "requirements:\n  - class: SchemaDefRequirement\n    types:\n      - {name: A, type: enum, symbols: [x]}\nhints:\n  - class: SchemaDefRequirement\n    types:\n      - {name: B, type: enum, symbols: [y]}\ninputs:\n  x: B\noutputs: {}\n", "B" ]
+            for (name, yaml, reference) in cases do
+                let decoded = Decode.decodeCommandLineTool yaml
+                Expect.equal (inputTypeOf (ListEntry.values decoded.Inputs.Value) "x") (Some (Reference reference)) $"{name}: the name is a reference."
+                Expect.equal (Decode.decodeCommandLineTool (Encode.encodeToolDescription decoded)) decoded $"{name}: the written text should decode to the same tool."
+            let workflow = "cwlVersion: v1.2\nclass: Workflow\ninputs:\n  p: Offset\nsteps:\n  move:\n    requirements:\n      - class: SchemaDefRequirement\n        types:\n          - {name: Offset, type: enum, symbols: [a]}\n    run: tool.cwl\n    in: {}\n    out: []\noutputs: {}\n"
+            let decodedWorkflow = Decode.decodeWorkflow workflow
+            Expect.equal (inputTypeOf (ListEntry.values decodedWorkflow.Inputs) "p") (Some (Reference "Offset")) "A name that only a step defines is a reference for the workflow."
+            Expect.equal (Decode.decodeWorkflow (Encode.encodeWorkflowDescription decodedWorkflow)) decodedWorkflow "The written workflow should decode to the same workflow."
         testCase "an imported file defines the names behind its path" <| fun _ ->
             let yaml = tool """requirements:
   - class: SchemaDefRequirement
@@ -1628,31 +1279,6 @@ outputs: {}"""
             Expect.stringContains encoded "shape: shapes.yml#Circle" "The reference is written as it was read."
             let roundTripped = Decode.decodeCommandLineTool encoded
             Expect.sequenceEqual roundTripped.Requirements.Value decoded.Requirements.Value "The import survives the round trip."
-        testCase "the path of an import and the path of a name count with their . and .. segments resolved" <| fun _ ->
-            let withPaths (imported: string) (name: string) =
-                tool ("""requirements:
-  - class: SchemaDefRequirement
-    types:
-      - $import: """ + imported + """
-inputs:
-  shape: """ + name + """
-outputs: {}""")
-            let sameFile =
-                [ "./shapes.yml", "shapes.yml#Circle"
-                  "shapes.yml", "./shapes.yml#Circle"
-                  "sub/../shapes.yml", "shapes.yml#Circle"
-                  "shapes.yml", "sub/../shapes.yml#Circle"
-                  "./sub/./shapes.yml", "sub/shapes.yml#Circle" ]
-            for (imported, name) in sameFile do
-                let decoded = Decode.decodeCommandLineTool (withPaths imported name)
-                Expect.equal (ListEntry.values decoded.Inputs.Value).[0].Type_ (Some (Reference name)) $"{imported} and {name} name one file."
-                Expect.equal decoded.Requirements.Value.[0] (SchemaDefRequirement (ResizeArray [ Imported imported ])) $"The import {imported} stays as written."
-            for (imported, name) in [ "sub/shapes.yml", "shapes.yml#Circle"; "../shapes.yml", "shapes.yml#Circle" ] do
-                match decodeError (fun () -> Decode.decodeCommandLineTool (withPaths imported name) |> ignore) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) "inputs.shape" $"{imported} and {name} name two files: the error should show the type."
-                    Expect.stringContains error.Message "is not imported by a SchemaDefRequirement of the document." $"{imported} and {name}: the error should say that the file is not imported."
-                | None -> failwith $"{imported} and {name} must fail"
         testCase "a types field that is an import stands for a list with the import" <| fun _ ->
             let whole = tool """requirements:
   - class: SchemaDefRequirement
@@ -1688,67 +1314,6 @@ outputs: {}"""
                 Expect.equal (DecodeError.pathText error) "requirements[0].types" "The error shows the types field."
                 Expect.isSome error.Span "The error has the place in the text."
             | None -> failwith "A mapping with another key is no import."
-        testCase "an unknown name or an unknown path is a decode error at the type" <| fun _ ->
-            let cases =
-                [ "an undefined name", "inputs.x", "Invalid CWL type: Missing", tool """inputs:
-  x: Missing
-outputs: {}"""
-                  "an undefined name with #", "inputs.x", "Invalid CWL type: #Missing", tool """requirements:
-  - class: SchemaDefRequirement
-    types:
-      - name: Point
-        type: enum
-        symbols: [a]
-inputs:
-  x: "#Missing"
-outputs: {}"""
-                  "an array of an undefined name", "inputs.x", "Invalid CWL type: Missing", tool """inputs:
-  x: Missing[]
-outputs: {}"""
-                  "a name behind a file that is not imported", "inputs.x", "The file other.yml is not imported by a SchemaDefRequirement of the document.", tool """requirements:
-  - class: SchemaDefRequirement
-    types:
-      - $import: shapes.yml
-inputs:
-  x: other.yml#Circle
-outputs: {}"""
-                  "a name behind a path when nothing is imported", "outputs.x", "The file shapes.yml is not imported by a SchemaDefRequirement of the document.", tool """inputs: {}
-outputs:
-  x: shapes.yml#Circle"""
-                  "an undefined name in a record field", "inputs.r.type.fields.f", "Invalid CWL type: Missing", tool """inputs:
-  r:
-    type:
-      type: record
-      fields:
-        f: Missing
-outputs: {}""" ]
-            for (name, path, message, yaml) in cases do
-                match decodeError (fun () -> Decode.decodeCommandLineTool yaml |> ignore) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) path $"{name}: the error should show the place of the type."
-                    Expect.stringContains error.Message message $"{name}: the error should say what is wrong."
-                    Expect.isSome error.Span $"{name}: the error should have the place in the text."
-                | None -> failwith $"{name} must fail"
-        testCase "a type that the requirements of a step define is no name for the workflow" <| fun _ ->
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-inputs:
-  p: Offset
-steps:
-  move:
-    requirements:
-      - class: SchemaDefRequirement
-        types:
-          - name: Offset
-            type: enum
-            symbols: [a]
-    run: tool.cwl
-    in: {}
-    out: []
-outputs: {}"""
-            match decodeError (fun () -> Decode.decodeWorkflow yaml |> ignore) with
-            | Some error -> Expect.equal (DecodeError.pathText error) "inputs.p" "The workflow does not see the type of its step."
-            | None -> failwith "The type of a step is not in force for the workflow."
         testCase "references compare and hash by their names" <| fun _ ->
             Expect.equal (Reference "Point") (Reference "Point") "The same name is the same reference."
             Expect.equal (hash (Reference "Point")) (hash (Reference "Point")) "The same name gives the same hash."
@@ -2497,13 +2062,7 @@ let testSchemaSaladDirectivesInRequirements =
                 "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\nrequirements:\n  - {$import: sd.yml}\ninputs:\n  a: " + reference + "\noutputs: {}\n"
             Expect.equal (ListEntry.values (Decode.decodeCommandLineTool (tool "sd.yml#Color")).Inputs.Value).[0].Type_ (Some (Reference "sd.yml#Color")) "The path of the import and the name are the reference."
             Expect.equal (ListEntry.values (Decode.decodeCommandLineTool (tool "sd.yml#Color?")).Inputs.Value).[0].Type_ (Some (Union (ResizeArray [ Null; Reference "sd.yml#Color" ]))) "The optional spelling reads too."
-            Expect.equal (ListEntry.values (Decode.decodeCommandLineTool (tool "\"file:///work/sd.yml#Color\"")).Inputs.Value).[0].Type_ (Some (Reference "file:///work/sd.yml#Color")) "An address with a scheme counts when the document imports a file."
-            for (name, reference) in [ "a bare name", "Color"; "a name behind another path", "other.yml#Color"; "the name with a hash in front", "\"#sd.yml#Color\"" ] do
-                match decodeError (fun () -> Decode.decodeCommandLineTool (tool reference) |> ignore) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) "inputs.a" (sprintf "%s: the error should show the port" name)
-                    Expect.stringContains error.Message "Invalid CWL type" (sprintf "%s: the error should say that the type is invalid" name)
-                | None -> failwith (sprintf "%s must fail" name)
+            Expect.equal (ListEntry.values (Decode.decodeCommandLineTool (tool "\"file:///work/sd.yml#Color\"")).Inputs.Value).[0].Type_ (Some (Reference "file:///work/sd.yml#Color")) "An address with a scheme is a reference."
         testCase "a field that holds no directive is a decode error for a mapping" <| fun _ ->
             let yaml = requirementsOf [ "  - class: DockerRequirement"; "    cwltool:dockerRunOptions:"; "      - $include: options.txt" ]
             match decodeError (fun () -> decodeRequirements yaml |> ignore) with

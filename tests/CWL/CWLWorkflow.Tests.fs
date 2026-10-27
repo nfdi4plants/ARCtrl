@@ -143,17 +143,6 @@ let testImportedEntries =
             let decoded = Decode.decodeCommandLineTool (tool "CommandLineTool" [ "baseCommand: echo" ] inputs outputs)
             Expect.equal (CWLToolDescription.getInputValuesOrEmpty decoded |> Seq.map (fun input -> input.Name) |> List.ofSeq) [ "a" ] "The tool inputs without the import."
             Expect.equal (CWLToolDescription.getOutputValues decoded |> Seq.map (fun output -> output.Name) |> List.ofSeq) [ "o" ] "The tool outputs without the import."
-        testCase "an import among the outputs of an inline process leaves the out field of its step unchecked" <| fun _ ->
-            let inlineStep (outputLines: string list) =
-                workflow
-                    [ "inputs: {}" ]
-                    [ "outputs: {}" ]
-                    ([ "steps:"; "  s:"; "    run:"; "      class: CommandLineTool"; "      baseCommand: echo"; "      inputs: {}" ] @ (outputLines |> List.map (fun line -> "      " + line)) @ [ "    in: {}"; "    out: [r]" ])
-            let withImport = Decode.decodeWorkflow (inlineStep [ "outputs:"; "  - {$import: out.yml}" ])
-            Expect.equal (ListEntry.values withImport.Steps).[0].Out.Count 1 "The step lists the output that the file may hold."
-            match decodeError (fun () -> Decode.decodeWorkflow (inlineStep [ "outputs:"; "  s: string" ]) |> ignore) with
-            | Some error -> Expect.stringContains error.Message "has no output of that name" "Without the import the output is unknown."
-            | None -> failwith "An output that the process lacks must fail."
         testCase "a directive cannot stand for the value of a map entry of the inputs, outputs or steps" <| fun _ ->
             let cases =
                 [ "an input", workflow [ "inputs:"; "  a: {$import: port.yml}" ] [ "outputs: {}" ] [ "steps: {}" ], "inputs.a", "an entry of the inputs"
@@ -254,11 +243,10 @@ let testImportedStepPorts =
                 failsAt name text path message
         testCase "the out field is a list, so a map of outputs is still an error" <| fun _ ->
             failsAt "a map of outputs" (referenced [ "in: {}"; "out: {r: {$import: p.yml}}" ]) "steps.s.out" "Expected a list of outputs, found a mapping."
-        testCase "the out field of a step with an inline process is checked for the entries that name an output" <| fun _ ->
+        testCase "the out field of a step with an inline process keeps the directives that stand for outputs" <| fun _ ->
             let inlineStep (outLine: string) =
                 workflow [ "run:"; "  class: CommandLineTool"; "  baseCommand: echo"; "  inputs: {}"; "  outputs:"; "    r: stdout"; "in: {}"; outLine ]
             Expect.equal (stepOf (inlineStep "out: [r, {$import: more.yml}, {$include: id.txt}]")).Out.Count 3 "The directives stand for outputs of files."
-            failsAt "a name beside an import" (inlineStep "out: [other, {$import: more.yml}]") "steps.s.out[0]" "has no output of that name"
     ]
 
 let testStringLists =
@@ -1692,7 +1680,6 @@ let testReachabilityInPackedDocuments =
     let workflow (id: string) (stepLines: string list) =
         [ "  - id: " + id; "    class: Workflow"; "    requirements:"; "      SubworkflowFeatureRequirement: {}"; "    inputs: []"; "    outputs: []"; "    steps:"; "      s:" ] @ (stepLines |> List.map (fun line -> "        " + line))
     let graph (members: string list list) = String.concat "\n" ([ "cwlVersion: v1.2"; "$graph:" ] @ List.concat members @ [ "" ])
-    let runTool = [ "run: \"#tool\""; "in: {}"; "out: [nothing]" ]
     let failsAt (name: string) (yaml: string) (path: string) (message: string) =
         match decodeError (fun () -> Decode.decodeCWLDocument yaml |> ignore) with
         | Some error ->
@@ -1705,13 +1692,6 @@ let testReachabilityInPackedDocuments =
         let written = Encode.encodeCWLDocument decoded
         Expect.equal (Decode.decodeCWLDocument written) decoded (sprintf "%s: the written text should decode to the same document." name)
     testList "Reachability of the checks in a packed document" [
-        testCase "a step of a process that the process main does not reach is not checked against the process that it runs" <| fun _ ->
-            let unreachable = graph [ mainTool; tool; workflow "other" runTool ]
-            expectReadsBack "unreachable" unreachable
-            let reached = graph [ workflow "main" [ "run: \"#other\""; "in: {}"; "out: []" ]; tool; workflow "other" runTool ]
-            failsAt "reached through another process" reached "$graph[2].steps.s.out[0]" "has no output of that name"
-            let direct = graph [ workflow "main" runTool; tool ]
-            failsAt "reached by main" direct "$graph[0].steps.s.out[0]" "has no output of that name"
         testCase "a step that runs a process of the document by an id that nothing defines is an error where the process main reaches it" <| fun _ ->
             let missing = [ "run: \"#nothing\""; "in: {}"; "out: []" ]
             expectReadsBack "unreachable" (graph [ mainTool; workflow "other" missing ])
@@ -1721,19 +1701,6 @@ let testReachabilityInPackedDocuments =
             let toA = [ "run: \"#a\""; "in: {}"; "out: []" ]
             expectReadsBack "unreachable" (graph [ mainTool; workflow "a" toB; workflow "b" toA ])
             failsAt "reached" (graph [ workflow "main" toB; workflow "a" toB; workflow "b" toA ]) "$graph[1].steps.s.run" "closes a cycle of run references"
-        testCase "the process that cwltool runs is main, or the only process of the document, and a document with several processes and no main has none" <| fun _ ->
-            expectReadsBack "no main" (graph [ tool; workflow "other" runTool ])
-            failsAt "the only process" (graph [ workflow "other" [ "run:"; "  class: CommandLineTool"; "  baseCommand: echo"; "  inputs: []"; "  outputs: []"; "in: {}"; "out: [nothing]" ] ]) "$graph[0].steps.s.out[0]" "has no output of that name"
-            failsAt "the inline process of main" (graph [ workflow "main" [ "run:"; "  class: CommandLineTool"; "  baseCommand: echo"; "  inputs: []"; "  outputs: []"; "in: {}"; "out: [nothing]" ] ]) "$graph[0].steps.s.out[0]" "has no output of that name"
-            expectReadsBack "unreachable inline process" (graph [ mainTool; workflow "other" [ "run:"; "  class: CommandLineTool"; "  baseCommand: echo"; "  inputs: []"; "  outputs: []"; "in: {}"; "out: [nothing]" ] ])
-        testCase "a run of the form #id reaches the last process with the id and a runner starts with the first process main" <| fun _ ->
-            let toolWith (output: string) = [ "  - id: tool"; "    class: CommandLineTool"; "    baseCommand: echo"; "    inputs: []"; "    outputs:"; "      " + output + ": stdout" ]
-            let runsTool (out: string) = workflow "main" [ "run: \"#tool\""; "in: {}"; "out: [" + out + "]" ]
-            failsAt "the first of two tools" (graph [ toolWith "a"; toolWith "b"; runsTool "a" ]) "$graph[2].steps.s.out[0]" "has no output of that name"
-            expectReadsBack "the last of two tools" (graph [ toolWith "a"; toolWith "b"; runsTool "b" ])
-            let badWorkflow = workflow "main" runTool
-            failsAt "the first of two process mains" (graph [ badWorkflow; tool; mainTool ]) "$graph[0].steps.s.out[0]" "has no output of that name"
-            expectReadsBack "the last of two process mains" (graph [ mainTool; tool; badWorkflow ])
         testCase "a repeated id is a warning that says which entry a reference finds" <| fun _ ->
             let decoded = Decode.decodeCWLDocumentWithWarnings (graph [ mainTool; tool; tool ])
             Expect.equal decoded.Warnings.Count 1 "The repeated id is one warning."

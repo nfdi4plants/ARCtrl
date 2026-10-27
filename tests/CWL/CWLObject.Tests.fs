@@ -1864,23 +1864,23 @@ outputs: {}
                     Decode.decodeCommandLineTool yaml |> ignore
                     None
                 with YamlDecodeException error -> Some error
-            let invalid = "Invalid CWL type: foo"
+            let invalid = "Invalid CWL type: foo bar"
             let bare (word: string) = "Expected a type name, found \"" + word + "\". A schema is a mapping, so a schema belongs under type."
             let record (fieldLines: string list) = [ "  r:"; "    type:"; "      type: record"; "      fields:" ] @ fieldLines
             let cases =
-                [ "a port type", "inputs.x", invalid, [ "  x: foo" ]
-                  "a port type with the shorthand", "inputs.x", invalid, [ "  x: foo[]?" ]
-                  "the type field of a port", "inputs.x.type", invalid, [ "  x:"; "    type: foo" ]
-                  "a member of a type list", "inputs.x[1]", invalid, [ "  x: [string, foo]" ]
-                  "a member of the type field of a port", "inputs.x.type[1]", invalid, [ "  x:"; "    type: [string, foo]" ]
+                [ "a port type", "inputs.x", invalid, [ "  x: foo bar" ]
+                  "a port type with the shorthand", "inputs.x", invalid, [ "  x: foo bar[]?" ]
+                  "the type field of a port", "inputs.x.type", invalid, [ "  x:"; "    type: foo bar" ]
+                  "a member of a type list", "inputs.x[1]", invalid, [ "  x: [string, foo bar]" ]
+                  "a member of the type field of a port", "inputs.x.type[1]", invalid, [ "  x:"; "    type: [string, foo bar]" ]
                   "a bare array as a member of a type list", "inputs.x[1]", bare "array", [ "  x: [\"null\", array]" ]
                   "a bare record as the type of a port", "inputs.x", bare "record", [ "  x: record" ]
-                  "the items of an array", "inputs.x.type.items", invalid, [ "  x:"; "    type:"; "      type: array"; "      items: foo" ]
-                  "a member of the items of an array", "inputs.x.type.items[1]", invalid, [ "  x:"; "    type:"; "      type: array"; "      items: [string, foo]" ]
+                  "the items of an array", "inputs.x.type.items", invalid, [ "  x:"; "    type:"; "      type: array"; "      items: foo bar" ]
+                  "a member of the items of an array", "inputs.x.type.items[1]", invalid, [ "  x:"; "    type:"; "      type: array"; "      items: [string, foo bar]" ]
                   "items that are a mapping without a type", "inputs.x.type.items", "a mapping without a type field", [ "  x:"; "    type:"; "      type: array"; "      items: {doc: a}" ]
-                  "a record field in map form", "inputs.r.type.fields.f", invalid, record [ "        f: foo" ]
+                  "a record field in map form", "inputs.r.type.fields.f", invalid, record [ "        f: foo bar" ]
                   "a bare array as a record field in map form", "inputs.r.type.fields.f", bare "array", record [ "        f: array" ]
-                  "the type field of a record field", "inputs.r.type.fields.f.type", invalid, record [ "        f:"; "          type: foo" ]
+                  "the type field of a record field", "inputs.r.type.fields.f.type", invalid, record [ "        f:"; "          type: foo bar" ]
                   "a type list in a record field", "inputs.r.type.fields.f.type[1]", bare "array", record [ "        f:"; "          type: [\"null\", array]" ] ]
             for (name, path, message, portLines) in cases do
                 match decodeError (tool portLines) with
@@ -1894,7 +1894,7 @@ class: CommandLineTool
 baseCommand: echo
 inputs: []
 outputs:
-  o: foo
+  o: foo bar
 """
             match decodeError output with
             | Some error -> Expect.equal (DecodeError.pathText error) "outputs.o" "The error of an output type should show the output."
@@ -2856,26 +2856,7 @@ let testFileAndDirectoryTypes =
     ]
 
 let testDirentIsNoType =
-    let tool (inputLines: string list) (outputLines: string list) =
-        "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n" + String.concat "\n" inputLines + "\noutputs:\n" + String.concat "\n" outputLines + "\n"
-
     testList "Dirent is no type" [
-        testCase "Dirent as a type name is an invalid CWL type at its place" <| fun _ ->
-            let cases =
-                [ "an input", "inputs.x", tool [ "  x: Dirent" ] [ "  o: string" ]
-                  "an array of Dirent", "inputs.x", tool [ "  x: Dirent[]" ] [ "  o: string" ]
-                  "an optional Dirent", "inputs.x", tool [ "  x: Dirent?" ] [ "  o: string" ]
-                  "the type field of an input", "inputs.x.type", tool [ "  x:"; "    type: Dirent"; "    listing: []" ] [ "  o: string" ]
-                  "a member of a type list", "inputs.x[1]", tool [ "  x: [string, Dirent]" ] [ "  o: string" ]
-                  "the items of an array", "inputs.x.type.items", tool [ "  x:"; "    type:"; "      type: array"; "      items: Dirent" ] [ "  o: string" ]
-                  "an output", "outputs.o", tool [ "  x: string" ] [ "  o: Dirent" ] ]
-            for (name, path, yaml) in cases do
-                match (try Decode.decodeCommandLineTool yaml |> ignore; None with YamlDecodeException error -> Some error) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the place of the type" name)
-                    Expect.equal error.Message "Invalid CWL type: Dirent" (sprintf "%s: the error should name the type" name)
-                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
-                | None -> failwith (sprintf "%s must fail" name)
         testCase "a Dirent stays an entry of the listing of an InitialWorkDirRequirement" <| fun _ ->
             let yaml = """cwlVersion: v1.2
 class: CommandLineTool
@@ -3080,46 +3061,14 @@ let testInvalidDocuments =
             Expect.equal (Decode.decodeWorkflow written) decoded.Value "The written text should decode to the same workflow."
             let plain = Decode.decodeWorkflow (workflow [ "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run: t.cwl"; "    in:"; "      a: x"; "      b: [y, z]"; "    out: []" ])
             Expect.stringContains (Encode.encodeWorkflowDescription plain) "a: x" "Distinct ids are written as a map."
-        testCase "the out field of a step lists outputs of the inline process that the step runs" <| fun _ ->
-            let inlineStep (run: string list) (outLines: string list) =
-                workflow ([ "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run:" ] @ (run |> List.map (fun line -> "      " + line)) @ [ "    in: {}" ] @ outLines)
-            let toolRun = [ "class: CommandLineTool"; "baseCommand: echo"; "inputs: {}"; "outputs:"; "  r: string"; "  q: string" ]
-            let workflowRun = [ "class: Workflow"; "inputs: {}"; "steps: {}"; "outputs:"; "  w:"; "    type: string"; "    outputSource: x" ]
-            let expressionRun = [ "class: ExpressionTool"; "expression: $(1)"; "inputs: {}"; "outputs:"; "  e: int" ]
-            let operationRun = [ "class: Operation"; "inputs: {}"; "outputs:"; "  o: string" ]
-            let message = "The out field lists the output nope, and the process that the step runs has no output of that name."
-            expectError "a tool" "steps.s.out[1]" (message + " The process has the outputs r, q.") (fun () ->
-                Decode.decodeWorkflow (inlineStep toolRun [ "    out: [r, nope]" ]) |> ignore)
-            expectError "a workflow" "steps.s.out[0]" (message + " The process has the outputs w.") (fun () ->
-                Decode.decodeWorkflow (inlineStep workflowRun [ "    out: [nope]" ]) |> ignore)
-            expectError "an expression tool" "steps.s.out[0]" (message + " The process has the outputs e.") (fun () ->
-                Decode.decodeWorkflow (inlineStep expressionRun [ "    out: [nope]" ]) |> ignore)
-            expectError "an operation" "steps.s.out[0]" (message + " The process has the outputs o.") (fun () ->
-                Decode.decodeWorkflow (inlineStep operationRun [ "    out: [nope]" ]) |> ignore)
-            expectError "an entry in the object form" "steps.s.out[0].id" message (fun () ->
-                Decode.decodeWorkflow (inlineStep toolRun [ "    out:"; "      - id: nope" ]) |> ignore)
-            expectError "a process without outputs" "steps.s.out[0]" "The process has no outputs." (fun () ->
-                Decode.decodeWorkflow (inlineStep [ "class: CommandLineTool"; "baseCommand: echo"; "inputs: {}"; "outputs: {}" ] [ "    out: [nope]" ]) |> ignore)
-            expectError "a step in a list" "steps.s.out[0]" message (fun () ->
-                Decode.decodeWorkflow (workflow ([ "inputs: {}"; "outputs: {}"; "steps:"; "  - id: s"; "    run:" ] @ (toolRun |> List.map (fun line -> "      " + line)) @ [ "    in: {}"; "    out: [nope]" ])) |> ignore)
-            // cwltool compares the short names of the ids, so a name with a hash or with a step in front of it names the output too.
-            for name in [ "r"; "\"#r\""; "s/r"; "\"#q\"" ] do
-                let decoded = Decode.decodeWorkflow (inlineStep toolRun [ "    out: [" + name + "]" ])
-                Expect.equal (ListEntry.values decoded.Steps).[0].Out.Count 1 (sprintf "The name %s lists an output of the tool." name)
-            Expect.equal (ListEntry.values (Decode.decodeWorkflow (inlineStep toolRun [ "    out: []" ])).Steps).[0].Out.Count 0 "A step lists no output at all."
-            Expect.equal (ListEntry.values (Decode.decodeWorkflow (inlineStep toolRun [ "    out: [r, r]" ])).Steps).[0].Out.Count 2 "A step may list an output twice, as cwltool accepts it."
-        testCase "the out field of a step that runs a process of a packed document by #id lists outputs of that process and a file is not read" <| fun _ ->
-            let packed (outEntries: string) (stepFirst: bool) =
-                let mainProcess = [ "  - id: main"; "    class: Workflow"; "    inputs: {}"; "    outputs: {}"; "    steps:"; "      s:"; "        run: \"#tool\""; "        in: {}"; "        out: [" + outEntries + "]" ]
-                let toolProcess = [ "  - id: tool"; "    class: CommandLineTool"; "    baseCommand: echo"; "    inputs: {}"; "    outputs:"; "      r: string" ]
-                String.concat "\n" ([ "cwlVersion: v1.2"; "$graph:" ] @ (if stepFirst then mainProcess @ toolProcess else toolProcess @ mainProcess)) + "\n"
-            for (name, path, stepFirst) in [ "a process behind the step", "$graph[0].steps.s.out[1]", true; "a process before the step", "$graph[1].steps.s.out[1]", false ] do
-                expectError name path "The out field lists the output nope, and the process that the step runs has no output of that name. The process has the outputs r." (fun () ->
-                    Decode.decodeCWLDocument (packed "r, nope" stepFirst) |> ignore)
-            for name in [ "r"; "\"#r\""; "tool/r" ] do
-                Expect.isTrue (match Decode.decodeCWLDocument (packed name true) with CWLDocument.Graph graph -> graph.Processes.Count = 2 | _ -> false) (sprintf "The name %s lists the output of the tool." name)
-            let viaFile = workflow [ "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run: tool.cwl"; "    in: {}"; "    out: [anything]" ]
-            Expect.equal (ListEntry.values (Decode.decodeWorkflow viaFile).Steps).[0].Out.Count 1 "The decoder reads no file, so the out field of a step that runs a file stays as written."
+        testCase "the out field of a step is read as written, whatever outputs the process that the step runs has" <| fun _ ->
+            // The decoder checks no link between objects, so a name that the inline process lacks stays an entry of the out field.
+            let inlineStep (outLines: string list) =
+                workflow ([ "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run:" ] @ ([ "class: CommandLineTool"; "baseCommand: echo"; "inputs: {}"; "outputs:"; "  r: string" ] |> List.map (fun line -> "      " + line)) @ [ "    in: {}" ] @ outLines)
+            for (name, outLines, count) in [ "a name list", [ "    out: [r, nope]" ], 2; "the object form", [ "    out:"; "      - id: nope" ], 1 ] do
+                let decoded = Decode.decodeWorkflow (inlineStep outLines)
+                Expect.equal (ListEntry.values decoded.Steps).[0].Out.Count count (sprintf "%s: every entry stays in the out field." name)
+                Expect.equal (Decode.decodeWorkflow (Encode.encodeWorkflowDescription decoded)) decoded (sprintf "%s: the written text should decode to the same workflow." name)
         testCase "an id that occurs twice in the list form of inputs, outputs or steps is a warning at the second and the list is written back" <| fun _ ->
             let inputs = Decode.decodeCommandLineToolWithWarnings (tool [ "inputs:"; "  - id: x"; "    type: string"; "  - id: y"; "    type: int"; "  - id: x"; "    type: int"; "outputs: []" ])
             Expect.equal ((ListEntry.values inputs.Value.Inputs.Value) |> Seq.map (fun input -> input.Name, input.Type_) |> List.ofSeq) [ "x", Some String; "y", Some Int; "x", Some Int ] "Every input stays in the list, in order."
@@ -4953,15 +4902,6 @@ let testDirectivesAsClassOrType =
             Expect.equal tool.Requirements.Value.[0] ShellCommandRequirement "The class of a requirement is the requirement."
             Expect.equal tool.Hints.Value.[0] (KnownHint ShellCommandRequirement) "The class of a hint is the known hint."
             Expect.isTrue (match (inputsOf tool).[0].Type_ with Some (Enum _) -> true | _ -> false) "The type of a schema is the enum."
-        testCase "the types that a requirement, a hint or an entry defines beside a directive count for the type names of the ports" <| fun _ ->
-            let definition = [ "      - name: R"; "        type: record"; "        fields:"; "          - name: f"; "            type: string" ]
-            let input = [ "inputs:"; "  x: R"; "outputs: []" ]
-            for form in forms do
-                for holder in [ "requirements"; "hints" ] do
-                    let tool = Decode.decodeCommandLineTool (toolDocument ([ holder + ":"; "  - class: " + form; "    types:" ] @ definition @ input))
-                    Expect.equal (inputsOf tool).[0].Type_ (Some (CWLType.Reference "R")) (sprintf "%s %s: the name is the type that the requirement defines." holder form)
-                let entry = Decode.decodeCommandLineTool (toolDocument ([ "requirements:"; "  SchemaDefRequirement:"; "    types:"; "      - type: " + form; "        name: R"; "        fields: []" ] @ input))
-                Expect.equal (inputsOf entry).[0].Type_ (Some (CWLType.Reference "R")) (sprintf "%s: the name is the type that the entry defines." form)
         testCase "a malformed directive and a mapping that is no directive are decode errors at the class or the type" <| fun _ ->
             failsAt "a requirement" (fun () -> Decode.decodeCommandLineTool (toolDocument [ "requirements:"; "  - class: {$import: 42}"; "inputs: []"; "outputs: []" ]) |> ignore) "requirements[0].class.$import" "Expected the path of the $import directive to be a string"
             failsAt "a hint" (fun () -> Decode.decodeCommandLineTool (toolDocument [ "hints:"; "  - class: {$import: s.yml, extra: 1}"; "inputs: []"; "outputs: []" ]) |> ignore) "hints[0].class" "A directive has exactly one field"
@@ -5155,8 +5095,8 @@ let testProcessWithDirectiveClass =
             for (name, lines, path, message) in
                 [ "a list as the label", [ "label: [1, 2]"; "inputs: []"; "outputs: []" ], "label", "Expected a string or a directive, found a list."
                   "a number as the doc", [ "doc: 5"; "inputs: []"; "outputs: []" ], "doc", "Expected a string, found the plain scalar 5"
-                  "a name that is no type in the inputs", [ "inputs: {x: notatype}"; "outputs: []" ], "inputs.x", "Invalid CWL type: notatype"
-                  "a name that is no type in the outputs", [ "inputs: []"; "outputs: {x: notatype}" ], "outputs.x", "Invalid CWL type: notatype"
+                  "a name that is no type in the inputs", [ "inputs: {x: not a type}"; "outputs: []" ], "inputs.x", "Invalid CWL type: not a type"
+                  "a name that is no type in the outputs", [ "inputs: []"; "outputs: {x: not a type}" ], "outputs.x", "Invalid CWL type: not a type"
                   "no inputs", [ "outputs: []" ], "", "Expected an inputs field, which CWL requires for a process."
                   "no outputs", [ "inputs: []" ], "", "The mapping has no field outputs."
                   "a number as the requirements", [ "requirements: 5"; "inputs: []"; "outputs: []" ], "requirements", "Expected a list or a mapping of requirements"
@@ -5431,62 +5371,6 @@ let testDirectivesAsItemsOfAListingArray =
             failsAt "an import of a number" (fun () -> Decode.decodeCommandLineTool (toolWith [ "- - {$import: 42}" ]) |> ignore) "requirements[0].listing[0][0].$import" "Expected the path of the $import directive to be a string"
             failsAt "an import with a field" (fun () -> Decode.decodeCommandLineTool (toolWith [ "- - {$import: file.yml, extra: 1}" ]) |> ignore) "requirements[0].listing[0][0]" "A directive has exactly one field"
             failsAt "a text" (fun () -> Decode.decodeCommandLineTool (toolWith [ "- - abc" ]) |> ignore) "requirements[0].listing[0][0]" "Expected a File or a Directory with a class field in an array of the listing"
-    ]
-
-let testSchemaDefinitionsWithMixins =
-    let tool (field: string) (items: string list) (inputs: string list) =
-        String.concat "\n" ([ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo"; field + ":" ] @ items @ [ "inputs:" ] @ (inputs |> List.map (fun line -> "  " + line)) @ [ "outputs: []"; "" ])
-    let schemaDef (entries: string list) =
-        [ "  - class: SchemaDefRequirement"; "    types:" ] @ (entries |> List.map (fun entry -> "      - " + entry))
-    let typeOf (decoded: CWLToolDescription) (name: string) : CWLType option =
-        ListEntry.values decoded.Inputs.Value |> Seq.find (fun input -> input.Name = name) |> fun input -> input.Type_
-    let fails (text: string) (message: string) =
-        match (try Decode.decodeCommandLineTool text |> ignore; None with YamlDecodeException error -> Some error) with
-        | Some error -> Expect.stringContains error.Message message "The error should name the type that nothing defines."
-        | None -> failwith ("The document must fail:\n" + text)
-    testList "SchemaDefRequirements with a mixin" [
-        testCase "a requirement with a mixin and a types field defines those types, as a requirement or as a hint" <| fun _ ->
-            for field in [ "requirements"; "hints" ] do
-                let decoded = Decode.decodeCommandLineTool (tool field [ "  - {$mixin: sdclass.yml, types: [{name: Colour, type: enum, symbols: [red, blue]}]}" ] [ "c: Colour" ])
-                Expect.equal (typeOf decoded "c") (Some (CWLType.Reference "Colour")) (sprintf "%s: the name is the type that the mixin item defines." field)
-                fails (tool field [ "  - {$mixin: sdclass.yml, types: [{name: Other, type: enum, symbols: [red]}]}" ] [ "c: Colour" ]) "Invalid CWL type: Colour"
-        testCase "a requirement with a mixin and no types field may bring types, so every well-formed name counts" <| fun _ ->
-            for field in [ "requirements"; "hints" ] do
-                for item in [ "{$mixin: sdfull.yml}"; "{$mixin: sdfull.yml, extra: 1}"; "{$mixin: sdfull.yml, class: SchemaDefRequirement}" ] do
-                    let decoded = Decode.decodeCommandLineTool (tool field [ "  - " + item ] [ "c: Colour" ])
-                    Expect.equal (typeOf decoded "c") (Some (CWLType.Reference "Colour")) (sprintf "%s %s: the file of the mixin may define the type." field item)
-        testCase "an open requirement lets a type behind a path through, because the file of the mixin may import any file" <| fun _ ->
-            let viaRequirement = Decode.decodeCommandLineTool (tool "requirements" [ "  - $mixin: sd.yml" ] [ "c: types.yml#Colour" ])
-            Expect.equal (typeOf viaRequirement "c") (Some (CWLType.Reference "types.yml#Colour")) "A requirement that holds a mixin only may import the file."
-            let viaEntry = Decode.decodeCommandLineTool (tool "requirements" (schemaDef [ "{$mixin: sdentry.yml}" ]) [ "c: types.yml#Colour" ])
-            Expect.equal (typeOf viaEntry "c") (Some (CWLType.Reference "types.yml#Colour")) "An entry of the types field that holds a mixin only may import the file."
-            fails (tool "requirements" [ "  - {$mixin: nn.yml, class: NetworkAccess, networkAccess: true}" ] [ "c: types.yml#Colour" ]) "The file types.yml is not imported by a SchemaDefRequirement of the document."
-        testCase "a mixin that names another class cannot bring types, and a plain document still fails for a type that nothing defines" <| fun _ ->
-            fails (tool "requirements" [ "  - {$mixin: nn.yml, class: NetworkAccess, networkAccess: true}" ] [ "c: Colour" ]) "Invalid CWL type: Colour"
-            fails (tool "requirements" [ "  - class: InlineJavascriptRequirement" ] [ "c: Colour" ]) "Invalid CWL type: Colour"
-            fails (tool "requirements" [ "  - {$import: sdfull.yml}" ] [ "c: Colour" ]) "Invalid CWL type: Colour"
-        testCase "an entry of the types field with a mixin and a name defines that name, with the fields and items that it shows" <| fun _ ->
-            let named = Decode.decodeCommandLineTool (tool "requirements" (schemaDef [ "{$mixin: enumbody.yml, name: Colour}" ]) [ "c: Colour" ])
-            Expect.equal (typeOf named "c") (Some (CWLType.Reference "Colour")) "The name beside the mixin is the type."
-            let record = Decode.decodeCommandLineTool (tool "requirements" (schemaDef [ "{$mixin: recbody.yml, name: Rec, fields: [{name: x, type: {name: Inner, type: enum, symbols: [a]}}]}" ]) [ "c: Rec"; "i: Rec/x/Inner" ])
-            Expect.equal (typeOf record "c") (Some (CWLType.Reference "Rec")) "The record is a type."
-            Expect.equal (typeOf record "i") (Some (CWLType.Reference "Rec/x/Inner")) "The schema in a field of the record is a type below it."
-            fails (tool "requirements" (schemaDef [ "{$mixin: enumbody.yml, name: Other}" ]) [ "c: Colour" ]) "Invalid CWL type: Colour"
-        testCase "an entry of the types field with a mixin and no name may name its type, so every well-formed name counts" <| fun _ ->
-            for entry in [ "{$mixin: named.yml}"; "{$mixin: named.yml, type: enum}"; "{$mixin: enumbody.yml}" ] do
-                let decoded = Decode.decodeCommandLineTool (tool "requirements" (schemaDef [ entry ]) [ "c: Colour" ])
-                Expect.equal (typeOf decoded "c") (Some (CWLType.Reference "Colour")) (sprintf "%s: the file of the mixin may name the type." entry)
-            let later = Decode.decodeCommandLineTool (tool "requirements" (schemaDef [ "{$mixin: named.yml}"; "{name: Inner, type: enum, symbols: [a]}" ]) [ "c: Colour"; "i: Inner" ])
-            Expect.equal (typeOf later "i") (Some (CWLType.Reference "Inner")) "The entry that follows defines its own type."
-        testCase "an open requirement leaves the types of the requirement of an inner process alone" <| fun _ ->
-            let workflow =
-                String.concat "\n"
-                    [ "cwlVersion: v1.2"; "class: Workflow"; "requirements:"; "  - {$mixin: sdfull.yml}"; "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    in: {}"; "    out: []"
-                      "    run:"; "      class: CommandLineTool"; "      baseCommand: echo"; "      requirements:"; "        - class: SchemaDefRequirement"; "          types:"; "            - {name: Other, type: enum, symbols: [a]}"
-                      "      inputs:"; "        c: Colour"; "      outputs: []"; "" ]
-            match (try Decode.decodeWorkflow workflow |> ignore; None with YamlDecodeException error -> Some error) with
-            | Some error -> Expect.stringContains error.Message "Invalid CWL type: Colour" "The requirement of the tool replaces the open one."
-            | None -> failwith "The tool defines Other only, so Colour must fail."
     ]
 
 let testRawObjectsAndMixinObjects =
@@ -5871,7 +5755,6 @@ let main =
         testOneWriterForTheEntriesOfAList
         testSecondaryFilePatternsAndNumberPositions
         testDirectivesAsItemsOfAListingArray
-        testSchemaDefinitionsWithMixins
         testWordsInNumberPositions
         testSecondaryFileRequiredField
         testLowestLong
