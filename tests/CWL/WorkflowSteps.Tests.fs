@@ -21,7 +21,7 @@ let tryYamlScalarString (y: RawYaml) =
 let mkStepInput id (source: ResizeArray<string> option) defaultValue valueFrom linkMerge =
     StepInput.create(
         id,
-        ?source = (source |> Option.map (fun texts -> literals texts)),
+        ?source = (source |> Option.map sourceOf),
         ?defaultValue = defaultValue,
         ?valueFrom = valueFrom,
         ?linkMerge = linkMerge
@@ -32,11 +32,11 @@ let testWorkflowStep =
         testCase "Length" <| fun _ -> Expect.equal 2 decodeWorkflowStep.Count ""
         testList "IDs" [
             testCase "MzMLToMzlite" <| fun _ ->
-                let expected = "MzMLToMzlite"
+                let expected = Some "MzMLToMzlite"
                 let actual = decodeWorkflowStep.[0].Id
                 Expect.equal actual expected ""
             testCase "PeptideSpectrumMatching" <| fun _ ->
-                let expected = "PeptideSpectrumMatching"
+                let expected = Some "PeptideSpectrumMatching"
                 let actual = decodeWorkflowStep.[1].Id
                 Expect.equal actual expected ""
         ]
@@ -64,7 +64,7 @@ let testWorkflowStep =
                 let actual = WorkflowStep.getInputValues decodeWorkflowStep.[0]
                 Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
                     Expect.equal actual.Id expected.Id ""
-                    Expect.sequenceEqual actual.Source.Value expected.Source.Value ""
+                    Expect.equal actual.Source expected.Source ""
                     Expect.equal
                         (actual.DefaultValue |> Option.bind tryYamlScalarString)
                         (expected.DefaultValue |> Option.bind tryYamlScalarString)
@@ -89,7 +89,7 @@ let testWorkflowStep =
                 Seq.iter2 (fun (expected: StepInput) (actual: StepInput) ->
                     Expect.equal actual.Id expected.Id ""
                     if expected.Source.IsSome then
-                        Expect.sequenceEqual actual.Source.Value expected.Source.Value ""
+                        Expect.equal actual.Source expected.Source ""
                     Expect.equal
                         (actual.DefaultValue |> Option.bind tryYamlScalarString)
                         (expected.DefaultValue |> Option.bind tryYamlScalarString)
@@ -232,16 +232,16 @@ let testWorkflowStepOps =
             let step =
                 WorkflowStep.fromRunPath(
                     id = "step1",
-                    in_ = ListEntry.ofValues [ StepInput.create("input1", source = literals [ "old" ]) ],
+                    in_ = ListEntry.ofValues [ StepInput.create("input1", source = sourceOf [ "old" ]) ],
                     out_ = ResizeArray [| StepOutputString "out" |],
                     runPath = "./tool.cwl"
                 )
 
             WorkflowStep.updateInputAt 0 (fun i ->
-                i.Source <- Some (literals [ "new" ])
+                i.Source <- Some (sourceOf [ "new" ])
                 i
             ) step
-            Expect.sequenceEqual (WorkflowStep.getInputValues step).[0].Source.Value (literals [ "new" ]) "Input source should be updated."
+            Expect.equal (WorkflowStep.getInputValues step).[0].Source (Some (sourceOf [ "new" ])) "Input source should be updated."
 
         testCase "updateInputById updates only matching input" <| fun _ ->
             let step =
@@ -249,8 +249,8 @@ let testWorkflowStepOps =
                     id = "step1",
                     in_ =
                         ListEntry.ofValues [
-                            StepInput.create("first", source = literals [ "a" ])
-                            StepInput.create("second", source = literals [ "b" ])
+                            StepInput.create("first", source = sourceOf [ "a" ])
+                            StepInput.create("second", source = sourceOf [ "b" ])
                         ],
                     out_ = ResizeArray [| StepOutputString "out" |],
                     runPath = "./tool.cwl"

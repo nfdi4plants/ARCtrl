@@ -20,6 +20,27 @@ steps:
       in1: stepA/out
     out: [out]"""
 
+/// A workflow with two steps without an id around a step with an id.
+let stepsWithoutIdWorkflowFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  x: string
+outputs: {}
+steps:
+- run: ./a.cwl
+  in:
+    in1: x
+  out: [out]
+- id: stepB
+  run: ./b.cwl
+  in:
+    in1: x
+  out: [out]
+- run: ./a.cwl
+  in:
+    in1: x
+  out: [out]"""
+
 let fanInWorkflowFile = """cwlVersion: v1.2
 class: Workflow
 inputs: {}

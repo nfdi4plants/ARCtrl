@@ -75,8 +75,9 @@ type OutputBinding (?glob: OutputGlob, ?loadContents: SchemaSaladBool, ?loadList
     static member create(?glob: OutputGlob, ?loadContents: SchemaSaladBool, ?loadListing: LoadListingEnum, ?outputEval: SchemaSaladString) =
         OutputBinding(?glob = glob, ?loadContents = loadContents, ?loadListing = loadListing, ?outputEval = outputEval)
 
-/// The source of an output, as a single name or as a list of names. A name is a string, so a directive can stand in its
-/// place. A single name differs from a list of one name, because CWL keeps the two spellings apart. The lists compare by
+/// The source of an output or of a step input, as a single name or as a list of names. A name is a string, so a directive
+/// can stand in its place. A single name differs from a list of one name, because CWL keeps the two spellings apart: a
+/// list of one source with a linkMerge yields a list, and a single source yields the value itself. The lists compare by
 /// their elements, because a ResizeArray compares references.
 [<CustomEquality; NoComparison; AttachMembers>]
 type OutputSource =

@@ -214,7 +214,7 @@ inputs:
     label: Mode choice
   optional_dir:
     type: Directory?
-  flow_union: [null, File]
+  flow_union: ["null", File]
   block_union:
     - string
     - int

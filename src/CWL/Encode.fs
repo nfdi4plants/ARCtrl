@@ -12,7 +12,7 @@ module Encode =
     // Type classification helpers - Single source of truth for CWL type categorization
     // ------------------------------
     
-    /// Matches the optional type, the list [null, X]. Schema Salad reads the shorthand X? as exactly this list. A list
+    /// Matches the optional type, the list ["null", X]. Schema Salad reads the shorthand X? as exactly this list. A list
     /// with the null behind X is a plain type list, and X? would reorder it.
     let (|OptionalOf|_|) (t: CWLType) : CWLType option =
         match t with
@@ -477,7 +477,7 @@ module Encode =
         | Stdin -> encodeString "stdin"
         | Null -> encodeString "null"
         | OptionalOf otherType ->
-            // Only the list [null, X] can use CWL's `?` shorthand.
+            // Only the list ["null", X] can use CWL's `?` shorthand.
             match otherType with
             | File -> encodeString "File?"
             | Directory -> encodeString "Directory?"
@@ -497,13 +497,13 @@ module Encode =
                     // Complex optional array - use full form
                     encodeSequence [ encodeString "null"; encodeInputArraySchema arraySchema ]
             | _ ->
-                // Complex optional type - use array form [null, type]
+                // Complex optional type - use array form ["null", type]
                 [ Null; otherType ] |> List.map encodeMember |> encodeSequence
         | Union types ->
             // Every other union is a type list.
             types |> Seq.toList |> List.map encodeMember |> encodeSequence
         | Array arraySchema ->
-            // Try to use short form for arrays; fall back to schema object for complex item types.
+            // Use the short form for arrays. Fall back to a schema object for complex item types.
             match arrayShorthand arraySchema with
             | Some shorthand -> encodeString shorthand
             | None -> encodeInputArraySchema arraySchema
@@ -605,17 +605,6 @@ module Encode =
         |> appendDynamicPropertiesExcept OutputBinding.KnownFieldNames ob
         |> encodeObject
 
-    /// Encode one source value as a scalar and multiple source values as a sequence. A directive on its own is written in
-    /// the place of the scalar, where it stands for the string or the list of a file.
-    let encodeStringArrayOrScalar (values: ResizeArray<SchemaSaladString>) : YamlNode =
-        if values.Count = 1 then
-            encodeSchemaSaladString values.[0]
-        else
-            values
-            |> Seq.map encodeSchemaSaladString
-            |> List.ofSeq
-            |> encodeSequence
-
     let rec encodeCWLParameterValue (value: CWLParameterValue) : YamlNode =
         match value with
         | CWLParameterValue.Null -> Encode.nullValue
@@ -656,11 +645,12 @@ module Encode =
     /// Encode a workflow or tool output, choosing shorthand only when type is the sole field.
     let encodeCWLOutput (o:CWLOutput) : (string * YamlNode) =
         let outputSourceElement =
-            // Keep scalar outputSource compact, but use a sequence when multiple
-            // upstream step outputs feed this workflow output.
+            // A single source is a scalar, and a list is a sequence also when it holds one source. A directive on its own is
+            // written in the place of the scalar, where it stands for the string or the list of a file.
             match o.OutputSource with
             | Some (OutputSource.Single value) -> Some (encodeSchemaSaladString value)
-            | Some (OutputSource.Multiple values) when values.Count > 0 -> Some (encodeStringArrayOrScalar values)
+            | Some (OutputSource.Multiple values) when values.Count > 0 ->
+                Some (values |> Seq.map encodeSchemaSaladString |> List.ofSeq |> encodeSequence)
             | _ -> None
 
         []
@@ -943,13 +933,13 @@ module Encode =
     // ------------------------------
     
     /// Encode the sources as either a single string or a sequence
-    let encodeSourceArray (sources:ResizeArray<SchemaSaladString>) : YamlNode =
-        match sources.Count with
-        | 1 ->
+    let encodeSourceArray (sources: OutputSource) : YamlNode =
+        match sources with
+        | OutputSource.Single source ->
             // CWL source shorthand: source: input_id
-            encodeSchemaSaladString sources.[0]
-        | _ -> 
-            // Several sources are always written as a block sequence.
+            encodeSchemaSaladString source
+        | OutputSource.Multiple sources ->
+            // A list is always written as a block sequence, also a list of one source.
             sources
             |> Seq.map (fun s -> YamlNode.item (encodeSchemaSaladString s))
             |> List.ofSeq
@@ -1256,7 +1246,7 @@ module Encode =
             withRequirements @ [ "inputs", (wd.Inputs |> Seq.map (ListEntry.map encodeCWLInput) |> Seq.toList |> encodeIdEntries "id" "type" (wd.SourceNodes.WholeFields.Contains "inputs")) ]
         let withSteps =
             // Steps are map entries keyed by step id.
-            withInputs @ [ "steps", (wd.Steps |> Seq.map (ListEntry.map (encodeWorkflowStep inGraph)) |> Seq.toList |> encodeIdEntries "id" "run" (wd.SourceNodes.WholeFields.Contains "steps")) ]
+            withInputs @ [ "steps", encodeWorkflowSteps inGraph (wd.SourceNodes.WholeFields.Contains "steps") wd.Steps ]
         let withOutputs =
             // Outputs follow steps for scan-friendly workflow YAML.
             withSteps @ [ "outputs", (wd.Outputs |> Seq.map (ListEntry.map encodeCWLOutput) |> Seq.toList |> encodeIdEntries "id" "type" (wd.SourceNodes.WholeFields.Contains "outputs")) ]
@@ -1271,17 +1261,32 @@ module Encode =
         |> appendDynamicPropertiesExcept CWLWorkflowDescription.KnownFieldNames wd
         |> encodeObject
 
-    /// Encode one workflow step as a map entry keyed by step id. A run of the form #id refers to a process of the packed
-    /// document that holds the step. Outside of a $graph, the file has no such process, so the step writes its resolved
-    /// process inline. A step without one cannot be written there.
-    and encodeWorkflowStep (inGraph: bool) (ws:WorkflowStep) : (string * YamlNode) =
+    /// Encode the steps of a workflow as the entries of an id list (see encodeIdEntries). A step without an id has no key
+    /// for a map, so a list with such a step is a list of objects, and only the steps with an id write it.
+    and encodeWorkflowSteps (inGraph: bool) (whole: bool) (steps: ResizeArray<ListEntry<WorkflowStep>>) : YamlNode =
+        let encoded = steps |> Seq.map (ListEntry.map (encodeWorkflowStep inGraph)) |> Seq.toList
+        let withoutId = encoded |> List.exists (fun entry -> match entry with | ListEntry.Value (None, _) -> true | _ -> false)
+        if withoutId then
+            encoded
+            |> List.map (encodeListEntry (fun (id, node) -> match id with | Some id -> idObject "id" "run" (id, node) | None -> node))
+            |> encodeSequence
+        else
+            encoded
+            |> List.map (ListEntry.map (fun (id, node) -> Option.get id, node))
+            |> encodeIdEntries "id" "run" whole
+
+    /// Encode one workflow step as a map entry keyed by step id, and without a key when the step has no id. A run of the
+    /// form #id refers to a process of the packed document that holds the step. Outside of a $graph, the file has no such
+    /// process, so the step writes its resolved process inline. A step without one cannot be written there.
+    and encodeWorkflowStep (inGraph: bool) (ws:WorkflowStep) : (string option * YamlNode) =
         let run =
             match ws.Run, ws.ResolvedRun.Run with
             | RunString reference, resolved when not inGraph && reference.StartsWith "#" ->
                 match resolved with
                 | Some resolvedRun -> resolvedRun
                 | None ->
-                    raise (System.ArgumentException($"The step {ws.Id} runs {reference}, a process of a packed document, and has no resolved process. A file that is no packed document cannot refer to it."))
+                    let name = match ws.Id with | Some id -> "step " + id | None -> "step without an id"
+                    raise (System.ArgumentException($"The {name} runs {reference}, a process of a packed document, and has no resolved process. A file that is no packed document cannot refer to it."))
             | run, _ -> run
         let basePairs =
             // Required step fields are emitted first.

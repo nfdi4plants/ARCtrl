@@ -358,9 +358,15 @@ type WorkflowConversion =
             outputs = CWL.ListEntry.ofValues outputs
         )
 
-    static member composeWorkflowStep (step : CWL.WorkflowStep, workflowID) =
-        let id = $"WorkflowStep_{workflowID}_{step.Id}"
-        let cw = LDComputationalWorkflow.create(id = id, name = step.Id)
+    /// A step with an id is named by it. A step without an id has no name in the crate and gets an identifier from its
+    /// position, which names the node in the crate only and never becomes an id of the step.
+    static member composeWorkflowStep (step : CWL.WorkflowStep, workflowID, ?position : int) =
+        let id =
+            match step.Id, position with
+            | Some stepId, _ -> Some $"WorkflowStep_{workflowID}_{stepId}"
+            | None, Some position -> Some $"WorkflowStep_{workflowID}?position={position}"
+            | None, None -> None
+        let cw = LDComputationalWorkflow.create(?id = id, ?name = step.Id)
         // Persist run info as identifier so decompose can reconstruct RunString or inline markers.
         WorkflowConversion.runToIdentifier step.Run |> Option.iter (fun identifier -> LDDataset.setIdentifierAsString(cw, identifier))
         cw
@@ -374,7 +380,8 @@ type WorkflowConversion =
             |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
         let steps =
             CWL.ListEntry.values workflow.Steps
-            |> ResizeArray.map (fun s -> WorkflowConversion.composeWorkflowStep(s, filePath))
+            |> Seq.mapi (fun position s -> WorkflowConversion.composeWorkflowStep(s, filePath, position))
+            |> ResizeArray
         LDWorkflowProtocol.create(
             id = filePath,
             name = filePath,
@@ -396,7 +403,7 @@ type WorkflowConversion =
     /// <param name="context">Optional LDContext for node property access.</param>
     /// <param name="graph">Optional LDGraph used for run reference resolution.</param>
     static member decomposeWorkflowStep (step : LDNode, ?workflowFilePath: string, ?resolveRunReferences: bool, ?context : LDContext, ?graph : LDGraph) =
-        let name = LDComputationalWorkflow.getNameAsString(step, ?context = context)
+        let name = LDComputationalWorkflow.tryGetNameAsString(step, ?context = context)
         let runString = LDDataset.getIdentifierAsString(step, ?context = context)
         let shouldResolveRunReferences = defaultArg resolveRunReferences true
         let inputs = ResizeArray()

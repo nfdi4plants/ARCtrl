@@ -120,6 +120,38 @@ steps:
         label: Input in array syntax
     out: [out]"""
 
+/// A workflow in which a list of one source differs from a single source: cwltool applies the linkMerge to the list, and a
+/// single source with a linkMerge fails the check of the types.
+let workflowWithListsOfOneSourceFile = """cwlVersion: v1.2
+class: Workflow
+requirements: [{class: MultipleInputFeatureRequirement}]
+inputs:
+  file1: File
+outputs:
+  nested:
+    type: File[]
+    outputSource: [make/created]
+    linkMerge: merge_nested
+  single:
+    type: File
+    outputSource: make/created
+steps:
+  make:
+    run: ./make.cwl
+    in: {}
+    out: [created]
+  count:
+    run: ./count.cwl
+    in:
+      files:
+        source: [file1]
+        linkMerge: merge_nested
+      one:
+        source: file1
+      short: [file1]
+      shortOne: file1
+    out: [n]"""
+
 let workflowWithStepsArrayFile = """cwlVersion: v1.2
 class: Workflow
 inputs:
@@ -894,26 +926,87 @@ inputs:
 outputs: []
 steps: {}"""
 
-let workflowWithUnnamedMalformedEntriesFile = """cwlVersion: v1.2
+let workflowWithUnnamedStepFile = """cwlVersion: v1.2
 class: Workflow
 inputs:
 - id: valid_input
   type: string
-- not_a_cwl_port: true
 outputs:
 - id: valid_output
   type: File
   outputSource: step1/out
-- [not, a, cwl, output]
 steps:
-- "not a workflow step"
+- run: ./unnamed.cwl # about it
+  in: []
+  out: []
 - id: step1
   run: ./tool.cwl
   in:
   - id: in1
     source: valid_input
-  - not_a_step_input: true
   out: [out]"""
+
+/// Two steps without an id that have the same content, in a workflow with an id.
+let workflowWithTwoUnnamedStepsFile = """cwlVersion: v1.2
+class: Workflow
+id: main
+inputs:
+  x: string
+outputs: {}
+steps:
+- run: ./same.cwl
+  in:
+    a: x
+  out: [o]
+- run: ./same.cwl
+  in:
+    a: x
+  out: [o]"""
+
+/// Steps without an id beside a step with an id, an import and a mixin.
+let workflowWithUnnamedAndDirectiveStepsFile = """cwlVersion: v1.2
+class: Workflow
+id: main
+inputs:
+  x: string
+outputs: {}
+steps:
+- $import: more-steps.yml
+- run: ./first.cwl
+  label: first
+  in:
+  - id: a
+    source: x
+  out: [o]
+- id: named
+  run: ./second.cwl
+  in: {}
+  out: []
+- run: ./third.cwl
+  in: {}
+  out: []
+- $mixin: mixed.yml
+  label: mixed"""
+
+/// A packed document whose process main has a step without an id.
+let packedDocumentWithUnnamedStepFile = """cwlVersion: v1.2
+$graph:
+- id: main
+  class: Workflow
+  inputs:
+    x: string
+  outputs: {}
+  steps:
+  - run: '#echo'
+    in:
+      m: x
+    out: []
+- id: echo
+  class: CommandLineTool
+  baseCommand: echo
+  inputs:
+    m: string
+  outputs: {}"""
 
 let workflowWithMalformedNamedInputFile = """cwlVersion: v1.2
 class: Workflow
@@ -1113,7 +1206,7 @@ inputs:
   - id: CHOICE
     type: [string, int, boolean]
   - id: MAYBE_LIST
-    type: [null, File]
+    type: ["null", File]
 steps:
   - id: run_tool
     run: tool.cwl

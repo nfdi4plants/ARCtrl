@@ -3216,7 +3216,21 @@ let tests_ArcWorkflow =
             Expect.isNone (LDDataset.tryGetIdentifierAsString parts.[0]) "The step with the raw run has no identifier, and no empty one."
             Expect.equal (LDDataset.tryGetIdentifierAsString parts.[1]) (Some "tools/echo.cwl") "The other step has its path."
             let roundTripped = WorkflowConversion.decomposeWorkflowProtocolToWorkflow(protocol, resolveRunReferences = false)
-            Expect.equal (CWL.ListEntry.values roundTripped.Steps |> Seq.map (fun step -> step.Id) |> List.ofSeq) [ "b" ] "The crate gives back the step that it can describe."
+            Expect.equal (CWL.ListEntry.values roundTripped.Steps |> Seq.map (fun step -> step.Id) |> List.ofSeq) [ Some "b" ] "The crate gives back the step that it can describe."
+        )
+        testCase "Workflow_WithStepsWithoutId_TheCrateKeepsThemWithoutAnIdAndGivesThemBack" (fun () ->
+            let workflow =
+                CWL.Decode.decodeWorkflow "cwlVersion: v1.2\nclass: Workflow\nid: main\ninputs: {}\noutputs: {}\nsteps:\n  - {run: tools/a.cwl, in: [], out: []}\n  - {id: named, run: tools/b.cwl, in: [], out: []}\n  - {run: tools/a.cwl, in: [], out: []}\n  - {id: \"\", run: tools/c.cwl, in: [], out: []}\n"
+            let protocol = WorkflowConversion.composeWorkflowProtocolFromWorkflow("workflows/w/workflow.cwl", workflow)
+            let parts = LDComputationalWorkflow.getHasPart protocol
+            Expect.equal parts.Count 4 "All four steps are in the crate."
+            Expect.equal (parts |> Seq.map (fun part -> LDComputationalWorkflow.tryGetNameAsString part) |> List.ofSeq) [ None; Some "named"; None; Some "" ] "A step without an id has no name, and the empty id is a name."
+            Expect.equal (parts |> Seq.map (fun part -> part.Id) |> Seq.distinct |> Seq.length) 4 "The crate gives each step an identifier of its own."
+            Expect.isFalse (parts.[0].Id.Contains "named") "The identifier of a step without an id is no id of the step."
+            let roundTripped = WorkflowConversion.decomposeWorkflowProtocolToWorkflow(protocol, resolveRunReferences = false)
+            let steps = CWL.ListEntry.values roundTripped.Steps
+            Expect.equal (steps |> Seq.map (fun step -> step.Id) |> List.ofSeq) [ None; Some "named"; None; Some "" ] "The ids come back, and a missing id stays missing."
+            Expect.equal (steps |> Seq.map (fun step -> step.Run) |> List.ofSeq) [ CWL.RunString "tools/a.cwl"; CWL.RunString "tools/b.cwl"; CWL.RunString "tools/a.cwl"; CWL.RunString "tools/c.cwl" ] "The runs come back."
         )
         testCase "Workflow_WithMixedRun_UsesThePathOfTheMixinAsIdentifier" (fun () ->
             let workflow =
@@ -3615,7 +3629,7 @@ let tests_ArcRun =
                 )
                 |> Map.ofSeq
 
-            let mutable expectedToolByStepId : Map<string, CWL.CWLToolDescription> = Map.empty
+            let mutable expectedToolByStepId : Map<string option, CWL.CWLToolDescription> = Map.empty
             for KeyValue(stepId, runPath) in expectedRunPathByStepId do
                 let expectedToolGraphPath =
                     ArcPathHelper.resolvePathFromFile referencedWorkflowGraphPath runPath
@@ -3640,7 +3654,7 @@ let tests_ArcRun =
 
                 Expect.isTrue
                     (match CWL.WorkflowStep.getResolvedRun parsedStep with | CWL.RunCommandLineTool _ -> true | _ -> false)
-                    (sprintf "Expected step %s to resolve to RunCommandLineTool but got %A" parsedStep.Id (CWL.WorkflowStep.getResolvedRun parsedStep))
+                    (sprintf "Expected step %A to resolve to RunCommandLineTool but got %A" parsedStep.Id (CWL.WorkflowStep.getResolvedRun parsedStep))
 
                 let parsedToolObj: obj =
                     match CWL.WorkflowStep.getResolvedRun parsedStep with
@@ -3648,7 +3662,7 @@ let tests_ArcRun =
                     | _ -> Unchecked.defaultof<obj>
                 Expect.isTrue
                     (parsedToolObj :? CWL.CWLToolDescription)
-                    (sprintf "Expected resolved tool payload of step %s to be CWLToolDescription but got %A" parsedStep.Id parsedToolObj)
+                    (sprintf "Expected resolved tool payload of step %A to be CWLToolDescription but got %A" parsedStep.Id parsedToolObj)
                 let parsedTool = parsedToolObj :?> CWL.CWLToolDescription
 
                 let expectedInputs, expectedOutputs = toolSignatures expectedTool

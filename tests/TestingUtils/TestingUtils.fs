@@ -301,6 +301,12 @@ module CWL =
     let literals (texts: string seq) : ResizeArray<SchemaSaladString> =
         texts |> Seq.map SchemaSaladString.Literal |> ResizeArray
 
+    /// The source that a document writes for these texts: a single text is a single source, any other number of texts is a list.
+    let sourceOf (texts: string seq) : OutputSource =
+        match Seq.toList texts with
+        | [ text ] -> OutputSource.Single (SchemaSaladString.Literal text)
+        | many -> OutputSource.Multiple (literals many)
+
     /// The binding that an input holds. An input without a binding and an input with a directive in its place fail the test.
     let inputBindingOf (input: CWLInput) : InputBinding =
         match input.InputBinding with

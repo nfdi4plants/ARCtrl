@@ -501,7 +501,7 @@ let private tests_SetISAFromContracts = testList "SetISAFromContracts" [
         let getStepById (id: string) (workflow: ARCtrl.CWL.CWLWorkflowDescription) =
             let stepOpt =
                 (ARCtrl.CWL.ListEntry.values workflow.Steps)
-                |> Seq.tryFind (fun s -> s.Id = id)
+                |> Seq.tryFind (fun s -> s.Id = Some id)
             Expect.wantSome stepOpt (sprintf "Expected step '%s' to exist." id)
 
         let requireWorkflowRun (label: string) (run: ARCtrl.CWL.WorkflowStepRun) : ARCtrl.CWL.CWLWorkflowDescription =

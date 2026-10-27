@@ -626,7 +626,7 @@ let testEncodeNormalizeEdgeCases =
                 )
 
             let encodedYaml =
-                YAMLicious.Encode.object [ "steps", YAMLicious.Encode.object [ Encode.encodeWorkflowStep false step ] ]
+                YAMLicious.Encode.object [ "steps", YAMLicious.Encode.object [ (let id, node = Encode.encodeWorkflowStep false step in Option.get id, node) ] ]
                 |> Encode.writeYaml
 
             let decodedSteps =
@@ -1543,6 +1543,57 @@ outputs: {}
             let sameKeyApart = tool [ "inputs:"; "  x:"; "    type: string"; "    default: {a: {a: 1}, b: {a: 2}}"; "outputs: []" ]
             Expect.isNone (decodeError sameKeyApart) "The same key in different mappings is no repeated key."
 
+        testCase "keys that the loader of cwltool takes for one key are a repeated key, and keys of another type are different keys" <| fun _ ->
+            let tool (keys: string) =
+                String.concat "\n" [ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo"; "inputs:"; "  x:"; "    type: Any"; "    default: " + keys; "outputs: []"; "" ]
+            let decodeError (yaml: string) =
+                try
+                    Decode.decodeCommandLineTool yaml |> ignore
+                    None
+                with YamlDecodeException error -> Some error
+            // The loader compares keys as Python does: 1 equals 0x1, 1.0 and true, and every null is one key.
+            for keys in
+                [ "{null: a, ~: b}"; "{null: a, Null: b}"; "{true: a, True: b}"; "{1: a, 0x1: b}"; "{1: a, 01: b}"; "{1: a, +1: b}"; "{1: a, 1.0: b}"
+                  "{true: a, 1: b}"; "{false: a, 0: b}"; "{1.5: a, 15e-1: b}"; "{.inf: a, .Inf: b}"; "{.nan: a, .NaN: b}"; "{8: a, 0o10: b}"
+                  "{a: 1, \"a\": 2}"; "{\"1\": a, '1': b}"; "{12345678901234567890: a, 12345678901234567890: b}" ] do
+                match decodeError (tool keys) with
+                | Some error ->
+                    Expect.isTrue ((DecodeError.pathText error).StartsWith "inputs.x.default.") (sprintf "%s: the error should show the second key, found %s." keys (DecodeError.pathText error))
+                    Expect.stringContains error.Message "occurs twice" (sprintf "%s: the error should say that a key occurs twice." keys)
+                | None -> failwith (sprintf "The keys %s are one key for cwltool and must fail." keys)
+            // A quoted key is a text, so it differs from the plain key of another type.
+            for keys in
+                [ "{1: a, \"1\": b}"; "{\"1\": a, 1: b}"; "{true: a, \"true\": b}"; "{null: a, \"null\": b}"; "{~: a, \"~\": b}"; "{1: a, 2: b}"; "{1: a, 1.5: b}"
+                  "{.inf: a, -.inf: b}"; "{1: a, a: b}"; "{.nan: a, \".nan\": b}" ] do
+                let decoded = Decode.decodeCommandLineTool (tool keys)
+                let written = Encode.encodeToolDescription decoded
+                Expect.equal (Decode.decodeCommandLineTool written) decoded (sprintf "%s: the written text should decode to the same tool." keys)
+                Expect.equal (Encode.encodeToolDescription (Decode.decodeCommandLineTool written)) written (sprintf "%s: writing again should give the same text." keys)
+            let written = Encode.encodeToolDescription (Decode.decodeCommandLineTool (tool "{1: a, \"1\": b, null: c, \"null\": d}"))
+            for expected in [ "1: a"; "\"1\": b"; "null: c"; "\"null\": d" ] do
+                Expect.stringContains written expected (sprintf "The key keeps its spelling: %s\n%s" expected written)
+        testCase "an extension field keeps the keys of a mapping with their types, and a field of an object needs a text as its name" <| fun _ ->
+            let tool (lines: string list) =
+                String.concat "\n" ([ "cwlVersion: v1.2"; "$namespaces: {ex: \"http://example.org/\"}"; "class: CommandLineTool"; "baseCommand: echo"; "inputs: []"; "outputs: []" ] @ lines @ [ "" ])
+            let decodeError (yaml: string) =
+                try
+                    Decode.decodeCommandLineTool yaml |> ignore
+                    None
+                with YamlDecodeException error -> Some error
+            let decoded = Decode.decodeCommandLineTool (tool [ "ex:meta:"; "  1: a"; "  \"1\": b"; "  null: e"; "  \"null\": f"; "ex:flags:"; "  true: c"; "  \"true\": d"; "ex:list:"; "  - {1: a, \"1\": b}" ])
+            let written = Encode.encodeToolDescription decoded
+            for expected in [ "1: a"; "\"1\": b"; "true: c"; "\"true\": d"; "null: e"; "\"null\": f" ] do
+                Expect.stringContains written expected (sprintf "The key keeps its spelling: %s\n%s" expected written)
+            Expect.equal (Decode.decodeCommandLineTool written) decoded "The written text should decode to the same tool."
+            Expect.notEqual decoded (Decode.decodeCommandLineTool (tool [ "ex:meta:"; "  \"1\": a"; "  \"1x\": b"; "  null: e"; "  \"null\": f"; "ex:flags:"; "  true: c"; "  \"true\": d"; "ex:list:"; "  - {1: a, \"1\": b}" ])) "Another key makes another tool."
+            for (name, key) in [ "an int", "1"; "a bool", "true"; "a null", "~"; "a float", "1.5" ] do
+                match decodeError (tool [ key + ": x" ]) with
+                | Some error ->
+                    Expect.stringContains error.Message "Expected a string, found" (sprintf "%s as the name of a field: the error should say what is wrong." name)
+                    Expect.stringContains error.Message "Write it in quotes" (sprintf "%s as the name of a field: the error should say how to write the text." name)
+                    Expect.isSome error.Span (sprintf "%s as the name of a field: the error should have the place in the text." name)
+                | None -> failwith (sprintf "%s as the name of a field must fail." name)
+            Expect.isSome (decodeError (tool [ "ex:x: 1"; "1: x" ])) "A key of another type fails also behind a valid field."
         testCase "a raw hint that starts with a comment or a blank line keeps it in the hint and is written behind a dash with a line break" <| fun _ ->
             let tool (hints: string list) =
                 String.concat "\n" ([ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo"; "inputs: []"; "outputs: []"; "hints:" ] @ hints) + "\n"
@@ -2543,8 +2594,8 @@ let testEqualityOfDecodedObjects =
             let secondInputs = stepInputsOf text
             Expect.equal firstInputs.Length 3 "The step has three inputs."
             List.iter2 (fun (a: StepInput) (b: StepInput) -> expectSame (sprintf "the step input %s" a.Id) (box a) (box b)) firstInputs secondInputs
-            Expect.equal (firstInputs.[0].Source |> Option.map Seq.toList) (Some [ SchemaSaladString.Literal "a" ]) "A single source is a list of one."
-            Expect.equal (firstInputs.[1].Source |> Option.map Seq.toList) (Some [ SchemaSaladString.Literal "a"; SchemaSaladString.Literal "b" ]) "A list of sources keeps its order."
+            Expect.equal firstInputs.[0].Source (Some (OutputSource.Single (SchemaSaladString.Literal "a"))) "A string is a single source."
+            Expect.equal firstInputs.[1].Source (Some (OutputSource.Multiple (literals [ "a"; "b" ]))) "A list of sources keeps its order."
             expectSame "the step" (box (stepOf text)) (box (stepOf text))
 
         testCase "a changed source, list order, link merge, pick value or value expression makes a step input unequal" <| fun _ ->
@@ -2578,7 +2629,9 @@ let testEqualityOfDecodedObjects =
             expectSame "a single output source" (box (OutputSource.Single (SchemaSaladString.Literal "a"))) (box (OutputSource.Single (SchemaSaladString.Literal "a")))
             Expect.notEqual (OutputSource.Multiple (literals [ "a"; "b" ])) (OutputSource.Multiple (literals [ "b"; "a" ])) "Another order is another list of sources."
             Expect.notEqual (OutputSource.Multiple (literals [ "a"; "b" ])) (OutputSource.Multiple (literals [ "a" ])) "Another number of sources is another list."
-            Expect.notEqual (OutputSource.Single (SchemaSaladString.Literal "a")) (OutputSource.Multiple (literals [ "a" ])) "A single source stays different from a list of one source."
+            Expect.equal (outputsOf (outputs "[a/x]")).[0].OutputSource (Some (OutputSource.Multiple (literals [ "a/x" ]))) "A list of one source is a list."
+            Expect.equal (outputsOf (outputs "a/x")).[0].OutputSource (Some (OutputSource.Single (SchemaSaladString.Literal "a/x"))) "A string is a single source."
+            Expect.notEqual (outputsOf (outputs "[a/x]")).[0] (outputsOf (outputs "a/x")).[0] "A list of one source stays different from a single source."
             Expect.notEqual (outputsOf text).[0] (outputsOf (outputs "[a/x, c/z]")).[0] "A changed source makes the outputs unequal."
 
         testCase "lists of any element type in dynamic properties compare and hash by their elements" <| fun _ ->
@@ -3030,7 +3083,7 @@ let testInvalidDocuments =
             Expect.equal ((ListEntry.values outputs.Value.Outputs) |> Seq.map (fun output -> output.Name) |> List.ofSeq) [ "o"; "o" ] "Both outputs stay in the list."
             Expect.equal (outputs.Warnings |> Seq.map (fun warning -> warning.Path) |> List.ofSeq) [ "outputs[1]" ] "The warning shows the repeated entry."
             let steps = Decode.decodeWorkflowWithWarnings (workflow [ "inputs: {}"; "outputs: {}"; "steps:"; "  - id: s"; "    run: t.cwl"; "    in: {}"; "    out: []"; "  - id: s"; "    run: u.cwl"; "    in: {}"; "    out: []" ])
-            Expect.equal ((ListEntry.values steps.Value.Steps) |> Seq.map (fun step -> step.Id, step.Run) |> List.ofSeq) [ "s", RunString "t.cwl"; "s", RunString "u.cwl" ] "Both steps stay in the list."
+            Expect.equal ((ListEntry.values steps.Value.Steps) |> Seq.map (fun step -> step.Id, step.Run) |> List.ofSeq) [ Some "s", RunString "t.cwl"; Some "s", RunString "u.cwl" ] "Both steps stay in the list."
             Expect.equal (steps.Warnings |> Seq.map (fun warning -> warning.Path) |> List.ofSeq) [ "steps[1]" ] "The warning shows the repeated entry."
             // A mapping holds a key once, so the lists with a repeated id are written as lists and read back equal.
             let writtenInputs = Encode.encodeToolDescription inputs.Value
@@ -3708,14 +3761,16 @@ let testScalarsThatCwltoolReadsAsAnotherType =
     let bigBinary = "0b" + String.replicate 70 "1"
     let bigHex = "0x_FFFF_FFFF_FFFF_FFFF_FFFF"
     // Strings that the core schema reads as strings and the loader of cwltool reads as other types.
-    let typed = [ "="; "<<"; bigBinary; bigHex; "yes"; "1_000"; "0b101"; "1:30" ]
+    let typed = [ "="; "<<"; bigBinary; bigHex; "1_000"; "0b101" ]
+    // Strings that the loader of cwltool reads as strings. The writer quotes them for the readers of YAML 1.1, which read a bool and a number.
+    let quotedForYaml11 = [ "yes"; "1:30" ]
     // Strings that quotes keep apart from an int or a float of the core schema.
     let quotedOnly = [ "0o" + String.replicate 30 "7"; "017"; ".5e3" ]
     // Strings with the pattern of a float or an int that the loader cannot convert.
     let unreadable = [ "._"; "-._"; "+._"; "._e+5"; ".__"; "0b_" ]
     testList "Strings that cwltool reads as another type" [
         testCase "a quoted text that cwltool would read as another type is written in quotes in a list of strings, an environment variable, a doc and a default" <| fun _ ->
-            for text in typed @ unreadable @ quotedOnly do
+            for text in typed @ quotedForYaml11 @ unreadable @ quotedOnly do
                 let documents =
                     [ "a list of strings", tool [ "baseCommand: [echo, \"" + text + "\"]"; "inputs: []"; "outputs: []" ]
                       "an environment variable", tool [ "baseCommand: env"; "requirements:"; "  EnvVarRequirement:"; "    envDef:"; "      A: \"" + text + "\""; "inputs: []"; "outputs: []" ]
@@ -3726,15 +3781,35 @@ let testScalarsThatCwltoolReadsAsAnotherType =
                     Expect.stringContains written ("\"" + text + "\"") (sprintf "%s %s: the text is written in quotes.\n%s" place text written)
                     Expect.equal (Decode.decodeCWLDocument written) decoded (sprintf "%s %s: the written text should decode to the same document." place text)
         testCase "a plain text that the core schema reads as a string decodes as a string and is written in quotes" <| fun _ ->
-            for text in typed @ unreadable do
+            for text in typed @ quotedForYaml11 @ unreadable do
                 let yaml = tool [ "label: " + text; "baseCommand: echo"; "inputs: []"; "outputs: []" ]
                 let decoded = Decode.decodeCommandLineTool yaml
                 Expect.equal decoded.Label (Some (SchemaSaladString.Literal text)) (sprintf "The plain label %s is a string." text)
                 let written = Encode.encodeToolDescription decoded
                 Expect.stringContains written ("label: \"" + text + "\"") (sprintf "%s: the label is written in quotes.\n%s" text written)
                 Expect.equal (Decode.decodeCommandLineTool written) decoded (sprintf "%s: the written text should decode to the same tool." text)
+        testCase "a text that cwltool reads as another string is written in quotes, in a block and in a flow collection" <| fun _ ->
+            // The loader fails on a tab inside a plain scalar, folds a NEL and drops a line separator at the ends, and reads a flow item that starts with ? as a mapping.
+            // The first column is the text as the source writes it in quotes, the second the decoded text and the third the text as the writer spells it.
+            for (what, source, text, written) in
+                [ "a tab inside", "a\\tb", "a\tb", "a\tb"
+                  "a NEL inside", "a\\Nb", "a\u0085b", "a\\Nb"
+                  "a line separator at the end", "a\\L", "a\u2028", "a\\L"
+                  "a paragraph separator at the start", "\\Pa", "\u2029a", "\\Pa"
+                  "a question mark at the start", "?x", "?x", "?x"
+                  "two question marks", "??", "??", "??" ] do
+                let decoded = Decode.decodeCommandLineTool (tool [ "label: \"" + source + "\""; "baseCommand: [echo, \"" + source + "\"]"; "inputs: []"; "outputs: []" ])
+                Expect.equal decoded.Label (Some (SchemaSaladString.Literal text)) (sprintf "%s: the label is the text." what)
+                let output = Encode.encodeToolDescription decoded
+                Expect.stringContains output ("label: \"" + written + "\"") (sprintf "%s: the label is written in quotes.\n%s" what output)
+                Expect.stringContains output ("baseCommand: [echo, \"" + written + "\"]") (sprintf "%s: the item of the flow list is written in quotes.\n%s" what output)
+                Expect.equal (Decode.decodeCommandLineTool output) decoded (sprintf "%s: the written text should decode to the same tool." what)
+            // A text that the loader reads as written stays plain.
+            let plain = Encode.encodeToolDescription (Decode.decodeCommandLineTool (tool [ "label: a-?b"; "baseCommand: [echo, \"-x\", \":y\"]"; "inputs: []"; "outputs: []" ]))
+            Expect.stringContains plain "label: a-?b" "A question mark inside a text needs no quotes."
+            Expect.stringContains plain "baseCommand: [echo, -x, :y]" "A dash or a colon at the start of a flow item needs no quotes."
         testCase "a quoted text that cwltool would read as another type is written in quotes in a job file and reads back" <| fun _ ->
-            for text in typed @ unreadable @ quotedOnly do
+            for text in typed @ quotedForYaml11 @ unreadable @ quotedOnly do
                 let references = DecodeParameters.decodeYAMLParameterFile ("b: \"" + text + "\"\n")
                 let written = Encode.encodeYAMLParameterFile references
                 Expect.stringContains written ("b: \"" + text + "\"") (sprintf "%s: the value is written in quotes.\n%s" text written)
@@ -4408,6 +4483,22 @@ let testIntsBeyond64BitsInNumberPositions =
                 failsAt ("success code " + text) (fun () -> Decode.decodeCommandLineTool (tool [ "successCodes: [" + text + "]"; "inputs: []"; "outputs: []" ]) |> ignore) "successCodes[0]" "Expected an int"
                 failsAt ("file size " + text) (fun () -> Decode.decodeCommandLineTool (tool [ "requirements:"; "  - class: InitialWorkDirRequirement"; "    listing:"; "      - class: File"; "        location: f.txt"; "        size: " + text; "inputs: []"; "outputs: []" ]) |> ignore) "requirements[0].listing[0].size" "Expected an int64"
             failsAt "an int beyond 32 bits" (fun () -> Decode.decodeCommandLineTool (tool [ "successCodes: [2147483648]"; "inputs: []"; "outputs: []" ]) |> ignore) "successCodes[0]" "Expected an int"
+        testCase "the message for an int beyond its range names the range" <| fun _ ->
+            let position (text: string) = tool [ "inputs:"; "  x:"; "    type: string"; "    inputBinding: {position: " + text + "}"; "outputs: []" ]
+            let successCode (text: string) = tool [ "successCodes: [" + text + "]"; "inputs: []"; "outputs: []" ]
+            let timeLimit (text: string) = tool [ "requirements:"; "  - class: ToolTimeLimit"; "    timelimit: " + text; "inputs: []"; "outputs: []" ]
+            let fileSize (text: string) = tool [ "requirements:"; "  - class: InitialWorkDirRequirement"; "    listing:"; "      - class: File"; "        location: f.txt"; "        size: " + text; "inputs: []"; "outputs: []" ]
+            for text in [ "2147483648"; "-2147483649"; "9223372036854775807" ] do
+                failsAt ("position " + text) (fun () -> Decode.decodeCommandLineTool (position text) |> ignore) "inputs.x.inputBinding.position" ("Expected an int, found the plain scalar " + text + ", which is an int beyond the 32-bit range.")
+                failsAt ("success code " + text) (fun () -> Decode.decodeCommandLineTool (successCode text) |> ignore) "successCodes[0]" ("Expected an int, found the plain scalar " + text + ", which is an int beyond the 32-bit range.")
+            failsAt "a success code beyond 64 bits" (fun () -> Decode.decodeCommandLineTool (successCode bigDecimal) |> ignore) "successCodes[0]" ("Expected an int, found the plain scalar " + bigDecimal + ", which is an int beyond the 32-bit range.")
+            failsAt "a position beyond 64 bits" (fun () -> Decode.decodeCommandLineTool (position bigDecimal) |> ignore) "inputs.x.inputBinding.position" ("found the plain scalar " + bigDecimal + ", which the core schema reads as an int beyond the 64-bit range.")
+            failsAt "a time limit beyond 64 bits" (fun () -> Decode.decodeCommandLineTool (timeLimit bigDecimal) |> ignore) "requirements[0].timelimit" ("found the plain scalar " + bigDecimal + ", which the core schema reads as an int beyond the 64-bit range.")
+            failsAt "a size beyond 64 bits" (fun () -> Decode.decodeCommandLineTool (fileSize bigDecimal) |> ignore) "requirements[0].listing[0].size" ("Expected an int64, found the plain scalar " + bigDecimal + ", which is an int beyond the 64-bit range.")
+            // The ends of the ranges stay valid.
+            let decoded = Decode.decodeCommandLineTool (tool [ "successCodes: [2147483647, -2147483648]"; "requirements:"; "  - class: ToolTimeLimit"; "    timelimit: 9223372036854775807"; "inputs:"; "  x:"; "    type: string"; "    inputBinding: {position: 2147483647}"; "outputs: []" ])
+            Expect.sequenceEqual (ListEntry.values decoded.SuccessCodes.Value) [ 2147483647; -2147483648 ] "The ends of the 32-bit range are valid."
+            Expect.equal (inputBindingOf (ListEntry.values decoded.Inputs.Value).[0]).Position (Some (BindingPosition.Number 2147483647)) "The highest int is a valid position."
         testCase "an int of the core schema is a number in every number position, and a spelling that only YAML 1.1 reads as an int is a string" <| fun _ ->
             let decoded = Decode.decodeCommandLineTool (tool [ "successCodes: [0o17, 0x1F, 017, 5]"; "requirements:"; "  - class: ToolTimeLimit"; "    timelimit: 0o17"; "  - class: InitialWorkDirRequirement"; "    listing:"; "      - {class: File, location: f.txt, size: 0x10}"; "inputs:"; "  x:"; "    type: string"; "    inputBinding: {position: 0o11}"; "outputs: []" ])
             Expect.sequenceEqual (ListEntry.values decoded.SuccessCodes.Value) [ 15; 31; 17; 5 ] "The success codes are the numbers."
@@ -4953,14 +5044,21 @@ let testProcessWithDirectiveClass =
                   "no outputs", [ "inputs: []" ], "", "The mapping has no field outputs."
                   "a number as the requirements", [ "requirements: 5"; "inputs: []"; "outputs: []" ], "requirements", "Expected a list or a mapping of requirements"
                   "a number as the hints", [ "hints: 5"; "inputs: []"; "outputs: []" ], "hints", "Expected a list or a mapping of hints"
-                  "a number as the intent", [ "intent: 5"; "inputs: []"; "outputs: []" ], "intent", "Expected a list of strings" ] do
+                  "a number as the intent", [ "intent: 5"; "inputs: []"; "outputs: []" ], "intent", "Expected a list of strings"
+                  "a number as the inputs", [ "inputs: 5"; "outputs: []" ], "inputs", "Expected a list or a mapping of inputs, found"
+                  "a number as the outputs", [ "inputs: []"; "outputs: 5" ], "outputs", "Expected a list or a mapping of outputs, found"
+                  "an input of the type stdout", [ "inputs: {x: stdout}"; "outputs: []" ], "inputs.x", "The type stdout is valid only as the whole type of an output"
+                  "an input of the type stderr", [ "inputs: [{id: x, type: stderr}]"; "outputs: []" ], "inputs.x.type", "The type stderr is valid only as the whole type of an output"
+                  "an output of the type stdin", [ "inputs: []"; "outputs: {o: stdin}" ], "outputs.o", "The type stdin is valid only as the whole type of an input"
+                  "an output of the type stdin in a list", [ "inputs: []"; "outputs: [{id: o, type: stdin}]" ], "outputs.o.type", "The type stdin is valid only as the whole type of an input" ] do
                 failsAt (name + " in a document") (fun () -> Decode.decodeCWLDocument (document lines) |> ignore) path message
                 failsAt (name + " in a run") (fun () -> Decode.decodeCWLDocument (run lines) |> ignore) ("steps.s.run" + (if path = "" then "" else "." + path)) message
                 failsAt (name + " in a packed document") (fun () -> Decode.decodeCWLDocument (graph lines) |> ignore) ("$graph[0]" + (if path = "" then "" else "." + path)) message
-            // Python raises an error of its runtime for a scalar where the ports stand, so only the failure is common to the targets.
-            for lines in [ [ "inputs: 5"; "outputs: []" ]; [ "inputs: []"; "outputs: 5" ] ] do
-                Expect.throws (fun () -> Decode.decodeCWLDocument (document lines) |> ignore) "A number where the ports stand is no map of ports."
-                Expect.throws (fun () -> Decode.decodeCWLDocument (run lines) |> ignore) "A number where the ports of a run stand is no map of ports."
+            // The file may hold a command line tool, so an input may have the type stdin and an output stdout or stderr.
+            let streams = [ "inputs: {i: stdin}"; "outputs: {o: stdout, e: stderr}" ]
+            Expect.equal (Decode.decodeCWLDocument (document streams)) (CWLDocument.Process (RawProcess { Node = Reader.readRoot (document streams) })) "A stream type that a command line tool admits leaves the process as written."
+            Decode.decodeCWLDocument (run streams) |> ignore
+            Decode.decodeCWLDocument (graph streams) |> ignore
             failsAt "a list as the id in a document" (fun () -> Decode.decodeCWLDocument (document [ "id: [a]"; "inputs: []"; "outputs: []" ]) |> ignore) "id" "Expected a string, found a sequence."
             failsAt "a list as the id in a run" (fun () -> Decode.decodeCWLDocument (run [ "id: [a]"; "inputs: []"; "outputs: []" ]) |> ignore) "steps.s.run.id" "Expected a string, found a sequence."
             let fieldsOfOneClass = [ "inputs: {i: {type: string, inputBinding: {position: 1}}}"; "outputs: {o: {type: string, outputBinding: {glob: o}}}"; "steps: []"; "baseCommand: echo"; "expression: x" ]

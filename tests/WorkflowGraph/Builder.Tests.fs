@@ -398,9 +398,27 @@ let tests_fullIds =
             Expect.isEmpty (built.Diagnostics |> Seq.filter (fun d -> d.Kind = GraphIssueKind.MissingReference) |> Seq.toList) "No reference is left unwired."
     ]
 
+let tests_stepsWithoutAnId =
+    let built = TestObjects.CWL.WorkflowGraph.stepsWithoutIdWorkflowFile |> decodeProcessingUnit |> Builder.build
+    let stepNodes = built.Nodes |> Seq.filter (fun n -> n.Kind = NodeKind.StepNode) |> Seq.toList
+    testList "Steps without an id" [
+        testCase "every step is a node of its own, and a step without an id is named by its position" <| fun () ->
+            Expect.equal (stepNodes |> List.map (fun n -> n.Id) |> List.sort) (List.sort [ "anonymous-step:root/0"; "step:root/stepB"; "anonymous-step:root/2" ]) "The nodes stand apart from each other."
+            Expect.equal (stepNodes |> List.map (fun n -> n.Label) |> List.sort) (List.sort [ "steps[0]"; "stepB"; "steps[2]" ]) "The label of a step without an id is its position."
+            Expect.equal (countEdges EdgeKind.Contains built) 3 "The workflow contains the three steps."
+            Expect.equal (countEdges EdgeKind.Calls built) 3 "Each step calls its run."
+        testCase "the ports and the sources of a step without an id are wired like those of the other steps" <| fun () ->
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.PortNode PortDirection.Input && n.OwnerNodeId.IsSome && (n.OwnerNodeId.Value.StartsWith "anonymous-step:" || n.OwnerNodeId.Value.StartsWith "step:")) built) 3 "Each step has its input port."
+            Expect.isTrue (hasNode "port:anonymous-step:root/0/in/in1" built) "The first step without an id has its input port."
+            Expect.isTrue (hasNode "port:anonymous-step:root/2/out/out" built) "The second step without an id has its output port."
+            Expect.equal (countEdges EdgeKind.BindsWorkflowInput built) 3 "The workflow input feeds the input port of each step."
+            Expect.isEmpty (built.Diagnostics |> Seq.toList) "Nothing is left unwired."
+    ]
+
 let main =
     testList "Builder" [
         tests_builderCore
         tests_fragmentRunReferences
         tests_fullIds
+        tests_stepsWithoutAnId
     ]

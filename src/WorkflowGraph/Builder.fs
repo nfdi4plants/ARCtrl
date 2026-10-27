@@ -114,17 +114,37 @@ module Builder =
         addNode state node
         nodeId
 
+    /// How the graph names a step. A step with an id is named by its id, read against the id of the workflow, as the step
+    /// #main/first of a packed document is first. A step without an id is named by its position among the entries of the
+    /// steps of the workflow, in a namespace apart from the ids of the other steps. The name is a place in the graph and no
+    /// id of the step.
+    type StepIdentity = {
+        /// The ID of the node of the step.
+        NodeId: WorkflowGraphNodeId
+        /// The name that the node shows when the step has no label, and that the diagnostics use.
+        Name: string
+        /// The segment that the scope of the process of the step ends in.
+        RunSegment: string
+    }
+
+    /// The identity of a step in the graph. The position is that of the entry among the steps of the workflow.
+    let stepIdentity (scope: string) (workflowId: string option) (position: int) (step: WorkflowStep) : StepIdentity =
+        match step.Id with
+        | Some id ->
+            let name = ReferenceParsing.relativeId workflowId id
+            { NodeId = GraphId.stepNodeId scope name; Name = name; RunSegment = $"{name}/run" }
+        | None ->
+            { NodeId = GraphId.anonymousStepNodeId scope position; Name = $"steps[{position}]"; RunSegment = $"anonymous:{position}/run" }
+
     /// Creates a step node for a CWL workflow step, adds a Contains edge from the workflow. Returns the step node ID.
-    /// The id of the step is read against the id of the workflow, as the step #main/first of a packed document is first.
     let addStepNode
         (state: BuildState)
-        (scope: string)
         (workflowNodeId: WorkflowGraphNodeId)
-        (workflowId: string option)
+        (identity: StepIdentity)
         (step: WorkflowStep)
         =
-        let stepName = ReferenceParsing.relativeId workflowId step.Id
-        let stepNodeId = GraphId.stepNodeId scope stepName
+        let stepName = identity.Name
+        let stepNodeId = identity.NodeId
         let metadata =
             createMetadata [
                 "when", step.When_ |> Option.map (fun expression -> box expression.AsDirectiveString)
@@ -170,7 +190,7 @@ module Builder =
 
     /// Adds all input and output port nodes for a workflow step.
     let addStepPorts (state: BuildState) (stepNodeId: WorkflowGraphNodeId) (step: WorkflowStep) =
-        let relative = ReferenceParsing.relativeId (Some step.Id)
+        let relative = ReferenceParsing.relativeId step.Id
         // An import or a mixin stands for ports of a file that the decoder does not read, and an include for the id of an output
         // of a file, so none of them gets a node.
         WorkflowStep.getInputValues step
@@ -708,24 +728,25 @@ module Builder =
         (scope: string)
         (workflowNodeId: WorkflowGraphNodeId)
         (workflowId: string option)
+        (identity: StepIdentity)
         (step: WorkflowStep)
         =
-        let stepNodeId = GraphId.stepNodeId scope (ReferenceParsing.relativeId workflowId step.Id)
+        let stepNodeId = identity.NodeId
 
         for stepInput in WorkflowStep.getInputValues step do
-            let targetInputPortId = GraphId.portNodeId stepNodeId PortDirection.Input (ReferenceParsing.relativeId (Some step.Id) stepInput.Id)
+            let targetInputPortId = GraphId.portNodeId stepNodeId PortDirection.Input (ReferenceParsing.relativeId step.Id stepInput.Id)
             match stepInput.Source with
             | None ->
                 ()
             | Some sources ->
                 // A directive names a file that the decoder does not read, so it gets no edge.
-                for source in sources |> Seq.choose SchemaSaladString.tryLiteral do
+                for source in sources.AsValues() |> Seq.choose SchemaSaladString.tryLiteral do
                     let sourceRef = ReferenceParsing.parseSourceReference (ReferenceParsing.relativeId workflowId source)
                     if System.String.IsNullOrWhiteSpace sourceRef.PortId then
                         addDiagnostic
                             state
                             GraphIssueKind.InvalidReference
-                            $"Step '{step.Id}' input '{stepInput.Id}' has invalid source '{source}'."
+                            $"Step '{identity.Name}' input '{stepInput.Id}' has invalid source '{source}'."
                             (Some scope)
                             (Some source)
                     else
@@ -749,7 +770,7 @@ module Builder =
                             addDiagnostic
                                 state
                                 GraphIssueKind.MissingReference
-                                $"Unable to wire source '{source}' to step input '{step.Id}/{stepInput.Id}'."
+                                $"Unable to wire source '{source}' to step input '{identity.Name}/{stepInput.Id}'."
                                 (Some scope)
                                 (Some source)
 
@@ -802,17 +823,23 @@ module Builder =
         (workflowNodeId: WorkflowGraphNodeId)
         (workflow: CWLWorkflowDescription)
         =
-        let steps = CWLWorkflowDescription.getStepValues workflow
-        for step in steps do
-            let stepNodeId = addStepNode state scope workflowNodeId workflow.Id step
+        // The identity of a step comes from its place among the entries, so an import or a mixin between the steps keeps the
+        // places of the others.
+        let steps =
+            workflow.Steps
+            |> Seq.indexed
+            |> Seq.choose (fun (position, entry) -> ListEntry.tryValue entry |> Option.map (fun step -> step, stepIdentity scope workflow.Id position step))
+            |> Seq.toList
+        for step, identity in steps do
+            let stepNodeId = addStepNode state workflowNodeId identity step
             addStepPorts state stepNodeId step
 
-            let runScope = GraphId.childScope scope $"{ReferenceParsing.relativeId workflow.Id step.Id}/run"
+            let runScope = GraphId.childScope scope identity.RunSegment
             let _, runNodeId = buildRunNode state runScope stepNodeId workflowFilePath (WorkflowStep.getResolvedRun step)
             addEdgeByType state EdgeKind.Calls stepNodeId runNodeId (Some "calls")
 
         steps
-        |> Seq.iter (wireStepInputs state scope workflowNodeId workflow.Id)
+        |> List.iter (fun (step, identity) -> wireStepInputs state scope workflowNodeId workflow.Id identity step)
 
         wireWorkflowOutputs state scope workflowNodeId workflow
 

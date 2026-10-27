@@ -1,12 +1,16 @@
 /// How the writer spells a scalar so that cwltool reads it as written.
 ///
 /// cwltool loads documents and job files with the YAML loader of ruamel.yaml. That loader reads more plain scalars as
-/// other types than the core schema of YAML 1.2.2 does: numbers with underscores (1_000, 1_0.5), binary ints (0b101),
-/// octal ints with a leading zero, the markers = and <<, sexagesimal numbers (1:30), and floats with a leading dot
-/// and an exponent without a sign (.5e3 is a string there). It reads the words yes, no, on and off as bools in YAML
-/// 1.1. A string that the core schema or this loader would read as another type is written in double quotes, so cwltool
-/// reads it as a string. The writer quotes more than the core schema needs on purpose. The reader follows the core
-/// schema only.
+/// other types than the core schema of YAML 1.2.2 does. Measured with cwltool, it types the markers = and <<, numbers
+/// with underscores (1_000, 1_0.5), binary ints (0b101, 0b_1) and hex ints with an underscore (0x1_F, 0x_1F). It reads
+/// a float with a dot in front of its digits and an exponent without a sign (.5e3) as a string, and it fails on
+/// spellings such as ._ and 0b_. A string that the core schema or this loader would read as another type is written in
+/// double quotes, so cwltool reads it as a string.
+///
+/// The loader reads the words yes, no, on and off, the sexagesimal numbers (1:30) and the dates as strings. A reader of
+/// YAML 1.1 reads the words as bools and the sexagesimal numbers as numbers, so the writer quotes them too. It quotes more
+/// than the core schema needs on purpose, so that a string stays a string for both kinds of reader. The reader follows
+/// the core schema only.
 module ARCtrl.CWL.ScalarQuoting
 
 open System.Text.RegularExpressions
@@ -30,9 +34,12 @@ let private dotFloatWithUnsignedExponent = Regex("^[-+]?\\.[0-9]+[eE][0-9]+$")
 let private matches (pattern: Regex) (text: string) : bool =
     not (text.Contains("\n")) && pattern.IsMatch text
 
-/// True when the loader of cwltool reads the text, written as a plain scalar, as another type than a string, and the
-/// core schema reads it as a string. The match is on the whole text and it is case-sensitive. A spelling that the
-/// loader recognizes but cannot construct, such as ._ and 0b_, counts too, because the loader fails on it.
+/// True when the loader of cwltool or a reader of YAML 1.1 reads the text, written as a plain scalar, as another type than
+/// a string, and the core schema reads it as a string. The loader types the markers, the numbers with underscores and the
+/// binary ints (see the description of the module). The words yes, no, on and off and the sexagesimal numbers are in the
+/// match for the readers of YAML 1.1, because the loader reads them as strings. The match is on the whole text and it is
+/// case-sensitive. A spelling that the loader recognizes but cannot construct, such as ._ and 0b_, counts too, because
+/// the loader fails on it.
 let readsAsAnotherTypeThanCore (text: string) : bool =
     text = "="
     || text = "<<"
@@ -40,9 +47,17 @@ let readsAsAnotherTypeThanCore (text: string) : bool =
     || (text.Length > 0 && "-+0123456789".IndexOf text.[0] >= 0 && matches intSpellings text)
     || matches floatSpellings text
 
+/// True when the loader of cwltool reads the text, written as a plain scalar, as another string than the core schema
+/// does, or fails on it. The loader fails on a tab inside a plain scalar. It reads a NEL (U+0085), a line separator
+/// (U+2028) and a paragraph separator (U+2029) as line breaks, which fold or vanish at the ends of the text. A ? at the
+/// start opens a key in a flow collection. The writer cannot see in which collection a scalar stands, so it quotes the
+/// text wherever it stands.
+let private readsAsAnotherString (text: string) : bool =
+    text.StartsWith "?" || text |> Seq.exists (fun c -> c = '\t' || c = '\u0085' || c = '\u2028' || c = '\u2029')
+
 /// True when a string needs double quotes to stay a string for the core schema or for the loader of cwltool.
 let readsAsAnotherType (text: string) : bool =
-    CoreSchema.resolvesToNonString text || readsAsAnotherTypeThanCore text
+    CoreSchema.resolvesToNonString text || readsAsAnotherTypeThanCore text || readsAsAnotherString text
 
 /// A plain scalar that a reader would take for another type than a string gets double quotes, so the text stays a
 /// string. A scalar in any other style is a string already, and so is a scalar with an explicit tag.

@@ -93,7 +93,7 @@ type ScatterMethod =
 [<AttachMembers>]
 type StepInput (
     id: string,
-    ?source: ResizeArray<SchemaSaladString>,
+    ?source: OutputSource,
     ?defaultValue: RawYaml,
     ?valueFrom: SchemaSaladString,
     ?linkMerge: LinkMergeMethod,
@@ -167,7 +167,7 @@ type StepInput (
         match o with
         | :? StepInput as other ->
             this.Id = other.Id &&
-            HashHelpers.optionSeqEqual this.Source other.Source &&
+            this.Source = other.Source &&
             this.DefaultValue = other.DefaultValue &&
             this.ValueFrom = other.ValueFrom &&
             this.LinkMerge = other.LinkMerge &&
@@ -182,7 +182,7 @@ type StepInput (
     override this.GetHashCode() =
         HashHelpers.hashFields [
             box this.Id
-            box (HashHelpers.hashOptionSeq this.Source)
+            box this.Source
             box this.DefaultValue
             box this.ValueFrom
             box this.LinkMerge
@@ -196,7 +196,7 @@ type StepInput (
 
     static member create(
         id: string,
-        ?source: ResizeArray<SchemaSaladString>,
+        ?source: OutputSource,
         ?defaultValue: RawYaml,
         ?valueFrom: SchemaSaladString,
         ?linkMerge: LinkMergeMethod,
@@ -321,7 +321,7 @@ type ResolvedRun =
 
 [<AttachMembers>]
 type WorkflowStep (
-    id: string,
+    id: string option,
     in_: ResizeArray<ListEntry<StepInput>>,
     out_: ResizeArray<StepOutput>,
     run: WorkflowStepRun,
@@ -335,7 +335,7 @@ type WorkflowStep (
 ) =
     inherit DynamicObj ()
 
-    let mutable _id: string = id
+    let mutable _id: string option = id
     let mutable _in: ResizeArray<ListEntry<StepInput>> = in_
     let mutable _out: ResizeArray<StepOutput> = out_
     let mutable _run: WorkflowStepRun = run
@@ -349,6 +349,8 @@ type WorkflowStep (
     let mutable _sourceNodes = SourceNodes.Empty
     let mutable _resolvedRun = ResolvedRun.Empty
 
+    /// The id of the step. CWL makes the id of a step optional, so a step without an id key has none, and a step with
+    /// id: "" has the empty text. The decoder and the model never make up an id.
     member this.Id
         with get() = _id
         and set(id) = _id <- id
@@ -409,6 +411,20 @@ type WorkflowStep (
         with get() = _hints
         and set(hints) = _hints <- hints
 
+    /// A step without an id and a step with the empty id hash alike under the hash of the properties on Python, so the id
+    /// is part of the equality and of the hash on its own.
+    override this.Equals(o: obj) =
+        match o with
+        | :? WorkflowStep as other -> this.Id = other.Id && base.Equals other
+        | _ -> false
+
+    override this.GetHashCode() =
+        let idHash =
+            match this.Id with
+            | Some id -> HashHelpers.mergeHashes 1 (hash id)
+            | None -> 0
+        HashHelpers.mergeHashes idHash (base.GetHashCode())
+
     static member fromRunPath(
         id: string,
         in_: ResizeArray<ListEntry<StepInput>>,
@@ -423,7 +439,7 @@ type WorkflowStep (
         ?hints: ResizeArray<HintEntry>
     ) =
         WorkflowStep(
-            id,
+            Some id,
             in_,
             out_,
             RunString runPath,
