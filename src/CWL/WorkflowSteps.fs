@@ -363,8 +363,8 @@ type WorkflowStep (
         with get() = _out
         and set(out_) = _out <- out_
 
-    /// The run as it is written: a reference to a file or to a process of the same packed document, or an inline
-    /// process. Setting it drops the resolved process, which belonged to the previous reference.
+    /// The run as it is written: a reference to a file, or an inline process. Setting it drops the resolved process,
+    /// which belonged to the previous reference.
     member this.Run
         with get() = _run
         and set(run) =

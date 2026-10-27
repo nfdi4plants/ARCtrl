@@ -21,7 +21,7 @@ export { FileSystem } from './ts/FileSystem/FileSystem.js'
 export { FileSystemTree } from './ts/FileSystem/FileSystemTree.js'
 
 /// CWL
-import { CWLProcessingUnit, CWLDocument, CWLGraph } from './ts/CWL/CWLProcessingUnit.js'
+import { CWLProcessingUnit } from './ts/CWL/CWLProcessingUnit.js'
 import { CWLType, SchemaSaladString, SchemaSaladBool, FileSize, DocText, ListEntry$1 as ListEntry, FileInstance, DirectoryInstance, DirentInstance, InputEnumSchema, InputRecordField, InputRecordSchema, InputArraySchema, SchemaDefinition, SoftwarePackage } from './ts/CWL/CWLTypes.js'
 import { CWLParameterValue, CWLParameterRecordField } from './ts/CWL/ParameterValue.js'
 import { CWLParameterReference } from './ts/CWL/ParameterReference.js'
@@ -34,8 +34,6 @@ import { Requirement, SchemaDefEntry, DockerRequirement, EnvironmentDef, Resourc
 
 export const CWL = {
     CWLProcessingUnit,
-    CWLDocument,
-    CWLGraph,
     CWLType,
     SchemaSaladString,
     SchemaSaladBool,

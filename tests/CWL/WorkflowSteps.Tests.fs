@@ -197,10 +197,10 @@ let testWorkflowStep =
             Expect.isNone actual "RunWorkflow with non-workflow payload should not decode as workflow"
         testCase "encodeWorkflowStepRun raises for wrong obj in RunCommandLineTool" <| fun _ ->
             let run = RunCommandLineTool (box "bad")
-            Expect.throws (fun _ -> Encode.encodeWorkflowStepRun false run |> ignore) "Encoding invalid RunCommandLineTool payload should fail"
+            Expect.throws (fun _ -> Encode.encodeWorkflowStepRun run |> ignore) "Encoding invalid RunCommandLineTool payload should fail"
         testCase "encodeWorkflowStepRun raises for wrong obj in RunWorkflow" <| fun _ ->
             let run = RunWorkflow (box "bad")
-            Expect.throws (fun _ -> Encode.encodeWorkflowStepRun false run |> ignore) "Encoding invalid RunWorkflow payload should fail"
+            Expect.throws (fun _ -> Encode.encodeWorkflowStepRun run |> ignore) "Encoding invalid RunWorkflow payload should fail"
         testCase "tryGetExpressionTool returns Some for correct payload" <| fun _ ->
             let expressionTool = CWLExpressionToolDescription(outputs = ResizeArray [], expression = SchemaSaladString.Literal "$(null)")
             let run = RunExpressionTool (box expressionTool)
@@ -218,7 +218,7 @@ let testWorkflowStep =
             Expect.isNone (WorkflowStepRunOps.tryGetWorkflow run) "RunExpressionTool should not decode as workflow"
         testCase "encodeWorkflowStepRun raises for wrong obj in RunExpressionTool" <| fun _ ->
             let run = RunExpressionTool (box 42)
-            Expect.throws (fun _ -> Encode.encodeWorkflowStepRun false run |> ignore) "Encoding invalid RunExpressionTool payload should fail"
+            Expect.throws (fun _ -> Encode.encodeWorkflowStepRun run |> ignore) "Encoding invalid RunExpressionTool payload should fail"
     ]
 
 let testWorkflowStepOps =

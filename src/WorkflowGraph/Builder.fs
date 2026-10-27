@@ -13,6 +13,9 @@ module Builder =
         mutable NodeIds: Set<WorkflowGraphNodeId>
         mutable EdgeIds: Set<WorkflowGraphEdgeId>
         mutable RunResolutionStack: Set<string>
+        /// The workflows whose steps are being built, innermost first. A workflow that runs one of them, inline or
+        /// through a resolved run, would build without end.
+        mutable ActiveWorkflows: CWLProcessingUnit list
         mutable RunResolutionCache: Map<string, WorkflowStepRun>
         mutable RunNodeCache: Map<string, WorkflowGraphNodeId>
         Options: WorkflowGraphBuildOptions
@@ -37,6 +40,7 @@ module Builder =
             NodeIds = Set.empty
             EdgeIds = Set.empty
             RunResolutionStack = Set.empty
+            ActiveWorkflows = []
             RunResolutionCache = Map.empty
             RunNodeCache = Map.empty
             Options = options
@@ -115,9 +119,9 @@ module Builder =
         nodeId
 
     /// How the graph names a step. A step with an id is named by its id, read against the id of the workflow, as the step
-    /// #main/first of a packed document is first. A step without an id is named by its position among the entries of the
-    /// steps of the workflow, in a namespace apart from the ids of the other steps. The name is a place in the graph and no
-    /// id of the step.
+    /// #main/first of a document that writes its ids in full is first. A step without an id is named by its position among
+    /// the entries of the steps of the workflow, in a namespace apart from the ids of the other steps. The name is a place
+    /// in the graph and no id of the step.
     type StepIdentity = {
         /// The ID of the node of the step.
         NodeId: WorkflowGraphNodeId
@@ -223,18 +227,11 @@ module Builder =
                 else
                     withoutHash
 
-    /// Returns true if a run path is a fragment #id, which refers to a process of the packed document that holds the step.
-    let isFragmentReference (runPath: string) =
-        not (System.String.IsNullOrWhiteSpace runPath)
-        && runPath.Trim().StartsWith("#")
-        && runPath.Trim().Length > 1
-
-    /// Returns true if a run path ends in '.cwl' or is a fragment #id.
+    /// Returns true if a run path ends in '.cwl'.
     let isCwlReference (runPath: string) =
         let candidate = trimToNameCandidate runPath
-        isFragmentReference runPath
-        || (System.String.IsNullOrWhiteSpace candidate |> not
-            && candidate.EndsWith(".cwl", System.StringComparison.OrdinalIgnoreCase))
+        System.String.IsNullOrWhiteSpace candidate |> not
+        && candidate.EndsWith(".cwl", System.StringComparison.OrdinalIgnoreCase)
 
     /// Extracts the basename of a path and strips the '.cwl' extension.
     let tryBasenameNoCwlExtension (value: string) =
@@ -272,24 +269,10 @@ module Builder =
         |> List.tryPick id
         |> Option.defaultValue fallback
 
-    /// Generates multiple path candidates to try when resolving a run reference. A fragment #id refers to a process of
-    /// the packed document that holds the workflow, so its first candidate is the path of the document with the
-    /// fragment, as in runs/r/run.cwl#shout, and the second is the fragment alone.
+    /// Generates multiple path candidates to try when resolving a run reference.
     let getRunPathCandidates (workflowFilePath: string option) (runPath: string) : string [] =
         if System.String.IsNullOrWhiteSpace runPath then
             [||]
-        elif isFragmentReference runPath then
-            let documentPath =
-                match workflowFilePath with
-                | Some workflowPath when System.String.IsNullOrWhiteSpace workflowPath |> not ->
-                    let hashIndex = workflowPath.IndexOf('#')
-                    if hashIndex >= 0 then workflowPath.Substring(0, hashIndex) else workflowPath
-                | _ -> ""
-            [|
-                documentPath + runPath.Trim()
-                runPath.Trim()
-            |]
-            |> Array.distinct
         else
             let trimmedRunPath = runPath.Trim()
             let normalizedRunPath = ArcPathHelper.normalize trimmedRunPath
@@ -515,7 +498,21 @@ module Builder =
                     metadata
             addWorkflowPorts state nodeId workflow
             if isRoot || state.Options.ExpandNestedWorkflows then
-                buildWorkflowSteps state scope workflowFilePath nodeId workflow
+                if state.ActiveWorkflows |> List.exists (CWLProcessingUnit.isSameObject processingUnit) then
+                    // The workflow runs itself, so the second node shows its ports and leaves its steps to the first one.
+                    addDiagnostic
+                        state
+                        GraphIssueKind.CycleDetected
+                        $"Cycle detected: the workflow '{label}' runs itself through its steps."
+                        workflowFilePath
+                        None
+                else
+                    let previousWorkflows = state.ActiveWorkflows
+                    state.ActiveWorkflows <- processingUnit :: previousWorkflows
+                    try
+                        buildWorkflowSteps state scope workflowFilePath nodeId workflow
+                    finally
+                        state.ActiveWorkflows <- previousWorkflows
             nodeId
         | RawProcess raw ->
             // A file decides the class of the process and the decoder reads no file, so the graph shows one node without ports.

@@ -1,34 +1,10 @@
 namespace ARCtrl.CWL
 
-open DynamicObj
-open Fable.Core
-
-/// A reference to a name in the same document starts with a #, as in #main. The name is the same without it.
+/// An id may start with a #, as in #main. The id is the same without it.
 module internal LocalReference =
 
     let withoutHash (reference: string) : string =
         if reference.StartsWith "#" then reference.Substring 1 else reference
-
-/// How a packed document finds a process, as cwltool does. A runner starts with the first process whose id is main. A
-/// run of the form #id reaches the last process with that id, because a later object of one id replaces the earlier ones.
-/// The model and the decoder find the processes of a document through these two functions only. The ids are the ids of
-/// the processes in the order of the document, with none for a process without an id.
-module GraphMembers =
-
-    let private positionsOf (wanted: string) (ids: seq<string option>) : int list =
-        ids
-        |> Seq.indexed
-        |> Seq.filter (fun (_, id) -> id |> Option.map LocalReference.withoutHash = Some wanted)
-        |> Seq.map fst
-        |> List.ofSeq
-
-    /// The position of the process that a runner starts with.
-    let tryStart (ids: seq<string option>) : int option =
-        positionsOf "main" ids |> List.tryHead
-
-    /// The position of the process that a run of the form #id reaches. The id may start with a #.
-    let tryReach (id: string) (ids: seq<string option>) : int option =
-        positionsOf (LocalReference.withoutHash id) ids |> List.tryLast
 
 type CWLProcessingUnit =
     | CommandLineTool of CWLToolDescription
@@ -93,16 +69,6 @@ type CWLProcessingUnit =
         |> Seq.choose HintEntry.tryAsRequirement
         |> ResizeArray
 
-    /// Returns the id of the process of any variant, as it is written. The id of a process whose class is a directive is
-    /// the plain text of its id field, and none when the field is missing or holds anything else.
-    static member tryGetId (processingUnit: CWLProcessingUnit) : string option =
-        match processingUnit with
-        | CommandLineTool tool -> tool.Id
-        | Workflow workflow -> workflow.Id
-        | ExpressionTool tool -> tool.Id
-        | Operation operation -> operation.Id
-        | RawProcess raw -> raw.TryScalarField "id"
-
     /// True when both values wrap the same description object. Two union values around one object are the same process.
     static member isSameObject (left: CWLProcessingUnit) (right: CWLProcessingUnit) : bool =
         match left, right with
@@ -148,65 +114,3 @@ module WorkflowStepRunOps =
         | RunOperation (:? CWLOperationDescription as operation) -> Some operation
         | _ -> None
 
-
-/// A packed CWL document. It has no process at its root. The processes stand under $graph and all use the cwlVersion
-/// of the root. A step of a workflow refers to another process of the graph by its id, as in run: "#tool". The other
-/// keys of the root, such as $namespaces and $schemas, are dynamic properties of the graph.
-[<AttachMembers>]
-type CWLGraph(processes: ResizeArray<CWLProcessingUnit>, ?cwlVersion: string) =
-    inherit DynamicObj()
-
-    let mutable _cwlVersion: string = cwlVersion |> Option.defaultValue "v1.2"
-    let mutable _processes: ResizeArray<CWLProcessingUnit> = processes
-
-    member this.CWLVersion
-        with get() = _cwlVersion
-        and set(value) = _cwlVersion <- value
-
-    member this.Processes
-        with get() = _processes
-        and set(value) = _processes <- value
-
-    static member KnownFieldNames =
-        CWLKnownFieldNames.graph
-
-    static member private idsOf (graph: CWLGraph) : seq<string option> =
-        graph.Processes |> Seq.map CWLProcessingUnit.tryGetId
-
-    /// Returns the process that a run of the form #id reaches: the last process with the id. The id of a process and the
-    /// id that is looked up may start with a #.
-    static member tryFindProcess (id: string) (graph: CWLGraph) : CWLProcessingUnit option =
-        GraphMembers.tryReach id (CWLGraph.idsOf graph) |> Option.map (fun position -> graph.Processes.[position])
-
-    /// Returns the process main of the graph, which a runner starts with: the first process with the id main.
-    static member tryFindMain (graph: CWLGraph) : CWLProcessingUnit option =
-        GraphMembers.tryStart (CWLGraph.idsOf graph) |> Option.map (fun position -> graph.Processes.[position])
-
-    /// True when the process is the process main of the graph, the object that tryFindMain finds. The id is read on each
-    /// call, so renaming a process in place changes the answer.
-    static member isMain (processingUnit: CWLProcessingUnit) (graph: CWLGraph) : bool =
-        CWLGraph.tryFindMain graph |> Option.exists (CWLProcessingUnit.isSameObject processingUnit)
-
-    override this.Equals(o: obj) =
-        match o with
-        | :? CWLGraph as other ->
-            this.CWLVersion = other.CWLVersion
-            && HashHelpers.seqEqual this.Processes other.Processes
-            && DynamicObjHelpers.dynamicPropertiesEqual this other
-        | _ -> false
-
-    override this.GetHashCode() =
-        hash (this.CWLVersion, HashHelpers.hashSeq this.Processes, DynamicObjHelpers.hashDynamicProperties this)
-
-/// A CWL document: a single process, or a packed document with a graph of processes.
-[<RequireQualifiedAccess>]
-type CWLDocument =
-    | Process of CWLProcessingUnit
-    | Graph of CWLGraph
-
-    /// Returns the process that a runner starts with: the process of a document with one process, or the process with
-    /// the id main of a packed document. A packed document without that id has none.
-    static member tryGetMain (document: CWLDocument) : CWLProcessingUnit option =
-        match document with
-        | Process processingUnit -> Some processingUnit
-        | Graph graph -> CWLGraph.tryFindMain graph

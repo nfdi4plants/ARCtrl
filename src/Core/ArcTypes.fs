@@ -1170,7 +1170,6 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     let mutable datamap : Datamap option = datamap
     let mutable contacts = defaultArg contacts (ResizeArray())
     let mutable cwlDescription = cwlDescription
-    let mutable cwlGraph : CWL.CWLGraph option = None
     let mutable comments  = defaultArg comments (ResizeArray())
     let mutable staticHash : int = 0
     let mutable cwlStaticHash : int = 0
@@ -1190,15 +1189,6 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     member this.Datamap with get() = datamap and set(dm) = datamap <- dm
     member this.Contacts with get() = contacts and set(c) = contacts <- c
     member this.CWLDescription with get() = cwlDescription and set(c) = cwlDescription <- c
-    /// The packed document that the CWL file of the workflow holds: the graph that was read or set, while CWLDescription
-    /// is its process main (the object with the id main). In any other case the file holds CWLDescription alone and
-    /// this is none. The setter keeps the graph, so it comes back when CWLDescription is its process main again.
-    member this.CWLGraph
-        with get() =
-            match cwlDescription, cwlGraph with
-            | Some description, Some graph when CWL.CWLGraph.isMain description graph -> Some graph
-            | _ -> None
-        and set(g) = cwlGraph <- g
     member this.Comments with get() = comments and set(c) = comments <- c
     member this.StaticHash with get() = staticHash and set(s) = staticHash <- s
     /// The hash of the CWL file of the workflow at the last read or write, or 0 when the file was not there. The ARC
@@ -1359,7 +1349,6 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
                 nextContacts
                 this.CWLDescription
                 nextComments
-        workflow.CWLGraph <- this.CWLGraph
         if copyInvestigationRef then workflow.Investigation <- this.Investigation
         workflow
 
@@ -1376,10 +1365,9 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
         let dm = this.Datamap = other.Datamap
         let con = Seq.compare this.Contacts other.Contacts
         let cwl = this.CWLDescription = other.CWLDescription
-        let graph = this.CWLGraph = other.CWLGraph
         let comments = Seq.compare this.Comments other.Comments
         // Todo maybe add reflection check to prove that all members are compared?
-        [|i; t; d; wft; uri; ver; subwf; par; com; dm; con; cwl; graph; comments|] |> Seq.forall (fun x -> x = true)
+        [|i; t; d; wft; uri; ver; subwf; par; com; dm; con; cwl; comments|] |> Seq.forall (fun x -> x = true)
 
 
     /// <summary>
@@ -1443,24 +1431,18 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
             HashCodes.boxHashOption this.Datamap
             HashCodes.boxHashSeq this.Contacts
             HashCodes.boxHashOption this.CWLDescription
-            HashCodes.boxHashOption this.CWLGraph
             HashCodes.boxHashSeq this.Comments
         |]
         |> HashCodes.boxHashArray
         |> fun x -> x :?> int
 
-    /// The hash of the CWL file of the workflow: its description and its graph. It is 0 for a workflow without a
+    /// The hash of the CWL file of the workflow, which holds its description. It is 0 for a workflow without a
     /// description, which has no file.
     member this.GetCWLHashCode() =
         match this.CWLDescription with
         | None -> 0
         | Some _ ->
-            [|
-                HashCodes.boxHashOption this.CWLDescription
-                HashCodes.boxHashOption this.CWLGraph
-            |]
-            |> HashCodes.boxHashArray
-            |> fun x -> x :?> int
+            HashCodes.boxHashOption this.CWLDescription :?> int
 
     // Hashcode without Datamap and CWL file, which are separate files with their own hashes
     member this.GetLightHashCode() =
@@ -1504,7 +1486,6 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     let mutable datamap : Datamap option = datamap
     let mutable performers = performers
     let mutable cwlDescription = cwlDescription
-    let mutable cwlGraph : CWL.CWLGraph option = None
     let mutable cwlInput : ResizeArray<CWL.CWLParameterReference> = cwlInput
     let mutable comments  = comments
     let mutable staticHash : int = 0
@@ -1524,15 +1505,6 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     member this.Datamap with get() = datamap and set(n) = datamap <- n
     member this.Performers with get() = performers and set(n) = performers <- n
     member this.CWLDescription with get() = cwlDescription and set(n) = cwlDescription <- n
-    /// The packed document that the CWL file of the run holds: the graph that was read or set, while CWLDescription is
-    /// its process main (the object with the id main). In any other case the file holds CWLDescription alone and this
-    /// is none. The setter keeps the graph, so it comes back when CWLDescription is its process main again.
-    member this.CWLGraph
-        with get() =
-            match cwlDescription, cwlGraph with
-            | Some description, Some graph when CWL.CWLGraph.isMain description graph -> Some graph
-            | _ -> None
-        and set(n) = cwlGraph <- n
     member this.CWLInput with get() = cwlInput and set(n) = cwlInput <- n
     member this.Comments with get() = comments and set(n) = comments <- n
     member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
@@ -1832,7 +1804,6 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
                 this.CWLDescription
                 this.CWLInput
                 nextComments
-        run.CWLGraph <- this.CWLGraph
         run
 
     /// <summary>
@@ -1868,7 +1839,6 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             this.Performers <- s
         if run.CWLDescription.IsSome || updateAlways then
             this.CWLDescription <- run.CWLDescription
-            this.CWLGraph <- run.CWLGraph
         if run.CWLInput.Count <> 0 || updateAlways then
             let s = ArcTypesAux.updateAppendResizeArray appendSequences this.CWLInput run.CWLInput
             this.CWLInput <- s
@@ -1925,11 +1895,10 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
         let tables = Seq.compare this.Tables other.Tables
         let perf = Seq.compare this.Performers other.Performers
         let cwl = this.CWLDescription = other.CWLDescription
-        let graph = this.CWLGraph = other.CWLGraph
         let cwli = Seq.compare this.CWLInput other.CWLInput
         let comments = Seq.compare this.Comments other.Comments
         // Todo maybe add reflection check to prove that all members are compared?
-        [|i; t; d; mst; tt; tp; wf; dm; tables; perf; cwl; graph; cwli; comments|] |> Seq.forall (fun x -> x = true)
+        [|i; t; d; mst; tt; tp; wf; dm; tables; perf; cwl; cwli; comments|] |> Seq.forall (fun x -> x = true)
 
     /// <summary>
     /// Use this function to check if this ArcRun and the input ArcRun refer to the same object.
@@ -1946,18 +1915,13 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             this.StructurallyEquals(run)
         | _ -> false
 
-    /// The hash of the CWL file of the run: its description and its graph. It is 0 for a run without a description,
+    /// The hash of the CWL file of the run, which holds its description. It is 0 for a run without a description,
     /// which has no file.
     member this.GetCWLHashCode() =
         match this.CWLDescription with
         | None -> 0
         | Some _ ->
-            [|
-                HashCodes.boxHashOption this.CWLDescription
-                HashCodes.boxHashOption this.CWLGraph
-            |]
-            |> HashCodes.boxHashArray
-            |> fun x -> x :?> int
+            HashCodes.boxHashOption this.CWLDescription :?> int
 
     /// The hash of the parameter file run.yml. It is 0 for a run without parameter references, which has no file.
     member this.GetCWLInputHashCode() =
@@ -1994,7 +1958,6 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             HashCodes.boxHashSeq this.Tables
             HashCodes.boxHashSeq this.Performers
             HashCodes.boxHashOption this.CWLDescription
-            HashCodes.boxHashOption this.CWLGraph
             HashCodes.boxHashSeq this.CWLInput
             HashCodes.boxHashSeq this.Comments
         |]

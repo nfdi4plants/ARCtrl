@@ -326,76 +326,18 @@ let tests_builderCore =
             Expect.equal (countEdges EdgeKind.Calls graph) 1 ""
     ]
 
-let tests_fragmentRunReferences =
-    let graph =
-        match Decode.decodeCWLDocument TestObjects.CWL.Workflow.PackedDocument.graphFile with
-        | CWLDocument.Graph graph -> graph
-        | other -> failwith $"Expected a packed document but got %A{other}"
-    let main = Expect.wantSome (CWLGraph.tryFindProcess "main" graph) "The packed document holds the process main."
-    let shout = Expect.wantSome (CWLGraph.tryFindProcess "shout" graph) "The packed document holds the process shout."
-    let optionsWith (lookup: (string -> CWLProcessingUnit option) option) =
-        WorkflowGraphBuildOptions.defaultOptions
-        |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "runs/tests/run.cwl")
-        |> WorkflowGraphBuildOptions.withTryResolveRunPath lookup
-
-    testList "Fragment run references" [
-        testCase "a fragment is a reference to resolve and a bare word is not" <| fun () ->
-            Expect.isTrue (Builder.isCwlReference "#shout") "A fragment refers to a process of the packed document."
-            Expect.isFalse (Builder.isCwlReference "#") "A # alone names nothing."
-            Expect.isFalse (Builder.isCwlReference "shout") "A word without # or .cwl is no reference to a CWL file."
-            Expect.isTrue (Builder.isCwlReference "tool.cwl") "A path to a CWL file stays a reference."
-        testCase "the candidates of a fragment are the path of the document with the fragment and the fragment alone" <| fun () ->
-            Expect.sequenceEqual (Builder.getRunPathCandidates (Some "runs/tests/run.cwl") "#shout") [| "runs/tests/run.cwl#shout"; "#shout" |] "The document comes first."
-            Expect.sequenceEqual (Builder.getRunPathCandidates (Some "runs/tests/run.cwl#main") "#shout") [| "runs/tests/run.cwl#shout"; "#shout" |] "A process of the document refers to its siblings through the same document."
-            Expect.sequenceEqual (Builder.getRunPathCandidates None "#shout") [| "#shout" |] "Without a path only the fragment is left."
-        testCase "a fragment resolves through the path of the document" <| fun () ->
-            let resolver (path: string) =
-                if ArcPathHelper.normalizePathKey path = "runs/tests/run.cwl#shout" then Some shout else None
-            let graph = Builder.buildWith (optionsWith (Some resolver)) main
-            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool) graph) 1 "The tool of the graph is a node."
-            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference) graph) 0 "Nothing stays unresolved."
-        testCase "a fragment resolves through the fragment alone when the lookup holds that" <| fun () ->
-            let resolver (path: string) = if path = "#shout" then Some shout else None
-            let graph = Builder.buildWith (optionsWith (Some resolver)) main
-            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.CommandLineTool) graph) 1 "The tool of the graph is a node."
-        testCase "a fragment that the lookup does not hold is an unresolved reference with the id as its label" <| fun () ->
-            let graph = Builder.buildWith (optionsWith (Some (fun _ -> None))) main
-            let unresolved =
-                graph.Nodes
-                |> Seq.tryFind (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.UnresolvedReference)
-            Expect.equal (Expect.wantSome unresolved "Expected an unresolved reference node").Label "shout" "The label is the id."
-            Expect.isTrue (graph.Diagnostics |> Seq.exists (fun d -> d.Kind = GraphIssueKind.ResolutionFailed)) "The failure is a diagnostic."
-        testCase "a fragment without a resolver is an external reference with the id as its label" <| fun () ->
-            let graph = Builder.buildWith (optionsWith None) main
-            let external =
-                graph.Nodes
-                |> Seq.tryFind (fun n -> n.Kind = NodeKind.ProcessingUnitNode ProcessingUnitKind.ExternalReference)
-            Expect.equal (Expect.wantSome external "Expected an external reference node").Label "shout" "The label is the id."
-    ]
-
 let tests_fullIds =
-    let graph =
-        match Decode.decodeCWLDocument TestObjects.CWL.WorkflowGraph.packedWithFullIdsFile with
-        | CWLDocument.Graph graph -> graph
-        | other -> failwith $"Expected a packed document but got %A{other}"
-    let main = Expect.wantSome (CWLGraph.tryFindProcess "main" graph) "The packed document holds the process main."
-    let built =
-        let resolver (path: string) = CWLGraph.tryFindProcess (path.Substring(path.IndexOf('#') + 1)) graph
-        WorkflowGraphBuildOptions.defaultOptions
-        |> WorkflowGraphBuildOptions.withRootWorkflowFilePath (Some "runs/tests/run.cwl")
-        |> WorkflowGraphBuildOptions.withTryResolveRunPath (Some resolver)
-        |> fun options -> Builder.buildWith options main
-
-    testList "Full ids of a packed document" [
-        testCase "the ids of the steps and ports are read against the id of the workflow" <| fun () ->
+    let built = TestObjects.CWL.WorkflowGraph.fullIdsWorkflowFile |> decodeProcessingUnit |> Builder.build
+    testList "Full ids" [
+        testCase "the ids of the steps, the ports and the references are read against the id of the workflow" <| fun () ->
             Expect.isTrue (hasNode "step:root/first" built) "The step #main/first is first."
             Expect.isTrue (hasNode "step:root/second" built) "The step #main/second is second."
             Expect.equal (countNodes (fun n -> n.Kind = NodeKind.StepNode) built) 2 ""
-        testCase "the references of the steps and the outputs wire the ports" <| fun () ->
             Expect.equal (countEdges EdgeKind.BindsWorkflowInput built) 1 "The input #main/msg feeds #main/first/msg."
             Expect.equal (countEdges EdgeKind.DataFlow built) 1 "The output #main/first/out feeds #main/second/msg."
             Expect.equal (countEdges EdgeKind.BindsWorkflowOutput built) 1 "The output #main/result takes #main/second/out."
-            Expect.isEmpty (built.Diagnostics |> Seq.filter (fun d -> d.Kind = GraphIssueKind.MissingReference) |> Seq.toList) "No reference is left unwired."
+            Expect.equal built.Edges.Count 7 "Each step adds a Contains and a Calls edge to the three bindings."
+            Expect.isEmpty (built.Diagnostics |> Seq.toList) "No reference is left unwired."
     ]
 
 let tests_stepsWithoutAnId =
@@ -415,10 +357,42 @@ let tests_stepsWithoutAnId =
             Expect.isEmpty (built.Diagnostics |> Seq.toList) "Nothing is left unwired."
     ]
 
+let tests_cycles =
+    let workflowOf (text: string) =
+        match decodeProcessingUnit text with
+        | Workflow workflow -> workflow
+        | other -> failwith $"Expected a workflow but got %A{other}"
+    let text = "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  s:\n    run: other.cwl\n    in: {}\n    out: []\n"
+    let cycles (graph: WorkflowGraph) =
+        graph.Diagnostics |> Seq.filter (fun d -> d.Kind = GraphIssueKind.CycleDetected) |> Seq.length
+    testList "Cycles" [
+        testCase "a workflow whose step holds the workflow inline builds once and reports the cycle" <| fun () ->
+            let workflow = workflowOf text
+            (ListEntry.values workflow.Steps).[0].Run <- WorkflowStepRunOps.fromWorkflow workflow
+            let graph = Builder.build (Workflow workflow)
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.StepNode) graph) 1 "The steps are built once."
+            Expect.equal (cycles graph) 1 "The cycle is a diagnostic."
+        testCase "two workflows whose resolved runs lead to each other build once each and report the cycle" <| fun () ->
+            let first = workflowOf text
+            let second = workflowOf text
+            (ListEntry.values first.Steps).[0].ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromWorkflow second) }
+            (ListEntry.values second.Steps).[0].ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromWorkflow first) }
+            let graph = Builder.build (Workflow first)
+            Expect.equal (countNodes (fun n -> n.Kind = NodeKind.StepNode) graph) 2 "The steps of each workflow are built once."
+            Expect.equal (cycles graph) 1 "The cycle is a diagnostic."
+        testCase "a workflow that two steps run is no cycle" <| fun () ->
+            let shared = workflowOf text
+            let holder = workflowOf (text.Replace("steps:\n", "steps:\n  t:\n    run: other.cwl\n    in: {}\n    out: []\n"))
+            for step in ListEntry.values holder.Steps do
+                step.ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromWorkflow shared) }
+            let graph = Builder.build (Workflow holder)
+            Expect.equal (cycles graph) 0 "A workflow that runs twice is no cycle."
+    ]
+
 let main =
     testList "Builder" [
         tests_builderCore
-        tests_fragmentRunReferences
         tests_fullIds
         tests_stepsWithoutAnId
+        tests_cycles
     ]

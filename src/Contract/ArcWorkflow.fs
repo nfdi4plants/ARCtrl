@@ -25,9 +25,9 @@ module CWLFileReading =
         | YAMLicious.YamlParseException error ->
             raise (YAMLicious.YamlParseException { error with Message = withFile error.Message })
 
-    /// Decodes the text of the CWL file at the path, which is one process or a packed document.
-    let decodeCWLFile (path: string) (text: string) : CWL.CWLDocument =
-        readingFile path (fun () -> CWL.Decode.decodeCWLDocument text)
+    /// Decodes the text of the CWL file at the path.
+    let decodeCWLFile (path: string) (text: string) : CWL.CWLProcessingUnit =
+        readingFile path (fun () -> CWL.Decode.decodeCWLProcessingUnit text)
 
     /// Decodes the text of the parameter file at the path.
     let decodeParameterFile (path: string) (text: string) : ResizeArray<CWL.CWLParameterReference> =
@@ -58,7 +58,7 @@ module WorkflowContractExtensions =
             this.CWLDescription
             |> Option.map (fun description ->
                 let path = Identifier.Workflow.cwlFileNameFromIdentifier this.Identifier
-                let dto = CWL.Encode.encodeProcessingUnitInGraph this.CWLGraph description
+                let dto = CWL.Encode.encodeProcessingUnit description
                 Contract.create(operation, path, DTOType.CWL, DTO.Text dto))
 
         member this.ToCreateContract (?WithFolder) =
@@ -105,18 +105,9 @@ module WorkflowContractExtensions =
                 |> Some 
             | _ -> None
 
-        /// The CWL file of the workflow as a document, which is one process or a packed document.
-        static member tryCWLDocumentFromReadContract (workflowIdentifier : string) (c:Contract) =
+        static member tryCWLFromReadContract (workflowIdentifier : string) (c:Contract) =
             let p = Identifier.Workflow.cwlFileNameFromIdentifier workflowIdentifier
             match c with
             | {Operation = READ; DTOType = Some DTOType.CWL; DTO = Some (DTO.Text cwl)} when c.Path = p->
                 Some (decodeCWLFile c.Path cwl)
             | _ -> None
-
-        /// The process that the CWL file of the workflow starts with. A packed document runs from its process main.
-        static member tryCWLFromReadContract (workflowIdentifier : string) (c:Contract) =
-            ArcWorkflow.tryCWLDocumentFromReadContract workflowIdentifier c
-            |> Option.map (fun document ->
-                match CWL.CWLDocument.tryGetMain document with
-                | Some processingUnit -> processingUnit
-                | None -> failwith $"The packed CWL document {c.Path} has no process with the id main.")

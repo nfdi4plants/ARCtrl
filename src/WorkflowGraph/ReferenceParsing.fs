@@ -17,10 +17,11 @@ module ReferenceParsing =
         if trimmed.StartsWith "#" then trimmed.Substring(1) else trimmed
 
     /// <summary>
-    /// Resolves an id against the id of the process that holds it. A packed document writes the ids in full: the input
-    /// msg of the step first of the workflow #main is #main/first/msg, and its source is #main/msg. An id that starts
-    /// with # and with the id of the holder gives the part behind it, as in msg for #main/msg when the holder is #main.
-    /// Any other id is relative already and stays as it is, so a step named like the workflow keeps its name.
+    /// Resolves an id against the id of the process that holds it. A document can write its ids in full, as cwltool
+    /// writes them: the input msg of the step first of the workflow #main is #main/first/msg, and its source is
+    /// #main/msg. An id that starts with # and with the id of the holder gives the part behind it, as in msg for
+    /// #main/msg when the holder is #main. Any other id is relative already and stays as it is, so a step named like the
+    /// workflow keeps its name.
     /// </summary>
     /// <param name="holderId">The id of the process or step that holds the id, if it has one.</param>
     /// <param name="id">The id or reference to resolve.</param>

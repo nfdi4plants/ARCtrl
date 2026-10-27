@@ -85,28 +85,25 @@ module ARCAux =
 
     let getWorkflowCWLFromContracts (workflowIdentifier) (contracts: Contract []) = 
         contracts 
-        |> Array.tryPick (ArcWorkflow.tryCWLDocumentFromReadContract workflowIdentifier)
+        |> Array.tryPick (ArcWorkflow.tryCWLFromReadContract workflowIdentifier)
 
     let getRunCWLFromContracts (runIdentifier) (contracts: Contract []) = 
         contracts 
-        |> Array.tryPick (ArcRun.tryCWLDocumentFromReadContract runIdentifier)
+        |> Array.tryPick (ArcRun.tryCWLFromReadContract runIdentifier)
 
     let getRunYMLFromContracts (runIdentifier) (contracts: Contract []) = 
         contracts 
         |> Array.tryPick (ArcRun.tryYMLFromReadContract runIdentifier)
 
     /// Builds a lookup map of normalized CWL file paths to decoded CWLProcessingUnit instances from CWL-typed contracts.
-    /// A packed document adds its processes behind the path of the file as well (see CWLRunResolver.lookupEntriesOfDocument).
     let getCWLByPathFromContracts (contracts: Contract []) : Map<string, CWL.CWLProcessingUnit> =
         contracts
-        |> Array.collect (fun c ->
+        |> Array.choose (fun c ->
             match c with
             | {Operation = READ; DTOType = Some DTOType.CWL; DTO = Some (DTO.Text text)} ->
-                decodeCWLFile c.Path text
-                |> CWLRunResolver.lookupEntriesOfDocument c.Path
-                |> List.toArray
+                Some (ArcPathHelper.normalizePathKey c.Path, decodeCWLFile c.Path text)
             | _ ->
-                [||]
+                None
         )
         |> Map.ofArray
 
@@ -756,13 +753,12 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             let cwlFilePath = Identifier.Workflow.cwlFileNameFromIdentifier workflow.Identifier
             let resolvedCwl =
                 cwl
-                |> Option.map (fun document ->
-                    CWLRunResolver.resolveRunReferencesOfDocument cwlFilePath document tryGetCWLByPath
+                |> Option.map (fun processingUnit ->
+                    CWLRunResolver.resolveRunReferencesFromLookup cwlFilePath processingUnit tryGetCWLByPath
                 )
             if workflow.Datamap.IsNone then
                 workflow.Datamap <- datamap
-            workflow.CWLDescription <- resolvedCwl |> Option.map fst
-            workflow.CWLGraph <- resolvedCwl |> Option.bind snd
+            workflow.CWLDescription <- resolvedCwl
             this.AddWorkflow(workflow)
             workflow.StaticHash <- workflow.GetLightHashCode()
             workflow.CWLStaticHash <- workflow.GetCWLHashCode()
@@ -774,14 +770,13 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             let cwlFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
             let resolvedCwl =
                 cwl
-                |> Option.map (fun document ->
-                    CWLRunResolver.resolveRunReferencesOfDocument cwlFilePath document tryGetCWLByPath
+                |> Option.map (fun processingUnit ->
+                    CWLRunResolver.resolveRunReferencesFromLookup cwlFilePath processingUnit tryGetCWLByPath
                 )
             if run.Datamap.IsNone then
                 run.Datamap <- datamap
             run.CWLInput <- yml |> Option.defaultValue (ResizeArray())
-            run.CWLDescription <- resolvedCwl |> Option.map fst
-            run.CWLGraph <- resolvedCwl |> Option.bind snd
+            run.CWLDescription <- resolvedCwl
             this.AddRun(run)
             run.StaticHash <- run.GetLightHashCode()
             run.CWLStaticHash <- run.GetCWLHashCode()

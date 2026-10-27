@@ -1053,16 +1053,9 @@ module Decode =
           /// without an id at the root. Schema Salad gives a step an id below the id of its workflow, so a step with an
           /// empty id has one of its own when the workflow has one.
           DocId: string
-          /// The ids of the processes of the packed document that the place belongs to, without a leading #, or none
-          /// outside of a packed document. A step of such a document refers to a process by #id.
-          GraphIds: Set<string> option
-          /// The cwlVersion that a process without one of its own takes. It is the version of the enclosing process
-          /// or of the packed document, and a document at the root has none.
-          DefaultCwlVersion: string option
-          /// True where a run of the form #id is checked against the processes of the packed document. cwltool builds the
-          /// process tree that starts at the process it runs and nothing else, so a process of a packed document that this
-          /// tree does not reach meets the schema only.
-          CheckSteps: bool }
+          /// The cwlVersion that a process without one of its own takes. It is the version of the enclosing process,
+          /// and a document at the root has none.
+          DefaultCwlVersion: string option }
 
     /// The scope of the root of a document.
     let rootScope : DecodeScope =
@@ -1070,9 +1063,7 @@ module Decode =
           Process = None
           StreamTypes = NoStreams
           DocId = ""
-          GraphIds = None
-          DefaultCwlVersion = None
-          CheckSteps = true }
+          DefaultCwlVersion = None }
 
     let private scalarText (node: YamlNode) : string option =
         match node.Kind with
@@ -1166,33 +1157,6 @@ module Decode =
         | Some id -> scopedId baseId id
         | None -> baseId
 
-    /// A step of a workflow node as the raw nodes show it.
-    type private RawStep =
-        { /// The id of the step, and none for an entry of a list without an id key.
-          StepId: string option
-          /// The segment that names the step in the path of an error: its id, or its position in the list when it has no id.
-          /// It is no identifier.
-          Segment: string
-          StepNode: YamlNode }
-
-    /// The steps of a workflow node, in map and in list form. A step of a list without an id key has no id.
-    let private stepsOf (node: YamlNode) : RawStep list =
-        match valueOf "steps" node with
-        | Some steps ->
-            match steps.Kind with
-            | YamlNodeKind.Mapping _ ->
-                entriesOf steps
-                |> List.choose (fun entry -> scalarText entry.Key |> Option.map (fun id -> { StepId = Some id; Segment = id; StepNode = entry.Value }))
-            | YamlNodeKind.Sequence _ ->
-                itemsOf steps
-                |> List.mapi (fun index step ->
-                    match valueOf "id" step with
-                    | None -> Some { StepId = None; Segment = "[" + string index + "]"; StepNode = step }
-                    | Some idNode -> scalarText idNode |> Option.map (fun id -> { StepId = Some id; Segment = id; StepNode = step }))
-                |> List.choose id
-            | _ -> []
-        | None -> []
-
     /// Fail at a $schemas field that cwltool refuses. The field takes the path of a schema file or a list of paths, and a
     /// directive or any other node there stops cwltool before it reads the document. A path is a string, so a plain
     /// number or bool is an error too, and so is null.
@@ -1210,8 +1174,16 @@ module Decode =
                 | _ -> failAt entry.Value ("Expected the path of a schema file or a list of paths, found " + describeNode entry.Value + "."))
         | None -> ()
 
+    /// Fail at the $graph field of a document. A packed document holds its processes under $graph, and the decoder reads
+    /// a document with its process at the root only.
+    let private rejectPackedDocument (root: YamlNode) : unit =
+        match entriesOf root |> List.tryFind (fun entry -> scalarText entry.Key = Some "$graph") with
+        | Some entry -> raise (YamlDecodeException { Message = "Packed CWL documents ($graph) are not supported."; Path = []; Span = entry.Key.Span })
+        | None -> ()
+
     /// The scope of a document, with the id of its root process.
     let documentScope (root: YamlNode) : DecodeScope =
+        rejectPackedDocument root
         checkSchemasField root
         { rootScope with DocId = processId "" "" root }
 
@@ -1551,10 +1523,10 @@ module Decode =
 
     /// Decode the text of the additional type of an RO-Crate entity. The text is YAML. A scalar is a type name such as
     /// File[][]? and may be quoted, as the null type is written ("null"), or carry a comment. The shorthand nests
-    /// arrays there, which a CWL document does not read. Anything else is a schema or a list of types. The text has no
-    /// port and no SchemaDefRequirement around it, so it reads like any type text (typeTextScope). A stream type is the
-    /// whole text, and a name that is no builtin type is a Reference when it is well-formed. The text is no CWL document,
-    /// so the plain text null names the null type there, where a document needs it in quotes.
+    /// arrays there, which a CWL document does not read. Anything else is a schema or a list of types. The text reads
+    /// like any type text (typeTextScope). A stream type is the whole text, and a name that is no builtin type is a
+    /// Reference when it is well-formed. The text is no CWL document, so the plain text null names the null type there,
+    /// where a document needs it in quotes.
     let cwlTypeFromAdditionalType (text: string) : CWLType =
         let node = readYaml text
         let scope = typeTextScope
@@ -2354,8 +2326,7 @@ module Decode =
             hints
         )
 
-    /// Decode the requirements of a node that stands alone. The types that its SchemaDefRequirements define are the
-    /// only ones that its other requirements may name.
+    /// Decode the requirements of a node that stands alone.
     let requirementsDecoder: (YamlNode -> ResizeArray<Requirement> option) =
         fun node -> requirementsDecoderWithScope None (documentScope node) node
 
@@ -2737,10 +2708,10 @@ module Decode =
         | _ -> false
 
     /// The cwlVersion of a process. A process below the top level takes the default of the scope, which is the version of
-    /// the enclosing process or of the packed document. CWL ignores a cwlVersion field anywhere else than at the top level
-    /// (concepts.md), so the value of such a field changes nothing. CWL types the field as a string everywhere, so a plain
-    /// scalar that the core schema reads as a number or a bool is a decode error, and so is a list or a mapping. A process
-    /// below the top level may leave the field out or give it a null. The field of the root is required.
+    /// the enclosing process. CWL ignores a cwlVersion field anywhere else than at the top level (concepts.md), so the
+    /// value of such a field changes nothing. CWL types the field as a string everywhere, so a plain scalar that the core
+    /// schema reads as a number or a bool is a decode error, and so is a list or a mapping. A process below the top level
+    /// may leave the field out or give it a null. The field of the root is required.
     let versionDecoder (scope: DecodeScope) : (YamlNode -> string) =
         fun node ->
             match scope.DefaultCwlVersion with
@@ -2770,18 +2741,8 @@ module Decode =
     let rec workflowStepRunDecoder (warnings: WarningSink) (scope: DecodeScope) (runValue: YamlNode) : WorkflowStepRun =
         match runValue.Kind with
         | YamlNodeKind.Scalar _ ->
-            // Most workflow steps reference an external CWL file by path. A step of a packed document may refer to a
-            // process of the document by #id, and then the id must belong to one of its processes.
-            let reference = Decode.nonNull stringDecoder runValue
-            match scope.GraphIds with
-            | Some ids when scope.CheckSteps && reference.StartsWith "#" && not (Set.contains (LocalReference.withoutHash reference) ids) ->
-                raise (
-                    YamlDecodeException
-                        { Message = "The run field refers to " + reference + ", which is no process of the $graph."
-                          Path = []
-                          Span = runValue.Span }
-                )
-            | _ -> RunString reference
+            // A step refers to the process of another file by its path, and the reference stays as written.
+            RunString (Decode.nonNull stringDecoder runValue)
         | YamlNodeKind.Mapping _ ->
             match objectDirective "the run field of a step" runValue with
             | Some (ImportedFile path) -> RunImport path
@@ -2898,10 +2859,9 @@ module Decode =
         )
 
     /// Decode a CommandLineTool and preserve unknown top-level metadata fields.
-    and commandLineToolDecoder (warnings: WarningSink) (scope: DecodeScope) (yamlCWL: YamlNode) =
+    and private commandLineToolDecoder (warnings: WarningSink) (scope: DecodeScope) (yamlCWL: YamlNode) =
         // Decode standard sections first. Inputs and outputs are required.
         let cwlVersion = versionDecoder scope yamlCWL
-        // The SchemaDefRequirement of the process overrides the one of the enclosing process.
         let scope = { scope with Process = Some CommandLineToolClass }
         // Only the ports of a command line tool may have a stream type.
         let outputs = outputsDecoderWithWarnings warnings { scope with StreamTypes = OutputStreams } yamlCWL
@@ -2967,11 +2927,10 @@ module Decode =
         description
 
     /// Decode an ExpressionTool and preserve unknown top-level metadata fields.
-    and expressionToolDecoder (warnings: WarningSink) (scope: DecodeScope) (yamlCWL: YamlNode) =
+    and private expressionToolDecoder (warnings: WarningSink) (scope: DecodeScope) (yamlCWL: YamlNode) =
         // ExpressionTool shares port/requirement metadata decoding with other
         // processing units, then decodes its required expression body.
         let cwlVersion = versionDecoder scope yamlCWL
-        // The SchemaDefRequirement of the process overrides the one of the enclosing process.
         let scope = { scope with Process = Some ExpressionToolClass }
         let outputs = outputsDecoderWithWarnings warnings scope yamlCWL
         let inputs = requiredInputsDecoder warnings scope "an expression tool" yamlCWL
@@ -3015,9 +2974,8 @@ module Decode =
         description
 
     /// Decode an Operation and enforce its required inputs collection.
-    and operationDecoder (warnings: WarningSink) (scope: DecodeScope) (yamlCWL: YamlNode) =
+    and private operationDecoder (warnings: WarningSink) (scope: DecodeScope) (yamlCWL: YamlNode) =
         let cwlVersion = versionDecoder scope yamlCWL
-        // The SchemaDefRequirement of the process overrides the one of the enclosing process.
         let scope = { scope with Process = Some OperationClass }
         let outputs = outputsDecoderWithWarnings warnings scope yamlCWL
         let inputs = requiredInputsDecoder warnings scope "an operation" yamlCWL
@@ -3058,10 +3016,9 @@ module Decode =
         description
 
     /// Decode a Workflow, including version-aware steps and preserved metadata fields.
-    and workflowDecoder (warnings: WarningSink) (scope: DecodeScope) (yamlCWL: YamlNode) =
+    and private workflowDecoder (warnings: WarningSink) (scope: DecodeScope) (yamlCWL: YamlNode) =
         // Workflow inputs and steps are required by this model.
         let cwlVersion = versionDecoder scope yamlCWL
-        // The SchemaDefRequirement of the process overrides the one of the enclosing process.
         let scope = { scope with Process = Some WorkflowClass }
         let outputs = outputsDecoderWithWarnings warnings scope yamlCWL
         let inputs = requiredInputsDecoder warnings scope "a workflow" yamlCWL
@@ -3104,7 +3061,7 @@ module Decode =
         description
 
     /// Dispatch a parsed CWL document to the processing-unit decoder declared by its class field.
-    and decodeCWLProcessingUnitElementWithWarnings (warnings: WarningSink) (scope: DecodeScope) (yamlCWL: YamlNode) =
+    and private decodeCWLProcessingUnitElementWithWarnings (warnings: WarningSink) (scope: DecodeScope) (yamlCWL: YamlNode) =
         let classNode = Decode.object (fun get -> get.Required.Field "class" (Decode.nonNull Decode.node)) yamlCWL
         // cwltool reads a process whose class is a directive. The class tells which of the four processes the model builds,
         // and the decoder reads no file, so the process stays as written. The fields that every process has are checked, as
@@ -3173,168 +3130,15 @@ module Decode =
     let decodeOperation (cwl: string) =
         (decodeOperationWithWarnings cwl).Value
 
-    /// Decode any CWL processing unit from a YAML string and return recoverable warnings. A packed document has no
-    /// process at its root, so it is a decode error here, and decodeCWLDocument reads it.
+    /// Decode any CWL processing unit from a YAML string and return recoverable warnings.
     let decodeCWLProcessingUnitWithWarnings (cwl:string) =
         let warnings = ResizeArray<DecodeWarning>()
         let yamlCWL = readYaml cwl
-        if hasField "$graph" yamlCWL then
-            raise (
-                YamlDecodeException
-                    { Message = "The document is a packed document with a $graph and has no process at its root. Read it with decodeCWLDocument."
-                      Path = []
-                      Span = yamlCWL.Span }
-            )
         { Value = decodeCWLProcessingUnitElementWithWarnings (Some warnings) (documentScope yamlCWL) yamlCWL; Warnings = warnings }
 
     /// Decode any CWL processing unit and discard recoverable warnings.
     let decodeCWLProcessingUnit (cwl:string) =
         (decodeCWLProcessingUnitWithWarnings cwl).Value
-
-    /// A step that runs another process of the packed document by #id.
-    type private GraphRun =
-        { /// The path to the run field of the step.
-          RunPath: string list
-          /// The id of the process that the step runs, without the hash.
-          Target: string
-          /// The node of the run field.
-          Run: YamlNode }
-
-    /// The steps of a process that run another process of the document by #id. The walk descends into the inline runs of
-    /// the steps.
-    let rec private runsIn (path: string list) (processNode: YamlNode) : GraphRun list =
-        stepsOf processNode
-        |> List.collect (fun step ->
-            match valueOf "run" step.StepNode with
-            | Some run ->
-                let runPath = path @ [ "steps"; step.Segment; "run" ]
-                match run.Kind with
-                | YamlNodeKind.Scalar scalar when scalar.Value.StartsWith "#" -> [ { RunPath = runPath; Target = LocalReference.withoutHash scalar.Value; Run = run } ]
-                | YamlNodeKind.Mapping _ -> runsIn runPath run
-                | _ -> []
-            | None -> [])
-
-    /// Decode a packed document. Its processes use the cwlVersion of the root and ignore their own, and a step names a
-    /// process of the document by #id. The scope of each process holds the ids of the whole document, because a workflow
-    /// may run a process that stands behind it in the list. The caller has applied rejectWhatTheSpecProhibits to the tree.
-    let private decodeCWLGraph (warnings: WarningSink) (yamlCWL: YamlNode) : CWLGraph =
-        let cwlVersion = versionDecoder rootScope yamlCWL
-        // The root of a packed document holds no process, so a class there contradicts the $graph.
-        match entriesOf yamlCWL |> List.tryFind (fun entry -> scalarText entry.Key = Some "class") with
-        | Some classEntry ->
-            raise (
-                YamlDecodeException
-                    { Message = "The document has a $graph, so it has no process at its root and no class field."
-                      Path = []
-                      Span = classEntry.Key.Span }
-            )
-        | None -> ()
-        let graphNode = Decode.object (fun get -> get.Required.Field "$graph" (Decode.nonNull Decode.node)) yamlCWL
-        let processNodes =
-            match graphNode.Kind with
-            | YamlNodeKind.Sequence _ -> itemsOf graphNode
-            | _ ->
-                atField "$graph" (fun () ->
-                    raise (
-                        YamlDecodeException
-                            { Message = "Expected a list of processes, found " + describeNode graphNode + "."
-                              Path = []
-                              Span = graphNode.Span }
-                    ))
-        // A step names a process by its id, so a process without an id is out of its reach. cwltool accepts such a
-        // process, and it accepts two processes with one id with the warning that the id was previously defined. A
-        // step then runs the last of them, so the steps are checked against every process behind an id.
-        let idList : string option list =
-            processNodes
-            |> List.mapi (fun index node ->
-                match valueOf "id" node with
-                | None
-                | Some CoreNull -> None
-                | Some idNode ->
-                    match scalarText idNode with
-                    | Some id -> Some (LocalReference.withoutHash id)
-                    | None ->
-                        atField "$graph" (fun () ->
-                            atField $"[{index}]" (fun () ->
-                                raise (YamlDecodeException { Message = "Expected the id of a process, found " + describeNode idNode + "."; Path = []; Span = idNode.Span }))))
-        warnRepeatedIds warnings "$graph" processNodes
-        let ids = idList |> List.choose id |> Set.ofList
-        let nodes = List.toArray processNodes
-        let idsByIndex = List.toArray idList
-        // The position of the process that a run of the form #id reaches.
-        let membersBehind (target: string) : int list = GraphMembers.tryReach target idList |> Option.toList
-        // cwltool runs the process main of a packed document, or the one process of a document that holds one. It builds the
-        // process tree from there, and it checks the steps of that tree only. A document with several processes and no main
-        // has no tree, so the steps of its processes meet the schema only.
-        let roots : int list =
-            match GraphMembers.tryStart idList with
-            | Some start -> [ start ]
-            | None -> if nodes.Length = 1 then [ 0 ] else []
-        let reachable =
-            let seen = System.Collections.Generic.HashSet<int>()
-            let rec reach (index: int) : unit =
-                if seen.Add index then
-                    for run in runsIn [] nodes.[index] do
-                        for targetIndex in membersBehind run.Target do
-                            reach targetIndex
-            roots |> List.iter reach
-            Set.ofSeq seen
-        // A run that leads back to a process on its way never ends. The run field that closes the cycle is the error.
-        let visiting = System.Collections.Generic.Dictionary<int, bool>()
-        let rec visit (stack: int list) (index: int) : unit =
-            visiting.[index] <- true
-            for { RunPath = runPath; Target = target; Run = runNode } in runsIn [] nodes.[index] do
-                for targetIndex in membersBehind target do
-                    match visiting.TryGetValue targetIndex with
-                    | true, true ->
-                        let cycle = (index :: stack) |> List.rev |> List.skipWhile (fun step -> step <> targetIndex)
-                        let names = (cycle @ [ targetIndex ]) |> List.map (fun step -> "#" + defaultArg idsByIndex.[step] "") |> String.concat ", "
-                        let raiseAt () =
-                            raise (
-                                YamlDecodeException
-                                    { Message = "The run field closes a cycle of run references (" + names + "). A process cannot run itself."
-                                      Path = []
-                                      Span = runNode.Span }
-                            )
-                        (List.foldBack (fun segment (inner: unit -> unit) -> (fun () -> atField segment inner)) ([ "$graph"; $"[{index}]" ] @ runPath) raiseAt) ()
-                    | true, false -> ()
-                    | _ -> visit (index :: stack) targetIndex
-            visiting.[index] <- false
-        for index in roots do
-            if not (visiting.ContainsKey index) then visit [] index
-        let graphScope = { documentScope yamlCWL with DefaultCwlVersion = Some cwlVersion; GraphIds = Some ids; DocId = "" }
-        let processes =
-            processNodes
-            |> List.mapi (fun index node ->
-                atField "$graph" (fun () ->
-                    atField $"[{index}]" (fun () ->
-                        decodeCWLProcessingUnitElementWithWarnings warnings { graphScope with DocId = processId "" "" node; CheckSteps = reachable.Contains index } node)))
-            |> ResizeArray
-        let graph = CWLGraph(processes, cwlVersion = cwlVersion)
-        overflowIntoDynamicObj graph (CWLGraph.KnownFieldNames |> Seq.toList) yamlCWL |> ignore
-        graph
-
-    /// Decode an already-parsed packed document and return the graph. The tree has to pass the same check as a text, so the
-    /// function applies rejectWhatTheSpecProhibits to it.
-    let decodeCWLGraphElementWithWarnings (warnings: WarningSink) (yamlCWL: YamlNode) : CWLGraph =
-        rejectWhatTheSpecProhibits yamlCWL
-        decodeCWLGraph warnings yamlCWL
-
-    /// Decode a CWL document, which is a process or a packed document, from a YAML string and return recoverable
-    /// warnings.
-    let decodeCWLDocumentWithWarnings (cwl: string) =
-        let warnings = ResizeArray<DecodeWarning>()
-        let yamlCWL = readYaml cwl
-        let document =
-            if hasField "$graph" yamlCWL then
-                CWLDocument.Graph (decodeCWLGraph (Some warnings) yamlCWL)
-            else
-                CWLDocument.Process (decodeCWLProcessingUnitElementWithWarnings (Some warnings) (documentScope yamlCWL) yamlCWL)
-        { Value = document; Warnings = warnings }
-
-    /// Decode a CWL document, which is a process or a packed document, and discard recoverable warnings.
-    let decodeCWLDocument (cwl: string) =
-        (decodeCWLDocumentWithWarnings cwl).Value
 
 module DecodeParameters =
 

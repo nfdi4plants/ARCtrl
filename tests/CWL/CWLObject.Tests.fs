@@ -379,7 +379,7 @@ let testCWLToolDescriptionEncode =
             testCase "hints emitted before requirements for both encoder variants" <| fun _ ->
                 let decoded = Decode.decodeCommandLineTool TestObjects.CWL.CommandLineTool.cwlFile
                 let topLevelEncoded = Encode.encodeToolDescription decoded
-                let elementEncoded = decoded |> Encode.encodeToolDescriptionElement true |> Encode.writeYaml
+                let elementEncoded = decoded |> Encode.encodeToolDescriptionElement |> Encode.writeYaml
 
                 let topReqIndex = topLevelEncoded.IndexOf("requirements:")
                 let topHintIndex = topLevelEncoded.IndexOf("hints:")
@@ -626,7 +626,7 @@ let testEncodeNormalizeEdgeCases =
                 )
 
             let encodedYaml =
-                YAMLicious.Encode.object [ "steps", YAMLicious.Encode.object [ (let id, node = Encode.encodeWorkflowStep false step in Option.get id, node) ] ]
+                YAMLicious.Encode.object [ "steps", YAMLicious.Encode.object [ (let id, node = Encode.encodeWorkflowStep step in Option.get id, node) ] ]
                 |> Encode.writeYaml
 
             let decodedSteps =
@@ -3108,25 +3108,12 @@ let testInvalidDocuments =
         testCase "the fields of a record that are no list and no mapping are reported without a dump of the node" <| fun _ ->
             let yaml = tool [ "inputs:"; "  r:"; "    type:"; "      type: record"; "      fields: abc"; "outputs: []" ]
             expectError "fields" "inputs.r.type.fields" "Expected a list of fields or a mapping of fields, found the text \"abc\"." (fun () -> Decode.decodeCommandLineTool yaml |> ignore)
-        testCase "the encoder writes a packed document with a member without an id or with a repeated id and it reads back" <| fun _ ->
-            let member' (id: string option) =
-                CWLProcessingUnit.CommandLineTool (CWLToolDescription(ResizeArray [], baseCommand = ResizeArray [ (SchemaSaladString.Literal "echo") ], inputs = ResizeArray [], ?id = id))
-            for (name, members) in [ "two members with one id", [ member' (Some "t"); member' (Some "t") ]
-                                     "a repeated id with a hash", [ member' (Some "t"); member' (Some "#t") ]
-                                     "a member without an id", [ member' None ]
-                                     "a member with an empty id", [ member' (Some "") ]
-                                     "distinct ids", [ member' (Some "a"); member' (Some "b") ] ] do
-                let graph = CWLGraph(ResizeArray members, cwlVersion = "v1.2")
-                let written = Encode.encodeCWLGraph graph
-                match Decode.decodeCWLDocument written with
-                | CWLDocument.Graph again -> Expect.equal again graph (sprintf "%s: the written graph should decode to the same graph." name)
-                | other -> failwith (sprintf "%s: expected a packed document but got %A" name other)
     ]
 
 let testStrictStrings =
     let decodeError (yaml: string) =
         try
-            Decode.decodeCWLDocument yaml |> ignore
+            Decode.decodeCWLProcessingUnit yaml |> ignore
             None
         with YamlDecodeException error -> Some error
     let toolHead = "cwlVersion: v1.2\nclass: CommandLineTool\n"
@@ -3255,10 +3242,7 @@ let testDirectivesInStringFields =
     let step (stepLines: string list) =
         workflow ([ "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run: t.cwl"; "    in: {}"; "    out: []" ] @ (stepLines |> List.map (fun line -> "    " + line)))
     let requirement (lines: string list) = toolWith ([ "requirements:" ] @ lines)
-    let processOf (yaml: string) =
-        match Decode.decodeCWLDocument yaml with
-        | CWLDocument.Process processingUnit -> processingUnit
-        | other -> failwith (sprintf "Expected a process but got %A" other)
+    let processOf (yaml: string) = Decode.decodeCWLProcessingUnit yaml
     let toolOf (yaml: string) =
         match processOf yaml with
         | CommandLineTool tool -> tool
@@ -3328,7 +3312,7 @@ let testDirectivesInStringFields =
                 for (directive, expected) in [ "{$include: notes.md}", SchemaSaladString.Include "notes.md"; "{$import: other.yml}", SchemaSaladString.Import "other.yml" ] do
                     let yaml = template.Replace("{0}", directive)
                     Expect.equal (read yaml) (Some expected) (sprintf "%s: the directive is the string." name)
-                    let written = Encode.encodeCWLDocument (Decode.decodeCWLDocument yaml)
+                    let written = Encode.encodeProcessingUnit (Decode.decodeCWLProcessingUnit yaml)
                     Expect.stringContains written directive (sprintf "%s: the directive is written as a flow mapping.\n%s" name written)
                     Expect.equal (processOf written) (processOf yaml) (sprintf "%s: the written text should decode to the same process." name)
                     Expect.equal (read written) (Some expected) (sprintf "%s: the written directive is the string." name)
@@ -3339,7 +3323,7 @@ let testDirectivesInStringFields =
                 match read yaml with
                 | Some (SchemaSaladString.Mixed _ as mixed) -> Expect.equal mixed.Value "notes.md" (sprintf "%s: the value of the mixin is its path." name)
                 | other -> failwith (sprintf "%s: expected a mixin beside a field, found %A" name other)
-                let written = Encode.encodeCWLDocument (Decode.decodeCWLDocument yaml)
+                let written = Encode.encodeProcessingUnit (Decode.decodeCWLProcessingUnit yaml)
                 Expect.stringContains written directive (sprintf "%s: the mixin and its field are written as they were.\n%s" name written)
                 Expect.equal (processOf written) (processOf yaml) (sprintf "%s: the written text should decode to the same process." name)
                 let changed = template.Replace("{0}", "{$mixin: notes.md, extra: 2}")
@@ -3348,7 +3332,7 @@ let testDirectivesInStringFields =
             for (name, template, _) in cases do
                 if name <> "the listing of an InitialWorkDirRequirement" then
                     for text in [ "42"; "true"; "{a: b}" ] do
-                        match (try Decode.decodeCWLDocument (template.Replace("{0}", text)) |> ignore; None with YamlDecodeException error -> Some error) with
+                        match (try Decode.decodeCWLProcessingUnit (template.Replace("{0}", text)) |> ignore; None with YamlDecodeException error -> Some error) with
                         | Some error -> Expect.isSome error.Span (sprintf "%s with %s: the error should have the place in the text." name text)
                         | None -> failwith (sprintf "%s: %s must fail" name text)
         testCase "a doc list with a directive item keeps its parts and a doc list of plain strings is one text" <| fun _ ->
@@ -3773,10 +3757,10 @@ let testScalarsThatCwltoolReadsAsAnotherType =
                       "an environment variable", tool [ "baseCommand: env"; "requirements:"; "  EnvVarRequirement:"; "    envDef:"; "      A: \"" + text + "\""; "inputs: []"; "outputs: []" ]
                       "a doc and a default", tool [ "doc: \"" + text + "\""; "baseCommand: echo"; "inputs:"; "  x:"; "    type: string"; "    default: \"" + text + "\""; "outputs: []" ] ]
                 for (place, yaml) in documents do
-                    let decoded = Decode.decodeCWLDocument yaml
-                    let written = Encode.encodeCWLDocument decoded
+                    let decoded = Decode.decodeCWLProcessingUnit yaml
+                    let written = Encode.encodeProcessingUnit decoded
                     Expect.stringContains written ("\"" + text + "\"") (sprintf "%s %s: the text is written in quotes.\n%s" place text written)
-                    Expect.equal (Decode.decodeCWLDocument written) decoded (sprintf "%s %s: the written text should decode to the same document." place text)
+                    Expect.equal (Decode.decodeCWLProcessingUnit written) decoded (sprintf "%s %s: the written text should decode to the same document." place text)
         testCase "a plain text that the core schema reads as a string decodes as a string and is written in quotes" <| fun _ ->
             for text in typed @ quotedForYaml11 @ unreadable do
                 let yaml = tool [ "label: " + text; "baseCommand: echo"; "inputs: []"; "outputs: []" ]
@@ -4088,7 +4072,7 @@ let testRepeatedEnumSymbols =
         testCase "an enum that repeats a symbol is a decode error at the repeat, whichever way the symbols are spelled" <| fun _ ->
             for (place, template) in places do
                 for (symbols, index) in repeated do
-                    match (try Decode.decodeCWLDocument (template.Replace("{0}", symbols)) |> ignore; None with YamlDecodeException error -> Some error) with
+                    match (try Decode.decodeCWLProcessingUnit (template.Replace("{0}", symbols)) |> ignore; None with YamlDecodeException error -> Some error) with
                     | Some error ->
                         Expect.isTrue ((DecodeError.pathText error).EndsWith (sprintf "symbols[%d]" index)) (sprintf "%s %s: the error should show the repeat, found %s" place symbols (DecodeError.pathText error))
                         Expect.stringContains error.Message "repeats the symbol at line" (sprintf "%s %s: the error should say what is wrong" place symbols)
@@ -4097,10 +4081,10 @@ let testRepeatedEnumSymbols =
         testCase "symbols that differ, and directives that stand for symbols of files, decode" <| fun _ ->
             for (place, template) in places do
                 for symbols in distinct do
-                    Decode.decodeCWLDocument (template.Replace("{0}", symbols)) |> ignore
+                    Decode.decodeCWLProcessingUnit (template.Replace("{0}", symbols)) |> ignore
         testCase "the rule holds in a document of v1.0" <| fun _ ->
             let text = "cwlVersion: v1.0\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n  a:\n    type:\n      type: enum\n      symbols: [a, a]\noutputs: []\n"
-            match (try Decode.decodeCWLDocument text |> ignore; None with YamlDecodeException error -> Some error) with
+            match (try Decode.decodeCWLProcessingUnit text |> ignore; None with YamlDecodeException error -> Some error) with
             | Some error -> Expect.equal (DecodeError.pathText error) "inputs.a.type.symbols[1]" "The error shows the repeat."
             | None -> failwith "A repeated symbol must fail."
     ]
@@ -4108,15 +4092,12 @@ let testRepeatedEnumSymbols =
 let testSchemasField =
     let tool (schemas: string) =
         "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs: []\noutputs: []\n$schemas:" + schemas + "\n"
-    let packed (schemas: string) =
-        "cwlVersion: v1.2\n$graph:\n  - class: CommandLineTool\n    id: main\n    baseCommand: echo\n    inputs: []\n    outputs: []\n$schemas:" + schemas + "\n"
     testList "The $schemas field" [
         testCase "a path or a list of paths is kept as an extension field and written back" <| fun _ ->
             for schemas in [ " []"; " schema.rdf"; " [schema.rdf]"; " [a.rdf, b.rdf]"; " \"2\"" ] do
                 let decoded = Decode.decodeCommandLineTool (tool schemas)
                 Expect.isSome decoded.Metadata (sprintf "%s: the field is an extension field." schemas)
                 Expect.equal (Decode.decodeCommandLineTool (Encode.encodeToolDescription decoded)) decoded (sprintf "%s: the written text should decode to the same tool." schemas)
-                Decode.decodeCWLDocument (packed schemas) |> ignore
         testCase "a directive, a mapping, a nested list, a number and null are decode errors, as cwltool refuses them" <| fun _ ->
             let cases =
                 [ "an import in a list", " [{$import: a.yml}]", "$schemas[0]", "Expected the path of a schema file as a string, found a mapping."
@@ -4127,13 +4108,12 @@ let testSchemasField =
                   "a number in a list", " [1]", "$schemas[0]", "Expected a string, found the plain scalar 1"
                   "null", "", "$schemas", "Expected a string, found null" ]
             for (name, schemas, path, message) in cases do
-                for (kind, text) in [ "tool", tool schemas; "packed", packed schemas ] do
-                    match (try Decode.decodeCWLDocument text |> ignore; None with YamlDecodeException error -> Some error) with
-                    | Some error ->
-                        Expect.equal (DecodeError.pathText error) path (sprintf "%s, %s: the error should show the field" name kind)
-                        Expect.stringContains error.Message message (sprintf "%s, %s: the error should say what is wrong" name kind)
-                        Expect.isSome error.Span (sprintf "%s, %s: the error should have the place in the text" name kind)
-                    | None -> failwith (sprintf "%s, %s must fail" name kind)
+                match (try Decode.decodeCWLProcessingUnit (tool schemas) |> ignore; None with YamlDecodeException error -> Some error) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the field" name)
+                    Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
+                    Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
+                | None -> failwith (sprintf "%s must fail" name)
     ]
 
 let testKeysAndIdsThatCwltoolReadsAsAnotherType =
@@ -4160,14 +4140,14 @@ let testKeysAndIdsThatCwltoolReadsAsAnotherType =
             for (place, template) in places do
                 for key in keys do
                     let text = template.Replace("{0}", key)
-                    let decoded = Decode.decodeCWLDocument text
-                    let written = Encode.encodeCWLDocument decoded
+                    let decoded = Decode.decodeCWLProcessingUnit text
+                    let written = Encode.encodeProcessingUnit decoded
                     Expect.stringContains written ("\"" + key + "\"") (sprintf "%s %s: the text is written in quotes.\n%s" place key written)
-                    let reread = Decode.decodeCWLDocument written
+                    let reread = Decode.decodeCWLProcessingUnit written
                     Expect.equal reread decoded (sprintf "%s %s: the written text should decode to the same document." place key)
-                    Expect.equal (Encode.encodeCWLDocument reread) written (sprintf "%s %s: writing again should give the same text." place key)
+                    Expect.equal (Encode.encodeProcessingUnit reread) written (sprintf "%s %s: writing again should give the same text." place key)
         testCase "a key that is plain text stays plain" <| fun _ ->
-            let written = Encode.encodeCWLDocument (Decode.decodeCWLDocument (tool [ "inputs:"; "  input_1: string"; "outputs: []" ]))
+            let written = Encode.encodeProcessingUnit (Decode.decodeCWLProcessingUnit (tool [ "inputs:"; "  input_1: string"; "outputs: []" ]))
             Expect.stringContains written "  input_1: string" "A key that no reader takes for another type needs no quotes."
         testCase "the key of an entry of a job file is written in quotes when cwltool would read another type" <| fun _ ->
             for key in keys do
@@ -4441,8 +4421,6 @@ let testSmallRejectionsOfCwltool =
             failsAt "an unknown hint" (fun () -> decodeTool (tool [ "hints:"; "  - class: ex:Hint"; "    payload:"; "      $namespaces: [ex]"; "inputs: []"; "outputs: []" ])) "hints[0].payload.$namespaces" message
             failsAt "an inline run" (fun () ->
                 Decode.decodeWorkflow (String.concat "\n" [ "cwlVersion: v1.2"; "class: Workflow"; "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run:"; "      $namespaces: [ex]"; "      class: CommandLineTool"; "      baseCommand: echo"; "      inputs: []"; "      outputs: []"; "    in: {}"; "    out: []"; "" ]) |> ignore) "steps.s.run.$namespaces" message
-            failsAt "a process of a packed document" (fun () ->
-                Decode.decodeCWLDocument (String.concat "\n" [ "cwlVersion: v1.2"; "$graph:"; "  - id: main"; "    $namespaces: [ex]"; "    class: CommandLineTool"; "    baseCommand: echo"; "    inputs: []"; "    outputs: []"; "" ]) |> ignore) "$graph[0].$namespaces" message
             failsAt "a job file" (fun () -> DecodeParameters.decodeYAMLParameterFile "x: a\n$namespaces: [ex]\n" |> ignore) "$namespaces" message
         testCase "a $namespaces that is a mapping or a directive decodes, whatever its values are" <| fun _ ->
             for value in [ "{ex: 'http://example.org/'}"; "{}"; "{ex: 1}"; "{ex: true}"; "{ex: }"; "{ex: [a]}"; "{ex: {a: b}}"; "{1: 'http://example.org/'}"; "{$import: a.yml}"; "{$include: a.yml}"; "{$mixin: a.yml}" ] do
@@ -5060,14 +5038,6 @@ let testProcessWithDirectiveClass =
     let forms = [ "{$import: s.yml}"; "{$include: s.txt}"; "{$mixin: s.yml}"; "{$mixin: s.yml, extra: 1}" ]
     let documentText (classValue: string) =
         String.concat "\n" [ "cwlVersion: v1.2"; "class: " + classValue; "baseCommand: echo"; "inputs: []"; "outputs: []"; "" ]
-    let graphText (classValue: string) =
-        String.concat "\n" [ "cwlVersion: v1.2"; "$graph:"; "  - class: " + classValue; "    id: main"; "    baseCommand: echo"; "    inputs: []"; "    outputs: []"; "  - class: CommandLineTool"; "    id: tool"; "    baseCommand: cat"; "    inputs: []"; "    outputs: []"; "" ]
-    let workflowGraphText (runValue: string) =
-        String.concat "\n" [ "cwlVersion: v1.2"; "$graph:"; "  - class: Workflow"; "    id: main"; "    inputs: []"; "    outputs: []"; "    steps:"; "      s:"; "        run: " + runValue; "        in: []"; "        out: []"; "  - class: {$import: s.yml}"; "    id: t"; "    baseCommand: echo"; "    inputs: []"; "    outputs: []"; "" ]
-    let graphOf (text: string) =
-        match Decode.decodeCWLDocument text with
-        | CWLDocument.Graph graph -> graph
-        | other -> failwith (sprintf "Expected a packed document, found %A" other)
     let failsAt (name: string) (decode: unit -> unit) (path: string) (message: string) =
         match (try decode (); None with YamlDecodeException error -> Some error) with
         | Some error ->
@@ -5079,19 +5049,15 @@ let testProcessWithDirectiveClass =
         testCase "a document of one process stays as written, reads back equal and is written back as it was" <| fun _ ->
             for form in forms do
                 let text = documentText form
-                let document = Decode.decodeCWLDocument text
-                Expect.equal document (CWLDocument.Process (RawProcess { Node = Reader.readRoot text })) (sprintf "%s: the process should stay as written." form)
-                Expect.equal (Decode.decodeCWLProcessingUnit text) (RawProcess { Node = Reader.readRoot text }) (sprintf "%s: the process decoder should keep it as written too." form)
-                let written = Encode.encodeCWLDocument document
+                let decoded = Decode.decodeCWLProcessingUnit text
+                Expect.equal decoded (RawProcess { Node = Reader.readRoot text }) (sprintf "%s: the process should stay as written." form)
+                let written = Encode.encodeProcessingUnit decoded
                 Expect.equal written text (sprintf "%s: the document should be written back as it was." form)
-                Expect.equal (Decode.decodeCWLDocument written) document (sprintf "%s: the written text should decode to the same document." form)
-                Expect.equal (Encode.encodeProcessingUnit (Decode.decodeCWLProcessingUnit text)) text (sprintf "%s: the process should be written back as it was." form)
-        testCase "the fields that every process has are checked on a process of unknown class, in a document, a run and a packed document" <| fun _ ->
+                Expect.equal (Decode.decodeCWLProcessingUnit written) decoded (sprintf "%s: the written text should decode to the same document." form)
+        testCase "the fields that every process has are checked on a process of unknown class, in a document and in a run" <| fun _ ->
             let document (lines: string list) = String.concat "\n" ([ "cwlVersion: v1.2"; "class: {$import: c.yml}" ] @ lines @ [ "" ])
             let run (lines: string list) =
                 String.concat "\n" ([ "cwlVersion: v1.2"; "class: Workflow"; "inputs: []"; "outputs: []"; "steps:"; "  s:"; "    run:"; "      class: {$import: c.yml}" ] @ (lines |> List.map (fun line -> "      " + line)) @ [ "    in: []"; "    out: []"; "" ])
-            let graph (lines: string list) =
-                String.concat "\n" ([ "cwlVersion: v1.2"; "$graph:"; "  - class: {$import: c.yml}" ] @ (lines |> List.map (fun line -> "    " + line)) @ [ "" ])
             for (name, lines, path, message) in
                 [ "a list as the label", [ "label: [1, 2]"; "inputs: []"; "outputs: []" ], "label", "Expected a string or a directive, found a list."
                   "a number as the doc", [ "doc: 5"; "inputs: []"; "outputs: []" ], "doc", "Expected a string, found the plain scalar 5"
@@ -5108,48 +5074,19 @@ let testProcessWithDirectiveClass =
                   "an input of the type stderr", [ "inputs: [{id: x, type: stderr}]"; "outputs: []" ], "inputs.x.type", "The type stderr is valid only as the whole type of an output"
                   "an output of the type stdin", [ "inputs: []"; "outputs: {o: stdin}" ], "outputs.o", "The type stdin is valid only as the whole type of an input"
                   "an output of the type stdin in a list", [ "inputs: []"; "outputs: [{id: o, type: stdin}]" ], "outputs.o.type", "The type stdin is valid only as the whole type of an input" ] do
-                failsAt (name + " in a document") (fun () -> Decode.decodeCWLDocument (document lines) |> ignore) path message
-                failsAt (name + " in a run") (fun () -> Decode.decodeCWLDocument (run lines) |> ignore) ("steps.s.run" + (if path = "" then "" else "." + path)) message
-                failsAt (name + " in a packed document") (fun () -> Decode.decodeCWLDocument (graph lines) |> ignore) ("$graph[0]" + (if path = "" then "" else "." + path)) message
+                failsAt (name + " in a document") (fun () -> Decode.decodeCWLProcessingUnit (document lines) |> ignore) path message
+                failsAt (name + " in a run") (fun () -> Decode.decodeCWLProcessingUnit (run lines) |> ignore) ("steps.s.run" + (if path = "" then "" else "." + path)) message
             // The file may hold a command line tool, so an input may have the type stdin and an output stdout or stderr.
             let streams = [ "inputs: {i: stdin}"; "outputs: {o: stdout, e: stderr}" ]
-            Expect.equal (Decode.decodeCWLDocument (document streams)) (CWLDocument.Process (RawProcess { Node = Reader.readRoot (document streams) })) "A stream type that a command line tool admits leaves the process as written."
-            Decode.decodeCWLDocument (run streams) |> ignore
-            Decode.decodeCWLDocument (graph streams) |> ignore
-            failsAt "a list as the id in a document" (fun () -> Decode.decodeCWLDocument (document [ "id: [a]"; "inputs: []"; "outputs: []" ]) |> ignore) "id" "Expected a string, found a sequence."
-            failsAt "a list as the id in a run" (fun () -> Decode.decodeCWLDocument (run [ "id: [a]"; "inputs: []"; "outputs: []" ]) |> ignore) "steps.s.run.id" "Expected a string, found a sequence."
+            Expect.equal (Decode.decodeCWLProcessingUnit (document streams)) (RawProcess { Node = Reader.readRoot (document streams) }) "A stream type that a command line tool admits leaves the process as written."
+            Decode.decodeCWLProcessingUnit (run streams) |> ignore
+            failsAt "a list as the id in a document" (fun () -> Decode.decodeCWLProcessingUnit (document [ "id: [a]"; "inputs: []"; "outputs: []" ]) |> ignore) "id" "Expected a string, found a sequence."
+            failsAt "a list as the id in a run" (fun () -> Decode.decodeCWLProcessingUnit (run [ "id: [a]"; "inputs: []"; "outputs: []" ]) |> ignore) "steps.s.run.id" "Expected a string, found a sequence."
             let fieldsOfOneClass = [ "inputs: {i: {type: string, inputBinding: {position: 1}}}"; "outputs: {o: {type: string, outputBinding: {glob: o}}}"; "steps: []"; "baseCommand: echo"; "expression: x" ]
-            Expect.equal (Decode.decodeCWLDocument (document fieldsOfOneClass)) (CWLDocument.Process (RawProcess { Node = Reader.readRoot (document fieldsOfOneClass) })) "A field that only some classes have is left to the file, and the process stays as written."
+            Expect.equal (Decode.decodeCWLProcessingUnit (document fieldsOfOneClass)) (RawProcess { Node = Reader.readRoot (document fieldsOfOneClass) }) "A field that only some classes have is left to the file, and the process stays as written."
         testCase "the comments and blank lines around the directive stay in the written document" <| fun _ ->
             let text = "# leading\ncwlVersion: v1.2\n\n# before the class\nclass: {$import: s.yml} # trailing\n\nbaseCommand: echo\ninputs: []\noutputs: []\n"
-            Expect.equal (Encode.encodeCWLDocument (Decode.decodeCWLDocument text)) text "The layout of the document should stay."
-        testCase "a process of a packed document stays as written, beside the processes that are read" <| fun _ ->
-            for form in forms do
-                let text = graphText form
-                let graph = graphOf text
-                Expect.equal graph.Processes.Count 2 (sprintf "%s: both processes should be in the graph." form)
-                match graph.Processes.[0] with
-                | RawProcess raw -> Expect.equal (raw.TryScalarField "id") (Some "main") (sprintf "%s: the raw process should keep its id." form)
-                | other -> failwith (sprintf "%s: expected a process of unknown class, found %A" form other)
-                Expect.isTrue (match graph.Processes.[1] with CommandLineTool tool -> tool.Id = Some "tool" | _ -> false) (sprintf "%s: the second process should be read." form)
-                let written = Encode.encodeCWLGraph graph
-                Expect.stringContains written ("  - class: " + form + "\n    id: main\n    baseCommand: echo\n") (sprintf "%s: the process should be written back as it was." form)
-                Expect.equal (graphOf written) graph (sprintf "%s: the written text should decode to the same document." form)
-        testCase "a process of unknown class is found by its id, and it can be the process main" <| fun _ ->
-            let document = Decode.decodeCWLDocument (graphText "{$import: s.yml}")
-            let graph = match document with CWLDocument.Graph graph -> graph | other -> failwith (sprintf "Expected a packed document, found %A" other)
-            Expect.equal (CWLProcessingUnit.tryGetId graph.Processes.[0]) (Some "main") "The id of the raw process is the text of its id field."
-            Expect.isTrue (CWLProcessingUnit.isSameObject (CWLGraph.tryFindProcess "main" graph |> Option.get) graph.Processes.[0]) "The process is found by its id."
-            Expect.isTrue (CWLProcessingUnit.isSameObject (CWLDocument.tryGetMain document |> Option.get) graph.Processes.[0]) "The process main is the raw process."
-            Expect.isTrue (CWLGraph.isMain graph.Processes.[0] graph) "The raw process is the process main of the graph."
-            let withoutId = Decode.decodeCWLProcessingUnit (documentText "{$import: s.yml}")
-            Expect.isNone (CWLProcessingUnit.tryGetId withoutId) "A raw process without an id field has no id."
-            let withEmptyId = Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: {$import: s.yml}\nid:\nbaseCommand: echo\ninputs: []\noutputs: []\n"
-            Expect.isNone (CWLProcessingUnit.tryGetId withEmptyId) "A raw process with an empty id field has no id."
-        testCase "a step reaches a process of unknown class by its id and a missing id still fails" <| fun _ ->
-            let graph = graphOf (workflowGraphText "'#t'")
-            Expect.isSome (CWLGraph.tryFindProcess "t" graph) "The process t is in the graph."
-            failsAt "a run of a missing id" (fun () -> Decode.decodeCWLDocument (workflowGraphText "'#nothere'") |> ignore) "$graph[0].steps.s.run" "which is no process of the $graph"
+            Expect.equal (Encode.encodeProcessingUnit (Decode.decodeCWLProcessingUnit text)) text "The layout of the document should stay."
         testCase "the model shows no inputs, outputs, requirements, hints or intent of a process of unknown class" <| fun _ ->
             let processingUnit = Decode.decodeCWLProcessingUnit (documentText "{$import: s.yml}")
             Expect.equal (CWLProcessingUnit.getInputValues processingUnit).Count 0 "No inputs."
@@ -5158,11 +5095,8 @@ let testProcessWithDirectiveClass =
             Expect.equal (CWLProcessingUnit.getHints processingUnit).Count 0 "No hints."
             Expect.equal (CWLProcessingUnit.getKnownHints processingUnit).Count 0 "No known hints."
             Expect.equal (CWLProcessingUnit.getIntent processingUnit).Count 0 "No intent."
-        testCase "a step lists the outputs of a process of unknown class without a check, because the outputs are not read" <| fun _ ->
-            let graph = graphOf ((workflowGraphText "'#t'").Replace("out: []", "out: [anything]"))
-            Expect.equal graph.Processes.Count 2 "The document decodes."
         testCase "two processes of unknown class are equal when their documents are, and the directive decides" <| fun _ ->
-            let read (form: string) = Decode.decodeCWLDocument (documentText form)
+            let read (form: string) = Decode.decodeCWLProcessingUnit (documentText form)
             Expect.equal (read "{$import: s.yml}") (read "{$import: s.yml}") "The same directive gives the same document."
             Expect.notEqual (read "{$import: s.yml}") (read "{$import: t.yml}") "Two paths differ."
             Expect.notEqual (read "{$import: s.yml}") (read "{$include: s.yml}") "An import and an include differ."
@@ -5172,13 +5106,9 @@ let testProcessWithDirectiveClass =
             Expect.isTrue (CWLProcessingUnit.isSameObject one one) "A process is the same object as itself."
         testCase "the cwlVersion of the document is still required and is read as written" <| fun _ ->
             let versioned (header: string) = header + "class: {$import: s.yml}\nbaseCommand: echo\ninputs: []\noutputs: []\n"
-            failsAt "a missing version" (fun () -> Decode.decodeCWLDocument (versioned "") |> ignore) "" "cwlVersion"
+            failsAt "a missing version" (fun () -> Decode.decodeCWLProcessingUnit (versioned "") |> ignore) "" "cwlVersion"
             for version in [ "v1.0"; "v1.1"; "v1.2"; "v1.3"; "v1.5" ] do
-                Expect.isTrue (match Decode.decodeCWLDocument (versioned ("cwlVersion: " + version + "\n")) with CWLDocument.Process (RawProcess _) -> true | _ -> false) (sprintf "%s: the document should be read." version)
-        testCase "the cwlVersion of a process of a packed document changes nothing when its class is a directive" <| fun _ ->
-            let withVersion (version: string) = (graphText "{$import: s.yml}").Replace("    id: main\n", "    id: main\n    cwlVersion: " + version + "\n")
-            for version in [ "v1.1"; "v1.5" ] do
-                Expect.equal (graphOf (withVersion version)).Processes.Count 2 (sprintf "%s: a version of the process is ignored." version)
+                Expect.isTrue (match Decode.decodeCWLProcessingUnit (versioned ("cwlVersion: " + version + "\n")) with RawProcess _ -> true | _ -> false) (sprintf "%s: the document should be read." version)
         testCase "the cwlVersion of an inline run whose class is a directive changes nothing" <| fun _ ->
             let withVersion (version: string) =
                 String.concat "\n" [ "cwlVersion: v1.2"; "class: Workflow"; "inputs: []"; "outputs: []"; "steps:"; "  s:"; "    run:"; "      cwlVersion: " + version; "      class: {$import: s.yml}"; "      baseCommand: echo"; "      inputs: []"; "      outputs: []"; "    in: []"; "    out: []"; "" ]
@@ -5187,7 +5117,7 @@ let testProcessWithDirectiveClass =
                 Expect.isTrue (match (ListEntry.values workflow.Steps).[0].Run with RunRaw _ -> true | _ -> false) (sprintf "%s: the run stays as written." version)
         testCase "a malformed directive as the class of a process is a decode error at the class" <| fun _ ->
             let fails (name: string) (classValue: string) (path: string) (message: string) =
-                failsAt name (fun () -> Decode.decodeCWLDocument (documentText classValue) |> ignore) path message
+                failsAt name (fun () -> Decode.decodeCWLProcessingUnit (documentText classValue) |> ignore) path message
             fails "a path that is no string" "{$import: 42}" "class.$import" "Expected the path of the $import directive to be a string"
             fails "a second field in a directive" "{$import: s.yml, extra: 1}" "class" "A directive has exactly one field"
             fails "a mapping that is no directive" "{a: b}" "class" "Expected a string, found a mapping."
@@ -5480,16 +5410,16 @@ let testTextWithoutAnExpressionInExpressionPositions =
         testCase "a text without $( or ${ is a decode error in every position" <| fun _ ->
             for (name, path, document, expected) in positions do
                 for text in [ "abc"; "\"5\""; "\"true\""; "\"\"" ] do
-                    failsAt (sprintf "%s with %s" name text) (fun () -> Decode.decodeCWLDocument (document text) |> ignore) path ("Expected " + expected + ", found")
+                    failsAt (sprintf "%s with %s" name text) (fun () -> Decode.decodeCWLProcessingUnit (document text) |> ignore) path ("Expected " + expected + ", found")
         testCase "an expression and a directive are read in every position" <| fun _ ->
             for (name, _, document, _) in positions do
                 for text in [ "$(1)"; "{$include: e.txt}"; "{$import: e.yml}" ] do
-                    Decode.decodeCWLDocument (document text) |> ignore
+                    Decode.decodeCWLProcessingUnit (document text) |> ignore
             let documentOf (name: string) = positions |> List.pick (fun (positionName, _, document, _) -> if positionName = name then Some document else None)
-            Decode.decodeCWLDocument (documentOf "networkAccess of NetworkAccess" "true") |> ignore
-            Decode.decodeCWLDocument (documentOf "enableReuse of WorkReuse" "false") |> ignore
-            Decode.decodeCWLDocument (documentOf "timelimit of ToolTimeLimit" "60") |> ignore
-            Decode.decodeCWLDocument (documentOf "outputEval of an output binding" "'${return 1;}'") |> ignore
+            Decode.decodeCWLProcessingUnit (documentOf "networkAccess of NetworkAccess" "true") |> ignore
+            Decode.decodeCWLProcessingUnit (documentOf "enableReuse of WorkReuse" "false") |> ignore
+            Decode.decodeCWLProcessingUnit (documentOf "timelimit of ToolTimeLimit" "60") |> ignore
+            Decode.decodeCWLProcessingUnit (documentOf "outputEval of an output binding" "'${return 1;}'") |> ignore
     ]
 
 let testAdviceForNonTextScalarsInExpressionPositions =
@@ -5637,10 +5567,7 @@ let testProhibitedYamlFeatures =
             Expect.stringContains error.Message "*nothere" "The error should name the alias."
             Expect.isFalse (error.Message.StartsWith "Line") "The place is in the span, so the message holds no line."
             Expect.equal (startOf error) (Some (4, 6)) "The error stands at the alias."
-        testCase "the features are rejected in a packed document, in a nested run, below a mixin and in the text of an RO-Crate type" <| fun _ ->
-            let packed = String.concat "\n" [ "cwlVersion: v1.2"; "$graph:"; "  - class: CommandLineTool"; "    id: main"; "    baseCommand: echo"; "    doc: &d x"; "    inputs: []"; "    outputs: []"; "" ]
-            failsAt "a packed document" (fun () -> Decode.decodeCWLDocument packed |> ignore) "$graph[0].doc" "The anchor &d is not allowed"
-            failsAt "a tag in a packed document" (fun () -> Decode.decodeCWLDocument (packed.Replace("&d x", "!!str x")) |> ignore) "$graph[0].doc" "The tag !!str is not allowed"
+        testCase "the features are rejected in a nested run, below a mixin and in the text of an RO-Crate type" <| fun _ ->
             let nested = String.concat "\n" [ "cwlVersion: v1.2"; "class: Workflow"; "inputs: []"; "outputs: []"; "steps:"; "  s:"; "    run:"; "      class: CommandLineTool"; "      baseCommand: echo"; "      inputs: []"; "      outputs: []"; "      doc: !!str x"; "    in: []"; "    out: []"; "" ]
             failsAt "a nested run" (fun () -> Decode.decodeWorkflow nested |> ignore) "steps.s.run.doc" "The tag !!str is not allowed"
             failsAt "a tag below a mixin" (fun () -> Decode.decodeCommandLineTool (tool [ "inputs:"; "  x:"; "    type: File"; "    streamable: {$mixin: t.yml, a: !!int 1}"; "outputs: []" ]) |> ignore) "inputs.x.streamable.a" "The tag !!int is not allowed"
@@ -5648,8 +5575,6 @@ let testProhibitedYamlFeatures =
         testCase "the entry points that take a tree apply the same check as the entry points that take a text" <| fun _ ->
             let yaml = tool [ "doc: !!str greeting"; "inputs: []"; "outputs: []" ]
             failsAt "a process" (fun () -> Decode.decodeCWLProcessingUnitElement (Reader.readRoot yaml) |> ignore) "doc" "The tag !!str is not allowed"
-            let packed = String.concat "\n" [ "cwlVersion: v1.2"; "$graph:"; "  - class: CommandLineTool"; "    id: main"; "    baseCommand: echo"; "    doc: &d x"; "    inputs: []"; "    outputs: []"; "" ]
-            failsAt "a packed document" (fun () -> Decode.decodeCWLGraphElementWithWarnings None (Reader.readRoot packed) |> ignore) "$graph[0].doc" "The anchor &d is not allowed"
             failsAt "a job file" (fun () -> DecodeParameters.cwlparameterReferenceArrayDecoder (Reader.readRoot "x: &v a\n") |> ignore) "x" "The anchor &v is not allowed"
             let clean = Reader.readRoot (tool [ "inputs: []"; "outputs: []" ])
             Expect.equal (Decode.decodeCWLProcessingUnitElement clean) (Decode.decodeCWLProcessingUnit (tool [ "inputs: []"; "outputs: []" ])) "A tree without a prohibited feature decodes as its text."

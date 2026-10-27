@@ -21,9 +21,9 @@ This gives one stable representation for:
 
 ## Build pipeline (high-level)
 
-1. Parse CWL into `CWLProcessingUnit`. A packed document has a `$graph` and no process at its root. Read it with `decodeCWLDocument` and take its process `main` with `CWLDocument.tryGetMain`.
+1. Parse CWL into `CWLProcessingUnit`.
 2. Build graph nodes/edges using `Builder.build` or `Builder.buildWith`.
-3. Optionally resolve `run` paths (relative/normalized) and `#id` fragments via `TryResolveRunPath`.
+3. Optionally resolve `run` paths (relative/normalized) via `TryResolveRunPath`.
 4. Collect diagnostics (`MissingReference`, `ResolutionFailed`, `CycleDetected`, ...).
 5. Query via `WorkflowGraphQueries` or render via `WorkflowGraphSiren`.
 
@@ -91,11 +91,6 @@ let options =
 
 let graph = WorkflowGraphApi.buildWith options processingUnit
 ```
-
-A step of a packed document names another process of the document as `run: "#shout"`. The resolver gets two candidates
-for such a fragment. The first is the path of the document with the fragment (`runs/tests/run.cwl#shout`), and the
-second is the fragment alone (`#shout`). `ARC.SetISAFromContracts` fills its lookup with the first form, so two packed
-documents that each hold a process with the id `shout` stay apart.
 
 ## ARC adapters usage
 

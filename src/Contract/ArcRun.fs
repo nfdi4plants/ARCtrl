@@ -40,7 +40,7 @@ module RunContractExtensions =
             this.CWLDescription
             |> Option.map (fun description ->
                 let path = Identifier.Run.cwlFileNameFromIdentifier this.Identifier
-                let dto = CWL.Encode.encodeProcessingUnitInGraph this.CWLGraph description
+                let dto = CWL.Encode.encodeProcessingUnit description
                 Contract.create(operation, path, DTOType.CWL, DTO.Text dto))
 
         /// The contract that carries the parameter file run.yml of the run, or none for a run without parameter
@@ -99,21 +99,12 @@ module RunContractExtensions =
                 |> Some 
             | _ -> None
 
-        /// The CWL file of the run as a document, which is one process or a packed document.
-        static member tryCWLDocumentFromReadContract (runIdentifier : string) (c:Contract) =
+        static member tryCWLFromReadContract (runIdentifier : string) (c:Contract) =
             let p = Identifier.Run.cwlFileNameFromIdentifier runIdentifier
             match c with
             | {Operation = READ; DTOType = Some DTOType.CWL; DTO = Some (DTO.Text text)} when c.Path = p ->
                 Some (decodeCWLFile c.Path text)
             | _ -> None
-
-        /// The process that the CWL file of the run starts with. A packed document runs from its process main.
-        static member tryCWLFromReadContract (runIdentifier : string) (c:Contract) =
-            ArcRun.tryCWLDocumentFromReadContract runIdentifier c
-            |> Option.map (fun document ->
-                match CWL.CWLDocument.tryGetMain document with
-                | Some processingUnit -> processingUnit
-                | None -> failwith $"The packed CWL document {c.Path} has no process with the id main.")
 
         static member tryYMLFromReadContract (runIdentifier : string) (c:Contract) =
             let p = Identifier.Run.ymlFileNameFromIdentifier runIdentifier

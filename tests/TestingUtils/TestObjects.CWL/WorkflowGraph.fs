@@ -214,48 +214,30 @@ outputs:
 steps: {}"""
 
 
-/// A packed document in the form of cwltool --pack: every id is written in full behind the id of its process.
-let packedWithFullIdsFile = """cwlVersion: v1.2
-$graph:
-  - class: CommandLineTool
-    id: "#shout.cwl"
-    baseCommand: echo
-    stdout: shout.txt
-    inputs:
-      - id: "#shout.cwl/msg"
-        type: string
-        inputBinding:
-          position: 1
-    outputs:
-      - id: "#shout.cwl/out"
-        type: File
-        outputBinding:
-          glob: shout.txt
-  - class: Workflow
-    id: "#main"
-    requirements:
-      - class: StepInputExpressionRequirement
-    inputs:
-      - id: "#main/msg"
-        type: string
-    outputs:
-      - id: "#main/result"
-        type: File
-        outputSource: "#main/second/out"
-    steps:
-      - id: "#main/first"
-        run: "#shout.cwl"
-        in:
-          - id: "#main/first/msg"
-            source: "#main/msg"
-        out:
-          - "#main/first/out"
-      - id: "#main/second"
-        run: "#shout.cwl"
-        in:
-          - id: "#main/second/msg"
-            source: "#main/first/out"
-            valueFrom: done
-        out:
-          - "#main/second/out"
+/// A plain document that writes every id in full behind the id of its workflow, as cwltool writes them.
+let fullIdsWorkflowFile = """cwlVersion: v1.2
+class: Workflow
+id: "#main"
+inputs:
+  - id: "#main/msg"
+    type: string
+outputs:
+  - id: "#main/result"
+    type: File
+    outputSource: "#main/second/out"
+steps:
+  - id: "#main/first"
+    run: shout.cwl
+    in:
+      - id: "#main/first/msg"
+        source: "#main/msg"
+    out:
+      - "#main/first/out"
+  - id: "#main/second"
+    run: shout.cwl
+    in:
+      - id: "#main/second/msg"
+        source: "#main/first/out"
+    out:
+      - "#main/second/out"
 """

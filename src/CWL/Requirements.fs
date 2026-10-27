@@ -395,8 +395,8 @@ type ResourceRequirementInstance (
 type SchemaDefEntry =
     | Defined of SchemaDefinition
     | Imported of string
-    /// A mapping with a $mixin directive, kept as it was written. The file may define the types of the entry, so the
-    /// decoder cannot tell which types the document defines.
+    /// A mapping with a $mixin directive, kept as it was written. The file may define the types of the entry, and the
+    /// decoder reads no file.
     | Mixed of RawYaml
     /// A schema whose type is a directive, as in {type: {$import: path}, name: Shape}, kept as it was written. The file
     /// decides which kind of schema it is, and the decoder reads no file.

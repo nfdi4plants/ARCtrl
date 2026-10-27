@@ -1048,13 +1048,9 @@ module Encode =
         | 1 -> encodeSchemaSaladString scatter.[0]
         | _ -> scatter |> Seq.map encodeSchemaSaladString |> List.ofSeq |> encodeSequence
 
-    /// The cwlVersion entry of a process. A process that takes the version of its enclosing document writes none.
-    let private cwlVersionPairs (includeCwlVersion: bool) (version: string) : (string * YamlNode) list =
-        if includeCwlVersion then [ "cwlVersion", encodeString version ] else []
-
-    /// Encode workflow step run targets as paths or inline processing units. The flag tells whether the run is written
-    /// inside the $graph of a packed document, where a run of the form #id can refer to a process of that document.
-    let rec encodeWorkflowStepRun (inGraph: bool) (run: WorkflowStepRun) : YamlNode =
+    /// Encode workflow step run targets as paths or inline processing units. The ancestors are the workflows whose steps
+    /// hold the run, innermost first.
+    let rec private encodeRunWithin (ancestors: CWLWorkflowDescription list) (run: WorkflowStepRun) : YamlNode =
         match run with
         | RunString runPath ->
             // External run reference.
@@ -1071,35 +1067,34 @@ module Encode =
         | RunCommandLineTool toolObj ->
             // Inline CommandLineTool run; validate the object payload before encoding.
             match WorkflowStepRunOps.tryGetTool run with
-            | Some tool -> encodeToolDescriptionElement true tool
+            | Some tool -> encodeToolDescriptionElement tool
             | None ->
                 raise (System.ArgumentException($"RunCommandLineTool must contain CWLToolDescription but got %A{toolObj}"))
         | RunWorkflow workflowObj ->
             // Inline nested Workflow run.
             match WorkflowStepRunOps.tryGetWorkflow run with
-            | Some workflow -> encodeWorkflowDescriptionElement inGraph true workflow
+            | Some workflow -> encodeWorkflowWithin ancestors workflow
             | None ->
                 raise (System.ArgumentException($"RunWorkflow must contain CWLWorkflowDescription but got %A{workflowObj}"))
         | RunExpressionTool expressionToolObj ->
             // Inline ExpressionTool run.
             match WorkflowStepRunOps.tryGetExpressionTool run with
-            | Some expressionTool -> encodeExpressionToolDescriptionElement true expressionTool
+            | Some expressionTool -> encodeExpressionToolDescriptionElement expressionTool
             | None ->
                 raise (System.ArgumentException($"RunExpressionTool must contain CWLExpressionToolDescription but got %A{expressionToolObj}"))
         | RunOperation operationObj ->
             // Inline Operation run.
             match WorkflowStepRunOps.tryGetOperation run with
-            | Some operation -> encodeOperationDescriptionElement true operation
+            | Some operation -> encodeOperationDescriptionElement operation
             | None ->
                 raise (System.ArgumentException($"RunOperation must contain CWLOperationDescription but got %A{operationObj}"))
 
-    /// Encode a CommandLineTool element with ordered sections and preserved metadata. The flag tells whether the element
-    /// writes its cwlVersion.
-    and encodeToolDescriptionElement (includeCwlVersion: bool) (td: CWLToolDescription) : YamlNode =
+    /// Encode a CommandLineTool element with ordered sections and preserved metadata.
+    and encodeToolDescriptionElement (td: CWLToolDescription) : YamlNode =
         let basePairs =
             // Base identity fields stay in the first top-level section.
-            cwlVersionPairs includeCwlVersion td.CWLVersion
-            @ [ "class", encodeString "CommandLineTool" ]
+            [ "cwlVersion", encodeString td.CWLVersion
+              "class", encodeString "CommandLineTool" ]
             |> appendOptPair (td.Id |> Option.map (fun id -> "id", encodeString id))
             |> appendOpt "label" (encodeLabelValue td.SourceNodes.Label) td.Label
             |> appendOpt "doc" (encodeProcessDocValue td.SourceNodes.Doc) td.Doc
@@ -1150,13 +1145,12 @@ module Encode =
         |> appendDynamicPropertiesExcept CWLToolDescription.KnownFieldNames td
         |> encodeObject
 
-    /// Encode an ExpressionTool element with ordered sections and preserved metadata. The flag tells whether the element
-    /// writes its cwlVersion.
-    and encodeExpressionToolDescriptionElement (includeCwlVersion: bool) (et: CWLExpressionToolDescription) : YamlNode =
+    /// Encode an ExpressionTool element with ordered sections and preserved metadata.
+    and encodeExpressionToolDescriptionElement (et: CWLExpressionToolDescription) : YamlNode =
         let basePairs =
             // Base identity fields stay in the first top-level section.
-            cwlVersionPairs includeCwlVersion et.CWLVersion
-            @ [ "class", encodeString "ExpressionTool" ]
+            [ "cwlVersion", encodeString et.CWLVersion
+              "class", encodeString "ExpressionTool" ]
             |> appendOptPair (et.Id |> Option.map (fun id -> "id", encodeString id))
             |> appendOpt "label" (encodeLabelValue et.SourceNodes.Label) et.Label
             |> appendOpt "doc" (encodeProcessDocValue et.SourceNodes.Doc) et.Doc
@@ -1191,13 +1185,12 @@ module Encode =
         |> appendDynamicPropertiesExcept CWLExpressionToolDescription.KnownFieldNames et
         |> encodeObject
 
-    /// Encode an Operation element with ordered sections and preserved metadata. The flag tells whether the element
-    /// writes its cwlVersion.
-    and encodeOperationDescriptionElement (includeCwlVersion: bool) (op: CWLOperationDescription) : YamlNode =
+    /// Encode an Operation element with ordered sections and preserved metadata.
+    and encodeOperationDescriptionElement (op: CWLOperationDescription) : YamlNode =
         let basePairs =
             // Base identity fields stay in the first top-level section.
-            cwlVersionPairs includeCwlVersion op.CWLVersion
-            @ [ "class", encodeString "Operation" ]
+            [ "cwlVersion", encodeString op.CWLVersion
+              "class", encodeString "Operation" ]
             |> appendOptPair (op.Id |> Option.map (fun id -> "id", encodeString id))
             |> appendOpt "label" (encodeLabelValue op.SourceNodes.Label) op.Label
             |> appendOpt "doc" (encodeProcessDocValue op.SourceNodes.Doc) op.Doc
@@ -1229,13 +1222,16 @@ module Encode =
         |> appendDynamicPropertiesExcept CWLOperationDescription.KnownFieldNames op
         |> encodeObject
 
-    /// Encode a Workflow element with ordered sections and preserved metadata. The first flag tells whether the element
-    /// is written inside the $graph of a packed document, and the second whether it writes its cwlVersion.
-    and encodeWorkflowDescriptionElement (inGraph: bool) (includeCwlVersion: bool) (wd: CWLWorkflowDescription) : YamlNode =
+    /// Encode a Workflow element with ordered sections and preserved metadata. A workflow that one of its steps holds as
+    /// an inline run, directly or further down, has no text of finite length, so it is an error.
+    and private encodeWorkflowWithin (ancestors: CWLWorkflowDescription list) (wd: CWLWorkflowDescription) : YamlNode =
+        if ancestors |> List.exists (fun ancestor -> System.Object.ReferenceEquals(ancestor, wd)) then
+            raise (System.ArgumentException("A step of the workflow holds the workflow itself as its inline run, so the workflow has no text of finite length."))
+        let ancestors = wd :: ancestors
         let basePairs =
             // Base identity fields stay in the first top-level section.
-            cwlVersionPairs includeCwlVersion wd.CWLVersion
-            @ [ "class", encodeString "Workflow" ]
+            [ "cwlVersion", encodeString wd.CWLVersion
+              "class", encodeString "Workflow" ]
             |> appendOptPair (wd.Id |> Option.map (fun id -> "id", encodeString id))
             |> appendOpt "label" (encodeLabelValue wd.SourceNodes.Label) wd.Label
             |> appendOpt "doc" (encodeProcessDocValue wd.SourceNodes.Doc) wd.Doc
@@ -1255,7 +1251,7 @@ module Encode =
             withRequirements @ [ "inputs", (wd.Inputs |> Seq.map (ListEntry.map encodeCWLInput) |> Seq.toList |> encodeIdEntries "id" "type" (wd.SourceNodes.WholeFields.Contains "inputs")) ]
         let withSteps =
             // Steps are map entries keyed by step id.
-            withInputs @ [ "steps", encodeWorkflowSteps inGraph (wd.SourceNodes.WholeFields.Contains "steps") wd.Steps ]
+            withInputs @ [ "steps", encodeStepsWithin ancestors (wd.SourceNodes.WholeFields.Contains "steps") wd.Steps ]
         let withOutputs =
             // Outputs follow steps for scan-friendly workflow YAML.
             withSteps @ [ "outputs", (wd.Outputs |> Seq.map (ListEntry.map encodeCWLOutput) |> Seq.toList |> encodeIdEntries "id" "type" (wd.SourceNodes.WholeFields.Contains "outputs")) ]
@@ -1272,8 +1268,8 @@ module Encode =
 
     /// Encode the steps of a workflow as the entries of an id list (see encodeIdEntries). A step without an id has no key
     /// for a map, so a list with such a step is a list of objects, and only the steps with an id write it.
-    and encodeWorkflowSteps (inGraph: bool) (whole: bool) (steps: ResizeArray<ListEntry<WorkflowStep>>) : YamlNode =
-        let encoded = steps |> Seq.map (ListEntry.map (encodeWorkflowStep inGraph)) |> Seq.toList
+    and private encodeStepsWithin (ancestors: CWLWorkflowDescription list) (whole: bool) (steps: ResizeArray<ListEntry<WorkflowStep>>) : YamlNode =
+        let encoded = steps |> Seq.map (ListEntry.map (encodeStepWithin ancestors)) |> Seq.toList
         let withoutId = encoded |> List.exists (fun entry -> match entry with | ListEntry.Value (None, _) -> true | _ -> false)
         if withoutId then
             encoded
@@ -1284,22 +1280,12 @@ module Encode =
             |> List.map (ListEntry.map (fun (id, node) -> Option.get id, node))
             |> encodeIdEntries "id" "run" whole
 
-    /// Encode one workflow step as a map entry keyed by step id, and without a key when the step has no id. A run of the
-    /// form #id refers to a process of the packed document that holds the step. Outside of a $graph, the file has no such
-    /// process, so the step writes its resolved process inline. A step without one cannot be written there.
-    and encodeWorkflowStep (inGraph: bool) (ws:WorkflowStep) : (string option * YamlNode) =
-        let run =
-            match ws.Run, ws.ResolvedRun.Run with
-            | RunString reference, resolved when not inGraph && reference.StartsWith "#" ->
-                match resolved with
-                | Some resolvedRun -> resolvedRun
-                | None ->
-                    let name = match ws.Id with | Some id -> "step " + id | None -> "step without an id"
-                    raise (System.ArgumentException($"The {name} runs {reference}, a process of a packed document, and has no resolved process. A file that is no packed document cannot refer to it."))
-            | run, _ -> run
+    /// Encode one workflow step as a map entry keyed by step id, and without a key when the step has no id. The run is
+    /// written as it was read, and the process that it resolved to stays out of the text.
+    and private encodeStepWithin (ancestors: CWLWorkflowDescription list) (ws:WorkflowStep) : (string option * YamlNode) =
         let basePairs =
             // Required step fields are emitted first.
-            [ "run", encodeWorkflowStepRun inGraph run
+            [ "run", encodeRunWithin ancestors ws.Run
               "in", encodeStepInputs (ws.SourceNodes.WholeFields.Contains "in") ws.In
               "out", encodeStepOutputs (ws.SourceNodes.WholeFields.Contains "out") ws.Out ]
             |> appendOpt "label" (encodeLabelValue ws.SourceNodes.Label) ws.Label
@@ -1319,6 +1305,22 @@ module Encode =
             | Some r when r.Count > 0 -> withHints @ [ "requirements", (encodeRequirementsField ws.SourceNodes r) ]
             | _ -> withHints
         ws.Id, encodeObject withReq
+
+    /// Encode workflow step run targets as paths or inline processing units.
+    let encodeWorkflowStepRun (run: WorkflowStepRun) : YamlNode =
+        encodeRunWithin [] run
+
+    /// Encode a Workflow element with ordered sections and preserved metadata.
+    let encodeWorkflowDescriptionElement (wd: CWLWorkflowDescription) : YamlNode =
+        encodeWorkflowWithin [] wd
+
+    /// Encode the steps of a workflow as the entries of an id list (see encodeIdEntries).
+    let encodeWorkflowSteps (whole: bool) (steps: ResizeArray<ListEntry<WorkflowStep>>) : YamlNode =
+        encodeStepsWithin [] whole steps
+
+    /// Encode one workflow step as a map entry keyed by step id, and without a key when the step has no id.
+    let encodeWorkflowStep (ws: WorkflowStep) : (string option * YamlNode) =
+        encodeStepWithin [] ws
 
     // ------------------------------
     // Top-level encoders
@@ -1531,22 +1533,22 @@ module Encode =
 
     let encodeToolDescription (td:CWLToolDescription) : string =
         // Tool top-level layout places command fields before ports.
-        encodeToolDescriptionElement true td
+        encodeToolDescriptionElement td
         |> renderTopLevelElement ["cwlVersion"; "class"; "id"; "label"; "doc"; "intent"] ["hints"; "requirements"; "baseCommand"; "inputs"; "outputs"]
 
     let encodeWorkflowDescription (wd:CWLWorkflowDescription) : string =
         // Workflow layout keeps inputs, steps, and outputs as separate scan blocks.
-        encodeWorkflowDescriptionElement false true wd
+        encodeWorkflowDescriptionElement wd
         |> renderTopLevelElement ["cwlVersion"; "class"; "id"; "label"; "doc"; "intent"] ["hints"; "requirements"; "inputs"; "steps"; "outputs"]
 
     let encodeExpressionToolDescription (et:CWLExpressionToolDescription) : string =
         // ExpressionTool layout writes expression after ports.
-        encodeExpressionToolDescriptionElement true et
+        encodeExpressionToolDescriptionElement et
         |> renderTopLevelElement ["cwlVersion"; "class"; "id"; "label"; "doc"; "intent"] ["hints"; "requirements"; "inputs"; "outputs"; "expression"]
 
     let encodeOperationDescription (op: CWLOperationDescription) : string =
         // Operation layout mirrors workflow/tool metadata and port ordering.
-        encodeOperationDescriptionElement true op
+        encodeOperationDescriptionElement op
         |> renderTopLevelElement ["cwlVersion"; "class"; "id"; "label"; "doc"; "intent"] ["hints"; "requirements"; "inputs"; "outputs"]
 
     let encodeProcessingUnit (pu : CWLProcessingUnit) :string =
@@ -1558,38 +1560,6 @@ module Encode =
         | Operation op -> encodeOperationDescription op
         // The process is written as it was read, with its own layout.
         | RawProcess raw -> writeYaml raw.Node
-
-    /// Encode a packed document: the cwlVersion of the root and the processes under $graph. The processes use the
-    /// version of the root, so they write none of their own. The other keys of the root follow the graph. A step that
-    /// runs one of the processes of the graph holds the reference to it, as in run: "#shout", and writes it as it is.
-    let encodeCWLGraph (graph: CWLGraph) : string =
-        let encodeMember (processingUnit: CWLProcessingUnit) : YamlNode =
-            match processingUnit with
-            | CommandLineTool td -> encodeToolDescriptionElement false td
-            | Workflow wd -> encodeWorkflowDescriptionElement true false wd
-            | ExpressionTool et -> encodeExpressionToolDescriptionElement false et
-            | Operation op -> encodeOperationDescriptionElement false op
-            | RawProcess raw -> raw.Node
-        [ "cwlVersion", encodeString graph.CWLVersion
-          "$graph", (graph.Processes |> Seq.map encodeMember |> List.ofSeq |> encodeSequence) ]
-        |> appendDynamicPropertiesExcept CWLGraph.KnownFieldNames graph
-        |> encodeObject
-        |> renderTopLevelElement ["cwlVersion"] ["$graph"]
-
-    /// Encode a CWL document, which is a process or a packed document.
-    let encodeCWLDocument (document: CWLDocument) : string =
-        match document with
-        | CWLDocument.Process processingUnit -> encodeProcessingUnit processingUnit
-        | CWLDocument.Graph graph -> encodeCWLGraph graph
-
-    /// Encode the process of a file that may hold a packed document. The file is the packed document while the process
-    /// is the process main of the graph, so the other processes and the other keys of the root are written as they were
-    /// read. In any other case the file holds the process alone. The caller can change the id of the process, or the
-    /// graph, after the read, so this decides on each write.
-    let encodeProcessingUnitInGraph (graph: CWLGraph option) (processingUnit: CWLProcessingUnit) : string =
-        match graph with
-        | Some graph when CWLGraph.isMain processingUnit graph -> encodeCWLGraph graph
-        | _ -> encodeProcessingUnit processingUnit
 
     /// Encode a CWLType in flow style, so that the written text has no line break and can be embedded in JSON.
     /// Unions are lists, and schemas are mappings with their fields in the array form.

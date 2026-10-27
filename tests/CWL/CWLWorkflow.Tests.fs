@@ -263,16 +263,13 @@ let testStringLists =
           "an operation", [ "class: Operation"; "inputs: {}"; "outputs: {}" ] ]
     let stepOf (text: string) = (ListEntry.values (Decode.decodeWorkflow text).Steps).[0]
     let intentOf (text: string) =
-        match Decode.decodeCWLDocument text with
-        | CWLDocument.Process (CommandLineTool tool) -> tool.Intent
-        | CWLDocument.Process (Workflow workflow) -> workflow.Intent
-        | CWLDocument.Process (ExpressionTool tool) -> tool.Intent
-        | CWLDocument.Process (Operation operation) -> operation.Intent
+        match Decode.decodeCWLProcessingUnit text with
+        | CommandLineTool tool -> tool.Intent
+        | Workflow workflow -> workflow.Intent
+        | ExpressionTool tool -> tool.Intent
+        | Operation operation -> operation.Intent
         | other -> failwith (sprintf "Expected a process but got %A" other)
-    let rewritten (text: string) =
-        match Decode.decodeCWLDocument text with
-        | CWLDocument.Process processingUnit -> Encode.encodeCWLDocument (CWLDocument.Process processingUnit)
-        | other -> failwith (sprintf "Expected a process but got %A" other)
+    let rewritten (text: string) = Encode.encodeProcessingUnit (Decode.decodeCWLProcessingUnit text)
     // A field that holds a string or a list of strings: the document with {0} where the value stands, and how to read the entries.
     let fields : (string * string * (string -> ResizeArray<SchemaSaladString> option)) list =
         [ "the scatter", workflowOf [ "in: {}"; "scatter: {0}" ], (fun text -> (stepOf text).Scatter)
@@ -321,7 +318,7 @@ let testStringLists =
                   "an import beside a field in the scatter", workflowOf [ "in: {}"; "scatter: {$import: p.yml, extra: 1}" ], "steps.s.scatter", "A directive has exactly one field"
                   "a number as the path in the source", workflowOf [ "in:"; "  a:"; "    source: [{$include: 42}]" ], "steps.s.in.a.source[0].$include", "Expected the path of the $include directive to be a string" ]
             for (name, text, path, message) in cases do
-                match decodeError (fun () -> Decode.decodeCWLDocument text |> ignore) with
+                match decodeError (fun () -> Decode.decodeCWLProcessingUnit text |> ignore) with
                 | Some error ->
                     Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the field" name)
                     Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
@@ -347,7 +344,7 @@ let testStringLists =
                 let whole = text "{$import: p.yml}"
                 let listed = text "[{$import: p.yml}]"
                 Expect.equal (intentOf whole |> Option.map List.ofSeq) (Some [ SchemaSaladString.Import "p.yml" ]) (sprintf "%s: the intent is the import." name)
-                Expect.equal (Decode.decodeCWLDocument whole) (Decode.decodeCWLDocument listed) (sprintf "%s: the spelling is layout, so the processes are equal." name)
+                Expect.equal (Decode.decodeCWLProcessingUnit whole) (Decode.decodeCWLProcessingUnit listed) (sprintf "%s: the spelling is layout, so the processes are equal." name)
                 Expect.stringContains (rewritten whole) "intent: {$import: p.yml}" (sprintf "%s: the whole field keeps its spelling." name)
                 Expect.isFalse ((rewritten listed).Contains "intent: {$import") (sprintf "%s: the listed spelling is written as a list." name)
                 Expect.stringContains (rewritten listed) "- {$import: p.yml}" (sprintf "%s: the listed import is an entry." name)
@@ -355,14 +352,14 @@ let testStringLists =
                 Expect.stringContains (rewritten (text "{$mixin: p.yml, extra: 1}")) "intent: {$mixin: p.yml, extra: 1}" (sprintf "%s: a mixin beside a field keeps its spelling." name)
                 let mixed = text "[a, {$include: b.txt}, {$import: c.yml}, {$mixin: d.yml}]"
                 Expect.equal (intentOf mixed |> Option.map List.ofSeq) (Some [ SchemaSaladString.Literal "a"; SchemaSaladString.Include "b.txt"; SchemaSaladString.Import "c.yml"; SchemaSaladString.Mixin "d.yml" ]) (sprintf "%s: the entries keep their kinds." name)
-                Expect.equal (Decode.decodeCWLDocument (rewritten mixed)) (Decode.decodeCWLDocument mixed) (sprintf "%s: the written text should decode to the same process." name)
+                Expect.equal (Decode.decodeCWLProcessingUnit (rewritten mixed)) (Decode.decodeCWLProcessingUnit mixed) (sprintf "%s: the written text should decode to the same process." name)
         testCase "the intent is a list, so a text, a mapping and a whole include are decode errors" <| fun _ ->
             for (name, header) in processes do
                 for (what, spelling, message) in
                     [ "a text", "http://example.org/i", "Expected a list of strings, found the text"
                       "a mapping", "{a: b}", "Expected a list of strings, found a mapping."
                       "an include", "{$include: p.txt}", "An $include yields the text of a file, but the intent field takes a list of strings." ] do
-                    match decodeError (fun () -> Decode.decodeCWLDocument (document header ("intent: " + spelling)) |> ignore) with
+                    match decodeError (fun () -> Decode.decodeCWLProcessingUnit (document header ("intent: " + spelling)) |> ignore) with
                     | Some error ->
                         Expect.equal (DecodeError.pathText error) "intent" (sprintf "%s, %s: the error should show the field" name what)
                         Expect.stringContains error.Message message (sprintf "%s, %s: the error should say what is wrong" name what)
@@ -563,7 +560,6 @@ outputs: {}"""
             | None -> failwith "A process at the root needs a cwlVersion."
         testCase "the cwlVersion at the root is a decode error at the field when it has no value or holds a number, a bool, a null, a list or a mapping" <| fun _ ->
             let tool (field: string) = "cwlVersion:" + field + "\nclass: CommandLineTool\nbaseCommand: echo\ninputs: {}\noutputs: {}"
-            let graph (field: string) = "cwlVersion:" + field + "\n$graph:\n  - id: main\n    class: CommandLineTool\n    baseCommand: echo\n    inputs: {}\n    outputs: {}"
             let cases =
                 [ "a list", " [v1.2]", None
                   "a mapping", " {version: v1.2}", None
@@ -573,27 +569,20 @@ outputs: {}"""
                   "a null", " ~", Some "Expected a value, found"
                   "no value", "", Some "Expected a value, found" ]
             for (name, field, message) in cases do
-                for (kind, decode) in [ "a process", (fun () -> Decode.decodeCWLDocument (tool field) |> ignore); "a packed document", (fun () -> Decode.decodeCWLDocument (graph field) |> ignore) ] do
-                    match decodeError decode with
-                    | Some error ->
-                        Expect.equal (DecodeError.pathText error) "cwlVersion" $"{name} in {kind}: the error should show the field."
-                        message |> Option.iter (fun text -> Expect.stringContains error.Message text $"{name} in {kind}: the error should say that the value is missing.")
-                        Expect.isSome error.Span $"{name} in {kind}: the error should have the place in the text."
-                    | None -> failwith $"{name} in {kind} must fail"
+                match decodeError (fun () -> Decode.decodeCWLProcessingUnit (tool field) |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) "cwlVersion" $"{name}: the error should show the field."
+                    message |> Option.iter (fun text -> Expect.stringContains error.Message text $"{name}: the error should say that the value is missing.")
+                    Expect.isSome error.Span $"{name}: the error should have the place in the text."
+                | None -> failwith $"{name} must fail"
         testCase "the cwlVersion at the root is read as written and every document decodes under the rules of v1.2" <| fun _ ->
             // A NetworkAccess requirement exists from v1.1, so the documents of v1.0 and v1.3 show that the version selects no rule.
             for version in [ "v1.0"; "v1.1"; "v1.2"; "v1.2.0-dev2"; "v1.3"; "v1.3.0-dev1"; "banana" ] do
                 let tool = "cwlVersion: " + version + "\nclass: CommandLineTool\nrequirements:\n  - class: NetworkAccess\n    networkAccess: true\nbaseCommand: echo\ninputs: {}\noutputs: {}"
-                let graph = "cwlVersion: " + version + "\n$graph:\n  - id: main\n    class: CommandLineTool\n    requirements:\n      - class: NetworkAccess\n        networkAccess: true\n    baseCommand: echo\n    inputs: {}\n    outputs: {}"
                 let decodedTool = Decode.decodeCommandLineTool tool
                 Expect.equal decodedTool.CWLVersion version $"A process decodes with {version}."
                 Expect.isSome decodedTool.Requirements $"A process of {version} keeps its NetworkAccess requirement."
                 Expect.stringContains (Encode.encodeToolDescription decodedTool) ("cwlVersion: " + version) $"A process writes {version} back."
-                match Decode.decodeCWLDocument graph with
-                | CWLDocument.Graph decoded ->
-                    Expect.equal decoded.CWLVersion version $"A packed document decodes with {version}."
-                    Expect.stringContains (Encode.encodeCWLDocument (CWLDocument.Graph decoded)) ("cwlVersion: " + version) $"A packed document writes {version} back."
-                | other -> failwith $"Expected a packed document but got %A{other}"
         testCase "a quoted number at the root is a text that is read as written, and the plain number is a decode error" <| fun _ ->
             let tool (field: string) = "cwlVersion: " + field + "\nclass: CommandLineTool\nbaseCommand: echo\ninputs: {}\noutputs: {}"
             let decoded = Decode.decodeCommandLineTool (tool "\"1.2\"")
@@ -623,31 +612,23 @@ steps:
                 let decoded = Decode.decodeWorkflow (head + field + tail)
                 let tool = Expect.wantSome (WorkflowStepRunOps.tryGetTool (ListEntry.values decoded.Steps).[0].Run) "The step runs an inline tool."
                 Expect.equal tool.CWLVersion "v1.2" $"{name}: the inline run takes the version of the workflow."
-        testCase "the cwlVersion of an inline run or of a process in a packed document is a decode error unless it is a string or a null" <| fun _ ->
+        testCase "the cwlVersion of an inline run is a decode error unless it is a string or a null" <| fun _ ->
             let run (field: string) =
                 String.concat "\n" [ "cwlVersion: v1.2"; "class: Workflow"; "inputs: {}"; "outputs: {}"; "steps:"; "  s:"; "    run:"; "      class: CommandLineTool"; "      cwlVersion:" + field; "      baseCommand: echo"; "      inputs: {}"; "      outputs: {}"; "    in: {}"; "    out: []" ]
-            let graph (field: string) =
-                String.concat "\n" [ "cwlVersion: v1.2"; "$graph:"; "  - id: main"; "    class: CommandLineTool"; "    cwlVersion:" + field; "    baseCommand: echo"; "    inputs: {}"; "    outputs: {}" ]
             for (name, field, message) in
                 [ "a float", " 1.2", "Expected a string, found the plain scalar 1.2"
                   "an int", " 1", "Expected a string, found the plain scalar 1"
                   "a bool", " true", "Expected a string, found the plain scalar true"
                   "a list", " [v1.2]", "Expected a string, found a sequence"
                   "a mapping", " {version: v1.2}", "Expected a string, found a mapping" ] do
-                match decodeError (fun () -> Decode.decodeCWLDocument (run field) |> ignore) with
+                match decodeError (fun () -> Decode.decodeCWLProcessingUnit (run field) |> ignore) with
                 | Some error ->
                     Expect.equal (DecodeError.pathText error) "steps.s.run.cwlVersion" $"{name} in a run: the error should show the field."
                     Expect.stringContains error.Message message $"{name} in a run: the error should say what is wrong."
                     Expect.isSome error.Span $"{name} in a run: the error should have the place in the text."
                 | None -> failwith $"{name} in a run must fail"
-                match decodeError (fun () -> Decode.decodeCWLDocument (graph field) |> ignore) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) "$graph[0].cwlVersion" $"{name} in a packed document: the error should show the field."
-                    Expect.stringContains error.Message message $"{name} in a packed document: the error should say what is wrong."
-                | None -> failwith $"{name} in a packed document must fail"
             for field in [ ""; " ~"; " \"1.2\""; " v1.0" ] do
-                Decode.decodeCWLDocument (run field) |> ignore
-                Decode.decodeCWLDocument (graph field) |> ignore
+                Decode.decodeCWLProcessingUnit (run field) |> ignore
         testCase "step input array form decode" <| fun _ ->
             let decoded = Decode.decodeWorkflow TestObjects.CWL.Workflow.workflowWithInputArrayStepFile
             let stepInput = (WorkflowStep.getInputValues (ListEntry.values decoded.Steps).[0]).[0]
@@ -1018,7 +999,7 @@ steps:
 
             let encodeSteps (steps: ResizeArray<WorkflowStep>) =
                 steps
-                |> Seq.map (Encode.encodeWorkflowStep false >> (fun (id, node) -> Option.get id, node) >> renderYamlPair)
+                |> Seq.map (Encode.encodeWorkflowStep >> (fun (id, node) -> Option.get id, node) >> renderYamlPair)
                 |> ResizeArray
 
             let encodeRequirements (requirements: ResizeArray<Requirement>) =
@@ -1055,20 +1036,6 @@ let testCWLWorkflowDescriptionEncode =
                 let decodedModified = Decode.decodeWorkflow modified
                 let missing = (ListEntry.values decodedModified.Outputs) |> Seq.filter (fun o -> o.OutputSource.IsNone) |> Seq.toList
                 Expect.isTrue (missing.Length > 0) "At least one output should be missing outputSource after manual removal"
-        ]
-        testList "Process elements" [
-            testCase "the process element encoders write the cwlVersion only when asked to" <| fun _ ->
-                let elements (includeCwlVersion: bool) =
-                    [ Encode.encodeToolDescriptionElement includeCwlVersion (CWLToolDescription(outputs = ResizeArray()))
-                      Encode.encodeWorkflowDescriptionElement false includeCwlVersion (CWLWorkflowDescription(steps = ResizeArray(), inputs = ResizeArray(), outputs = ResizeArray()))
-                      Encode.encodeExpressionToolDescriptionElement includeCwlVersion (CWLExpressionToolDescription(outputs = ResizeArray(), expression = SchemaSaladString.Literal "$(null)"))
-                      Encode.encodeOperationDescriptionElement includeCwlVersion (CWLOperationDescription(inputs = ResizeArray(), outputs = ResizeArray())) ]
-                    |> List.map Encode.writeYaml
-                for text in elements true do
-                    Expect.stringContains text "cwlVersion: v1.2" "The element writes its version."
-                for text in elements false do
-                    Expect.isFalse (text.Contains "cwlVersion") "The element takes the version of its document."
-                    Expect.stringContains text "class:" "The element still writes its class."
         ]
         testList "Workflow Encode RoundTrip" [
             testCase "workflow encode/decode deterministic & outputSource preserved" <| fun _ ->
@@ -1396,315 +1363,75 @@ outputs:
             assertTypesEqual (optionalOf (CWLType.File)) (outputTypeOf workflow "result") "result"
     ]
 
+let testInlineRunsThatHoldTheirWorkflow =
+    let text = "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  s:\n    run: other.cwl\n    in: {}\n    out: []\n"
+    testList "Inline runs that hold their workflow" [
+        testCase "a workflow whose step holds the workflow inline, directly or further down, cannot be written" <| fun _ ->
+            let direct = Decode.decodeWorkflow text
+            (ListEntry.values direct.Steps).[0].Run <- WorkflowStepRunOps.fromWorkflow direct
+            Expect.throws (fun () -> Encode.encodeWorkflowDescription direct |> ignore) "A workflow that holds itself has no text."
+            let outer = Decode.decodeWorkflow text
+            let inner = Decode.decodeWorkflow text
+            (ListEntry.values outer.Steps).[0].Run <- WorkflowStepRunOps.fromWorkflow inner
+            (ListEntry.values inner.Steps).[0].Run <- WorkflowStepRunOps.fromWorkflow outer
+            Expect.throws (fun () -> Encode.encodeWorkflowDescription outer |> ignore) "A workflow that holds itself further down has no text."
+            Expect.throws (fun () -> Encode.encodeWorkflowStep (ListEntry.values outer.Steps).[0] |> ignore) "The step encoder stops at the cycle too."
+        testCase "one inline workflow in two steps is written twice and reads back" <| fun _ ->
+            let shared = Decode.decodeWorkflow text
+            let holder = Decode.decodeWorkflow (text.Replace("steps:\n", "steps:\n  t:\n    run: other.cwl\n    in: {}\n    out: []\n"))
+            for step in ListEntry.values holder.Steps do
+                step.Run <- WorkflowStepRunOps.fromWorkflow shared
+            let written = Encode.encodeWorkflowDescription holder
+            Expect.equal (Decode.decodeWorkflow written) holder "The written text should decode to the same workflow."
+    ]
+
 let testPackedDocuments =
-    let fixture = TestObjects.CWL.Workflow.PackedDocument.graphFile
-    let graphOf (yaml: string) =
-        match Decode.decodeCWLDocument yaml with
-        | CWLDocument.Graph graph -> graph
-        | other -> failwith $"Expected a packed document but got %A{other}"
-    let workflowOf (processingUnit: CWLProcessingUnit) =
-        match processingUnit with
-        | Workflow workflow -> workflow
-        | other -> failwith $"Expected a workflow but got %A{other}"
-    let toolOf (processingUnit: CWLProcessingUnit) =
-        match processingUnit with
-        | CommandLineTool tool -> tool
-        | other -> failwith $"Expected a command line tool but got %A{other}"
+    let packed = String.concat "\n" [ "cwlVersion: v1.2"; "$graph:"; "  - id: main"; "    class: CommandLineTool"; "    baseCommand: echo"; "    inputs: []"; "    outputs: []"; "" ]
+    let expectPackedError (name: string) (decode: unit -> unit) (line: int) =
+        match decodeError decode with
+        | Some error ->
+            Expect.equal (DecodeError.pathText error) "" $"{name}: the error stands at the root."
+            Expect.equal error.Message "Packed CWL documents ($graph) are not supported." $"{name}: the error says that the document is packed."
+            Expect.equal (error.Span |> Option.map (fun span -> span.Start.Line)) (Some line) $"{name}: the error points at the $graph key."
+        | None -> failwith $"{name} must fail"
     testList "Packed documents" [
-        testCase "a packed document decodes as a graph of its processes that use the version of the root" <| fun _ ->
-            let graph = graphOf fixture
-            Expect.equal graph.CWLVersion "v1.2" "The graph has the version of the root."
-            Expect.equal graph.Processes.Count 2 "The graph holds two processes."
-            let main = workflowOf graph.Processes.[0]
-            Expect.equal main.Id (Some "main") "The workflow keeps its id."
-            Expect.equal main.CWLVersion "v1.2" "The workflow uses the version of the root."
-            let shout = toolOf graph.Processes.[1]
-            Expect.equal shout.Id (Some "shout") "The tool keeps its id."
-            Expect.equal shout.CWLVersion "v1.2" "The tool uses the version of the root."
-        testCase "a step keeps the reference to a process of the graph as its run string" <| fun _ ->
-            let main = workflowOf (graphOf fixture).Processes.[0]
-            Expect.equal (ListEntry.values main.Steps).[0].Run (RunString "#shout") "The run field stays the reference."
-        testCase "the other keys of the root stay on the graph" <| fun _ ->
-            let graph = graphOf fixture
-            let namespaces = Expect.wantSome (DynObj.tryGetTypedPropertyValue<DynamicObj> "$namespaces" graph) "The graph keeps $namespaces."
-            Expect.equal (DynObj.tryGetTypedPropertyValue<string> "ex" namespaces) (Some "https://example.org/ns#") "The namespace keeps its IRI."
-            Expect.isNone (DynObj.tryGetTypedPropertyValue<obj> "$graph" graph) "The processes are no dynamic property."
-        testCase "a graph is written with the version of the root only and reads back" <| fun _ ->
-            let graph = graphOf fixture
-            let encoded = Encode.encodeCWLDocument (CWLDocument.Graph graph)
-            Expect.stringContains encoded "$graph:" "The processes stand under $graph."
-            Expect.stringContains encoded "$namespaces:" "The other keys of the root are written."
-            Expect.equal (encoded.Split('\n') |> Array.filter (fun line -> line.Contains "cwlVersion") |> Array.length) 1 "Only the root writes a cwlVersion."
-            let roundTripped = graphOf encoded
-            Expect.equal roundTripped.CWLVersion "v1.2" "The version survives the round trip."
-            Expect.equal roundTripped.Processes.Count 2 "Both processes survive the round trip."
-            Expect.equal (ListEntry.values (workflowOf roundTripped.Processes.[0]).Steps).[0].Run (RunString "#shout") "The reference survives the round trip."
-            Expect.equal (toolOf roundTripped.Processes.[1]).CWLVersion "v1.2" "The tool uses the version of the root again."
-            Expect.isSome (DynObj.tryGetTypedPropertyValue<DynamicObj> "$namespaces" roundTripped) "$namespaces survives the round trip."
-            Expect.equal (Encode.encodeCWLDocument (CWLDocument.Graph roundTripped)) encoded "A second pass writes the same text."
-        testCase "a graph compares by its version, its processes and the other keys of its root" <| fun _ ->
-            let namespaced = TestObjects.CWL.Workflow.PackedDocument.namespacedFile
-            Expect.equal (graphOf namespaced) (graphOf namespaced) "Two reads of one text are equal."
-            Expect.equal (Decode.decodeCWLDocument namespaced) (Decode.decodeCWLDocument namespaced) "The documents are equal too."
-            Expect.equal (hash (graphOf namespaced)) (hash (graphOf namespaced)) "Equal graphs hash alike."
-            Expect.notEqual (graphOf namespaced) (graphOf (namespaced.Replace("baseCommand: wc", "baseCommand: cat"))) "Another process makes another graph."
-            Expect.notEqual (graphOf namespaced) (graphOf (namespaced.Replace("ex:note: kept at the root", "ex:note: changed"))) "Another key of the root makes another graph."
-            Expect.notEqual (graphOf namespaced) (graphOf (namespaced.Replace("cwlVersion: v1.2", "cwlVersion: v1.1"))) "Another version makes another graph."
-        testCase "a step that runs a process of the graph keeps the reference in the graph and writes the resolved process inline in a plain file" <| fun _ ->
-            let graph = graphOf fixture
-            let main = workflowOf graph.Processes.[0]
-            let shout = toolOf graph.Processes.[1]
-            (ListEntry.values main.Steps).[0].ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromTool shout) }
-            Expect.equal (graphOf (Encode.encodeCWLGraph graph)) (graphOf fixture) "In the graph the step runs the process by its id."
-            let plain = Encode.encodeProcessingUnit (Workflow main)
-            Expect.isFalse (plain.Contains "#shout") "The plain file has no reference to the graph."
-            match Decode.decodeCWLDocument plain with
-            | CWLDocument.Process (Workflow written) ->
-                Expect.equal (WorkflowStepRunOps.tryGetTool (ListEntry.values written.Steps).[0].Run |> Option.bind (fun tool -> tool.BaseCommand) |> Option.map Seq.toList) (Some [ (SchemaSaladString.Literal "echo") ]) "The plain file holds the tool inside the step."
-            | other -> failwith $"Expected a plain workflow but got %A{other}"
-        testCase "a step that runs a process of the graph without a resolved process cannot be written as a plain file" <| fun _ ->
-            let main = workflowOf (graphOf fixture).Processes.[0]
-            let error = Expect.wantSome (try Encode.encodeProcessingUnit (Workflow main) |> ignore; None with :? System.ArgumentException as error -> Some error) "The plain file cannot refer to the graph."
-            Expect.stringContains error.Message "The step shout" "The error names the step."
-            Expect.stringContains error.Message "#shout" "The error names the reference."
-        testCase "a step that runs a file keeps the reference in a plain file even with a resolved process" <| fun _ ->
-            let step = WorkflowStep.fromRunPath(id = "s", in_ = ResizeArray(), out_ = ResizeArray(), runPath = "./tool.cwl")
-            step.ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromTool (CWLToolDescription(outputs = ResizeArray(), baseCommand = ResizeArray [ (SchemaSaladString.Literal "echo") ]))) }
-            let workflow = CWLWorkflowDescription(steps = ListEntry.ofValues [ step ], inputs = ResizeArray(), outputs = ResizeArray())
-            let plain = Encode.encodeProcessingUnit (Workflow workflow)
-            Expect.stringContains plain "run: ./tool.cwl" "The file reference stays."
-            Expect.isFalse (plain.Contains "baseCommand") "The tool is not inlined."
-        testCase "a process is the process main of a graph when the graph finds that object under the id main" <| fun _ ->
-            let namespaced = TestObjects.CWL.Workflow.PackedDocument.namespacedFile
-            let graph = graphOf namespaced
-            let main = workflowOf graph.Processes.[0]
-            Expect.isTrue (CWLGraph.isMain (Workflow main) graph) "A new union value around the object of main is the process main."
-            Expect.isFalse (CWLGraph.isMain graph.Processes.[1] graph) "Another process of the graph is not."
-            Expect.isFalse (CWLGraph.isMain (Workflow (workflowOf (graphOf namespaced).Processes.[0])) graph) "A process with the same content in another graph is another object."
-            main.Id <- Some "renamed"
-            Expect.isFalse (CWLGraph.isMain (Workflow main) graph) "The graph reads the id on each call, so a process that was renamed is not the process main."
-        testCase "the process main of a graph is written with its graph and any other process is written alone" <| fun _ ->
-            let namespaced = TestObjects.CWL.Workflow.PackedDocument.namespacedFile
-            let graph = graphOf namespaced
-            let packed = Encode.encodeProcessingUnitInGraph (Some graph) graph.Processes.[0]
-            Expect.equal packed (Encode.encodeCWLGraph graph) "The process main stands for its graph."
-            Expect.equal (graphOf packed) (graphOf namespaced) "The other processes and the keys of the root are written as they were read."
-            // A plain file holds the processes that its steps run inline, so the steps need their resolved processes.
-            let resolved (graph: CWLGraph) =
-                for processingUnit in graph.Processes do
-                    match processingUnit with
-                    | Workflow workflow ->
-                        for step in (ListEntry.values workflow.Steps) do
-                            match step.Run with
-                            | RunString reference when reference.StartsWith "#" ->
-                                CWLGraph.tryFindProcess reference graph
-                                |> Option.iter (fun target ->
-                                    let run =
-                                        match target with
-                                        | CommandLineTool tool -> WorkflowStepRunOps.fromTool tool
-                                        | other -> failwith $"Expected a tool but got %A{other}"
-                                    step.ResolvedRun <- { Run = Some run })
-                            | _ -> ()
-                    | _ -> ()
-                graph
-            let renamed (id: string option) =
-                let fresh = resolved (graphOf namespaced)
-                (workflowOf fresh.Processes.[0]).Id <- id
-                fresh, fresh.Processes.[0]
-            let withoutMain = resolved (graphOf (namespaced.Replace("- id: main", "- id: first")))
-            let renamedGraph, renamedMain = renamed (Some "renamed")
-            let unnamedGraph, unnamedMain = renamed None
-            let cases =
-                [ "a new process with the id main", graph, CommandLineTool (CWLToolDescription(outputs = ResizeArray(), baseCommand = ResizeArray [ (SchemaSaladString.Literal "date") ], id = "main"))
-                  "another process of the graph", graph, graph.Processes.[1]
-                  "the process main after a rename", renamedGraph, renamedMain
-                  "the process main after its id was removed", unnamedGraph, unnamedMain
-                  "a process of a graph that has no process main", withoutMain, withoutMain.Processes.[0] ]
-            for (name, owner, processingUnit) in cases do
-                let written = Encode.encodeProcessingUnitInGraph (Some owner) processingUnit
-                Expect.equal written (Encode.encodeProcessingUnit processingUnit) $"{name}: the file holds the process alone."
-                match Decode.decodeCWLDocument written with
-                | CWLDocument.Process _ -> ()
-                | other -> failwith $"{name}: expected a plain process but got %A{other}"
-            let withoutId = CWLToolDescription(outputs = ResizeArray(), baseCommand = ResizeArray [ (SchemaSaladString.Literal "date") ])
-            Encode.encodeProcessingUnitInGraph (Some graph) (CommandLineTool withoutId) |> ignore
-            Expect.isNone withoutId.Id "Writing does not give a process an id."
-        testCase "a graph with a cycle of run references is a decode error at the run field that closes the cycle" <| fun _ ->
-            let cases =
-                [ "two workflows that run each other", TestObjects.CWL.Workflow.PackedDocument.cyclicFile, "$graph[1].steps.back.run", "#main, #sub, #main"
-                  "a workflow that runs itself", TestObjects.CWL.Workflow.PackedDocument.cyclicFile.Replace("run: \"#sub\"", "run: \"#main\""), "$graph[0].steps.s.run", "#main, #main"
-                  "a step of an inline workflow that runs main", TestObjects.CWL.Workflow.PackedDocument.cyclicThroughInlineRunFile, "$graph[0].steps.s.run.steps.t.run", "#main, #main" ]
-            for (name, yaml, path, cycle) in cases do
-                match decodeError (fun () -> Decode.decodeCWLDocument yaml |> ignore) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) path $"{name}: the error should show the run field."
-                    Expect.stringContains error.Message ("cycle of run references (" + cycle + ")") $"{name}: the error should name the cycle."
-                    Expect.isSome error.Span $"{name}: the error should have the place in the text."
-                | None -> failwith $"{name} must fail"
-            let shared = graphOf TestObjects.CWL.Workflow.PackedDocument.sharedProcessFile
-            Expect.equal shared.Processes.Count 2 "Two runs of one process are no cycle."
-        testCase "a run that names no process of the graph is a decode error at the run field" <| fun _ ->
-            let yaml = fixture.Replace("run: \"#shout\"", "run: \"#absent\"")
-            match decodeError (fun () -> Decode.decodeCWLDocument yaml |> ignore) with
-            | Some error ->
-                Expect.equal (DecodeError.pathText error) "$graph[0].steps.shout.run" "The error shows the run field of the step."
-                Expect.stringContains error.Message "#absent" "The error names the reference."
-                Expect.isSome error.Span "The error has the place in the text."
-            | None -> failwith "A reference to a missing process must fail."
-        testCase "ids with and without the leading # name the same process" <| fun _ ->
-            let withHash = fixture.Replace("- id: main", "- id: \"#main\"").Replace("- id: shout", "- id: \"#shout\"")
-            let graph = graphOf withHash
-            Expect.equal (workflowOf graph.Processes.[0]).Id (Some "#main") "The id keeps the # as it is written."
-            Expect.isSome (CWLGraph.tryFindProcess "main" graph) "main is found without the #."
-            Expect.isSome (CWLGraph.tryFindProcess "#shout" graph) "shout is found with the #."
-            Expect.isNone (CWLGraph.tryFindProcess "absent" graph) "A missing id finds nothing."
-            let plain = graphOf fixture
-            Expect.isSome (CWLGraph.tryFindProcess "#main" plain) "An id written without # is found with the #."
-            Expect.isSome (CWLGraph.tryFindProcess "shout" plain) "An id written without # is found without it."
-        testCase "a process that names another cwlVersion than the root uses the version of the root" <| fun _ ->
-            let graph = graphOf TestObjects.CWL.Workflow.PackedDocument.versionsFile
-            Expect.equal (workflowOf graph.Processes.[0]).CWLVersion "v1.2" "The same version is accepted."
-            Expect.equal (toolOf graph.Processes.[1]).CWLVersion "v1.2" "The version of the root wins over v1.0."
-        testCase "the cwlVersion of a process of a packed document changes nothing whatever it holds" <| fun _ ->
-            let head = """cwlVersion: v1.2
-$graph:
-  - id: main
-    class: CommandLineTool
-    cwlVersion:"""
-            let tail = """
-    baseCommand: echo
-    inputs: {}
-    outputs: {}"""
-            for (name, field) in [ "no value", ""; "an older version", " v1.0"; "a draft", " draft-3"; "the version itself", " v1.2"; "a newer version", " v1.3"; "a text that is no version", " banana" ] do
-                Expect.equal (toolOf (graphOf (head + field + tail)).Processes.[0]).CWLVersion "v1.2" $"{name}: the process uses the version of the root."
-        testCase "a process of a packed document without an id or with an empty id decodes, and the id is written as it was" <| fun _ ->
-            let yaml = """cwlVersion: v1.2
-$graph:
-  - id: main
-    class: CommandLineTool
-    baseCommand: echo
-    inputs: {}
-    outputs: {}
-  - class: CommandLineTool
-    baseCommand: cat
-    inputs: {}
-    outputs: {}
-  - id: ""
-    class: CommandLineTool
-    baseCommand: ls
-    inputs: {}
-    outputs: {}"""
-            let graph = graphOf yaml
-            Expect.equal (graph.Processes |> Seq.map CWLProcessingUnit.tryGetId |> List.ofSeq) [ Some "main"; None; Some "" ] "The second process has no id and the third has the empty one."
-            let written = Encode.encodeCWLDocument (CWLDocument.Graph graph)
-            Expect.equal (graphOf written) graph "The written text should decode to the same graph."
-            Expect.equal (CWLProcessingUnit.tryGetId (graphOf written).Processes.[1]) None "The process without an id stays without one."
-        testCase "a packed document with a class at the root is a decode error at the root" <| fun _ ->
-            let yaml = """cwlVersion: v1.2
-class: Workflow
-$graph:
-  - id: main
-    class: CommandLineTool
-    baseCommand: echo
-    inputs: {}
-    outputs: {}"""
-            match decodeError (fun () -> Decode.decodeCWLDocument yaml |> ignore) with
-            | Some error ->
-                Expect.equal (DecodeError.pathText error) "" "The error stands at the root."
-                Expect.stringContains error.Message "no class field" "The error names the field."
-                Expect.isSome error.Span "The error has the place in the text."
-            | None -> failwith "A class at the root of a packed document must fail."
-        testCase "two processes of a packed document with one id decode with a warning at the second and are written back" <| fun _ ->
-            let cases =
-                [ "the same id", TestObjects.CWL.Workflow.PackedDocument.duplicateIdsFile
-                  "the same id with and without the #", TestObjects.CWL.Workflow.PackedDocument.duplicateIdsWithHashFile ]
-            for (name, yaml) in cases do
-                let decoded = Decode.decodeCWLDocumentWithWarnings yaml
-                let graph = match decoded.Value with CWLDocument.Graph graph -> graph | other -> failwith $"Expected a packed document but got %A{other}"
-                Expect.equal graph.Processes.Count 2 $"{name}: both processes stay in the graph."
-                Expect.equal decoded.Warnings.Count 1 $"{name}: the repeated id is one warning."
-                Expect.equal decoded.Warnings.[0].Path "$graph[1]" $"{name}: the warning should show the second process."
-                Expect.stringContains decoded.Warnings.[0].Message "The id main" $"{name}: the warning should name the id."
-                Expect.isSome decoded.Warnings.[0].Raw $"{name}: the warning should show the process."
-                Expect.equal (CWLGraph.tryFindMain graph |> Option.map (fun processingUnit -> processingUnit = graph.Processes.[0])) (Some true) $"{name}: a runner starts with the first process."
-                Expect.equal (CWLGraph.tryFindProcess "main" graph |> Option.map (fun processingUnit -> processingUnit = graph.Processes.[1])) (Some true) $"{name}: a run of the form #main reaches the last process."
-                Expect.equal (graphOf (Encode.encodeCWLDocument decoded.Value)) graph $"{name}: the written text should decode to the same graph."
-        testCase "a $graph that is no list is a decode error that names the kind of the value" <| fun _ ->
-            let mapping = """cwlVersion: v1.2
-$graph:
-  id: main"""
-            let text = """cwlVersion: v1.2
-$graph: main"""
-            let cases = [ "a mapping", mapping, "found a mapping."; "a text", text, "found the text \"main\"." ]
-            for (name, yaml, message) in cases do
-                match decodeError (fun () -> Decode.decodeCWLDocument yaml |> ignore) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) "$graph" $"{name}: the error should show the field."
-                    Expect.stringContains error.Message message $"{name}: the error should say what it found."
-                | None -> failwith $"{name} must fail"
-        testCase "a type is named through the id of another process of the graph" <| fun _ ->
-            let graph = graphOf TestObjects.CWL.Workflow.PackedDocument.typesFile
-            let place = toolOf graph.Processes.[1]
-            Expect.equal (ListEntry.values place.Inputs.Value).[0].Type_ (Some (Reference "#main/Point")) "The tool names the type of the workflow."
-            let main = workflowOf graph.Processes.[0]
-            Expect.equal (ListEntry.values main.Inputs).[0].Type_ (Some (Reference "#main/Point")) "The workflow names its own type the same way."
-        testCase "a document without a graph decodes as a single process" <| fun _ ->
-            let yaml = TestObjects.CWL.CommandLineTool.StreamTypes.cwlFile
-            match Decode.decodeCWLDocument yaml with
-            | CWLDocument.Process (CommandLineTool tool) -> Expect.equal tool.CWLVersion "v1.2" "The process keeps its version."
-            | other -> failwith $"Expected a command line tool but got %A{other}"
-            Expect.equal (Encode.encodeCWLDocument (Decode.decodeCWLDocument yaml)) (Encode.encodeProcessingUnit (Decode.decodeCWLProcessingUnit yaml)) "A process is written as before."
-        testCase "a packed document is a decode error at the root when it is read as one process" <| fun _ ->
-            match decodeError (fun () -> Decode.decodeCWLProcessingUnit fixture |> ignore) with
-            | Some error ->
-                Expect.equal (DecodeError.pathText error) "" "The error stands at the root."
-                Expect.stringContains error.Message "decodeCWLDocument" "The error names the function that reads the document."
-                Expect.isSome error.Span "The error has the place in the text."
-            | None -> failwith "A packed document has no process at its root."
-        testCase "a reference by #id in a document without a graph stays a run string" <| fun _ ->
+        testCase "a document with $graph at its root is a decode error at the key, for every decoder of a document" <| fun _ ->
+            expectPackedError "a process" (fun () -> Decode.decodeCWLProcessingUnit packed |> ignore) 2
+            expectPackedError "a process with warnings" (fun () -> Decode.decodeCWLProcessingUnitWithWarnings packed |> ignore) 2
+            expectPackedError "a tree" (fun () -> Decode.decodeCWLProcessingUnitElement (Reader.readRoot packed) |> ignore) 2
+            expectPackedError "a workflow" (fun () -> Decode.decodeWorkflow packed |> ignore) 2
+            expectPackedError "a tool" (fun () -> Decode.decodeCommandLineTool packed |> ignore) 2
+            expectPackedError "a class beside the graph" (fun () -> Decode.decodeCWLProcessingUnit (packed.Replace("$graph:", "class: Workflow\n$graph:")) |> ignore) 3
+            expectPackedError "a graph that is no list" (fun () -> Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\n$graph: main\n" |> ignore) 2
+            expectPackedError "a quoted key" (fun () -> Decode.decodeCWLProcessingUnit (packed.Replace("$graph:", "\"$graph\":")) |> ignore) 2
+        testCase "a run of the form #id stays a run string as written, and the workflow reads back equal" <| fun _ ->
+            // An inline run defines the id tool, and a second step names it. The decoder resolves no reference.
             let yaml = """cwlVersion: v1.2
 class: Workflow
 inputs: {}
 outputs: {}
 steps:
-  s:
+  a:
+    run:
+      class: CommandLineTool
+      id: tool
+      baseCommand: echo
+      inputs: []
+      outputs: []
+    in: {}
+    out: []
+  b:
     run: "#tool"
     in: {}
     out: []"""
-            Expect.equal (ListEntry.values (Decode.decodeWorkflow yaml).Steps).[0].Run (RunString "#tool") "Nothing names a process, so the reference is kept."
-    ]
-
-let testReachabilityInPackedDocuments =
-    let tool = [ "  - id: tool"; "    class: CommandLineTool"; "    baseCommand: echo"; "    inputs: []"; "    outputs: []" ]
-    let mainTool = [ "  - id: main"; "    class: CommandLineTool"; "    baseCommand: echo"; "    inputs: []"; "    outputs: []" ]
-    let workflow (id: string) (stepLines: string list) =
-        [ "  - id: " + id; "    class: Workflow"; "    requirements:"; "      SubworkflowFeatureRequirement: {}"; "    inputs: []"; "    outputs: []"; "    steps:"; "      s:" ] @ (stepLines |> List.map (fun line -> "        " + line))
-    let graph (members: string list list) = String.concat "\n" ([ "cwlVersion: v1.2"; "$graph:" ] @ List.concat members @ [ "" ])
-    let failsAt (name: string) (yaml: string) (path: string) (message: string) =
-        match decodeError (fun () -> Decode.decodeCWLDocument yaml |> ignore) with
-        | Some error ->
-            Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the step" name)
-            Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
-            Expect.isSome error.Span (sprintf "%s: the error should have the place in the text" name)
-        | None -> failwith (sprintf "%s must fail" name)
-    let expectReadsBack (name: string) (yaml: string) =
-        let decoded = Decode.decodeCWLDocument yaml
-        let written = Encode.encodeCWLDocument decoded
-        Expect.equal (Decode.decodeCWLDocument written) decoded (sprintf "%s: the written text should decode to the same document." name)
-    testList "Reachability of the checks in a packed document" [
-        testCase "a step that runs a process of the document by an id that nothing defines is an error where the process main reaches it" <| fun _ ->
-            let missing = [ "run: \"#nothing\""; "in: {}"; "out: []" ]
-            expectReadsBack "unreachable" (graph [ mainTool; workflow "other" missing ])
-            failsAt "reached" (graph [ workflow "main" missing ]) "$graph[0].steps.s.run" "which is no process of the $graph"
-        testCase "processes that run each other are an error where the process main reaches them and a document otherwise" <| fun _ ->
-            let toB = [ "run: \"#b\""; "in: {}"; "out: []" ]
-            let toA = [ "run: \"#a\""; "in: {}"; "out: []" ]
-            expectReadsBack "unreachable" (graph [ mainTool; workflow "a" toB; workflow "b" toA ])
-            failsAt "reached" (graph [ workflow "main" toB; workflow "a" toB; workflow "b" toA ]) "$graph[1].steps.s.run" "closes a cycle of run references"
-        testCase "a repeated id is a warning that says which entry a reference finds" <| fun _ ->
-            let decoded = Decode.decodeCWLDocumentWithWarnings (graph [ mainTool; tool; tool ])
-            Expect.equal decoded.Warnings.Count 1 "The repeated id is one warning."
-            Expect.stringContains decoded.Warnings.[0].Message "A reference to the id finds the last entry." "The warning says which entry stands for the id."
+            let decoded = Decode.decodeWorkflow yaml
+            let second = (ListEntry.values decoded.Steps).[1]
+            Expect.equal second.Run (RunString "#tool") "The reference is kept as written."
+            let written = Encode.encodeWorkflowDescription decoded
+            Expect.stringContains written "run: \"#tool\"" "The reference is written as it was read."
+            Expect.equal (Decode.decodeWorkflow written) decoded "The written text should decode to the same workflow."
+            second.ResolvedRun <- { Run = Some (WorkflowStepRunOps.fromTool (CWLToolDescription(outputs = ResizeArray(), baseCommand = ResizeArray [ SchemaSaladString.Literal "cat" ]))) }
+            Expect.equal (Encode.encodeWorkflowDescription decoded) written "A resolved process stays out of the text."
     ]
 
 let testListsOfOneSource =
@@ -1796,27 +1523,6 @@ let testStepsWithoutAnId =
             Expect.equal (kinds again.Steps) expected "The written text has the same entries."
             Expect.equal (ListEntry.values again.Steps |> Seq.map (fun step -> step.Run) |> List.ofSeq) [ RunString "./first.cwl"; RunString "./second.cwl"; RunString "./third.cwl" ] "The steps keep their runs."
             Expect.equal again decoded "The written text should decode to the same workflow."
-        testCase "a step without an id in a process of a packed document reads back" <| fun _ ->
-            let decoded =
-                match Decode.decodeCWLDocument TestObjects.CWL.Workflow.packedDocumentWithUnnamedStepFile with
-                | CWLDocument.Graph graph -> graph
-                | other -> failwith (sprintf "Expected a packed document but got %A" other)
-            let mainOf (graph: CWLGraph) =
-                graph.Processes
-                |> Seq.pick (fun processingUnit -> match processingUnit with | Workflow workflow -> Some workflow | _ -> None)
-            let check (graph: CWLGraph) =
-                let steps = ListEntry.values (mainOf graph).Steps
-                Expect.equal steps.Count 1 "The step stays."
-                Expect.equal steps.[0].Id None "The step has no id."
-                Expect.equal steps.[0].Run (RunString "#echo") "The step runs the other process."
-            check decoded
-            let written = Encode.encodeCWLDocument (CWLDocument.Graph decoded)
-            let again =
-                match Decode.decodeCWLDocument written with
-                | CWLDocument.Graph graph -> graph
-                | other -> failwith (sprintf "Expected a packed document but got %A" other)
-            check again
-            Expect.equal (Encode.encodeCWLDocument (CWLDocument.Graph again)) written "Writing again should give the same text."
         testCase "id: \"\" is a step with the empty id and no step without an id, in the list form and in the map form" <| fun _ ->
             let inList = workflow [ "id: main" ] [ "  - {id: \"\", run: a.cwl, in: [], out: []}"; "  - {run: b.cwl, in: [], out: []}"; "  - {id: a, run: c.cwl, in: [], out: []}" ]
             let inMap = workflow [ "id: main" ] [ "  \"\": {run: a.cwl, in: [], out: []}"; "  a: {run: c.cwl, in: [], out: []}" ]
@@ -1877,7 +1583,7 @@ let testPortsAndStepsOfTheWrongShape =
     let document (cls: string) (lines: string list) =
         String.concat "\n" ([ "cwlVersion: v1.2"; "class: " + cls ] @ lines @ [ "" ])
     let failsAt (name: string) (text: string) (path: string) (message: string) =
-        match decodeError (fun () -> Decode.decodeCWLDocument text |> ignore) with
+        match decodeError (fun () -> Decode.decodeCWLProcessingUnit text |> ignore) with
         | Some error ->
             Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error should show the field" name)
             Expect.stringContains error.Message message (sprintf "%s: the error should say what is wrong" name)
@@ -1937,7 +1643,7 @@ let testPortsAndStepsOfTheWrongShape =
             failsAt "no run" (step [ "in: []"; "out: []" ]) "steps[0]" "The mapping has no field run."
             failsAt "no in" (step [ "run: t.cwl"; "out: []" ]) "steps[0]" "The mapping has no field in."
             failsAt "no out" (step [ "run: t.cwl"; "in: []" ]) "steps[0]" "The mapping has no field out."
-            Decode.decodeCWLDocument (step [ "run: t.cwl"; "in: []"; "out: []" ]) |> ignore
+            Decode.decodeCWLProcessingUnit (step [ "run: t.cwl"; "in: []"; "out: []" ]) |> ignore
         testCase "the path of the error shows the index of the entry behind valid entries" <| fun _ ->
             let valid = "{id: a, type: string}"
             failsAt "inputs" (document "CommandLineTool" [ "baseCommand: echo"; "inputs: [" + valid + ", 5]"; "outputs: []" ]) "inputs[1]" "Expected a mapping"
@@ -1957,9 +1663,7 @@ let testPortsAndStepsOfTheWrongShape =
                     failsAt (cls + " with the output " + spelling) (document cls (extra @ [ "inputs: []"; "outputs: {o: " + spelling + "}" ])) "outputs.o" hint
                     failsAt (cls + " with the items " + spelling) (document cls (extra @ [ "inputs: [{id: x, type: {type: array, items: " + spelling + "}}]"; "outputs: []" ])) "inputs.x.type.items" hint
             let typeOf (cls: string) (extra: string list) (line: string) =
-                match Decode.decodeCWLDocument (document cls (extra @ [ line; "outputs: []" ])) with
-                | CWLDocument.Process processingUnit -> (CWLProcessingUnit.getInputValues processingUnit).[0].Type_
-                | other -> failwith (sprintf "Expected a process but got %A" other)
+                (CWLProcessingUnit.getInputValues (Decode.decodeCWLProcessingUnit (document cls (extra @ [ line; "outputs: []" ])))).[0].Type_
             for (cls, extra) in classes do
                 Expect.equal (typeOf cls extra "inputs: {x: \"null\"}") (Some CWLType.Null) (cls + ": the quoted null is the null type.")
                 Expect.equal (typeOf cls extra "inputs: [{id: x, type: 'null'}]") (Some CWLType.Null) (cls + ": the single quoted null is the null type.")
@@ -1999,19 +1703,16 @@ let testPortsAndStepsOfTheWrongShape =
                     Expect.equal (ListEntry.values fromList.Steps).[0].Id (Some value) "The step keeps its id."
                     let fromMap = readsBack ("a map in the workflow " + id) (workflow [ "id: " + id ] inMap)
                     Expect.equal (ListEntry.values fromMap.Steps).[0].Id (Some value) "The step keeps its id."
-        testCase "an empty step id in an inline workflow or in a process of a packed document reads back, because the step lives below the id of its process" <| fun _ ->
+        testCase "an empty step id in an inline workflow reads back, because the step lives below the id of its process" <| fun _ ->
             let step = "{id: \"\", run: {class: CommandLineTool, baseCommand: echo, inputs: [], outputs: []}, in: [], out: []}"
             let nested = document "Workflow" [ "requirements: [{class: SubworkflowFeatureRequirement}]"; "inputs: []"; "outputs: []"; "steps:"; "  s:"; "    run: {class: Workflow, inputs: [], outputs: [], steps: [" + step + "]}"; "    in: []"; "    out: []" ]
             readsBack "an inline workflow" nested |> ignore
-            let packed = String.concat "\n" [ "cwlVersion: v1.2"; "$graph:"; "  - class: Workflow"; "    id: main"; "    inputs: []"; "    outputs: []"; "    steps: [" + step + "]"; "" ]
-            let decoded = Decode.decodeCWLDocument packed
-            Expect.equal (Decode.decodeCWLDocument (Encode.encodeCWLDocument decoded)) decoded "The written text should decode to the same document."
         testCase "an id that cwltool reads as a name is no empty id" <| fun _ ->
             // cwltool drops only the characters up to a space at the start of an id, so a no-break space is a name.
             // For a step, a # followed by a space is a name too, because the fragment behind the # is a space.
             for text in [ "\"\\u00a0\""; "\"\\u3000\"" ] do
-                let tool = Decode.decodeCWLDocument (document "CommandLineTool" [ "baseCommand: echo"; "id: main"; "inputs: [{id: " + text + ", type: string}]"; "outputs: []" ])
-                Expect.equal (Decode.decodeCWLDocument (Encode.encodeCWLDocument tool)) tool (sprintf "The tool with the input id %s should read back." text)
+                let tool = Decode.decodeCWLProcessingUnit (document "CommandLineTool" [ "baseCommand: echo"; "id: main"; "inputs: [{id: " + text + ", type: string}]"; "outputs: []" ])
+                Expect.equal (Decode.decodeCWLProcessingUnit (Encode.encodeProcessingUnit tool)) tool (sprintf "The tool with the input id %s should read back." text)
             for text in [ "\"\\u00a0\""; "\"\\u3000\""; "\"# \""; "\" # \"" ] do
                 let fromSteps = readsBack (sprintf "the step id %s" text) (document "Workflow" [ "inputs: []"; "outputs: []"; "steps: [{id: " + text + ", run: t.cwl, in: [], out: []}]" ])
                 Expect.equal (ListEntry.values fromSteps.Steps).Count 1 "The step is there."
@@ -2023,7 +1724,7 @@ let main =
         testCWLWorkflowDescriptionEncode
         testWorkflowUnionPortRoundTrip
         testPackedDocuments
-        testReachabilityInPackedDocuments
+        testInlineRunsThatHoldTheirWorkflow
         testImportedRun
         testImportedEntries
         testImportedStepPorts

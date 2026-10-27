@@ -4,7 +4,7 @@ from typing import Any
 # Unions are transpiled into an implementation class holding the members and a
 # type alias over the case classes. The public name has to be the implementation
 # class, otherwise members and `isinstance` are unavailable. See ARCtrl/__init__.py.
-from .py.CWL.cwlprocessing_unit import _CWLProcessingUnit as CWLProcessingUnit, _CWLDocument as CWLDocument, CWLGraph
+from .py.CWL.cwlprocessing_unit import _CWLProcessingUnit as CWLProcessingUnit
 from .py.CWL.cwltypes import _CWLType as CWLType, _SchemaSaladString as SchemaSaladString, _SchemaSaladBool as SchemaSaladBool, _FileSize as FileSize, _DocText as DocText, _ListEntry_1 as ListEntry, FileInstance, DirectoryInstance, DirentInstance, InputEnumSchema, InputRecordField, InputRecordSchema, InputArraySchema, _SchemaDefinition as SchemaDefinition, SoftwarePackage
 from .py.CWL.parameter_value import _CWLParameterValue as CWLParameterValue, CWLParameterRecordField
 from .py.CWL.parameter_reference import CWLParameterReference
