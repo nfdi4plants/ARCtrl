@@ -2561,6 +2561,27 @@ let testInvalidRequirementsAndHints =
                     Expect.stringContains error.Message message (sprintf "%s: the error says what is wrong" name)
                     Expect.isSome error.Span (sprintf "%s: the error has the place in the text" name)
                 | None -> failwith (sprintf "%s must fail" name)
+        testCase "a hint of an unknown class keeps keys of any type, and a requirement or a hint of a known class needs texts as field names" <| fun _ ->
+            let tool (lines: string list) =
+                String.concat "\n" ([ "cwlVersion: v1.2"; "$namespaces: {acme: \"http://example.org/acme#\"}"; "class: CommandLineTool"; "baseCommand: echo"; "inputs: []"; "outputs: []" ] @ lines @ [ "" ])
+            let unknownHints = tool [ "hints:"; "  - class: acme:Listed"; "    1: a"; "    false: b"; "    ~: c"; "  - class: acme:Other"; "    1.5: d" ]
+            let decoded = Decode.decodeCommandLineTool unknownHints
+            for hint in decoded.Hints.Value do
+                Expect.isTrue (match hint with UnknownHint _ -> true | _ -> false) (sprintf "A hint of an unknown class stays unknown: %A" hint)
+            let written = Encode.encodeToolDescription decoded
+            for expected in [ "1: a"; "false: b"; "~: c"; "1.5: d" ] do
+                Expect.stringContains written expected (sprintf "The key keeps its spelling: %s\n%s" expected written)
+            Expect.equal (Decode.decodeCommandLineTool written) decoded "The written text should decode to the same tool."
+            let mapForm = Decode.decodeCommandLineTool (tool [ "hints:"; "  acme:Mapped:"; "    1: a" ])
+            Expect.isTrue (match mapForm.Hints.Value.[0] with UnknownHint _ -> true | _ -> false) "A hint of an unknown class in the map form stays unknown."
+            for field, entry, path in [ "requirements", "  - class: ShellCommandRequirement", "requirements[0]"; "hints", "  - class: ShellCommandRequirement", "hints[0]"; "hints", "  - class: DockerRequirement\n    dockerPull: alpine", "hints[0]"; "hints", "  ScatterFeatureRequirement:", "hints.ScatterFeatureRequirement" ] do
+                let text = tool [ field + ":"; entry; "    1: x" ]
+                match decodeError (fun () -> Decode.decodeCommandLineTool text |> ignore) with
+                | Some error ->
+                    Expect.equal (DecodeError.pathText error) path (sprintf "%s: the error shows the entry" entry)
+                    Expect.stringContains error.Message "Expected a string as a field name, found the plain scalar \"1\"" (sprintf "%s: the error says what is wrong" entry)
+                    Expect.isSome error.Span (sprintf "%s: the error has the place in the text" entry)
+                | None -> failwith (sprintf "%s with the key 1 must fail" entry)
     ]
 
 let testDynamicPayloadModel =

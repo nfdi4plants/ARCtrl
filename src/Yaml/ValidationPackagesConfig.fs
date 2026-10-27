@@ -20,7 +20,9 @@ module ValidationPackagesConfig =
         Decode.object (fun get ->
             ValidationPackagesConfig(
                 validation_packages = get.Required.Field VALIDATION_PACKAGES_KEY (Decode.resizearray ValidationPackage.decoder),
-                ?arc_specification = get.Optional.Field ARC_SPECIFICATION_KEY Decode.string
+                // A specification version such as 2.0 is a float in the core schema, and the field keeps the text as it
+                // is written.
+                ?arc_specification = get.Optional.Field ARC_SPECIFICATION_KEY Decode.scalarText
             )
         )
 

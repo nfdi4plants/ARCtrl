@@ -101,7 +101,7 @@ module Decode =
     /// What a plain scalar is when the core schema reads it as null, a bool, an int or a float, as it stands in a message.
     /// A quoted scalar, a block scalar and a scalar under !!str are strings, and so is any node that is no scalar.
     let private notAString (node: YamlNode) : string option =
-        let plain (typeName: string) = Some ("the plain scalar " + Decode.string node + ", which the core schema reads as " + typeName)
+        let plain (typeName: string) = Some ("the plain scalar " + Decode.scalarText node + ", which the core schema reads as " + typeName)
         match node with
         | CoreNull -> Some "null"
         | CoreBool _ -> plain "a bool"
@@ -131,7 +131,7 @@ module Decode =
             | CoreBigInt _ -> true
             | _ -> false
         if beyondRange then
-            failAt node ("Expected an int, found the plain scalar " + Decode.string node + ", which is an int beyond the 32-bit range.")
+            failAt node ("Expected an int, found the plain scalar " + Decode.scalarText node + ", which is an int beyond the 32-bit range.")
         else
             Decode.int node
 
@@ -139,7 +139,7 @@ module Decode =
     /// the range.
     let private int64Decoder (node: YamlNode) : int64 =
         match node with
-        | CoreBigInt _ -> failAt node ("Expected an int64, found the plain scalar " + Decode.string node + ", which is an int beyond the 64-bit range.")
+        | CoreBigInt _ -> failAt node ("Expected an int64, found the plain scalar " + Decode.scalarText node + ", which is an int beyond the 64-bit range.")
         | _ -> Decode.int64 node
 
     /// The text of a tag as a document writes it: !! for a core tag, ! for a local tag and !<...> for a verbatim tag.
@@ -176,6 +176,29 @@ module Decode =
             match key.Kind with
             | YamlNodeKind.Scalar scalar -> "text " + scalar.Value
             | _ -> "other"
+
+    /// Fail when a scalar key repeats a key before it in the same mapping, and remember the key otherwise. Two keys repeat
+    /// each other when the loader of cwltool takes them for one key (see keyIdentity). The error stands at the second key,
+    /// and its path leads through the mapping to that key. The reversed path is the path to the mapping, built backwards,
+    /// and seen holds the keys that come before in the mapping by their identity.
+    let private rememberKey (seen: System.Collections.Generic.Dictionary<string, YamlNode>) (reversedPath: string list) (key: YamlNode) (text: string) : unit =
+        let identity = keyIdentity key
+        match seen.TryGetValue identity with
+        | true, first ->
+            let firstText = match first.Kind with | YamlNodeKind.Scalar firstScalar -> firstScalar.Value | _ -> ""
+            // Keys of another spelling that the loader takes for one key, such as null and ~, name both.
+            let message =
+                if firstText = text then
+                    "The key " + text + " occurs twice, at " + placeOf first + " and at " + placeOf key + "."
+                else
+                    "The key " + text + " at " + placeOf key + " repeats the key " + firstText + " at " + placeOf first + "."
+            raise (
+                YamlDecodeException
+                    { Message = message
+                      Path = List.rev (text :: reversedPath)
+                      Span = key.Span }
+            )
+        | _ -> seen.[identity] <- key
 
     /// Fail with the first anchor, alias, explicit tag, repeated scalar key and $namespaces field that holds no mapping in the
     /// tree. Schema Salad v1.2 prohibits the first three (see prohibitedMessage). Every anchor counts, also one that no alias
@@ -225,31 +248,19 @@ module Decode =
                     let name =
                         match entry.Key.Kind with
                         | YamlNodeKind.Scalar scalar ->
-                            let identity = keyIdentity entry.Key
-                            match seen.TryGetValue identity with
-                            | true, first ->
-                                raise (
-                                    YamlDecodeException
-                                        { Message =
-                                            "The key " + scalar.Value + " occurs twice, at " + placeOf first
-                                            + " and at " + placeOf entry.Key + "."
-                                          Path = List.rev (scalar.Value :: reversedPath)
-                                          Span = entry.Key.Span }
-                                )
-                            | _ ->
-                                seen.[identity] <- entry.Key
-                                if scalar.Value = "$namespaces" && not exemptFromNamespaces then
-                                    match entry.Value.Kind with
-                                    | YamlNodeKind.Mapping _
-                                    | YamlNodeKind.Alias _ -> ()
-                                    | _ ->
-                                        raise (
-                                            YamlDecodeException
-                                                { Message = "The field $namespaces takes a mapping of prefixes to IRIs, found " + describeNode entry.Value + "."
-                                                  Path = List.rev (scalar.Value :: reversedPath)
-                                                  Span = entry.Value.Span }
-                                        )
-                                scalar.Value
+                            rememberKey seen reversedPath entry.Key scalar.Value
+                            if scalar.Value = "$namespaces" && not exemptFromNamespaces then
+                                match entry.Value.Kind with
+                                | YamlNodeKind.Mapping _
+                                | YamlNodeKind.Alias _ -> ()
+                                | _ ->
+                                    raise (
+                                        YamlDecodeException
+                                            { Message = "The field $namespaces takes a mapping of prefixes to IRIs, found " + describeNode entry.Value + "."
+                                              Path = List.rev (scalar.Value :: reversedPath)
+                                              Span = entry.Value.Span }
+                                    )
+                            scalar.Value
                         | _ -> "?" + string index
                     children.Add((entry.Key, name :: reversedPath, exemptFromNamespaces))
                     children.Add((entry.Value, name :: reversedPath, exemptFromNamespaces)))
@@ -308,15 +319,26 @@ module Decode =
         box value
 #endif
 
-    /// The entries of a mapping in source order. The keys must be scalars, and a key must not occur twice. A caller that
-    /// loops over the entries inside an array comprehension binds the result first. When the source of a comprehension
-    /// fails, Python raises a TypeError of its runtime that hides the decode error.
+    /// The entries of a mapping in source order, with keys of any type. Decode.object takes strings as keys only. A caller
+    /// reads a key with idMapKey, which names the type of a key that is no string in the CWL message, or with entryName,
+    /// which takes the text of any scalar. Decode.entries returns every entry as written, and a public decoder may get a
+    /// tree that did not pass rejectWhatTheSpecProhibits, so the function checks the keys of this mapping with the same
+    /// rule and fails with the same error. A caller that loops over the entries inside an array comprehension binds the
+    /// result first. When the source of a comprehension fails, Python raises a TypeError of its runtime that hides
+    /// the decode error.
     let mappingEntries (node: YamlNode) : MappingEntry list =
-        node |> Decode.object (fun get -> get.Entries)
+        let entries = Decode.entries node
+        let seen = System.Collections.Generic.Dictionary<string, YamlNode>()
+        for entry in entries do
+            match entry.Key.Kind with
+            | YamlNodeKind.Scalar scalar -> rememberKey seen [] entry.Key scalar.Value
+            | _ -> ()
+        entries
 
-    /// The text of the key of an entry.
+    /// The text of the key of an entry as it is written, also for a key that the core schema reads as a number, a bool or
+    /// null.
     let entryName (entry: MappingEntry) : string =
-        Decode.string entry.Key
+        Decode.scalarText entry.Key
 
     /// Run a decoder for the value of a map entry and put the name of the entry in the path of its error.
     let atField (name: string) (decode: unit -> 'T) : 'T =
@@ -331,7 +353,9 @@ module Decode =
 
     /// The text of a CWL string field. CWL types these fields as strings, so a plain scalar that the core schema reads
     /// as null, a bool, an int or a float is a decode error at the field, as cwltool reports it. Every other scalar is
-    /// a string, for example a quoted one or one tagged !!str. A collection and an alias are errors too.
+    /// a string, for example a quoted one or one tagged !!str. A collection and an alias are errors too. Decode.string
+    /// accepts the same nodes and fails at the same place, and this decoder gives the CWL message with the advice to
+    /// quote the value.
     let stringDecoder (node: YamlNode) : string =
         match notAString node with
         | Some found ->
@@ -380,7 +404,7 @@ module Decode =
                 // Preserve lists recursively as ResizeArray<obj> to match the rest of
                 // the CWL object model.
                 collection.Items
-                |> List.map (fun item -> decodeOverflowValue item.Node)
+                |> List.mapi (fun index item -> atField $"[{index}]" (fun () -> decodeOverflowValue item.Node))
                 |> ResizeArray
                 |> box
             | YamlNodeKind.Mapping collection ->
@@ -402,8 +426,11 @@ module Decode =
         for entry in entries do
             // The caller already filtered known fields with FieldList, so every
             // entry here is dynamic extension metadata.
-            // The name of a field is a string in CWL, so cwltool rejects a key of another type.
-            DynObj.setProperty (stringDecoder entry.Key) (decodeOverflowValue entry.Value) dynObj
+            // Decode.object takes strings as keys only, and a nested mapping comes here when its keys are strings, so the
+            // key reads as a string of the core schema.
+            // A nested mapping checks its keys (mappingEntries), and the error of such a key shows the path through the field.
+            let name = Decode.string entry.Key
+            DynObj.setProperty name (atField name (fun () -> decodeOverflowValue entry.Value)) dynObj
         dynObj
 
     /// Decode an optional field of a node that may be a scalar shorthand. A node that is no mapping has no
@@ -2478,26 +2505,27 @@ module Decode =
     let inlineJavascriptRequirementDecoder (get: Decode.IGetters): InlineJavascriptRequirementValue =
         InlineJavascriptRequirementValue(?expressionLib = get.Optional.Field "expressionLib" (decodeSchemaSaladStringList "the expressionLib field"))
 
-    /// Dispatch a CWL requirement class to its typed decoder. A class that the model does not know has no decoder.
-    let tryRequirementFromTypeName (scope: DecodeScope) cls get : Requirement option =
+    /// The decoder of the payload of a CWL requirement class, and none for a class that the model does not know. The caller
+    /// knows the class before it reads the payload, because a hint of an unknown class may hold keys of any type.
+    let tryRequirementDecoder (scope: DecodeScope) (cls: string) : (Decode.IGetters -> Requirement) option =
         match cls with
-        | "InlineJavascriptRequirement" -> Some (InlineJavascriptRequirement (inlineJavascriptRequirementDecoder get))
-        | "SchemaDefRequirement" -> Some (SchemaDefRequirement (schemaDefRequirementDecoder scope get))
-        | "DockerRequirement" -> Some (DockerRequirement (dockerRequirementDecoder get))
-        | "SoftwareRequirement" -> Some (SoftwareRequirement (softwareRequirementDecoder get))
-        | "LoadListingRequirement" -> Some (LoadListingRequirement (loadListingRequirementDecoder get))
-        | "InitialWorkDirRequirement" -> Some (initialWorkDirRequirementDecoder get)
-        | "EnvVarRequirement" -> Some (EnvVarRequirement (envVarRequirementDecoder get))
-        | "ShellCommandRequirement" -> Some ShellCommandRequirement
-        | "ResourceRequirement" -> Some (ResourceRequirement (resourceRequirementDecoder get))
-        | "WorkReuse" -> Some (workReuseRequirementDecoder get)
-        | "NetworkAccess" -> Some (networkAccessRequirementDecoder get)
-        | "InplaceUpdateRequirement" -> Some (InplaceUpdateRequirement (inplaceUpdateRequirementDecoder get))
-        | "ToolTimeLimit" -> Some (ToolTimeLimitRequirement (toolTimeLimitRequirementDecoder get))
-        | "SubworkflowFeatureRequirement" -> Some SubworkflowFeatureRequirement
-        | "ScatterFeatureRequirement" -> Some ScatterFeatureRequirement
-        | "MultipleInputFeatureRequirement" -> Some MultipleInputFeatureRequirement
-        | "StepInputExpressionRequirement" -> Some StepInputExpressionRequirement
+        | "InlineJavascriptRequirement" -> Some (fun get -> InlineJavascriptRequirement (inlineJavascriptRequirementDecoder get))
+        | "SchemaDefRequirement" -> Some (fun get -> SchemaDefRequirement (schemaDefRequirementDecoder scope get))
+        | "DockerRequirement" -> Some (fun get -> DockerRequirement (dockerRequirementDecoder get))
+        | "SoftwareRequirement" -> Some (fun get -> SoftwareRequirement (softwareRequirementDecoder get))
+        | "LoadListingRequirement" -> Some (fun get -> LoadListingRequirement (loadListingRequirementDecoder get))
+        | "InitialWorkDirRequirement" -> Some initialWorkDirRequirementDecoder
+        | "EnvVarRequirement" -> Some (fun get -> EnvVarRequirement (envVarRequirementDecoder get))
+        | "ShellCommandRequirement" -> Some (fun _ -> ShellCommandRequirement)
+        | "ResourceRequirement" -> Some (fun get -> ResourceRequirement (resourceRequirementDecoder get))
+        | "WorkReuse" -> Some workReuseRequirementDecoder
+        | "NetworkAccess" -> Some networkAccessRequirementDecoder
+        | "InplaceUpdateRequirement" -> Some (fun get -> InplaceUpdateRequirement (inplaceUpdateRequirementDecoder get))
+        | "ToolTimeLimit" -> Some (fun get -> ToolTimeLimitRequirement (toolTimeLimitRequirementDecoder get))
+        | "SubworkflowFeatureRequirement" -> Some (fun _ -> SubworkflowFeatureRequirement)
+        | "ScatterFeatureRequirement" -> Some (fun _ -> ScatterFeatureRequirement)
+        | "MultipleInputFeatureRequirement" -> Some (fun _ -> MultipleInputFeatureRequirement)
+        | "StepInputExpressionRequirement" -> Some (fun _ -> StepInputExpressionRequirement)
         | _ -> None
 
     /// Attach unknown payload fields to DynamicObj-backed requirement values after class dispatch.
@@ -2575,8 +2603,8 @@ module Decode =
                     // Sequence syntax carries class inside each item.
                     let classNode = get.Required.Field "class" (Decode.nonNull Decode.node)
                     let cls = atField "class" (fun () -> stringDecoder classNode)
-                    match tryRequirementFromTypeName scope cls get with
-                    | Some requirement -> addRequirementPayloadOverflow ele requirement
+                    match tryRequirementDecoder scope cls with
+                    | Some decode -> addRequirementPayloadOverflow ele (decode get)
                     | None -> atField "class" (fun () -> failAt classNode ("Invalid or unsupported requirement class: " + cls))
                 ) ele
 
@@ -2618,8 +2646,8 @@ module Decode =
                         | None ->
                         let requirement =
                             Decode.object (fun get ->
-                                match tryRequirementFromTypeName scope name get with
-                                | Some requirement -> addRequirementPayloadOverflow entry.Value requirement
+                                match tryRequirementDecoder scope name with
+                                | Some decode -> addRequirementPayloadOverflow entry.Value (decode get)
                                 | None -> failAt entry.Key ("Invalid or unsupported requirement class: " + name)
                             ) entry.Value
                         warnAboutRequirement warnings $"{field}.{name}" entry.Value requirement
@@ -2635,7 +2663,8 @@ module Decode =
 
     /// Decode one hint. An $import stands for the hints of a file, and the decoder checks for it before it reads the class,
     /// because the directive has none. A hint of a class that the model knows decodes with the decoder of the requirement of
-    /// that class and fails with the same errors. A hint of any other class stays as it was written.
+    /// that class and fails with the same errors. A hint of any other class stays as it was written. cwltool accepts keys of
+    /// any type in such a hint, so the decoder reads the class before Decode.object, which takes strings as keys only.
     let decodeHintElement (scope: DecodeScope) (element: YamlNode) : HintEntry =
         match objectDirective "an entry of the hints" element with
         | Some (ImportedFile path) -> ImportedHint path
@@ -2643,19 +2672,20 @@ module Decode =
         // The file decides the class of a hint whose class is a directive, so it stays as written.
         | None when fieldIsDirective "class" element -> RawHint { Node = element }
         | None ->
-        Decode.object (fun get ->
-            let cls = get.Required.Field "class" (Decode.nonNull stringDecoder)
-            // A requirement of the same class overrides a SchemaDefRequirement hint in every chain, so no runner applies
-            // its types. cwltool accepts the type names in such a hint without resolving them.
-            let scope =
-                if cls = "SchemaDefRequirement" && scope.Chains |> List.forall (fun chain -> (Option.orElse chain.Inherited chain.Own).IsSome) then
-                    { scope with References = AnyNames }
-                else
-                    scope
-            match tryRequirementFromTypeName scope cls get with
-            | Some requirement -> KnownHint (addRequirementPayloadOverflow element requirement)
-            | None -> UnknownHint (HintUnknownValue(Some cls, { Node = element }))
-        ) element
+        let cls =
+            match mappingEntries element |> List.tryFind (fun entry -> scalarTextOf entry.Key = Some "class") with
+            | Some entry -> atField "class" (fun () -> Decode.nonNull stringDecoder entry.Value)
+            | None -> failAt element "The mapping has no field class."
+        // A requirement of the same class overrides a SchemaDefRequirement hint in every chain, so no runner applies
+        // its types. cwltool accepts the type names in such a hint without resolving them.
+        let scope =
+            if cls = "SchemaDefRequirement" && scope.Chains |> List.forall (fun chain -> (Option.orElse chain.Inherited chain.Own).IsSome) then
+                { scope with References = AnyNames }
+            else
+                scope
+        match tryRequirementDecoder scope cls with
+        | Some decode -> KnownHint (addRequirementPayloadOverflow element (Decode.object decode element))
+        | None -> UnknownHint (HintUnknownValue(Some cls, { Node = element }))
 
     /// Warn about the requirement of a known hint, as warnAboutRequirement does.
     let private warnAboutHint (warnings: WarningSink) (path: string) (node: YamlNode) (hint: HintEntry) : HintEntry =
@@ -2695,15 +2725,17 @@ module Decode =
                         | YamlNodeKind.Mapping collection ->
                             // Schema Salad sets the key of the entry as the class of the hint and drops a class field in the
                             // value before it reads that field. A class field with any other content, such as a directive,
-                            // changes nothing, so only a class field that already holds the key stays where it stands.
+                            // changes nothing, so only a class field that already holds the key stays where it stands. The
+                            // decoder checks the keys before a class field drops out, so a repeated class key stays an error.
+                            let payloadEntries = mappingEntries payload
                             let isClassField (payloadEntry: MappingEntry) = entryName payloadEntry = "class"
-                            let holdsKey = collection.Items |> List.exists (fun payloadEntry -> isClassField payloadEntry && scalarText payloadEntry.Value = Some hintName)
+                            let holdsKey = payloadEntries |> List.exists (fun payloadEntry -> isClassField payloadEntry && scalarText payloadEntry.Value = Some hintName)
                             let valueWithClass =
                                 if holdsKey then
                                     payload
                                 else
                                     let classEntry = YamlNode.entry (YamlNode.plain "class") (ScalarQuoting.textNode hintName)
-                                    { payload with Kind = YamlNodeKind.Mapping { collection with Items = classEntry :: (collection.Items |> List.filter (isClassField >> not)) } }
+                                    { payload with Kind = YamlNodeKind.Mapping { collection with Items = classEntry :: (payloadEntries |> List.filter (isClassField >> not)) } }
                             decodeHintElement scope valueWithClass |> warnAboutHint warnings $"hints.{hintName}" payload
                         | _ ->
                             failAt payload ("Expected a mapping for the hint " + hintName + ", found " + describeNode payload + "."))
@@ -3883,8 +3915,14 @@ module DecodeParameters =
 
     let private tryScalarString (node: YamlNode) =
         match node.Kind with
-        | YamlNodeKind.Scalar _ -> Some (YAMLicious.Decode.string node)
+        | YamlNodeKind.Scalar _ -> Some (YAMLicious.Decode.scalarText node)
         | _ -> None
+
+    /// The name of a parameter or of a field of a record. Schema Salad restricts a job file to the JSON-compatible subset of
+    /// YAML, where every key is a string, so a plain key that the core schema reads as null, a bool or a number is a decode
+    /// error at the key. Two names are then equal only for keys that are one string, and mappingEntries rejects those.
+    let private keyName (entry: MappingEntry) : string =
+        Decode.stringDecoder entry.Key
 
     let private decodeFileInstance (node: YamlNode) =
         Decode.decodeFileInstanceFields node
@@ -3924,7 +3962,7 @@ module DecodeParameters =
             | _ ->
                 Decode.mappingEntries value
                 |> List.map (fun entry ->
-                    let name = Decode.entryName entry
+                    let name = keyName entry
                     CWLParameterRecordField(name, Decode.atField name (fun () -> decodeParameterValue entry.Value)))
                 |> ResizeArray
                 |> CWLParameterValue.Record
@@ -3939,14 +3977,10 @@ module DecodeParameters =
     /// Decode every top-level parameter entry into CWLParameterReference values. The caller has applied
     /// rejectWhatTheSpecProhibits to the tree.
     let private referencesOfRoot: YamlNode -> ResizeArray<CWLParameterReference> =
-        let decodeReferences =
-            Decode.object (fun get ->
-                [|
-                    for entry in get.Entries do
-                        cwlParameterReferenceDecoder (Decode.entryName entry) entry.Value
-                |]
-                |> ResizeArray
-            )
+        let decodeReferences (node: YamlNode) =
+            Decode.mappingEntries node
+            |> List.map (fun entry -> cwlParameterReferenceDecoder (keyName entry) entry.Value)
+            |> ResizeArray
         fun root ->
             // A parameter file without content, such as an empty file or a file with comments only, holds no references.
             match Decode.option decodeReferences root with

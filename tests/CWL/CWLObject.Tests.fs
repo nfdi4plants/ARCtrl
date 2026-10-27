@@ -1552,14 +1552,23 @@ outputs: {}
                     None
                 with YamlDecodeException error -> Some error
             // The loader compares keys as Python does: 1 equals 0x1, 1.0 and true, and every null is one key.
-            for keys in
-                [ "{null: a, ~: b}"; "{null: a, Null: b}"; "{true: a, True: b}"; "{1: a, 0x1: b}"; "{1: a, 01: b}"; "{1: a, +1: b}"; "{1: a, 1.0: b}"
-                  "{true: a, 1: b}"; "{false: a, 0: b}"; "{1.5: a, 15e-1: b}"; "{.inf: a, .Inf: b}"; "{.nan: a, .NaN: b}"; "{8: a, 0o10: b}"
-                  "{a: 1, \"a\": 2}"; "{\"1\": a, '1': b}"; "{12345678901234567890: a, 12345678901234567890: b}" ] do
+            // The message names both spellings when they differ, and the key once when they are equal.
+            for (keys, first, second) in
+                [ "{null: a, ~: b}", "null", "~"; "{null: a, Null: b}", "null", "Null"; "{true: a, True: b}", "true", "True"; "{1: a, 0x1: b}", "1", "0x1"
+                  "{1: a, 01: b}", "1", "01"; "{1: a, +1: b}", "1", "+1"; "{1: a, 1.0: b}", "1", "1.0"; "{true: a, 1: b}", "true", "1"
+                  "{false: a, 0: b}", "false", "0"; "{1.5: a, 15e-1: b}", "1.5", "15e-1"; "{.inf: a, .Inf: b}", ".inf", ".Inf"
+                  "{.nan: a, .NaN: b}", ".nan", ".NaN"; "{8: a, 0o10: b}", "8", "0o10"
+                  "{a: 1, \"a\": 2}", "a", "a"; "{\"1\": a, '1': b}", "1", "1"
+                  "{12345678901234567890: a, 12345678901234567890: b}", "12345678901234567890", "12345678901234567890" ] do
                 match decodeError (tool keys) with
                 | Some error ->
                     Expect.isTrue ((DecodeError.pathText error).StartsWith "inputs.x.default.") (sprintf "%s: the error should show the second key, found %s." keys (DecodeError.pathText error))
-                    Expect.stringContains error.Message "occurs twice" (sprintf "%s: the error should say that a key occurs twice." keys)
+                    if first = second then
+                        Expect.stringContains error.Message ("The key " + first + " occurs twice, at line ") (sprintf "%s: the error should say that the key occurs twice." keys)
+                    else
+                        Expect.stringContains error.Message ("The key " + second + " at line ") (sprintf "%s: the error should name the second key and its place." keys)
+                        Expect.stringContains error.Message (" repeats the key " + first + " at line ") (sprintf "%s: the error should name the first key and its place." keys)
+                        Expect.isFalse (error.Message.Contains "occurs twice") (sprintf "%s: the error should not use the wording for equal keys." keys)
                 | None -> failwith (sprintf "The keys %s are one key for cwltool and must fail." keys)
             // A quoted key is a text, so it differs from the plain key of another type.
             for keys in
@@ -1572,6 +1581,45 @@ outputs: {}
             let written = Encode.encodeToolDescription (Decode.decodeCommandLineTool (tool "{1: a, \"1\": b, null: c, \"null\": d}"))
             for expected in [ "1: a"; "\"1\": b"; "null: c"; "\"null\": d" ] do
                 Expect.stringContains written expected (sprintf "The key keeps its spelling: %s\n%s" expected written)
+        testCase "a decoder of a fragment fails at a key that repeats a key of the mapping it reads, with the error of the whole text" <| fun _ ->
+            // A tree that goes straight to a decoder of a fragment has not passed the check of a document, so the decoder checks
+            // the keys of each mapping that it reads entry by entry. The error equals the error of the text entry point.
+            let errorOf (decode: unit -> unit) : DecodeError option =
+                try
+                    decode ()
+                    None
+                with YamlDecodeException error -> Some error
+            let places : (string * (YamlNode -> unit) * (string -> string -> string)) list =
+                [ "inputs", (Decode.inputArrayDecoder >> ignore), (fun a b -> a + ": string\n" + b + ": int\n")
+                  "outputs", (Decode.outputArrayDecoder >> ignore), (fun a b -> a + ": stdout\n" + b + ": stderr\n")
+                  "steps", (Decode.stepsDecoder >> ignore), (fun a b -> "steps:\n  " + a + ": {run: t.cwl, in: [], out: []}\n  " + b + ": {run: t.cwl, in: [], out: []}\n")
+                  "step inputs", (Decode.inputStepDecoder >> ignore), (fun a b -> a + ": x\n" + b + ": y\n")
+                  "hints in map form", (Decode.hintArrayDecoder >> ignore), (fun a b -> a + ": {}\n" + b + ": {}\n")
+                  "the fields of a hint in map form", (Decode.hintArrayDecoder >> ignore), (fun a b -> "acme:Hint: {" + a + ": 1, " + b + ": 2}\n")
+                  "the fields of a hint of an unknown class", (Decode.hintArrayDecoder >> ignore), (fun a b -> "- {class: acme:Hint, " + a + ": 1, " + b + ": 2}\n")
+                  "requirements in map form", (Decode.requirementArrayDecoder >> ignore), (fun a b -> a + ": {}\n" + b + ": {}\n")
+                  "envDef in map form", (Decode.requirementArrayDecoder >> ignore), (fun a b -> "- class: EnvVarRequirement\n  envDef: {" + a + ": x, " + b + ": y}\n")
+                  "a record of a job file", (DecodeParameters.decodeParameterValue >> ignore), (fun a b -> "{" + a + ": 1, " + b + ": 2}\n") ]
+            // An extension field holds a mapping with a key that is no text as it was written, so these places take text keys.
+            let extensionPlaces : (string * (YamlNode -> unit) * (string -> string -> string)) list =
+                [ "a mapping in an extension field", (Decode.inputArrayDecoder >> ignore), (fun a b -> "x: {type: string, acme:f: {" + a + ": 1, " + b + ": 2}}\n")
+                  "a mapping in a list of an extension field", (Decode.inputArrayDecoder >> ignore), (fun a b -> "x: {type: string, acme:f: [{a: 1}, {g: {" + a + ": 1, " + b + ": 2}}]}\n") ]
+            // Equal texts in any quoting and plain keys that the loader of cwltool takes for one key. A hint in map form drops
+            // its class field, and a repeated class key fails there too.
+            let textPairs = [ "x", "x"; "x", "\"x\""; "'x'", "\"x\""; "class", "class" ]
+            let otherPairs = [ "1", "0x1"; "true", "1"; "null", "~" ]
+            for (somePlaces, keyPairs) in [ places, textPairs @ otherPairs; extensionPlaces, textPairs ] do
+                for (place, decode, text) in somePlaces do
+                    for (first, second) in keyPairs do
+                        let yaml = text first second
+                        let expected = errorOf (fun () -> Decode.readYaml yaml |> ignore)
+                        match expected with
+                        | Some error ->
+                            Expect.isTrue (error.Message.Contains "occurs twice" || error.Message.Contains "repeats the key") (sprintf "%s, %s and %s: the whole text fails at the repeated key, found %s" place first second error.Message)
+                        | None -> failwith (sprintf "%s, %s and %s: the whole text must fail." place first second)
+                        Expect.equal (errorOf (fun () -> decode (Reader.readRoot yaml))) expected (sprintf "%s, %s and %s: the decoder should fail with the error of the whole text." place first second)
+            let apart = "x: {type: string, acme:f: {a: 1}}\ny: {type: string, acme:f: {a: 2}}\n"
+            Expect.equal (Decode.inputArrayDecoder (Reader.readRoot apart)).Count 2 "The same key in two mappings is no repeated key."
         testCase "an extension field keeps the keys of a mapping with their types, and a field of an object needs a text as its name" <| fun _ ->
             let tool (lines: string list) =
                 String.concat "\n" ([ "cwlVersion: v1.2"; "$namespaces: {ex: \"http://example.org/\"}"; "class: CommandLineTool"; "baseCommand: echo"; "inputs: []"; "outputs: []" ] @ lines @ [ "" ])
@@ -1586,11 +1634,11 @@ outputs: {}
                 Expect.stringContains written expected (sprintf "The key keeps its spelling: %s\n%s" expected written)
             Expect.equal (Decode.decodeCommandLineTool written) decoded "The written text should decode to the same tool."
             Expect.notEqual decoded (Decode.decodeCommandLineTool (tool [ "ex:meta:"; "  \"1\": a"; "  \"1x\": b"; "  null: e"; "  \"null\": f"; "ex:flags:"; "  true: c"; "  \"true\": d"; "ex:list:"; "  - {1: a, \"1\": b}" ])) "Another key makes another tool."
-            for (name, key) in [ "an int", "1"; "a bool", "true"; "a null", "~"; "a float", "1.5" ] do
+            for (name, key, tag) in [ "an int", "1", "!!int"; "a bool", "true", "!!bool"; "a null", "~", "!!null"; "a float", "1.5", "!!float" ] do
                 match decodeError (tool [ key + ": x" ]) with
                 | Some error ->
-                    Expect.stringContains error.Message "Expected a string, found" (sprintf "%s as the name of a field: the error should say what is wrong." name)
-                    Expect.stringContains error.Message "Write it in quotes" (sprintf "%s as the name of a field: the error should say how to write the text." name)
+                    Expect.stringContains error.Message "Expected a string as a field name, found" (sprintf "%s as the name of a field: the error should say what is wrong." name)
+                    Expect.stringContains error.Message ("which resolves to " + tag) (sprintf "%s as the name of a field: the error should name the type of the key." name)
                     Expect.isSome error.Span (sprintf "%s as the name of a field: the error should have the place in the text." name)
                 | None -> failwith (sprintf "%s as the name of a field must fail." name)
             Expect.isSome (decodeError (tool [ "ex:x: 1"; "1: x" ])) "A key of another type fails also behind a valid field."
@@ -3808,6 +3856,75 @@ let testScalarsThatCwltoolReadsAsAnotherType =
             let plain = Encode.encodeToolDescription (Decode.decodeCommandLineTool (tool [ "label: a-?b"; "baseCommand: [echo, \"-x\", \":y\"]"; "inputs: []"; "outputs: []" ]))
             Expect.stringContains plain "label: a-?b" "A question mark inside a text needs no quotes."
             Expect.stringContains plain "baseCommand: [echo, -x, :y]" "A dash or a colon at the start of a flow item needs no quotes."
+        testCase "a text with several lines is a literal block, and it is written in double quotes when it holds a NEL, a line separator or a paragraph separator" <| fun _ ->
+            // The loader reads those characters as line breaks in a block scalar too. The writer escapes them in double quotes.
+            let built (text: string) =
+                CWLToolDescription(
+                    ResizeArray(),
+                    baseCommand = ResizeArray [ SchemaSaladString.Literal "echo" ],
+                    requirements = ResizeArray [ Requirement.EnvVarRequirement (ResizeArray [ ListEntry.Value (EnvironmentDef(SchemaSaladString.Literal "V", SchemaSaladString.Literal text)) ]) ],
+                    inputs = ResizeArray(),
+                    label = SchemaSaladString.Literal text,
+                    doc = DocText.Text (SchemaSaladString.Literal text))
+            for (what, text, written) in
+                [ "a NEL inside", "a\u0085b\nc", "a\\Nb\\nc"
+                  "a NEL at the end", "a\nb\u0085", "a\\nb\\N"
+                  "a NEL at the start", "\u0085a\nb", "\\Na\\nb"
+                  "a line separator inside", "a\u2028b\nc", "a\\Lb\\nc"
+                  "a line separator at the end", "a\nb\u2028", "a\\nb\\L"
+                  "a paragraph separator inside", "a\u2029b\nc", "a\\Pb\\nc"
+                  "a paragraph separator at the end", "a\nb\u2029", "a\\nb\\P"
+                  "the three together", "a\u0085b\u2028c\u2029d\ne", "a\\Nb\\Lc\\Pd\\ne" ] do
+                let output = Encode.encodeToolDescription (built text)
+                for field in [ "label"; "doc"; "envValue" ] do
+                    Expect.stringContains output (field + ": \"" + written + "\"") (sprintf "%s: the %s is written in double quotes.\n%s" what field output)
+                Expect.isFalse (output.Contains "|-") (sprintf "%s: no block scalar is written.\n%s" what output)
+                let again = Decode.decodeCommandLineTool output
+                Expect.equal again.Label (Some (SchemaSaladString.Literal text)) (sprintf "%s: the label reads back." what)
+                Expect.equal again.Doc (Some (DocText.Text (SchemaSaladString.Literal text))) (sprintf "%s: the doc reads back." what)
+                Expect.equal (Encode.encodeToolDescription again) output (sprintf "%s: writing again should give the same text." what)
+            for text in [ "a\nb"; "x\ty\n\tz"; "a\n\nb"; "a b\nc d" ] do
+                let output = Encode.encodeToolDescription (built text)
+                for field in [ "label"; "doc"; "envValue" ] do
+                    Expect.stringContains output (field + ": |-") (sprintf "%s: the %s stays a literal block.\n%s" (text.Replace("\n", "\\n")) field output)
+                Expect.equal (Decode.decodeCommandLineTool output).Label (Some (SchemaSaladString.Literal text)) "The label reads back."
+            // A label that the source wrote as a block scalar follows the rule when its text holds one of these characters.
+            let fromBlock = Decode.decodeCommandLineTool (tool [ "label: |-"; "  a\u0085b"; "baseCommand: echo"; "inputs: []"; "outputs: []" ])
+            Expect.equal fromBlock.Label (Some (SchemaSaladString.Literal "a\u0085b")) "The block scalar holds the NEL as a character."
+            Expect.stringContains (Encode.encodeToolDescription fromBlock) "label: \"a\\Nb\"" "The label is written in double quotes."
+            // The text of an expression follows the same rule.
+            let expressionTool (expression: string) =
+                String.concat "\n" [ "cwlVersion: v1.2"; "class: ExpressionTool"; "requirements: [{class: InlineJavascriptRequirement}]"; "inputs: []"; "outputs: [{id: o, type: int}]"; "expression: \"" + expression + "\""; "" ]
+            let quoted = Encode.encodeExpressionToolDescription (Decode.decodeExpressionTool (expressionTool "${\\n  return {o: 1};\\N\\n}"))
+            Expect.stringContains quoted "expression: \"${\\n  return {o: 1};\\N\\n}\"" "An expression with a NEL is written in double quotes."
+            let block = Encode.encodeExpressionToolDescription (Decode.decodeExpressionTool (expressionTool "${\\n  return {o: 1};\\n}"))
+            Expect.stringContains block "expression: |-" "An expression without one stays a literal block."
+        testCase "the comment behind the header of a block scalar stays behind the double-quoted scalar that replaces it" <| fun _ ->
+            // A literal or folded doc or label whose text holds a NEL, a line separator or a paragraph separator is written in double quotes.
+            // A double-quoted scalar has no header, so its comment moves to the end of its line, and it stays there when the text is read again.
+            for (what, field, header, lines, text, written) in
+                [ "a literal doc", "doc", "|  # keep this", [ "  first \u2028"; "  second" ], "first \u2028\nsecond\n", "\"first \\L\\nsecond\\n\" # keep this"
+                  "a folded label", "label", ">-  # note", [ "  folded\u0085"; "  text" ], "folded\u0085 text", "\"folded\\N text\" # note"
+                  "a literal label", "label", "|-  # c", [ "  a\u2029b"; "  c" ], "a\u2029b\nc", "\"a\\Pb\\nc\" # c"
+                  "a folded doc", "doc", ">  # d", [ "  x\u0085y"; "  z" ], "x\u0085y z\n", "\"x\\Ny z\\n\" # d"
+                  "a literal doc that keeps its final lines", "doc", "|+  # k", [ "  a\u2028b"; ""; "  c"; "" ], "a\u2028b\n\nc\n\n", "\"a\\Lb\\n\\nc\\n\\n\" # k" ] do
+                let yaml = tool ([ field + ": " + header ] @ lines @ [ "baseCommand: echo"; "inputs: []"; "outputs: []" ])
+                let decoded = Decode.decodeCommandLineTool yaml
+                let textOf (tool: CWLToolDescription) =
+                    if field = "doc" then tool.Doc |> Option.bind (fun doc -> doc.TryText) else tool.Label |> Option.bind SchemaSaladString.tryLiteral
+                Expect.equal (textOf decoded) (Some text) (sprintf "%s: the block scalar holds the text." what)
+                let output = Encode.encodeToolDescription decoded
+                Expect.stringContains output (field + ": " + written) (sprintf "%s: the comment stands behind the quoted scalar.\n%s" what output)
+                let again = Decode.decodeCommandLineTool output
+                Expect.equal (textOf again) (Some text) (sprintf "%s: the text reads back." what)
+                Expect.equal again decoded (sprintf "%s: the written text should decode to the same tool." what)
+                Expect.equal (Encode.encodeToolDescription again) output (sprintf "%s: the comment is still there when the text is written again." what)
+            // A plain scalar on several lines that gets quotes keeps its lines.
+            let plain = Decode.decodeCommandLineTool (tool [ "label: ?x"; "  second line"; "baseCommand: echo"; "inputs: []"; "outputs: []" ])
+            Expect.equal plain.Label (Some (SchemaSaladString.Literal "?x second line")) "The plain scalar holds both lines."
+            let plainOutput = Encode.encodeToolDescription plain
+            Expect.stringContains plainOutput "label: \"?x" "The label is written in double quotes."
+            Expect.equal (Decode.decodeCommandLineTool plainOutput) plain "The written text should decode to the same tool."
         testCase "a quoted text that cwltool would read as another type is written in quotes in a job file and reads back" <| fun _ ->
             for text in typed @ quotedForYaml11 @ unreadable @ quotedOnly do
                 let references = DecodeParameters.decodeYAMLParameterFile ("b: \"" + text + "\"\n")

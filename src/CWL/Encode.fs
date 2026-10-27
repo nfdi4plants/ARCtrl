@@ -97,13 +97,22 @@ module Encode =
     let private literalBlock (value: string) : YamlNode =
         YamlNode.scalar (ScalarStyle.Block(BlockScalarStyle.Literal, ChompingMode.Strip, None)) value
 
+    /// A text with a line feed is a literal block scalar. The loader of cwltool reads a NEL, a line separator and a
+    /// paragraph separator as line breaks in a block scalar too, so a text that holds one is double-quoted, where the
+    /// writer escapes it.
+    let private multiLineScalar (value: string) : YamlNode =
+        if ScalarQuoting.holdsLineBreakCharacter value then
+            YamlNode.scalar ScalarStyle.DoubleQuoted value
+        else
+            literalBlock value
+
     /// A string that spans lines is written as a literal block scalar, so a doc text or an expression stays
-    /// readable. Any other string goes through Encode.string, which double-quotes text that a core schema
+    /// readable (see multiLineScalar). Any other string goes through Encode.string, which double-quotes text that a core schema
     /// reader takes for a bool, a number or null, and then through ScalarQuoting.keepAsText, which quotes what the loader of
     /// cwltool reads as another type.
     let encodeString (value: string) : YamlNode =
         if value.Contains("\n") then
-            literalBlock value
+            multiLineScalar value
         else
             ScalarQuoting.textNode value
 
@@ -273,16 +282,16 @@ module Encode =
 
     /// Encode expression payloads with style-aware scalars.
     /// Single-line expressions are double-quoted to protect JS token syntax.
-    /// Multi-line expressions are literal block scalars, which keep them readable and keep YAML from reading the
-    /// punctuation of the JavaScript. The writer picks the chomping, so the trailing line feeds and blank lines
-    /// of the expression survive a write and a read.
+    /// Multi-line expressions are literal block scalars (see multiLineScalar), which keep them readable and keep YAML
+    /// from reading the punctuation of the JavaScript. The writer picks the chomping, so the trailing line feeds and
+    /// blank lines of the expression survive a write and a read.
     let encodeExpressionScalar (expression: string) : YamlNode =
         let normalized =
             // Normalize line endings once so style selection and emitted text agree.
             if isNull expression then "" else expression.Replace("\r\n", "\n").Replace("\r", "\n")
 
         if normalized.Contains("\n") then
-            literalBlock normalized
+            multiLineScalar normalized
         else
             // Single-line expressions are quoted for parser safety.
             YamlNode.scalar ScalarStyle.DoubleQuoted normalized

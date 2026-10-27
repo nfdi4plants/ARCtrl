@@ -360,6 +360,33 @@ let testProhibitedYamlFeaturesInJobFiles =
                 let written = Encode.encodeYAMLParameterFile references
                 Expect.stringContains written "\"<<\":" (sprintf "%s: the key is written in quotes.\n%s" key written)
                 Expect.sequenceEqual (DecodeParameters.decodeYAMLParameterFile written) references (sprintf "%s: the written file should decode to the same references." key)
+        testCase "a key that the core schema reads as null, a bool or a number is a decode error at the key, for a parameter and for a field of a record" <| fun _ ->
+            // Schema Salad restricts a job file to the JSON-compatible subset of YAML, where every key is a string.
+            let keys = [ "1"; "0x1"; "-2"; "1.5"; ".nan"; "-.inf"; "12345678901234567890"; "true"; "False"; "null"; "~" ]
+            for key in keys do
+                for (place, text, path, line, column) in
+                    [ "a parameter", "x: 0\n" + key + ": a\n", "", 2, 1
+                      "a field of a record", "x:\n  " + key + ": a\n", "x", 2, 3
+                      "a field of a record in a record", "x:\n  y: {z: 0, " + key + ": a}\n", "x.y", 2, 13
+                      "a field of a record in a list", "x:\n  - " + key + ": a\n", "x[0]", 2, 5 ] do
+                    let error = errorOf (place + " with the key " + key) text
+                    Expect.equal (DecodeError.pathText error) path (sprintf "%s with the key %s: the error should show the mapping of the key" place key)
+                    Expect.equal (error.Span |> Option.map (fun span -> span.Start.Line, span.Start.Column)) (Some (line, column)) (sprintf "%s with the key %s: the error should stand at the key" place key)
+                    Expect.stringContains error.Message "Expected a string, found " (sprintf "%s with the key %s: the error should say that the key is no string" place key)
+            let empty = errorOf "an empty key" "x: {z: 0, : a}\n"
+            Expect.equal (DecodeError.pathText empty) "x" "An empty key is null, and the error shows the mapping of the key."
+            Expect.stringContains empty.Message "Expected a string, found null." "The error should say that the empty key is null."
+        testCase "a key that is a string names a parameter or a field, also when it looks like another type, and the written file reads back equal" <| fun _ ->
+            let keys = [ "\"1\"", "1"; "'true'", "true"; "\"null\"", "null"; "\"~\"", "~"; "\"1.5\"", "1.5"; "\"\"", ""; "yes", "yes"; "1_000", "1_000"; "<<", "<<"; "a b", "a b" ]
+            let text = keys |> List.map (fun (spelling, _) -> spelling + ": {" + spelling + ": a}") |> String.concat "\n"
+            let references = DecodeParameters.decodeYAMLParameterFile (text + "\n")
+            for (reference, (spelling, name)) in Seq.zip references keys do
+                Expect.equal reference.Key name (sprintf "The key %s names the parameter %s." spelling name)
+                Expect.equal reference.Value (Some (CWLParameterValue.Record (ResizeArray [ CWLParameterRecordField(name, CWLParameterValue.String "a") ]))) (sprintf "The key %s names the field %s." spelling name)
+            let written = Encode.encodeYAMLParameterFile references
+            let readBack = DecodeParameters.decodeYAMLParameterFile written
+            Expect.sequenceEqual readBack references (sprintf "The written file should decode to the same references.\n%s" written)
+            Expect.equal (Encode.encodeYAMLParameterFile readBack) written "Writing again should give the same text."
         testCase "the error of a value shows the parameter, the field of a record and the index of a list" <| fun _ ->
             let beyond = "100000000000000000000000000000"
             for (name, text, path) in

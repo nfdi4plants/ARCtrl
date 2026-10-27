@@ -47,26 +47,38 @@ let readsAsAnotherTypeThanCore (text: string) : bool =
     || (text.Length > 0 && "-+0123456789".IndexOf text.[0] >= 0 && matches intSpellings text)
     || matches floatSpellings text
 
+/// True when the text holds a NEL (U+0085), a line separator (U+2028) or a paragraph separator (U+2029). The loader of
+/// cwltool reads them as line breaks, in a plain scalar and in a block scalar, where they fold, vanish at the ends of
+/// the text or split it. The core schema of YAML 1.2.2 reads them as characters. A double-quoted scalar holds them as
+/// escapes.
+let holdsLineBreakCharacter (text: string) : bool =
+    text |> Seq.exists (fun c -> c = '\u0085' || c = '\u2028' || c = '\u2029')
+
 /// True when the loader of cwltool reads the text, written as a plain scalar, as another string than the core schema
-/// does, or fails on it. The loader fails on a tab inside a plain scalar. It reads a NEL (U+0085), a line separator
-/// (U+2028) and a paragraph separator (U+2029) as line breaks, which fold or vanish at the ends of the text. A ? at the
-/// start opens a key in a flow collection. The writer cannot see in which collection a scalar stands, so it quotes the
-/// text wherever it stands.
+/// does, or fails on it. The loader fails on a tab inside a plain scalar, and it reads some characters as line breaks
+/// (see holdsLineBreakCharacter). A ? at the start opens a key in a flow collection. The writer cannot see in which
+/// collection a scalar stands, so it quotes the text wherever it stands.
 let private readsAsAnotherString (text: string) : bool =
-    text.StartsWith "?" || text |> Seq.exists (fun c -> c = '\t' || c = '\u0085' || c = '\u2028' || c = '\u2029')
+    text.StartsWith "?" || holdsLineBreakCharacter text || text |> Seq.exists (fun c -> c = '\t')
 
 /// True when a string needs double quotes to stay a string for the core schema or for the loader of cwltool.
 let readsAsAnotherType (text: string) : bool =
     CoreSchema.resolvesToNonString text || readsAsAnotherTypeThanCore text || readsAsAnotherString text
 
 /// A plain scalar that a reader would take for another type than a string gets double quotes, so the text stays a
-/// string. A scalar in any other style is a string already, and so is a scalar with an explicit tag.
+/// string. A block scalar whose text holds a character that the loader reads as a line break gets double quotes too. It
+/// loses the layout of its lines, which only a block scalar has, and its header comment becomes the trailing comment of
+/// the quoted scalar. A scalar in any other style is a string already, and so is a scalar with an explicit tag.
 let keepAsText (node: YamlNode) : YamlNode =
     match node.Kind with
     | YamlNodeKind.Scalar scalar when node.Properties.Tag.IsNone ->
         match scalar.Style with
         | ScalarStyle.Plain when readsAsAnotherType scalar.Value ->
             { node with Kind = YamlNodeKind.Scalar { scalar with Style = ScalarStyle.DoubleQuoted } }
+        | ScalarStyle.Block _ when holdsLineBreakCharacter scalar.Value ->
+            { node with
+                Kind = YamlNodeKind.Scalar { scalar with Style = ScalarStyle.DoubleQuoted; HeaderComment = None; Layout = None }
+                TrailingComment = scalar.HeaderComment }
         | _ -> node
     | _ -> node
 

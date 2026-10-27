@@ -75,6 +75,12 @@ let tests_extended = testList "extended" [
   - name: null
 """
             Expect.throws (fun () -> Decode.fromYamlString ValidationPackagesConfig.decoder text |> ignore) "A plain null is no name."
+        testCase "a specification that reads as a number keeps its text" <| fun _ ->
+            let text = """arc_specification: 2.0
+validation_packages: []
+"""
+            let actual = Decode.fromYamlString ValidationPackagesConfig.decoder text
+            Expect.equal actual.ARCSpecification (Some "2.0") "A plain float as the specification keeps its text."
     ]
     testList "roundtrip (toYamlString >> fromYamlString)" [
         testCase "name and version" <| fun _ -> 

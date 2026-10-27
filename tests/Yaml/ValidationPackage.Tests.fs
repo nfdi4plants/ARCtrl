@@ -83,6 +83,13 @@ version:
 """
             let actual = Decode.fromYamlString ValidationPackage.decoder yaml
             Expect.equal actual.Version None "An optional field without a value is missing."
+        testCase "a name and a version that read as numbers keep their text" <| fun _ ->
+            let yaml = """name: 2
+version: 1.0
+"""
+            let actual = Decode.fromYamlString ValidationPackage.decoder yaml
+            Expect.equal actual.Name "2" "A plain int as the name keeps its text."
+            Expect.equal actual.Version (Some "1.0") "A plain float as the version keeps its text."
     ]
     testList "roundtrip (fromYamlString >> toYamlString)" [ 
         testCase "name and version" <| fun _ -> 
