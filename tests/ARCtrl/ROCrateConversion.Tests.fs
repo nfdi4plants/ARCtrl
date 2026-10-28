@@ -3863,6 +3863,34 @@ let tests_WorkflowCrate =
                 Expect.isTrue (List.contains id ids) $"The run crate holds {id}."
             Expect.equal (ids |> List.distinct |> List.length) ids.Length "Each part is listed once."
         )
+        testCase "Crates_RootIsPublishedAtTheGivenDate" (fun () ->
+            let workflow = create_workflow_full()
+            let date = System.DateTime(2026, 1, 2, 3, 4, 5, System.DateTimeKind.Utc)
+            let json = ARCtrl.Json.ARC.ROCrate.writeWorkflowAsCrate(workflow, WorkflowCrate.fileSystemOf [], WorkflowCrate.license, datePublished = date)
+            Expect.stringContains json "\"datePublished\": \"2026-01-02T03:04:05" "The root of the workflow crate is published at the given date."
+            let run = create_run_full()
+            let json = ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(run, WorkflowCrate.fileSystemOf [], WorkflowCrate.license, datePublished = date)
+            Expect.stringContains json "\"datePublished\": \"2026-01-02T03:04:05" "The root of the run crate is published at the given date."
+        )
+        testCase "Crates_RootIsPublishedNowWithoutADate" (fun () ->
+            let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeWorkflowAsCrate(create_workflow_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license))
+            let root = Expect.wantSome (graph.TryGetNode "./") "The crate has a root."
+            Expect.isSome (LDDataset.tryGetDatePublished(root, ?context = graph.TryGetContext())) "The root has a date of publication."
+        )
+        testCase "RunCrate_NamesItsProfilesAsEntities" (fun () ->
+            let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(create_run_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license))
+            let context = graph.TryGetContext()
+            let root = Expect.wantSome (graph.TryGetNode "./") "The crate has a root."
+            let profiles = root.GetPropertyNodes(LDDataset.conformsTo, graph = graph, ?context = context)
+            let describe (node : LDNode) =
+                let text (property : string) = node.TryGetPropertyAsSingleton(property, ?context = context) |> Option.map string
+                node.Id, LDCreativeWork.validate(node, ?context = context), text LDCreativeWork.name, text LDCreativeWork.version
+            Expect.equal (profiles |> Seq.map describe |> List.ofSeq) [
+                "https://w3id.org/ro/wfrun/process/0.5", true, Some "Process Run Crate", Some "0.5"
+                "https://w3id.org/ro/wfrun/workflow/0.5", true, Some "Workflow Run Crate", Some "0.5"
+                "https://w3id.org/workflowhub/workflow-ro-crate/1.0", true, Some "Workflow RO-Crate", Some "1.0"
+            ] "Each profile that the root conforms to is a CreativeWork with its name and version."
+        )
     ]
 
 let tests_Assay =

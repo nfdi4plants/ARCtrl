@@ -98,7 +98,8 @@ module ARC =
                     failwith "RO-Crate graph did not contain root data Entity"
             )
 
-        static member packDatasetAsCrate (dataset : LDNode, datasetName:string, datasetDescription:string, metadataFileDescriptor: option<LDNode>, license : License) =
+        /// Packs a dataset as the root of a crate. The root is published at the given date, and now in UTC when none is given.
+        static member packDatasetAsCrate (dataset : LDNode, datasetName:string, datasetDescription:string, metadataFileDescriptor: option<LDNode>, license : License, ?datePublished : System.DateTime) =
             let metadataFileDescriptor = defaultArg metadataFileDescriptor ROCrate.metadataFileDescriptor
             let license = ROCrate.createLicenseNode(Some license)
             // Create the main entity node with all properties from the dataset, but with @id "./"
@@ -109,6 +110,7 @@ module ARC =
             )
             // Set additional properties
             LDDataset.setDateCreatedAsDateTime(mainEntity, System.DateTime.Now)
+            LDDataset.setDatePublishedAsDateTime(mainEntity, defaultArg datePublished System.DateTime.UtcNow)
             LDDataset.setLicenseAsCreativeWork(mainEntity, license)
             // LDDataset.setHasParts(mainEntity,(dataset.GetPropertyValues"http://schema.org/mainEntity") |> Seq.map (fun x -> x :?> LDNode) |> ResizeArray)
             // Flatten the dataset into a graph
@@ -135,7 +137,9 @@ module ARC =
             if files.Count > 0 then
                 LDDataset.setHasParts(dataset, ResizeArray.append parts files)
 
-        static member writeRunAsCrate(arcRun:ArcRun, fileSystem: FileSystem, license : License) =
+        /// Writes a run as a Workflow Run Crate. A license is required. The crate is published at the given date, and now in
+        /// UTC when none is given.
+        static member writeRunAsCrate(arcRun:ArcRun, fileSystem: FileSystem, license : License, ?datePublished : System.DateTime) =
             let runDataset = arcRun.ToROCrateRun(fs = fileSystem)
             ROCrate.addReferencedFiles(runDataset, Identifier.Run.cwlFileNameFromIdentifier arcRun.Identifier, arcRun.CWLDescription.Value, fileSystem)
             
@@ -186,10 +190,12 @@ module ARC =
                     |> String.concat ", "
                 failwithf "WorkflowInvocation is missing required properties: %s" missingPropsStr
             
-            ROCrate.packDatasetAsCrate(runDataset, arcRun.Title.Value, arcRun.Description.Value, Some ROCrate.metadataFileDescriptorWfRun,license)
+            ROCrate.packDatasetAsCrate(runDataset, arcRun.Title.Value, arcRun.Description.Value, Some ROCrate.metadataFileDescriptorWfRun, license, ?datePublished = datePublished)
             |> LDGraph.toROCrateJsonString(2)
 
-        static member writeWorkflowAsCrate(arcWorkflow:ArcWorkflow, fileSystem: FileSystem, license : License) =
+        /// Writes a workflow as a Workflow RO-Crate. A license is required. The crate is published at the given date, and now
+        /// in UTC when none is given.
+        static member writeWorkflowAsCrate(arcWorkflow:ArcWorkflow, fileSystem: FileSystem, license : License, ?datePublished : System.DateTime) =
             let workflowDataset = arcWorkflow.ToROCrateWorkflow(fs = fileSystem)
             ROCrate.addReferencedFiles(workflowDataset, Identifier.Workflow.cwlFileNameFromIdentifier arcWorkflow.Identifier, arcWorkflow.CWLDescription.Value, fileSystem)
             
@@ -242,7 +248,7 @@ module ARC =
                     |> String.concat ", "
                 failwithf "Workflow protocol is missing required properties: %s" missingPropsStr
             
-            ROCrate.packDatasetAsCrate(workflowDataset, arcWorkflow.Title.Value, arcWorkflow.Description.Value, Some ROCrate.metadataFileDescriptorWfRun, license)
+            ROCrate.packDatasetAsCrate(workflowDataset, arcWorkflow.Title.Value, arcWorkflow.Description.Value, Some ROCrate.metadataFileDescriptorWfRun, license, ?datePublished = datePublished)
             |> LDGraph.toROCrateJsonString(2)
             
         static member decoderDeprecated : Decoder<ArcInvestigation> =
