@@ -3555,6 +3555,28 @@ let tests_ArcRun =
             Expect.equal (RunConversion.decomposeCWLInputFilePath("runs/R/sub/out.csv", "R")) "sub/out.csv" "An id without the leading ./ is read the same way."
             Expect.equal (RunConversion.decomposeCWLInputFilePath("./assays/A/dataset/d.csv", "R")) "../../assays/A/dataset/d.csv" "A file outside the run folder leaves it."
         )
+        testCase "JobFilePaths_TheRunFolderItselfReadsBackAsDot" (fun () ->
+            Expect.equal (RunConversion.composeCWLInputFilePath(".", "R")) "runs/R" "The run folder is the path of the run from the crate root."
+            for id in [ "runs/R"; "./runs/R"; "./runs/R/" ] do
+                Expect.equal (RunConversion.decomposeCWLInputFilePath(id, "R")) "." $"The id {id} is the run folder, which is . from the run."
+            Expect.equal (RunConversion.decomposeCWLInputFilePath("./runs", "R")) "../../runs" "The folder of all runs is no run folder."
+            let workflow =
+                CWL.CWLWorkflowDescription(
+                    steps = ResizeArray(),
+                    inputs = ListEntry.ofValues [CWL.CWLInput(name = "here", type_ = CWLType.Directory)],
+                    outputs = ResizeArray()
+                )
+            let run =
+                ArcRun.create(
+                    identifier = "R",
+                    cwlDescription = CWL.Workflow workflow,
+                    cwlInput = CWL.DecodeParameters.decodeYAMLParameterFile "here:\n  class: Directory\n  location: .\n"
+                )
+            let run' = RunConversion.decomposeRun(RunConversion.composeRun run)
+            match (Seq.exactlyOne run'.CWLInput).Value with
+            | Some (CWL.CWLParameterValue.Directory directory) -> Expect.equal (CWL.DirectoryInstance.pathOrLocation directory) "." "The directory reads back as the run folder."
+            | other -> failwithf "Expected a Directory value but got %A" other
+        )
         testCaseCrossAsync "RelativeWorkflowRunReference_ResolvesToWorkflow" (crossAsync {
             let sampleArcDirectory = TestObjects.IO.testSimpleARCWithCWL
             let runFixturePath =

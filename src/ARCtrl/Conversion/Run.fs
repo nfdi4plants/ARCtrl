@@ -28,7 +28,8 @@ type RunConversion =
             |> ArcPathHelper.normalize
 
     /// Turns the id of a file in the crate back into a path relative to the run folder. The run folder is compared by
-    /// whole segments, so runs/R does not contain runs/R2. An id with a URI scheme is a URL and stays as it is.
+    /// whole segments, so runs/R does not contain runs/R2, and the run folder itself is ".". An id with a URI scheme is a
+    /// URL and stays as it is.
     static member decomposeCWLInputFilePath (path : string, runName : string) =
         if ArcPathHelper.hasUriScheme path then
             path
@@ -37,9 +38,11 @@ type RunConversion =
             // File ids in RO-Crate start with ./, which split drops with every other "." segment.
             let segments = ArcPathHelper.split path
             let isInRunFolder =
-                segments.Length > runFolder.Length
+                segments.Length >= runFolder.Length
                 && (runFolder |> Array.mapi (fun index segment -> segments.[index] = segment) |> Array.forall id)
-            if isInRunFolder then
+            if isInRunFolder && segments.Length = runFolder.Length then
+                "."
+            elif isInRunFolder then
                 String.concat (string ArcPathHelper.PathSeperator) segments.[runFolder.Length..]
             else
                 ArcPathHelper.combine "../.." (String.concat (string ArcPathHelper.PathSeperator) segments)
