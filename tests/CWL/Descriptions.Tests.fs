@@ -34,7 +34,7 @@ let stripDocContent (docBlock:string) =
 
 /// The tool that a top-level field of a document belongs to.
 let toolWith (fields: string) : CWLToolDescription =
-    Decode.decodeCommandLineTool ("cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs: []\noutputs: []\n" + fields + "\n")
+    Decode.decodeCommandLineTool (Kit.tool [ "baseCommand: echo"; "inputs: []"; "outputs: []"; fields ])
 
 let decodeTests =
     testList "Decode" [

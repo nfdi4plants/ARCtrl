@@ -170,7 +170,7 @@ let testOutputMutationApi =
 
 let testOutputGlob =
     let tool (glob: string) =
-        String.concat "\n" [ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo"; "inputs: []"; "outputs:"; "  o:"; "    type: File[]"; "    outputBinding:"; "      glob: " + glob; "" ]
+        Kit.tool [ "baseCommand: echo"; "inputs: []"; "outputs:"; "  o:"; "    type: File[]"; "    outputBinding:"; "      glob: " + glob ]
     let globOf (decoded: CWLToolDescription) = (outputBindingOf (ListEntry.values decoded.Outputs).[0]).Glob
 
     testList "Output glob" [
@@ -185,16 +185,11 @@ let testOutputGlob =
             for text, expected, written in cases do
                 let decoded = Decode.decodeCommandLineTool (tool text)
                 Expect.equal (globOf decoded) (Some expected) (sprintf "glob: %s should decode as %A" text expected)
-                let encoded = Encode.encodeToolDescription decoded
+                let _, encoded = Kit.rewrite (sprintf "glob: %s should survive a write and a read" text) Decode.decodeCommandLineTool Encode.encodeToolDescription decoded
                 Expect.stringContains encoded written (sprintf "glob: %s should be written in its form" text)
-                Expect.equal (Decode.decodeCommandLineTool encoded) decoded (sprintf "glob: %s should survive a write and a read" text)
         testCase "a glob that is neither a string nor a list of strings is a decode error" <| fun _ ->
             for text, path in [ "{a: b}", "outputs.o.outputBinding.glob"; "[a.txt, {a: b}]", "outputs.o.outputBinding.glob[1]"; "[a.txt, [b.txt]]", "outputs.o.outputBinding.glob[1]" ] do
-                match (try Decode.decodeCommandLineTool (tool text) |> ignore; None with YamlDecodeException error -> Some error) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) path (sprintf "glob: %s should fail at its place" text)
-                    Expect.isSome error.Span (sprintf "glob: %s should have the place in the text" text)
-                | None -> failwith (sprintf "glob: %s must fail" text)
+                Kit.toolFails (sprintf "glob: %s" text) (tool text) path ""
         testCase "globs compare by their patterns" <| fun _ ->
             Expect.equal (OutputGlob.Multiple (ResizeArray [ (SchemaSaladString.Literal "a"); (SchemaSaladString.Literal "b") ])) (OutputGlob.Multiple (ResizeArray [ (SchemaSaladString.Literal "a"); (SchemaSaladString.Literal "b") ])) "Lists with equal patterns are equal."
             Expect.notEqual (OutputGlob.Multiple (ResizeArray [ (SchemaSaladString.Literal "a") ])) (OutputGlob.Single (SchemaSaladString.Literal "a")) "A list of one pattern differs from the pattern."

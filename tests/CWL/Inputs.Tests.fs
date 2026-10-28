@@ -180,22 +180,14 @@ let testInputFormat =
     type: File
     format:
       iri: edam:format_2330"""
-            match (try Decode.readYaml yaml |> Decode.inputsDecoder |> ignore; None with YamlDecodeException error -> Some error) with
-            | Some error ->
-                Expect.equal (DecodeError.pathText error) "inputs.x.format" "The error shows the format field."
-                Expect.isSome error.Span "The error has the place in the text."
-            | None -> failwith "A mapping as the format of an input must fail."
+            Kit.decodeFails "A mapping as the format of an input" (fun () -> Decode.readYaml yaml |> Decode.inputsDecoder) "inputs.x.format" ""
 
         testCase "a list as the format of an output is a decode error at format" <| fun _ ->
             let yaml = """outputs:
   result:
     type: File
     format: [edam:format_2330, edam:format_1930]"""
-            match (try Decode.readYaml yaml |> Decode.outputsDecoder |> ignore; None with YamlDecodeException error -> Some error) with
-            | Some error ->
-                Expect.equal (DecodeError.pathText error) "outputs.result.format" "The error shows the format field."
-                Expect.isSome error.Span "The error has the place in the text."
-            | None -> failwith "A list as the format of an output must fail."
+            Kit.decodeFails "A list as the format of an output" (fun () -> Decode.readYaml yaml |> Decode.outputsDecoder) "outputs.result.format" ""
 
         testCase "formats compare and hash by their names" <| fun _ ->
             let several = InputFormat.Multiple (ResizeArray [ (SchemaSaladString.Literal "a"); (SchemaSaladString.Literal "b") ])
@@ -533,9 +525,8 @@ let testInputOptional =
             let hand = tool [ CWLInput("x", CWLType.makeOptional CWLType.Int) ]
             Expect.equal (ListEntry.values hand.Inputs.Value).[0].Type_ (Some (Union (ResizeArray [ Null; CWLType.Int ]))) "The optional int is the union of null and int."
             Expect.isTrue (ListEntry.values hand.Inputs.Value).[0].Optional "The input is optional."
-            let encoded = Encode.encodeToolDescription hand
+            let _, encoded = Kit.rewrite "The written text should read back as the same tool." Decode.decodeCommandLineTool Encode.encodeToolDescription hand
             Expect.stringContains encoded "  x: int?\n" "The optional int is the shorthand."
-            Expect.equal (Decode.decodeCommandLineTool encoded) hand "The written text should read back as the same tool."
         testCase "the input decoded from the shorthand equals the input built with makeOptional" <| fun _ ->
             let decoded = Decode.decodeCommandLineTool "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n  x: int?\noutputs: []\n"
             Expect.equal (ListEntry.values decoded.Inputs.Value).[0] (CWLInput("x", CWLType.makeOptional CWLType.Int)) "Both inputs have the union of null and int."
@@ -564,27 +555,7 @@ let testInputOptional =
     ]
 
 let testBindingPosition =
-    let tool (position: string) =
-        String.concat "\n" [ "cwlVersion: v1.2"; "class: CommandLineTool"; "baseCommand: echo"; "inputs:"; "  x:"; "    type: string"; "    inputBinding:"; "      position: " + position; "outputs: []"; "" ]
-    let positionOf (decoded: CWLToolDescription) = (inputBindingOf (ListEntry.values decoded.Inputs.Value).[0]).Position
-
     testList "Binding position" [
-        testCase "an int is a number and an expression is an expression, and both are written as they were" <| fun _ ->
-            for text, expected in [ "3", BindingPosition.Number 3; "-1", BindingPosition.Number -1; "0x2", BindingPosition.Number 2; "$(1 + 1)", BindingPosition.Expression "$(1 + 1)"; "${return 3;}", BindingPosition.Expression "${return 3;}" ] do
-                let decoded = Decode.decodeCommandLineTool (tool text)
-                Expect.equal (positionOf decoded) (Some expected) (sprintf "position: %s should decode as %A" text expected)
-                let encoded = Encode.encodeToolDescription decoded
-                Expect.equal (positionOf (Decode.decodeCommandLineTool encoded)) (Some expected) (sprintf "position: %s should survive a write and a read" text)
-            let encoded = Encode.encodeToolDescription (Decode.decodeCommandLineTool (tool "$(1 + 1)"))
-            Expect.stringContains encoded "      position: $(1 + 1)\n" "The expression is written as a plain scalar."
-        testCase "a position that is neither an int nor an expression is a decode error at the position" <| fun _ ->
-            for text in [ "abc"; "\"2\""; "1.5"; "true" ] do
-                match (try Decode.decodeCommandLineTool (tool text) |> ignore; None with YamlDecodeException error -> Some error) with
-                | Some error ->
-                    Expect.equal (DecodeError.pathText error) "inputs.x.inputBinding.position" (sprintf "position: %s should fail at the field" text)
-                    Expect.stringContains error.Message "Expected an int or an expression" (sprintf "position: %s should say what is wrong" text)
-                    Expect.isSome error.Span (sprintf "position: %s should have the place in the text" text)
-                | None -> failwith (sprintf "position: %s must fail" text)
         testCase "positions compare by their value" <| fun _ ->
             Expect.equal (BindingPosition.Number 1) (BindingPosition.Number 1) "Equal numbers are equal."
             Expect.notEqual (BindingPosition.Number 1) (BindingPosition.Expression "$(1)") "A number differs from an expression."

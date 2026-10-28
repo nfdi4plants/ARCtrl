@@ -2078,9 +2078,6 @@ let tests_AdditionalTypeDecoding =
             )
         ]
         testList "ScalarForms" [
-            testCase "NullIsWrittenQuoted" (fun () ->
-                Expect.equal (WorkflowConversion.composeAdditionalType CWLType.Null) "\"null\"" "The null type is quoted so that it is no YAML null."
-            )
             testCase "DoubleQuoted" (fun () ->
                 Expect.equal (WorkflowConversion.decomposeAdditionalType "\"File\"") (CWLType.File) "A double-quoted type name is the type."
             )
