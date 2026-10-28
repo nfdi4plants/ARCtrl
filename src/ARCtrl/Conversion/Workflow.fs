@@ -301,7 +301,9 @@ type WorkflowConversion =
 
     /// The file references in the YAML tree of a CWL document, in the order of the document: the run of every step that
     /// is a text, the text target of every $import, $include and $mixin directive, and the location or path of every
-    /// File and Directory literal. Each reference comes with true when it names a directory.
+    /// File and Directory literal. Only a mapping whose class is Workflow has steps, which is the process at the root or
+    /// an inline run, so a field named steps in a data value holds no runs. Each reference comes with true when it names
+    /// a directory.
     static member private fileReferencesOfYaml (root: YAMLicious.YamlNode) : ResizeArray<string * bool> =
         let references = ResizeArray<string * bool>()
         let tryScalarText (node: YAMLicious.YamlNode) =
@@ -321,11 +323,12 @@ type WorkflowConversion =
                     |> Option.orElse (fieldText "path")
                     |> Option.iter (fun path -> references.Add((path, literalClass = "Directory")))
                 | _ -> ()
+                let isWorkflow = fieldText "class" = Some "Workflow"
                 for entry in collection.Items do
                     let key = tryScalarText entry.Key |> Option.defaultValue ""
                     match tryScalarText entry.Value with
                     | Some path when isDirective key || (isStep && key = "run") -> references.Add((path, false))
-                    | _ when key = "steps" -> visitSteps entry.Value
+                    | _ when isWorkflow && key = "steps" -> visitSteps entry.Value
                     | _ -> visit false entry.Value
             | YAMLicious.YamlNodeKind.Sequence collection ->
                 for item in collection.Items do

@@ -3911,6 +3911,13 @@ let tests_WorkflowCrate =
             let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  d:\n    type: Directory\n    default:\n      class: Directory\n      location: ../../runs\noutputs: []\n"
             Expect.sequenceEqual (WorkflowConversion.getReferencedFilePaths("workflows/W/workflow.cwl", tool, fs)) ["runs/R/run.cwl"] "A folder of the ARC adds its files."
         )
+        testCase "ReferencedFiles_OnlyAWorkflowHasSteps" (fun () ->
+            let fs = WorkflowCrate.fileSystemOf ["workflows/W/workflow.cwl"; "workflows/W/a.txt"; "workflows/W/b.cwl"; "workflows/W/c.cwl"]
+            let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: x\ninputs:\n  r:\n    type: Any\n    default: {steps: [{run: a.txt}]}\noutputs: []\n"
+            Expect.sequenceEqual (WorkflowConversion.getReferencedFilePaths("workflows/W/workflow.cwl", tool, fs)) [] "A field named steps in a data value holds no runs."
+            let workflow = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: Workflow\ninputs:\n  r:\n    type: Any\n    default: {steps: {s: {run: a.txt}}}\noutputs: {}\nsteps:\n  s:\n    run: b.cwl\n    in: {}\n    out: []\n  t:\n    run:\n      class: Workflow\n      inputs: {}\n      outputs: {}\n      steps:\n        u: {run: c.cwl, in: {}, out: []}\n    in: {}\n    out: []\n"
+            Expect.sequenceEqual (WorkflowConversion.getReferencedFilePaths("workflows/W/workflow.cwl", workflow, fs)) ["workflows/W/b.cwl"; "workflows/W/c.cwl"] "The steps of the workflow at the root and of an inline workflow name their runs."
+        )
         testCase "ReferencedFiles_FileAndDirectoryLiterals" (fun () ->
             let text =
                 "cwlVersion: v1.2\nclass: CommandLineTool\nrequirements:\n  InitialWorkDirRequirement:\n    listing:\n      - class: File\n        location: x.R\n      - class: Directory\n        location: data\n      - class: File\n        location: missing.R\n      - class: File\n        location: https://example.org/y.R\nbaseCommand: [Rscript, x.R]\ninputs:\n  table:\n    type: File\n    default:\n      class: File\n      path: tables/t.csv\n      secondaryFiles:\n        - class: File\n          location: tables/t.csv.idx\noutputs: []\n"
