@@ -127,7 +127,9 @@ module ARC =
         /// one part.
         static member private addReferencedFiles (dataset : LDNode, cwlFilePath : string, processingUnit : CWL.CWLProcessingUnit, fileSystem : FileSystem) =
             let parts = LDDataset.getHasParts(dataset)
-            let partPaths = parts |> ResizeArray.map (fun part -> ArcPathHelper.normalize part.Id)
+            let partPaths = System.Collections.Generic.HashSet<string>()
+            for part in parts do
+                partPaths.Add(ArcPathHelper.normalize part.Id) |> ignore
             let files =
                 WorkflowConversion.getReferencedFilePaths(cwlFilePath, processingUnit, fileSystem)
                 |> ResizeArray.filter (fun path -> not (partPaths.Contains path))

@@ -379,13 +379,14 @@ type WorkflowConversion =
     static member getReferencedFilePaths (cwlFilePath: string, processingUnit: CWL.CWLProcessingUnit, fs: FileSystem) : ResizeArray<string> =
         let mainPath = ArcPathHelper.normalize cwlFilePath
         let paths = ResizeArray<string>()
+        let added = System.Collections.Generic.HashSet<string>()
         let visited = System.Collections.Generic.HashSet<string>()
         let isFile (path: string) =
             match fs.Tree.TryGetPath path with
             | Some (FileSystemTree.File _) -> true
             | _ -> false
         let add (path: string) =
-            if path <> mainPath && not (paths.Contains path) then paths.Add path
+            if path <> mainPath && added.Add path then paths.Add path
         let rec visit (filePath: string) (processingUnit: CWL.CWLProcessingUnit) =
             if visited.Add filePath then
                 for (reference, isDirectory) in WorkflowConversion.fileReferencesOfYaml (CWL.Encode.encodeProcessingUnitElement processingUnit) do
