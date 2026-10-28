@@ -1551,6 +1551,15 @@ module Encode =
         encodeOperationDescriptionElement op
         |> renderTopLevelElement ["cwlVersion"; "class"; "id"; "label"; "doc"; "intent"] ["hints"; "requirements"; "inputs"; "outputs"]
 
+    /// Encode a processing unit as its YAML tree, with the runs of its steps and its directives as they were written.
+    let encodeProcessingUnitElement (pu : CWLProcessingUnit) : YamlNode =
+        match pu with
+        | CommandLineTool td -> encodeToolDescriptionElement td
+        | Workflow wd -> encodeWorkflowDescriptionElement wd
+        | ExpressionTool et -> encodeExpressionToolDescriptionElement et
+        | Operation op -> encodeOperationDescriptionElement op
+        | RawProcess raw -> rawYamlNode raw
+
     let encodeProcessingUnit (pu : CWLProcessingUnit) :string =
         match pu with
         // Preserve the public processing-unit wrapper dispatch at the string level.

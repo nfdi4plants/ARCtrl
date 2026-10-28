@@ -122,8 +122,22 @@ module ARC =
             graph.Compact_InPlace()
             graph
 
+        /// Adds the local files that the CWL file of a workflow or a run needs to the parts of its dataset, as File
+        /// entities, so that the crate holds every file that its main workflow reads. A file that is a part already stays
+        /// one part.
+        static member private addReferencedFiles (dataset : LDNode, cwlFilePath : string, processingUnit : CWL.CWLProcessingUnit, fileSystem : FileSystem) =
+            let parts = LDDataset.getHasParts(dataset)
+            let partPaths = parts |> ResizeArray.map (fun part -> ArcPathHelper.normalize part.Id)
+            let files =
+                WorkflowConversion.getReferencedFilePaths(cwlFilePath, processingUnit, fileSystem)
+                |> ResizeArray.filter (fun path -> not (partPaths.Contains path))
+                |> ResizeArray.map (fun path -> LDFile.create(name = path))
+            if files.Count > 0 then
+                LDDataset.setHasParts(dataset, ResizeArray.append parts files)
+
         static member writeRunAsCrate(arcRun:ArcRun, fileSystem: FileSystem, license : License) =
             let runDataset = arcRun.ToROCrateRun(fs = fileSystem)
+            ROCrate.addReferencedFiles(runDataset, Identifier.Run.cwlFileNameFromIdentifier arcRun.Identifier, arcRun.CWLDescription.Value, fileSystem)
             
             // Validate required dataset properties
             let requiredDatasetProperties = [
@@ -177,6 +191,7 @@ module ARC =
 
         static member writeWorkflowAsCrate(arcWorkflow:ArcWorkflow, fileSystem: FileSystem, license : License) =
             let workflowDataset = arcWorkflow.ToROCrateWorkflow(fs = fileSystem)
+            ROCrate.addReferencedFiles(workflowDataset, Identifier.Workflow.cwlFileNameFromIdentifier arcWorkflow.Identifier, arcWorkflow.CWLDescription.Value, fileSystem)
             
             // Validate required dataset properties
             let requiredDatasetProperties = [

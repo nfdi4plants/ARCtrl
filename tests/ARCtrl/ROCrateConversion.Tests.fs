@@ -3710,6 +3710,112 @@ let tests_ArcRun =
 
     ]
 
+module WorkflowCrate =
+
+    let workflowText =
+        "cwlVersion: v1.2\nclass: Workflow\nrequirements:\n  DockerRequirement:\n    dockerFile: {$include: Dockerfile}\ninputs:\n  x: string\noutputs:\n  y:\n    type: string\n    outputSource: s/o\nsteps:\n  s:\n    run: tool.cwl\n    in: {}\n    out: [o]\n"
+
+    let toolText =
+        "cwlVersion: v1.2\nclass: CommandLineTool\nrequirements:\n  SchemaDefRequirement:\n    types:\n      - $import: types.yml\nbaseCommand: echo\ninputs: []\noutputs:\n  o: string\n"
+
+    let runText =
+        "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  main:\n    run: ../../workflows/W/workflow.cwl\n    in: {}\n    out: []\n"
+
+    /// Decodes each file once and resolves the runs of the CWL file at the path, as the reader of an ARC does.
+    let resolve (cwlFilePath : string) (files : (string * string) list) =
+        let byPath =
+            files
+            |> List.map (fun (path, text) -> ArcPathHelper.normalizePathKey path, CWL.Decode.decodeCWLProcessingUnit text)
+            |> Map.ofList
+        CWLRunResolver.resolveRunReferencesFromLookup cwlFilePath byPath.[ArcPathHelper.normalizePathKey cwlFilePath] (fun path -> byPath.TryFind (ArcPathHelper.normalizePathKey path))
+
+    let fileSystemOf (paths : string list) = FileSystem.fromFilePaths (Array.ofList paths)
+
+    let license = License(contentType = LicenseContentType.Fulltext, content = "MIT", path = "LICENSE")
+
+    let hasPartIds (json : string) =
+        let graph = JsonController.LDGraph.fromROCrateJsonString json
+        let root = Expect.wantSome (graph.TryGetNode "./") "The crate has a root."
+        let parts = LDDataset.getHasParts(root, graph = graph, ?context = graph.TryGetContext())
+        parts |> Seq.iter (fun part -> Expect.isTrue (LDFile.validate(part, ?context = graph.TryGetContext())) $"The part {part.Id} is a File.")
+        parts |> Seq.map (fun part -> part.Id) |> List.ofSeq
+
+let tests_WorkflowCrate =
+    testList "WorkflowCrate" [
+        testCase "ReferencedFiles_StepRunsAndDirectivesOfEveryFileReached" (fun () ->
+            let workflow =
+                WorkflowCrate.resolve "workflows/W/workflow.cwl" [
+                    "workflows/W/workflow.cwl", WorkflowCrate.workflowText
+                    "workflows/W/tool.cwl", WorkflowCrate.toolText
+                ]
+            let fs = WorkflowCrate.fileSystemOf ["workflows/W/workflow.cwl"; "workflows/W/tool.cwl"; "workflows/W/Dockerfile"; "workflows/W/types.yml"]
+            let paths = WorkflowConversion.getReferencedFilePaths("workflows/W/workflow.cwl", workflow, fs)
+            Expect.sequenceEqual paths ["workflows/W/Dockerfile"; "workflows/W/tool.cwl"; "workflows/W/types.yml"] "The include and the run of the workflow come first, then the import of the tool."
+        )
+        testCase "ReferencedFiles_TheWorkflowOfARunAndItsTools" (fun () ->
+            let run =
+                WorkflowCrate.resolve "runs/R/run.cwl" [
+                    "runs/R/run.cwl", WorkflowCrate.runText
+                    "workflows/W/workflow.cwl", WorkflowCrate.workflowText
+                    "workflows/W/tool.cwl", WorkflowCrate.toolText
+                ]
+            let fs = WorkflowCrate.fileSystemOf ["runs/R/run.cwl"; "workflows/W/workflow.cwl"; "workflows/W/tool.cwl"; "workflows/W/Dockerfile"; "workflows/W/types.yml"]
+            let paths = WorkflowConversion.getReferencedFilePaths("runs/R/run.cwl", run, fs)
+            Expect.sequenceEqual paths ["workflows/W/workflow.cwl"; "workflows/W/Dockerfile"; "workflows/W/tool.cwl"; "workflows/W/types.yml"] "The run needs the workflow that it runs and every file of the workflow."
+        )
+        testCase "ReferencedFiles_MissingRemoteAndOutsideFilesAreLeftOut" (fun () ->
+            let text =
+                "cwlVersion: v1.2\nclass: Workflow\nrequirements:\n  DockerRequirement:\n    dockerFile: {$include: Dockerfile}\ninputs: {}\noutputs: {}\nsteps:\n  a:\n    run: missing.cwl\n    in: {}\n    out: []\n  b:\n    run: https://example.org/tool.cwl\n    in: {}\n    out: []\n  c:\n    run: ../../../outside.cwl\n    in: {}\n    out: []\n  d:\n    run: /workflows/W/tool.cwl\n    in: {}\n    out: []\n"
+            let workflow = WorkflowCrate.resolve "workflows/W/workflow.cwl" ["workflows/W/workflow.cwl", text]
+            let fs = WorkflowCrate.fileSystemOf ["workflows/W/workflow.cwl"; "workflows/W/tool.cwl"; "outside.cwl"]
+            let paths = WorkflowConversion.getReferencedFilePaths("workflows/W/workflow.cwl", workflow, fs)
+            Expect.isEmpty paths "No reference names a file of the ARC."
+        )
+        testCase "ReferencedFiles_ACycleEnds" (fun () ->
+            let text (other : string) =
+                $"cwlVersion: v1.2\nclass: Workflow\ninputs: {{}}\noutputs: {{}}\nsteps:\n  s:\n    run: {other}\n    in: {{}}\n    out: []\n"
+            let a = CWL.Decode.decodeCWLProcessingUnit (text "b.cwl")
+            let b = CWL.Decode.decodeCWLProcessingUnit (text "a.cwl")
+            let stepOf (processingUnit : CWL.CWLProcessingUnit) =
+                match processingUnit with
+                | CWL.Workflow workflow -> (CWL.ListEntry.values workflow.Steps).[0]
+                | other -> failwithf "Expected a workflow but got %A" other
+            // Each step holds the other workflow, which no reader of an ARC does, so only the visited files end the walk.
+            (stepOf a).ResolvedRun <- { Run = CWLRunResolver.tryRunFromProcessingUnit b }
+            (stepOf b).ResolvedRun <- { Run = CWLRunResolver.tryRunFromProcessingUnit a }
+            let fs = WorkflowCrate.fileSystemOf ["workflows/W/a.cwl"; "workflows/W/b.cwl"]
+            let paths = WorkflowConversion.getReferencedFilePaths("workflows/W/a.cwl", a, fs)
+            Expect.sequenceEqual paths ["workflows/W/b.cwl"] "The walk visits each file once and leaves out the main file."
+        )
+        testCase "WorkflowCrate_ListsTheFilesTheWorkflowNeeds" (fun () ->
+            let workflow = create_workflow_full()
+            workflow.CWLDescription <-
+                WorkflowCrate.resolve "workflows/MyWorkflow/workflow.cwl" [
+                    "workflows/MyWorkflow/workflow.cwl", WorkflowCrate.workflowText
+                    "workflows/MyWorkflow/tool.cwl", WorkflowCrate.toolText
+                ]
+                |> Some
+            let fs = WorkflowCrate.fileSystemOf ["workflows/MyWorkflow/workflow.cwl"; "workflows/MyWorkflow/tool.cwl"; "workflows/MyWorkflow/Dockerfile"]
+            let json = ARCtrl.Json.ARC.ROCrate.writeWorkflowAsCrate(workflow, fs, WorkflowCrate.license)
+            Expect.sequenceEqual (WorkflowCrate.hasPartIds json) ["./workflows/MyWorkflow/workflow.cwl"; "./workflows/MyWorkflow/Dockerfile"; "./workflows/MyWorkflow/tool.cwl"] "The crate holds the workflow, its include and its tool, and no file that is missing."
+        )
+        testCase "RunCrate_ListsTheWorkflowItRunsAndItsTools" (fun () ->
+            let run = create_run_full()
+            run.CWLDescription <-
+                WorkflowCrate.resolve "runs/MyRun/run.cwl" [
+                    "runs/MyRun/run.cwl", WorkflowCrate.runText
+                    "workflows/W/workflow.cwl", WorkflowCrate.workflowText
+                    "workflows/W/tool.cwl", WorkflowCrate.toolText
+                ]
+                |> Some
+            let fs = WorkflowCrate.fileSystemOf ["runs/MyRun/run.cwl"; "workflows/W/workflow.cwl"; "workflows/W/tool.cwl"; "workflows/W/Dockerfile"; "workflows/W/types.yml"]
+            let ids = WorkflowCrate.hasPartIds (ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(run, fs, WorkflowCrate.license))
+            for id in ["./runs/MyRun/run.cwl"; "./workflows/W/workflow.cwl"; "./workflows/W/Dockerfile"; "./workflows/W/tool.cwl"; "./workflows/W/types.yml"] do
+                Expect.isTrue (List.contains id ids) $"The run crate holds {id}."
+            Expect.equal (ids |> List.distinct |> List.length) ids.Length "Each part is listed once."
+        )
+    ]
+
 let tests_Assay =
     testList "Assay" [
         testCase "Empty_FromScaffold" (fun () ->
@@ -4181,6 +4287,7 @@ let main =
         tests_WorkflowInvocation
         tests_ArcWorkflow
         tests_ArcRun
+        tests_WorkflowCrate
         tests_Assay
         tests_Study
         tests_Investigation

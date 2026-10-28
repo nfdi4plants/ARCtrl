@@ -249,6 +249,109 @@ type WorkflowConversion =
             | _ ->
                 None
 
+    /// True when a reference is a relative path, which names a file in relation to the CWL file that holds it. A
+    /// reference with a URI scheme, as in https://example.org/tool.cwl, and an absolute path name no file of the ARC.
+    static member private isRelativeFileReference (reference: string) : bool =
+        not (System.String.IsNullOrWhiteSpace reference)
+        && not (System.Text.RegularExpressions.Regex.IsMatch(reference, "^[A-Za-z][A-Za-z0-9+.\\-]+:"))
+        && (fst (ArcPathHelper.splitWithPrefix reference)).IsNone
+
+    /// The file references in the YAML tree of a CWL document, in the order of the document: the run of every step that
+    /// is a text and the text target of every $import, $include and $mixin directive.
+    static member private fileReferencesOfYaml (root: YAMLicious.YamlNode) : ResizeArray<string> =
+        let references = ResizeArray<string>()
+        let tryScalarText (node: YAMLicious.YamlNode) =
+            match node.Kind with
+            | YAMLicious.YamlNodeKind.Scalar scalar when not (YAMLicious.YamlNode.isMissingValue node) -> Some scalar.Value
+            | _ -> None
+        let isDirective (key: string) = key = "$import" || key = "$include" || key = "$mixin"
+        let rec visit (isStep: bool) (node: YAMLicious.YamlNode) =
+            match node.Kind with
+            | YAMLicious.YamlNodeKind.Mapping collection ->
+                for entry in collection.Items do
+                    let key = tryScalarText entry.Key |> Option.defaultValue ""
+                    match tryScalarText entry.Value with
+                    | Some path when isDirective key || (isStep && key = "run") -> references.Add path
+                    | _ when key = "steps" -> visitSteps entry.Value
+                    | _ -> visit false entry.Value
+            | YAMLicious.YamlNodeKind.Sequence collection ->
+                for item in collection.Items do
+                    visit false item.Node
+            | _ -> ()
+        // The steps are the values of a mapping or the items of a list. A directive can stand for them.
+        and visitSteps (node: YAMLicious.YamlNode) =
+            match node.Kind with
+            | YAMLicious.YamlNodeKind.Mapping collection ->
+                for entry in collection.Items do
+                    let key = tryScalarText entry.Key |> Option.defaultValue ""
+                    match tryScalarText entry.Value with
+                    | Some path when isDirective key -> references.Add path
+                    | _ -> visit true entry.Value
+            | YAMLicious.YamlNodeKind.Sequence collection ->
+                for item in collection.Items do
+                    visit true item.Node
+            | _ -> ()
+        visit false root
+        references
+
+    /// The processes that the steps of a process resolved their runs to, each with the run as it is written. The steps of
+    /// an inline workflow are steps of the same file, and each inline workflow is entered once.
+    static member private resolvedRunsOf (processingUnit: CWL.CWLProcessingUnit) : ResizeArray<string * CWL.CWLProcessingUnit> =
+        let resolved = ResizeArray<string * CWL.CWLProcessingUnit>()
+        let entered = ResizeArray<CWL.CWLWorkflowDescription>()
+        let rec visit (workflow: CWL.CWLWorkflowDescription) =
+            if not (entered |> Seq.exists (fun other -> System.Object.ReferenceEquals(other, workflow))) then
+                entered.Add workflow
+                for step in CWL.CWLWorkflowDescription.getStepValues workflow do
+                    match step.Run with
+                    | CWL.RunString runPath
+                    | CWL.RunImport runPath ->
+                        step.ResolvedRun.Run
+                        |> Option.bind CWL.WorkflowStepRunOps.tryGetProcessingUnit
+                        |> Option.iter (fun target -> resolved.Add((runPath, target)))
+                    | CWL.RunWorkflow _ ->
+                        CWL.WorkflowStepRunOps.tryGetWorkflow step.Run |> Option.iter visit
+                    | _ -> ()
+        match processingUnit with
+        | CWL.Workflow workflow -> visit workflow
+        | _ -> ()
+        resolved
+
+    /// <summary>
+    /// Returns the local files that a CWL file needs, as paths from the root of the ARC. These are the run of every step
+    /// that names a file and the target of every $import, $include and $mixin directive, each resolved against the folder
+    /// of the CWL file that holds it. A file that a step runs adds the files that it needs in turn, when the step holds the
+    /// process that its run resolved to. References with a URI scheme, absolute paths, paths outside the ARC and paths
+    /// that are no file of the file system are left out. Each CWL file is visited once, so a cycle of references ends.
+    /// </summary>
+    /// <param name="cwlFilePath">The path of the CWL file from the root of the ARC.</param>
+    /// <param name="processingUnit">The process that the CWL file describes.</param>
+    /// <param name="fs">The file system of the ARC.</param>
+    static member getReferencedFilePaths (cwlFilePath: string, processingUnit: CWL.CWLProcessingUnit, fs: FileSystem) : ResizeArray<string> =
+        let mainPath = ArcPathHelper.normalize cwlFilePath
+        let paths = ResizeArray<string>()
+        let visited = System.Collections.Generic.HashSet<string>()
+        let tryResolve (filePath: string) (reference: string) =
+            if WorkflowConversion.isRelativeFileReference reference then
+                let path = ArcPathHelper.resolvePathFromFile filePath reference
+                if path = ".." || path.StartsWith "../" then None else Some path
+            else
+                None
+        let isFile (path: string) =
+            match fs.Tree.TryGetPath path with
+            | Some (FileSystemTree.File _) -> true
+            | _ -> false
+        let rec visit (filePath: string) (processingUnit: CWL.CWLProcessingUnit) =
+            if visited.Add filePath then
+                for reference in WorkflowConversion.fileReferencesOfYaml (CWL.Encode.encodeProcessingUnitElement processingUnit) do
+                    match tryResolve filePath reference with
+                    | Some path when path <> mainPath && isFile path && not (paths.Contains path) -> paths.Add path
+                    | _ -> ()
+                for (runPath, target) in WorkflowConversion.resolvedRunsOf processingUnit do
+                    tryResolve filePath runPath |> Option.iter (fun path -> visit path target)
+        visit mainPath processingUnit
+        paths
+
     static member composeWorkflowProtocolFromToolDescription (filePath : string, workflow : CWL.CWLToolDescription, ?workflowName : string, ?runName : string) =
         let inputs =
             workflow.Inputs

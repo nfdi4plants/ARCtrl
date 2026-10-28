@@ -114,3 +114,14 @@ module WorkflowStepRunOps =
         | RunOperation (:? CWLOperationDescription as operation) -> Some operation
         | _ -> None
 
+    /// The process that a run holds, and none for a run that names a file or keeps a mapping as it was written.
+    let tryGetProcessingUnit (run: WorkflowStepRun) : CWLProcessingUnit option =
+        match run with
+        | RunCommandLineTool _ -> tryGetTool run |> Option.map CommandLineTool
+        | RunWorkflow _ -> tryGetWorkflow run |> Option.map Workflow
+        | RunExpressionTool _ -> tryGetExpressionTool run |> Option.map ExpressionTool
+        | RunOperation _ -> tryGetOperation run |> Option.map Operation
+        | RunString _
+        | RunImport _
+        | RunMixed _
+        | RunRaw _ -> None
