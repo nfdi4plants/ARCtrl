@@ -3836,6 +3836,14 @@ let tests_WorkflowCrate =
             let paths = WorkflowConversion.getReferencedFilePaths("workflows/W/a.cwl", a, fs)
             Expect.sequenceEqual paths ["workflows/W/b.cwl"] "The walk visits each file once and leaves out the main file."
         )
+        testCase "ReferencedFiles_FileAndDirectoryLiterals" (fun () ->
+            let text =
+                "cwlVersion: v1.2\nclass: CommandLineTool\nrequirements:\n  InitialWorkDirRequirement:\n    listing:\n      - class: File\n        location: x.R\n      - class: Directory\n        location: data\n      - class: File\n        location: missing.R\n      - class: File\n        location: https://example.org/y.R\nbaseCommand: [Rscript, x.R]\ninputs:\n  table:\n    type: File\n    default:\n      class: File\n      path: tables/t.csv\n      secondaryFiles:\n        - class: File\n          location: tables/t.csv.idx\noutputs: []\n"
+            let tool = CWL.Decode.decodeCWLProcessingUnit text
+            let fs = WorkflowCrate.fileSystemOf ["workflows/W/workflow.cwl"; "workflows/W/x.R"; "workflows/W/data/a.txt"; "workflows/W/data/sub/b.txt"; "workflows/W/tables/t.csv"; "workflows/W/tables/t.csv.idx"; "workflows/W/other.txt"]
+            let paths = WorkflowConversion.getReferencedFilePaths("workflows/W/workflow.cwl", tool, fs)
+            Expect.equal (paths |> Seq.sort |> List.ofSeq) ["workflows/W/data/a.txt"; "workflows/W/data/sub/b.txt"; "workflows/W/tables/t.csv"; "workflows/W/tables/t.csv.idx"; "workflows/W/x.R"] "A File literal names its file, a Directory literal every file under its directory, and a missing or remote literal nothing."
+        )
         testCase "WorkflowCrate_ListsTheFilesTheWorkflowNeeds" (fun () ->
             let workflow = create_workflow_full()
             workflow.CWLDescription <-

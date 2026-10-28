@@ -295,9 +295,10 @@ type WorkflowConversion =
             None
 
     /// The file references in the YAML tree of a CWL document, in the order of the document: the run of every step that
-    /// is a text and the text target of every $import, $include and $mixin directive.
-    static member private fileReferencesOfYaml (root: YAMLicious.YamlNode) : ResizeArray<string> =
-        let references = ResizeArray<string>()
+    /// is a text, the text target of every $import, $include and $mixin directive, and the location or path of every
+    /// File and Directory literal. Each reference comes with true when it names a directory.
+    static member private fileReferencesOfYaml (root: YAMLicious.YamlNode) : ResizeArray<string * bool> =
+        let references = ResizeArray<string * bool>()
         let tryScalarText (node: YAMLicious.YamlNode) =
             match node.Kind with
             | YAMLicious.YamlNodeKind.Scalar scalar when not (YAMLicious.YamlNode.isMissingValue node) -> Some scalar.Value
@@ -306,10 +307,19 @@ type WorkflowConversion =
         let rec visit (isStep: bool) (node: YAMLicious.YamlNode) =
             match node.Kind with
             | YAMLicious.YamlNodeKind.Mapping collection ->
+                let fieldText (name: string) =
+                    collection.Items
+                    |> List.tryPick (fun entry -> if tryScalarText entry.Key = Some name then tryScalarText entry.Value else None)
+                match fieldText "class" with
+                | Some literalClass when literalClass = "File" || literalClass = "Directory" ->
+                    fieldText "location"
+                    |> Option.orElse (fieldText "path")
+                    |> Option.iter (fun path -> references.Add((path, literalClass = "Directory")))
+                | _ -> ()
                 for entry in collection.Items do
                     let key = tryScalarText entry.Key |> Option.defaultValue ""
                     match tryScalarText entry.Value with
-                    | Some path when isDirective key || (isStep && key = "run") -> references.Add path
+                    | Some path when isDirective key || (isStep && key = "run") -> references.Add((path, false))
                     | _ when key = "steps" -> visitSteps entry.Value
                     | _ -> visit false entry.Value
             | YAMLicious.YamlNodeKind.Sequence collection ->
@@ -323,7 +333,7 @@ type WorkflowConversion =
                 for entry in collection.Items do
                     let key = tryScalarText entry.Key |> Option.defaultValue ""
                     match tryScalarText entry.Value with
-                    | Some path when isDirective key -> references.Add path
+                    | Some path when isDirective key -> references.Add((path, false))
                     | _ -> visit true entry.Value
             | YAMLicious.YamlNodeKind.Sequence collection ->
                 for item in collection.Items do
@@ -357,10 +367,11 @@ type WorkflowConversion =
 
     /// <summary>
     /// Returns the local files that a CWL file needs, as paths from the root of the ARC. These are the run of every step
-    /// that names a file and the target of every $import, $include and $mixin directive, each resolved against the folder
-    /// of the CWL file that holds it. A file that a step runs adds the files that it needs in turn, when the step holds the
-    /// process that its run resolved to. References with a URI scheme, absolute paths, paths outside the ARC and paths
-    /// that are no file of the file system are left out. Each CWL file is visited once, so a cycle of references ends.
+    /// that names a file, the target of every $import, $include and $mixin directive and the location or path of every
+    /// File literal, each resolved against the folder of the CWL file that holds it. A Directory literal adds every file
+    /// under its directory. A file that a step runs adds the files that it needs in turn, when the step holds the process
+    /// that its run resolved to. References with a URI scheme, absolute paths, paths outside the ARC and paths that are
+    /// not in the file system are left out. Each CWL file is visited once, so a cycle of references ends.
     /// </summary>
     /// <param name="cwlFilePath">The path of the CWL file from the root of the ARC.</param>
     /// <param name="processingUnit">The process that the CWL file describes.</param>
@@ -373,11 +384,19 @@ type WorkflowConversion =
             match fs.Tree.TryGetPath path with
             | Some (FileSystemTree.File _) -> true
             | _ -> false
+        let add (path: string) =
+            if path <> mainPath && not (paths.Contains path) then paths.Add path
         let rec visit (filePath: string) (processingUnit: CWL.CWLProcessingUnit) =
             if visited.Add filePath then
-                for reference in WorkflowConversion.fileReferencesOfYaml (CWL.Encode.encodeProcessingUnitElement processingUnit) do
+                for (reference, isDirectory) in WorkflowConversion.fileReferencesOfYaml (CWL.Encode.encodeProcessingUnitElement processingUnit) do
                     match WorkflowConversion.tryResolveFileReference filePath reference with
-                    | Some path when path <> mainPath && isFile path && not (paths.Contains path) -> paths.Add path
+                    | Some path when isDirectory ->
+                        match fs.Tree.TryGetPath path with
+                        | Some (FileSystemTree.Folder _ as folder) ->
+                            for file in folder.ToFilePaths(true) do
+                                add (ArcPathHelper.combine path file)
+                        | _ -> ()
+                    | Some path when isFile path -> add path
                     | _ -> ()
                 for (runPath, target) in WorkflowConversion.resolvedRunsOf processingUnit do
                     WorkflowConversion.tryResolveFileReference filePath runPath |> Option.iter (fun path -> visit path target)
