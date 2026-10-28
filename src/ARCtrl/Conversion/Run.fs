@@ -18,11 +18,10 @@ type RunConversion =
     /// File paths in CWL files are relative to the file itself. In RO-Crate, we use relative paths from the root of the crate.
     ///
     /// This function replaces the relative paths in the CWL input file with paths relative to the root of the crate.
+    /// The path is joined to the run folder, and its "." and ".." segments are resolved.
     static member composeCWLInputFilePath (path : string, runName : string) =
-        if path.StartsWith("../..") then
-            path.Replace("../../","").Replace("../..","")
-        else
-            ArcPathHelper.combineMany [| "runs"; runName ; path|]
+        ArcPathHelper.combineMany [| "runs"; runName ; path|]
+        |> ArcPathHelper.normalize
 
     static member decomposeCWLInputFilePath (path : string, runName : string) =
         let prefix = ArcPathHelper.combineMany [| "runs"; runName|]

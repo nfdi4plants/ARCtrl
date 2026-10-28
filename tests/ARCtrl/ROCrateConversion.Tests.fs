@@ -3424,6 +3424,44 @@ let tests_ArcRun =
             Expect.equal actualInput.Value expectedInput.Value "Run with nested File[][] input should roundtrip through RO-Crate."
             Expect.sequenceEqual actualInput.Values expectedInput.Values "Legacy flattened Values projection should roundtrip."
         )
+        testCase "JobFilePaths_DotSegmentsAreResolved" (fun () ->
+            Expect.equal (RunConversion.composeCWLInputFilePath("./x", "R")) "runs/R/x" "A leading . segment is dropped."
+            Expect.equal (RunConversion.composeCWLInputFilePath("a/./b", "R")) "runs/R/a/b" "A . segment inside the path is dropped."
+            Expect.equal (RunConversion.composeCWLInputFilePath("../../assays/A/dataset/d.csv", "R")) "assays/A/dataset/d.csv" "The .. segments leave the run folder."
+            Expect.equal (RunConversion.composeCWLInputFilePath("../S/./out.csv", "R")) "runs/S/out.csv" "A path into another run resolves both kinds of segment."
+        )
+        testCase "JobFilePaths_CrateIdsHaveNoDotSegmentsAndReadBack" (fun () ->
+            let workflow =
+                CWL.CWLWorkflowDescription(
+                    steps = ResizeArray(),
+                    inputs = ListEntry.ofValues [CWL.CWLInput(name = "params", type_ = CWLType.File); CWL.CWLInput(name = "table", type_ = CWLType.File)],
+                    outputs = ResizeArray()
+                )
+            let runInputValues =
+                "params:\n  class: File\n  path: ./quantalignresult/AlignmentBasedQuantificationParams.json\ntable:\n  class: File\n  path: ../../assays/A/./dataset/table.csv\n"
+                |> CWL.DecodeParameters.decodeYAMLParameterFile
+            let run =
+                ArcRun.create(
+                    identifier = "DilutionSeries",
+                    cwlDescription = CWL.Workflow workflow,
+                    cwlInput = runInputValues
+                )
+            let json = (RunConversion.composeRun run).Flatten() |> JsonController.LDGraph.toROCrateJsonString()
+            let graph = JsonController.LDGraph.fromROCrateJsonString json
+            Expect.isSome (graph.TryGetNode "./runs/DilutionSeries/quantalignresult/AlignmentBasedQuantificationParams.json") "The id of a file in the run folder has no . segment."
+            Expect.isSome (graph.TryGetNode "./assays/A/dataset/table.csv") "The id of a file outside the run folder has no . or .. segment."
+            let ro_Run = Expect.wantSome (graph.TryGetNode "./runs/DilutionSeries/") "The run is in the crate."
+            let run' = RunConversion.decomposeRun(ro_Run, graph = graph)
+            let pathOf (key : string) =
+                run'.CWLInput
+                |> Seq.find (fun input -> input.Key = key)
+                |> fun input ->
+                    match input.Value with
+                    | Some (CWL.CWLParameterValue.File file) -> CWL.FileInstance.pathOrLocation file
+                    | other -> failwithf "Expected a File value for %s but got %A" key other
+            Expect.equal (pathOf "params") "quantalignresult/AlignmentBasedQuantificationParams.json" "The value reads back relative to the run folder."
+            Expect.equal (pathOf "table") "../../assays/A/dataset/table.csv" "The value outside the run folder reads back relative to the run folder."
+        )
         testCaseCrossAsync "RelativeWorkflowRunReference_ResolvesToWorkflow" (crossAsync {
             let sampleArcDirectory = TestObjects.IO.testSimpleARCWithCWL
             let runFixturePath =
