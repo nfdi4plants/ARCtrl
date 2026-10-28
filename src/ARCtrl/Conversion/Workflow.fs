@@ -282,7 +282,7 @@ type WorkflowConversion =
     /// reference with a URI scheme, as in https://example.org/tool.cwl, and an absolute path name no file of the ARC.
     static member private isRelativeFileReference (reference: string) : bool =
         not (System.String.IsNullOrWhiteSpace reference)
-        && not (System.Text.RegularExpressions.Regex.IsMatch(reference, "^[A-Za-z][A-Za-z0-9+.\\-]+:"))
+        && not (ArcPathHelper.hasUriScheme reference)
         && (fst (ArcPathHelper.splitWithPrefix reference)).IsNone
 
     /// The path from the root of the ARC that a relative reference names, resolved against the folder of the CWL file

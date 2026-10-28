@@ -43,6 +43,11 @@ let split(path: string) =
     path.Split(seperators, enum<StringSplitOptions>(3))
     |> Array.filter (fun p -> p <> "" && p <> ".")
 
+/// True when a path starts with a URI scheme, as in https://example.org/data.csv or file:///data.csv. A drive letter, as
+/// in C:/data.csv, is no scheme.
+let hasUriScheme (path: string) : bool =
+    System.Text.RegularExpressions.Regex.IsMatch(path.Trim(), "^[A-Za-z][A-Za-z0-9+.\\-]+:")
+
 let hasLeadingSeparator (path: string) =
     path.Length > 0 && (path.[0] = PathSeperator || path.[0] = PathSeperatorWindows)
 

@@ -3511,6 +3511,35 @@ let tests_ArcRun =
             Expect.equal (pathOf "params") "quantalignresult/AlignmentBasedQuantificationParams.json" "The value reads back relative to the run folder."
             Expect.equal (pathOf "table") "../../assays/A/dataset/table.csv" "The value outside the run folder reads back relative to the run folder."
         )
+        testCase "JobFilePaths_URLsStayAsTheyAre" (fun () ->
+            Expect.equal (RunConversion.composeCWLInputFilePath("https://example.org/data/p.json", "R")) "https://example.org/data/p.json" "A URL is not joined to the run folder."
+            Expect.equal (RunConversion.composeCWLInputFilePath("file:///data/p.json", "R")) "file:///data/p.json" "A file URI is not joined to the run folder."
+            Expect.equal (RunConversion.decomposeCWLInputFilePath("https://example.org/data/p.json", "R")) "https://example.org/data/p.json" "A URL reads back as it is."
+            let workflow =
+                CWL.CWLWorkflowDescription(
+                    steps = ResizeArray(),
+                    inputs = ListEntry.ofValues [CWL.CWLInput(name = "params", type_ = CWLType.File)],
+                    outputs = ResizeArray()
+                )
+            let run =
+                ArcRun.create(
+                    identifier = "R",
+                    cwlDescription = CWL.Workflow workflow,
+                    cwlInput = CWL.DecodeParameters.decodeYAMLParameterFile "params:\n  class: File\n  location: https://example.org/data/p.json\n"
+                )
+            let graph = (RunConversion.composeRun run).Flatten() |> JsonController.LDGraph.toROCrateJsonString() |> JsonController.LDGraph.fromROCrateJsonString
+            Expect.isSome (graph.TryGetNode "https://example.org/data/p.json") "The id of the file is the URL."
+            let run' = RunConversion.decomposeRun(Expect.wantSome (graph.TryGetNode "./runs/R/") "The run is in the crate.", graph = graph)
+            match (Seq.exactlyOne run'.CWLInput).Value with
+            | Some (CWL.CWLParameterValue.File file) -> Expect.equal (CWL.FileInstance.pathOrLocation file) "https://example.org/data/p.json" "The value reads back as the URL."
+            | other -> failwithf "Expected a File value but got %A" other
+        )
+        testCase "JobFilePaths_TheRunFolderIsComparedBySegments" (fun () ->
+            Expect.equal (RunConversion.decomposeCWLInputFilePath("./runs/R/out.csv", "R")) "out.csv" "A file in the run folder is relative to it."
+            Expect.equal (RunConversion.decomposeCWLInputFilePath("./runs/R2/out.csv", "R")) "../../runs/R2/out.csv" "A file of the run R2 is no file of the run R."
+            Expect.equal (RunConversion.decomposeCWLInputFilePath("runs/R/sub/out.csv", "R")) "sub/out.csv" "An id without the leading ./ is read the same way."
+            Expect.equal (RunConversion.decomposeCWLInputFilePath("./assays/A/dataset/d.csv", "R")) "../../assays/A/dataset/d.csv" "A file outside the run folder leaves it."
+        )
         testCaseCrossAsync "RelativeWorkflowRunReference_ResolvesToWorkflow" (crossAsync {
             let sampleArcDirectory = TestObjects.IO.testSimpleARCWithCWL
             let runFixturePath =
