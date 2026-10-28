@@ -76,13 +76,11 @@ module ARC =
             |> Decode.map (fun graph ->
                 match graph.TryGetNode("./") with
                 | Some node ->
-                    // Files referenced by URL are online resources and not part of the ARC filesystem
-                    let isOnlineRessource (id : string) =
-                        id.StartsWith("http:") || id.StartsWith("https:")
+                    // A file whose id has a URI scheme, as in https:, file: or s3:, is a URL and no part of the ARC file system
                     let files =
                         graph.Nodes
                         |> ResizeArray.choose (fun n ->
-                            if LDFile.validate(n, ?context = graph.TryGetContext()) && n.Id.Contains "#" |> not && isOnlineRessource n.Id |> not && n.HasType(LDDataset.schemaType, ?context = graph.TryGetContext()) |> not then
+                            if LDFile.validate(n, ?context = graph.TryGetContext()) && n.Id.Contains "#" |> not && ArcPathHelper.hasUriScheme n.Id |> not && n.HasType(LDDataset.schemaType, ?context = graph.TryGetContext()) |> not then
                                 Some n.Id
                             else
                                 None

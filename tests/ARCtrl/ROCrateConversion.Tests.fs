@@ -3534,6 +3534,21 @@ let tests_ArcRun =
             | Some (CWL.CWLParameterValue.File file) -> Expect.equal (CWL.FileInstance.pathOrLocation file) "https://example.org/data/p.json" "The value reads back as the URL."
             | other -> failwithf "Expected a File value but got %A" other
         )
+        testCase "JobFilePaths_URLsAreNoFilesOfTheArc" (fun () ->
+            let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: cat\ninputs:\n  a: File\n  b: File\noutputs: []\n"
+            let input = CWL.DecodeParameters.decodeYAMLParameterFile "a:\n  class: File\n  location: file:///data/p.json\nb:\n  class: File\n  location: s3://bucket/x.csv\n"
+            let run = ArcRun.create(identifier = "R", title = "t", description = "d", cwlDescription = tool, cwlInput = input)
+            let arc = ARC("I", title = "T", description = "D", runs = ResizeArray [run])
+            let arc' = ARC.fromROCrateJsonString (arc.ToROCrateJsonString())
+            let paths = arc'.FileSystem.Tree.ToFilePaths()
+            Expect.isFalse (paths |> Array.exists (fun path -> path.Contains "p.json" || path.Contains "x.csv")) $"No URL becomes a file of the ARC, but the paths are %A{paths}."
+            let pathOf (key : string) =
+                match (arc'.Runs.[0].CWLInput |> Seq.find (fun input -> input.Key = key)).Value with
+                | Some (CWL.CWLParameterValue.File file) -> CWL.FileInstance.pathOrLocation file
+                | other -> failwithf "Expected a File value for %s but got %A" key other
+            Expect.equal (pathOf "a") "file:///data/p.json" "The file URI reads back as it is."
+            Expect.equal (pathOf "b") "s3://bucket/x.csv" "The S3 URL reads back as it is."
+        )
         testCase "JobFilePaths_TheRunFolderIsComparedBySegments" (fun () ->
             Expect.equal (RunConversion.decomposeCWLInputFilePath("./runs/R/out.csv", "R")) "out.csv" "A file in the run folder is relative to it."
             Expect.equal (RunConversion.decomposeCWLInputFilePath("./runs/R2/out.csv", "R")) "../../runs/R2/out.csv" "A file of the run R2 is no file of the run R."
