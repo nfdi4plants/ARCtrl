@@ -96,7 +96,8 @@ module ARC =
                     failwith "RO-Crate graph did not contain root data Entity"
             )
 
-        /// Packs a dataset as the root of a crate. The root is published at the given date, and now in UTC when none is given.
+        /// Packs a dataset as the root of a crate. The root is created now and published at the given date, and now when
+        /// none is given. Both dates are local time.
         static member packDatasetAsCrate (dataset : LDNode, datasetName:string, datasetDescription:string, metadataFileDescriptor: option<LDNode>, license : License, ?datePublished : System.DateTime) =
             let metadataFileDescriptor = defaultArg metadataFileDescriptor ROCrate.metadataFileDescriptor
             let license = ROCrate.createLicenseNode(Some license)
@@ -108,7 +109,7 @@ module ARC =
             )
             // Set additional properties
             LDDataset.setDateCreatedAsDateTime(mainEntity, System.DateTime.Now)
-            LDDataset.setDatePublishedAsDateTime(mainEntity, defaultArg datePublished System.DateTime.UtcNow)
+            LDDataset.setDatePublishedAsDateTime(mainEntity, defaultArg datePublished System.DateTime.Now)
             LDDataset.setLicenseAsCreativeWork(mainEntity, license)
             // LDDataset.setHasParts(mainEntity,(dataset.GetPropertyValues"http://schema.org/mainEntity") |> Seq.map (fun x -> x :?> LDNode) |> ResizeArray)
             // Flatten the dataset into a graph
@@ -138,7 +139,7 @@ module ARC =
                 LDDataset.setHasParts(dataset, ResizeArray.append parts files)
 
         /// Writes a run as a Workflow Run Crate. A license is required. The crate is published at the given date, and now in
-        /// UTC when none is given.
+        /// local time when none is given.
         static member writeRunAsCrate(arcRun:ArcRun, fileSystem: FileSystem, license : License, ?datePublished : System.DateTime) =
             let runDataset = arcRun.ToROCrateRun(fs = fileSystem)
             ROCrate.addReferencedFiles(runDataset, Identifier.Run.cwlFileNameFromIdentifier arcRun.Identifier, arcRun.CWLDescription.Value, fileSystem)
@@ -194,7 +195,7 @@ module ARC =
             |> LDGraph.toROCrateJsonString(2)
 
         /// Writes a workflow as a Workflow RO-Crate. A license is required. The crate is published at the given date, and now
-        /// in UTC when none is given.
+        /// in local time when none is given.
         static member writeWorkflowAsCrate(arcWorkflow:ArcWorkflow, fileSystem: FileSystem, license : License, ?datePublished : System.DateTime) =
             let workflowDataset = arcWorkflow.ToROCrateWorkflow(fs = fileSystem)
             ROCrate.addReferencedFiles(workflowDataset, Identifier.Workflow.cwlFileNameFromIdentifier arcWorkflow.Identifier, arcWorkflow.CWLDescription.Value, fileSystem)

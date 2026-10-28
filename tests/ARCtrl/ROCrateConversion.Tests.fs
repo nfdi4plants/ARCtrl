@@ -3966,6 +3966,14 @@ let tests_WorkflowCrate =
             let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeWorkflowAsCrate(create_workflow_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license))
             let root = Expect.wantSome (graph.TryGetNode "./") "The crate has a root."
             Expect.isSome (LDDataset.tryGetDatePublished(root, ?context = graph.TryGetContext())) "The root has a date of publication."
+            let before = System.DateTime.Now
+            let graph = ARCtrl.Json.ARC.ROCrate.packDatasetAsCrate(WorkflowConversion.composeWorkflow(create_workflow_full()), "name", "description", None, WorkflowCrate.license)
+            let after = System.DateTime.Now
+            let root = Expect.wantSome (graph.TryGetNode "./") "The packed crate has a root."
+            let datePublished = Expect.wantSome (LDDataset.tryGetDatePublishedAsDateTime(root, ?context = graph.TryGetContext())) "The root has a date of publication."
+            let dateCreated = Expect.wantSome (LDDataset.tryGetDateCreatedAsDateTime(root, ?context = graph.TryGetContext())) "The root has a date of creation."
+            for date in [ datePublished; dateCreated ] do
+                Expect.isTrue (before.AddSeconds(-1.) <= date && date <= after.AddSeconds(1.)) $"The date {date} is now in local time, between {before} and {after}."
         )
         testCase "RunCrate_NamesItsProfilesAsEntities" (fun () ->
             let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(create_run_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license))
