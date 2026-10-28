@@ -171,6 +171,20 @@ let resolvePathFromFile (filePath: string) (path: string) : string =
             else
                 buildPathFromPrefixAndSegments filePrefixOpt resolvedSegments
 
+/// The path of a file relative to the directory of another file, where both paths start at the same root. This is the
+/// inverse of resolvePathFromFile for a relative path.
+let getRelativePathFromFile (filePath: string) (path: string) : string =
+    let fileSegments = split filePath |> normalizeSegments
+    let directorySegments =
+        if fileSegments.Length <= 1 then [||]
+        else fileSegments[0..fileSegments.Length - 2]
+    let pathSegments = split path |> normalizeSegments
+    let mutable common = 0
+    while common < directorySegments.Length && common < pathSegments.Length - 1 && directorySegments[common] = pathSegments[common] do
+        common <- common + 1
+    Array.append (Array.create (directorySegments.Length - common) "..") pathSegments[common..]
+    |> String.concat (string PathSeperator)
+
 let getFileName (path: string) : string =
     split path |> Array.last
 

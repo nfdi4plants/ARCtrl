@@ -2975,9 +2975,10 @@ let tests_ArcWorkflow =
             let parsedStepIds = (CWL.ListEntry.values parsedWorkflow.Steps) |> Seq.map (fun step -> step.Id) |> Seq.toList
             Expect.equal parsedStepIds sourceStepIds "Step identifiers should be preserved through workflow conversion"
 
-            let sourceRuns = (CWL.ListEntry.values sourceWorkflow.Steps) |> Seq.map getRunId |> Seq.toList
+            // The crate holds the path of each run, so a run written as ./tool.cwl comes back as tool.cwl.
+            let sourceRuns = (CWL.ListEntry.values sourceWorkflow.Steps) |> Seq.map (getRunId >> ArcPathHelper.normalize) |> Seq.toList
             let parsedRuns = (CWL.ListEntry.values parsedWorkflow.Steps) |> Seq.map getRunId |> Seq.toList
-            Expect.equal parsedRuns sourceRuns "Step run references should be preserved through workflow conversion"
+            Expect.equal parsedRuns sourceRuns "Step run references should name the same files after workflow conversion"
 
             Expect.equal parsedWorkflow.Steps.Count 12 "Full workflow should contain all expected steps"
         })
@@ -3205,13 +3206,13 @@ let tests_ArcWorkflow =
             let workflow =
                 CWL.Decode.decodeWorkflow "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  a:\n    run: {class: {$import: c.yml}, baseCommand: echo, inputs: [], outputs: []}\n    in: {}\n    out: []\n  b:\n    run: tools/echo.cwl\n    in: {}\n    out: []\n"
             let steps = CWL.ListEntry.values workflow.Steps
-            Expect.isNone (WorkflowConversion.runToIdentifier steps.[0].Run) "A process whose class is a directive has no path and no marker."
-            Expect.equal (WorkflowConversion.runToIdentifier steps.[1].Run) (Some "tools/echo.cwl") "A run string keeps its path."
+            Expect.isNone (WorkflowConversion.runToIdentifier("workflows/w/workflow.cwl", steps.[0].Run)) "A process whose class is a directive has no path and no marker."
+            Expect.equal (WorkflowConversion.runToIdentifier("workflows/w/workflow.cwl", steps.[1].Run)) (Some "./workflows/w/tools/echo.cwl") "A run string becomes its path from the root of the crate."
             let protocol = WorkflowConversion.composeWorkflowProtocolFromWorkflow("workflows/w/workflow.cwl", workflow)
             let parts = LDComputationalWorkflow.getHasPart protocol
             Expect.equal parts.Count 2 "Both steps are in the crate."
             Expect.isNone (LDDataset.tryGetIdentifierAsString parts.[0]) "The step with the raw run has no identifier, and no empty one."
-            Expect.equal (LDDataset.tryGetIdentifierAsString parts.[1]) (Some "tools/echo.cwl") "The other step has its path."
+            Expect.equal (LDDataset.tryGetIdentifierAsString parts.[1]) (Some "./workflows/w/tools/echo.cwl") "The other step has its path."
             let roundTripped = WorkflowConversion.decomposeWorkflowProtocolToWorkflow(protocol, resolveRunReferences = false)
             Expect.equal (CWL.ListEntry.values roundTripped.Steps |> Seq.map (fun step -> step.Id) |> List.ofSeq) [ Some "b" ] "The crate gives back the step that it can describe."
         )
@@ -3229,11 +3230,59 @@ let tests_ArcWorkflow =
             Expect.equal (steps |> Seq.map (fun step -> step.Id) |> List.ofSeq) [ None; Some "named"; None; Some "" ] "The ids come back, and a missing id stays missing."
             Expect.equal (steps |> Seq.map (fun step -> step.Run) |> List.ofSeq) [ CWL.RunString "tools/a.cwl"; CWL.RunString "tools/b.cwl"; CWL.RunString "tools/a.cwl"; CWL.RunString "tools/c.cwl" ] "The runs come back."
         )
+        testCase "StepIdentifier_IsThePathFromTheCrateRoot" (fun () ->
+            let workflow =
+                CWL.Decode.decodeWorkflow "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  a: {run: tool.cwl, in: {}, out: []}\n  b: {run: ./sub/../tools/t.cwl, in: {}, out: []}\n  c: {run: https://example.org/t.cwl, in: {}, out: []}\n  d: {run: ../../common.cwl, in: {}, out: []}\n  e: {run: {$import: tool.cwl}, in: {}, out: []}\n  f: {run: {class: CommandLineTool, baseCommand: echo, inputs: [], outputs: []}, in: {}, out: []}\n"
+            let identifiers =
+                CWL.ListEntry.values workflow.Steps
+                |> Seq.map (fun step -> WorkflowConversion.runToIdentifier("workflows/W/workflow.cwl", step.Run))
+                |> List.ofSeq
+            Expect.equal identifiers [ Some "./workflows/W/tool.cwl"; Some "./workflows/W/tools/t.cwl"; Some "https://example.org/t.cwl"; Some "../../common.cwl"; Some "./workflows/W/tool.cwl"; Some "inline:CommandLineTool" ] "A run in a folder of the ARC becomes its path from the crate root, a remote run and a run outside the folders stay as written, and an inline run has its marker."
+            Expect.equal (WorkflowConversion.runToIdentifier("runs/R/run.cwl", CWL.RunString "../../workflows/S/workflow.cwl")) (Some "./workflows/S/workflow.cwl") "The workflow that a run runs is a path from the crate root."
+        )
+        testCase "StepIdentifier_ReadsBackAsTheRunAsWritten" (fun () ->
+            Expect.equal (WorkflowConversion.identifierToRun("./workflows/W/workflow.cwl", "./workflows/W/tool.cwl")) "tool.cwl" "A path in the folder of the workflow is relative to it."
+            Expect.equal (WorkflowConversion.identifierToRun("workflows/W/workflow.cwl", "./workflows/W/tools/t.cwl")) "tools/t.cwl" "A path below the folder of the workflow is relative to it."
+            Expect.equal (WorkflowConversion.identifierToRun("./runs/R/run.cwl", "./workflows/S/workflow.cwl")) "../../workflows/S/workflow.cwl" "A path in another folder leaves the folder of the run."
+            for identifier in [ "tool.cwl"; "./tool.cwl"; "tools/echo.cwl"; "../../workflows/S/workflow.cwl"; "../../common.cwl"; "https://example.org/t.cwl"; "inline:Workflow" ] do
+                Expect.equal (WorkflowConversion.identifierToRun("./runs/R/run.cwl", identifier)) identifier $"The identifier {identifier} is a run as written, as older crates hold it, or a marker."
+        )
+        testCase "StepIdentifier_RoundTripThroughTheCrateKeepsTheRuns" (fun () ->
+            let workflow = create_workflow_full()
+            workflow.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: Workflow\ninputs:\n  x: string\noutputs: {}\nsteps:\n  s: {run: tool.cwl, in: {}, out: []}\n")
+            let json = (WorkflowConversion.composeWorkflow workflow).Flatten() |> JsonController.LDGraph.toROCrateJsonString()
+            let graph = JsonController.LDGraph.fromROCrateJsonString json
+            let step = Expect.wantSome (graph.TryGetNode "WorkflowStep_workflows/MyWorkflow/workflow.cwl_s") "The step is in the crate."
+            Expect.equal (LDDataset.tryGetIdentifierAsString(step, ?context = graph.TryGetContext())) (Some "./workflows/MyWorkflow/tool.cwl") "The crate holds the path of the tool from its root."
+            let workflow' = WorkflowConversion.decomposeWorkflow(Expect.wantSome (graph.TryGetNode "./workflows/MyWorkflow/") "The workflow is in the crate.", graph = graph)
+            match workflow'.CWLDescription with
+            | Some (CWL.Workflow workflow') ->
+                Expect.equal ((CWL.ListEntry.values workflow'.Steps).[0].Run) (CWL.RunString "tool.cwl") "The workflow runs tool.cwl again."
+            | other -> failwithf "Expected a workflow but got %A" other
+            let run = create_run_full()
+            run.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  main: {run: ../../workflows/W/workflow.cwl, in: {}, out: []}\n")
+            let json = (RunConversion.composeRun run).Flatten() |> JsonController.LDGraph.toROCrateJsonString()
+            let graph = JsonController.LDGraph.fromROCrateJsonString json
+            let run' = RunConversion.decomposeRun(Expect.wantSome (graph.TryGetNode "./runs/MyRun/") "The run is in the crate.", graph = graph)
+            match run'.CWLDescription with
+            | Some (CWL.Workflow runWorkflow) ->
+                Expect.equal ((CWL.ListEntry.values runWorkflow.Steps).[0].Run) (CWL.RunString "../../workflows/W/workflow.cwl") "The run runs the workflow by the same relative path again."
+            | other -> failwithf "Expected a workflow but got %A" other
+        )
+        testCase "StepIdentifier_OlderCratesHoldTheRunAsWritten" (fun () ->
+            let workflow = CWL.Decode.decodeWorkflow "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  a: {run: tool.cwl, in: {}, out: []}\n  b: {run: tool.cwl, in: {}, out: []}\n"
+            let protocol = WorkflowConversion.composeWorkflowProtocolFromWorkflow("workflows/W/workflow.cwl", workflow)
+            let parts = LDComputationalWorkflow.getHasPart protocol
+            LDDataset.setIdentifierAsString(parts.[0], "./tool.cwl")
+            LDDataset.setIdentifierAsString(parts.[1], "tools/echo.cwl")
+            let roundTripped = WorkflowConversion.decomposeWorkflowProtocolToWorkflow(protocol, resolveRunReferences = false)
+            Expect.equal (CWL.ListEntry.values roundTripped.Steps |> Seq.map (fun step -> step.Run) |> List.ofSeq) [ CWL.RunString "./tool.cwl"; CWL.RunString "tools/echo.cwl" ] "The runs of an older crate come back as they were written."
+        )
         testCase "Workflow_WithMixedRun_UsesThePathOfTheMixinAsIdentifier" (fun () ->
             let workflow =
                 CWL.Decode.decodeWorkflow "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  s:\n    run: {$mixin: tools/echo.cwl}\n    in: {}\n    out: []\n"
             let step = (CWL.ListEntry.values workflow.Steps).[0]
-            Expect.equal (WorkflowConversion.runToIdentifier step.Run) (Some "tools/echo.cwl") "The identifier is the path of the mixin, as it is the path of an import."
+            Expect.equal (WorkflowConversion.runToIdentifier("workflows/w/workflow.cwl", step.Run)) (Some "./workflows/w/tools/echo.cwl") "The identifier is the path of the mixin, as it is the path of an import."
         )
     ]
 

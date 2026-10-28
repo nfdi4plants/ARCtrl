@@ -182,22 +182,51 @@ type WorkflowConversion =
 
     static member operationDescriptionTypeName = "OperationDescription"
 
+    /// True when a path from the root of the ARC lies in one of its folders: assays, studies, workflows or runs.
+    static member private isInArcFolder (path : string) : bool =
+        let segments = ArcPathHelper.split path
+        segments.Length > 1
+        && (segments.[0] = ArcPathHelper.AssaysFolderName
+            || segments.[0] = ArcPathHelper.StudiesFolderName
+            || segments.[0] = ArcPathHelper.WorkflowsFolderName
+            || segments.[0] = ArcPathHelper.RunsFolderName)
+
     /// <summary>
     /// Converts a workflow step run payload to a storable dataset identifier.
-    /// String runs preserve the path, while inline runs are mapped to stable inline markers. A process whose class is a
-    /// directive has no path and no marker, so it has no identifier.
+    /// A run that names a file in a folder of the ARC is resolved against the folder of the CWL file and written as a path
+    /// from the root of the crate with a leading "./", like the ids of the files in the crate. Any other run that names a
+    /// file is written as it is. Inline runs are mapped to stable inline markers. A process whose class is a directive has
+    /// no path and no marker, so it has no identifier.
     /// </summary>
+    /// <param name="cwlFilePath">The path of the CWL file that holds the step, from the root of the ARC.</param>
     /// <param name="run">Workflow step run payload.</param>
-    static member runToIdentifier (run : CWL.WorkflowStepRun) : string option =
+    static member runToIdentifier (cwlFilePath : string, run : CWL.WorkflowStepRun) : string option =
+        let ofPath (runPath : string) =
+            match WorkflowConversion.tryResolveFileReference cwlFilePath runPath with
+            | Some path when WorkflowConversion.isInArcFolder path -> "./" + path
+            | _ -> runPath
         match run with
         | CWL.RunString runPath
-        | CWL.RunImport runPath -> Some runPath
-        | CWL.RunMixed raw -> Some raw.MixinPath
+        | CWL.RunImport runPath -> Some (ofPath runPath)
+        | CWL.RunMixed raw -> Some (ofPath raw.MixinPath)
         | CWL.RunRaw _ -> None
         | CWL.RunCommandLineTool _ -> Some "inline:CommandLineTool"
         | CWL.RunWorkflow _ -> Some "inline:Workflow"
         | CWL.RunExpressionTool _ -> Some "inline:ExpressionTool"
         | CWL.RunOperation _ -> Some "inline:Operation"
+
+    /// <summary>
+    /// Converts the identifier of a workflow step back to its run as the CWL file writes it. An identifier that is a path
+    /// from the root of the crate into a folder of the ARC becomes the path relative to the folder of the CWL file. Any
+    /// other identifier stays as it is: an inline marker, or a run as written, which is what older crates hold.
+    /// </summary>
+    /// <param name="cwlFilePath">The path of the CWL file that holds the step, from the root of the crate.</param>
+    /// <param name="identifier">The identifier of the step.</param>
+    static member identifierToRun (cwlFilePath : string, identifier : string) : string =
+        if identifier.StartsWith "./" && WorkflowConversion.isInArcFolder identifier then
+            ArcPathHelper.getRelativePathFromFile cwlFilePath identifier
+        else
+            identifier
 
     /// <summary>
     /// Attempts to decode a CWL processing unit from an LDGraph node addressed by a resolved run path.
@@ -255,6 +284,15 @@ type WorkflowConversion =
         not (System.String.IsNullOrWhiteSpace reference)
         && not (System.Text.RegularExpressions.Regex.IsMatch(reference, "^[A-Za-z][A-Za-z0-9+.\\-]+:"))
         && (fst (ArcPathHelper.splitWithPrefix reference)).IsNone
+
+    /// The path from the root of the ARC that a relative reference names, resolved against the folder of the CWL file
+    /// that holds it, and none for any other reference and for a path outside the ARC.
+    static member private tryResolveFileReference (cwlFilePath : string) (reference : string) : string option =
+        if WorkflowConversion.isRelativeFileReference reference then
+            let path = ArcPathHelper.resolvePathFromFile cwlFilePath reference
+            if path = ".." || path.StartsWith "../" then None else Some path
+        else
+            None
 
     /// The file references in the YAML tree of a CWL document, in the order of the document: the run of every step that
     /// is a text and the text target of every $import, $include and $mixin directive.
@@ -331,12 +369,6 @@ type WorkflowConversion =
         let mainPath = ArcPathHelper.normalize cwlFilePath
         let paths = ResizeArray<string>()
         let visited = System.Collections.Generic.HashSet<string>()
-        let tryResolve (filePath: string) (reference: string) =
-            if WorkflowConversion.isRelativeFileReference reference then
-                let path = ArcPathHelper.resolvePathFromFile filePath reference
-                if path = ".." || path.StartsWith "../" then None else Some path
-            else
-                None
         let isFile (path: string) =
             match fs.Tree.TryGetPath path with
             | Some (FileSystemTree.File _) -> true
@@ -344,11 +376,11 @@ type WorkflowConversion =
         let rec visit (filePath: string) (processingUnit: CWL.CWLProcessingUnit) =
             if visited.Add filePath then
                 for reference in WorkflowConversion.fileReferencesOfYaml (CWL.Encode.encodeProcessingUnitElement processingUnit) do
-                    match tryResolve filePath reference with
+                    match WorkflowConversion.tryResolveFileReference filePath reference with
                     | Some path when path <> mainPath && isFile path && not (paths.Contains path) -> paths.Add path
                     | _ -> ()
                 for (runPath, target) in WorkflowConversion.resolvedRunsOf processingUnit do
-                    tryResolve filePath runPath |> Option.iter (fun path -> visit path target)
+                    WorkflowConversion.tryResolveFileReference filePath runPath |> Option.iter (fun path -> visit path target)
         visit mainPath processingUnit
         paths
 
@@ -462,16 +494,17 @@ type WorkflowConversion =
         )
 
     /// A step with an id is named by it. A step without an id has no name in the crate and gets an identifier from its
-    /// position, which names the node in the crate only and never becomes an id of the step.
-    static member composeWorkflowStep (step : CWL.WorkflowStep, workflowID, ?position : int) =
+    /// position, which names the node in the crate only and never becomes an id of the step. The file path is the path of
+    /// the CWL file that holds the step, from the root of the ARC.
+    static member composeWorkflowStep (step : CWL.WorkflowStep, filePath : string, ?position : int) =
         let id =
             match step.Id, position with
-            | Some stepId, _ -> Some $"WorkflowStep_{workflowID}_{stepId}"
-            | None, Some position -> Some $"WorkflowStep_{workflowID}?position={position}"
+            | Some stepId, _ -> Some $"WorkflowStep_{filePath}_{stepId}"
+            | None, Some position -> Some $"WorkflowStep_{filePath}?position={position}"
             | None, None -> None
         let cw = LDComputationalWorkflow.create(?id = id, ?name = step.Id)
         // Persist run info as identifier so decompose can reconstruct RunString or inline markers.
-        WorkflowConversion.runToIdentifier step.Run |> Option.iter (fun identifier -> LDDataset.setIdentifierAsString(cw, identifier))
+        WorkflowConversion.runToIdentifier(filePath, step.Run) |> Option.iter (fun identifier -> LDDataset.setIdentifierAsString(cw, identifier))
         cw
 
     static member composeWorkflowProtocolFromWorkflow (filePath : string, workflow : CWL.CWLWorkflowDescription, ?workflowName : string, ?runName : string) =
@@ -501,13 +534,17 @@ type WorkflowConversion =
     /// holds the resolved process in its ResolvedRun.
     /// </summary>
     /// <param name="step">Workflow step LD node.</param>
-    /// <param name="workflowFilePath">Optional workflow file path used for resolving relative run references.</param>
+    /// <param name="workflowFilePath">Optional workflow file path used for turning the identifier back into the run as written and for resolving relative run references.</param>
     /// <param name="resolveRunReferences">If true and a workflow file path is given, the step resolves its run through the graph. Otherwise the step has no resolved run.</param>
     /// <param name="context">Optional LDContext for node property access.</param>
     /// <param name="graph">Optional LDGraph used for run reference resolution.</param>
     static member decomposeWorkflowStep (step : LDNode, ?workflowFilePath: string, ?resolveRunReferences: bool, ?context : LDContext, ?graph : LDGraph) =
         let name = LDComputationalWorkflow.tryGetNameAsString(step, ?context = context)
-        let runString = LDDataset.getIdentifierAsString(step, ?context = context)
+        let identifier = LDDataset.getIdentifierAsString(step, ?context = context)
+        let runString =
+            match workflowFilePath with
+            | Some path -> WorkflowConversion.identifierToRun(path, identifier)
+            | None -> identifier
         let shouldResolveRunReferences = defaultArg resolveRunReferences true
         let inputs = ResizeArray()
         let output = ResizeArray<CWL.StepOutput>()
