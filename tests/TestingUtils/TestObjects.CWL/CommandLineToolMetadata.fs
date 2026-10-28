@@ -9,8 +9,7 @@ requirements:
   - class: InitialWorkDirRequirement
     listing:
       - entryname: script.fsx
-        entry:
-          $include: script.fsx
+        entry: {$include: script.fsx}
   - class: EnvVarRequirement
     envDef:
       - envName: DOTNET_NOLOGO

@@ -1172,6 +1172,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     let mutable cwlDescription = cwlDescription
     let mutable comments  = defaultArg comments (ResizeArray())
     let mutable staticHash : int = 0
+    let mutable cwlStaticHash : int = 0
 
     /// Must be unique in one study
     member this.Identifier with get() = identifier and internal set(i) = identifier <- i
@@ -1190,6 +1191,9 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     member this.CWLDescription with get() = cwlDescription and set(c) = cwlDescription <- c
     member this.Comments with get() = comments and set(c) = comments <- c
     member this.StaticHash with get() = staticHash and set(s) = staticHash <- s
+    /// The hash of the CWL file of the workflow at the last read or write, or 0 when the file was not there. The ARC
+    /// compares it with GetCWLHashCode to find the changes of the file, as it compares StaticHash for the xlsx file.
+    member this.CWLStaticHash with get() = cwlStaticHash and set(h) = cwlStaticHash <- h
 
     static member init(identifier : string) = ArcWorkflow(identifier = identifier)
     static member create(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<OntologyAnnotation>, ?components : ResizeArray<Process.Component>, ?datamap : Datamap, ?contacts : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?comments : ResizeArray<Comment>) = 
@@ -1432,6 +1436,15 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
         |> HashCodes.boxHashArray
         |> fun x -> x :?> int
 
+    /// The hash of the CWL file of the workflow, which holds its description. It is 0 for a workflow without a
+    /// description, which has no file.
+    member this.GetCWLHashCode() =
+        match this.CWLDescription with
+        | None -> 0
+        | Some _ ->
+            HashCodes.boxHashOption this.CWLDescription :?> int
+
+    // Hashcode without Datamap and CWL file, which are separate files with their own hashes
     member this.GetLightHashCode() =
         [|
             box this.Identifier
@@ -1476,6 +1489,8 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     let mutable cwlInput : ResizeArray<CWL.CWLParameterReference> = cwlInput
     let mutable comments  = comments
     let mutable staticHash : int = 0
+    let mutable cwlStaticHash : int = 0
+    let mutable cwlInputStaticHash : int = 0
 
     /// Must be unique in one study
     member this.Identifier with get() = identifier and internal set(i) = identifier <- i
@@ -1493,6 +1508,11 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     member this.CWLInput with get() = cwlInput and set(n) = cwlInput <- n
     member this.Comments with get() = comments and set(n) = comments <- n
     member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
+    /// The hash of the CWL file of the run at the last read or write, or 0 when the file was not there. The ARC compares
+    /// it with GetCWLHashCode to find the changes of the file, as it compares StaticHash for the xlsx file.
+    member this.CWLStaticHash with get() = cwlStaticHash and set(h) = cwlStaticHash <- h
+    /// The hash of the parameter file run.yml at the last read or write, or 0 when the file was not there.
+    member this.CWLInputStaticHash with get() = cwlInputStaticHash and set(h) = cwlInputStaticHash <- h
 
     static member init (identifier : string) = ArcRun(identifier)
     static member create (identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : Datamap, ?performers : ResizeArray<Person>, ?cwlDescription : CWL.CWLProcessingUnit, ?cwlInput : ResizeArray<CWL.CWLParameterReference>,  ?comments : ResizeArray<Comment>) = 
@@ -1769,20 +1789,22 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
         let nextDatamap = this.Datamap |> Option.map (fun d -> d.Copy())
         let nextPerformers = this.Performers |> ResizeArray.map (fun c -> c.Copy())
         let nextWorkflowIdentifiers = this.WorkflowIdentifiers |> ResizeArray.map (fun c -> c)
-        ArcRun.make
-            this.Identifier
-            this.Title
-            this.Description
-            this.MeasurementType
-            this.TechnologyType
-            this.TechnologyPlatform
-            nextWorkflowIdentifiers
-            nextTables
-            nextDatamap
-            nextPerformers
-            this.CWLDescription
-            this.CWLInput
-            nextComments
+        let run =
+            ArcRun.make
+                this.Identifier
+                this.Title
+                this.Description
+                this.MeasurementType
+                this.TechnologyType
+                this.TechnologyPlatform
+                nextWorkflowIdentifiers
+                nextTables
+                nextDatamap
+                nextPerformers
+                this.CWLDescription
+                this.CWLInput
+                nextComments
+        run
 
     /// <summary>
     /// Updates given run with another run, Identifier will never be updated. By default update is full replace. Optional Parameters can be used to specify update logic.
@@ -1893,7 +1915,20 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             this.StructurallyEquals(run)
         | _ -> false
 
-    // Hashcode without Datamap
+    /// The hash of the CWL file of the run, which holds its description. It is 0 for a run without a description,
+    /// which has no file.
+    member this.GetCWLHashCode() =
+        match this.CWLDescription with
+        | None -> 0
+        | Some _ ->
+            HashCodes.boxHashOption this.CWLDescription :?> int
+
+    /// The hash of the parameter file run.yml. It is 0 for a run without parameter references, which has no file.
+    member this.GetCWLInputHashCode() =
+        if this.CWLInput.Count = 0 then 0
+        else HashCodes.boxHashSeq this.CWLInput :?> int
+
+    // Hashcode without Datamap, CWL file and parameter file, which are separate files with their own hashes
     member this.GetLightHashCode() =
         [|
             box this.Identifier

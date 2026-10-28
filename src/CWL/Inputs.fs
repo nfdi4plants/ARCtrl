@@ -2,17 +2,28 @@ namespace ARCtrl.CWL
 
 open DynamicObj
 open Fable.Core
-open YAMLicious.YAMLiciousTypes
+
+/// The position of an input binding: a number, or an expression that evaluates to one. An expression is a string with
+/// $( or ${ in it. A directive stands for the number or the expression of a file. An $include yields the text of a file,
+/// which can only be an expression there. The decoder reads no file, so a directive stays as written.
+[<RequireQualifiedAccess; NoComparison>]
+type BindingPosition =
+    | Number of int
+    | Expression of string
+    | Imported of string
+    | Included of string
+    /// A mapping with a $mixin directive, alone or beside other fields, kept as it was written.
+    | Mixed of RawYaml
 
 [<AttachMembers>]
 type InputBinding (
-    ?prefix: string,
-    ?position: int,
-    ?itemSeparator: string,
-    ?separate: bool,
-    ?loadContents: bool,
-    ?valueFrom: string,
-    ?shellQuote: bool
+    ?prefix: SchemaSaladString,
+    ?position: BindingPosition,
+    ?itemSeparator: SchemaSaladString,
+    ?separate: SchemaSaladBool,
+    ?loadContents: SchemaSaladBool,
+    ?valueFrom: SchemaSaladString,
+    ?shellQuote: SchemaSaladBool
 ) =
     inherit DynamicObj ()
 
@@ -72,58 +83,87 @@ type InputBinding (
         | _ -> false
 
     override this.GetHashCode() =
-        hash (
-            this.Prefix,
-            this.Position,
-            this.ItemSeparator,
-            this.Separate,
-            this.LoadContents,
-            this.ValueFrom,
-            this.ShellQuote,
-            DynamicObjHelpers.hashDynamicProperties this
-        )
+        HashHelpers.hashFields [
+            box this.Prefix
+            box this.Position
+            box this.ItemSeparator
+            box this.Separate
+            box this.LoadContents
+            box this.ValueFrom
+            box this.ShellQuote
+            box (DynamicObjHelpers.hashDynamicProperties this)
+        ]
 
     static member KnownFieldNames =
         CWLKnownFieldNames.inputBinding
 
     static member create
         (
-            ?prefix: string,
-            ?position: int,
-            ?itemSeparator: string,
-            ?separate: bool,
-            ?loadContents: bool,
-            ?valueFrom: string,
-            ?shellQuote: bool
+            ?prefix: SchemaSaladString,
+            ?position: BindingPosition,
+            ?itemSeparator: SchemaSaladString,
+            ?separate: SchemaSaladBool,
+            ?loadContents: SchemaSaladBool,
+            ?valueFrom: SchemaSaladString,
+            ?shellQuote: SchemaSaladBool
         ) =
         InputBinding(?prefix = prefix, ?position = position, ?itemSeparator = itemSeparator, ?separate = separate, ?loadContents = loadContents, ?valueFrom = valueFrom, ?shellQuote = shellQuote)
 
+/// The format of an input, as a single name or as a list of names. A name is an IRI or an expression, and a directive
+/// names a file with the text of the name. A single name differs from a list of one name, and the empty list stays an
+/// empty list, because CWL keeps the spellings apart. The lists compare by their elements, because a ResizeArray
+/// compares references. The format of an output is a single name only.
+[<RequireQualifiedAccess; CustomEquality; NoComparison; AttachMembers>]
+type InputFormat =
+    | Single of SchemaSaladString
+    | Multiple of ResizeArray<SchemaSaladString>
+    with
+    member this.AsValues() =
+        match this with
+        | Single value -> ResizeArray [| value |]
+        | Multiple values -> values
 
+    override this.Equals(o: obj) =
+        match o with
+        | :? InputFormat as other ->
+            match this, other with
+            | Single left, Single right -> left = right
+            | Multiple left, Multiple right -> HashHelpers.seqEqual left right
+            | _ -> false
+        | _ -> false
+
+    override this.GetHashCode() =
+        match this with
+        | Single value -> HashHelpers.mergeHashes 1 (hash value)
+        | Multiple values -> HashHelpers.mergeHashes 2 (HashHelpers.hashSeq values)
+
+/// An input of a process. The type tells whether the input is optional: it is when the type is a union that contains
+/// null. CWLType.makeOptional adds null to a type that has none. The inputBinding is the binding itself, or the directive
+/// that stands for the binding of a file.
 [<AttachMembers>]
 type CWLInput (
     name: string,
     ?type_: CWLType,
-    ?inputBinding: InputBinding,
-    ?optional: bool,
-    ?label: string,
-    ?secondaryFiles: YAMLElement,
-    ?streamable: bool,
-    ?doc: string,
-    ?format: string,
-    ?loadContents: bool,
+    ?inputBinding: ListEntry<InputBinding>,
+    ?label: SchemaSaladString,
+    ?secondaryFiles: RawYaml,
+    ?streamable: SchemaSaladBool,
+    ?doc: DocText,
+    ?format: InputFormat,
+    ?loadContents: SchemaSaladBool,
     ?loadListing: LoadListingEnum,
-    ?defaultValue: YAMLElement
+    ?defaultValue: RawYaml
 ) =
     inherit DynamicObj ()
 
     let mutable _name = name
     let mutable _type = type_
     let mutable _inputBinding = inputBinding
-    let mutable _optional = optional
     let mutable _label = label
     let mutable _secondaryFiles = secondaryFiles
     let mutable _streamable = streamable
     let mutable _doc = doc
+    let mutable _sourceNodes = SourceNodes.Empty
     let mutable _format = format
     let mutable _loadContents = loadContents
     let mutable _loadListing = loadListing
@@ -141,9 +181,11 @@ type CWLInput (
         with get() = _inputBinding
         and set(value) = _inputBinding <- value
 
-    member this.Optional
-        with get() = _optional
-        and set(value) = _optional <- value
+    /// True when the type is a union that contains null. The type holds this, and an input stores no flag of its own.
+    member this.Optional =
+        match _type with
+        | Some type_ -> CWLType.isOptional type_
+        | None -> false
 
     member this.Label
         with get() = _label
@@ -161,6 +203,13 @@ type CWLInput (
         with get() = _doc
         and set(value) = _doc <- value
 
+    /// The nodes that the doc and the label were read from. The encoder writes the layout of the author from them.
+    /// They stay out of the equality and the hash of the object.
+    member internal this.SourceNodes
+        with get() = _sourceNodes
+        and set(value) = _sourceNodes <- value
+
+    /// The format of the input: one name or a list of names.
     member this.Format
         with get() = _format
         and set(value) = _format <- value
@@ -183,7 +232,6 @@ type CWLInput (
             this.Name = other.Name &&
             this.Type_ = other.Type_ &&
             this.InputBinding = other.InputBinding &&
-            this.Optional = other.Optional &&
             this.Label = other.Label &&
             this.SecondaryFiles = other.SecondaryFiles &&
             this.Streamable = other.Streamable &&
@@ -196,21 +244,20 @@ type CWLInput (
         | _ -> false
 
     override this.GetHashCode() =
-        hash (
-            this.Name,
-            this.Type_,
-            this.InputBinding,
-            this.Optional,
-            this.Label,
-            this.SecondaryFiles,
-            this.Streamable,
-            this.Doc,
-            this.Format,
-            this.LoadContents,
-            this.LoadListing,
-            this.DefaultValue,
-            DynamicObjHelpers.hashDynamicProperties this
-        )
+        HashHelpers.hashFields [
+            box this.Name
+            box this.Type_
+            box this.InputBinding
+            box this.Label
+            box this.SecondaryFiles
+            box this.Streamable
+            box this.Doc
+            box this.Format
+            box this.LoadContents
+            box this.LoadListing
+            box this.DefaultValue
+            box (DynamicObjHelpers.hashDynamicProperties this)
+        ]
 
     static member KnownFieldNames =
         CWLKnownFieldNames.cwlInput

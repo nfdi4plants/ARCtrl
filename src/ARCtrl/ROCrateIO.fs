@@ -76,13 +76,11 @@ module ARC =
             |> Decode.map (fun graph ->
                 match graph.TryGetNode("./") with
                 | Some node ->
-                    // Files referenced by URL are online resources and not part of the ARC filesystem
-                    let isOnlineRessource (id : string) =
-                        id.StartsWith("http:") || id.StartsWith("https:")
+                    // A file whose id has a URI scheme, as in https:, file: or s3:, is a URL and no part of the ARC file system
                     let files =
                         graph.Nodes
                         |> ResizeArray.choose (fun n ->
-                            if LDFile.validate(n, ?context = graph.TryGetContext()) && n.Id.Contains "#" |> not && isOnlineRessource n.Id |> not && n.HasType(LDDataset.schemaType, ?context = graph.TryGetContext()) |> not then
+                            if LDFile.validate(n, ?context = graph.TryGetContext()) && n.Id.Contains "#" |> not && ArcPathHelper.hasUriScheme n.Id |> not && n.HasType(LDDataset.schemaType, ?context = graph.TryGetContext()) |> not then
                                 Some n.Id
                             else
                                 None
@@ -98,7 +96,9 @@ module ARC =
                     failwith "RO-Crate graph did not contain root data Entity"
             )
 
-        static member packDatasetAsCrate (dataset : LDNode, datasetName:string, datasetDescription:string, metadataFileDescriptor: option<LDNode>, license : License) =
+        /// Packs a dataset as the root of a crate. The root is created now and published at the given date, and now when
+        /// none is given. Both dates are local time.
+        static member packDatasetAsCrate (dataset : LDNode, datasetName:string, datasetDescription:string, metadataFileDescriptor: option<LDNode>, license : License, ?datePublished : System.DateTime) =
             let metadataFileDescriptor = defaultArg metadataFileDescriptor ROCrate.metadataFileDescriptor
             let license = ROCrate.createLicenseNode(Some license)
             // Create the main entity node with all properties from the dataset, but with @id "./"
@@ -109,6 +109,7 @@ module ARC =
             )
             // Set additional properties
             LDDataset.setDateCreatedAsDateTime(mainEntity, System.DateTime.Now)
+            LDDataset.setDatePublishedAsDateTime(mainEntity, defaultArg datePublished System.DateTime.Now)
             LDDataset.setLicenseAsCreativeWork(mainEntity, license)
             // LDDataset.setHasParts(mainEntity,(dataset.GetPropertyValues"http://schema.org/mainEntity") |> Seq.map (fun x -> x :?> LDNode) |> ResizeArray)
             // Flatten the dataset into a graph
@@ -122,8 +123,26 @@ module ARC =
             graph.Compact_InPlace()
             graph
 
-        static member writeRunAsCrate(arcRun:ArcRun, fileSystem: FileSystem, license : License) =
+        /// Adds the local files that the CWL file of a workflow or a run needs to the parts of its dataset, as File
+        /// entities, so that the crate holds every file that its main workflow reads. A file that is a part already stays
+        /// one part.
+        static member private addReferencedFiles (dataset : LDNode, cwlFilePath : string, processingUnit : CWL.CWLProcessingUnit, fileSystem : FileSystem) =
+            let parts = LDDataset.getHasParts(dataset)
+            let partPaths = System.Collections.Generic.HashSet<string>()
+            for part in parts do
+                partPaths.Add(ArcPathHelper.normalize part.Id) |> ignore
+            let files =
+                WorkflowConversion.getReferencedFilePaths(cwlFilePath, processingUnit, fileSystem)
+                |> ResizeArray.filter (fun path -> not (partPaths.Contains path))
+                |> ResizeArray.map (fun path -> LDFile.create(name = path))
+            if files.Count > 0 then
+                LDDataset.setHasParts(dataset, ResizeArray.append parts files)
+
+        /// Writes a run as a Workflow Run Crate. A license is required. The crate is published at the given date, and now in
+        /// local time when none is given.
+        static member writeRunAsCrate(arcRun:ArcRun, fileSystem: FileSystem, license : License, ?datePublished : System.DateTime) =
             let runDataset = arcRun.ToROCrateRun(fs = fileSystem)
+            ROCrate.addReferencedFiles(runDataset, Identifier.Run.cwlFileNameFromIdentifier arcRun.Identifier, arcRun.CWLDescription.Value, fileSystem)
             
             // Validate required dataset properties
             let requiredDatasetProperties = [
@@ -172,11 +191,14 @@ module ARC =
                     |> String.concat ", "
                 failwithf "WorkflowInvocation is missing required properties: %s" missingPropsStr
             
-            ROCrate.packDatasetAsCrate(runDataset, arcRun.Title.Value, arcRun.Description.Value, Some ROCrate.metadataFileDescriptorWfRun,license)
+            ROCrate.packDatasetAsCrate(runDataset, arcRun.Title.Value, arcRun.Description.Value, Some ROCrate.metadataFileDescriptorWfRun, license, ?datePublished = datePublished)
             |> LDGraph.toROCrateJsonString(2)
 
-        static member writeWorkflowAsCrate(arcWorkflow:ArcWorkflow, fileSystem: FileSystem, license : License) =
+        /// Writes a workflow as a Workflow RO-Crate. A license is required. The crate is published at the given date, and now
+        /// in local time when none is given.
+        static member writeWorkflowAsCrate(arcWorkflow:ArcWorkflow, fileSystem: FileSystem, license : License, ?datePublished : System.DateTime) =
             let workflowDataset = arcWorkflow.ToROCrateWorkflow(fs = fileSystem)
+            ROCrate.addReferencedFiles(workflowDataset, Identifier.Workflow.cwlFileNameFromIdentifier arcWorkflow.Identifier, arcWorkflow.CWLDescription.Value, fileSystem)
             
             // Validate required dataset properties
             let requiredDatasetProperties = [
@@ -227,7 +249,7 @@ module ARC =
                     |> String.concat ", "
                 failwithf "Workflow protocol is missing required properties: %s" missingPropsStr
             
-            ROCrate.packDatasetAsCrate(workflowDataset, arcWorkflow.Title.Value, arcWorkflow.Description.Value, Some ROCrate.metadataFileDescriptorWfRun, license)
+            ROCrate.packDatasetAsCrate(workflowDataset, arcWorkflow.Title.Value, arcWorkflow.Description.Value, Some ROCrate.metadataFileDescriptorWfRun, license, ?datePublished = datePublished)
             |> LDGraph.toROCrateJsonString(2)
             
         static member decoderDeprecated : Decoder<ArcInvestigation> =

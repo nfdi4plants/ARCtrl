@@ -18,20 +18,34 @@ type RunConversion =
     /// File paths in CWL files are relative to the file itself. In RO-Crate, we use relative paths from the root of the crate.
     ///
     /// This function replaces the relative paths in the CWL input file with paths relative to the root of the crate.
+    /// The path is joined to the run folder, and its "." and ".." segments are resolved. A path with a URI scheme is a URL
+    /// and stays as it is.
     static member composeCWLInputFilePath (path : string, runName : string) =
-        if path.StartsWith("../..") then
-            path.Replace("../../","").Replace("../..","")
+        if ArcPathHelper.hasUriScheme path then
+            path
         else
             ArcPathHelper.combineMany [| "runs"; runName ; path|]
+            |> ArcPathHelper.normalize
 
+    /// Turns the id of a file in the crate back into a path relative to the run folder. The run folder is compared by
+    /// whole segments, so runs/R does not contain runs/R2, and the run folder itself is ".". An id with a URI scheme is a
+    /// URL and stays as it is.
     static member decomposeCWLInputFilePath (path : string, runName : string) =
-        let prefix = ArcPathHelper.combineMany [| "runs"; runName|]
-        // File ids in RO-Crate start with ./
-        let path = if path.StartsWith("./") then path.Substring(2) else path
-        if path.StartsWith(prefix) then
-            path.Replace(prefix, "").TrimStart('/')
+        if ArcPathHelper.hasUriScheme path then
+            path
         else
-            ArcPathHelper.combine "../.." path
+            let runFolder = ArcPathHelper.split (ArcPathHelper.combineMany [| "runs"; runName|])
+            // File ids in RO-Crate start with ./, which split drops with every other "." segment.
+            let segments = ArcPathHelper.split path
+            let isInRunFolder =
+                segments.Length >= runFolder.Length
+                && (runFolder |> Array.mapi (fun index segment -> segments.[index] = segment) |> Array.forall id)
+            if isInRunFolder && segments.Length = runFolder.Length then
+                "."
+            elif isInRunFolder then
+                String.concat (string ArcPathHelper.PathSeperator) segments.[runFolder.Length..]
+            else
+                ArcPathHelper.combine "../.." (String.concat (string ArcPathHelper.PathSeperator) segments)
 
     static member composeCWLParameterValue(value: CWL.CWLParameterValue, runName: string, ?context: LDContext) : obj =
         match value with
@@ -40,7 +54,8 @@ type RunConversion =
                 file
                 |> CWL.FileInstance.pathOrLocation
                 |> fun path -> RunConversion.composeCWLInputFilePath(path, runName)
-            let encodingFormat = file.Format
+            // A format given by a directive has no text to write into the crate, so it counts as absent.
+            let encodingFormat = file.Format |> Option.bind CWL.SchemaSaladString.tryLiteral
             LDFile.create(path, ?encodingFormat = encodingFormat, ?context = context) :> obj
         | CWL.CWLParameterValue.Directory directory ->
             let path =
@@ -78,18 +93,15 @@ type RunConversion =
         if inputParam.Type_.IsNone then
             failwith $"Cannot convert param values \"{inputValue.Values}\" as Input parameter \"{inputParam.Name}\" has no type."
         let type_ = inputParam.Type_.Value
-        if inputValue.Type.IsSome then
-            if not (CWL.CWLType.typesEqual inputValue.Type.Value type_) then
-                let typeStr = CWL.Encode.formatCWLType inputValue.Type.Value
-                let paramTypeStr = CWL.Encode.formatCWLType type_
-                failwith $"Type ({typeStr}) of yml input value \"{inputValue.Key}\" does not match type of workflow input parameter ({paramTypeStr})."
         match type_ with
-        | CWL.CWLType.File _ when inputValue.Values.Count = 1 ->
+        | CWL.CWLType.File when inputValue.Values.Count = 1 ->
             let path = RunConversion.composeCWLInputFilePath(inputValue.Values[0], runName)
             let file = LDFile.createCWLParameter(path, exampleOfWork = exampleOfWork)
             match inputValue.Value with
             | Some (CWL.CWLParameterValue.File fileValue) ->
+                // A format given by a directive has no text to write into the crate, so it counts as absent.
                 fileValue.Format
+                |> Option.bind CWL.SchemaSaladString.tryLiteral
                 |> Option.iter (fun format -> LDFile.setEncodingFormatAsString(file, format))
             | _ -> ()
             file
@@ -151,24 +163,24 @@ type RunConversion =
                 |> CWL.CWLParameterValue.Array
             | _ ->
                 CWL.CWLParameterValue.Array (ResizeArray [RunConversion.decomposeCWLParameterValue(value, runName, expectedType = arraySchema.Items, ?graph = graph)])
-        | Some (CWL.CWLType.File _) ->
+        | Some CWL.CWLType.File ->
             match value with
             | :? LDNode as node when LDFile.validate(node) ->
                 let path = RunConversion.decomposeCWLInputFilePath(node.Id, runName)
-                let format = LDFile.tryGetEncodingFormatAsString node
-                CWL.CWLParameterValue.File (CWL.FileInstance(path = path, ?format = format))
+                let format = LDFile.tryGetEncodingFormatAsString node |> Option.map CWL.SchemaSaladString.Literal
+                CWL.CWLParameterValue.File (CWL.FileInstance(path = CWL.SchemaSaladString.Literal path, ?format = format))
             | :? string as path ->
                 let path = RunConversion.decomposeCWLInputFilePath(path, runName)
-                CWL.CWLParameterValue.File (CWL.FileInstance(path = path))
+                CWL.CWLParameterValue.File (CWL.FileInstance(path = CWL.SchemaSaladString.Literal path))
             | _ -> CWL.CWLParameterValue.String (string value)
-        | Some (CWL.CWLType.Directory _) ->
+        | Some CWL.CWLType.Directory ->
             match value with
             | :? LDNode as node when LDFile.validate(node) ->
                 let path = RunConversion.decomposeCWLInputFilePath(node.Id, runName)
-                CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = path))
+                CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = CWL.SchemaSaladString.Literal path))
             | :? string as path ->
                 let path = RunConversion.decomposeCWLInputFilePath(path, runName)
-                CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = path))
+                CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = CWL.SchemaSaladString.Literal path))
             | _ -> CWL.CWLParameterValue.String (string value)
         | Some CWL.CWLType.String ->
             match value with
@@ -222,8 +234,8 @@ type RunConversion =
             | :? bool as value -> CWL.CWLParameterValue.Boolean value
             | :? LDNode as node when LDFile.validate(node) ->
                 let path = RunConversion.decomposeCWLInputFilePath(node.Id, runName)
-                let format = LDFile.tryGetEncodingFormatAsString node
-                CWL.CWLParameterValue.File (CWL.FileInstance(path = path, ?format = format))
+                let format = LDFile.tryGetEncodingFormatAsString node |> Option.map CWL.SchemaSaladString.Literal
+                CWL.CWLParameterValue.File (CWL.FileInstance(path = CWL.SchemaSaladString.Literal path, ?format = format))
             | :? System.Collections.IEnumerable as values ->
                 values
                 |> Seq.cast<obj>
@@ -256,8 +268,7 @@ type RunConversion =
             let path = RunConversion.decomposeCWLInputFilePath(inputValue.Id, runName)
             CWL.CWLParameterReference(
                 key = key,
-                values = ResizeArray [path],
-                type_ = CWL.CWLType.file()
+                value = CWL.CWLParameterValue.File (CWL.FileInstance(path = CWL.SchemaSaladString.Literal path))
             )
         else if LDPropertyValue.validateCWLParameter(inputValue, ?context = context) then
             let valueObject = LDPropertyValue.getValueObject(inputValue, ?context = context)

@@ -431,11 +431,16 @@ type LDDataset =
         let s = LDDataset.create(id, identier = identifier, ?name = name, ?description = description, ?creators = creators, ?hasParts = hasParts, ?measurementMethod = measurementMethod, ?measurementTechnique = measurementTechnique, ?variableMeasureds = variableMeasureds, ?abouts = abouts, ?mentions = mentions, ?comments = comments, ?context = context)
         s.AdditionalType <- ResizeArray ["Run"]
         mainEntities |> Option.iter (fun me -> s.SetProperty(LDDataset.mainEntity, me, ?context = context))
-        // Add conformsTo for workflow run profiles
-        let conformsToRefs = ResizeArray [
-            LDRef("https://w3id.org/ro/wfrun/process/0.5")
-            LDRef("https://w3id.org/ro/wfrun/workflow/0.5")
-            LDRef("https://w3id.org/workflowhub/workflow-ro-crate/1.0")
+        // A run conforms to the workflow run profiles. Each profile is an entity with its name and version, as the profiles
+        // require of the crate that names them.
+        let profile (id : string) (name : string) (version : string) =
+            let node = LDCreativeWork.create(id, name = name, ?context = context)
+            node.SetProperty(LDCreativeWork.version, version, ?context = context)
+            node
+        let profiles = ResizeArray [
+            profile "https://w3id.org/ro/wfrun/process/0.5" "Process Run Crate" "0.5"
+            profile "https://w3id.org/ro/wfrun/workflow/0.5" "Workflow Run Crate" "0.5"
+            profile "https://w3id.org/workflowhub/workflow-ro-crate/1.0" "Workflow RO-Crate" "1.0"
         ]
-        s.SetProperty(LDDataset.conformsTo, conformsToRefs, ?context = context)
+        s.SetProperty(LDDataset.conformsTo, profiles, ?context = context)
         s

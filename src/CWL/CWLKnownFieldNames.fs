@@ -42,9 +42,6 @@ module internal CWLKnownFieldNames =
     let inputArraySchema =
         Set [ "type"; "items"; "label"; "doc"; "name" ]
 
-    let schemaDefRequirementType =
-        Set [ "name"; "type" ]
-
     let softwarePackage =
         Set [ "package"; "version"; "specs" ]
 
@@ -138,6 +135,3 @@ module internal CWLKnownFieldNames =
 
     let workflowStep =
         Set [ "id"; "run"; "in"; "out"; "requirements"; "hints"; "label"; "doc"; "scatter"; "scatterMethod"; "when" ]
-
-    let parameterReference =
-        Set [ "class"; "path"; "location"; "type"; "value" ]

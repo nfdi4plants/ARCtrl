@@ -2,49 +2,49 @@ namespace ARCtrl.CWL
 
 open DynamicObj
 open Fable.Core
-open YAMLicious.YAMLiciousTypes
 
 [<AttachMembers>]
 type CWLToolDescription (
-        outputs: ResizeArray<CWLOutput>,
+        outputs: ResizeArray<ListEntry<CWLOutput>>,
         ?cwlVersion: string,
-        ?baseCommand: ResizeArray<string>,
-        ?arguments: YAMLElement,
-        ?stdin: string,
-        ?stderr: string,
-        ?stdout: string,
-        ?successCodes: ResizeArray<int>,
-        ?temporaryFailCodes: ResizeArray<int>,
-        ?permanentFailCodes: ResizeArray<int>,
+        ?baseCommand: ResizeArray<SchemaSaladString>,
+        ?arguments: RawYaml,
+        ?stdin: SchemaSaladString,
+        ?stderr: SchemaSaladString,
+        ?stdout: SchemaSaladString,
+        ?successCodes: ResizeArray<ListEntry<int>>,
+        ?temporaryFailCodes: ResizeArray<ListEntry<int>>,
+        ?permanentFailCodes: ResizeArray<ListEntry<int>>,
         ?requirements: ResizeArray<Requirement>,
         ?hints: ResizeArray<HintEntry>,
-        ?intent: ResizeArray<string>,
-        ?inputs: ResizeArray<CWLInput>,
+        ?intent: ResizeArray<SchemaSaladString>,
+        ?inputs: ResizeArray<ListEntry<CWLInput>>,
         ?metadata: DynamicObj,
-        ?label: string,
-        ?doc: string,
+        ?label: SchemaSaladString,
+        ?doc: DocText,
         ?id: string
     ) =
     inherit DynamicObj ()
 
     let mutable _id: string option = id
     let mutable _cwlVersion: string = cwlVersion |> Option.defaultValue "v1.2"
-    let mutable _outputs: ResizeArray<CWLOutput> = outputs
-    let mutable _baseCommand: ResizeArray<string> option = baseCommand
-    let mutable _arguments: YAMLElement option = arguments
-    let mutable _stdin: string option = stdin
-    let mutable _stderr: string option = stderr
-    let mutable _stdout: string option = stdout
-    let mutable _successCodes: ResizeArray<int> option = successCodes
-    let mutable _temporaryFailCodes: ResizeArray<int> option = temporaryFailCodes
-    let mutable _permanentFailCodes: ResizeArray<int> option = permanentFailCodes
+    let mutable _outputs: ResizeArray<ListEntry<CWLOutput>> = outputs
+    let mutable _baseCommand: ResizeArray<SchemaSaladString> option = baseCommand
+    let mutable _arguments: RawYaml option = arguments
+    let mutable _stdin: SchemaSaladString option = stdin
+    let mutable _stderr: SchemaSaladString option = stderr
+    let mutable _stdout: SchemaSaladString option = stdout
+    let mutable _successCodes: ResizeArray<ListEntry<int>> option = successCodes
+    let mutable _temporaryFailCodes: ResizeArray<ListEntry<int>> option = temporaryFailCodes
+    let mutable _permanentFailCodes: ResizeArray<ListEntry<int>> option = permanentFailCodes
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<HintEntry> option = hints
-    let mutable _intent: ResizeArray<string> option = intent
-    let mutable _inputs: ResizeArray<CWLInput> option = inputs
+    let mutable _intent: ResizeArray<SchemaSaladString> option = intent
+    let mutable _inputs: ResizeArray<ListEntry<CWLInput>> option = inputs
     let mutable _metadata: DynamicObj option = metadata
-    let mutable _label: string option = label
-    let mutable _doc: string option = doc
+    let mutable _label: SchemaSaladString option = label
+    let mutable _doc: DocText option = doc
+    let mutable _sourceNodes = SourceNodes.Empty
 
     member this.Id
         with get() = _id
@@ -118,18 +118,26 @@ type CWLToolDescription (
         with get() = _doc
         and set(doc) = _doc <- doc
 
+    /// The nodes that the doc and the label were read from. The encoder writes the layout of the author from them.
+    /// They stay out of the equality and the hash of the object.
+    member internal this.SourceNodes
+        with get() = _sourceNodes
+        and set(value) = _sourceNodes <- value
+
     static member KnownFieldNames =
         CWLKnownFieldNames.toolDescription
 
-    /// Returns the tool's inputs or an empty ResizeArray if None.
-    static member getInputsOrEmpty (tool: CWLToolDescription) =
-        tool.Inputs |> Option.defaultValue (ResizeArray())
+    /// Returns a new list of the inputs of the tool that are objects, or an empty list. The imports and the mixins are left
+    /// out, so a change of the list changes nothing in the tool. The entries of the tool are in Inputs.
+    static member getInputValuesOrEmpty (tool: CWLToolDescription) : ResizeArray<CWLInput> =
+        tool.Inputs |> Option.map ListEntry.values |> Option.defaultValue (ResizeArray())
 
-    /// Returns the tool's outputs.
-    static member getOutputs (tool: CWLToolDescription) =
-        tool.Outputs
+    /// Returns a new list of the outputs of the tool that are objects. The imports and the mixins are left out, so a change
+    /// of the list changes nothing in the tool. The entries of the tool are in Outputs.
+    static member getOutputValues (tool: CWLToolDescription) : ResizeArray<CWLOutput> =
+        ListEntry.values tool.Outputs
 
-    /// Returns the tool's inputs, creating and assigning a new empty ResizeArray if None.
+    /// Returns the entries of the tool's inputs, creating and assigning a new empty ResizeArray if None.
     static member getOrCreateInputs (tool: CWLToolDescription) =
         match tool.Inputs with
         | Some inputs -> inputs

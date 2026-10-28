@@ -17,33 +17,13 @@ type WorkflowConversion =
         if CWL.Encode.isComplexType t then
             CWL.Encode.cwlTypeToYamlString t
         else
-            CWL.Encode.encodeCWLType t
+            CWL.Encode.encodeCWLTypeShorthand t
             |> CWL.Encode.writeYaml
             |> fun s -> s.Trim()
 
     static member decomposeAdditionalType (t : string) : CWL.CWLType =
-        // Try to parse as YAML (handles both shorthand and YAML-formatted complex types)
-        let yamlElement = YAMLicious.Reader.read t
-        
-        // Check if it's a simple string (shorthand like "File[]", "string?")
-        match yamlElement with
-        | YAMLicious.YAMLiciousTypes.YAMLElement.Value _ ->
-            // Shorthand format: parse string directly without YAML context
-            // Note: YAMLicious.Decode.object requires a YAMLElement for its API,
-            // but cwlTypeStringMatcher only uses the 'get' function and ignores the element.
-            // This placeholder satisfies the function without affecting the actual parsing.
-            let placeholderElement = YAMLicious.YAMLiciousTypes.YAMLElement.Comment "unused-shorthand-context"
-            YAMLicious.Decode.object (fun get ->
-                CWL.Decode.cwlTypeStringMatcher t get
-            ) placeholderElement
-            |> fst
-        | YAMLicious.YAMLiciousTypes.YAMLElement.Object [YAMLicious.YAMLiciousTypes.YAMLElement.Sequence items] ->
-            // YAML array wrapped in Object (happens when parsing multi-line YAML arrays)
-            // Unwrap and treat as Union
-            CWL.Decode.cwlTypeDecoder' (YAMLicious.YAMLiciousTypes.YAMLElement.Sequence items)
-        | _ ->
-            // Complex type in YAML format
-            CWL.Decode.cwlTypeDecoder' yamlElement
+        // The shorthand of the text nests arrays (File[][]), which a CWL document does not read.
+        CWL.Decode.cwlTypeFromAdditionalType t
 
     static member composeFormalParamInputIdentifiers (prefix : string option) (position : int option) =
         match prefix, position with
@@ -71,12 +51,22 @@ type WorkflowConversion =
             match inp.Type_ with
             | Some t -> WorkflowConversion.composeAdditionalType t
             | None -> failwith "Input must have a type"
-        let valueRequired = inp.Optional |> Option.defaultValue false |> not
+        let valueRequired = not inp.Optional
         let id = LDFormalParameter.genID(name = inp.Name, ?workflowName = workflowName, ?runName = runName)
         let identifiers =
             inp.InputBinding
+            |> Option.bind CWL.ListEntry.tryValue
             |> Option.bind (fun ib ->
-                WorkflowConversion.composeFormalParamInputIdentifiers ib.Prefix ib.Position
+                // The identifiers hold a number only, so a position that is an expression or a directive has no place in them.
+                let position =
+                    ib.Position
+                    |> Option.bind (function
+                        | CWL.BindingPosition.Number number -> Some number
+                        | CWL.BindingPosition.Expression _
+                        | CWL.BindingPosition.Imported _
+                        | CWL.BindingPosition.Included _
+                        | CWL.BindingPosition.Mixed _ -> None)
+                WorkflowConversion.composeFormalParamInputIdentifiers (ib.Prefix |> Option.bind CWL.SchemaSaladString.tryLiteral) position
             )
         LDFormalParameter.create(
             additionalType = additionalType,
@@ -93,27 +83,25 @@ type WorkflowConversion =
         | None, None -> None
         | _ ->
             CWL.InputBinding.create(
-                ?prefix = prefix,
-                ?position = position
+                ?prefix = (prefix |> Option.map CWL.SchemaSaladString.Literal),
+                ?position = (position |> Option.map CWL.BindingPosition.Number)
             )
             |> Some
 
     static member decomposeInputFromFormalParameter(inp : LDNode, ?context : LDContext, ?graph : LDGraph) =
         let t = inp.AdditionalType |> Seq.exactlyOne |> WorkflowConversion.decomposeAdditionalType
         let binding = WorkflowConversion.decomposeInputBindings(LDFormalParameter.getIdentifiers(inp, ?context = context, ?graph = graph), ?context = context)
-        let optional =
-            match LDFormalParameter.tryGetValueRequiredAsBoolean(inp, ?context = context) with
-            | Some true -> None
-            | _ -> Some true
+        let required = LDFormalParameter.tryGetValueRequiredAsBoolean(inp, ?context = context) = Some true
         let name = LDFormalParameter.getNameAsString(inp, ?context = context)
-        CWL.CWLInput(name, t, ?inputBinding = binding, ?optional = optional)
+        CWL.CWLInput(name, (if required then t else CWL.CWLType.makeOptional t), ?inputBinding = (binding |> Option.map CWL.ListEntry.Value))
 
-    static member composeFormalParameterOutputIdentifiers (glob : string option) =
+    static member composeFormalParameterOutputIdentifiers (glob : CWL.OutputGlob option) =
         match glob with
-        | Some g ->               
-            ResizeArray [
-                LDPropertyValue.createGlob(g)
-            ]
+        | Some globs ->
+            globs.AsValues()
+            |> Seq.choose CWL.SchemaSaladString.tryLiteral
+            |> Seq.map (fun g -> LDPropertyValue.createGlob(g))
+            |> ResizeArray
             |> Some
         | None -> None
 
@@ -125,6 +113,7 @@ type WorkflowConversion =
         let id = LDFormalParameter.genID(name = out.Name, ?workflowName = workflowName, ?runName = runName)
         let identifiers =
             out.OutputBinding
+            |> Option.bind CWL.ListEntry.tryValue
             |> Option.bind (fun ob ->
                 WorkflowConversion.composeFormalParameterOutputIdentifiers ob.Glob
             )
@@ -137,16 +126,18 @@ type WorkflowConversion =
         )
 
     static member decomposeOutputBindings(identifiers : ResizeArray<LDNode>, ?context : LDContext) =
-        CWL.OutputBinding.create(
-            ?glob = Seq.tryPick (fun n -> LDPropertyValue.tryGetAsGlob(n, ?context = context)) identifiers
-        )
+        let globs = identifiers |> Seq.choose (fun n -> LDPropertyValue.tryGetAsGlob(n, ?context = context)) |> ResizeArray
+        match globs.Count with
+        | 0 -> CWL.OutputBinding.create()
+        | 1 -> CWL.OutputBinding.create(glob = CWL.OutputGlob.Single (CWL.SchemaSaladString.Literal globs.[0]))
+        | _ -> CWL.OutputBinding.create(glob = CWL.OutputGlob.Multiple (globs |> ResizeArray.map CWL.SchemaSaladString.Literal))
 
     static member decomposeOutputFromFormalParameter(outp : LDNode, ?context : LDContext, ?graph : LDGraph) =
         let t = outp.AdditionalType |> Seq.exactlyOne |> WorkflowConversion.decomposeAdditionalType
         let binding = WorkflowConversion.decomposeOutputBindings(LDFormalParameter.getIdentifiers(outp, ?context = context, ?graph = graph), ?context = context)
         let optional = LDFormalParameter.tryGetValueRequiredAsBoolean(outp, ?context = context) |> Option.map (not)
         let name = LDFormalParameter.getNameAsString(outp, ?context = context)
-        CWL.CWLOutput(name, t, binding)
+        CWL.CWLOutput(name, t, CWL.ListEntry.Value binding)
 
     static member composeComputationalTool (tool : Process.Component) =
         let n, na =
@@ -180,7 +171,7 @@ type WorkflowConversion =
     /// </summary>
     /// <param name="pu">The processing unit to inspect.</param>
     static member getInputParametersFromProcessingUnit (pu : CWL.CWLProcessingUnit) =
-        CWL.CWLProcessingUnit.getInputs pu
+        CWL.CWLProcessingUnit.getInputValues pu
 
     
     static member toolDescriptionTypeName = "ToolDescription"
@@ -191,18 +182,51 @@ type WorkflowConversion =
 
     static member operationDescriptionTypeName = "OperationDescription"
 
+    /// True when a path from the root of the ARC lies in one of its folders: assays, studies, workflows or runs.
+    static member private isInArcFolder (path : string) : bool =
+        let segments = ArcPathHelper.split path
+        segments.Length > 1
+        && (segments.[0] = ArcPathHelper.AssaysFolderName
+            || segments.[0] = ArcPathHelper.StudiesFolderName
+            || segments.[0] = ArcPathHelper.WorkflowsFolderName
+            || segments.[0] = ArcPathHelper.RunsFolderName)
+
     /// <summary>
     /// Converts a workflow step run payload to a storable dataset identifier.
-    /// String runs preserve the path, while inline runs are mapped to stable inline markers.
+    /// A run that names a file in a folder of the ARC is resolved against the folder of the CWL file and written as a path
+    /// from the root of the crate with a leading "./", like the ids of the files in the crate. Any other run that names a
+    /// file is written as it is. Inline runs are mapped to stable inline markers. A process whose class is a directive has
+    /// no path and no marker, so it has no identifier.
     /// </summary>
+    /// <param name="cwlFilePath">The path of the CWL file that holds the step, from the root of the ARC.</param>
     /// <param name="run">Workflow step run payload.</param>
-    static member runToIdentifier (run : CWL.WorkflowStepRun) : string =
+    static member runToIdentifier (cwlFilePath : string, run : CWL.WorkflowStepRun) : string option =
+        let ofPath (runPath : string) =
+            match WorkflowConversion.tryResolveFileReference cwlFilePath runPath with
+            | Some path when WorkflowConversion.isInArcFolder path -> "./" + path
+            | _ -> runPath
         match run with
-        | CWL.RunString runPath -> runPath
-        | CWL.RunCommandLineTool _ -> "inline:CommandLineTool"
-        | CWL.RunWorkflow _ -> "inline:Workflow"
-        | CWL.RunExpressionTool _ -> "inline:ExpressionTool"
-        | CWL.RunOperation _ -> "inline:Operation"
+        | CWL.RunString runPath
+        | CWL.RunImport runPath -> Some (ofPath runPath)
+        | CWL.RunMixed raw -> Some (ofPath raw.MixinPath)
+        | CWL.RunRaw _ -> None
+        | CWL.RunCommandLineTool _ -> Some "inline:CommandLineTool"
+        | CWL.RunWorkflow _ -> Some "inline:Workflow"
+        | CWL.RunExpressionTool _ -> Some "inline:ExpressionTool"
+        | CWL.RunOperation _ -> Some "inline:Operation"
+
+    /// <summary>
+    /// Converts the identifier of a workflow step back to its run as the CWL file writes it. An identifier that is a path
+    /// from the root of the crate into a folder of the ARC becomes the path relative to the folder of the CWL file. Any
+    /// other identifier stays as it is: an inline marker, or a run as written, which is what older crates hold.
+    /// </summary>
+    /// <param name="cwlFilePath">The path of the CWL file that holds the step, from the root of the crate.</param>
+    /// <param name="identifier">The identifier of the step.</param>
+    static member identifierToRun (cwlFilePath : string, identifier : string) : string =
+        if identifier.StartsWith "./" && WorkflowConversion.isInArcFolder identifier then
+            ArcPathHelper.getRelativePathFromFile cwlFilePath identifier
+        else
+            identifier
 
     /// <summary>
     /// Attempts to decode a CWL processing unit from an LDGraph node addressed by a resolved run path.
@@ -254,12 +278,146 @@ type WorkflowConversion =
             | _ ->
                 None
 
+    /// True when a reference is a relative path, which names a file in relation to the CWL file that holds it. A
+    /// reference with a URI scheme, as in https://example.org/tool.cwl, and an absolute path name no file of the ARC.
+    static member private isRelativeFileReference (reference: string) : bool =
+        not (System.String.IsNullOrWhiteSpace reference)
+        && not (ArcPathHelper.hasUriScheme reference)
+        && (fst (ArcPathHelper.splitWithPrefix reference)).IsNone
+
+    /// The path from the root of the ARC that a relative reference names, resolved against the folder of the CWL file
+    /// that holds it. It is none for any other reference, for a path outside the ARC and for the root of the ARC, whose
+    /// path is empty after resolving.
+    static member private tryResolveFileReference (cwlFilePath : string) (reference : string) : string option =
+        if WorkflowConversion.isRelativeFileReference reference then
+            let fileSegments = ArcPathHelper.split cwlFilePath
+            let segments =
+                Array.append fileSegments.[.. fileSegments.Length - 2] (ArcPathHelper.split reference)
+                |> ArcPathHelper.normalizeSegments
+            if segments.Length = 0 || segments.[0] = ".." then None
+            else Some (String.concat (string ArcPathHelper.PathSeperator) segments)
+        else
+            None
+
+    /// The file references in the YAML tree of a CWL document, in the order of the document: the run of every step that
+    /// is a text, the text target of every $import, $include and $mixin directive, and the location or path of every
+    /// File and Directory literal. Only a mapping whose class is Workflow has steps, which is the process at the root or
+    /// an inline run, so a field named steps in a data value holds no runs. Each reference comes with true when it names
+    /// a directory.
+    static member private fileReferencesOfYaml (root: YAMLicious.YamlNode) : ResizeArray<string * bool> =
+        let references = ResizeArray<string * bool>()
+        let tryScalarText (node: YAMLicious.YamlNode) =
+            match node.Kind with
+            | YAMLicious.YamlNodeKind.Scalar scalar when not (YAMLicious.YamlNode.isMissingValue node) -> Some scalar.Value
+            | _ -> None
+        let isDirective (key: string) = key = "$import" || key = "$include" || key = "$mixin"
+        let rec visit (isStep: bool) (node: YAMLicious.YamlNode) =
+            match node.Kind with
+            | YAMLicious.YamlNodeKind.Mapping collection ->
+                let fieldText (name: string) =
+                    collection.Items
+                    |> List.tryPick (fun entry -> if tryScalarText entry.Key = Some name then tryScalarText entry.Value else None)
+                match fieldText "class" with
+                | Some literalClass when literalClass = "File" || literalClass = "Directory" ->
+                    fieldText "location"
+                    |> Option.orElse (fieldText "path")
+                    |> Option.iter (fun path -> references.Add((path, literalClass = "Directory")))
+                | _ -> ()
+                let isWorkflow = fieldText "class" = Some "Workflow"
+                for entry in collection.Items do
+                    let key = tryScalarText entry.Key |> Option.defaultValue ""
+                    match tryScalarText entry.Value with
+                    | Some path when isDirective key || (isStep && key = "run") -> references.Add((path, false))
+                    | _ when isWorkflow && key = "steps" -> visitSteps entry.Value
+                    | _ -> visit false entry.Value
+            | YAMLicious.YamlNodeKind.Sequence collection ->
+                for item in collection.Items do
+                    visit false item.Node
+            | _ -> ()
+        // The steps are the values of a mapping or the items of a list. A directive can stand for them.
+        and visitSteps (node: YAMLicious.YamlNode) =
+            match node.Kind with
+            | YAMLicious.YamlNodeKind.Mapping collection ->
+                for entry in collection.Items do
+                    let key = tryScalarText entry.Key |> Option.defaultValue ""
+                    match tryScalarText entry.Value with
+                    | Some path when isDirective key -> references.Add((path, false))
+                    | _ -> visit true entry.Value
+            | YAMLicious.YamlNodeKind.Sequence collection ->
+                for item in collection.Items do
+                    visit true item.Node
+            | _ -> ()
+        visit false root
+        references
+
+    /// The processes that the steps of a process resolved their runs to, each with the run as it is written. The steps of
+    /// an inline workflow are steps of the same file, and each inline workflow is entered once.
+    static member private resolvedRunsOf (processingUnit: CWL.CWLProcessingUnit) : ResizeArray<string * CWL.CWLProcessingUnit> =
+        let resolved = ResizeArray<string * CWL.CWLProcessingUnit>()
+        let entered = ResizeArray<CWL.CWLWorkflowDescription>()
+        let rec visit (workflow: CWL.CWLWorkflowDescription) =
+            if not (entered |> Seq.exists (fun other -> System.Object.ReferenceEquals(other, workflow))) then
+                entered.Add workflow
+                for step in CWL.CWLWorkflowDescription.getStepValues workflow do
+                    match step.Run with
+                    | CWL.RunString runPath
+                    | CWL.RunImport runPath ->
+                        step.ResolvedRun.Run
+                        |> Option.bind CWL.WorkflowStepRunOps.tryGetProcessingUnit
+                        |> Option.iter (fun target -> resolved.Add((runPath, target)))
+                    | CWL.RunWorkflow _ ->
+                        CWL.WorkflowStepRunOps.tryGetWorkflow step.Run |> Option.iter visit
+                    | _ -> ()
+        match processingUnit with
+        | CWL.Workflow workflow -> visit workflow
+        | _ -> ()
+        resolved
+
+    /// <summary>
+    /// Returns the local files that a CWL file needs, as paths from the root of the ARC. These are the run of every step
+    /// that names a file, the target of every $import, $include and $mixin directive and the location or path of every
+    /// File literal, each resolved against the folder of the CWL file that holds it. A Directory literal adds every file
+    /// under its directory. A file that a step runs adds the files that it needs in turn, when the step holds the process
+    /// that its run resolved to. References with a URI scheme, absolute paths, paths outside the ARC and paths that are
+    /// not in the file system are left out. Each CWL file is visited once, so a cycle of references ends.
+    /// </summary>
+    /// <param name="cwlFilePath">The path of the CWL file from the root of the ARC.</param>
+    /// <param name="processingUnit">The process that the CWL file describes.</param>
+    /// <param name="fs">The file system of the ARC.</param>
+    static member getReferencedFilePaths (cwlFilePath: string, processingUnit: CWL.CWLProcessingUnit, fs: FileSystem) : ResizeArray<string> =
+        let mainPath = ArcPathHelper.normalize cwlFilePath
+        let paths = ResizeArray<string>()
+        let added = System.Collections.Generic.HashSet<string>()
+        let visited = System.Collections.Generic.HashSet<string>()
+        let isFile (path: string) =
+            match fs.Tree.TryGetPath path with
+            | Some (FileSystemTree.File _) -> true
+            | _ -> false
+        let add (path: string) =
+            if path <> mainPath && added.Add path then paths.Add path
+        let rec visit (filePath: string) (processingUnit: CWL.CWLProcessingUnit) =
+            if visited.Add filePath then
+                for (reference, isDirectory) in WorkflowConversion.fileReferencesOfYaml (CWL.Encode.encodeProcessingUnitElement processingUnit) do
+                    match WorkflowConversion.tryResolveFileReference filePath reference with
+                    | Some path when isDirectory ->
+                        match fs.Tree.TryGetPath path with
+                        | Some (FileSystemTree.Folder _ as folder) ->
+                            for file in folder.ToFilePaths(true) do
+                                add (ArcPathHelper.combine path file)
+                        | _ -> ()
+                    | Some path when isFile path -> add path
+                    | _ -> ()
+                for (runPath, target) in WorkflowConversion.resolvedRunsOf processingUnit do
+                    WorkflowConversion.tryResolveFileReference filePath runPath |> Option.iter (fun path -> visit path target)
+        visit mainPath processingUnit
+        paths
+
     static member composeWorkflowProtocolFromToolDescription (filePath : string, workflow : CWL.CWLToolDescription, ?workflowName : string, ?runName : string) =
         let inputs =
             workflow.Inputs
-            |> Option.map (ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName)))
+            |> Option.map (CWL.ListEntry.values >> ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName)))
         let outputs =
-            workflow.Outputs
+            CWL.ListEntry.values workflow.Outputs
             |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
         LDWorkflowProtocol.create(
             id = filePath,
@@ -278,8 +436,8 @@ type WorkflowConversion =
             LDComputationalWorkflow.getOutputsAsFormalParameter(protocol, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun o -> WorkflowConversion.decomposeOutputFromFormalParameter(o, ?context = context, ?graph = graph))
         CWL.CWLToolDescription(
-            outputs = outputs,
-            inputs = inputs
+            outputs = CWL.ListEntry.ofValues outputs,
+            inputs = CWL.ListEntry.ofValues inputs
         )
 
     /// <summary>
@@ -293,9 +451,9 @@ type WorkflowConversion =
     static member composeWorkflowProtocolFromExpressionToolDescription (filePath : string, expressionTool : CWL.CWLExpressionToolDescription, ?workflowName : string, ?runName : string) =
         let inputs =
             expressionTool.Inputs
-            |> Option.map (ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName)))
+            |> Option.map (CWL.ListEntry.values >> ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName)))
         let outputs =
-            expressionTool.Outputs
+            CWL.ListEntry.values expressionTool.Outputs
             |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
         let protocol =
             LDWorkflowProtocol.create(
@@ -308,7 +466,7 @@ type WorkflowConversion =
             )
         // Persist expression on schema:description to keep roundtrip fidelity without introducing
         // a custom LD predicate in the current RO-Crate projection.
-        LDLabProtocol.setDescriptionAsString(protocol, expressionTool.Expression)
+        LDLabProtocol.setDescriptionAsString(protocol, expressionTool.Expression.AsDirectiveString)
         protocol
 
     /// <summary>
@@ -330,17 +488,17 @@ type WorkflowConversion =
             // Keep deserialization resilient for externally produced or incomplete crates.
             |> Option.defaultValue "$(null)"
         CWL.CWLExpressionToolDescription(
-            outputs = outputs,
-            expression = expression,
-            inputs = inputs
+            outputs = CWL.ListEntry.ofValues outputs,
+            expression = CWL.SchemaSaladString.Literal expression,
+            inputs = CWL.ListEntry.ofValues inputs
         )
 
     static member composeWorkflowProtocolFromOperationDescription (filePath : string, operation : CWL.CWLOperationDescription, ?workflowName : string, ?runName : string) =
         let inputs =
-            operation.Inputs
+            CWL.ListEntry.values operation.Inputs
             |> ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName))
         let outputs =
-            operation.Outputs
+            CWL.ListEntry.values operation.Outputs
             |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
         LDWorkflowProtocol.create(
             id = filePath,
@@ -359,27 +517,35 @@ type WorkflowConversion =
             LDComputationalWorkflow.getOutputsAsFormalParameter(protocol, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun o -> WorkflowConversion.decomposeOutputFromFormalParameter(o, ?context = context, ?graph = graph))
         CWL.CWLOperationDescription(
-            inputs = inputs,
-            outputs = outputs
+            inputs = CWL.ListEntry.ofValues inputs,
+            outputs = CWL.ListEntry.ofValues outputs
         )
 
-    static member composeWorkflowStep (step : CWL.WorkflowStep, workflowID) =
-        let id = $"WorkflowStep_{workflowID}_{step.Id}"
-        let cw = LDComputationalWorkflow.create(id = id, name = step.Id)
+    /// A step with an id is named by it. A step without an id has no name in the crate and gets an identifier from its
+    /// position, which names the node in the crate only and never becomes an id of the step. The file path is the path of
+    /// the CWL file that holds the step, from the root of the ARC.
+    static member composeWorkflowStep (step : CWL.WorkflowStep, filePath : string, ?position : int) =
+        let id =
+            match step.Id, position with
+            | Some stepId, _ -> Some $"WorkflowStep_{filePath}_{stepId}"
+            | None, Some position -> Some $"WorkflowStep_{filePath}?position={position}"
+            | None, None -> None
+        let cw = LDComputationalWorkflow.create(?id = id, ?name = step.Id)
         // Persist run info as identifier so decompose can reconstruct RunString or inline markers.
-        LDDataset.setIdentifierAsString(cw, WorkflowConversion.runToIdentifier step.Run)
+        WorkflowConversion.runToIdentifier(filePath, step.Run) |> Option.iter (fun identifier -> LDDataset.setIdentifierAsString(cw, identifier))
         cw
 
     static member composeWorkflowProtocolFromWorkflow (filePath : string, workflow : CWL.CWLWorkflowDescription, ?workflowName : string, ?runName : string) =
         let inputs =
-            workflow.Inputs
+            CWL.ListEntry.values workflow.Inputs
             |> ResizeArray.map (fun i -> WorkflowConversion.composeFormalParameterFromInput(i, ?workflowName = workflowName, ?runName = runName))
         let outputs =
-            workflow.Outputs
+            CWL.ListEntry.values workflow.Outputs
             |> ResizeArray.map (fun o -> WorkflowConversion.composeFormalParameterFromOutput(o, ?workflowName = workflowName, ?runName = runName))
         let steps =
-            workflow.Steps
-            |> ResizeArray.map (fun s -> WorkflowConversion.composeWorkflowStep(s, filePath))
+            CWL.ListEntry.values workflow.Steps
+            |> Seq.mapi (fun position s -> WorkflowConversion.composeWorkflowStep(s, filePath, position))
+            |> ResizeArray
         LDWorkflowProtocol.create(
             id = filePath,
             name = filePath,
@@ -392,34 +558,34 @@ type WorkflowConversion =
 
     /// <summary>
     /// Converts a workflow-step LD node into a CWL WorkflowStep.
-    /// Can optionally resolve run string references into inline CWL processing units via the graph.
+    /// Can optionally resolve the run reference of the step via the graph. The step keeps the reference as its run and
+    /// holds the resolved process in its ResolvedRun.
     /// </summary>
     /// <param name="step">Workflow step LD node.</param>
-    /// <param name="workflowFilePath">Optional workflow file path used for resolving relative run references.</param>
-    /// <param name="resolveRunReferences">If true, attempts graph-backed run resolution; otherwise keeps raw RunString.</param>
+    /// <param name="workflowFilePath">Optional workflow file path used for turning the identifier back into the run as written and for resolving relative run references.</param>
+    /// <param name="resolveRunReferences">If true and a workflow file path is given, the step resolves its run through the graph. Otherwise the step has no resolved run.</param>
     /// <param name="context">Optional LDContext for node property access.</param>
     /// <param name="graph">Optional LDGraph used for run reference resolution.</param>
     static member decomposeWorkflowStep (step : LDNode, ?workflowFilePath: string, ?resolveRunReferences: bool, ?context : LDContext, ?graph : LDGraph) =
-        let name = LDComputationalWorkflow.getNameAsString(step, ?context = context)
-        let runString = LDDataset.getIdentifierAsString(step, ?context = context)
+        let name = LDComputationalWorkflow.tryGetNameAsString(step, ?context = context)
+        let identifier = LDDataset.getIdentifierAsString(step, ?context = context)
+        let runString =
+            match workflowFilePath with
+            | Some path -> WorkflowConversion.identifierToRun(path, identifier)
+            | None -> identifier
         let shouldResolveRunReferences = defaultArg resolveRunReferences true
-        let run =
-            let initialRun = CWL.RunString runString
-            if not shouldResolveRunReferences then
-                initialRun
-            else
-                match workflowFilePath with
-                | Some path ->
-                    // Use graph-backed lookup so run paths can be materialized to inline CWL objects.
-                    let tryResolveRunPath runPath =
-                        WorkflowConversion.tryDecodeProcessingUnitFromGraph(runPath, ?graph = graph, ?context = context)
-                    CWLRunResolver.resolveWorkflowStepRunFromLookup path initialRun tryResolveRunPath
-                | None ->
-                    // Without a workflow path we cannot resolve relative references safely.
-                    initialRun
         let inputs = ResizeArray()
         let output = ResizeArray<CWL.StepOutput>()
-        CWL.WorkflowStep(id = name, in_ = inputs, out_ = output, run = run)
+        let workflowStep = CWL.WorkflowStep(id = name, in_ = inputs, out_ = output, run = CWL.RunString runString)
+        // Without a workflow path we cannot resolve relative references safely.
+        match workflowFilePath with
+        | Some path when shouldResolveRunReferences ->
+            // Use graph-backed lookup so run paths resolve to CWL objects of the crate.
+            let tryResolveRunPath runPath =
+                WorkflowConversion.tryDecodeProcessingUnitFromGraph(runPath, ?graph = graph, ?context = context)
+            CWLRunResolver.resolveWorkflowStepFromLookup path workflowStep tryResolveRunPath
+        | _ -> ()
+        workflowStep
 
 
     /// <summary>
@@ -443,6 +609,9 @@ type WorkflowConversion =
             |> ResizeArray.map (fun o -> WorkflowConversion.decomposeOutputFromFormalParameter(o, ?context = context, ?graph = graph))
         let steps =
             LDComputationalWorkflow.getHasPart(protocol, ?graph = graph, ?context = context)
+            // A step without an identifier held a process whose class is a directive, which the crate cannot give back.
+            |> Seq.filter (fun s -> (LDDataset.tryGetIdentifierAsString(s, ?context = context)).IsSome)
+            |> ResizeArray
             |> ResizeArray.map (fun s ->
                 // Forward workflow path and options to keep step-level run resolution consistent.
                 WorkflowConversion.decomposeWorkflowStep(
@@ -454,9 +623,9 @@ type WorkflowConversion =
                 )
             )
         CWL.CWLWorkflowDescription(
-            steps = steps,
-            inputs = inputs,
-            outputs = outputs
+            steps = CWL.ListEntry.ofValues steps,
+            inputs = CWL.ListEntry.ofValues inputs,
+            outputs = CWL.ListEntry.ofValues outputs
         )
 
     /// <summary>
@@ -477,6 +646,10 @@ type WorkflowConversion =
             WorkflowConversion.composeWorkflowProtocolFromExpressionToolDescription(filePath, et, ?workflowName = workflowName, ?runName = runName)
         | CWL.Operation op ->
             WorkflowConversion.composeWorkflowProtocolFromOperationDescription(filePath, op, ?workflowName = workflowName, ?runName = runName)
+        // The class of the process is a directive, so the crate cannot tell its kind or its ports. It holds the process as a
+        // tool without ports, which is what the decomposition makes of a protocol of unknown kind.
+        | CWL.RawProcess _ ->
+            WorkflowConversion.composeWorkflowProtocolFromToolDescription(filePath, CWL.CWLToolDescription(outputs = ResizeArray()), ?workflowName = workflowName, ?runName = runName)
 
     /// <summary>
     /// Converts a workflow protocol node back into the appropriate CWL processing unit variant.

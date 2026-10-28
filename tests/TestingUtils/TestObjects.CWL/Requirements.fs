@@ -98,7 +98,7 @@ requirements: { SubworkflowFeatureRequirement: {} }
 
 module Docker =
 
-    let dockerRequirement = DockerRequirement.create (dockerImageId = "devcontainer", dockerFileReference = Include "FSharpArcCapsule/Dockerfile")
+    let dockerRequirement = DockerRequirement.create (dockerImageId = SchemaSaladString.Literal "devcontainer", dockerFileReference = Include "FSharpArcCapsule/Dockerfile")
 
     let requirement = Requirement.DockerRequirement dockerRequirement
 
@@ -117,3 +117,74 @@ let initialWorkDirListingTypedFileContent = """requirements:
         path: /tmp/out
         basename: out
         arc:dir note: keep dir overflow"""
+
+
+module SchemaDefTypes =
+
+    /// A tool with two records. The second record names the first by a bare name and with a leading #, and it holds an
+    /// array of the first as well. The ports name both records.
+    let toolFile = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: draw
+requirements:
+  - class: SchemaDefRequirement
+    types:
+      - name: Point
+        type: record
+        fields:
+          x: int
+          y: int
+      - name: Segment
+        type: record
+        fields:
+          from: Point
+          to: "#Point"
+          waypoints: Point[]
+inputs:
+  start: Point
+  anchor: "#Point"
+  route: Segment
+  corners: Point[]
+  spare: Point?
+outputs:
+  bend:
+    type: Segment
+"""
+
+    /// A tool whose only requirement defines one record, with no reference to any other type.
+    let plainRecordFile = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+requirements:
+  - class: SchemaDefRequirement
+    types:
+      - name: Point
+        type: record
+        fields:
+          x: int
+inputs: {}
+outputs: {}
+"""
+
+module SchemaDefIds =
+
+    /// A tool whose SchemaDefRequirement holds a named record and two unnamed schemas, an enum and a record.
+    let unnamedDefinitionsFile = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+requirements:
+  - class: SchemaDefRequirement
+    types:
+      - name: Point
+        type: record
+        fields:
+          x: int
+      - type: enum
+        symbols: [a]
+      - type: record
+        fields:
+          p: Point
+inputs:
+  x: Point?
+outputs: []
+"""

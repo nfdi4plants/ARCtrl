@@ -31,11 +31,11 @@ module Helper =
         
         /// Create a CWL Record type with fields
         let record (fields: ARCtrl.CWL.InputRecordField list) : ARCtrl.CWL.CWLType = 
-            ARCtrl.CWL.CWLType.Record (ARCtrl.CWL.InputRecordSchema(fields = ResizeArray fields))
+            ARCtrl.CWL.CWLType.Record (ARCtrl.CWL.InputRecordSchema(fields = ARCtrl.CWL.ListEntry.ofValues fields))
         
         /// Create a CWL Enum type with symbols
         let enum (symbols: string list) : ARCtrl.CWL.CWLType = 
-            ARCtrl.CWL.CWLType.Enum (ARCtrl.CWL.InputEnumSchema(ResizeArray symbols))
+            ARCtrl.CWL.CWLType.Enum (ARCtrl.CWL.InputEnumSchema(ResizeArray (List.map ARCtrl.CWL.SchemaSaladString.Literal symbols)))
         
         /// Create a CWL Array type
         let array (items: ARCtrl.CWL.CWLType) : ARCtrl.CWL.CWLType = 
@@ -272,7 +272,7 @@ module Helper =
             tables = ResizeArray [singleRowMixedValues; table2],
             performers = ResizeArray [person],
             cwlDescription = TestObjects.CWL.CommandLineTool.Basic.processingUnit,
-            cwlInput = ResizeArray [TestObjects.CWL.YAMLParameterFile.File.fileParameterReferenceWithType; TestObjects.CWL.YAMLParameterFile.String.stringParameterReference]
+            cwlInput = ResizeArray [TestObjects.CWL.YAMLParameterFile.File.fileParameterReference; TestObjects.CWL.YAMLParameterFile.String.stringParameterReference]
         )
        
 
@@ -1842,7 +1842,7 @@ let tests_FormalParameter =
             testCase "Simple_Optional" (fun () ->
                 let name = "MyInput"
                 let t = CWLType.String
-                let input = CWL.CWLInput(name = name, type_ = t, optional = true)
+                let input = CWL.CWLInput(name = name, type_ = CWL.CWLType.makeOptional t)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
                 Expect.equal name' name "FormalParameter name should match input name"
@@ -1852,8 +1852,8 @@ let tests_FormalParameter =
             testCase "Prefix" (fun () ->
                 let name = "MyInput"
                 let t = CWLType.String
-                let binding = InputBinding.create(prefix = "--eenput")
-                let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
+                let binding = InputBinding.create(prefix = (SchemaSaladString.Literal "--eenput"))
+                let input = CWL.CWLInput(name = name, type_ = t, inputBinding = CWL.ListEntry.Value binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 let identifiers = LDFormalParameter.getIdentifiers formalParameter
                 Expect.hasLength identifiers 1 "FormalParameter should have 1 identifier"
@@ -1865,8 +1865,8 @@ let tests_FormalParameter =
             testCase "Position" (fun () ->
                 let name = "MyInput"
                 let t = CWLType.String
-                let binding = InputBinding.create(position = 1)
-                let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
+                let binding = InputBinding.create(position = BindingPosition.Number 1)
+                let input = CWL.CWLInput(name = name, type_ = t, inputBinding = CWL.ListEntry.Value binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 let identifiers = LDFormalParameter.getIdentifiers formalParameter
                 Expect.hasLength identifiers 1 "FormalParameter should have 1 identifier"
@@ -1875,11 +1875,29 @@ let tests_FormalParameter =
                 let position = Expect.wantSome (LDPropertyValue.tryGetValueAsString id) "Identifier should have a position"
                 Expect.equal position "1" "Position should match input binding" 
             )
+            testCase "A position that is an expression or a directive has no identifier" (fun () ->
+                for position in [ BindingPosition.Expression "$(1 + 1)"; BindingPosition.Imported "p.yml"; BindingPosition.Included "p.txt"; BindingPosition.Mixed { Node = YAMLicious.Reader.readRoot "{$mixin: p.yml}" } ] do
+                    let binding = InputBinding.create(position = position)
+                    let input = CWL.CWLInput(name = "MyInput", type_ = CWLType.String, inputBinding = CWL.ListEntry.Value binding)
+                    let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+                    Expect.hasLength (LDFormalParameter.getIdentifiers formalParameter) 0 (sprintf "%A: the position has no number to write." position)
+                let withPrefix = InputBinding.create(prefix = (SchemaSaladString.Literal "--x"), position = BindingPosition.Imported "p.yml")
+                let formalParameter = WorkflowConversion.composeFormalParameterFromInput (CWL.CWLInput(name = "MyInput", type_ = CWLType.String, inputBinding = CWL.ListEntry.Value withPrefix))
+                let identifiers = LDFormalParameter.getIdentifiers formalParameter
+                Expect.hasLength identifiers 1 "The prefix stays and the directive position is left out."
+                Expect.isTrue (LDPropertyValue.validatePrefix identifiers.[0]) "The identifier is the prefix."
+            )
+            testCase "A binding that a file holds has no identifiers" (fun () ->
+                for binding in [ CWL.ListEntry.Imported "b.yml"; CWL.ListEntry.Mixed { Node = YAMLicious.Reader.readRoot "{$mixin: b.yml, position: 1}" } ] do
+                    let input = CWL.CWLInput(name = "MyInput", type_ = CWLType.String, inputBinding = binding)
+                    let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
+                    Expect.hasLength (LDFormalParameter.getIdentifiers formalParameter) 0 (sprintf "%A: the binding of a file has no prefix and no position to write." binding)
+            )
             testCase "PrefixPosition" (fun () ->
                 let name = "MyInput"
                 let t = CWLType.String
-                let binding = InputBinding.create(prefix = "--eenput", position = 1)
-                let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
+                let binding = InputBinding.create(prefix = (SchemaSaladString.Literal "--eenput"), position = BindingPosition.Number 1)
+                let input = CWL.CWLInput(name = name, type_ = t, inputBinding = CWL.ListEntry.Value binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 let identifiers = LDFormalParameter.getIdentifiers formalParameter
                 Expect.hasLength identifiers 2 "FormalParameter should have 2 identifiers"
@@ -1893,15 +1911,15 @@ let tests_FormalParameter =
             testCase "PrefixPosition_Roundabout" (fun () ->
                 let name = "MyInput"
                 let t = CWLType.String
-                let binding = InputBinding.create(prefix = "--eenput", position = 1)
-                let input = CWL.CWLInput(name = name, type_ = t,inputBinding = binding)
+                let binding = InputBinding.create(prefix = (SchemaSaladString.Literal "--eenput"), position = BindingPosition.Number 1)
+                let input = CWL.CWLInput(name = name, type_ = t, inputBinding = CWL.ListEntry.Value binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 let input' = WorkflowConversion.decomposeInputFromFormalParameter formalParameter
                 Expect.equal input' input "Input should match after roundabout"
             )
             ptestCase "File" (fun () ->
                 let name = "MyInput"
-                let t = CWLType.file()
+                let t = CWLType.File
                 let input = CWL.CWLInput(name = name, type_ = t)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
                 Expect.equal formalParameter.Id "#FormalParameter_MyInput" "FormalParameter ID should match"
@@ -1936,7 +1954,7 @@ let tests_FormalParameter =
             )
             testCase "File" (fun () ->
                 let name = "MyOutput"
-                let t = CWLType.file()
+                let t = CWLType.File
                 let output = CWL.CWLOutput(name = name, type_ = t)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
                 let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
@@ -1947,9 +1965,9 @@ let tests_FormalParameter =
             )
             testCase "File_GlobBinding" (fun () ->
                 let name = "MyOutput"
-                let t = CWLType.file()
-                let binding = OutputBinding.create(glob = "*.txt")
-                let output = CWL.CWLOutput(name = name, type_ = t, outputBinding = binding)
+                let t = CWLType.File
+                let binding = OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "*.txt"))
+                let output = CWL.CWLOutput(name = name, type_ = t, outputBinding = CWL.ListEntry.Value binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
                 let name' = Expect.wantSome (LDFormalParameter.tryGetNameAsString formalParameter) "FormalParameter should have a name"
                 Expect.equal name' name "FormalParameter name should match output name"
@@ -1961,11 +1979,17 @@ let tests_FormalParameter =
                 let glob = Expect.wantSome (LDPropertyValue.tryGetValueAsString globId) "Identifier should have a glob"
                 Expect.equal glob "*.txt" "Glob should match output binding"
             )
+            testCase "An output binding that a file holds has no identifiers" (fun () ->
+                for binding in [ CWL.ListEntry.Imported "b.yml"; CWL.ListEntry.Mixed { Node = YAMLicious.Reader.readRoot "{$mixin: b.yml, glob: o.txt}" } ] do
+                    let output = CWL.CWLOutput(name = "MyOutput", type_ = CWLType.File, outputBinding = binding)
+                    let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
+                    Expect.hasLength (LDFormalParameter.getIdentifiers formalParameter) 0 (sprintf "%A: the binding of a file has no glob to write." binding)
+            )
             testCase "File_GlobBinding_Roundabout" (fun () ->
                 let name = "MyOutput"
-                let t = CWLType.file()
-                let binding = OutputBinding.create(glob = "*.txt")
-                let output = CWL.CWLOutput(name = name, type_ = t, outputBinding = binding)
+                let t = CWLType.File
+                let binding = OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "*.txt"))
+                let output = CWL.CWLOutput(name = name, type_ = t, outputBinding = CWL.ListEntry.Value binding)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromOutput output
                 let output' = WorkflowConversion.decomposeOutputFromFormalParameter formalParameter
                 Expect.equal output' output "Output should match after roundabout"
@@ -1975,6 +1999,101 @@ let tests_FormalParameter =
 
 let tests_AdditionalTypeDecoding =
     testList "AdditionalTypeDecoding" [
+        testList "EveryTypeRoundTrip" [
+            let cases : (string * CWLType) list =
+                [ "File", CWLType.File
+                  "Directory", CWLType.Directory
+                  "String", CWLType.String
+                  "Int", CWLType.Int
+                  "Long", CWLType.Long
+                  "Float", CWLType.Float
+                  "Double", CWLType.Double
+                  "Boolean", CWLType.Boolean
+                  "Null", CWLType.Null
+                  "Stdout", CWLType.Stdout
+                  "Stderr", CWLType.Stderr
+                  "Stdin", CWLType.Stdin
+                  "Reference", CWLType.Reference "Point"
+                  "ReferenceInFile", CWLType.Reference "shapes.yml#Circle"
+                  "ReferenceArray", Helper.CWL.array (CWLType.Reference "Point")
+                  "OptionalReference", Helper.CWL.optional (CWLType.Reference "Point")
+                  "RecordWithReference", Helper.CWL.record [Helper.CWL.field "p" (CWLType.Reference "Point")]
+                  "Any", CWLType.Any
+                  "AnyArray", Helper.CWL.array CWLType.Any
+                  "OptionalAny", Helper.CWL.optional CWLType.Any
+                  "FileArray", Helper.CWL.array (CWLType.File)
+                  "NestedStringArray", Helper.CWL.array (Helper.CWL.array CWLType.String)
+                  "OptionalString", Helper.CWL.optional CWLType.String
+                  "OptionalDirectoryArray", Helper.CWL.optional (Helper.CWL.array (CWLType.Directory))
+                  "Union", CWLType.Union (ResizeArray [CWLType.String; CWLType.Int])
+                  "UnionWithNull", CWLType.Union (ResizeArray [CWLType.Null; CWLType.String; CWLType.Int])
+                  "Record", Helper.CWL.record [Helper.CWL.field "name" CWLType.String]
+                  "RecordWithNullField", Helper.CWL.record [Helper.CWL.field "nothing" CWLType.Null]
+                  "Enum", Helper.CWL.enum ["a"; "b"]
+                  "RecordArray", Helper.CWL.array (Helper.CWL.record [Helper.CWL.field "value" CWLType.String]) ]
+            for (name, original) in cases do
+                testCase name (fun () ->
+                    let encoded = WorkflowConversion.composeAdditionalType original
+                    let decoded = WorkflowConversion.decomposeAdditionalType encoded
+                    Expect.equal decoded original (sprintf "%s should survive compose and decompose, written as %s" name encoded)
+                )
+        ]
+        testList "TypesWithoutSchema" [
+            testCase "WellFormedUnknownNameIsAReference" (fun () ->
+                Expect.equal (WorkflowConversion.decomposeAdditionalType "Strng") (CWLType.Reference "Strng") "No schema is in view to say that the name is wrong."
+                Expect.equal
+                    (WorkflowConversion.decomposeAdditionalType "Point[]?")
+                    (Helper.CWL.optional (Helper.CWL.array (CWLType.Reference "Point")))
+                    "The shorthand works with a reference."
+            )
+            testCase "MalformedNamesFail" (fun () ->
+                for text in [ "File["; "a b"; "File]"; "File[]]"; "Po?int" ] do
+                    match (try WorkflowConversion.decomposeAdditionalType text |> ignore; None with YAMLicious.YamlDecodeException error -> Some error) with
+                    | Some error ->
+                        Expect.stringContains error.Message "Invalid CWL type" $"{text}: the error should say that the type is invalid."
+                        Expect.isSome error.Span $"{text}: the error should have the place in the text."
+                    | None -> failwith $"{text} must fail"
+            )
+            testCase "StreamTypesAreTheWholeTypeOnly" (fun () ->
+                for text in [ "[stdout, string]"; "stdout?"; "stdout[]"; "stderr[]"; "[stdin, \"null\"]" ] do
+                    match (try WorkflowConversion.decomposeAdditionalType text |> ignore; None with YAMLicious.YamlDecodeException error -> Some error) with
+                    | Some error ->
+                        Expect.stringContains error.Message "valid only as the whole type" $"{text}: the error should say where a stream type is valid."
+                        Expect.isSome error.Span $"{text}: the error should have the place in the text."
+                    | None -> failwith $"{text} must fail"
+            )
+        ]
+        testList "UnionOrder" [
+            testCase "NullBehindTheTypeIsAList" (fun () ->
+                let original = CWLType.Union (ResizeArray [CWLType.String; CWLType.Null])
+                let encoded = WorkflowConversion.composeAdditionalType original
+                Expect.equal encoded """[string, "null"]""" "A list with the null behind the type is no optional type."
+                Expect.equal (WorkflowConversion.decomposeAdditionalType encoded) original "The list should keep its order."
+            )
+            testCase "NullInFrontOfTheTypeIsTheShorthand" (fun () ->
+                let original = Helper.CWL.optional CWLType.String
+                let encoded = WorkflowConversion.composeAdditionalType original
+                Expect.equal encoded "string?" "A list with the null in front of the type is the optional type."
+                Expect.equal (WorkflowConversion.decomposeAdditionalType encoded) original "The shorthand should give the list back."
+            )
+        ]
+        testList "ScalarForms" [
+            testCase "DoubleQuoted" (fun () ->
+                Expect.equal (WorkflowConversion.decomposeAdditionalType "\"File\"") (CWLType.File) "A double-quoted type name is the type."
+            )
+            testCase "SingleQuotedOptional" (fun () ->
+                Expect.equal (WorkflowConversion.decomposeAdditionalType "'string?'") (Helper.CWL.optional CWLType.String) "A single-quoted optional type is the type."
+            )
+            testCase "PlainNull" (fun () ->
+                Expect.equal (WorkflowConversion.decomposeAdditionalType "null") CWLType.Null "The plain text null is the null type."
+            )
+            testCase "TrailingComment" (fun () ->
+                Expect.equal (WorkflowConversion.decomposeAdditionalType "File[]? # an optional list") (Helper.CWL.optional (Helper.CWL.array (CWLType.File))) "A comment behind the type is no part of it."
+            )
+            testCase "MissingValueFails" (fun () ->
+                Expect.throws (fun () -> WorkflowConversion.decomposeAdditionalType "" |> ignore) "No text is no type."
+            )
+        ]
         testList "SimpleTypes_FromYAML" [
             testCase "String" (fun () ->
                 let encoded = "string"
@@ -1987,13 +2106,13 @@ let tests_AdditionalTypeDecoding =
                 Expect.equal decoded CWLType.Int "Should decode int from YAML"
             )
             testCase "File" (fun () ->
-                let expected = CWLType.file()
+                let expected = CWLType.File
                 let encoded = "File"
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
                 Expect.equal decoded expected "Should decode File from YAML"
             )
             testCase "FileArray" (fun () ->
-                let expected = CWLType.Array (InputArraySchema(CWLType.file()))
+                let expected = CWLType.Array (InputArraySchema(CWLType.File))
                 let encoded = "File[]"
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
                 Expect.equal decoded expected "Should decode File[] from YAML"
@@ -2005,7 +2124,7 @@ let tests_AdditionalTypeDecoding =
                 Expect.equal decoded expected "Should decode string[] from YAML"
             )
             testCase "NestedFileArray" (fun () ->
-                let inner = InputArraySchema(CWLType.file())
+                let inner = InputArraySchema(CWLType.File)
                 let expected = CWLType.Array (InputArraySchema(CWLType.Array inner))
                 let encoded = "File[][]"
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
@@ -2059,7 +2178,7 @@ let tests_AdditionalTypeDecoding =
                 Expect.equal decoded expected "Should decode optional string correctly"
             )
             testCase "OptionalFileArray_YAML" (fun () ->
-                let expected = Helper.CWL.optional (Helper.CWL.array (CWLType.file()))
+                let expected = Helper.CWL.optional (Helper.CWL.array (CWLType.File))
                 let encoded = "File[]?"
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
                 Expect.equal decoded expected "Should decode optional File[] correctly"
@@ -2075,13 +2194,13 @@ let tests_AdditionalTypeDecoding =
         ]
         testList "EdgeCases" [
             testCase "EmptyRecord" (fun () ->
-                let original = CWLType.Record (InputRecordSchema(fields = ResizeArray []))
+                let original = CWLType.Record (InputRecordSchema(fields = ListEntry.ofValues []))
                 let encoded = WorkflowConversion.composeAdditionalType original
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
                 Expect.equal decoded original "Should decode empty Record correctly"
             )
             testCase "SingleSymbolEnum" (fun () ->
-                let original = CWLType.Enum (InputEnumSchema(ResizeArray ["only"]))
+                let original = CWLType.Enum (InputEnumSchema(ResizeArray [ SchemaSaladString.Literal "only" ]))
                 let encoded = WorkflowConversion.composeAdditionalType original
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
                 Expect.equal decoded original "Should decode single symbol Enum correctly"
@@ -2103,13 +2222,13 @@ let tests_AdditionalTypeDecoding =
             testCase "Record_RoundTrip" (fun () ->
                 let field1 = InputRecordField("name", CWLType.String)
                 let field2 = InputRecordField("count", CWLType.Int)
-                let original = CWLType.Record (InputRecordSchema(fields = ResizeArray [field1; field2]))
+                let original = CWLType.Record (InputRecordSchema(fields = ListEntry.ofValues [field1; field2]))
                 let encoded = WorkflowConversion.composeAdditionalType original
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
                 Expect.equal decoded original "Record should round-trip correctly"
             )
             testCase "Enum_RoundTrip" (fun () ->
-                let original = CWLType.Enum (InputEnumSchema(ResizeArray ["red"; "green"; "blue"]))
+                let original = CWLType.Enum (InputEnumSchema(ResizeArray [ SchemaSaladString.Literal "red"; SchemaSaladString.Literal "green"; SchemaSaladString.Literal "blue" ]))
                 let encoded = WorkflowConversion.composeAdditionalType original
                 let decoded = WorkflowConversion.decomposeAdditionalType encoded
                 Expect.equal decoded original "Enum should round-trip correctly"
@@ -2137,12 +2256,12 @@ let tests_AdditionalTypeEncoding =
                 Expect.equal encoded "int" "Int should encode to YAML shorthand"
             )
             testCase "File" (fun () ->
-                let t = CWLType.file()
+                let t = CWLType.File
                 let encoded = WorkflowConversion.composeAdditionalType t
                 Expect.equal encoded "File" "File should encode to YAML shorthand"
             )
             testCase "FileArray" (fun () ->
-                let t = Helper.CWL.array (CWLType.file())
+                let t = Helper.CWL.array (CWLType.File)
                 let encoded = WorkflowConversion.composeAdditionalType t
                 Expect.equal encoded "File[]" "File[] should encode to YAML shorthand"
             )
@@ -2152,7 +2271,7 @@ let tests_AdditionalTypeEncoding =
                 Expect.equal encoded "string[]" "string[] should encode to YAML shorthand"
             )
             testCase "NestedFileArray" (fun () ->
-                let t = Helper.CWL.array (Helper.CWL.array (CWLType.file()))
+                let t = Helper.CWL.array (Helper.CWL.array (CWLType.File))
                 let encoded = WorkflowConversion.composeAdditionalType t
                 Expect.equal encoded "File[][]" "File[][] should encode to YAML shorthand"
             )
@@ -2173,7 +2292,7 @@ let tests_AdditionalTypeEncoding =
                 Expect.equal encoded expected "Record should encode to single-line YAML"
             )
             testCase "Enum" (fun () ->
-                let schema = InputEnumSchema(ResizeArray ["option1"; "option2"; "option3"])
+                let schema = InputEnumSchema(ResizeArray [ SchemaSaladString.Literal "option1"; SchemaSaladString.Literal "option2"; SchemaSaladString.Literal "option3" ])
                 let t = CWLType.Enum schema
                 let encoded = WorkflowConversion.composeAdditionalType t
                 let expected = "{type: enum, symbols: [option1, option2, option3]}"
@@ -2181,7 +2300,7 @@ let tests_AdditionalTypeEncoding =
             )
             testCase "RecordArray" (fun () ->
                 let field = InputRecordField("value", CWLType.String)
-                let recordSchema = InputRecordSchema(fields = ResizeArray [field])
+                let recordSchema = InputRecordSchema(fields = ListEntry.ofValues [field])
                 let arraySchema = InputArraySchema(CWLType.Record recordSchema)
                 let t = CWLType.Array arraySchema
                 let encoded = WorkflowConversion.composeAdditionalType t
@@ -2189,7 +2308,7 @@ let tests_AdditionalTypeEncoding =
                 Expect.equal encoded expected "Array of records should encode to single-line YAML"
             )
             testCase "EnumArray" (fun () ->
-                let enumSchema = InputEnumSchema(ResizeArray ["A"; "B"; "C"])
+                let enumSchema = InputEnumSchema(ResizeArray [ SchemaSaladString.Literal "A"; SchemaSaladString.Literal "B"; SchemaSaladString.Literal "C" ])
                 let arraySchema = InputArraySchema(CWLType.Enum enumSchema)
                 let t = CWLType.Array arraySchema
                 let encoded = WorkflowConversion.composeAdditionalType t
@@ -2204,14 +2323,14 @@ let tests_AdditionalTypeEncoding =
                 Expect.equal encoded "string?" "Optional string should use YAML shorthand"
             )
             testCase "OptionalFileArray_YAML" (fun () ->
-                let fileArray = InputArraySchema(CWLType.file())
+                let fileArray = InputArraySchema(CWLType.File)
                 let t = CWLType.Union (ResizeArray [CWLType.Null; CWLType.Array fileArray])
                 let encoded = WorkflowConversion.composeAdditionalType t
                 Expect.equal encoded "File[]?" "Optional File[] should use YAML shorthand"
             )
             testCase "OptionalRecord_YAML" (fun () ->
                 let field = InputRecordField("name", CWLType.String)
-                let recordSchema = InputRecordSchema(fields = ResizeArray [field])
+                let recordSchema = InputRecordSchema(fields = ListEntry.ofValues [field])
                 let t = CWLType.Union (ResizeArray [CWLType.Null; CWLType.Record recordSchema])
                 let encoded = WorkflowConversion.composeAdditionalType t
                 let expected = "[\"null\", {type: record, fields: [{name: name, type: string}]}]"
@@ -2227,7 +2346,7 @@ let tests_AdditionalTypeEncoding =
                 Expect.equal encoded expected "Empty record should encode to single-line YAML"
             )
             testCase "SingleSymbolEnum" (fun () ->
-                let schema = InputEnumSchema(ResizeArray ["only"])
+                let schema = InputEnumSchema(ResizeArray [ SchemaSaladString.Literal "only" ])
                 let t = CWLType.Enum schema
                 let encoded = WorkflowConversion.composeAdditionalType t
                 let expected = "{type: enum, symbols: [only]}"
@@ -2237,7 +2356,7 @@ let tests_AdditionalTypeEncoding =
         testList "Integration_WithFormalParameter" [
             testCase "RecordInput_CreatesValidFormalParameter" (fun () ->
                 let field = InputRecordField("name", CWLType.String)
-                let recordSchema = InputRecordSchema(fields = ResizeArray [field])
+                let recordSchema = InputRecordSchema(fields = ListEntry.ofValues [field])
                 let t = CWLType.Record recordSchema
                 let input = CWL.CWLInput(name = "MyRecordInput", type_ = t)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
@@ -2249,7 +2368,7 @@ let tests_AdditionalTypeEncoding =
                 Expect.equal additionalType expected "AdditionalType should be single-line YAML-encoded record"
             )
             testCase "FileArrayInput_CreatesValidFormalParameter" (fun () ->
-                let arraySchema = InputArraySchema(CWLType.file())
+                let arraySchema = InputArraySchema(CWLType.File)
                 let t = CWLType.Array arraySchema
                 let input = CWL.CWLInput(name = "MyFileArrayInput", type_ = t)
                 let formalParameter = WorkflowConversion.composeFormalParameterFromInput input
@@ -2269,11 +2388,13 @@ let tests_AdditionalTypeErrorHandling =
                     (fun () -> WorkflowConversion.decomposeAdditionalType invalidYaml |> ignore)
                     "Should throw on invalid YAML syntax"
             )
-            testCase "UnknownType_ShouldThrow" (fun () ->
+            testCase "UnknownName_IsReference" (fun () ->
+                // The text has no schema around it, so a name that is no builtin type names a type that a SchemaDefRequirement defines.
                 let unknownType = "unknownPrimitiveType"
-                Expect.throws 
-                    (fun () -> WorkflowConversion.decomposeAdditionalType unknownType |> ignore)
-                    "Should throw on unknown type string"
+                Expect.equal
+                    (WorkflowConversion.decomposeAdditionalType unknownType)
+                    (CWLType.Reference unknownType)
+                    "Should read an unknown type string as a reference"
             )
             testCase "RecordWithoutFieldsProperty_CreatesEmptyRecord" (fun () ->
                 // CWL specification allows records without explicit 'fields' property
@@ -2281,7 +2402,7 @@ let tests_AdditionalTypeErrorHandling =
                 let result = WorkflowConversion.decomposeAdditionalType recordWithoutFields
                 match result with
                 | CWLType.Record schema -> 
-                    Expect.isTrue (schema.Fields.IsNone || schema.Fields.Value.Count = 0) "Should create empty record"
+                    Expect.isTrue (schema.Fields.IsNone || (InputRecordSchema.getFieldValuesOrEmpty schema).Count = 0) "Should create empty record"
                 | _ -> failwith "Should decode as record type"
             )
             testCase "MalformedEnum_MissingSymbols" (fun () ->
@@ -2372,8 +2493,8 @@ let tests_YAMLInputValue =
             let name = "MyInput"
             let runName = "MyRun"
             let filePath = "myfile.txt"
-            let paramValue = CWLParameterReference(name, values = ResizeArray.singleton  filePath, type_ = CWLType.file())
-            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
+            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = CWL.SchemaSaladString.Literal filePath)))
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
             Expect.sequenceEqual file.SchemaType [LDFile.schemaType] "File should have correct schema type"
@@ -2390,20 +2511,31 @@ let tests_YAMLInputValue =
             let name = "MyInput"
             let runName = "MyRun"
             let filePath = "myfile.txt"
-            let paramValue = CWLParameterReference(name, values = ResizeArray.singleton  filePath, type_ = CWLType.file())
-            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
+            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = CWL.SchemaSaladString.Literal filePath)))
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
             let paramValue' = RunConversion.decomposeCWLInputValue(file,runName)
             Expect.equal paramValue' paramValue "Parameter value should match after roundabout"
         )
+        testCase "SimpleFileInRun_IsAFileObjectInTheJobFile" (fun () ->
+            let name = "MyInput"
+            let runName = "MyRun"
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
+            let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
+            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = CWL.SchemaSaladString.Literal "myfile.txt")))
+            let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
+            let decomposed = RunConversion.decomposeCWLInputValue(file, runName)
+            let jobFile = CWL.Encode.encodeYAMLParameterFile (ResizeArray [ decomposed ])
+            Expect.equal jobFile "MyInput:\n  class: File\n  path: myfile.txt\n" "The job file gives the file as a File object, which is what cwltool accepts for a File input."
+        )
         testCase "SimpleFileInAssay" (fun () ->
             let name = "MyInput"
             let runName = "MyRun"
             let fileName = "myfile.txt"
-            let filePath = ResizeArray.singleton $"../../assays/MyAssay/dataset/{fileName}"
-            let paramValue = CWLParameterReference(name, values = filePath, type_ = CWLType.file())
-            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
+            let filePath = $"../../assays/MyAssay/dataset/{fileName}"
+            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = CWL.SchemaSaladString.Literal filePath)))
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
             Expect.sequenceEqual file.SchemaType [LDFile.schemaType] "File should have correct schema type"
@@ -2420,9 +2552,9 @@ let tests_YAMLInputValue =
             let name = "MyInput"
             let runName = "MyRun"
             let fileName = "myfile.txt"
-            let filePath = ResizeArray.singleton $"../../assays/MyAssay/dataset/{fileName}"
-            let paramValue = CWLParameterReference(name, values = filePath, type_ = CWLType.file())
-            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
+            let filePath = $"../../assays/MyAssay/dataset/{fileName}"
+            let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (FileInstance(path = CWL.SchemaSaladString.Literal filePath)))
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let file = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
             let paramValue' = RunConversion.decomposeCWLInputValue(file,runName)
@@ -2449,15 +2581,6 @@ let tests_YAMLInputValue =
             let exampleOfWorkAsNode : LDNode = Expect.wantSome (tryLDNode exampleOfWork) "ExampleOfWork should be a node"
             Expect.equal exampleOfWorkAsNode.Id formalParam.Id "ExampleOfWork ID should match name"
         )
-        testCase "FailForNonMatchingType" (fun () ->
-            let name = "MyInput"
-            let runName = "MyRun"
-            let value = ResizeArray.singleton "verbose"
-            let paramValue = CWLParameterReference(name, values = value, type_ = CWLType.Int)
-            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.file())
-            let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
-            Expect.throws (fun () -> RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName) |> ignore) "Should throw for non-matching type"
-        )
         testCase "SimpleArray" (fun () ->
             let name = "MyInput"
             let runName = "MyRun"
@@ -2477,9 +2600,9 @@ let tests_YAMLInputValue =
             let name = "MyInput"
             let runName = "MyRun"
             let value = ["a"; "b"]
-            let inputBinding = CWL.InputBinding.create(itemSeparator = ";")
+            let inputBinding = CWL.InputBinding.create(itemSeparator = (SchemaSaladString.Literal ";"))
             let paramValue = CWLParameterReference(name, values = ResizeArray value)
-            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Array(InputArraySchema(CWLType.String)), inputBinding = inputBinding)
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Array(InputArraySchema(CWLType.String)), inputBinding = CWL.ListEntry.Value inputBinding)
             let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
             let propValue = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
             Expect.sequenceEqual propValue.SchemaType [LDPropertyValue.schemaType] "PropertyValue should have correct schema type"
@@ -2493,7 +2616,7 @@ let tests_YAMLInputValue =
             let name = "sampleRecordFiles"
             let runName = "kallisto"
             let createFile path =
-                CWL.FileInstance(path = path, format = "edam:format_1930")
+                CWL.FileInstance(path = CWL.SchemaSaladString.Literal path, format = CWL.SchemaSaladString.Literal "edam:format_1930")
             let value =
                 CWL.CWLParameterValue.Array (ResizeArray [
                     CWL.CWLParameterValue.Array (ResizeArray [
@@ -2507,13 +2630,56 @@ let tests_YAMLInputValue =
             let cwlParam =
                 CWL.CWLInput(
                     name = name,
-                    type_ = CWLType.Array (InputArraySchema(CWLType.Array (InputArraySchema(CWLType.file()))))
+                    type_ = CWLType.Array (InputArraySchema(CWLType.Array (InputArraySchema(CWLType.File))))
                 )
             let formalParam = WorkflowConversion.composeFormalParameterFromInput(cwlParam, runName = runName)
             let node = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
             let graph = node.Flatten()
             let roundTripped = RunConversion.decomposeCWLInputValue(node, runName, graph = graph)
             Expect.equal roundTripped paramValue "Nested file arrays should roundtrip through RO-Crate."
+        )
+        testCase "FileWithDirectivePathOrLocation_CountsAsAbsent" (fun () ->
+            let runName = "MyRun"
+            let literal (text: string) = CWL.SchemaSaladString.Literal text
+            let fileId (file: CWL.FileInstance) = (RunConversion.composeCWLParameterValue(CWLParameterValue.File file, runName) :?> LDNode).Id
+            let directoryId (directory: CWL.DirectoryInstance) = (RunConversion.composeCWLParameterValue(CWLParameterValue.Directory directory, runName) :?> LDNode).Id
+            Expect.equal (fileId (CWL.FileInstance(path = CWL.SchemaSaladString.Import "p.yml", location = literal "data/a.txt"))) (fileId (CWL.FileInstance(location = literal "data/a.txt"))) "A path that is a directive has no text, so the location names the file."
+            Expect.equal (fileId (CWL.FileInstance(path = CWL.SchemaSaladString.Include "p.txt", location = CWL.SchemaSaladString.Import "l.yml"))) (fileId (CWL.FileInstance())) "Two directives count as a File without a path and a location."
+            Expect.equal (directoryId (CWL.DirectoryInstance(path = CWL.SchemaSaladString.Import "p.yml", location = literal "data"))) (directoryId (CWL.DirectoryInstance(location = literal "data"))) "A Directory reads the same way."
+            Expect.equal (directoryId (CWL.DirectoryInstance(location = CWL.SchemaSaladString.Include "l.txt"))) (directoryId (CWL.DirectoryInstance())) "A directive as the only name counts as absent."
+        )
+        testCase "FileWithDirectiveFormat_HasNoEncodingFormat" (fun () ->
+            let name = "MyInput"
+            let runName = "MyRun"
+            let fileOf (format: CWL.SchemaSaladString) = CWL.FileInstance(path = CWL.SchemaSaladString.Literal "myfile.txt", format = format)
+            let compose (format: CWL.SchemaSaladString) =
+                let paramValue = CWLParameterReference(name, value = CWLParameterValue.File (fileOf format))
+                let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.File)
+                let formalParam = WorkflowConversion.composeFormalParameterFromInput cwlParam
+                RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
+            Expect.equal (LDFile.tryGetEncodingFormatAsString (compose (CWL.SchemaSaladString.Literal "text/csv"))) (Some "text/csv") "A literal format is the encoding format."
+            Expect.isNone (LDFile.tryGetEncodingFormatAsString (compose (CWL.SchemaSaladString.Import "format.yml"))) "A format given by an import has no text, so the file has no encoding format."
+            Expect.isNone (LDFile.tryGetEncodingFormatAsString (compose (CWL.SchemaSaladString.Include "format.txt"))) "A format given by an include has no text, so the file has no encoding format."
+            let value = CWLParameterValue.Array (ResizeArray [ CWLParameterValue.File (fileOf (CWL.SchemaSaladString.Import "format.yml")) ])
+            let composed = RunConversion.composeCWLParameterValue(value, runName)
+            let files = composed :?> ResizeArray<obj>
+            Expect.isNone (LDFile.tryGetEncodingFormatAsString (files.[0] :?> LDNode)) "A file in an array has no encoding format either."
+        )
+        testCase "ReferenceTypedRecord_Roundtrip" (fun () ->
+            let name = "start"
+            let runName = "plot"
+            let value =
+                CWL.CWLParameterValue.Record (ResizeArray [
+                    CWL.CWLParameterRecordField("x", CWL.CWLParameterValue.Int 1L)
+                    CWL.CWLParameterRecordField("y", CWL.CWLParameterValue.Int 2L)
+                ])
+            let paramValue = CWLParameterReference(name, value = value)
+            let cwlParam = CWL.CWLInput(name = name, type_ = CWLType.Reference "Point")
+            let formalParam = WorkflowConversion.composeFormalParameterFromInput(cwlParam, runName = runName)
+            let node = RunConversion.composeCWLInputValue(paramValue, formalParam, cwlParam, runName)
+            let graph = node.Flatten()
+            let roundTripped = RunConversion.decomposeCWLInputValue(node, runName, graph = graph)
+            Expect.equal roundTripped.Value paramValue.Value "A value of a referenced type should roundtrip through RO-Crate."
         )
     ]
 
@@ -2563,6 +2729,54 @@ let tests_ToolDescription =
             let toolDescription' = WorkflowConversion.decomposeWorkflowProtocolToToolDescription ro_Tool
             Expect.equal toolDescription' toolDescription "Tool description should match after roundabout"
         )
+        testCase "The layout of the doc and the label of a tool stays out of the RO-Crate" (fun () ->
+            let tool (texts: string) =
+                CWL.Decode.decodeCommandLineTool ("cwlVersion: v1.2\nclass: CommandLineTool\n" + texts + "baseCommand: [echo]\ninputs:\n  x:\n    type: string\noutputs: {}\n")
+            let folded = tool """label: first part of the name
+  second part of the name
+doc: >-
+  first line of the text
+  second line of the text
+"""
+            let oneLine = tool """label: first part of the name second part of the name
+doc: first line of the text second line of the text
+"""
+            Expect.equal folded oneLine "The tools should be equal whatever the layout of their texts."
+            let json (tool: CWL.CWLToolDescription) =
+                WorkflowConversion.composeWorkflowProtocolFromToolDescription("tools/echo.cwl", tool, workflowName = "workflow", runName = "run")
+                |> Json.LDNode.encoder
+                |> Json.Encode.toJsonString 0
+            Expect.equal (json folded) (json oneLine) "The RO-Crate should not depend on the layout of the texts."
+            Expect.isFalse ((json folded).ToLowerInvariant().Contains "sourcenodes") "The nodes of the texts should not reach the RO-Crate."
+        )
+    ]
+
+let tests_ProcessOfUnknownClass =
+    let unknown () =
+        CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: {$import: s.yml}\nbaseCommand: echo\ninputs: {a: string}\noutputs: {o: string}\n"
+    testList "ProcessOfUnknownClass" [
+        testCase "ComposeProtocol_HoldsAToolWithoutPorts" (fun () ->
+            let protocol = WorkflowConversion.composeWorkflowProtocolFromProcessingUnit("tools/unknown.cwl", unknown ())
+            Expect.equal (LDComputationalWorkflow.getAdditionalTypeAsString protocol) WorkflowConversion.toolDescriptionTypeName "The crate holds the process as a tool, like a protocol of unknown kind."
+            Expect.equal (LDComputationalWorkflow.getInputsAsFormalParameters protocol).Count 0 "The crate holds no inputs, because the model does not show them."
+            Expect.equal (LDComputationalWorkflow.getOutputsAsFormalParameter protocol).Count 0 "The crate holds no outputs, because the model does not show them."
+            match WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(protocol) with
+            | CWL.CommandLineTool tool -> Expect.equal (CWL.ListEntry.values tool.Outputs).Count 0 "The protocol reads back as a tool without ports."
+            | other -> failwith $"Expected a tool but got %A{other}"
+        )
+        testCase "ArcRun_ComposesAndDecomposesWithoutThePorts" (fun () ->
+            let run = ArcRun(identifier = "UnknownRun", cwlDescription = unknown ())
+            let roRun = RunConversion.composeRun run
+            match (RunConversion.decomposeRun roRun).CWLDescription with
+            | Some (CWL.CommandLineTool tool) -> Expect.equal (CWL.CWLToolDescription.getOutputValues tool).Count 0 "The run reads back with a tool without ports."
+            | other -> failwith $"Expected a tool but got %A{other}"
+        )
+        testCase "ArcWorkflow_ComposesAndDecomposesWithoutThePorts" (fun () ->
+            let workflow = ArcWorkflow(identifier = "UnknownWorkflow", cwlDescription = unknown ())
+            match (WorkflowConversion.decomposeWorkflow (WorkflowConversion.composeWorkflow workflow)).CWLDescription with
+            | Some (CWL.CommandLineTool tool) -> Expect.equal (CWL.CWLToolDescription.getOutputValues tool).Count 0 "The workflow reads back with a tool without ports."
+            | other -> failwith $"Expected a tool but got %A{other}"
+        )
     ]
 
 let tests_OperationDescription =
@@ -2581,10 +2795,10 @@ let tests_OperationDescription =
             let roundTripped = WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(protocol)
             match roundTripped with
             | CWL.Operation rt ->
-                Expect.equal rt.Inputs.Count operation.Inputs.Count "Input count should survive roundtrip"
-                Expect.equal rt.Outputs.Count operation.Outputs.Count "Output count should survive roundtrip"
-                Expect.equal rt.Inputs.[0].Name operation.Inputs.[0].Name "Input name should survive roundtrip"
-                Expect.equal rt.Outputs.[0].Name operation.Outputs.[0].Name "Output name should survive roundtrip"
+                Expect.equal (CWL.ListEntry.values rt.Inputs).Count (CWL.ListEntry.values operation.Inputs).Count "Input count should survive roundtrip"
+                Expect.equal (CWL.ListEntry.values rt.Outputs).Count (CWL.ListEntry.values operation.Outputs).Count "Output count should survive roundtrip"
+                Expect.equal (CWL.ListEntry.values rt.Inputs).[0].Name (CWL.ListEntry.values operation.Inputs).[0].Name "Input name should survive roundtrip"
+                Expect.equal (CWL.ListEntry.values rt.Outputs).[0].Name (CWL.ListEntry.values operation.Outputs).[0].Name "Output name should survive roundtrip"
             | other ->
                 Expect.isTrue false $"Expected Operation but got %A{other}"
         )
@@ -2609,8 +2823,7 @@ let tests_OperationDescription =
             let runInput =
                 CWL.CWLParameterReference(
                     key = "input",
-                    values = ResizeArray [ "value" ],
-                    type_ = CWL.CWLType.String
+                    values = ResizeArray [ "value" ]
                 )
             let run =
                 ArcRun(
@@ -2749,19 +2962,23 @@ let tests_ArcWorkflow =
 
             let getRunId (step: CWL.WorkflowStep) =
                 match step.Run with
-                | CWL.RunString runPath -> runPath
+                | CWL.RunString runPath
+                | CWL.RunImport runPath -> runPath
+                | CWL.RunMixed raw -> raw.MixinPath
+                | CWL.RunRaw _ -> failwith "A process whose class is a directive has no run identifier."
                 | CWL.RunCommandLineTool _ -> "inline:CommandLineTool"
                 | CWL.RunWorkflow _ -> "inline:Workflow"
                 | CWL.RunExpressionTool _ -> "inline:ExpressionTool"
                 | CWL.RunOperation _ -> "inline:Operation"
 
-            let sourceStepIds = sourceWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
-            let parsedStepIds = parsedWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
+            let sourceStepIds = (CWL.ListEntry.values sourceWorkflow.Steps) |> Seq.map (fun step -> step.Id) |> Seq.toList
+            let parsedStepIds = (CWL.ListEntry.values parsedWorkflow.Steps) |> Seq.map (fun step -> step.Id) |> Seq.toList
             Expect.equal parsedStepIds sourceStepIds "Step identifiers should be preserved through workflow conversion"
 
-            let sourceRuns = sourceWorkflow.Steps |> Seq.map getRunId |> Seq.toList
-            let parsedRuns = parsedWorkflow.Steps |> Seq.map getRunId |> Seq.toList
-            Expect.equal parsedRuns sourceRuns "Step run references should be preserved through workflow conversion"
+            // The crate holds the path of each run, so a run written as ./tool.cwl comes back as tool.cwl.
+            let sourceRuns = (CWL.ListEntry.values sourceWorkflow.Steps) |> Seq.map (getRunId >> ArcPathHelper.normalize) |> Seq.toList
+            let parsedRuns = (CWL.ListEntry.values parsedWorkflow.Steps) |> Seq.map getRunId |> Seq.toList
+            Expect.equal parsedRuns sourceRuns "Step run references should name the same files after workflow conversion"
 
             Expect.equal parsedWorkflow.Steps.Count 12 "Full workflow should contain all expected steps"
         })
@@ -2786,7 +3003,7 @@ let tests_ArcWorkflow =
                 Expect.wantSome sourceWorkflowOpt $"Expected full workflow fixture to decode as Workflow but got %A{processingUnit}"
 
             let expectedRunPathByStepId =
-                sourceWorkflow.Steps
+                (CWL.ListEntry.values sourceWorkflow.Steps)
                 |> Seq.map (fun step ->
                     let runPath =
                         let runPathOpt =
@@ -2880,31 +3097,30 @@ let tests_ArcWorkflow =
             let inputSignature (input: CWL.CWLInput) =
                 input.Name,
                 (input.Type_ |> Option.map WorkflowConversion.composeAdditionalType),
-                (input.InputBinding |> Option.bind (fun binding -> binding.Prefix)),
-                (input.InputBinding |> Option.bind (fun binding -> binding.Position))
+                (input.InputBinding |> Option.bind CWL.ListEntry.tryValue |> Option.bind (fun binding -> binding.Prefix)),
+                (input.InputBinding |> Option.bind CWL.ListEntry.tryValue |> Option.bind (fun binding -> binding.Position))
 
             let outputSignature (output: CWL.CWLOutput) =
                 output.Name,
                 (output.Type_ |> Option.map WorkflowConversion.composeAdditionalType),
-                (output.OutputBinding |> Option.bind (fun binding -> binding.Glob))
+                (output.OutputBinding |> Option.bind CWL.ListEntry.tryValue |> Option.bind (fun binding -> binding.Glob))
 
             let commandLineToolSignatures (tool: CWL.CWLToolDescription) =
                 let inputSignatures =
-                    tool.Inputs
-                    |> Option.defaultValue (ResizeArray())
+                    CWL.CWLToolDescription.getInputValuesOrEmpty tool
                     |> Seq.map inputSignature
                     |> Seq.sortBy (fun (name, _, _, _) -> name)
                     |> Seq.toList
                 let outputSignatures =
-                    tool.Outputs
+                    (CWL.ListEntry.values tool.Outputs)
                     |> Seq.map outputSignature
                     |> Seq.sortBy (fun (name, _, _) -> name)
                     |> Seq.toList
                 inputSignatures, outputSignatures
 
-            Expect.equal parsedWorkflow.Steps.Count sourceWorkflow.Steps.Count "All workflow steps should be preserved"
+            Expect.equal (CWL.ListEntry.values parsedWorkflow.Steps).Count (CWL.ListEntry.values sourceWorkflow.Steps).Count "All workflow steps should be preserved"
 
-            for parsedStep in parsedWorkflow.Steps do
+            for parsedStep in (CWL.ListEntry.values parsedWorkflow.Steps) do
                 let runPath =
                     let runPathOpt = expectedRunPathByStepId.TryFind parsedStep.Id
                     Expect.wantSome runPathOpt $"Expected source run path for step {parsedStep.Id}"
@@ -2914,14 +3130,14 @@ let tests_ArcWorkflow =
 
                 let parsedTool =
                     let parsedToolOpt =
-                        match parsedStep.Run with
+                        match CWL.WorkflowStep.getResolvedRun parsedStep with
                         | CWL.RunCommandLineTool toolObj ->
                             match toolObj with
                             | :? CWL.CWLToolDescription as parsedTool -> Some parsedTool
                             | _ -> None
                         | _ -> None
                     let mismatchMessage =
-                        match parsedStep.Run with
+                        match CWL.WorkflowStep.getResolvedRun parsedStep with
                         | CWL.RunCommandLineTool toolObj ->
                             $"Expected resolved run of step {parsedStep.Id} to be CWLToolDescription object but got %A{toolObj}"
                         | other ->
@@ -2967,8 +3183,8 @@ let tests_ArcWorkflow =
                 WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(protocol)
             match roundTripped with
             | CWL.Workflow rtWorkflow ->
-                Expect.equal rtWorkflow.Steps.Count workflow.Steps.Count "Step count should be preserved through RO-Crate roundtrip"
-                let runValue = rtWorkflow.Steps.[0].Run
+                Expect.equal (CWL.ListEntry.values rtWorkflow.Steps).Count (CWL.ListEntry.values workflow.Steps).Count "Step count should be preserved through RO-Crate roundtrip"
+                let runValue = (CWL.ListEntry.values rtWorkflow.Steps).[0].Run
                 match runValue with
                 | CWL.RunString runIdentifier ->
                     Expect.equal runIdentifier "inline:ExpressionTool" "Inline ExpressionTool marker should be preserved as run string"
@@ -2976,6 +3192,97 @@ let tests_ArcWorkflow =
                     Expect.isTrue false $"Expected RunString marker but got %A{other}"
             | other ->
                 Expect.isTrue false $"Expected Workflow but got %A{other}"
+        )
+        testCase "Tool_WithMixedPorts_ConvertsTheTypedPortsOnly" (fun () ->
+            let tool =
+                CWL.Decode.decodeCommandLineTool "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: echo\ninputs:\n  x: {$mixin: mix.yml}\n  y: string\n  z: {type: int, $mixin: typed.yml}\noutputs:\n  - {id: o, $mixin: out.yml}\n  - {id: p, type: stdout}\n"
+            Expect.equal tool.Inputs.Value.Count 3 "The three inputs stay in the tool."
+            let protocol = WorkflowConversion.composeWorkflowProtocolFromToolDescription("tools/mixed.cwl", tool)
+            let roundTripped = WorkflowConversion.decomposeWorkflowProtocolToToolDescription protocol
+            Expect.equal (CWL.ListEntry.values roundTripped.Inputs.Value |> Seq.map (fun input -> input.Name) |> List.ofSeq) [ "y" ] "Only the typed input is converted, because the file of a mixin holds the type of the others."
+            Expect.equal (CWL.ListEntry.values roundTripped.Outputs |> Seq.map (fun output -> output.Name) |> List.ofSeq) [ "p" ] "Only the typed output is converted."
+        )
+        testCase "Workflow_WithRawRun_HasNoIdentifierAndTheCrateGivesBackTheOtherSteps" (fun () ->
+            let workflow =
+                CWL.Decode.decodeWorkflow "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  a:\n    run: {class: {$import: c.yml}, baseCommand: echo, inputs: [], outputs: []}\n    in: {}\n    out: []\n  b:\n    run: tools/echo.cwl\n    in: {}\n    out: []\n"
+            let steps = CWL.ListEntry.values workflow.Steps
+            Expect.isNone (WorkflowConversion.runToIdentifier("workflows/w/workflow.cwl", steps.[0].Run)) "A process whose class is a directive has no path and no marker."
+            Expect.equal (WorkflowConversion.runToIdentifier("workflows/w/workflow.cwl", steps.[1].Run)) (Some "./workflows/w/tools/echo.cwl") "A run string becomes its path from the root of the crate."
+            let protocol = WorkflowConversion.composeWorkflowProtocolFromWorkflow("workflows/w/workflow.cwl", workflow)
+            let parts = LDComputationalWorkflow.getHasPart protocol
+            Expect.equal parts.Count 2 "Both steps are in the crate."
+            Expect.isNone (LDDataset.tryGetIdentifierAsString parts.[0]) "The step with the raw run has no identifier, and no empty one."
+            Expect.equal (LDDataset.tryGetIdentifierAsString parts.[1]) (Some "./workflows/w/tools/echo.cwl") "The other step has its path."
+            let roundTripped = WorkflowConversion.decomposeWorkflowProtocolToWorkflow(protocol, resolveRunReferences = false)
+            Expect.equal (CWL.ListEntry.values roundTripped.Steps |> Seq.map (fun step -> step.Id) |> List.ofSeq) [ Some "b" ] "The crate gives back the step that it can describe."
+        )
+        testCase "Workflow_WithStepsWithoutId_TheCrateKeepsThemWithoutAnIdAndGivesThemBack" (fun () ->
+            let workflow =
+                CWL.Decode.decodeWorkflow "cwlVersion: v1.2\nclass: Workflow\nid: main\ninputs: {}\noutputs: {}\nsteps:\n  - {run: tools/a.cwl, in: [], out: []}\n  - {id: named, run: tools/b.cwl, in: [], out: []}\n  - {run: tools/a.cwl, in: [], out: []}\n  - {id: \"\", run: tools/c.cwl, in: [], out: []}\n"
+            let protocol = WorkflowConversion.composeWorkflowProtocolFromWorkflow("workflows/w/workflow.cwl", workflow)
+            let parts = LDComputationalWorkflow.getHasPart protocol
+            Expect.equal parts.Count 4 "All four steps are in the crate."
+            Expect.equal (parts |> Seq.map (fun part -> LDComputationalWorkflow.tryGetNameAsString part) |> List.ofSeq) [ None; Some "named"; None; Some "" ] "A step without an id has no name, and the empty id is a name."
+            Expect.equal (parts |> Seq.map (fun part -> part.Id) |> Seq.distinct |> Seq.length) 4 "The crate gives each step an identifier of its own."
+            Expect.isFalse (parts.[0].Id.Contains "named") "The identifier of a step without an id is no id of the step."
+            let roundTripped = WorkflowConversion.decomposeWorkflowProtocolToWorkflow(protocol, resolveRunReferences = false)
+            let steps = CWL.ListEntry.values roundTripped.Steps
+            Expect.equal (steps |> Seq.map (fun step -> step.Id) |> List.ofSeq) [ None; Some "named"; None; Some "" ] "The ids come back, and a missing id stays missing."
+            Expect.equal (steps |> Seq.map (fun step -> step.Run) |> List.ofSeq) [ CWL.RunString "tools/a.cwl"; CWL.RunString "tools/b.cwl"; CWL.RunString "tools/a.cwl"; CWL.RunString "tools/c.cwl" ] "The runs come back."
+        )
+        testCase "StepIdentifier_IsThePathFromTheCrateRoot" (fun () ->
+            let workflow =
+                CWL.Decode.decodeWorkflow "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  a: {run: tool.cwl, in: {}, out: []}\n  b: {run: ./sub/../tools/t.cwl, in: {}, out: []}\n  c: {run: https://example.org/t.cwl, in: {}, out: []}\n  d: {run: ../../common.cwl, in: {}, out: []}\n  e: {run: {$import: tool.cwl}, in: {}, out: []}\n  f: {run: {class: CommandLineTool, baseCommand: echo, inputs: [], outputs: []}, in: {}, out: []}\n"
+            let identifiers =
+                CWL.ListEntry.values workflow.Steps
+                |> Seq.map (fun step -> WorkflowConversion.runToIdentifier("workflows/W/workflow.cwl", step.Run))
+                |> List.ofSeq
+            Expect.equal identifiers [ Some "./workflows/W/tool.cwl"; Some "./workflows/W/tools/t.cwl"; Some "https://example.org/t.cwl"; Some "../../common.cwl"; Some "./workflows/W/tool.cwl"; Some "inline:CommandLineTool" ] "A run in a folder of the ARC becomes its path from the crate root, a remote run and a run outside the folders stay as written, and an inline run has its marker."
+            Expect.equal (WorkflowConversion.runToIdentifier("runs/R/run.cwl", CWL.RunString "../../workflows/S/workflow.cwl")) (Some "./workflows/S/workflow.cwl") "The workflow that a run runs is a path from the crate root."
+        )
+        testCase "StepIdentifier_ReadsBackAsTheRunAsWritten" (fun () ->
+            Expect.equal (WorkflowConversion.identifierToRun("./workflows/W/workflow.cwl", "./workflows/W/tool.cwl")) "tool.cwl" "A path in the folder of the workflow is relative to it."
+            Expect.equal (WorkflowConversion.identifierToRun("workflows/W/workflow.cwl", "./workflows/W/tools/t.cwl")) "tools/t.cwl" "A path below the folder of the workflow is relative to it."
+            Expect.equal (WorkflowConversion.identifierToRun("./runs/R/run.cwl", "./workflows/S/workflow.cwl")) "../../workflows/S/workflow.cwl" "A path in another folder leaves the folder of the run."
+            for identifier in [ "tool.cwl"; "./tool.cwl"; "tools/echo.cwl"; "../../workflows/S/workflow.cwl"; "../../common.cwl"; "https://example.org/t.cwl"; "inline:Workflow" ] do
+                Expect.equal (WorkflowConversion.identifierToRun("./runs/R/run.cwl", identifier)) identifier $"The identifier {identifier} is a run as written, as older crates hold it, or a marker."
+        )
+        testCase "StepIdentifier_RoundTripThroughTheCrateKeepsTheRuns" (fun () ->
+            let workflow = create_workflow_full()
+            workflow.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: Workflow\ninputs:\n  x: string\noutputs: {}\nsteps:\n  s: {run: tool.cwl, in: {}, out: []}\n")
+            let json = (WorkflowConversion.composeWorkflow workflow).Flatten() |> JsonController.LDGraph.toROCrateJsonString()
+            let graph = JsonController.LDGraph.fromROCrateJsonString json
+            let step = Expect.wantSome (graph.TryGetNode "WorkflowStep_workflows/MyWorkflow/workflow.cwl_s") "The step is in the crate."
+            Expect.equal (LDDataset.tryGetIdentifierAsString(step, ?context = graph.TryGetContext())) (Some "./workflows/MyWorkflow/tool.cwl") "The crate holds the path of the tool from its root."
+            let workflow' = WorkflowConversion.decomposeWorkflow(Expect.wantSome (graph.TryGetNode "./workflows/MyWorkflow/") "The workflow is in the crate.", graph = graph)
+            match workflow'.CWLDescription with
+            | Some (CWL.Workflow workflow') ->
+                Expect.equal ((CWL.ListEntry.values workflow'.Steps).[0].Run) (CWL.RunString "tool.cwl") "The workflow runs tool.cwl again."
+            | other -> failwithf "Expected a workflow but got %A" other
+            let run = create_run_full()
+            run.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  main: {run: ../../workflows/W/workflow.cwl, in: {}, out: []}\n")
+            let json = (RunConversion.composeRun run).Flatten() |> JsonController.LDGraph.toROCrateJsonString()
+            let graph = JsonController.LDGraph.fromROCrateJsonString json
+            let run' = RunConversion.decomposeRun(Expect.wantSome (graph.TryGetNode "./runs/MyRun/") "The run is in the crate.", graph = graph)
+            match run'.CWLDescription with
+            | Some (CWL.Workflow runWorkflow) ->
+                Expect.equal ((CWL.ListEntry.values runWorkflow.Steps).[0].Run) (CWL.RunString "../../workflows/W/workflow.cwl") "The run runs the workflow by the same relative path again."
+            | other -> failwithf "Expected a workflow but got %A" other
+        )
+        testCase "StepIdentifier_OlderCratesHoldTheRunAsWritten" (fun () ->
+            let workflow = CWL.Decode.decodeWorkflow "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  a: {run: tool.cwl, in: {}, out: []}\n  b: {run: tool.cwl, in: {}, out: []}\n"
+            let protocol = WorkflowConversion.composeWorkflowProtocolFromWorkflow("workflows/W/workflow.cwl", workflow)
+            let parts = LDComputationalWorkflow.getHasPart protocol
+            LDDataset.setIdentifierAsString(parts.[0], "./tool.cwl")
+            LDDataset.setIdentifierAsString(parts.[1], "tools/echo.cwl")
+            let roundTripped = WorkflowConversion.decomposeWorkflowProtocolToWorkflow(protocol, resolveRunReferences = false)
+            Expect.equal (CWL.ListEntry.values roundTripped.Steps |> Seq.map (fun step -> step.Run) |> List.ofSeq) [ CWL.RunString "./tool.cwl"; CWL.RunString "tools/echo.cwl" ] "The runs of an older crate come back as they were written."
+        )
+        testCase "Workflow_WithMixedRun_UsesThePathOfTheMixinAsIdentifier" (fun () ->
+            let workflow =
+                CWL.Decode.decodeWorkflow "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  s:\n    run: {$mixin: tools/echo.cwl}\n    in: {}\n    out: []\n"
+            let step = (CWL.ListEntry.values workflow.Steps).[0]
+            Expect.equal (WorkflowConversion.runToIdentifier("workflows/w/workflow.cwl", step.Run)) (Some "./workflows/w/tools/echo.cwl") "The identifier is the path of the mixin, as it is the path of an import."
         )
     ]
 
@@ -3014,8 +3321,8 @@ let tests_ArcRun =
             let inputFileName = "input.txt"
             let tool = 
                 CWL.CWLToolDescription(
-                    outputs = ResizeArray [TestObjects.CWL.Outputs.CSV.outputCSV],
-                    inputs = ResizeArray [CWL.CWLInput(name = TestObjects.CWL.Inputs.File.inputFileName, type_ = CWLType.file())]
+                    outputs = ListEntry.ofValues [TestObjects.CWL.Outputs.CSV.outputCSV],
+                    inputs = ListEntry.ofValues [CWL.CWLInput(name = TestObjects.CWL.Inputs.File.inputFileName, type_ = CWLType.File)]
                 )
                 |> CWL.CommandLineTool
             let table = ArcTable.init("MyTable")
@@ -3029,8 +3336,7 @@ let tests_ArcRun =
             )
             let ymlParam = CWLParameterReference(
                 key = TestObjects.CWL.Inputs.File.inputFileName,
-                values = ResizeArray [inputFileName],
-                type_ = CWLType.file()
+                value = CWLParameterValue.File (FileInstance(path = CWL.SchemaSaladString.Literal inputFileName))
             )
             let run = ArcRun(
                 "MyRun",
@@ -3135,11 +3441,11 @@ let tests_ArcRun =
         testCase "NestedFileArrayInput_Roundtrip" (fun () ->
             let inputName = "sampleRecordFiles"
             let inputType =
-                CWLType.Array (InputArraySchema(CWLType.Array (InputArraySchema(CWLType.file()))))
+                CWLType.Array (InputArraySchema(CWLType.Array (InputArraySchema(CWLType.File))))
             let workflow =
                 CWL.CWLWorkflowDescription(
                     steps = ResizeArray(),
-                    inputs = ResizeArray [CWL.CWLInput(name = inputName, type_ = inputType)],
+                    inputs = ListEntry.ofValues [CWL.CWLInput(name = inputName, type_ = inputType)],
                     outputs = ResizeArray()
                 )
             let runInputValues =
@@ -3166,6 +3472,110 @@ let tests_ArcRun =
             Expect.equal actualInput.Key expectedInput.Key "Input key should roundtrip."
             Expect.equal actualInput.Value expectedInput.Value "Run with nested File[][] input should roundtrip through RO-Crate."
             Expect.sequenceEqual actualInput.Values expectedInput.Values "Legacy flattened Values projection should roundtrip."
+        )
+        testCase "JobFilePaths_DotSegmentsAreResolved" (fun () ->
+            Expect.equal (RunConversion.composeCWLInputFilePath("./x", "R")) "runs/R/x" "A leading . segment is dropped."
+            Expect.equal (RunConversion.composeCWLInputFilePath("a/./b", "R")) "runs/R/a/b" "A . segment inside the path is dropped."
+            Expect.equal (RunConversion.composeCWLInputFilePath("../../assays/A/dataset/d.csv", "R")) "assays/A/dataset/d.csv" "The .. segments leave the run folder."
+            Expect.equal (RunConversion.composeCWLInputFilePath("../S/./out.csv", "R")) "runs/S/out.csv" "A path into another run resolves both kinds of segment."
+        )
+        testCase "JobFilePaths_CrateIdsHaveNoDotSegmentsAndReadBack" (fun () ->
+            let workflow =
+                CWL.CWLWorkflowDescription(
+                    steps = ResizeArray(),
+                    inputs = ListEntry.ofValues [CWL.CWLInput(name = "params", type_ = CWLType.File); CWL.CWLInput(name = "table", type_ = CWLType.File)],
+                    outputs = ResizeArray()
+                )
+            let runInputValues =
+                "params:\n  class: File\n  path: ./quantalignresult/AlignmentBasedQuantificationParams.json\ntable:\n  class: File\n  path: ../../assays/A/./dataset/table.csv\n"
+                |> CWL.DecodeParameters.decodeYAMLParameterFile
+            let run =
+                ArcRun.create(
+                    identifier = "DilutionSeries",
+                    cwlDescription = CWL.Workflow workflow,
+                    cwlInput = runInputValues
+                )
+            let json = (RunConversion.composeRun run).Flatten() |> JsonController.LDGraph.toROCrateJsonString()
+            let graph = JsonController.LDGraph.fromROCrateJsonString json
+            Expect.isSome (graph.TryGetNode "./runs/DilutionSeries/quantalignresult/AlignmentBasedQuantificationParams.json") "The id of a file in the run folder has no . segment."
+            Expect.isSome (graph.TryGetNode "./assays/A/dataset/table.csv") "The id of a file outside the run folder has no . or .. segment."
+            let ro_Run = Expect.wantSome (graph.TryGetNode "./runs/DilutionSeries/") "The run is in the crate."
+            let run' = RunConversion.decomposeRun(ro_Run, graph = graph)
+            let pathOf (key : string) =
+                run'.CWLInput
+                |> Seq.find (fun input -> input.Key = key)
+                |> fun input ->
+                    match input.Value with
+                    | Some (CWL.CWLParameterValue.File file) -> CWL.FileInstance.pathOrLocation file
+                    | other -> failwithf "Expected a File value for %s but got %A" key other
+            Expect.equal (pathOf "params") "quantalignresult/AlignmentBasedQuantificationParams.json" "The value reads back relative to the run folder."
+            Expect.equal (pathOf "table") "../../assays/A/dataset/table.csv" "The value outside the run folder reads back relative to the run folder."
+        )
+        testCase "JobFilePaths_URLsStayAsTheyAre" (fun () ->
+            Expect.equal (RunConversion.composeCWLInputFilePath("https://example.org/data/p.json", "R")) "https://example.org/data/p.json" "A URL is not joined to the run folder."
+            Expect.equal (RunConversion.composeCWLInputFilePath("file:///data/p.json", "R")) "file:///data/p.json" "A file URI is not joined to the run folder."
+            Expect.equal (RunConversion.decomposeCWLInputFilePath("https://example.org/data/p.json", "R")) "https://example.org/data/p.json" "A URL reads back as it is."
+            let workflow =
+                CWL.CWLWorkflowDescription(
+                    steps = ResizeArray(),
+                    inputs = ListEntry.ofValues [CWL.CWLInput(name = "params", type_ = CWLType.File)],
+                    outputs = ResizeArray()
+                )
+            let run =
+                ArcRun.create(
+                    identifier = "R",
+                    cwlDescription = CWL.Workflow workflow,
+                    cwlInput = CWL.DecodeParameters.decodeYAMLParameterFile "params:\n  class: File\n  location: https://example.org/data/p.json\n"
+                )
+            let graph = (RunConversion.composeRun run).Flatten() |> JsonController.LDGraph.toROCrateJsonString() |> JsonController.LDGraph.fromROCrateJsonString
+            Expect.isSome (graph.TryGetNode "https://example.org/data/p.json") "The id of the file is the URL."
+            let run' = RunConversion.decomposeRun(Expect.wantSome (graph.TryGetNode "./runs/R/") "The run is in the crate.", graph = graph)
+            match (Seq.exactlyOne run'.CWLInput).Value with
+            | Some (CWL.CWLParameterValue.File file) -> Expect.equal (CWL.FileInstance.pathOrLocation file) "https://example.org/data/p.json" "The value reads back as the URL."
+            | other -> failwithf "Expected a File value but got %A" other
+        )
+        testCase "JobFilePaths_URLsAreNoFilesOfTheArc" (fun () ->
+            let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: cat\ninputs:\n  a: File\n  b: File\noutputs: []\n"
+            let input = CWL.DecodeParameters.decodeYAMLParameterFile "a:\n  class: File\n  location: file:///data/p.json\nb:\n  class: File\n  location: s3://bucket/x.csv\n"
+            let run = ArcRun.create(identifier = "R", title = "t", description = "d", cwlDescription = tool, cwlInput = input)
+            let arc = ARC("I", title = "T", description = "D", runs = ResizeArray [run])
+            let arc' = ARC.fromROCrateJsonString (arc.ToROCrateJsonString())
+            let paths = arc'.FileSystem.Tree.ToFilePaths()
+            Expect.isFalse (paths |> Array.exists (fun path -> path.Contains "p.json" || path.Contains "x.csv")) $"No URL becomes a file of the ARC, but the paths are %A{paths}."
+            let pathOf (key : string) =
+                match (arc'.Runs.[0].CWLInput |> Seq.find (fun input -> input.Key = key)).Value with
+                | Some (CWL.CWLParameterValue.File file) -> CWL.FileInstance.pathOrLocation file
+                | other -> failwithf "Expected a File value for %s but got %A" key other
+            Expect.equal (pathOf "a") "file:///data/p.json" "The file URI reads back as it is."
+            Expect.equal (pathOf "b") "s3://bucket/x.csv" "The S3 URL reads back as it is."
+        )
+        testCase "JobFilePaths_TheRunFolderIsComparedBySegments" (fun () ->
+            Expect.equal (RunConversion.decomposeCWLInputFilePath("./runs/R/out.csv", "R")) "out.csv" "A file in the run folder is relative to it."
+            Expect.equal (RunConversion.decomposeCWLInputFilePath("./runs/R2/out.csv", "R")) "../../runs/R2/out.csv" "A file of the run R2 is no file of the run R."
+            Expect.equal (RunConversion.decomposeCWLInputFilePath("runs/R/sub/out.csv", "R")) "sub/out.csv" "An id without the leading ./ is read the same way."
+            Expect.equal (RunConversion.decomposeCWLInputFilePath("./assays/A/dataset/d.csv", "R")) "../../assays/A/dataset/d.csv" "A file outside the run folder leaves it."
+        )
+        testCase "JobFilePaths_TheRunFolderItselfReadsBackAsDot" (fun () ->
+            Expect.equal (RunConversion.composeCWLInputFilePath(".", "R")) "runs/R" "The run folder is the path of the run from the crate root."
+            for id in [ "runs/R"; "./runs/R"; "./runs/R/" ] do
+                Expect.equal (RunConversion.decomposeCWLInputFilePath(id, "R")) "." $"The id {id} is the run folder, which is . from the run."
+            Expect.equal (RunConversion.decomposeCWLInputFilePath("./runs", "R")) "../../runs" "The folder of all runs is no run folder."
+            let workflow =
+                CWL.CWLWorkflowDescription(
+                    steps = ResizeArray(),
+                    inputs = ListEntry.ofValues [CWL.CWLInput(name = "here", type_ = CWLType.Directory)],
+                    outputs = ResizeArray()
+                )
+            let run =
+                ArcRun.create(
+                    identifier = "R",
+                    cwlDescription = CWL.Workflow workflow,
+                    cwlInput = CWL.DecodeParameters.decodeYAMLParameterFile "here:\n  class: Directory\n  location: .\n"
+                )
+            let run' = RunConversion.decomposeRun(RunConversion.composeRun run)
+            match (Seq.exactlyOne run'.CWLInput).Value with
+            | Some (CWL.CWLParameterValue.Directory directory) -> Expect.equal (CWL.DirectoryInstance.pathOrLocation directory) "." "The directory reads back as the run folder."
+            | other -> failwithf "Expected a Directory value but got %A" other
         )
         testCaseCrossAsync "RelativeWorkflowRunReference_ResolvesToWorkflow" (crossAsync {
             let sampleArcDirectory = TestObjects.IO.testSimpleARCWithCWL
@@ -3224,9 +3634,9 @@ let tests_ArcRun =
                 Expect.wantSome sourceRunWorkflowOpt $"Expected run fixture to decode as Workflow but got %A{runProcessingUnit}"
             let! runParameterText = FileSystemHelper.readFileTextAsync runParameterFixturePath
             let runInputValues = CWL.DecodeParameters.decodeYAMLParameterFile (runParameterText.TrimEnd())
-            Expect.equal runInputValues.Count sourceRunWorkflow.Inputs.Count "run.yml should define all required run inputs"
+            Expect.equal runInputValues.Count (CWL.ListEntry.values sourceRunWorkflow.Inputs).Count "run.yml should define all required run inputs"
             let expectedInputKeys =
-                sourceRunWorkflow.Inputs
+                (CWL.ListEntry.values sourceRunWorkflow.Inputs)
                 |> Seq.map (fun input -> input.Name)
                 |> Seq.sort
                 |> Seq.toList
@@ -3273,22 +3683,22 @@ let tests_ArcRun =
             let workflowInputSignature (input: CWL.CWLInput) =
                 input.Name,
                 (input.Type_ |> Option.map WorkflowConversion.composeAdditionalType),
-                (input.InputBinding |> Option.bind (fun binding -> binding.Prefix)),
-                (input.InputBinding |> Option.bind (fun binding -> binding.Position))
+                (input.InputBinding |> Option.bind CWL.ListEntry.tryValue |> Option.bind (fun binding -> binding.Prefix)),
+                (input.InputBinding |> Option.bind CWL.ListEntry.tryValue |> Option.bind (fun binding -> binding.Position))
 
             let workflowOutputSignature (output: CWL.CWLOutput) =
                 output.Name,
                 (output.Type_ |> Option.map WorkflowConversion.composeAdditionalType),
-                (output.OutputBinding |> Option.bind (fun binding -> binding.Glob))
+                (output.OutputBinding |> Option.bind CWL.ListEntry.tryValue |> Option.bind (fun binding -> binding.Glob))
 
             let workflowSignatures (workflow: CWL.CWLWorkflowDescription) =
                 let inputSignatures =
-                    workflow.Inputs
+                    (CWL.ListEntry.values workflow.Inputs)
                     |> Seq.map workflowInputSignature
                     |> Seq.sortBy (fun (name, _, _, _) -> name)
                     |> Seq.toList
                 let outputSignatures =
-                    workflow.Outputs
+                    (CWL.ListEntry.values workflow.Outputs)
                     |> Seq.map workflowOutputSignature
                     |> Seq.sortBy (fun (name, _, _) -> name)
                     |> Seq.toList
@@ -3296,13 +3706,12 @@ let tests_ArcRun =
 
             let toolSignatures (tool: CWL.CWLToolDescription) =
                 let inputSignatures =
-                    tool.Inputs
-                    |> Option.defaultValue (ResizeArray())
+                    CWL.CWLToolDescription.getInputValuesOrEmpty tool
                     |> Seq.map workflowInputSignature
                     |> Seq.sortBy (fun (name, _, _, _) -> name)
                     |> Seq.toList
                 let outputSignatures =
-                    tool.Outputs
+                    (CWL.ListEntry.values tool.Outputs)
                     |> Seq.map workflowOutputSignature
                     |> Seq.sortBy (fun (name, _, _) -> name)
                     |> Seq.toList
@@ -3316,21 +3725,21 @@ let tests_ArcRun =
                     | _ -> None
                 Expect.wantSome parsedRunWorkflowOpt $"Expected decomposed run to contain workflow CWL but got %A{run'.CWLDescription}"
 
-            let sourceRunStepIds = sourceRunWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
-            let parsedRunStepIds = parsedRunWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
+            let sourceRunStepIds = (CWL.ListEntry.values sourceRunWorkflow.Steps) |> Seq.map (fun step -> step.Id) |> Seq.toList
+            let parsedRunStepIds = (CWL.ListEntry.values parsedRunWorkflow.Steps) |> Seq.map (fun step -> step.Id) |> Seq.toList
             Expect.equal parsedRunStepIds sourceRunStepIds "Run workflow step identifiers should be preserved"
             let sourceRunInputs, sourceRunOutputs = workflowSignatures sourceRunWorkflow
             let parsedRunInputs, parsedRunOutputs = workflowSignatures parsedRunWorkflow
             Expect.equal parsedRunInputs sourceRunInputs "Run workflow input signatures should be preserved"
             Expect.equal parsedRunOutputs sourceRunOutputs "Run workflow output signatures should be preserved"
 
-            let parsedRunStep = parsedRunWorkflow.Steps.[0]
+            let parsedRunStep = (CWL.ListEntry.values parsedRunWorkflow.Steps).[0]
             Expect.isTrue
-                (match parsedRunStep.Run with | CWL.RunWorkflow _ -> true | _ -> false)
-                (sprintf "Expected run step to resolve to RunWorkflow but got %A" parsedRunStep.Run)
+                (match CWL.WorkflowStep.getResolvedRun parsedRunStep with | CWL.RunWorkflow _ -> true | _ -> false)
+                (sprintf "Expected run step to resolve to RunWorkflow but got %A" (CWL.WorkflowStep.getResolvedRun parsedRunStep))
 
             let referencedWorkflowObj: obj =
-                match parsedRunStep.Run with
+                match CWL.WorkflowStep.getResolvedRun parsedRunStep with
                 | CWL.RunWorkflow workflowObj -> workflowObj
                 | _ -> Unchecked.defaultof<obj>
             Expect.isTrue
@@ -3338,8 +3747,8 @@ let tests_ArcRun =
                 (sprintf "Expected RunWorkflow payload to be CWLWorkflowDescription but got %A" referencedWorkflowObj)
             let parsedReferencedWorkflow = referencedWorkflowObj :?> CWL.CWLWorkflowDescription
 
-            let sourceReferencedStepIds = sourceReferencedWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
-            let parsedReferencedStepIds = parsedReferencedWorkflow.Steps |> Seq.map (fun step -> step.Id) |> Seq.toList
+            let sourceReferencedStepIds = (CWL.ListEntry.values sourceReferencedWorkflow.Steps) |> Seq.map (fun step -> step.Id) |> Seq.toList
+            let parsedReferencedStepIds = (CWL.ListEntry.values parsedReferencedWorkflow.Steps) |> Seq.map (fun step -> step.Id) |> Seq.toList
             Expect.equal parsedReferencedStepIds sourceReferencedStepIds "Referenced workflow step identifiers should be preserved"
             let sourceReferencedInputs, sourceReferencedOutputs = workflowSignatures sourceReferencedWorkflow
             let parsedReferencedInputs, parsedReferencedOutputs = workflowSignatures parsedReferencedWorkflow
@@ -3347,9 +3756,9 @@ let tests_ArcRun =
             Expect.equal parsedReferencedOutputs sourceReferencedOutputs "Referenced workflow output signatures should be preserved"
 
             let unresolvedNestedRuns =
-                parsedReferencedWorkflow.Steps
+                (CWL.ListEntry.values parsedReferencedWorkflow.Steps)
                 |> Seq.choose (fun step ->
-                    match step.Run with
+                    match CWL.WorkflowStep.getResolvedRun step with
                     | CWL.RunString unresolvedPath -> Some (step.Id, unresolvedPath)
                     | _ -> None
                 )
@@ -3358,7 +3767,7 @@ let tests_ArcRun =
 
             let referencedWorkflowGraphPath = fixturePathToGraphPath referencedWorkflowFixturePathNormalized
             let expectedRunPathByStepId =
-                sourceReferencedWorkflow.Steps
+                (CWL.ListEntry.values sourceReferencedWorkflow.Steps)
                 |> Seq.map (fun step ->
                     let runPath =
                         let runPathOpt =
@@ -3370,7 +3779,7 @@ let tests_ArcRun =
                 )
                 |> Map.ofSeq
 
-            let mutable expectedToolByStepId : Map<string, CWL.CWLToolDescription> = Map.empty
+            let mutable expectedToolByStepId : Map<string option, CWL.CWLToolDescription> = Map.empty
             for KeyValue(stepId, runPath) in expectedRunPathByStepId do
                 let expectedToolGraphPath =
                     ArcPathHelper.resolvePathFromFile referencedWorkflowGraphPath runPath
@@ -3388,22 +3797,22 @@ let tests_ArcRun =
                     Expect.wantSome expectedToolOpt $"Expected referenced tool fixture for step {stepId} to decode as CommandLineTool but got %A{expectedToolProcessingUnit}"
                 expectedToolByStepId <- expectedToolByStepId.Add(stepId, expectedTool)
 
-            for parsedStep in parsedReferencedWorkflow.Steps do
+            for parsedStep in (CWL.ListEntry.values parsedReferencedWorkflow.Steps) do
                 let expectedTool =
                     let expectedToolOpt = expectedToolByStepId.TryFind parsedStep.Id
                     Expect.wantSome expectedToolOpt $"Expected source tool for step {parsedStep.Id}"
 
                 Expect.isTrue
-                    (match parsedStep.Run with | CWL.RunCommandLineTool _ -> true | _ -> false)
-                    (sprintf "Expected step %s to resolve to RunCommandLineTool but got %A" parsedStep.Id parsedStep.Run)
+                    (match CWL.WorkflowStep.getResolvedRun parsedStep with | CWL.RunCommandLineTool _ -> true | _ -> false)
+                    (sprintf "Expected step %A to resolve to RunCommandLineTool but got %A" parsedStep.Id (CWL.WorkflowStep.getResolvedRun parsedStep))
 
                 let parsedToolObj: obj =
-                    match parsedStep.Run with
+                    match CWL.WorkflowStep.getResolvedRun parsedStep with
                     | CWL.RunCommandLineTool toolObj -> toolObj
                     | _ -> Unchecked.defaultof<obj>
                 Expect.isTrue
                     (parsedToolObj :? CWL.CWLToolDescription)
-                    (sprintf "Expected resolved tool payload of step %s to be CWLToolDescription but got %A" parsedStep.Id parsedToolObj)
+                    (sprintf "Expected resolved tool payload of step %A to be CWLToolDescription but got %A" parsedStep.Id parsedToolObj)
                 let parsedTool = parsedToolObj :?> CWL.CWLToolDescription
 
                 let expectedInputs, expectedOutputs = toolSignatures expectedTool
@@ -3414,6 +3823,172 @@ let tests_ArcRun =
         })
 
 
+    ]
+
+module WorkflowCrate =
+
+    let workflowText =
+        "cwlVersion: v1.2\nclass: Workflow\nrequirements:\n  DockerRequirement:\n    dockerFile: {$include: Dockerfile}\ninputs:\n  x: string\noutputs:\n  y:\n    type: string\n    outputSource: s/o\nsteps:\n  s:\n    run: tool.cwl\n    in: {}\n    out: [o]\n"
+
+    let toolText =
+        "cwlVersion: v1.2\nclass: CommandLineTool\nrequirements:\n  SchemaDefRequirement:\n    types:\n      - $import: types.yml\nbaseCommand: echo\ninputs: []\noutputs:\n  o: string\n"
+
+    let runText =
+        "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  main:\n    run: ../../workflows/W/workflow.cwl\n    in: {}\n    out: []\n"
+
+    /// Decodes each file once and resolves the runs of the CWL file at the path, as the reader of an ARC does.
+    let resolve (cwlFilePath : string) (files : (string * string) list) =
+        let byPath =
+            files
+            |> List.map (fun (path, text) -> ArcPathHelper.normalizePathKey path, CWL.Decode.decodeCWLProcessingUnit text)
+            |> Map.ofList
+        CWLRunResolver.resolveRunReferencesFromLookup cwlFilePath byPath.[ArcPathHelper.normalizePathKey cwlFilePath] (fun path -> byPath.TryFind (ArcPathHelper.normalizePathKey path))
+
+    let fileSystemOf (paths : string list) = FileSystem.fromFilePaths (Array.ofList paths)
+
+    let license = License(contentType = LicenseContentType.Fulltext, content = "MIT", path = "LICENSE")
+
+    let hasPartIds (json : string) =
+        let graph = JsonController.LDGraph.fromROCrateJsonString json
+        let root = Expect.wantSome (graph.TryGetNode "./") "The crate has a root."
+        let parts = LDDataset.getHasParts(root, graph = graph, ?context = graph.TryGetContext())
+        parts |> Seq.iter (fun part -> Expect.isTrue (LDFile.validate(part, ?context = graph.TryGetContext())) $"The part {part.Id} is a File.")
+        parts |> Seq.map (fun part -> part.Id) |> List.ofSeq
+
+let tests_WorkflowCrate =
+    testList "WorkflowCrate" [
+        testCase "ReferencedFiles_StepRunsAndDirectivesOfEveryFileReached" (fun () ->
+            let workflow =
+                WorkflowCrate.resolve "workflows/W/workflow.cwl" [
+                    "workflows/W/workflow.cwl", WorkflowCrate.workflowText
+                    "workflows/W/tool.cwl", WorkflowCrate.toolText
+                ]
+            let fs = WorkflowCrate.fileSystemOf ["workflows/W/workflow.cwl"; "workflows/W/tool.cwl"; "workflows/W/Dockerfile"; "workflows/W/types.yml"]
+            let paths = WorkflowConversion.getReferencedFilePaths("workflows/W/workflow.cwl", workflow, fs)
+            Expect.sequenceEqual paths ["workflows/W/Dockerfile"; "workflows/W/tool.cwl"; "workflows/W/types.yml"] "The include and the run of the workflow come first, then the import of the tool."
+        )
+        testCase "ReferencedFiles_TheWorkflowOfARunAndItsTools" (fun () ->
+            let run =
+                WorkflowCrate.resolve "runs/R/run.cwl" [
+                    "runs/R/run.cwl", WorkflowCrate.runText
+                    "workflows/W/workflow.cwl", WorkflowCrate.workflowText
+                    "workflows/W/tool.cwl", WorkflowCrate.toolText
+                ]
+            let fs = WorkflowCrate.fileSystemOf ["runs/R/run.cwl"; "workflows/W/workflow.cwl"; "workflows/W/tool.cwl"; "workflows/W/Dockerfile"; "workflows/W/types.yml"]
+            let paths = WorkflowConversion.getReferencedFilePaths("runs/R/run.cwl", run, fs)
+            Expect.sequenceEqual paths ["workflows/W/workflow.cwl"; "workflows/W/Dockerfile"; "workflows/W/tool.cwl"; "workflows/W/types.yml"] "The run needs the workflow that it runs and every file of the workflow."
+        )
+        testCase "ReferencedFiles_MissingRemoteAndOutsideFilesAreLeftOut" (fun () ->
+            let text =
+                "cwlVersion: v1.2\nclass: Workflow\nrequirements:\n  DockerRequirement:\n    dockerFile: {$include: Dockerfile}\ninputs: {}\noutputs: {}\nsteps:\n  a:\n    run: missing.cwl\n    in: {}\n    out: []\n  b:\n    run: https://example.org/tool.cwl\n    in: {}\n    out: []\n  c:\n    run: ../../../outside.cwl\n    in: {}\n    out: []\n  d:\n    run: /workflows/W/tool.cwl\n    in: {}\n    out: []\n"
+            let workflow = WorkflowCrate.resolve "workflows/W/workflow.cwl" ["workflows/W/workflow.cwl", text]
+            let fs = WorkflowCrate.fileSystemOf ["workflows/W/workflow.cwl"; "workflows/W/tool.cwl"; "outside.cwl"]
+            let paths = WorkflowConversion.getReferencedFilePaths("workflows/W/workflow.cwl", workflow, fs)
+            Expect.isEmpty paths "No reference names a file of the ARC."
+        )
+        testCase "ReferencedFiles_ACycleEnds" (fun () ->
+            let text (other : string) =
+                $"cwlVersion: v1.2\nclass: Workflow\ninputs: {{}}\noutputs: {{}}\nsteps:\n  s:\n    run: {other}\n    in: {{}}\n    out: []\n"
+            let a = CWL.Decode.decodeCWLProcessingUnit (text "b.cwl")
+            let b = CWL.Decode.decodeCWLProcessingUnit (text "a.cwl")
+            let stepOf (processingUnit : CWL.CWLProcessingUnit) =
+                match processingUnit with
+                | CWL.Workflow workflow -> (CWL.ListEntry.values workflow.Steps).[0]
+                | other -> failwithf "Expected a workflow but got %A" other
+            // Each step holds the other workflow, which no reader of an ARC does, so only the visited files end the walk.
+            (stepOf a).ResolvedRun <- { Run = CWLRunResolver.tryRunFromProcessingUnit b }
+            (stepOf b).ResolvedRun <- { Run = CWLRunResolver.tryRunFromProcessingUnit a }
+            let fs = WorkflowCrate.fileSystemOf ["workflows/W/a.cwl"; "workflows/W/b.cwl"]
+            let paths = WorkflowConversion.getReferencedFilePaths("workflows/W/a.cwl", a, fs)
+            Expect.sequenceEqual paths ["workflows/W/b.cwl"] "The walk visits each file once and leaves out the main file."
+        )
+        testCase "ReferencedFiles_ADirectoryLiteralOfTheArcRootIsLeftOut" (fun () ->
+            let fs = WorkflowCrate.fileSystemOf ["workflows/W/workflow.cwl"; "workflows/W/a.txt"; "isa.investigation.xlsx"; "runs/R/run.cwl"]
+            for location in [ "../.."; "../../"; "./../.."; "../../."; "../W/../.." ] do
+                let tool = CWL.Decode.decodeCWLProcessingUnit $"cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  d:\n    type: Directory\n    default:\n      class: Directory\n      location: {location}\noutputs: []\n"
+                let paths = WorkflowConversion.getReferencedFilePaths("workflows/W/workflow.cwl", tool, fs)
+                Expect.sequenceEqual paths [] $"The location {location} names the root of the ARC, which adds no files."
+            let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  d:\n    type: Directory\n    default:\n      class: Directory\n      location: ../../runs\noutputs: []\n"
+            Expect.sequenceEqual (WorkflowConversion.getReferencedFilePaths("workflows/W/workflow.cwl", tool, fs)) ["runs/R/run.cwl"] "A folder of the ARC adds its files."
+        )
+        testCase "ReferencedFiles_OnlyAWorkflowHasSteps" (fun () ->
+            let fs = WorkflowCrate.fileSystemOf ["workflows/W/workflow.cwl"; "workflows/W/a.txt"; "workflows/W/b.cwl"; "workflows/W/c.cwl"]
+            let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: x\ninputs:\n  r:\n    type: Any\n    default: {steps: [{run: a.txt}]}\noutputs: []\n"
+            Expect.sequenceEqual (WorkflowConversion.getReferencedFilePaths("workflows/W/workflow.cwl", tool, fs)) [] "A field named steps in a data value holds no runs."
+            let workflow = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: Workflow\ninputs:\n  r:\n    type: Any\n    default: {steps: {s: {run: a.txt}}}\noutputs: {}\nsteps:\n  s:\n    run: b.cwl\n    in: {}\n    out: []\n  t:\n    run:\n      class: Workflow\n      inputs: {}\n      outputs: {}\n      steps:\n        u: {run: c.cwl, in: {}, out: []}\n    in: {}\n    out: []\n"
+            Expect.sequenceEqual (WorkflowConversion.getReferencedFilePaths("workflows/W/workflow.cwl", workflow, fs)) ["workflows/W/b.cwl"; "workflows/W/c.cwl"] "The steps of the workflow at the root and of an inline workflow name their runs."
+        )
+        testCase "ReferencedFiles_FileAndDirectoryLiterals" (fun () ->
+            let text =
+                "cwlVersion: v1.2\nclass: CommandLineTool\nrequirements:\n  InitialWorkDirRequirement:\n    listing:\n      - class: File\n        location: x.R\n      - class: Directory\n        location: data\n      - class: File\n        location: missing.R\n      - class: File\n        location: https://example.org/y.R\nbaseCommand: [Rscript, x.R]\ninputs:\n  table:\n    type: File\n    default:\n      class: File\n      path: tables/t.csv\n      secondaryFiles:\n        - class: File\n          location: tables/t.csv.idx\noutputs: []\n"
+            let tool = CWL.Decode.decodeCWLProcessingUnit text
+            let fs = WorkflowCrate.fileSystemOf ["workflows/W/workflow.cwl"; "workflows/W/x.R"; "workflows/W/data/a.txt"; "workflows/W/data/sub/b.txt"; "workflows/W/tables/t.csv"; "workflows/W/tables/t.csv.idx"; "workflows/W/other.txt"]
+            let paths = WorkflowConversion.getReferencedFilePaths("workflows/W/workflow.cwl", tool, fs)
+            Expect.equal (paths |> Seq.sort |> List.ofSeq) ["workflows/W/data/a.txt"; "workflows/W/data/sub/b.txt"; "workflows/W/tables/t.csv"; "workflows/W/tables/t.csv.idx"; "workflows/W/x.R"] "A File literal names its file, a Directory literal every file under its directory, and a missing or remote literal nothing."
+        )
+        testCase "WorkflowCrate_ListsTheFilesTheWorkflowNeeds" (fun () ->
+            let workflow = create_workflow_full()
+            workflow.CWLDescription <-
+                WorkflowCrate.resolve "workflows/MyWorkflow/workflow.cwl" [
+                    "workflows/MyWorkflow/workflow.cwl", WorkflowCrate.workflowText
+                    "workflows/MyWorkflow/tool.cwl", WorkflowCrate.toolText
+                ]
+                |> Some
+            let fs = WorkflowCrate.fileSystemOf ["workflows/MyWorkflow/workflow.cwl"; "workflows/MyWorkflow/tool.cwl"; "workflows/MyWorkflow/Dockerfile"]
+            let json = ARCtrl.Json.ARC.ROCrate.writeWorkflowAsCrate(workflow, fs, WorkflowCrate.license)
+            Expect.sequenceEqual (WorkflowCrate.hasPartIds json) ["./workflows/MyWorkflow/workflow.cwl"; "./workflows/MyWorkflow/Dockerfile"; "./workflows/MyWorkflow/tool.cwl"] "The crate holds the workflow, its include and its tool, and no file that is missing."
+        )
+        testCase "RunCrate_ListsTheWorkflowItRunsAndItsTools" (fun () ->
+            let run = create_run_full()
+            run.CWLDescription <-
+                WorkflowCrate.resolve "runs/MyRun/run.cwl" [
+                    "runs/MyRun/run.cwl", WorkflowCrate.runText
+                    "workflows/W/workflow.cwl", WorkflowCrate.workflowText
+                    "workflows/W/tool.cwl", WorkflowCrate.toolText
+                ]
+                |> Some
+            let fs = WorkflowCrate.fileSystemOf ["runs/MyRun/run.cwl"; "workflows/W/workflow.cwl"; "workflows/W/tool.cwl"; "workflows/W/Dockerfile"; "workflows/W/types.yml"]
+            let ids = WorkflowCrate.hasPartIds (ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(run, fs, WorkflowCrate.license))
+            for id in ["./runs/MyRun/run.cwl"; "./workflows/W/workflow.cwl"; "./workflows/W/Dockerfile"; "./workflows/W/tool.cwl"; "./workflows/W/types.yml"] do
+                Expect.isTrue (List.contains id ids) $"The run crate holds {id}."
+            Expect.equal (ids |> List.distinct |> List.length) ids.Length "Each part is listed once."
+        )
+        testCase "Crates_RootIsPublishedAtTheGivenDate" (fun () ->
+            let workflow = create_workflow_full()
+            let date = System.DateTime(2026, 1, 2, 3, 4, 5, System.DateTimeKind.Utc)
+            let json = ARCtrl.Json.ARC.ROCrate.writeWorkflowAsCrate(workflow, WorkflowCrate.fileSystemOf [], WorkflowCrate.license, datePublished = date)
+            Expect.stringContains json "\"datePublished\": \"2026-01-02T03:04:05" "The root of the workflow crate is published at the given date."
+            let run = create_run_full()
+            let json = ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(run, WorkflowCrate.fileSystemOf [], WorkflowCrate.license, datePublished = date)
+            Expect.stringContains json "\"datePublished\": \"2026-01-02T03:04:05" "The root of the run crate is published at the given date."
+        )
+        testCase "Crates_RootIsPublishedNowWithoutADate" (fun () ->
+            let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeWorkflowAsCrate(create_workflow_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license))
+            let root = Expect.wantSome (graph.TryGetNode "./") "The crate has a root."
+            Expect.isSome (LDDataset.tryGetDatePublished(root, ?context = graph.TryGetContext())) "The root has a date of publication."
+            let before = System.DateTime.Now
+            let graph = ARCtrl.Json.ARC.ROCrate.packDatasetAsCrate(WorkflowConversion.composeWorkflow(create_workflow_full()), "name", "description", None, WorkflowCrate.license)
+            let after = System.DateTime.Now
+            let root = Expect.wantSome (graph.TryGetNode "./") "The packed crate has a root."
+            let datePublished = Expect.wantSome (LDDataset.tryGetDatePublishedAsDateTime(root, ?context = graph.TryGetContext())) "The root has a date of publication."
+            let dateCreated = Expect.wantSome (LDDataset.tryGetDateCreatedAsDateTime(root, ?context = graph.TryGetContext())) "The root has a date of creation."
+            for date in [ datePublished; dateCreated ] do
+                Expect.isTrue (before.AddSeconds(-1.) <= date && date <= after.AddSeconds(1.)) $"The date {date} is now in local time, between {before} and {after}."
+        )
+        testCase "RunCrate_NamesItsProfilesAsEntities" (fun () ->
+            let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(create_run_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license))
+            let context = graph.TryGetContext()
+            let root = Expect.wantSome (graph.TryGetNode "./") "The crate has a root."
+            let profiles = root.GetPropertyNodes(LDDataset.conformsTo, graph = graph, ?context = context)
+            let describe (node : LDNode) =
+                let text (property : string) = node.TryGetPropertyAsSingleton(property, ?context = context) |> Option.map string
+                node.Id, LDCreativeWork.validate(node, ?context = context), text LDCreativeWork.name, text LDCreativeWork.version
+            Expect.equal (profiles |> Seq.map describe |> List.ofSeq) [
+                "https://w3id.org/ro/wfrun/process/0.5", true, Some "Process Run Crate", Some "0.5"
+                "https://w3id.org/ro/wfrun/workflow/0.5", true, Some "Workflow Run Crate", Some "0.5"
+                "https://w3id.org/workflowhub/workflow-ro-crate/1.0", true, Some "Workflow RO-Crate", Some "1.0"
+            ] "Each profile that the root conforms to is a CreativeWork with its name and version."
+        )
     ]
 
 let tests_Assay =
@@ -3883,9 +4458,11 @@ let main =
         tests_YAMLInputValue
         tests_ToolDescription
         tests_OperationDescription
+        tests_ProcessOfUnknownClass
         tests_WorkflowInvocation
         tests_ArcWorkflow
         tests_ArcRun
+        tests_WorkflowCrate
         tests_Assay
         tests_Study
         tests_Investigation

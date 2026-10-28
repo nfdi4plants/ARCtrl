@@ -2,10 +2,37 @@ namespace ARCtrl.CWL
 
 open DynamicObj
 open Fable.Core
-open YAMLicious.YAMLiciousTypes
+
+/// The glob of an output binding, as a single pattern or as a list of patterns. A single pattern differs from a list
+/// of one pattern, and the empty list stays an empty list, because CWL keeps the spellings apart. The lists compare by
+/// their elements, because a ResizeArray compares references. A pattern is a string or an expression, and a directive
+/// names a file with the text of the pattern.
+[<RequireQualifiedAccess; CustomEquality; NoComparison; AttachMembers>]
+type OutputGlob =
+    | Single of SchemaSaladString
+    | Multiple of ResizeArray<SchemaSaladString>
+    with
+    member this.AsValues() =
+        match this with
+        | Single value -> ResizeArray [| value |]
+        | Multiple values -> values
+
+    override this.Equals(o: obj) =
+        match o with
+        | :? OutputGlob as other ->
+            match this, other with
+            | Single left, Single right -> left = right
+            | Multiple left, Multiple right -> HashHelpers.seqEqual left right
+            | _ -> false
+        | _ -> false
+
+    override this.GetHashCode() =
+        match this with
+        | Single value -> HashHelpers.mergeHashes 1 (hash value)
+        | Multiple values -> HashHelpers.mergeHashes 2 (HashHelpers.hashSeq values)
 
 [<AttachMembers>]
-type OutputBinding (?glob: string, ?loadContents: bool, ?loadListing: LoadListingEnum, ?outputEval: string) =
+type OutputBinding (?glob: OutputGlob, ?loadContents: SchemaSaladBool, ?loadListing: LoadListingEnum, ?outputEval: SchemaSaladString) =
     inherit DynamicObj ()
 
     let mutable _glob = glob
@@ -45,30 +72,50 @@ type OutputBinding (?glob: string, ?loadContents: bool, ?loadListing: LoadListin
     static member KnownFieldNames =
         CWLKnownFieldNames.outputBinding
 
-    static member create(?glob: string, ?loadContents: bool, ?loadListing: LoadListingEnum, ?outputEval: string) =
+    static member create(?glob: OutputGlob, ?loadContents: SchemaSaladBool, ?loadListing: LoadListingEnum, ?outputEval: SchemaSaladString) =
         OutputBinding(?glob = glob, ?loadContents = loadContents, ?loadListing = loadListing, ?outputEval = outputEval)
 
-[<AttachMembers>]
+/// The source of an output or of a step input, as a single name or as a list of names. A name is a string, so a directive
+/// can stand in its place. A single name differs from a list of one name, because CWL keeps the two spellings apart: a
+/// list of one source with a linkMerge yields a list, and a single source yields the value itself. The lists compare by
+/// their elements, because a ResizeArray compares references.
+[<CustomEquality; NoComparison; AttachMembers>]
 type OutputSource =
-    | Single of string
-    | Multiple of ResizeArray<string>
+    | Single of SchemaSaladString
+    | Multiple of ResizeArray<SchemaSaladString>
     with
     member this.AsValues() =
         match this with
         | Single value -> ResizeArray [| value |]
         | Multiple values -> values
 
+    override this.Equals(o: obj) =
+        match o with
+        | :? OutputSource as other ->
+            match this, other with
+            | Single left, Single right -> left = right
+            | Multiple left, Multiple right -> HashHelpers.seqEqual left right
+            | _ -> false
+        | _ -> false
+
+    override this.GetHashCode() =
+        match this with
+        | Single value -> HashHelpers.mergeHashes 1 (hash value)
+        | Multiple values -> HashHelpers.mergeHashes 2 (HashHelpers.hashSeq values)
+
+/// An output of a process. The outputBinding is the binding itself, or the directive that stands for the binding of a
+/// file.
 [<AttachMembers>]
 type CWLOutput (
     name: string,
     ?type_: CWLType,
-    ?outputBinding: OutputBinding,
+    ?outputBinding: ListEntry<OutputBinding>,
     ?outputSource: OutputSource,
-    ?label: string,
-    ?secondaryFiles: YAMLElement,
-    ?streamable: bool,
-    ?doc: string,
-    ?format: string
+    ?label: SchemaSaladString,
+    ?secondaryFiles: RawYaml,
+    ?streamable: SchemaSaladBool,
+    ?doc: DocText,
+    ?format: SchemaSaladString
 ) =
     inherit DynamicObj ()
 
@@ -84,6 +131,7 @@ type CWLOutput (
     let mutable _secondaryFiles = secondaryFiles
     let mutable _streamable = streamable
     let mutable _doc = doc
+    let mutable _sourceNodes = SourceNodes.Empty
     let mutable _format = format
 
     member this.Name
@@ -119,13 +167,21 @@ type CWLOutput (
         with get() = _doc
         and set(value) = _doc <- value
 
+    /// The nodes that the doc and the label were read from. The encoder writes the layout of the author from them.
+    /// They stay out of the equality and the hash of the object.
+    member internal this.SourceNodes
+        with get() = _sourceNodes
+        and set(value) = _sourceNodes <- value
+
     member this.Format
         with get() = _format
         and set(value) = _format <- value
 
-    member this.GetOutputSources() =
+    /// Returns a new list of the sources that the document writes out as ids. The directives are left out, because they
+    /// name files that the decoder does not read.
+    member this.GetOutputSources() : ResizeArray<string> =
         match this.OutputSource with
-        | Some outputSource -> outputSource.AsValues()
+        | Some outputSource -> outputSource.AsValues() |> Seq.choose SchemaSaladString.tryLiteral |> ResizeArray
         | _ ->
             ResizeArray()
 
@@ -145,18 +201,18 @@ type CWLOutput (
         | _ -> false
 
     override this.GetHashCode() =
-        hash (
-            this.Name,
-            this.Type_,
-            this.OutputBinding,
-            this.OutputSource,
-            this.Label,
-            this.SecondaryFiles,
-            this.Streamable,
-            this.Doc,
-            this.Format,
-            DynamicObjHelpers.hashDynamicProperties this
-        )
+        HashHelpers.hashFields [
+            box this.Name
+            box this.Type_
+            box this.OutputBinding
+            box this.OutputSource
+            box this.Label
+            box this.SecondaryFiles
+            box this.Streamable
+            box this.Doc
+            box this.Format
+            box (DynamicObjHelpers.hashDynamicProperties this)
+        ]
 
     static member KnownFieldNames =
         CWLKnownFieldNames.cwlOutput

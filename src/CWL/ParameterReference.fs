@@ -1,12 +1,12 @@
 namespace ARCtrl.CWL
 
-open DynamicObj
 open Fable.Core
 open System
 
+/// An entry of a job file: the key of a process input and the CWL value that the file gives it. The value is a plain
+/// CWL value, so the file has no place for the type of the input. The type belongs to the process that runs.
 [<AttachMembers>]
-type CWLParameterReference(key : string, ?values: string ResizeArray, ?value: CWLParameterValue, ?type_: CWLType) =
-    inherit DynamicObj ()
+type CWLParameterReference(key : string, ?values: string ResizeArray, ?value: CWLParameterValue) =
 
     let mutable _key = key
     let mutable _value =
@@ -15,7 +15,6 @@ type CWLParameterReference(key : string, ?values: string ResizeArray, ?value: CW
             values
             |> Option.bind CWLParameterValue.fromFlatStrings
         )
-    let mutable _type = type_
 
     member this.Key
         with get() = _key
@@ -32,33 +31,22 @@ type CWLParameterReference(key : string, ?values: string ResizeArray, ?value: CW
             |> Option.defaultValue (ResizeArray())
         and set(values) = _value <- CWLParameterValue.fromFlatStrings values
 
-    member this.Type
-        with get() = _type
-        and set(value) = _type <- value
-
     override this.GetHashCode() =
         [|
             HashHelpers.hash this.Key |> box
             HashHelpers.boxHashOption this.Value
-            HashHelpers.boxHashOption this.Type
-            DynamicObjHelpers.hashDynamicProperties this
         |]
         |> HashHelpers.boxHashArray
         |> fun x -> x :?> int
 
-    override this.Equals (obj: obj) : bool = 
+    override this.Equals (obj: obj) : bool =
         match obj with
         | :? CWLParameterReference as other -> this.StructurallyEquals other
         | _ -> false
 
     member this.StructurallyEquals (other: CWLParameterReference) : bool =
         this.Key = other.Key &&
-        this.Value = other.Value &&
-        this.Type = other.Type &&
-        DynamicObjHelpers.dynamicPropertiesEqual this other
+        this.Value = other.Value
 
     member this.ReferenceEquals (other: CWLParameterReference) : bool =
         System.Object.ReferenceEquals(this,other)
-
-    static member KnownFieldNames =
-        CWLKnownFieldNames.parameterReference

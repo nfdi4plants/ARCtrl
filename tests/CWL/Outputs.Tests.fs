@@ -4,11 +4,13 @@ open ARCtrl.CWL
 open DynamicObj
 open YAMLicious
 open TestingUtils
+open TestingUtils.CWL
 
 let decodeOutput =
     TestObjects.CWL.Outputs.outputsFileContent
-    |> Decode.read
+    |> Decode.readYaml
     |> Decode.outputsDecoder
+    |> ListEntry.values
 
 let testOutput =
     testList "Decode" [
@@ -23,11 +25,11 @@ let testOutput =
                 let actual = fileItem.Name
                 Expect.equal actual expected ""
             testCase "Type" <| fun _ ->
-                let expected = File (FileInstance())
+                let expected = File
                 let actual = fileItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "OutputBinding" <| fun _ ->
-                let expected = Some (OutputBinding.create(glob = "./arc/runs/fsResult1/result.csv"))
+                let expected = Some (ListEntry.Value (OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "./arc/runs/fsResult1/result.csv"))))
                 let actual = fileItem.OutputBinding
                 Expect.equal actual expected ""
         ]
@@ -38,11 +40,11 @@ let testOutput =
                 let actual = directoryItem.Name
                 Expect.equal actual expected ""
             testCase "Type" <| fun _ ->
-                let expected = Directory (DirectoryInstance())
+                let expected = Directory
                 let actual = directoryItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "OutputBinding" <| fun _ ->
-                let expected = Some (OutputBinding.create(glob = "./arc/runs/fsResult1/example.csv"))
+                let expected = Some (ListEntry.Value (OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "./arc/runs/fsResult1/example.csv"))))
                 let actual = directoryItem.OutputBinding
                 Expect.equal actual expected ""
         ]
@@ -53,7 +55,7 @@ let testOutput =
                 let actual = directoryItem.Name
                 Expect.equal actual expected ""
             testCase "Type" <| fun _ ->
-                let expected = Directory (DirectoryInstance())
+                let expected = Directory
                 let actual = directoryItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "OutputBinding" <| fun _ ->
@@ -68,11 +70,11 @@ let testOutput =
                 let actual = fileArrayItem.Name
                 Expect.equal actual expected ""
             testCase "Type" <| fun _ ->
-                let expected = Array (InputArraySchema(File (FileInstance())))
+                let expected = Array (InputArraySchema(File))
                 let actual = fileArrayItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "OutputBinding" <| fun _ ->
-                let expected = Some (OutputBinding.create(glob = "./arc/runs/fsResult1/example.csv"))
+                let expected = Some (ListEntry.Value (OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "./arc/runs/fsResult1/example.csv"))))
                 let actual = fileArrayItem.OutputBinding
                 Expect.equal actual expected ""
         ]
@@ -83,11 +85,11 @@ let testOutput =
                 let actual = fileArrayItem.Name
                 Expect.equal actual expected ""
             testCase "Type" <| fun _ ->
-                let expected = Array (InputArraySchema(File (FileInstance())))
+                let expected = Array (InputArraySchema(File))
                 let actual = fileArrayItem.Type_.Value
                 Expect.equal actual expected ""
             testCase "OutputBinding" <| fun _ ->
-                let expected = Some (OutputBinding.create(glob = "./arc/runs/fsResult1/example.csv"))
+                let expected = Some (ListEntry.Value (OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "./arc/runs/fsResult1/example.csv"))))
                 let actual = fileArrayItem.OutputBinding
                 Expect.equal actual expected ""
         ]
@@ -97,21 +99,21 @@ let testOutputMutationApi =
     testList "Mutation API" [
         testCase "typed setters roundtrip values" <| fun _ ->
             let output = CWLOutput("result")
-            output.Type_ <- Some (File (FileInstance()))
-            output.OutputBinding <- Some (OutputBinding.create(glob = "results/*.txt"))
-            output.OutputSource <- Some (OutputSource.Single "step/out")
+            output.Type_ <- Some (File)
+            output.OutputBinding <- Some (ListEntry.Value (OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "results/*.txt"))))
+            output.OutputSource <- Some (OutputSource.Single (SchemaSaladString.Literal "step/out"))
 
-            Expect.equal output.Type_ (Some (File (FileInstance()))) "Type_ setter should write DynamicObj-backed value."
-            Expect.equal output.OutputBinding (Some (OutputBinding.create(glob = "results/*.txt"))) "OutputBinding setter should write value."
-            Expect.equal output.OutputSource (Some (OutputSource.Single "step/out")) "OutputSource setter should write value."
+            Expect.equal output.Type_ (Some (File)) "Type_ setter should write DynamicObj-backed value."
+            Expect.equal output.OutputBinding (Some (ListEntry.Value (OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "results/*.txt"))))) "OutputBinding setter should write value."
+            Expect.equal output.OutputSource (Some (OutputSource.Single (SchemaSaladString.Literal "step/out"))) "OutputSource setter should write value."
 
         testCase "typed setters can clear optional values" <| fun _ ->
             let output =
                 CWLOutput(
                     "result",
                     type_ = CWLType.String,
-                    outputBinding = OutputBinding.create(glob = "*.txt"),
-                    outputSource = OutputSource.Single "step/out"
+                    outputBinding = ListEntry.Value (OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "*.txt"))),
+                    outputSource = OutputSource.Single (SchemaSaladString.Literal "step/out")
                 )
             output.Type_ <- None
             output.OutputBinding <- None
@@ -126,17 +128,17 @@ let testOutputMutationApi =
             Expect.isNone output.OutputSource "Empty outputSource collections should normalize to None."
 
         testCase "known fields are typed fields, not dynamic overflow" <| fun _ ->
-            let binding = OutputBinding.create(glob = "*.txt", loadContents = true, loadListing = LoadListingEnum.DeepListing, outputEval = "$(self[0])")
+            let binding = OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal "*.txt"), loadContents = SchemaSaladBool.Value true, loadListing = LoadListingEnum.DeepListing, outputEval = (SchemaSaladString.Literal "$(self[0])"))
             let output =
                 CWLOutput(
                     "result",
                     type_ = CWLType.String,
-                    outputBinding = binding,
-                    outputSource = OutputSource.Single "step/out",
-                    label = "Result",
-                    doc = "Result docs",
-                    format = "edam:format_2330",
-                    streamable = true
+                    outputBinding = ListEntry.Value binding,
+                    outputSource = OutputSource.Single (SchemaSaladString.Literal "step/out"),
+                    label = (SchemaSaladString.Literal "Result"),
+                    doc = (DocText.literal "Result docs"),
+                    format = (SchemaSaladString.Literal "edam:format_2330"),
+                    streamable = SchemaSaladBool.Value true
                 )
 
             Expect.sequenceEqual OutputBinding.KnownFieldNames (Set [| "loadContents"; "loadListing"; "glob"; "outputEval" |]) "OutputBinding known fields should be declared on the type."
@@ -150,23 +152,53 @@ let testOutputMutationApi =
         testCase "spec output fields decode as typed members regardless of order" <| fun _ ->
             let output =
                 TestObjects.CWL.Outputs.specOutputFieldsDecodeFileContent
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.outputsDecoder
+                |> ListEntry.values
                 |> fun outputs -> outputs.[0]
 
-            Expect.equal output.Label (Some "Result") "label should decode to a typed field."
-            Expect.equal output.Doc (Some "Result docs") "doc should decode to a typed field."
-            Expect.equal output.Format (Some "edam:format_2330") "format should decode to a typed field."
-            Expect.equal output.Streamable (Some true) "streamable should decode to a typed field."
+            Expect.equal output.Label (Some (SchemaSaladString.Literal "Result")) "label should decode to a typed field."
+            Expect.equal output.Doc (Some (DocText.literal "Result docs")) "doc should decode to a typed field."
+            Expect.equal output.Format (Some (SchemaSaladString.Literal "edam:format_2330")) "format should decode to a typed field."
+            Expect.equal output.Streamable (Some (SchemaSaladBool.Value true)) "streamable should decode to a typed field."
             Expect.isSome output.SecondaryFiles "secondaryFiles should decode to a typed field."
-            Expect.equal output.OutputBinding.Value.LoadContents (Some true) "outputBinding.loadContents should decode to a typed field."
-            Expect.equal output.OutputBinding.Value.LoadListing (Some LoadListingEnum.DeepListing) "outputBinding.loadListing should decode to a typed field."
-            Expect.equal output.OutputBinding.Value.OutputEval (Some "$(self[0])") "outputBinding.outputEval should decode to a typed field."
+            Expect.equal (outputBindingOf output).LoadContents (Some (SchemaSaladBool.Value true)) "outputBinding.loadContents should decode to a typed field."
+            Expect.equal (outputBindingOf output).LoadListing (Some LoadListingEnum.DeepListing) "outputBinding.loadListing should decode to a typed field."
+            Expect.equal (outputBindingOf output).OutputEval (Some (SchemaSaladString.Literal "$(self[0])")) "outputBinding.outputEval should decode to a typed field."
             Expect.isEmpty (output |> DynamicObjHelpers.dynamicPropertiesSnapshot) "Known output fields should not be overflow."
     ]
 
-let main = 
+let testOutputGlob =
+    let tool (glob: string) =
+        Kit.tool [ "baseCommand: echo"; "inputs: []"; "outputs:"; "  o:"; "    type: File[]"; "    outputBinding:"; "      glob: " + glob ]
+    let globOf (decoded: CWLToolDescription) = (outputBindingOf (ListEntry.values decoded.Outputs).[0]).Glob
+
+    testList "Output glob" [
+        testCase "a pattern, a list of patterns and an expression keep the form that they were written in" <| fun _ ->
+            let cases =
+                [ "\"*.txt\"", OutputGlob.Single (SchemaSaladString.Literal "*.txt"), "glob: \"*.txt\""
+                  "[a.txt, b.txt]", OutputGlob.Multiple (ResizeArray [ (SchemaSaladString.Literal "a.txt"); (SchemaSaladString.Literal "b.txt") ]), "glob: [a.txt, b.txt]"
+                  "[a.txt]", OutputGlob.Multiple (ResizeArray [ (SchemaSaladString.Literal "a.txt") ]), "glob: [a.txt]"
+                  "[]", OutputGlob.Multiple (ResizeArray []), "glob: []"
+                  "[a.txt, $(inputs.x)]", OutputGlob.Multiple (ResizeArray [ (SchemaSaladString.Literal "a.txt"); (SchemaSaladString.Literal "$(inputs.x)") ]), "glob: [a.txt, $(inputs.x)]"
+                  "$(inputs.x)", OutputGlob.Single (SchemaSaladString.Literal "$(inputs.x)"), "glob: $(inputs.x)" ]
+            for text, expected, written in cases do
+                let decoded = Decode.decodeCommandLineTool (tool text)
+                Expect.equal (globOf decoded) (Some expected) (sprintf "glob: %s should decode as %A" text expected)
+                let _, encoded = Kit.rewrite (sprintf "glob: %s should survive a write and a read" text) Decode.decodeCommandLineTool Encode.encodeToolDescription decoded
+                Expect.stringContains encoded written (sprintf "glob: %s should be written in its form" text)
+        testCase "a glob that is neither a string nor a list of strings is a decode error" <| fun _ ->
+            for text, path in [ "{a: b}", "outputs.o.outputBinding.glob"; "[a.txt, {a: b}]", "outputs.o.outputBinding.glob[1]"; "[a.txt, [b.txt]]", "outputs.o.outputBinding.glob[1]" ] do
+                Kit.toolFails (sprintf "glob: %s" text) (tool text) path ""
+        testCase "globs compare by their patterns" <| fun _ ->
+            Expect.equal (OutputGlob.Multiple (ResizeArray [ (SchemaSaladString.Literal "a"); (SchemaSaladString.Literal "b") ])) (OutputGlob.Multiple (ResizeArray [ (SchemaSaladString.Literal "a"); (SchemaSaladString.Literal "b") ])) "Lists with equal patterns are equal."
+            Expect.notEqual (OutputGlob.Multiple (ResizeArray [ (SchemaSaladString.Literal "a") ])) (OutputGlob.Single (SchemaSaladString.Literal "a")) "A list of one pattern differs from the pattern."
+            Expect.equal (OutputBinding.create(glob = OutputGlob.Multiple (ResizeArray [ (SchemaSaladString.Literal "a") ]))) (OutputBinding.create(glob = OutputGlob.Multiple (ResizeArray [ (SchemaSaladString.Literal "a") ]))) "Bindings with equal globs are equal."
+    ]
+
+let main =
     testList "Output" [
         testOutput
         testOutputMutationApi
+        testOutputGlob
     ]

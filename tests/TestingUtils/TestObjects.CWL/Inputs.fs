@@ -22,15 +22,15 @@ module File =
 
     let inputFileName = "firstArg"
 
-    let inputFileType = CWLType.file()
+    let inputFileType = CWLType.File
 
     let inputFilePrefix = "-f"
 
     let inputFilePosition = 1
 
-    let inputFileBinding = InputBinding.create(position = inputFilePosition, prefix = inputFilePrefix)
+    let inputFileBinding = InputBinding.create(position = BindingPosition.Number inputFilePosition, prefix = SchemaSaladString.Literal inputFilePrefix)
 
-    let inputFirstArg = CWLInput(inputFileName, inputFileType, inputBinding = inputFileBinding)
+    let inputFirstArg = CWLInput(inputFileName, inputFileType, inputBinding = ListEntry.Value inputFileBinding)
 
 
 module String =
@@ -41,9 +41,9 @@ module String =
 
     let inputStringPosition = 2
 
-    let inputStringBinding = InputBinding.create(position = inputStringPosition)
+    let inputStringBinding = InputBinding.create(position = BindingPosition.Number inputStringPosition)
 
-    let inputSecondArg = CWLInput(inputStringName, inputStringType, inputBinding = inputStringBinding)
+    let inputSecondArg = CWLInput(inputStringName, inputStringType, inputBinding = ListEntry.Value inputStringBinding)
 
 
 let specInputFieldsDecodeFileContent = """inputs:
@@ -64,3 +64,49 @@ let specInputFieldsDecodeFileContent = """inputs:
     format: edam:format_2330
     secondaryFiles: .bai"""
     
+
+/// A tool with the forms of the format field of an input: a name, a list of names, a list of one name and the empty
+/// list. The names use the prefix edam, which the document declares as a namespace.
+let formatFormsFileContent = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+$namespaces:
+  edam: http://edamontology.org/
+inputs:
+  single:
+    type: File
+    format: edam:format_2330
+  several:
+    type: File
+    format: [edam:format_2330, edam:format_1930]
+  one_in_list:
+    type: File
+    format: [edam:format_2330]
+  empty:
+    type: File
+    format: []
+outputs: []"""
+
+/// A tool with one input that sets every field of an input, for the tests of equality and hash.
+module AllFields =
+
+    let toolFile = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs:
+  x:
+    type: string
+    inputBinding:
+      prefix: -a
+      position: 1
+    label: lab
+    secondaryFiles: .idx
+    streamable: true
+    doc: first
+    format: edam:format_1
+    loadContents: false
+    loadListing: no_listing
+    default: dflt
+    arc:note: n1
+outputs: {}
+"""

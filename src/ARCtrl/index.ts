@@ -22,19 +22,24 @@ export { FileSystemTree } from './ts/FileSystem/FileSystemTree.js'
 
 /// CWL
 import { CWLProcessingUnit } from './ts/CWL/CWLProcessingUnit.js'
-import { CWLType, FileInstance, DirectoryInstance, DirentInstance, InputEnumSchema, InputRecordField, InputRecordSchema, InputArraySchema, SchemaDefRequirementType, SoftwarePackage } from './ts/CWL/CWLTypes.js'
+import { CWLType, SchemaSaladString, SchemaSaladBool, FileSize, DocText, ListEntry$1 as ListEntry, FileInstance, DirectoryInstance, DirentInstance, InputEnumSchema, InputRecordField, InputRecordSchema, InputArraySchema, SchemaDefinition, SoftwarePackage } from './ts/CWL/CWLTypes.js'
 import { CWLParameterValue, CWLParameterRecordField } from './ts/CWL/ParameterValue.js'
 import { CWLParameterReference } from './ts/CWL/ParameterReference.js'
-import { CWLInput, InputBinding } from './ts/CWL/Inputs.js'
-import { CWLOutput, OutputBinding } from './ts/CWL/Outputs.js'
+import { CWLInput, InputBinding, InputFormat, BindingPosition } from './ts/CWL/Inputs.js'
+import { CWLOutput, OutputBinding, OutputSource, OutputGlob } from './ts/CWL/Outputs.js'
 import { CWLToolDescription } from './ts/CWL/ToolDescription.js'
 import { CWLWorkflowDescription } from './ts/CWL/WorkflowDescription.js'
-import { WorkflowStep, StepInput, StepOutput } from './ts/CWL/WorkflowSteps.js'
-import { Requirement, DockerRequirement, EnvironmentDef, ResourceRequirementInstance } from './ts/CWL/Requirements.js'
+import { WorkflowStep, ResolvedRun, StepInput, StepOutput } from './ts/CWL/WorkflowSteps.js'
+import { Requirement, SchemaDefEntry, DockerRequirement, EnvironmentDef, ResourceRequirementInstance } from './ts/CWL/Requirements.js'
 
 export const CWL = {
     CWLProcessingUnit,
     CWLType,
+    SchemaSaladString,
+    SchemaSaladBool,
+    FileSize,
+    DocText,
+    ListEntry,
     FileInstance,
     DirectoryInstance,
     DirentInstance,
@@ -42,21 +47,27 @@ export const CWL = {
     InputRecordField,
     InputRecordSchema,
     InputArraySchema,
-    SchemaDefRequirementType,
+    SchemaDefinition,
     SoftwarePackage,
     CWLParameterValue,
     CWLParameterRecordField,
     CWLParameterReference,
     CWLInput,
     InputBinding,
+    InputFormat,
+    BindingPosition,
     CWLOutput,
     OutputBinding,
+    OutputSource,
+    OutputGlob,
     CWLToolDescription,
     CWLWorkflowDescription,
     WorkflowStep,
+    ResolvedRun,
     StepInput,
     StepOutput,
     Requirement,
+    SchemaDefEntry,
     DockerRequirement,
     EnvironmentDef,
     ResourceRequirementInstance

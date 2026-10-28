@@ -4,6 +4,7 @@ open System
 open ARCtrl.CWL
 open YAMLicious
 open TestingUtils
+open TestingUtils.CWL
 
 let normalizeNewLines (text:string) =
     text.Replace("\r\n","\n").TrimEnd('\n')
@@ -31,26 +32,23 @@ let stripDocContent (docBlock:string) =
             |> fun s -> s.TrimEnd()
     | _ -> normalized
 
+/// The tool that a top-level field of a document belongs to.
+let toolWith (fields: string) : CWLToolDescription =
+    Decode.decodeCommandLineTool (Kit.tool [ "baseCommand: echo"; "inputs: []"; "outputs: []"; fields ])
+
 let decodeTests =
     testList "Decode" [
         testCase "label" <| fun _ ->
-            let actual =
-                TestObjects.CWL.Descriptions.label
-                |> Decode.read
-                |> Decode.labelDecoder
-            Expect.equal actual (Some "An example tool demonstrating metadata.") ""
+            let actual = (toolWith TestObjects.CWL.Descriptions.label).Label
+            Expect.equal actual (Some (SchemaSaladString.Literal "An example tool demonstrating metadata.")) ""
         testCase "doc simple" <| fun _ ->
-            let actual =
-                TestObjects.CWL.Descriptions.docSimple
-                |> Decode.read
-                |> Decode.docDecoder
+            let actual = (toolWith TestObjects.CWL.Descriptions.docSimple).Doc
             let expected = "Note that this is an example and the metadata is not necessarily consistent."
-            Expect.equal actual (Some expected) ""
+            Expect.equal actual (Some (DocText.literal expected)) ""
         testCase "doc block" <| fun _ ->
             let actual =
-                TestObjects.CWL.Descriptions.descriptionFileContentComplex
-                |> Decode.read
-                |> Decode.docDecoder
+                (toolWith TestObjects.CWL.Descriptions.descriptionFileContentComplex).Doc
+                |> Option.bind (fun doc -> doc.TryText)
                 |> Option.map normalizeDocBlockContent
             let expected =
                 TestObjects.CWL.Descriptions.descriptionFileContentComplexDecoded
@@ -59,16 +57,16 @@ let decodeTests =
         testCase "intent" <| fun _ ->
             let actual =
                 TestObjects.CWL.Descriptions.intent
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.intentDecoder
-            let expected = ResizeArray [|"classification"; "quality-control"|]
+            let expected = literals [ "classification"; "quality-control" ]
             let parsed = Expect.wantSome actual "Intent should decode as string array."
             Expect.sequenceEqual parsed expected ""
     ]
 
 let encodeToString pair =
     [pair]
-    |> Encode.yMap
+    |> YAMLicious.Encode.object
     |> Encode.writeYaml
     |> normalizeNewLines
 
@@ -76,34 +74,33 @@ let encodeTests =
     testList "Encode" [
         testCase "label" <| fun _ ->
             let expected = normalizeNewLines TestObjects.CWL.Descriptions.label
-            let actual = Encode.encodeLabel "An example tool demonstrating metadata." |> encodeToString
+            let actual = Encode.encodeLabel (SchemaSaladString.Literal "An example tool demonstrating metadata.") |> encodeToString
             Expect.equal actual expected ""
         testCase "doc simple" <| fun _ ->
             let expected = normalizeNewLines TestObjects.CWL.Descriptions.docSimple
-            let actual = Encode.encodeDoc "Note that this is an example and the metadata is not necessarily consistent." |> encodeToString
+            let actual = Encode.encodeDoc (DocText.literal "Note that this is an example and the metadata is not necessarily consistent.") |> encodeToString
             Expect.equal actual expected ""
         testCase "doc block" <| fun _ ->
             let complexDoc = stripDocContent TestObjects.CWL.Descriptions.descriptionFileContentComplex
-            let actual = Encode.encodeDoc complexDoc |> encodeToString
+            let actual = Encode.encodeDoc (DocText.literal complexDoc) |> encodeToString
             let decoded =
-                actual
-                |> Decode.read
-                |> Decode.docDecoder
+                (toolWith actual).Doc
+                |> Option.bind (fun doc -> doc.TryText)
                 |> Option.map normalizeDocBlockContent
             let expected = normalizeDocBlockContent complexDoc
             Expect.equal decoded (Some expected) "Encoded block doc should decode back to original content."
             Expect.stringContains actual "doc:" "Encoded block doc should emit doc field."
         testCase "intent roundtrip" <| fun _ ->
             let encoded =
-                ResizeArray [|"classification"; "quality-control"|]
-                |> Encode.encodeIntent
+                literals [ "classification"; "quality-control" ]
+                |> Encode.encodeIntent false
                 |> encodeToString
             let decoded =
                 encoded
-                |> Decode.read
+                |> Decode.readYaml
                 |> Decode.intentDecoder
             let parsed = Expect.wantSome decoded "Intent should decode after encode."
-            Expect.sequenceEqual parsed (ResizeArray [|"classification"; "quality-control"|]) ""
+            Expect.sequenceEqual parsed (literals [ "classification"; "quality-control" ]) ""
     ]
 
 let main =

@@ -2,7 +2,6 @@ namespace ARCtrl.Yaml
 
 open ARCtrl.ValidationPackages
 open YAMLicious
-open YAMLicious.YAMLiciousTypes
 
 module ValidationPackagesConfig = 
 
@@ -11,17 +10,19 @@ module ValidationPackagesConfig =
 
     let encoder (validationpackage : ValidationPackagesConfig) = 
         [
-            Encode.tryInclude ARC_SPECIFICATION_KEY Encode.string  (validationpackage.ARCSpecification)
-            VALIDATION_PACKAGES_KEY, Encode.resizearray ValidationPackage.encoder validationpackage.ValidationPackages
+            Encode.optionalField ARC_SPECIFICATION_KEY Encode.string validationpackage.ARCSpecification
+            Some (VALIDATION_PACKAGES_KEY, Encode.resizearray ValidationPackage.encoder validationpackage.ValidationPackages)
         ]
-        |> Encode.choose
+        |> List.choose id
         |> Encode.object
 
-    let decoder : (YAMLElement -> ValidationPackagesConfig) = 
+    let decoder : (YamlNode -> ValidationPackagesConfig) = 
         Decode.object (fun get ->
             ValidationPackagesConfig(
                 validation_packages = get.Required.Field VALIDATION_PACKAGES_KEY (Decode.resizearray ValidationPackage.decoder),
-                ?arc_specification = get.Optional.Field ARC_SPECIFICATION_KEY Decode.string
+                // A specification version such as 2.0 is a float in the core schema, and the field keeps the text as it
+                // is written.
+                ?arc_specification = get.Optional.Field ARC_SPECIFICATION_KEY Decode.scalarText
             )
         )
 

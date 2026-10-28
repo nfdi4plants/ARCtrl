@@ -181,6 +181,34 @@ let tests_tryFromContract = testList "tryFromContract" [
             (CWL.Encode.encodeProcessingUnit decoded)
             createdCwlText
             "Decoded processing unit should encode to the created CWL payload"
+    testCase "RunYML_CreateContractRoundtrip" <| fun _ ->
+        let runIdentifier = "parameterRun"
+        let references =
+            ResizeArray [
+                CWL.CWLParameterReference(key = "message", value = CWL.CWLParameterValue.String "hello")
+                CWL.CWLParameterReference(key = "count", value = CWL.CWLParameterValue.Int 3L)
+            ]
+        let run = ArcRun(identifier = runIdentifier, cwlInput = references)
+
+        let ymlPath = Identifier.Run.ymlFileNameFromIdentifier runIdentifier
+        let createContract =
+            run.ToCreateContract()
+            |> Array.tryFind (fun c -> c.Path = ymlPath)
+            |> fun c -> Expect.wantSome c "Run should create a YAML contract for its parameter references"
+
+        Expect.equal createContract.Operation Operation.CREATE "Contract should be a create contract"
+        Expect.equal createContract.DTOType (Some DTOType.YAML) "Contract should be typed as YAML"
+        let readContract = { createContract with Operation = Operation.READ }
+        let decoded =
+            ArcRun.tryYMLFromReadContract runIdentifier readContract
+            |> fun yml -> Expect.wantSome yml "Run parameter references should decode from read contract"
+        Expect.sequenceEqual decoded references "The parameter references should survive the contract"
+    testCase "RunYML_NoParameterReferencesCreateNoContract" <| fun _ ->
+        let run = ArcRun(identifier = "plainRun")
+        let ymlPath = Identifier.Run.ymlFileNameFromIdentifier "plainRun"
+        Expect.isFalse
+            (run.ToCreateContract(WithFolder = true) |> Array.exists (fun c -> c.Path = ymlPath))
+            "A run without parameter references creates no run.yml"
     testCase "RunCWL_OperationContractRoundtrip" <| fun _ ->
         let runIdentifier = "operationRun"
         let operationText = TestObjects.CWL.Operation.operationWithRequirementsAndMetadataFile

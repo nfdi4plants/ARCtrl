@@ -20,6 +20,27 @@ steps:
       in1: stepA/out
     out: [out]"""
 
+/// A workflow with two steps without an id around a step with an id.
+let stepsWithoutIdWorkflowFile = """cwlVersion: v1.2
+class: Workflow
+inputs:
+  x: string
+outputs: {}
+steps:
+- run: ./a.cwl
+  in:
+    in1: x
+  out: [out]
+- id: stepB
+  run: ./b.cwl
+  in:
+    in1: x
+  out: [out]
+- run: ./a.cwl
+  in:
+    in1: x
+  out: [out]"""
+
 let fanInWorkflowFile = """cwlVersion: v1.2
 class: Workflow
 inputs: {}
@@ -191,3 +212,32 @@ outputs:
     type: string
     outputSource: x
 steps: {}"""
+
+
+/// A plain document that writes every id in full behind the id of its workflow, as cwltool writes them.
+let fullIdsWorkflowFile = """cwlVersion: v1.2
+class: Workflow
+id: "#main"
+inputs:
+  - id: "#main/msg"
+    type: string
+outputs:
+  - id: "#main/result"
+    type: File
+    outputSource: "#main/second/out"
+steps:
+  - id: "#main/first"
+    run: shout.cwl
+    in:
+      - id: "#main/first/msg"
+        source: "#main/msg"
+    out:
+      - "#main/first/out"
+  - id: "#main/second"
+    run: shout.cwl
+    in:
+      - id: "#main/second/msg"
+        source: "#main/first/out"
+    out:
+      - "#main/second/out"
+"""
