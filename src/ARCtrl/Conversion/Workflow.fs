@@ -286,11 +286,16 @@ type WorkflowConversion =
         && (fst (ArcPathHelper.splitWithPrefix reference)).IsNone
 
     /// The path from the root of the ARC that a relative reference names, resolved against the folder of the CWL file
-    /// that holds it, and none for any other reference and for a path outside the ARC.
+    /// that holds it. It is none for any other reference, for a path outside the ARC and for the root of the ARC, whose
+    /// path is empty after resolving.
     static member private tryResolveFileReference (cwlFilePath : string) (reference : string) : string option =
         if WorkflowConversion.isRelativeFileReference reference then
-            let path = ArcPathHelper.resolvePathFromFile cwlFilePath reference
-            if path = ".." || path.StartsWith "../" then None else Some path
+            let fileSegments = ArcPathHelper.split cwlFilePath
+            let segments =
+                Array.append fileSegments.[.. fileSegments.Length - 2] (ArcPathHelper.split reference)
+                |> ArcPathHelper.normalizeSegments
+            if segments.Length = 0 || segments.[0] = ".." then None
+            else Some (String.concat (string ArcPathHelper.PathSeperator) segments)
         else
             None
 

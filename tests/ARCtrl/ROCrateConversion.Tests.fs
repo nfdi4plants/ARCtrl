@@ -3902,6 +3902,15 @@ let tests_WorkflowCrate =
             let paths = WorkflowConversion.getReferencedFilePaths("workflows/W/a.cwl", a, fs)
             Expect.sequenceEqual paths ["workflows/W/b.cwl"] "The walk visits each file once and leaves out the main file."
         )
+        testCase "ReferencedFiles_ADirectoryLiteralOfTheArcRootIsLeftOut" (fun () ->
+            let fs = WorkflowCrate.fileSystemOf ["workflows/W/workflow.cwl"; "workflows/W/a.txt"; "isa.investigation.xlsx"; "runs/R/run.cwl"]
+            for location in [ "../.."; "../../"; "./../.."; "../../."; "../W/../.." ] do
+                let tool = CWL.Decode.decodeCWLProcessingUnit $"cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  d:\n    type: Directory\n    default:\n      class: Directory\n      location: {location}\noutputs: []\n"
+                let paths = WorkflowConversion.getReferencedFilePaths("workflows/W/workflow.cwl", tool, fs)
+                Expect.sequenceEqual paths [] $"The location {location} names the root of the ARC, which adds no files."
+            let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  d:\n    type: Directory\n    default:\n      class: Directory\n      location: ../../runs\noutputs: []\n"
+            Expect.sequenceEqual (WorkflowConversion.getReferencedFilePaths("workflows/W/workflow.cwl", tool, fs)) ["runs/R/run.cwl"] "A folder of the ARC adds its files."
+        )
         testCase "ReferencedFiles_FileAndDirectoryLiterals" (fun () ->
             let text =
                 "cwlVersion: v1.2\nclass: CommandLineTool\nrequirements:\n  InitialWorkDirRequirement:\n    listing:\n      - class: File\n        location: x.R\n      - class: Directory\n        location: data\n      - class: File\n        location: missing.R\n      - class: File\n        location: https://example.org/y.R\nbaseCommand: [Rscript, x.R]\ninputs:\n  table:\n    type: File\n    default:\n      class: File\n      path: tables/t.csv\n      secondaryFiles:\n        - class: File\n          location: tables/t.csv.idx\noutputs: []\n"
