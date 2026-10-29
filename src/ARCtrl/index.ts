@@ -1,5 +1,6 @@
 export { ARC } from './ts/ARC.js'
 export { ArcAssay, ArcStudy, ArcRun, ArcWorkflow, ArcInvestigation } from './ts/Core/ArcTypes.js'
+export { OntologySourceReference } from './ts/Core/OntologySourceReference.js'
 export { Datamap } from './ts/Core/Datamap.js'
 export { DataContext } from './ts/Core/DataContext.js'
 export { CompositeCell } from './ts/Core/Table/CompositeCell.js'
@@ -90,7 +91,7 @@ export const ROCrate = {
     LDContext,
     initV1_1,
     initV1_2,
-    initBioschemasContext,  
+    initBioschemasContext,
     LDComment,
     LDDefinedTerm,
     LDFile,
