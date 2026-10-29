@@ -5,7 +5,7 @@ open ARCtrl.Helper
 
 [<AttachMembers>]
 [<RequireQualifiedAccess>]
-type CompositeCell = 
+type CompositeCell =
     /// ISA-TAB term columns as ontology annotation.
     ///
     /// https://isa-specs.readthedocs.io/en/latest/isatab.html#ontology-annotations
@@ -73,7 +73,7 @@ type CompositeCell =
     /// | Unitized (v,oa) -> [| v; oa.NameText; defaultArg oa.TermSourceREF ""; defaultArg oa.TermAccessionNumber ""|]
     /// ```
     /// </summary>
-    member this.GetContent() = 
+    member this.GetContent() =
         match this with
         | FreeText s -> [|s|]
         | Term oa -> [| oa.NameText; defaultArg oa.TermSourceREF ""; defaultArg oa.TermAccessionNumber ""|]
@@ -144,11 +144,11 @@ type CompositeCell =
 
     static member createUnitized (value: string, ?oa:OntologyAnnotation) = Unitized (value, Option.defaultValue (OntologyAnnotation()) oa)
 
-    static member createUnitizedFromString (value: string, ?name: string, ?tsr: string, ?tan: string) = 
+    static member createUnitizedFromString (value: string, ?name: string, ?tsr: string, ?tan: string) =
         Unitized <| (value, OntologyAnnotation.create(?name = name, ?tsr = tsr, ?tan = tan))
 
     static member createFreeText (value: string) = FreeText value
-    
+
     static member createData (d:Data) = Data d
 
     static member createDataFromString (value : string, ?format : string, ?selectorFormat : string) =
@@ -186,7 +186,7 @@ type CompositeCell =
     static member updateWithOA (oa:OntologyAnnotation) (cell: CompositeCell) =
         cell.UpdateWithOA oa
 
-    override this.ToString() = 
+    override this.ToString() =
         match this with
         | Term oa -> $"{oa.NameText}"
         | FreeText s -> s
@@ -205,19 +205,19 @@ type CompositeCell =
         let cell = this
         match header, cell with
         // no cell values will be handled later and is no error case
-        | isData when header.IsDataColumn && (cell.isData || cell.isFreeText) -> 
+        | isData when header.IsDataColumn && (cell.isData || cell.isFreeText) ->
             true
-        | isData when header.IsDataColumn -> 
-            if raiseExeption then 
+        | isData when header.IsDataColumn ->
+            if raiseExeption then
                 let msg = $"Invalid combination of header `{header}` and cell `{cell}`, Data header should have either Data or Freetext cells"
                 failwith msg
             false
-        | isTerm when header.IsTermColumn && (cell.isTerm || cell.isUnitized) -> 
+        | isTerm when header.IsTermColumn && (cell.isTerm || cell.isUnitized) ->
             true
-        | isNotTerm when (not header.IsTermColumn) && cell.isFreeText -> 
+        | isNotTerm when (not header.IsTermColumn) && cell.isFreeText ->
             true
-        | h, c -> 
-            if raiseExeption then 
+        | h, c ->
+            if raiseExeption then
                 let msg = $"Invalid combination of header `{h}` and cell `{cell}`"
                 failwith msg
             // Maybe still return `msg` somehow if `raiseExeption` is false?
@@ -225,15 +225,15 @@ type CompositeCell =
 
 #if FABLE_COMPILER
     //[<CompiledName("Term")>]
-    static member term (oa:OntologyAnnotation) = CompositeCell.Term(oa)
+    static member term (oa:OntologyAnnotation) : CompositeCell = CompositeCell.Term(oa)
 
     //[<CompiledName("FreeText")>]
-    static member freeText (s:string) = CompositeCell.FreeText(s)
+    static member freeText (s:string) : CompositeCell = CompositeCell.FreeText(s)
 
     //[<CompiledName("Unitized")>]
-    static member unitized (v:string, oa:OntologyAnnotation) = CompositeCell.Unitized(v, oa)
+    static member unitized (v:string, oa:OntologyAnnotation) : CompositeCell = CompositeCell.Unitized(v, oa)
 
     //[<CompiledName("Data")>]
-    static member data (d:Data) = CompositeCell.Data(d)
+    static member data (d:Data) : CompositeCell = CompositeCell.Data(d)
 #else
 #endif

@@ -45,6 +45,7 @@
     "isomorphic-fetch": "^3.0.0"
   },
   "devDependencies": {
+    "@types/node": "^26.6.6",
     "jsonschema": "^1.4.1",
     "typescript": "~5.8.3",
     "vite": "^7.0.0",

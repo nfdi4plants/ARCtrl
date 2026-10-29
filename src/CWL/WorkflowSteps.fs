@@ -9,6 +9,12 @@ type LinkMergeMethod =
     | MergeNested
     | MergeFlattened
     with
+#if FABLE_COMPILER
+    static member mergeNested() : LinkMergeMethod = LinkMergeMethod.MergeNested
+
+    static member mergeFlattened() : LinkMergeMethod = LinkMergeMethod.MergeFlattened
+#endif
+
     member this.AsCwlString =
         match this with
         | MergeNested -> "merge_nested"
@@ -26,6 +32,14 @@ type PickValueMethod =
     | TheOnlyNonNull
     | AllNonNull
     with
+#if FABLE_COMPILER
+    static member firstNonNull() : PickValueMethod = PickValueMethod.FirstNonNull
+
+    static member theOnlyNonNull() : PickValueMethod = PickValueMethod.TheOnlyNonNull
+
+    static member allNonNull() : PickValueMethod = PickValueMethod.AllNonNull
+#endif
+
     member this.AsCwlString =
         match this with
         | FirstNonNull -> "first_non_null"
@@ -45,6 +59,14 @@ type ScatterMethod =
     | NestedCrossProduct
     | FlatCrossProduct
     with
+#if FABLE_COMPILER
+    static member dotProduct() : ScatterMethod = ScatterMethod.DotProduct
+
+    static member nestedCrossProduct() : ScatterMethod = ScatterMethod.NestedCrossProduct
+
+    static member flatCrossProduct() : ScatterMethod = ScatterMethod.FlatCrossProduct
+#endif
+
     member this.AsCwlString =
         match this with
         | DotProduct -> "dotproduct"
@@ -220,6 +242,12 @@ type StepOutput =
     | StepOutputString of string
     | StepOutputRecord of StepOutputParameter
 
+#if FABLE_COMPILER
+    static member stepOutputString(value: string) : StepOutput = StepOutput.StepOutputString value
+
+    static member stepOutputRecord(value: StepOutputParameter) : StepOutput = StepOutput.StepOutputRecord value
+#endif
+
 [<AttachMembers>]
 type WorkflowStepRun =
     | RunString of string
@@ -227,6 +255,18 @@ type WorkflowStepRun =
     | RunWorkflow of obj
     | RunExpressionTool of obj
     | RunOperation of obj
+
+#if FABLE_COMPILER
+    static member runString(value: string) : WorkflowStepRun = WorkflowStepRun.RunString value
+
+    static member runCommandLineTool(value: obj) : WorkflowStepRun = WorkflowStepRun.RunCommandLineTool value
+
+    static member runWorkflow(value: obj) : WorkflowStepRun = WorkflowStepRun.RunWorkflow value
+
+    static member runExpressionTool(value: obj) : WorkflowStepRun = WorkflowStepRun.RunExpressionTool value
+
+    static member runOperation(value: obj) : WorkflowStepRun = WorkflowStepRun.RunOperation value
+#endif
 
 [<AttachMembers>]
 type WorkflowStep (
