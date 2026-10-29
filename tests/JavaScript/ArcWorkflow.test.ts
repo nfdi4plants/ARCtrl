@@ -1,9 +1,7 @@
 import {
     ArcAssay, ArcInvestigation, ArcRun, ArcStudy, ArcTable, ArcWorkflow, Comment,
-    CWL, DataContext, Datamap, OntologyAnnotation, OntologySourceReference, Person, Publication,
+    CWL, DataContext, Datamap, OntologyAnnotation, OntologySourceReference, Person, Publication, Component, ScalarValue,
 } from "../../src/ARCtrl/index.ts";
-import { Component } from "../../src/ARCtrl/ts/Core/Process/Component.ts";
-import { ScalarValue } from "../../src/ARCtrl/ts/Core/ScalarValue.ts";
 import { describe, expect, it } from "vitest";
 
 

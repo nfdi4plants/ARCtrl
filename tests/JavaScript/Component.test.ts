@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Comment, OntologyAnnotation } from '../../src/ARCtrl/index.ts';
-import { Component } from '../../src/ARCtrl/ts/Core/Process/Component.ts';
-import { ScalarValue } from '../../src/ARCtrl/ts/Core/ScalarValue.ts';
+import { Comment, Component, OntologyAnnotation, ScalarValue } from '../../src/ARCtrl/index.ts';
 import { value } from '@fable-org/fable-library-ts/Option.ts';
 
 describe('Component primary constructor', () => {

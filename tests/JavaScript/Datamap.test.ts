@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Comment, Datamap, DataContext, OntologyAnnotation } from '../../src/ARCtrl/index.ts';
-import { DataFile } from '../../src/ARCtrl/ts/Core/DataFile.ts';
+import { Comment, Datamap, DataContext, DataFile, OntologyAnnotation } from '../../src/ARCtrl/index.ts';
 
 describe('Datamap primary constructor', () => {
     it('constructs from an empty context array', () => {

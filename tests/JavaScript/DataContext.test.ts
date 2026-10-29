@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Comment, DataContext, OntologyAnnotation } from '../../src/ARCtrl/index.ts';
-import { DataFile } from '../../src/ARCtrl/ts/Core/DataFile.ts';
+import { Comment, DataContext, DataFile, OntologyAnnotation } from '../../src/ARCtrl/index.ts';
 
 describe('DataContext primary constructor', () => {
     it('constructs with omitted optional arguments', () => {

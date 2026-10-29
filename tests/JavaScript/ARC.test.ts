@@ -1,10 +1,7 @@
 import {
     ARC, ArcAssay, ArcInvestigation, ArcRun, ArcStudy, ArcWorkflow, Comment, CWL,
-    FileSystem, FileSystemTree, OntologySourceReference, Person, Publication,
+    FileSystem, FileSystemTree, OntologySourceReference, Person, Publication, Remark, Commit, License,
 } from "../../src/ARCtrl/index.ts";
-import { Remark } from "../../src/ARCtrl/ts/Core/Comment.ts";
-import { Commit } from "../../src/ARCtrl/ts/FileSystem/Commit.ts";
-import { License } from "../../src/ARCtrl/ts/License.ts";
 import { expect, it, describe } from "vitest";
 
 describe("ARC", function () {

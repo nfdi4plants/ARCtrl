@@ -1,5 +1,4 @@
-import { FileSystem, FileSystemTree } from "../../src/ARCtrl/index.ts";
-import { Commit } from "../../src/ARCtrl/ts/FileSystem/Commit.ts";
+import { Commit, FileSystem, FileSystemTree } from "../../src/ARCtrl/index.ts";
 import { describe, expect, it } from "vitest";
 
 describe("Commit", function () {

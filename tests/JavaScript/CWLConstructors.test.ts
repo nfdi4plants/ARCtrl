@@ -2,24 +2,22 @@ import { describe, expect, it } from "vitest";
 import { ofArray } from "@fable-org/fable-library-ts/List.ts";
 import { CWL } from "../../src/ARCtrl/index.ts";
 import type { CWLProcessingUnit_$cases } from "../../src/ARCtrl/ts/CWL/CWLProcessingUnit.ts";
-import { SchemaSaladString, type CWLType_$cases } from "../../src/ARCtrl/ts/CWL/CWLTypes.ts";
-import { CWLExpressionToolDescription } from "../../src/ARCtrl/ts/CWL/ExpressionToolDescription.ts";
-import { CWLOperationDescription } from "../../src/ARCtrl/ts/CWL/OperationDescription.ts";
-import { OutputSource, type OutputSource_$cases } from "../../src/ARCtrl/ts/CWL/Outputs.ts";
+import type { CWLType_$cases } from "../../src/ARCtrl/ts/CWL/CWLTypes.ts";
+import type { OutputSource_$cases } from "../../src/ARCtrl/ts/CWL/Outputs.ts";
 import type { CWLParameterValue_$cases } from "../../src/ARCtrl/ts/CWL/ParameterValue.ts";
-import {
-    HintEntry, HintUnknownValue, InitialWorkDirEntry, InlineJavascriptRequirementValue,
-    InplaceUpdateRequirementValue, LoadListingEnum, LoadListingRequirementValue,
-    NetworkAccessRequirementValue, ToolTimeLimitValue, WorkReuseRequirementValue,
-    type InitialWorkDirEntry_$cases, type Requirement_$cases,
-} from "../../src/ARCtrl/ts/CWL/Requirements.ts";
-import {
-    LinkMergeMethod, PickValueMethod, ScatterMethod, StepOutputParameter, WorkflowStepRun,
-} from "../../src/ARCtrl/ts/CWL/WorkflowSteps.ts";
+import type { InitialWorkDirEntry_$cases, Requirement_$cases } from "../../src/ARCtrl/ts/CWL/Requirements.ts";
 import {
     BlockScalarStyle, ChompingMode, ScalarStyle, YAMLContent, YAMLElement,
     type YAMLElement_$cases,
 } from "../../src/ARCtrl/ts/fable_modules/YAMLicious.1.0.0/YAMLiciousTypes.fs.ts";
+
+const {
+    SchemaSaladString, CWLExpressionToolDescription, CWLOperationDescription, OutputSource,
+    HintEntry, HintUnknownValue, InitialWorkDirEntry, InlineJavascriptRequirementValue,
+    InplaceUpdateRequirementValue, LoadListingEnum, LoadListingRequirementValue,
+    NetworkAccessRequirementValue, ToolTimeLimitValue, WorkReuseRequirementValue,
+    LinkMergeMethod, PickValueMethod, ScatterMethod, StepOutputParameter, WorkflowStepRun,
+} = CWL;
 
 // Expected public properties are listed explicitly, independently of generated storage names.
 function expectProperties(actual: object, expected: Record<string, unknown>) {

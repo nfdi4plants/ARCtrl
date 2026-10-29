@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Comment, OntologyAnnotation } from '../../src/ARCtrl/index.ts';
-import { ScalarValue } from '../../src/ARCtrl/ts/Core/ScalarValue.ts';
+import { Comment, OntologyAnnotation, ScalarValue } from '../../src/ARCtrl/index.ts';
 
 describe('ScalarValue primary constructor', () => {
     it('constructs the Ontology case with its nested annotation', () => {

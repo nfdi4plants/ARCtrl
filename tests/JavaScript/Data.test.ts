@@ -1,7 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Comment } from '../../src/ARCtrl/index.ts';
-import { Data } from '../../src/ARCtrl/ts/Core/Data.ts';
-import { DataFile } from '../../src/ARCtrl/ts/Core/DataFile.ts';
+import { Comment, Data, DataFile } from '../../src/ARCtrl/index.ts';
 
 describe('Data primary constructor', () => {
     it('constructs with omitted optional arguments', () => {

@@ -2,7 +2,7 @@ import {
     ArcAssay, ArcInvestigation, ArcRun, ArcStudy, ArcTable, ArcWorkflow, Comment,
     CWL, DataContext, Datamap, OntologyAnnotation, OntologySourceReference, Person, Publication,
 } from "../../src/ARCtrl/index.ts";
-import { Remark } from "../../src/ARCtrl/ts/Core/Comment.ts";
+import { Remark } from "../../src/ARCtrl/index.ts";
 import { describe, expect, it } from "vitest";
 
 

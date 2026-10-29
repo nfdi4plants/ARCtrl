@@ -1,4 +1,4 @@
-import { Remark } from "../../src/ARCtrl/ts/Core/Comment.ts";
+import { Remark } from "../../src/ARCtrl/index.ts";
 import { expect, it, describe } from 'vitest';
 
 describe('Remark', function () {

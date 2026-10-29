@@ -1,4 +1,4 @@
-import { License } from "../../src/ARCtrl/ts/License.ts";
+import { License } from "../../src/ARCtrl/index.ts";
 import { describe, expect, it } from "vitest";
 
 describe("License", function () {

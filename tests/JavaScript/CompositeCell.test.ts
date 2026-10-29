@@ -1,9 +1,7 @@
 import { equal, deepEqual, notEqual } from 'assert';
 import { CompositeCell, OntologyAnnotation } from "../../src/ARCtrl/index.ts"
 import { expect, it, describe } from 'vitest';
-import { Comment } from '../../src/ARCtrl/index.ts';
-import { Data } from '../../src/ARCtrl/ts/Core/Data.ts';
-import { DataFile } from '../../src/ARCtrl/ts/Core/DataFile.ts';
+import { Comment, Data, DataFile } from '../../src/ARCtrl/index.ts';
 
 describe('CompositeCell', function () {
     it('Primary Constructor', function() {
