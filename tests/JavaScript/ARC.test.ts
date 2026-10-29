@@ -67,7 +67,7 @@ describe("ARC", function () {
         const study = new ArcStudy("study-1");
         const workflow = new ArcWorkflow("workflow-1");
         const run = new ArcRun("run-1");
-        const cwl = new CWL.CWLProcessingUnit(0, [new CWL.CWLToolDescription([])]);
+        const cwl = CWL.CWLProcessingUnit.commandLineTool(new CWL.CWLToolDescription([]));
         const comment = new Comment("lastUpdated", "2026-10-29");
         const remark = new Remark(7, "Investigation remark");
         const commit = new Commit("abc123", "Kevin", "kevin@example.org", new Date("2026-10-29T10:00:00Z"), "Initial ARC");

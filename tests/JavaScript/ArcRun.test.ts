@@ -33,7 +33,7 @@ describe("ArcRun", function () {
         const table = new ArcTable("Measurements");
         const datamap = new Datamap([new DataContext("data-1", "dataset/results.csv")]);
         const performer = new Person("0000-0002-1825-0097", "Frey", "Kevin");
-        const cwl = new CWL.CWLProcessingUnit(0, [new CWL.CWLToolDescription([], "v1.2", ["echo"])]);
+        const cwl = CWL.CWLProcessingUnit.commandLineTool(new CWL.CWLToolDescription([], "v1.2", ["echo"]));
         const input = new CWL.CWLParameterReference("message", ["hello"]);
         const comment = new Comment("lastUpdated", "2026-10-29");
         const run = new ArcRun(

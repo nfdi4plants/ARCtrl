@@ -53,6 +53,12 @@ type OutputSource =
     | Single of string
     | Multiple of ResizeArray<string>
     with
+#if FABLE_COMPILER
+    static member single(value: string) : OutputSource = OutputSource.Single value
+
+    static member multiple(value: ResizeArray<string>) : OutputSource = OutputSource.Multiple value
+#endif
+
     member this.AsValues() =
         match this with
         | Single value -> ResizeArray [| value |]

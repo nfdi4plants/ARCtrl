@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ofArray } from "@fable-org/fable-library-ts/List.ts";
 import { CWL } from "../../src/ARCtrl/index.ts";
-import type { CWLProcessingUnit_$cases } from "../../src/ARCtrl/ts/CWL/CWLProcessingUnit.ts";
-import type { CWLType_$cases } from "../../src/ARCtrl/ts/CWL/CWLTypes.ts";
-import type { OutputSource_$cases } from "../../src/ARCtrl/ts/CWL/Outputs.ts";
-import type { CWLParameterValue_$cases } from "../../src/ARCtrl/ts/CWL/ParameterValue.ts";
-import type { InitialWorkDirEntry_$cases, Requirement_$cases } from "../../src/ARCtrl/ts/CWL/Requirements.ts";
 import {
     BlockScalarStyle, ChompingMode, ScalarStyle, YAMLContent, YAMLElement,
     type YAMLElement_$cases,
@@ -26,24 +21,24 @@ function expectProperties(actual: object, expected: Record<string, unknown>) {
     }
 }
 
-const stringType = new CWL.CWLType(3, []);
+const stringType = CWL.CWLType.string();
 const yamlContent = new YAMLContent("sample.txt", undefined, undefined, undefined, undefined);
 const yamlValue = new YAMLElement(1, [yamlContent]);
-const literal = new SchemaSaladString(0, ["Hello"]);
-const include = new SchemaSaladString(1, ["message.txt"]);
+const literal = SchemaSaladString.literal("Hello");
+const include = SchemaSaladString.include("message.txt");
 const file = new CWL.FileInstance("file:///data/sample.txt", "/data/sample.txt");
 const directory = new CWL.DirectoryInstance("file:///data", "/data");
 const dirent = new CWL.DirentInstance(literal);
-const listing = new LoadListingEnum(2, []);
+const listing = LoadListingEnum.deepListing();
 const input = new CWL.CWLInput("message", stringType);
 const output = new CWL.CWLOutput("result", stringType);
 const inputBinding = new CWL.InputBinding("--message", 2);
 const outputBinding = new CWL.OutputBinding("result.txt");
-const requirement = new CWL.Requirement(2, [new CWL.DockerRequirement("alpine:3")]);
-const hint = new HintEntry(0, [requirement]);
-const run = new WorkflowStepRun(0, ["tool.cwl"]);
+const requirement = CWL.Requirement.dockerRequirement(new CWL.DockerRequirement("alpine:3"));
+const hint = HintEntry.knownHint(requirement);
+const run = WorkflowStepRun.runString("tool.cwl");
 const stepInput = new CWL.StepInput("message");
-const stepOutput = new CWL.StepOutput(0, ["result"]);
+const stepOutput = CWL.StepOutput.stepOutputString("result");
 const step = new CWL.WorkflowStep("echo", [stepInput], [stepOutput], run);
 const tool = new CWL.CWLToolDescription([output]);
 const workflow = new CWL.CWLWorkflowDescription([step], [input], [output]);
@@ -203,7 +198,7 @@ describe("CWL primary constructors: inputs, outputs and parameters", () => {
             Name: "result", Type_: undefined, OutputBinding: undefined, OutputSource: undefined,
             Label: undefined, SecondaryFiles: undefined, Streamable: undefined, Doc: undefined, Format: undefined,
         });
-        const source = new OutputSource(1, [["echo/result", "other/result"]]);
+        const source = OutputSource.multiple(["echo/result", "other/result"]);
         expectProperties(new CWL.CWLOutput(
             "result", stringType, outputBinding, source, "Result", yamlValue, false, "Output documentation", "text/plain",
         ), {
@@ -213,7 +208,7 @@ describe("CWL primary constructors: inputs, outputs and parameters", () => {
     });
 
     it("CWLParameterRecordField keeps its required name and recursive value", () => {
-        const value = new CWL.CWLParameterValue(7, [[new CWL.CWLParameterValue(1, ["hello"])]]);
+        const value = CWL.CWLParameterValue.array([CWL.CWLParameterValue.string("hello")]);
         expectProperties(new CWL.CWLParameterRecordField("messages", value), { Name: "messages", Value: value });
     });
 
@@ -224,8 +219,10 @@ describe("CWL primary constructors: inputs, outputs and parameters", () => {
         const flat = new CWL.CWLParameterReference("message", ["hello", "world"]);
         expectProperties(flat, { Key: "message", Values: ["hello", "world"], Type: undefined });
         expect(flat.Value?.tag).toBe(7);
-        expect(flat.Value?.fields).toEqual([[new CWL.CWLParameterValue(1, ["hello"]), new CWL.CWLParameterValue(1, ["world"])]]);
-        const value = new CWL.CWLParameterValue(1, ["explicit"]);
+        expect(flat.Value).toEqual(CWL.CWLParameterValue.array([
+            CWL.CWLParameterValue.string("hello"), CWL.CWLParameterValue.string("world"),
+        ]));
+        const value = CWL.CWLParameterValue.string("explicit");
         expectProperties(new CWL.CWLParameterReference("message", ["ignored"], value, stringType), {
             Key: "message", Values: ["explicit"], Value: value, Type: stringType,
         });
@@ -292,8 +289,8 @@ describe("CWL primary constructors: workflow steps", () => {
             LinkMerge: undefined, PickValue: undefined, Doc: undefined, LoadContents: undefined,
             LoadListing: undefined, Label: undefined,
         });
-        const merge = new LinkMergeMethod(1, []);
-        const pick = new PickValueMethod(0, []);
+        const merge = LinkMergeMethod.mergeFlattened();
+        const pick = PickValueMethod.firstNonNull();
         expectProperties(new CWL.StepInput(
             "message", ["workflow/message"], yamlValue, "$(self)", merge, pick,
             "Step input documentation", false, "deep_listing", "Message",
@@ -313,7 +310,7 @@ describe("CWL primary constructors: workflow steps", () => {
             Id: "echo", In: [stepInput], Out: [stepOutput], Run: run, Label: undefined, Doc: undefined,
             Scatter: undefined, ScatterMethod: undefined, When_: undefined, Requirements: undefined, Hints: undefined,
         });
-        const scatter = new ScatterMethod(2, []);
+        const scatter = ScatterMethod.flatCrossProduct();
         expectProperties(new CWL.WorkflowStep(
             "echo", [stepInput], [stepOutput], run, "Echo", "Step documentation", ["message"], scatter,
             "$(inputs.message != null)", [requirement], [hint],
@@ -383,164 +380,188 @@ describe("CWL primary constructors: processing descriptions", () => {
     });
 });
 
-// Explicit case tables exercise primary tag/fields constructors, including every recursive branch.
-function expectUnion(actual: { tag: number; fields: unknown[]; cases(): string[] }, tag: number, name: string, fields: unknown[]) {
+type UnionValue = { tag: number; fields: unknown[]; cases(): string[] };
+type FactoryCase = [tag: number, name: string, actual: UnionValue, fields: unknown[]];
+
+function expectUnion(actual: UnionValue, tag: number, name: string, fields: unknown[]) {
     expect(actual.tag).toBe(tag);
     expect(actual.cases()[tag]).toBe(name);
     expect(actual.fields).toEqual(fields);
 }
 
-describe("CWL union primary constructors", () => {
-    it.each([
-        [0, "Literal", "literal text"], [1, "Include", "contents.txt"], [2, "Import", "tool.cwl"],
-    ] as const)("SchemaSaladString %s %s", (tag, name, text) => {
-        expectUnion(new SchemaSaladString(tag, [text]), tag, name, [text]);
-    });
-
-    const typeCases: Array<[keyof CWLType_$cases, string, CWLType_$cases[keyof CWLType_$cases][1]]> = [
-        [0, "File", [file]], [1, "Directory", [directory]], [2, "Dirent", [dirent]],
-        [3, "String", []], [4, "Int", []], [5, "Long", []], [6, "Float", []],
-        [7, "Double", []], [8, "Boolean", []], [9, "Stdout", []], [10, "Null", []],
-        [11, "Array", [new CWL.InputArraySchema(stringType)]],
-        [12, "Record", [new CWL.InputRecordSchema([new CWL.InputRecordField("message", stringType)])]],
-        [13, "Enum", [new CWL.InputEnumSchema(["red", "blue"])]],
-        [14, "Union", [[stringType, new CWL.CWLType(10, [])]]],
+describe("CWL union factory helpers", () => {
+    const saladCases: FactoryCase[] = [
+        [0, "Literal", SchemaSaladString.literal("literal text"), ["literal text"]],
+        [1, "Include", SchemaSaladString.include("contents.txt"), ["contents.txt"]],
+        [2, "Import", SchemaSaladString.import("tool.cwl"), ["tool.cwl"]],
     ];
-    it.each(typeCases)("CWLType %s %s", (tag, name, fields) => {
-        expectUnion(new CWL.CWLType(tag, fields), tag, name, fields);
+    it.each(saladCases)("SchemaSaladString %s %s", (tag, name, actual, fields) => {
+        expectUnion(actual, tag, name, fields);
     });
 
-    const parameterCases: Array<[keyof CWLParameterValue_$cases, string, CWLParameterValue_$cases[keyof CWLParameterValue_$cases][1]]> = [
-        [0, "Null", []], [1, "String", ["hello"]], [2, "Int", [9007199254740993n]],
-        [3, "Float", [1.25]], [4, "Boolean", [false]], [5, "File", [file]], [6, "Directory", [directory]],
-        [7, "Array", [[new CWL.CWLParameterValue(1, ["hello"]), new CWL.CWLParameterValue(0, [])]]],
-        [8, "Record", [[new CWL.CWLParameterRecordField("message", new CWL.CWLParameterValue(1, ["hello"]))]]],
+    const arraySchema = new CWL.InputArraySchema(stringType);
+    const recordSchema = new CWL.InputRecordSchema([new CWL.InputRecordField("message", stringType)]);
+    const enumSchema = new CWL.InputEnumSchema(["red", "blue"]);
+    const unionTypes = [stringType, CWL.CWLType.null()];
+    const typeCases: FactoryCase[] = [
+        [0, "File", CWL.CWLType.file(file), [file]],
+        [1, "Directory", CWL.CWLType.directory(directory), [directory]],
+        [2, "Dirent", CWL.CWLType.dirent(dirent), [dirent]],
+        [3, "String", CWL.CWLType.string(), []], [4, "Int", CWL.CWLType.int(), []],
+        [5, "Long", CWL.CWLType.long(), []], [6, "Float", CWL.CWLType.float(), []],
+        [7, "Double", CWL.CWLType.double(), []], [8, "Boolean", CWL.CWLType.boolean(), []],
+        [9, "Stdout", CWL.CWLType.stdout(), []], [10, "Null", CWL.CWLType.null(), []],
+        [11, "Array", CWL.CWLType.array(arraySchema), [arraySchema]],
+        [12, "Record", CWL.CWLType.record(recordSchema), [recordSchema]],
+        [13, "Enum", CWL.CWLType.enum(enumSchema), [enumSchema]],
+        [14, "Union", CWL.CWLType.union(unionTypes), [unionTypes]],
     ];
-    it.each(parameterCases)("CWLParameterValue %s %s", (tag, name, fields) => {
-        expectUnion(new CWL.CWLParameterValue(tag, fields), tag, name, fields);
+    it.each(typeCases)("CWLType %s %s", (tag, name, actual, fields) => {
+        expectUnion(actual, tag, name, fields);
     });
 
-    const sourceCases: Array<[keyof OutputSource_$cases, string, OutputSource_$cases[keyof OutputSource_$cases][1]]> = [
-        [0, "Single", ["echo/result"]], [1, "Multiple", [["echo/result", "other/result"]]],
+    it("CWLType file and directory factories still accept omitted instances", () => {
+        expectUnion(CWL.CWLType.file(), 0, "File", [new CWL.FileInstance()]);
+        expectUnion(CWL.CWLType.directory(), 1, "Directory", [new CWL.DirectoryInstance()]);
+    });
+
+    const parameterArray = [CWL.CWLParameterValue.string("hello"), CWL.CWLParameterValue.null()];
+    const parameterRecord = [new CWL.CWLParameterRecordField("message", CWL.CWLParameterValue.string("hello"))];
+    const parameterCases: FactoryCase[] = [
+        [0, "Null", CWL.CWLParameterValue.null(), []],
+        [1, "String", CWL.CWLParameterValue.string("hello"), ["hello"]],
+        [2, "Int", CWL.CWLParameterValue.int(9007199254740993n), [9007199254740993n]],
+        [3, "Float", CWL.CWLParameterValue.float(1.25), [1.25]],
+        [4, "Boolean", CWL.CWLParameterValue.boolean(false), [false]],
+        [5, "File", CWL.CWLParameterValue.file(file), [file]],
+        [6, "Directory", CWL.CWLParameterValue.directory(directory), [directory]],
+        [7, "Array", CWL.CWLParameterValue.array(parameterArray), [parameterArray]],
+        [8, "Record", CWL.CWLParameterValue.record(parameterRecord), [parameterRecord]],
+    ];
+    it.each(parameterCases)("CWLParameterValue %s %s", (tag, name, actual, fields) => {
+        expectUnion(actual, tag, name, fields);
+    });
+
+    const sourceCases: FactoryCase[] = [
+        [0, "Single", OutputSource.single("echo/result"), ["echo/result"]],
+        [1, "Multiple", OutputSource.multiple(["echo/result", "other/result"]), [["echo/result", "other/result"]]],
     ];
     it.each(sourceCases)(
-        "OutputSource %s %s", (tag, name, fields) => {
-            expectUnion(new OutputSource(tag, fields), tag, name, fields);
+        "OutputSource %s %s", (tag, name, actual, fields) => {
+            expectUnion(actual, tag, name, fields);
         },
     );
 
-    it.each([[0, "NoListing"], [1, "ShallowListing"], [2, "DeepListing"]] as const)(
-        "LoadListingEnum %s %s", (tag, name) => expectUnion(new LoadListingEnum(tag, []), tag, name, []),
+    it.each([
+        [0, "NoListing", LoadListingEnum.noListing()],
+        [1, "ShallowListing", LoadListingEnum.shallowListing()],
+        [2, "DeepListing", LoadListingEnum.deepListing()],
+    ] as const)(
+        "LoadListingEnum %s %s", (tag, name, actual) => expectUnion(actual, tag, name, []),
     );
 
     it("ToolTimeLimitValue preserves integer seconds and an expression", () => {
-        expectUnion(new ToolTimeLimitValue(0, [120n]), 0, "ToolTimeLimitSeconds", [120n]);
-        expectUnion(new ToolTimeLimitValue(1, ["$(inputs.timeout)"]), 1, "ToolTimeLimitExpression", ["$(inputs.timeout)"]);
+        expectUnion(ToolTimeLimitValue.toolTimeLimitSeconds(120n), 0, "ToolTimeLimitSeconds", [120n]);
+        expectUnion(ToolTimeLimitValue.toolTimeLimitExpression("$(inputs.timeout)"), 1, "ToolTimeLimitExpression", ["$(inputs.timeout)"]);
     });
 
-    const workDirCases: Array<[keyof InitialWorkDirEntry_$cases, string, InitialWorkDirEntry_$cases[keyof InitialWorkDirEntry_$cases][1]]> = [
-        [0, "DirentEntry", [dirent]], [1, "StringEntry", [include]],
-        [2, "FileEntry", [file]], [3, "DirectoryEntry", [directory]],
+    const workDirCases: FactoryCase[] = [
+        [0, "DirentEntry", InitialWorkDirEntry.direntEntry(dirent), [dirent]],
+        [1, "StringEntry", InitialWorkDirEntry.stringEntry(include), [include]],
+        [2, "FileEntry", InitialWorkDirEntry.fileEntry(file), [file]],
+        [3, "DirectoryEntry", InitialWorkDirEntry.directoryEntry(directory), [directory]],
     ];
-    it.each(workDirCases)("InitialWorkDirEntry %s %s", (tag, name, fields) => {
-        expectUnion(new InitialWorkDirEntry(tag, fields), tag, name, fields);
+    it.each(workDirCases)("InitialWorkDirEntry %s %s", (tag, name, actual, fields) => {
+        expectUnion(actual, tag, name, fields);
     });
 
-    const requirementCases: Array<[keyof Requirement_$cases, string, Requirement_$cases[keyof Requirement_$cases][1]]> = [
-        [0, "InlineJavascriptRequirement", [new InlineJavascriptRequirementValue(["function echo(x) { return x; }"])]],
-        [1, "SchemaDefRequirement", [[new CWL.SchemaDefRequirementType("Message", stringType)]]],
-        [2, "DockerRequirement", [new CWL.DockerRequirement("alpine:3")]],
-        [3, "SoftwareRequirement", [[new CWL.SoftwarePackage("echo", ["1.0"])]]],
-        [4, "LoadListingRequirement", [new LoadListingRequirementValue(listing)]],
-        [5, "InitialWorkDirRequirement", [[new InitialWorkDirEntry(0, [dirent])]]],
-        [6, "EnvVarRequirement", [[new CWL.EnvironmentDef("MESSAGE", "hello")]]],
-        [7, "ShellCommandRequirement", []], [8, "ResourceRequirement", [new CWL.ResourceRequirementInstance(1)]],
-        [9, "WorkReuseRequirement", [new WorkReuseRequirementValue(false)]],
-        [10, "WorkReuseExpressionRequirement", ["$(inputs.reuse)"]],
-        [11, "NetworkAccessRequirement", [new NetworkAccessRequirementValue(false)]],
-        [12, "NetworkAccessExpressionRequirement", ["$(inputs.network)"]],
-        [13, "InplaceUpdateRequirement", [new InplaceUpdateRequirementValue(true)]],
-        [14, "ToolTimeLimitRequirement", [new ToolTimeLimitValue(0, [60n])]],
-        [15, "SubworkflowFeatureRequirement", []], [16, "ScatterFeatureRequirement", []],
-        [17, "MultipleInputFeatureRequirement", []], [18, "StepInputExpressionRequirement", []],
+    const inlineJavascript = new InlineJavascriptRequirementValue(["function echo(x) { return x; }"]);
+    const schemaDefs = [new CWL.SchemaDefRequirementType("Message", stringType)];
+    const docker = new CWL.DockerRequirement("alpine:3");
+    const software = [new CWL.SoftwarePackage("echo", ["1.0"])];
+    const loadListing = new LoadListingRequirementValue(listing);
+    const workDir = [InitialWorkDirEntry.direntEntry(dirent)];
+    const environment = [new CWL.EnvironmentDef("MESSAGE", "hello")];
+    const resources = new CWL.ResourceRequirementInstance(1);
+    const workReuse = new WorkReuseRequirementValue(false);
+    const network = new NetworkAccessRequirementValue(false);
+    const inplaceUpdate = new InplaceUpdateRequirementValue(true);
+    const timeLimit = ToolTimeLimitValue.toolTimeLimitSeconds(60n);
+    const requirementCases: FactoryCase[] = [
+        [0, "InlineJavascriptRequirement", CWL.Requirement.inlineJavascriptRequirement(inlineJavascript), [inlineJavascript]],
+        [1, "SchemaDefRequirement", CWL.Requirement.schemaDefRequirement(schemaDefs), [schemaDefs]],
+        [2, "DockerRequirement", CWL.Requirement.dockerRequirement(docker), [docker]],
+        [3, "SoftwareRequirement", CWL.Requirement.softwareRequirement(software), [software]],
+        [4, "LoadListingRequirement", CWL.Requirement.loadListingRequirement(loadListing), [loadListing]],
+        [5, "InitialWorkDirRequirement", CWL.Requirement.initialWorkDirRequirement(workDir), [workDir]],
+        [6, "EnvVarRequirement", CWL.Requirement.envVarRequirement(environment), [environment]],
+        [7, "ShellCommandRequirement", CWL.Requirement.shellCommandRequirement(), []],
+        [8, "ResourceRequirement", CWL.Requirement.resourceRequirement(resources), [resources]],
+        [9, "WorkReuseRequirement", CWL.Requirement.workReuseRequirement(workReuse), [workReuse]],
+        [10, "WorkReuseExpressionRequirement", CWL.Requirement.workReuseExpressionRequirement("$(inputs.reuse)"), ["$(inputs.reuse)"]],
+        [11, "NetworkAccessRequirement", CWL.Requirement.networkAccessRequirement(network), [network]],
+        [12, "NetworkAccessExpressionRequirement", CWL.Requirement.networkAccessExpressionRequirement("$(inputs.network)"), ["$(inputs.network)"]],
+        [13, "InplaceUpdateRequirement", CWL.Requirement.inplaceUpdateRequirement(inplaceUpdate), [inplaceUpdate]],
+        [14, "ToolTimeLimitRequirement", CWL.Requirement.toolTimeLimitRequirement(timeLimit), [timeLimit]],
+        [15, "SubworkflowFeatureRequirement", CWL.Requirement.subworkflowFeatureRequirement(), []],
+        [16, "ScatterFeatureRequirement", CWL.Requirement.scatterFeatureRequirement(), []],
+        [17, "MultipleInputFeatureRequirement", CWL.Requirement.multipleInputFeatureRequirement(), []],
+        [18, "StepInputExpressionRequirement", CWL.Requirement.stepInputExpressionRequirement(), []],
     ];
-    it.each(requirementCases)("Requirement %s %s", (tag, name, fields) => {
-        expectUnion(new CWL.Requirement(tag, fields), tag, name, fields);
+    it.each(requirementCases)("Requirement %s %s", (tag, name, actual, fields) => {
+        expectUnion(actual, tag, name, fields);
     });
 
     it("HintEntry preserves both known and extension hints", () => {
         const unknown = new HintUnknownValue("example:Extension", yamlValue);
-        expectUnion(new HintEntry(0, [requirement]), 0, "KnownHint", [requirement]);
-        expectUnion(new HintEntry(1, [unknown]), 1, "UnknownHint", [unknown]);
+        expectUnion(HintEntry.knownHint(requirement), 0, "KnownHint", [requirement]);
+        expectUnion(HintEntry.unknownHint(unknown), 1, "UnknownHint", [unknown]);
     });
 
-    it.each([[0, "MergeNested"], [1, "MergeFlattened"]] as const)(
-        "LinkMergeMethod %s %s", (tag, name) => expectUnion(new LinkMergeMethod(tag, []), tag, name, []),
+    it.each([
+        [0, "MergeNested", LinkMergeMethod.mergeNested()], [1, "MergeFlattened", LinkMergeMethod.mergeFlattened()],
+    ] as const)(
+        "LinkMergeMethod %s %s", (tag, name, actual) => expectUnion(actual, tag, name, []),
     );
-    it.each([[0, "FirstNonNull"], [1, "TheOnlyNonNull"], [2, "AllNonNull"]] as const)(
-        "PickValueMethod %s %s", (tag, name) => expectUnion(new PickValueMethod(tag, []), tag, name, []),
+    it.each([
+        [0, "FirstNonNull", PickValueMethod.firstNonNull()],
+        [1, "TheOnlyNonNull", PickValueMethod.theOnlyNonNull()],
+        [2, "AllNonNull", PickValueMethod.allNonNull()],
+    ] as const)(
+        "PickValueMethod %s %s", (tag, name, actual) => expectUnion(actual, tag, name, []),
     );
-    it.each([[0, "DotProduct"], [1, "NestedCrossProduct"], [2, "FlatCrossProduct"]] as const)(
-        "ScatterMethod %s %s", (tag, name) => expectUnion(new ScatterMethod(tag, []), tag, name, []),
+    it.each([
+        [0, "DotProduct", ScatterMethod.dotProduct()],
+        [1, "NestedCrossProduct", ScatterMethod.nestedCrossProduct()],
+        [2, "FlatCrossProduct", ScatterMethod.flatCrossProduct()],
+    ] as const)(
+        "ScatterMethod %s %s", (tag, name, actual) => expectUnion(actual, tag, name, []),
     );
 
     it("StepOutput preserves a string id and a parameter record", () => {
         const parameter = new StepOutputParameter("result");
-        expectUnion(new CWL.StepOutput(0, ["result"]), 0, "StepOutputString", ["result"]);
-        expectUnion(new CWL.StepOutput(1, [parameter]), 1, "StepOutputRecord", [parameter]);
+        expectUnion(CWL.StepOutput.stepOutputString("result"), 0, "StepOutputString", ["result"]);
+        expectUnion(CWL.StepOutput.stepOutputRecord(parameter), 1, "StepOutputRecord", [parameter]);
     });
 
-    it.each([
-        [0, "RunString", "tool.cwl"], [1, "RunCommandLineTool", tool], [2, "RunWorkflow", workflow],
-        [3, "RunExpressionTool", expressionTool], [4, "RunOperation", operation],
-    ] as const)("WorkflowStepRun %s %s", (tag, name, value) => {
-        expectUnion(new WorkflowStepRun(tag, [value]), tag, name, [value]);
-    });
-
-    const processingUnitCases: Array<[keyof CWLProcessingUnit_$cases, string, CWLProcessingUnit_$cases[keyof CWLProcessingUnit_$cases][1]]> = [
-        [0, "CommandLineTool", [tool]], [1, "Workflow", [workflow]],
-        [2, "ExpressionTool", [expressionTool]], [3, "Operation", [operation]],
+    const runCases: FactoryCase[] = [
+        [0, "RunString", WorkflowStepRun.runString("tool.cwl"), ["tool.cwl"]],
+        [1, "RunCommandLineTool", WorkflowStepRun.runCommandLineTool(tool), [tool]],
+        [2, "RunWorkflow", WorkflowStepRun.runWorkflow(workflow), [workflow]],
+        [3, "RunExpressionTool", WorkflowStepRun.runExpressionTool(expressionTool), [expressionTool]],
+        [4, "RunOperation", WorkflowStepRun.runOperation(operation), [operation]],
     ];
-    it.each(processingUnitCases)("CWLProcessingUnit %s %s", (tag, name, fields) => {
-        expectUnion(new CWL.CWLProcessingUnit(tag, fields), tag, name, fields);
-    });
-});
-
-describe("YAML values nested in CWL constructors", () => {
-    it("YAMLContent accepts absent options and full scalar annotations", () => {
-        expectProperties(new YAMLContent("hello", undefined, undefined, undefined, undefined), {
-            Value: "hello", Comment: undefined, Anchor: undefined, Tag: undefined, Style: undefined,
-        });
-        const style = new ScalarStyle(3, [new BlockScalarStyle(0, []), new ChompingMode(2, []), 2]);
-        expectProperties(new YAMLContent("hello\nworld", "comment", "message", "!!str", style), {
-            Value: "hello\nworld", Comment: "comment", Anchor: "message", Tag: "!!str", Style: style,
-        });
+    it.each(runCases)("WorkflowStepRun %s %s", (tag, name, actual, fields) => {
+        expectUnion(actual, tag, name, fields);
     });
 
-    it.each([[0, "Literal"], [1, "Folded"]] as const)(
-        "BlockScalarStyle %s %s", (tag, name) => expectUnion(new BlockScalarStyle(tag, []), tag, name, []),
-    );
-    it.each([[0, "Strip"], [1, "Clip"], [2, "Keep"]] as const)(
-        "ChompingMode %s %s", (tag, name) => expectUnion(new ChompingMode(tag, []), tag, name, []),
-    );
-    it.each([[0, "Plain"], [1, "SingleQuoted"], [2, "DoubleQuoted"]] as const)(
-        "ScalarStyle %s %s", (tag, name) => expectUnion(new ScalarStyle(tag, []), tag, name, []),
-    );
-    it("ScalarStyle Block accepts omitted indentation and explicit indentation", () => {
-        const block = new BlockScalarStyle(1, []);
-        const chomping = new ChompingMode(0, []);
-        expectUnion(new ScalarStyle(3, [block, chomping, undefined]), 3, "Block", [block, chomping, undefined]);
-        expectUnion(new ScalarStyle(3, [block, chomping, 4]), 3, "Block", [block, chomping, 4]);
-    });
-
-    const yamlCases: Array<[keyof YAMLElement_$cases, string, YAMLElement_$cases[keyof YAMLElement_$cases][1]]> = [
-        [0, "Mapping", [new YAMLContent("message", undefined, undefined, undefined, undefined), yamlValue]],
-        [1, "Value", [yamlContent]], [2, "Sequence", [ofArray([yamlValue])]],
-        [3, "Object", [ofArray([new YAMLElement(0, [yamlContent, yamlValue])])]],
-        [4, "Comment", ["a comment"]], [5, "DocumentStart", []], [6, "DocumentEnd", []],
-        [7, "Alias", ["message"]], [8, "Nil", []],
+    const processingUnitCases: FactoryCase[] = [
+        [0, "CommandLineTool", CWL.CWLProcessingUnit.commandLineTool(tool), [tool]],
+        [1, "Workflow", CWL.CWLProcessingUnit.workflow(workflow), [workflow]],
+        [2, "ExpressionTool", CWL.CWLProcessingUnit.expressionTool(expressionTool), [expressionTool]],
+        [3, "Operation", CWL.CWLProcessingUnit.operation(operation), [operation]],
     ];
-    it.each(yamlCases)("YAMLElement %s %s", (tag, name, fields) => {
-        expectUnion(new YAMLElement(tag, fields), tag, name, fields);
+    it.each(processingUnitCases)("CWLProcessingUnit %s %s", (tag, name, actual, fields) => {
+        expectUnion(actual, tag, name, fields);
     });
 });

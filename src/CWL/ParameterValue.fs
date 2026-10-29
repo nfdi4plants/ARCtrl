@@ -30,6 +30,26 @@ and [<CustomEquality; NoComparison; RequireQualifiedAccess; AttachMembers>] CWLP
     | Array of ResizeArray<CWLParameterValue>
     | Record of ResizeArray<CWLParameterRecordField>
 
+#if FABLE_COMPILER
+    static member ``null``() : CWLParameterValue = CWLParameterValue.Null
+
+    static member string(value: string) : CWLParameterValue = CWLParameterValue.String value
+
+    static member int(value: int64) : CWLParameterValue = CWLParameterValue.Int value
+
+    static member float(value: float) : CWLParameterValue = CWLParameterValue.Float value
+
+    static member boolean(value: bool) : CWLParameterValue = CWLParameterValue.Boolean value
+
+    static member file(value: FileInstance) : CWLParameterValue = CWLParameterValue.File value
+
+    static member directory(value: DirectoryInstance) : CWLParameterValue = CWLParameterValue.Directory value
+
+    static member array(value: ResizeArray<CWLParameterValue>) : CWLParameterValue = CWLParameterValue.Array value
+
+    static member record(value: ResizeArray<CWLParameterRecordField>) : CWLParameterValue = CWLParameterValue.Record value
+#endif
+
     override this.Equals(other: obj) =
         let resizeArrayEqual (left: ResizeArray<'T>) (right: ResizeArray<'T>) =
             left.Count = right.Count && Seq.forall2 (=) left right
