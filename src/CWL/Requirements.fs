@@ -129,10 +129,19 @@ type EnvironmentDef (envName: string, envValue: string) =
     static member KnownFieldNames =
         CWLKnownFieldNames.environmentDef
 
+[<AttachMembers>]
 type LoadListingEnum =
     | NoListing
     | ShallowListing
     | DeepListing
+
+#if FABLE_COMPILER
+    static member noListing() : LoadListingEnum = LoadListingEnum.NoListing
+
+    static member shallowListing() : LoadListingEnum = LoadListingEnum.ShallowListing
+
+    static member deepListing() : LoadListingEnum = LoadListingEnum.DeepListing
+#endif
 
     static member toCwlString = function
         | NoListing -> "no_listing"
@@ -250,9 +259,16 @@ type InplaceUpdateRequirementValue (inplaceUpdate: bool) =
     static member KnownFieldNames =
         CWLKnownFieldNames.inplaceUpdateRequirementValue
 
+[<AttachMembers>]
 type ToolTimeLimitValue =
     | ToolTimeLimitSeconds of int64
     | ToolTimeLimitExpression of string
+
+#if FABLE_COMPILER
+    static member toolTimeLimitSeconds(value: int64) : ToolTimeLimitValue = ToolTimeLimitValue.ToolTimeLimitSeconds value
+
+    static member toolTimeLimitExpression(value: string) : ToolTimeLimitValue = ToolTimeLimitValue.ToolTimeLimitExpression value
+#endif
 
 /// "min" is the minimum amount of a resource that must be reserved to schedule a job. If "min" cannot be satisfied, the job should not be run.
 /// "max" is the maximum amount of a resource that the job shall be permitted to use. If a node has sufficient resources, multiple jobs may be scheduled on a single node provided each job's "max" resource requirements are met.
@@ -373,11 +389,22 @@ type ResourceRequirementInstance (
 
 /// Entry in InitialWorkDirRequirement listing.
 /// CWL allows either a Dirent object or a string/expression entry.
+[<AttachMembers>]
 type InitialWorkDirEntry =
     | DirentEntry of DirentInstance
     | StringEntry of SchemaSaladString
     | FileEntry of FileInstance
     | DirectoryEntry of DirectoryInstance
+
+#if FABLE_COMPILER
+    static member direntEntry(value: DirentInstance) : InitialWorkDirEntry = InitialWorkDirEntry.DirentEntry value
+
+    static member stringEntry(value: SchemaSaladString) : InitialWorkDirEntry = InitialWorkDirEntry.StringEntry value
+
+    static member fileEntry(value: FileInstance) : InitialWorkDirEntry = InitialWorkDirEntry.FileEntry value
+
+    static member directoryEntry(value: DirectoryInstance) : InitialWorkDirEntry = InitialWorkDirEntry.DirectoryEntry value
+#endif
 
 [<AttachMembers>]
 type InlineJavascriptRequirementValue (?expressionLib: ResizeArray<string>) =
@@ -434,6 +461,7 @@ type HintUnknownValue (class_: string option, raw: YAMLElement) =
     static member KnownFieldNames =
         CWLKnownFieldNames.hintUnknownValue
 
+[<AttachMembers>]
 type Requirement =
     /// Indicates that the workflow platform must support inline Javascript expressions.
     | InlineJavascriptRequirement of InlineJavascriptRequirementValue
@@ -476,6 +504,46 @@ type Requirement =
     | StepInputExpressionRequirement
 
     with
+#if FABLE_COMPILER
+    static member inlineJavascriptRequirement(value: InlineJavascriptRequirementValue) : Requirement = Requirement.InlineJavascriptRequirement value
+
+    static member schemaDefRequirement(value: ResizeArray<SchemaDefRequirementType>) : Requirement = Requirement.SchemaDefRequirement value
+
+    static member dockerRequirement(value: DockerRequirement) : Requirement = Requirement.DockerRequirement value
+
+    static member softwareRequirement(value: ResizeArray<SoftwarePackage>) : Requirement = Requirement.SoftwareRequirement value
+
+    static member loadListingRequirement(value: LoadListingRequirementValue) : Requirement = Requirement.LoadListingRequirement value
+
+    static member initialWorkDirRequirement(value: ResizeArray<InitialWorkDirEntry>) : Requirement = Requirement.InitialWorkDirRequirement value
+
+    static member envVarRequirement(value: ResizeArray<EnvironmentDef>) : Requirement = Requirement.EnvVarRequirement value
+
+    static member shellCommandRequirement() : Requirement = Requirement.ShellCommandRequirement
+
+    static member resourceRequirement(value: ResourceRequirementInstance) : Requirement = Requirement.ResourceRequirement value
+
+    static member workReuseRequirement(value: WorkReuseRequirementValue) : Requirement = Requirement.WorkReuseRequirement value
+
+    static member workReuseExpressionRequirement(value: string) : Requirement = Requirement.WorkReuseExpressionRequirement value
+
+    static member networkAccessRequirement(value: NetworkAccessRequirementValue) : Requirement = Requirement.NetworkAccessRequirement value
+
+    static member networkAccessExpressionRequirement(value: string) : Requirement = Requirement.NetworkAccessExpressionRequirement value
+
+    static member inplaceUpdateRequirement(value: InplaceUpdateRequirementValue) : Requirement = Requirement.InplaceUpdateRequirement value
+
+    static member toolTimeLimitRequirement(value: ToolTimeLimitValue) : Requirement = Requirement.ToolTimeLimitRequirement value
+
+    static member subworkflowFeatureRequirement() : Requirement = Requirement.SubworkflowFeatureRequirement
+
+    static member scatterFeatureRequirement() : Requirement = Requirement.ScatterFeatureRequirement
+
+    static member multipleInputFeatureRequirement() : Requirement = Requirement.MultipleInputFeatureRequirement
+
+    static member stepInputExpressionRequirement() : Requirement = Requirement.StepInputExpressionRequirement
+#endif
+
     static member defaultInlineJavascriptRequirement =
         InlineJavascriptRequirement InlineJavascriptRequirementValue.defaultEmpty
 
@@ -494,9 +562,16 @@ type Requirement =
     static member defaultToolTimeLimitSeconds(seconds: int64) =
         ToolTimeLimitRequirement (ToolTimeLimitSeconds seconds)
 
+[<AttachMembers>]
 type HintEntry =
     | KnownHint of Requirement
     | UnknownHint of HintUnknownValue
+
+#if FABLE_COMPILER
+    static member knownHint(value: Requirement) : HintEntry = HintEntry.KnownHint value
+
+    static member unknownHint(value: HintUnknownValue) : HintEntry = HintEntry.UnknownHint value
+#endif
 
     /// Wraps a known requirement as a known hint entry.
     static member ofRequirement (requirement: Requirement) =

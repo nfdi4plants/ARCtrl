@@ -1,7 +1,9 @@
 namespace ARCtrl
 
+open Fable.Core
 open ARCtrl
 
+[<AttachMembers>]
 [<RequireQualifiedAccess>]
 type DataFile =
 
@@ -40,3 +42,14 @@ type DataFile =
         match this with
         | ImageFile -> true
         | _ -> false
+
+#if FABLE_COMPILER
+
+    static member rawDataFile() : DataFile = DataFile.RawDataFile
+
+    static member derivedDataFile() : DataFile = DataFile.DerivedDataFile
+
+    static member imageFile() : DataFile = DataFile.ImageFile
+
+#else
+#endif

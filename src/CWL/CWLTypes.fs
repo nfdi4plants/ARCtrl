@@ -4,11 +4,20 @@ open DynamicObj
 open Fable.Core
 open YAMLicious.YAMLiciousTypes
 
+[<AttachMembers>]
 type SchemaSaladString =
     | Literal of string
     | Include of string
     | Import of string
     with
+#if FABLE_COMPILER
+    static member literal(value: string) : SchemaSaladString = SchemaSaladString.Literal value
+
+    static member ``include``(value: string) : SchemaSaladString = SchemaSaladString.Include value
+
+    static member import(value: string) : SchemaSaladString = SchemaSaladString.Import value
+#endif
+
     member this.Value =
         match this with
         | Literal value
@@ -404,7 +413,7 @@ and [<AttachMembers>] InputArraySchema (items: CWLType, ?label: string, ?doc: st
         CWLKnownFieldNames.inputArraySchema
 
 /// Primitive types with the concept of a file and directory as a builtin type.
-and [<CustomEquality; NoComparison>] CWLType =
+and [<CustomEquality; NoComparison; AttachMembers>] CWLType =
     /// Represents a file (or group of files when secondaryFiles is provided)
     | File of FileInstance
     /// Represents a directory to present to a command line tool.
@@ -468,9 +477,41 @@ and [<CustomEquality; NoComparison>] CWLType =
         | Enum e -> hash (13, e)
         | Union u -> hash (14, u |> Seq.map (fun t -> t.GetHashCode()) |> Seq.toList)
 
+#if FABLE_COMPILER
+    static member file(?value: FileInstance) : CWLType = CWLType.File(defaultArg value (FileInstance()))
+
+    static member directory(?value: DirectoryInstance) : CWLType = CWLType.Directory(defaultArg value (DirectoryInstance()))
+
+    static member dirent(value: DirentInstance) : CWLType = CWLType.Dirent value
+
+    static member string() : CWLType = CWLType.String
+
+    static member int() : CWLType = CWLType.Int
+
+    static member long() : CWLType = CWLType.Long
+
+    static member float() : CWLType = CWLType.Float
+
+    static member double() : CWLType = CWLType.Double
+
+    static member boolean() : CWLType = CWLType.Boolean
+
+    static member stdout() : CWLType = CWLType.Stdout
+
+    static member ``null``() : CWLType = CWLType.Null
+
+    static member array(value: InputArraySchema) : CWLType = CWLType.Array value
+
+    static member enum(value: InputEnumSchema) : CWLType = CWLType.Enum value
+
+    static member record(value: InputRecordSchema) : CWLType = CWLType.Record value
+
+    static member union(value: ResizeArray<CWLType>) : CWLType = CWLType.Union value
+#else
     static member file() = File(FileInstance())
 
     static member directory() = Directory(DirectoryInstance())
+#endif
 
 [<AttachMembers>]
 type SchemaDefRequirementType (name: string, type_: CWLType) =

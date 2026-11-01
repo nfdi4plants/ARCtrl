@@ -1,7 +1,12 @@
 export { ARC } from './ts/ARC.js'
 export { ArcAssay, ArcStudy, ArcRun, ArcWorkflow, ArcInvestigation } from './ts/Core/ArcTypes.js'
+export { OntologySourceReference } from './ts/Core/OntologySourceReference.js'
 export { Datamap } from './ts/Core/Datamap.js'
 export { DataContext } from './ts/Core/DataContext.js'
+export { Data } from './ts/Core/Data.js'
+export { DataFile } from './ts/Core/DataFile.js'
+export { Component } from './ts/Core/Process/Component.js'
+export { ScalarValue } from './ts/Core/ScalarValue.js'
 export { CompositeCell } from './ts/Core/Table/CompositeCell.js'
 export { CompositeHeader, IOType } from './ts/Core/Table/CompositeHeader.js'
 export { CompositeColumn } from './ts/Core/Table/CompositeColumn.js'
@@ -14,27 +19,37 @@ export { XlsxController } from './ts/Xlsx.js'
 export { Person } from './ts/Core/Person.js'
 export { Publication } from './ts/Core/Publication.js'
 export { OntologyAnnotation } from './ts/Core/OntologyAnnotation.js'
-export { Comment$ as Comment } from './ts/Core/Comment.js'
+export { Comment$ as Comment, Remark } from './ts/Core/Comment.js'
 export { Contract } from './ts/Contract/Contract.js'
 export { WebController} from './ts/Template.Web.js'
 export { FileSystem } from './ts/FileSystem/FileSystem.js'
 export { FileSystemTree } from './ts/FileSystem/FileSystemTree.js'
+export { Commit } from './ts/FileSystem/Commit.js'
+export { License } from './ts/License.js'
 
 /// CWL
 import { CWLProcessingUnit } from './ts/CWL/CWLProcessingUnit.js'
-import { CWLType, FileInstance, DirectoryInstance, DirentInstance, InputEnumSchema, InputRecordField, InputRecordSchema, InputArraySchema, SchemaDefRequirementType, SoftwarePackage } from './ts/CWL/CWLTypes.js'
+import { CWLType, SchemaSaladString, FileInstance, DirectoryInstance, DirentInstance, InputEnumSchema, InputRecordField, InputRecordSchema, InputArraySchema, SchemaDefRequirementType, SoftwarePackage } from './ts/CWL/CWLTypes.js'
 import { CWLParameterValue, CWLParameterRecordField } from './ts/CWL/ParameterValue.js'
 import { CWLParameterReference } from './ts/CWL/ParameterReference.js'
 import { CWLInput, InputBinding } from './ts/CWL/Inputs.js'
-import { CWLOutput, OutputBinding } from './ts/CWL/Outputs.js'
+import { CWLOutput, OutputBinding, OutputSource } from './ts/CWL/Outputs.js'
 import { CWLToolDescription } from './ts/CWL/ToolDescription.js'
 import { CWLWorkflowDescription } from './ts/CWL/WorkflowDescription.js'
-import { WorkflowStep, StepInput, StepOutput } from './ts/CWL/WorkflowSteps.js'
-import { Requirement, DockerRequirement, EnvironmentDef, ResourceRequirementInstance } from './ts/CWL/Requirements.js'
+import { CWLExpressionToolDescription } from './ts/CWL/ExpressionToolDescription.js'
+import { CWLOperationDescription } from './ts/CWL/OperationDescription.js'
+import { WorkflowStep, StepInput, StepOutput, StepOutputParameter, WorkflowStepRun, LinkMergeMethod, PickValueMethod, ScatterMethod } from './ts/CWL/WorkflowSteps.js'
+import {
+    Requirement, DockerRequirement, EnvironmentDef, ResourceRequirementInstance,
+    HintEntry, HintUnknownValue, InitialWorkDirEntry, InlineJavascriptRequirementValue,
+    InplaceUpdateRequirementValue, LoadListingEnum, LoadListingRequirementValue,
+    NetworkAccessRequirementValue, ToolTimeLimitValue, WorkReuseRequirementValue,
+} from './ts/CWL/Requirements.js'
 
 export const CWL = {
     CWLProcessingUnit,
     CWLType,
+    SchemaSaladString,
     FileInstance,
     DirectoryInstance,
     DirentInstance,
@@ -51,15 +66,33 @@ export const CWL = {
     InputBinding,
     CWLOutput,
     OutputBinding,
+    OutputSource,
     CWLToolDescription,
     CWLWorkflowDescription,
+    CWLExpressionToolDescription,
+    CWLOperationDescription,
     WorkflowStep,
     StepInput,
     StepOutput,
+    StepOutputParameter,
+    WorkflowStepRun,
+    LinkMergeMethod,
+    PickValueMethod,
+    ScatterMethod,
     Requirement,
     DockerRequirement,
     EnvironmentDef,
-    ResourceRequirementInstance
+    ResourceRequirementInstance,
+    HintEntry,
+    HintUnknownValue,
+    InitialWorkDirEntry,
+    InlineJavascriptRequirementValue,
+    InplaceUpdateRequirementValue,
+    LoadListingEnum,
+    LoadListingRequirementValue,
+    NetworkAccessRequirementValue,
+    ToolTimeLimitValue,
+    WorkReuseRequirementValue,
 };
 
 /// RO-Crate
@@ -90,7 +123,7 @@ export const ROCrate = {
     LDContext,
     initV1_1,
     initV1_2,
-    initBioschemasContext,  
+    initBioschemasContext,
     LDComment,
     LDDefinedTerm,
     LDFile,

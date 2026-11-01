@@ -1,10 +1,23 @@
 namespace ARCtrl.CWL
 
+open Fable.Core
+
+[<AttachMembers>]
 type CWLProcessingUnit =
     | CommandLineTool of CWLToolDescription
     | Workflow of CWLWorkflowDescription
     | ExpressionTool of CWLExpressionToolDescription
     | Operation of CWLOperationDescription
+
+#if FABLE_COMPILER
+    static member commandLineTool(value: CWLToolDescription) : CWLProcessingUnit = CWLProcessingUnit.CommandLineTool value
+
+    static member workflow(value: CWLWorkflowDescription) : CWLProcessingUnit = CWLProcessingUnit.Workflow value
+
+    static member expressionTool(value: CWLExpressionToolDescription) : CWLProcessingUnit = CWLProcessingUnit.ExpressionTool value
+
+    static member operation(value: CWLOperationDescription) : CWLProcessingUnit = CWLProcessingUnit.Operation value
+#endif
 
     /// Returns normalized inputs for all CWL processing unit variants.
     static member getInputs (processingUnit: CWLProcessingUnit) : ResizeArray<CWLInput> =

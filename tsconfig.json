@@ -25,7 +25,10 @@
     "target": "es2020",
     "module": "es2020",
     "moduleResolution": "Node",
-    "declarationDir": "dist/ts/types"
+    "declarationDir": "dist/ts/types",
+    "types": [
+        "node"
+    ]
   },
   "include": [ "src/ARCtrl/index.ts" ],
   "exclude": [
