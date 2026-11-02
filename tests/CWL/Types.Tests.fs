@@ -632,6 +632,34 @@ let testRepeatedEnumSymbols =
     ]
 
 
+let testAdmits =
+    let optionalFile = CWLType.Union (ResizeArray [ CWLType.Null; CWLType.File ])
+    let arrayOf (items: CWLType) = CWLType.Array (InputArraySchema(items))
+    testList "Admits" [
+        testCase "a type admits itself" <| fun _ ->
+            Expect.isTrue (CWLType.admits CWLType.File CWLType.File) "File admits File."
+            Expect.isTrue (CWLType.admits CWLType.String CWLType.String) "String admits String."
+        testCase "File and Directory admit only themselves" <| fun _ ->
+            Expect.isFalse (CWLType.admits CWLType.File CWLType.Directory) "File does not admit Directory."
+            Expect.isFalse (CWLType.admits CWLType.Directory CWLType.File) "Directory does not admit File."
+        testCase "an optional File admits a File and no Directory" <| fun _ ->
+            Expect.isTrue (CWLType.admits optionalFile CWLType.File) "File? admits File."
+            Expect.isFalse (CWLType.admits optionalFile CWLType.Directory) "File? does not admit Directory."
+        testCase "an array of File admits an array of File and nothing else" <| fun _ ->
+            Expect.isTrue (CWLType.admits (arrayOf CWLType.File) (arrayOf CWLType.File)) "File[] admits File[]."
+            Expect.isFalse (CWLType.admits (arrayOf CWLType.File) (arrayOf CWLType.Directory)) "File[] does not admit Directory[]."
+            Expect.isFalse (CWLType.admits (arrayOf CWLType.File) CWLType.File) "File[] does not admit File."
+        testCase "Any admits every value" <| fun _ ->
+            Expect.isTrue (CWLType.admits CWLType.Any CWLType.File) "Any admits File."
+            Expect.isTrue (CWLType.admits CWLType.Any CWLType.String) "Any admits String."
+        testCase "an unresolved type admits every value" <| fun _ ->
+            Expect.isTrue (CWLType.admits (CWLType.Reference "#MyRecord") CWLType.File) "A reference admits File."
+        testCase "stdin admits a File and no Directory" <| fun _ ->
+            Expect.isTrue (CWLType.admits CWLType.Stdin CWLType.File) "Stdin admits File."
+            Expect.isFalse (CWLType.admits CWLType.Stdin CWLType.Directory) "Stdin does not admit Directory."
+    ]
+
+
 let main =
     testList "Types" [
         testNestedArrayDecoding
@@ -644,4 +672,5 @@ let main =
         testFileAndDirectoryTypes
         testDirentIsNoType
         testRepeatedEnumSymbols
+        testAdmits
     ]

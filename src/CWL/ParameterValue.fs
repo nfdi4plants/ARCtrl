@@ -147,9 +147,9 @@ module CWLParameterValue =
             |> Seq.collect (fun field -> toFlatStrings field.Value :> seq<string>)
             |> ResizeArray
 
-    /// The type that a value shows by itself: File for a File, Directory for a Directory, and an array of that type for
-    /// a list whose items all show the same type. Any other value shows no type, because a job file gives scalars and
-    /// records without one.
+    /// The type that a value shows by itself. A File shows File and a Directory shows Directory. A list whose items all
+    /// show the same type shows an array of that type. Any other value shows no type, because a job file gives scalars
+    /// and records without one.
     let rec tryInferType (value: CWLParameterValue) : CWLType option =
         match value with
         | CWLParameterValue.File _ -> Some CWLType.File

@@ -942,6 +942,28 @@ module CWLType =
             | _ -> false
         | _ -> left = right
 
+    /// True when a value of valueType fits a parameter of parameterType. A union admits what one of its members admits,
+    /// so File? admits a File, and an array type admits an array whose items its items admit. Any admits every value, and
+    /// so does a type that stays unresolved (a reference to a SchemaDefRequirement, $import, $include, $mixin or a raw
+    /// type), because the type it stands for is unknown. Stdin admits what File admits, because a stdin input takes a File.
+    /// Every other type admits the values of an equal type. The run conversion uses this rule to check the values of a job
+    /// file against the inputs of a workflow.
+    let rec admits (parameterType : CWLType) (valueType : CWLType) : bool =
+        match parameterType with
+        | CWLType.Any
+        | CWLType.Reference _
+        | CWLType.ImportedType _
+        | CWLType.IncludedType _
+        | CWLType.MixedType _
+        | CWLType.RawType _ -> true
+        | CWLType.Union members -> members |> Seq.exists (fun item -> admits item valueType)
+        | CWLType.Array parameterArray ->
+            match valueType with
+            | CWLType.Array valueArray -> admits parameterArray.Items valueArray.Items
+            | _ -> false
+        | CWLType.Stdin -> admits CWLType.File valueType
+        | _ -> typesEqual parameterType valueType
+
     /// True when the type is a union that contains null, so that a value of the type may be missing. The shorthand
     /// File? is such a union.
     let isOptional (type_ : CWLType) =

@@ -3614,6 +3614,16 @@ let tests_ArcRun =
                 let file = Expect.wantSome (graph.TryGetNode id) $"The crate has an entity {id}."
                 Expect.isTrue (LDFile.validate(file, ?context = context)) $"The entity {id} is a File."
         )
+        testCase "FileValues_AFileFitsAnInputOfTypeStdin" (fun () ->
+            let run = create_run_full()
+            run.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: cat\ninputs:\n  inp: stdin\noutputs: []\n")
+            run.CWLInput <- CWL.DecodeParameters.decodeYAMLParameterFile "inp:\n  class: File\n  path: ../../assays/MyAssay/a.txt\n"
+            let fs = FileSystem.fromFilePaths [| "runs/MyRun/run.cwl"; "assays/MyAssay/a.txt" |]
+            let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(run, fs, License(contentType = LicenseContentType.Fulltext, content = "MIT", path = "LICENSE")))
+            let root = Expect.wantSome (graph.TryGetNode "./") "The crate has a root."
+            let rootParts = LDDataset.getHasParts(root, graph = graph, ?context = graph.TryGetContext()) |> Seq.map (fun part -> part.Id) |> List.ofSeq
+            Expect.isTrue (List.contains "./assays/MyAssay/a.txt" rootParts) "The root lists the file of the stdin input."
+        )
         testCase "DirectoryValues_ReadBackFromTheRunAndAreNoFilesOfTheArc" (fun () ->
             let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  input_dir: Directory\noutputs: []\n"
             let input = CWL.DecodeParameters.decodeYAMLParameterFile "input_dir:\n  class: Directory\n  path: ../../assays/MyAssay/dataset\n"

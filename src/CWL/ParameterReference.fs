@@ -31,8 +31,8 @@ type CWLParameterReference(key : string, ?values: string ResizeArray, ?value: CW
             |> Option.defaultValue (ResizeArray())
         and set(values) = _value <- CWLParameterValue.fromFlatStrings values
 
-    /// The type that the value shows by itself: File, Directory or an array of one of them, and none for any other value.
-    /// A job file holds no type, so the type comes from the value.
+    /// The type that the value shows by itself. A File shows File and a Directory shows Directory. A list of them shows an
+    /// array of that type. Any other value shows no type. A job file holds no type, so the type comes from the value.
     member this.Type =
         _value |> Option.bind CWLParameterValue.tryInferType
 
