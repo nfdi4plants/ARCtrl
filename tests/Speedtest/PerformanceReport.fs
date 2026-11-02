@@ -404,7 +404,114 @@ let arc_fromROCrate =
         prepareARC
         false // Do not prepare again, as the ARC is used and not altered
         (fun _ -> ARC.fromROCrateJsonString json |> ignore)
-        
+
+// The CWL documents below are invented in code, so the benchmark does not depend on any real workflow.
+let private cwlPortTypes = [| "File"; "string"; "int"; "boolean"; "string[]"; "File?"; "double" |]
+
+/// The lines of a CommandLineTool with the given number of input and output ports, without cwlVersion.
+let private cwlToolLines (inputCount: int) (outputCount: int) =
+    [
+        "class: CommandLineTool"
+        $"label: Tool with {inputCount} inputs and {outputCount} outputs"
+        "requirements:"
+        "  - class: DockerRequirement"
+        "    dockerPull: example/tool:1.0"
+        "  - class: ResourceRequirement"
+        "    coresMin: 2"
+        "    ramMin: 1024"
+        "baseCommand: [tool, run]"
+        "arguments:"
+        "  - --verbose"
+        "  - valueFrom: $(runtime.outdir)"
+        "    prefix: --out"
+        "inputs:"
+        for i = 1 to inputCount do
+            $"  input{i}:"
+            $"    type: {cwlPortTypes.[(i - 1) % cwlPortTypes.Length]}"
+            $"    doc: Input number {i}."
+            "    inputBinding:"
+            $"      prefix: --input{i}"
+            $"      position: {i}"
+        "outputs:"
+        for i = 1 to outputCount do
+            $"  output{i}:"
+            "    type: File"
+            "    outputBinding:"
+            $"      glob: output{i}.txt"
+    ]
+
+let private cwlToolText (inputCount: int) (outputCount: int) =
+    "cwlVersion: v1.2" :: cwlToolLines inputCount outputCount |> String.concat "\n"
+
+/// A Workflow whose steps form a chain. Every step runs an inline tool with four inputs and two outputs.
+let private cwlWorkflowText (stepCount: int) =
+    [
+        "cwlVersion: v1.2"
+        "class: Workflow"
+        $"label: Workflow with {stepCount} steps"
+        "requirements:"
+        "  - class: StepInputExpressionRequirement"
+        "inputs:"
+        "  input0: File"
+        for i = 1 to stepCount do
+            $"  input{i}: string"
+        "outputs:"
+        for i = 1 to stepCount do
+            $"  output{i}:"
+            "    type: File"
+            $"    outputSource: step{i}/output1"
+        "steps:"
+        for i = 1 to stepCount do
+            $"  step{i}:"
+            "    run:"
+            for line in cwlToolLines 4 2 do
+                "      " + line
+            "    in:"
+            if i = 1 then "      input1: input0" else $"      input1: step{i - 1}/output1"
+            "      input2:"
+            $"        source: input{i}"
+            "        default: value"
+            "      input3:"
+            "        valueFrom: $(inputs.input2)"
+            $"      input4: {{default: {i}}}"
+            "    out: [output1, output2]"
+    ]
+    |> String.concat "\n"
+
+let private cwlToolInputCount = 200
+let private cwlToolOutputCount = 50
+let private cwlWorkflowStepCount = 50
+
+let cwl_decode =
+    let mutable texts = [||]
+    let prepare () =
+        texts <- [| cwlToolText cwlToolInputCount cwlToolOutputCount; cwlWorkflowText cwlWorkflowStepCount |]
+    PerformanceTest.create
+        "CWL_Decode"
+        $"Decode a CommandLineTool with {cwlToolInputCount} inputs and {cwlToolOutputCount} outputs and a Workflow with {cwlWorkflowStepCount} steps, each running an inline tool."
+        prepare
+        false // Do not prepare again, as the texts are used and not altered
+        (fun _ ->
+            for text in texts do
+                ARCtrl.CWL.Decode.decodeCWLProcessingUnit text |> ignore
+        )
+
+let cwl_encode =
+    let mutable units = [||]
+    let prepare () =
+        units <-
+            [| cwlToolText cwlToolInputCount cwlToolOutputCount; cwlWorkflowText cwlWorkflowStepCount |]
+            |> Array.map ARCtrl.CWL.Decode.decodeCWLProcessingUnit
+    PerformanceTest.create
+        "CWL_Encode"
+        $"Encode a CommandLineTool with {cwlToolInputCount} inputs and {cwlToolOutputCount} outputs and a Workflow with {cwlWorkflowStepCount} steps, each running an inline tool."
+        prepare
+        false // Do not prepare again, as the processing units are used and not altered
+        (fun _ ->
+            for processingUnit in units do
+                ARCtrl.CWL.Encode.encodeProcessingUnit processingUnit |> ignore
+        )
+
 let allPerformanceTests = 
     [
         table_GetHashCode
@@ -423,6 +530,8 @@ let allPerformanceTests =
         investigation_toWorkbook_ManyStudies
         investigation_fromWorkbook_ManyStudies
         arc_toROCrate
+        cwl_decode
+        cwl_encode
         //arc_fromROCrate
     ]
 
