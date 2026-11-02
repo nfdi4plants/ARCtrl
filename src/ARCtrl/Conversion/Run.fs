@@ -312,17 +312,27 @@ type RunConversion =
         let inputParams =
             LDComputationalWorkflow.getInputsAsFormalParameters(workflowProtocol, ?context = workflowProtocol.TryGetContext())
             |> ResizeArray.zip (WorkflowConversion.getInputParametersFromProcessingUnit run.CWLDescription.Value)
-            |> ResizeArray.map (fun (i, ldI) ->
+            |> ResizeArray.choose (fun (i, ldI) ->
                 let name = LDFormalParameter.getNameAsString(ldI, ?context = workflowProtocol.TryGetContext())
+                // An input without a value in the job file takes the default of the CWL file. The default is a value of
+                // the same shape as a value of the job file, and both files lie in the run folder. An optional input
+                // without either has no value in the invocation.
                 let paramRef =
                     run.CWLInput
                     |> Seq.tryPick (fun i ->
                         if i.Key = name then Some i
                         else None
                     )
+                    |> Option.orElseWith (fun () ->
+                        i.DefaultValue
+                        |> Option.map (fun defaultValue -> CWL.CWLParameterReference(key = name, value = CWL.DecodeParameters.decodeParameterValue defaultValue.Node))
+                    )
                 match paramRef with
                 | Some pr ->
                     RunConversion.composeCWLInputValue(pr, exampleOfWork = ldI, inputParam = i, runName = run.Identifier, ?fs = fs)
+                    |> Some
+                | None when i.Optional ->
+                    None
                 | None ->
                     failwith $"Could not create workflow invocation for run \"{run.Identifier}\": Workflow parameter \"{name}\" had no assigned value."
             )
