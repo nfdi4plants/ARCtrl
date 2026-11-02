@@ -3577,6 +3577,43 @@ let tests_ArcRun =
             | Some (CWL.CWLParameterValue.Directory directory) -> Expect.equal (CWL.DirectoryInstance.pathOrLocation directory) "." "The directory reads back as the run folder."
             | other -> failwithf "Expected a Directory value but got %A" other
         )
+        testCase "DirectoryValues_AreDatasetsInTheRootWithTheirFiles" (fun () ->
+            let run = create_run_full()
+            run.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  input_dir: Directory\n  more: Directory[]\noutputs: []\n")
+            run.CWLInput <- CWL.DecodeParameters.decodeYAMLParameterFile "input_dir:\n  class: Directory\n  path: ../../assays/MyAssay/dataset\nmore:\n  - class: Directory\n    location: ../../assays/MyAssay/dataset\n  - class: Directory\n    location: s3://bucket/folder\n"
+            let fs = FileSystem.fromFilePaths [| "runs/MyRun/run.cwl"; "assays/MyAssay/dataset/a.txt"; "assays/MyAssay/dataset/sub/b.txt"; "assays/MyAssay/other.txt" |]
+            let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(run, fs, License(contentType = LicenseContentType.Fulltext, content = "MIT", path = "LICENSE")))
+            let context = graph.TryGetContext()
+            let root = Expect.wantSome (graph.TryGetNode "./") "The crate has a root."
+            let rootParts = LDDataset.getHasParts(root, graph = graph, ?context = context) |> Seq.map (fun part -> part.Id) |> List.ofSeq
+            let dataset = Expect.wantSome (graph.TryGetNode "./assays/MyAssay/dataset/") "The directory is an entity whose id ends with a slash."
+            Expect.isTrue (LDDataset.validate(dataset, ?context = context)) "The directory is a Dataset."
+            Expect.isFalse (LDFile.validate(dataset, ?context = context)) "The directory is no File."
+            Expect.isNone (graph.TryGetNode "./assays/MyAssay/dataset") "No entity names the directory without the slash."
+            Expect.equal (rootParts |> List.filter (fun id -> id = "./assays/MyAssay/dataset/")) ["./assays/MyAssay/dataset/"] "The root lists the directory once, for both parameters that name it."
+            let files = LDDataset.getHasParts(dataset, graph = graph, ?context = context)
+            Expect.equal (files |> Seq.map (fun file -> file.Id) |> List.ofSeq) ["./assays/MyAssay/dataset/a.txt"; "./assays/MyAssay/dataset/sub/b.txt"] "The Dataset lists the files under its directory."
+            for file in files do
+                Expect.isTrue (LDFile.validate(file, ?context = context)) $"The part {file.Id} is a File."
+            let url = Expect.wantSome (graph.TryGetNode "s3://bucket/folder") "A directory with a URI scheme keeps the URL as its id."
+            Expect.isTrue (LDDataset.validate(url, ?context = context)) "The remote directory is a Dataset."
+            Expect.isTrue (List.contains "s3://bucket/folder" rootParts) "The root lists the remote directory."
+        )
+        testCase "DirectoryValues_ReadBackFromTheRunAndAreNoFilesOfTheArc" (fun () ->
+            let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  input_dir: Directory\noutputs: []\n"
+            let input = CWL.DecodeParameters.decodeYAMLParameterFile "input_dir:\n  class: Directory\n  path: ../../assays/MyAssay/dataset\n"
+            let run = ArcRun.create(identifier = "MyRun", title = "t", description = "d", cwlDescription = tool, cwlInput = input)
+            let directoryOf (run : ArcRun) =
+                match (Seq.exactlyOne run.CWLInput).Value with
+                | Some (CWL.CWLParameterValue.Directory directory) -> CWL.DirectoryInstance.pathOrLocation directory
+                | other -> failwithf "Expected a Directory value but got %A" other
+            Expect.equal (directoryOf (RunConversion.decomposeRun(RunConversion.composeRun run))) "../../assays/MyAssay/dataset" "The Dataset reads back as the directory."
+            let arc = ARC("I", title = "T", description = "D", runs = ResizeArray [run])
+            let arc' = ARC.fromROCrateJsonString (arc.ToROCrateJsonString())
+            let paths = arc'.FileSystem.Tree.ToFilePaths()
+            Expect.isFalse (paths |> Array.exists (fun path -> path.TrimEnd('/') = "assays/MyAssay/dataset")) $"The directory is no file of the ARC, but the paths are %A{paths}."
+            Expect.equal (directoryOf arc'.Runs.[0]) "../../assays/MyAssay/dataset" "The directory reads back from the crate of the ARC."
+        )
         testCaseCrossAsync "RelativeWorkflowRunReference_ResolvesToWorkflow" (crossAsync {
             let sampleArcDirectory = TestObjects.IO.testSimpleARCWithCWL
             let runFixturePath =
