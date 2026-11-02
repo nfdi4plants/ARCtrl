@@ -4146,6 +4146,26 @@ let tests_WorkflowCrate =
                 for (key, value) in dates do
                     Expect.isTrue (value.StartsWith "2026-01-02T03:04:05" && value.EndsWith "Z") $"The {key} {value} is the timestamp in UTC."
         )
+        testCase "Crates_ALocalTimestampIsConvertedToUTC" (fun () ->
+            let timestamp = System.DateTime(2026, 1, 2, 3, 4, 5, System.DateTimeKind.Local)
+            let expected = timestamp.ToUniversalTime().ToString("O", System.Globalization.CultureInfo.InvariantCulture)
+            let flattened (dataset : LDNode) = dataset.Flatten() |> JsonController.LDGraph.toROCrateJsonString(2)
+            let crates = [
+                "workflow crate", ARCtrl.Json.ARC.ROCrate.writeWorkflowAsCrate(create_workflow_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license, timestamp = timestamp)
+                "run crate", ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(create_run_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license, timestamp = timestamp)
+                "composed workflow", flattened (WorkflowConversion.composeWorkflow(create_workflow_full(), dateCreated = timestamp))
+                "composed run", flattened (RunConversion.composeRun(create_run_full(), dateCreated = timestamp))
+            ]
+            for (name, json) in crates do
+                let dates =
+                    System.Text.RegularExpressions.Regex.Matches(json, "\"[^\"]*(dateCreated|datePublished)\": \"([^\"]*)\"")
+                    |> Seq.cast<System.Text.RegularExpressions.Match>
+                    |> Seq.map (fun m -> m.Groups.[2].Value)
+                    |> List.ofSeq
+                Expect.isNotEmpty dates $"The {name} has dates."
+                for value in dates do
+                    Expect.equal value expected $"Every date of the {name} is the timestamp in UTC."
+        )
         testCase "Crates_ThePinnedTimestampGivesTheSameCrate" (fun () ->
             let date = System.DateTime(2026, 1, 2, 3, 4, 5, System.DateTimeKind.Utc)
             let writeWorkflow () = ARCtrl.Json.ARC.ROCrate.writeWorkflowAsCrate(create_workflow_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license, timestamp = date)

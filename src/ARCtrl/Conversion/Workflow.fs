@@ -676,7 +676,8 @@ type WorkflowConversion =
             WorkflowConversion.decomposeWorkflowProtocolToToolDescription(protocol, ?context = context, ?graph = graph)
             |> CWL.CommandLineTool              
 
-    /// The dataset of a workflow. Its workflow is created at the given time, and now when none is given.
+    /// The dataset of a workflow. Its workflow is created at the given time, in UTC, and now when none is given. A time of
+    /// kind Unspecified counts as local time, as in .NET.
     static member composeWorkflow (workflow : ArcWorkflow, ?fs : FileSystem, ?dateCreated : System.DateTime) =
         BaseTypes.warnIfTitleEmpty("Workflow", workflow.Identifier, workflow.Title)
         let workflowProtocol =
@@ -690,7 +691,7 @@ type WorkflowConversion =
             workflow.Contacts
             |> ResizeArray.map (fun c -> PersonConversion.composePerson(c, ?persons = persons))
             |> Option.fromSeq
-        let dateCreated = defaultArg dateCreated System.DateTime.UtcNow
+        let dateCreated = (defaultArg dateCreated System.DateTime.UtcNow).ToUniversalTime()
         if creators.IsSome then
             LDComputationalWorkflow.setCreators(workflowProtocol, creators.Value)
         LDComputationalWorkflow.setSdPublisher(workflowProtocol, publisher)

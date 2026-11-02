@@ -448,10 +448,10 @@ type RunConversion =
                 LDPropertyValue.tryGetValueObject(parameter) |> Option.iter collect
         entities
 
-    /// The dataset of a run. Its workflow is created at the given time, and now when none is given. With useDefaults, an
-    /// input without a value or with a null value in the job file takes its CWL default, because the run crate shows the
-    /// values a run runs with and the ARC crate keeps the job file as written. When the run is the root of its crate, its
-    /// folder is a part like any other folder.
+    /// The dataset of a run. Its workflow is created at the given time, in UTC, and now when none is given. A time of kind
+    /// Unspecified counts as local time, as in .NET. With useDefaults, an input without a value or with a null value in
+    /// the job file takes its CWL default, because the run crate shows the values a run runs with and the ARC crate keeps
+    /// the job file as written. When the run is the root of its crate, its folder is a part like any other folder.
     static member composeRun (run : ArcRun, ?fs : FileSystem, ?dateCreated : System.DateTime, ?useDefaults : bool, ?isCrateRoot : bool) =
         let isCrateRoot = defaultArg isCrateRoot false
         BaseTypes.warnIfTitleEmpty("Run", run.Identifier, run.Title)
@@ -472,7 +472,7 @@ type RunConversion =
             |> ResizeArray.map (fun c -> PersonConversion.composePerson(c, ?persons = persons))
             |> Option.fromSeq
         let publisher = LDOrganization.create("DataPLANT")
-        let dateCreated = defaultArg dateCreated System.DateTime.UtcNow
+        let dateCreated = (defaultArg dateCreated System.DateTime.UtcNow).ToUniversalTime()
         if creators.IsSome then
             LDComputationalWorkflow.setCreators(workflowProtocol, creators.Value)
         LDComputationalWorkflow.setSdPublisher(workflowProtocol, publisher)

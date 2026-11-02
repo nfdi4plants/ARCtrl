@@ -101,7 +101,7 @@ module ARC =
             (defaultArg timestamp System.DateTime.UtcNow).ToUniversalTime()
 
         /// Packs a dataset as the root of a crate. The root is created and published at the given time, and now when none
-        /// is given. Both dates are in UTC.
+        /// is given. Both dates are in UTC. A time of kind Unspecified counts as local time, as in .NET.
         static member packDatasetAsCrate (dataset : LDNode, datasetName:string, datasetDescription:string, metadataFileDescriptor: option<LDNode>, license : License, ?timestamp : System.DateTime) =
             let timestamp = ROCrate.utcTimestamp timestamp
             let metadataFileDescriptor = defaultArg metadataFileDescriptor ROCrate.metadataFileDescriptor
@@ -145,7 +145,7 @@ module ARC =
 
         /// Writes a run as a Workflow Run Crate. A license is required. The crate and its workflow are created and the crate
         /// is published at the given time, and now when none is given. The dates are in UTC, so the same time gives the
-        /// same crate.
+        /// same crate. A time of kind Unspecified counts as local time, as in .NET.
         static member writeRunAsCrate(arcRun:ArcRun, fileSystem: FileSystem, license : License, ?timestamp : System.DateTime) =
             let timestamp = ROCrate.utcTimestamp timestamp
             let runDataset = RunConversion.composeRun(arcRun, fs = fileSystem, dateCreated = timestamp, useDefaults = true, isCrateRoot = true)
@@ -203,7 +203,7 @@ module ARC =
 
         /// Writes a workflow as a Workflow RO-Crate. A license is required. The crate and its workflow are created and the
         /// crate is published at the given time, and now when none is given. The dates are in UTC, so the same time gives
-        /// the same crate.
+        /// the same crate. A time of kind Unspecified counts as local time, as in .NET.
         static member writeWorkflowAsCrate(arcWorkflow:ArcWorkflow, fileSystem: FileSystem, license : License, ?timestamp : System.DateTime) =
             let timestamp = ROCrate.utcTimestamp timestamp
             let workflowDataset = WorkflowConversion.composeWorkflow(arcWorkflow, fs = fileSystem, dateCreated = timestamp)
