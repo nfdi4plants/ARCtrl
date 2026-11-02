@@ -59,6 +59,7 @@ module internal IntegerOf =
         else
             None
 
+[<AttachMembers>]
 type SchemaSaladString =
     | Literal of string
     | Include of string
@@ -70,6 +71,18 @@ type SchemaSaladString =
     /// which of the two happens.
     | Mixed of RawYaml
     with
+#if FABLE_COMPILER
+    static member literal(value: string) : SchemaSaladString = SchemaSaladString.Literal value
+
+    static member ``include``(value: string) : SchemaSaladString = SchemaSaladString.Include value
+
+    static member import(value: string) : SchemaSaladString = SchemaSaladString.Import value
+
+    static member ``mixin``(value: string) : SchemaSaladString = SchemaSaladString.Mixin value
+
+    static member mixed(value: RawYaml) : SchemaSaladString = SchemaSaladString.Mixed value
+#endif
+
     /// The text of a literal and the path of a directive.
     member this.Value =
         match this with
@@ -662,7 +675,7 @@ and [<AttachMembers>] InputArraySchema (items: CWLType, ?label: SchemaSaladStrin
         CWLKnownFieldNames.inputArraySchema
 
 /// Primitive types with the concept of a file and directory as a builtin type.
-and [<CustomEquality; NoComparison>] CWLType =
+and [<CustomEquality; NoComparison; AttachMembers>] CWLType =
     /// A file. The type has no fields, because CWL spells it as the name File only. The format and the secondaryFiles
     /// of a file belong to the port that has this type, and the location and the other fields belong to a File value.
     | File
@@ -760,6 +773,52 @@ and [<CustomEquality; NoComparison>] CWLType =
         | MixedType raw -> hash (20, raw)
         | RawType raw -> hash (22, raw)
         | IncludedType path -> hash (21, path)
+
+#if FABLE_COMPILER
+    static member file() : CWLType = CWLType.File
+
+    static member directory() : CWLType = CWLType.Directory
+
+    static member string() : CWLType = CWLType.String
+
+    static member int() : CWLType = CWLType.Int
+
+    static member long() : CWLType = CWLType.Long
+
+    static member float() : CWLType = CWLType.Float
+
+    static member double() : CWLType = CWLType.Double
+
+    static member boolean() : CWLType = CWLType.Boolean
+
+    static member any() : CWLType = CWLType.Any
+
+    static member stdout() : CWLType = CWLType.Stdout
+
+    static member stderr() : CWLType = CWLType.Stderr
+
+    static member stdin() : CWLType = CWLType.Stdin
+
+    static member reference(value: string) : CWLType = CWLType.Reference value
+
+    static member importedType(value: string) : CWLType = CWLType.ImportedType value
+
+    static member includedType(value: string) : CWLType = CWLType.IncludedType value
+
+    static member mixedType(value: RawYaml) : CWLType = CWLType.MixedType value
+
+    static member rawType(value: RawYaml) : CWLType = CWLType.RawType value
+
+    static member ``null``() : CWLType = CWLType.Null
+
+    static member array(value: InputArraySchema) : CWLType = CWLType.Array value
+
+    static member enum(value: InputEnumSchema) : CWLType = CWLType.Enum value
+
+    static member record(value: InputRecordSchema) : CWLType = CWLType.Record value
+
+    static member union(value: ResizeArray<CWLType>) : CWLType = CWLType.Union value
+#endif
 
 /// The schema that a SchemaDefRequirement defines. CWL admits record, enum and array schemas there and no other type,
 /// so an alias for a builtin type has no case. A union of the three schema classes holds that rule in the type itself,

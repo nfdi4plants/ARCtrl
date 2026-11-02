@@ -1,6 +1,7 @@
 import { equal, deepEqual, notEqual } from 'assert';
 import { CompositeHeader, IOType, OntologyAnnotation } from "../../src/ARCtrl/index.ts"
 import { expect, it, describe } from 'vitest';
+import { Comment } from '../../src/ARCtrl/index.ts';
 
 function tests_IOType() {
     describe('IOType', function () {
@@ -193,5 +194,93 @@ describe('CompositeHeader', function () {
         let ft1 = CompositeHeader.freeText(ft)
         let ft2 = new CompositeHeader(13, [ft])
         expect(ft1).toStrictEqual(ft2);
+    });
+});
+
+describe('IOType primary constructor cases', () => {
+    it.each([
+        [0, 'Source', 'Source Name'],
+        [1, 'Sample', 'Sample Name'],
+        [2, 'Data', 'Data'],
+        [3, 'Material', 'Material'],
+    ] as const)('preserves tag %s (%s) with no fields', (tag, caseName, label) => {
+        const ioType = new IOType(tag, []);
+
+        expect(ioType.tag).toBe(tag);
+        expect(ioType.fields).toStrictEqual([]);
+        expect(ioType.cases()[ioType.tag]).toBe(caseName);
+        expect(ioType.asInput).toBe(`Input [${label}]`);
+        expect(ioType.asOutput).toBe(`Output [${label}]`);
+    });
+
+    it('preserves the FreeText tag and string field', () => {
+        const ioType = new IOType(4, ['custom material']);
+
+        expect(ioType.tag).toBe(4);
+        expect(ioType.fields).toStrictEqual(['custom material']);
+        expect(ioType.asInput).toBe('Input [custom material]');
+        expect(ioType.asOutput).toBe('Output [custom material]');
+    });
+});
+
+describe('CompositeHeader primary constructor cases', () => {
+    it.each([
+        [0, 'Component'], [1, 'Characteristic'], [2, 'Factor'], [3, 'Parameter'],
+    ] as const)('preserves tag %s (%s) and its nested ontology', (tag, caseName) => {
+        const annotation = new OntologyAnnotation('temperature', 'PATO', 'PATO:0000146', [new Comment('term', 'curated')]);
+        const header = new CompositeHeader(tag, [annotation]);
+
+        expect(header.tag).toBe(tag);
+        expect(header.cases()[header.tag]).toBe(caseName);
+        expect(header.fields).toHaveLength(1);
+        expect(header.fields[0]).toBe(annotation);
+        expect(header.fields[0].Name).toBe('temperature');
+        expect(header.fields[0].TermSourceREF).toBe('PATO');
+        expect(header.fields[0].TermAccessionNumber).toBe('PATO:0000146');
+        expect(header.fields[0].Comments[0].Name).toBe('term');
+        expect(header.fields[0].Comments[0].Value).toBe('curated');
+        expect(header.toString()).toBe(`${caseName} [temperature]`);
+    });
+
+    it.each([
+        [4, 'ProtocolType', 'Protocol Type'],
+        [5, 'ProtocolDescription', 'Protocol Description'],
+        [6, 'ProtocolUri', 'Protocol Uri'],
+        [7, 'ProtocolVersion', 'Protocol Version'],
+        [8, 'ProtocolREF', 'Protocol REF'],
+        [9, 'Performer', 'Performer'],
+        [10, 'Date', 'Date'],
+    ] as const)('preserves tag %s (%s) with no fields', (tag, caseName, label) => {
+        const header = new CompositeHeader(tag, []);
+
+        expect(header.tag).toBe(tag);
+        expect(header.fields).toStrictEqual([]);
+        expect(header.cases()[header.tag]).toBe(caseName);
+        expect(header.toString()).toBe(label);
+    });
+
+    it.each([[11, 'Input'], [12, 'Output']] as const)('preserves tag %s (%s) and its IOType', (tag, caseName) => {
+        const ioType = new IOType(4, ['custom material']);
+        const header = new CompositeHeader(tag, [ioType]);
+
+        expect(header.tag).toBe(tag);
+        expect(header.fields).toHaveLength(1);
+        expect(header.fields[0]).toBe(ioType);
+        expect(header.fields[0].tag).toBe(4);
+        expect(header.fields[0].fields).toStrictEqual(['custom material']);
+        expect(header.cases()[header.tag]).toBe(caseName);
+        expect(header.toString()).toBe(`${caseName} [custom material]`);
+    });
+
+    it.each([
+        [13, 'FreeText', 'Extra information', 'Extra information'],
+        [14, 'Comment', 'Review', 'Comment [Review]'],
+    ] as const)('preserves tag %s (%s) and its string field', (tag, caseName, value, label) => {
+        const header = new CompositeHeader(tag, [value]);
+
+        expect(header.tag).toBe(tag);
+        expect(header.fields).toStrictEqual([value]);
+        expect(header.cases()[header.tag]).toBe(caseName);
+        expect(header.toString()).toBe(label);
     });
 });

@@ -131,6 +131,7 @@ type EnvironmentDef (envName: SchemaSaladString, envValue: SchemaSaladString) =
 /// How much of a directory a port lists. A directive stands for the name of the symbol, and the decoder reads no file, so
 /// it stays as written. An $import and a $mixin take the data of a file, and an $include takes its text, which is the
 /// name of the symbol.
+[<AttachMembers>]
 type LoadListingEnum =
     | NoListing
     | ShallowListing
@@ -139,6 +140,20 @@ type LoadListingEnum =
     | IncludedLoadListing of string
     /// A mapping with a $mixin directive, alone or beside other fields, kept as it was written.
     | MixedLoadListing of RawYaml
+
+#if FABLE_COMPILER
+    static member noListing() : LoadListingEnum = LoadListingEnum.NoListing
+
+    static member shallowListing() : LoadListingEnum = LoadListingEnum.ShallowListing
+
+    static member deepListing() : LoadListingEnum = LoadListingEnum.DeepListing
+
+    static member importedLoadListing(value: string) : LoadListingEnum = LoadListingEnum.ImportedLoadListing value
+
+    static member includedLoadListing(value: string) : LoadListingEnum = LoadListingEnum.IncludedLoadListing value
+
+    static member mixedLoadListing(value: RawYaml) : LoadListingEnum = LoadListingEnum.MixedLoadListing value
+#endif
 
     /// The name of the symbol as a document spells it, and for a directive the text with the directive in front of the
     /// path. The text of a directive serves for display, because the encoder writes the directive as a mapping.
@@ -261,9 +276,16 @@ type InplaceUpdateRequirementValue (inplaceUpdate: SchemaSaladBool) =
     static member KnownFieldNames =
         CWLKnownFieldNames.inplaceUpdateRequirementValue
 
+[<AttachMembers>]
 type ToolTimeLimitValue =
     | ToolTimeLimitSeconds of int64
     | ToolTimeLimitExpression of SchemaSaladString
+
+#if FABLE_COMPILER
+    static member toolTimeLimitSeconds(value: int64) : ToolTimeLimitValue = ToolTimeLimitValue.ToolTimeLimitSeconds value
+
+    static member toolTimeLimitExpression(value: SchemaSaladString) : ToolTimeLimitValue = ToolTimeLimitValue.ToolTimeLimitExpression value
+#endif
 
 /// "min" is the minimum amount of a resource that must be reserved to schedule a job. If "min" cannot be satisfied, the job should not be run.
 /// "max" is the maximum amount of a resource that the job shall be permitted to use. If a node has sufficient resources, multiple jobs may be scheduled on a single node provided each job's "max" resource requirements are met.
@@ -420,7 +442,7 @@ type FileOrDirectory =
 /// Entry in InitialWorkDirRequirement listing.
 /// CWL allows null, a Dirent object, a string/expression entry, a File, a Directory and an array of Files and
 /// Directories. The lists of the array compare by their elements.
-[<CustomEquality; NoComparison>]
+[<CustomEquality; NoComparison; AttachMembers>]
 type InitialWorkDirEntry =
     | DirentEntry of DirentInstance
     | StringEntry of SchemaSaladString
@@ -458,6 +480,22 @@ type InitialWorkDirEntry =
         | NullEntry -> 5
         | FilesEntry values -> HashHelpers.mergeHashes 6 (HashHelpers.hashSeq values)
         | RawEntry value -> HashHelpers.mergeHashes 7 (hash value)
+
+#if FABLE_COMPILER
+    static member direntEntry(value: DirentInstance) : InitialWorkDirEntry = InitialWorkDirEntry.DirentEntry value
+
+    static member stringEntry(value: SchemaSaladString) : InitialWorkDirEntry = InitialWorkDirEntry.StringEntry value
+
+    static member fileEntry(value: FileInstance) : InitialWorkDirEntry = InitialWorkDirEntry.FileEntry value
+
+    static member directoryEntry(value: DirectoryInstance) : InitialWorkDirEntry = InitialWorkDirEntry.DirectoryEntry value
+
+    static member nullEntry() : InitialWorkDirEntry = InitialWorkDirEntry.NullEntry
+
+    static member filesEntry(value: ResizeArray<FileOrDirectory>) : InitialWorkDirEntry = InitialWorkDirEntry.FilesEntry value
+
+    static member rawEntry(value: RawYaml) : InitialWorkDirEntry = InitialWorkDirEntry.RawEntry value
+#endif
 
 [<AttachMembers>]
 type InlineJavascriptRequirementValue (?expressionLib: ResizeArray<SchemaSaladString>) =
@@ -516,7 +554,7 @@ type HintUnknownValue (class_: string option, raw: RawYaml) =
 
 /// The equality of a requirement compares the lists of its payload by their elements, and the objects of the payload by
 /// their own equality.
-[<CustomEquality; NoComparison>]
+[<CustomEquality; NoComparison; AttachMembers>]
 type Requirement =
     /// Indicates that the workflow platform must support inline Javascript expressions.
     | InlineJavascriptRequirement of InlineJavascriptRequirementValue
@@ -633,6 +671,54 @@ type Requirement =
         | MixedRequirement value -> HashHelpers.mergeHashes 22 (hash value)
         | RawRequirement value -> HashHelpers.mergeHashes 23 (hash value)
 
+#if FABLE_COMPILER
+    static member inlineJavascriptRequirement(value: InlineJavascriptRequirementValue) : Requirement = Requirement.InlineJavascriptRequirement value
+
+    static member schemaDefRequirement(value: ResizeArray<SchemaDefEntry>) : Requirement = Requirement.SchemaDefRequirement value
+
+    static member dockerRequirement(value: DockerRequirement) : Requirement = Requirement.DockerRequirement value
+
+    static member softwareRequirement(value: ResizeArray<ListEntry<SoftwarePackage>>) : Requirement = Requirement.SoftwareRequirement value
+
+    static member loadListingRequirement(value: LoadListingRequirementValue) : Requirement = Requirement.LoadListingRequirement value
+
+    static member initialWorkDirRequirement(value: ResizeArray<InitialWorkDirEntry>) : Requirement = Requirement.InitialWorkDirRequirement value
+
+    static member initialWorkDirExpressionRequirement(value: SchemaSaladString) : Requirement = Requirement.InitialWorkDirExpressionRequirement value
+
+    static member envVarRequirement(value: ResizeArray<ListEntry<EnvironmentDef>>) : Requirement = Requirement.EnvVarRequirement value
+
+    static member shellCommandRequirement() : Requirement = Requirement.ShellCommandRequirement
+
+    static member resourceRequirement(value: ResourceRequirementInstance) : Requirement = Requirement.ResourceRequirement value
+
+    static member workReuseRequirement(value: WorkReuseRequirementValue) : Requirement = Requirement.WorkReuseRequirement value
+
+    static member workReuseExpressionRequirement(value: SchemaSaladString) : Requirement = Requirement.WorkReuseExpressionRequirement value
+
+    static member networkAccessRequirement(value: NetworkAccessRequirementValue) : Requirement = Requirement.NetworkAccessRequirement value
+
+    static member networkAccessExpressionRequirement(value: SchemaSaladString) : Requirement = Requirement.NetworkAccessExpressionRequirement value
+
+    static member inplaceUpdateRequirement(value: InplaceUpdateRequirementValue) : Requirement = Requirement.InplaceUpdateRequirement value
+
+    static member toolTimeLimitRequirement(value: ToolTimeLimitValue) : Requirement = Requirement.ToolTimeLimitRequirement value
+
+    static member subworkflowFeatureRequirement() : Requirement = Requirement.SubworkflowFeatureRequirement
+
+    static member scatterFeatureRequirement() : Requirement = Requirement.ScatterFeatureRequirement
+
+    static member multipleInputFeatureRequirement() : Requirement = Requirement.MultipleInputFeatureRequirement
+
+    static member stepInputExpressionRequirement() : Requirement = Requirement.StepInputExpressionRequirement
+
+    static member importedRequirement(value: string) : Requirement = Requirement.ImportedRequirement value
+
+    static member mixedRequirement(value: RawYaml) : Requirement = Requirement.MixedRequirement value
+
+    static member rawRequirement(value: RawYaml) : Requirement = Requirement.RawRequirement value
+#endif
+
     static member defaultInlineJavascriptRequirement =
         InlineJavascriptRequirement InlineJavascriptRequirementValue.defaultEmpty
 
@@ -651,6 +737,7 @@ type Requirement =
     static member defaultToolTimeLimitSeconds(seconds: int64) =
         ToolTimeLimitRequirement (ToolTimeLimitSeconds seconds)
 
+[<AttachMembers>]
 type HintEntry =
     | KnownHint of Requirement
     | UnknownHint of HintUnknownValue
@@ -661,6 +748,18 @@ type HintEntry =
     | MixedHint of RawYaml
     /// A hint whose class is a directive, kept as it was written. The file decides the class, and the decoder reads no file.
     | RawHint of RawYaml
+
+#if FABLE_COMPILER
+    static member knownHint(value: Requirement) : HintEntry = HintEntry.KnownHint value
+
+    static member unknownHint(value: HintUnknownValue) : HintEntry = HintEntry.UnknownHint value
+
+    static member importedHint(value: string) : HintEntry = HintEntry.ImportedHint value
+
+    static member mixedHint(value: RawYaml) : HintEntry = HintEntry.MixedHint value
+
+    static member rawHint(value: RawYaml) : HintEntry = HintEntry.RawHint value
+#endif
 
     /// Wraps a known requirement as a known hint entry.
     static member ofRequirement (requirement: Requirement) =

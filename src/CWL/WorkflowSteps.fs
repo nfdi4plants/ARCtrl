@@ -15,6 +15,18 @@ type LinkMergeMethod =
     /// A mapping with a $mixin directive, alone or beside other fields, kept as it was written.
     | MixedLinkMerge of RawYaml
     with
+#if FABLE_COMPILER
+    static member mergeNested() : LinkMergeMethod = LinkMergeMethod.MergeNested
+
+    static member mergeFlattened() : LinkMergeMethod = LinkMergeMethod.MergeFlattened
+
+    static member importedLinkMerge(value: string) : LinkMergeMethod = LinkMergeMethod.ImportedLinkMerge value
+
+    static member includedLinkMerge(value: string) : LinkMergeMethod = LinkMergeMethod.IncludedLinkMerge value
+
+    static member mixedLinkMerge(value: RawYaml) : LinkMergeMethod = LinkMergeMethod.MixedLinkMerge value
+#endif
+
     /// The name of the symbol as a document spells it, and for a directive the text with the directive in front of the
     /// path. The text of a directive serves for display, because the encoder writes the directive as a mapping.
     member this.AsCwlString =
@@ -43,6 +55,20 @@ type PickValueMethod =
     /// A mapping with a $mixin directive, alone or beside other fields, kept as it was written.
     | MixedPickValue of RawYaml
     with
+#if FABLE_COMPILER
+    static member firstNonNull() : PickValueMethod = PickValueMethod.FirstNonNull
+
+    static member theOnlyNonNull() : PickValueMethod = PickValueMethod.TheOnlyNonNull
+
+    static member allNonNull() : PickValueMethod = PickValueMethod.AllNonNull
+
+    static member importedPickValue(value: string) : PickValueMethod = PickValueMethod.ImportedPickValue value
+
+    static member includedPickValue(value: string) : PickValueMethod = PickValueMethod.IncludedPickValue value
+
+    static member mixedPickValue(value: RawYaml) : PickValueMethod = PickValueMethod.MixedPickValue value
+#endif
+
     /// The name of the symbol as a document spells it, and for a directive the text with the directive in front of the
     /// path. The text of a directive serves for display, because the encoder writes the directive as a mapping.
     member this.AsCwlString =
@@ -72,6 +98,20 @@ type ScatterMethod =
     /// A mapping with a $mixin directive, alone or beside other fields, kept as it was written.
     | MixedScatterMethod of RawYaml
     with
+#if FABLE_COMPILER
+    static member dotProduct() : ScatterMethod = ScatterMethod.DotProduct
+
+    static member nestedCrossProduct() : ScatterMethod = ScatterMethod.NestedCrossProduct
+
+    static member flatCrossProduct() : ScatterMethod = ScatterMethod.FlatCrossProduct
+
+    static member importedScatterMethod(value: string) : ScatterMethod = ScatterMethod.ImportedScatterMethod value
+
+    static member includedScatterMethod(value: string) : ScatterMethod = ScatterMethod.IncludedScatterMethod value
+
+    static member mixedScatterMethod(value: RawYaml) : ScatterMethod = ScatterMethod.MixedScatterMethod value
+#endif
+
     /// The name of the symbol as a document spells it, and for a directive the text with the directive in front of the
     /// path. The text of a directive serves for display, because the encoder writes the directive as a mapping.
     member this.AsCwlString =
@@ -282,6 +322,18 @@ type StepOutput =
         | StepOutputImport _
         | StepOutputMixed _ -> None
 
+#if FABLE_COMPILER
+    static member stepOutputString(value: string) : StepOutput = StepOutput.StepOutputString value
+
+    static member stepOutputRecord(value: StepOutputParameter) : StepOutput = StepOutput.StepOutputRecord value
+
+    static member stepOutputInclude(value: string) : StepOutput = StepOutput.StepOutputInclude value
+
+    static member stepOutputImport(value: string) : StepOutput = StepOutput.StepOutputImport value
+
+    static member stepOutputMixed(value: RawYaml) : StepOutput = StepOutput.StepOutputMixed value
+#endif
+
 [<AttachMembers>]
 type WorkflowStepRun =
     | RunString of string
@@ -298,6 +350,24 @@ type WorkflowStepRun =
     | RunWorkflow of obj
     | RunExpressionTool of obj
     | RunOperation of obj
+
+#if FABLE_COMPILER
+    static member runString(value: string) : WorkflowStepRun = WorkflowStepRun.RunString value
+
+    static member runImport(value: string) : WorkflowStepRun = WorkflowStepRun.RunImport value
+
+    static member runMixed(value: RawYaml) : WorkflowStepRun = WorkflowStepRun.RunMixed value
+
+    static member runRaw(value: RawYaml) : WorkflowStepRun = WorkflowStepRun.RunRaw value
+
+    static member runCommandLineTool(value: obj) : WorkflowStepRun = WorkflowStepRun.RunCommandLineTool value
+
+    static member runWorkflow(value: obj) : WorkflowStepRun = WorkflowStepRun.RunWorkflow value
+
+    static member runExpressionTool(value: obj) : WorkflowStepRun = WorkflowStepRun.RunExpressionTool value
+
+    static member runOperation(value: obj) : WorkflowStepRun = WorkflowStepRun.RunOperation value
+#endif
 
 /// The process that the run reference of a step resolved to. The run holds the reference as it is written, and this
 /// holds what it stands for, one of the four cases of a run that carry a process. The reader of an ARC sets it from the

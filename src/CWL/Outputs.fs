@@ -84,6 +84,12 @@ type OutputSource =
     | Single of SchemaSaladString
     | Multiple of ResizeArray<SchemaSaladString>
     with
+#if FABLE_COMPILER
+    static member single(value: SchemaSaladString) : OutputSource = OutputSource.Single value
+
+    static member multiple(value: ResizeArray<SchemaSaladString>) : OutputSource = OutputSource.Multiple value
+#endif
+
     member this.AsValues() =
         match this with
         | Single value -> ResizeArray [| value |]

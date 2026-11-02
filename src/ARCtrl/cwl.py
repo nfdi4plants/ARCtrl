@@ -12,5 +12,18 @@ from .py.CWL.inputs import CWLInput, InputBinding, _InputFormat as InputFormat, 
 from .py.CWL.outputs import CWLOutput, OutputBinding, _OutputSource as OutputSource, _OutputGlob as OutputGlob
 from .py.CWL.tool_description import CWLToolDescription
 from .py.CWL.workflow_description import CWLWorkflowDescription
-from .py.CWL.workflow_steps import WorkflowStep, ResolvedRun, StepInput, _StepOutput as StepOutput
-from .py.CWL.requirements import _Requirement as Requirement, _SchemaDefEntry as SchemaDefEntry, DockerRequirement, EnvironmentDef, ResourceRequirementInstance
+from .py.CWL.expression_tool_description import CWLExpressionToolDescription
+from .py.CWL.operation_description import CWLOperationDescription
+from .py.CWL.workflow_steps import (
+    WorkflowStep, ResolvedRun, StepInput, _StepOutput as StepOutput, StepOutputParameter,
+    _WorkflowStepRun as WorkflowStepRun, _LinkMergeMethod as LinkMergeMethod,
+    _PickValueMethod as PickValueMethod, _ScatterMethod as ScatterMethod,
+)
+from .py.CWL.requirements import (
+    _Requirement as Requirement, _SchemaDefEntry as SchemaDefEntry, DockerRequirement, EnvironmentDef, ResourceRequirementInstance,
+    _HintEntry as HintEntry, HintUnknownValue, _InitialWorkDirEntry as InitialWorkDirEntry,
+    InlineJavascriptRequirementValue, InplaceUpdateRequirementValue,
+    _LoadListingEnum as LoadListingEnum, LoadListingRequirementValue,
+    NetworkAccessRequirementValue, _ToolTimeLimitValue as ToolTimeLimitValue,
+    WorkReuseRequirementValue,
+)

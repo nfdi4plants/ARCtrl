@@ -1,11 +1,14 @@
 namespace ARCtrl.CWL
 
+open Fable.Core
+
 /// An id may start with a #, as in #main. The id is the same without it.
 module internal LocalReference =
 
     let withoutHash (reference: string) : string =
         if reference.StartsWith "#" then reference.Substring 1 else reference
 
+[<AttachMembers>]
 type CWLProcessingUnit =
     | CommandLineTool of CWLToolDescription
     | Workflow of CWLWorkflowDescription
@@ -15,6 +18,18 @@ type CWLProcessingUnit =
     /// this is, and the decoder reads no file, so the mapping is kept as it was written. The inputs, outputs, requirements
     /// and hints of such a process are empty here, because the model cannot tell where they stand.
     | RawProcess of RawYaml
+
+#if FABLE_COMPILER
+    static member commandLineTool(value: CWLToolDescription) : CWLProcessingUnit = CWLProcessingUnit.CommandLineTool value
+
+    static member workflow(value: CWLWorkflowDescription) : CWLProcessingUnit = CWLProcessingUnit.Workflow value
+
+    static member expressionTool(value: CWLExpressionToolDescription) : CWLProcessingUnit = CWLProcessingUnit.ExpressionTool value
+
+    static member operation(value: CWLOperationDescription) : CWLProcessingUnit = CWLProcessingUnit.Operation value
+
+    static member rawProcess(value: RawYaml) : CWLProcessingUnit = CWLProcessingUnit.RawProcess value
+#endif
 
     /// Returns a new list of the inputs of the process that are objects, for every kind of process. A change of the list
     /// changes nothing in the process.
