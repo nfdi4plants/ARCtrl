@@ -19,7 +19,8 @@ let writeFile (path : string) (content : string) =
     fs.writeFileSync(path,content)
     #endif
     #if FABLE_COMPILER_PYTHON
-    let file = builtins.``open``(path, OpenTextMode.Write)
+    // Without an encoding, Python writes in the encoding of the system, which turns ± into another character on Windows.
+    let file = builtins.``open``(path, OpenTextMode.Write, encoding = "utf-8")
     file.write(content) |> ignore
     #endif
     #if !FABLE_COMPILER
@@ -540,18 +541,17 @@ let createMarkdownPerformanceReport lang cpu =
     let report = PerformanceReport.create cpu lang allPerformanceTests
     report.RunTests().ToMarkdown()
 
-let lang = 
-    #if FABLE_COMPILER_JAVASCRIPT
-    "JavaScript"
-    #endif 
+// The JavaScript build defines FABLE_COMPILER_TYPESCRIPT as well (see ARCtrl.Javascript.fsproj), so JavaScript and
+// TypeScript both report as JavaScript, the runtime they run on.
+let lang =
     #if FABLE_COMPILER_PYTHON
     "Python"
-    #endif
-    #if !FABLE_COMPILER
+    #else
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+    "JavaScript"
+    #else
     "FSharp"
     #endif
-    #if FABLE_COMPILER_TYPESCRIPT
-    "TypeScript"
     #endif
 
 let runReport cpu =
