@@ -415,15 +415,16 @@ type RunConversion =
             )
         cwlDescription, parameterRefs
 
-    /// The Dataset entities of the directories that the parameter values of the invocations name, each once. A value of
-    /// a parameter that is no File is the value of a PropertyValue, where a directory can stand in a list or a record.
-    static member private getDirectoriesOfParameterValues (invocations : ResizeArray<LDNode>) =
-        let directories = ResizeArray<LDNode>()
-        let ids = HashSet<string>()
+    /// The File and Dataset entities that the parameter values of the invocations name, each once, without the entities
+    /// of the given ids. A value of a parameter that is no single File is the value of a PropertyValue, where a file or a
+    /// directory can stand in a list or a record.
+    static member private getDataEntitiesOfParameterValues (invocations : ResizeArray<LDNode>, knownIds : seq<string>) =
+        let entities = ResizeArray<LDNode>()
+        let ids = HashSet<string>(knownIds)
         let rec collect (value : obj) =
             match value with
-            | :? LDNode as node when LDDataset.validate(node) ->
-                if ids.Add node.Id then directories.Add node
+            | :? LDNode as node when LDDataset.validate(node) || LDFile.validate(node) ->
+                if ids.Add node.Id then entities.Add node
             | :? LDNode
             | :? string -> ()
             | :? DynamicObj as record ->
@@ -434,7 +435,7 @@ type RunConversion =
         for invocation in invocations do
             for parameter in LDLabProcess.getObjects(invocation) do
                 LDPropertyValue.tryGetValueObject(parameter) |> Option.iter collect
-        directories
+        entities
 
     /// The dataset of a run. Its workflow is created at the given time, and now when none is given.
     static member composeRun (run : ArcRun, ?fs : FileSystem, ?dateCreated : System.DateTime) =
@@ -467,15 +468,16 @@ type RunConversion =
         let dataFiles = 
             workflowInvocations
             |> Option.map (fun ps -> AssayConversion.getDataFilesFromProcesses(ps, ?fragmentDescriptors = fragmentDescriptors))
-        let directories =
+        let parameterValueData =
+            let knownIds = dataFiles |> Option.defaultValue (ResizeArray()) |> Seq.map (fun file -> file.Id)
             workflowInvocations
-            |> Option.map RunConversion.getDirectoriesOfParameterValues
+            |> Option.map (fun invocations -> RunConversion.getDataEntitiesOfParameterValues(invocations, knownIds))
             |> Option.defaultValue (ResizeArray())
         let hasParts =
             match dataFiles with
             | Some df -> ResizeArray.appendSingleton workflowProtocol df
             | None -> ResizeArray.singleton workflowProtocol
-            |> fun parts -> ResizeArray.append parts directories
+            |> fun parts -> ResizeArray.append parts parameterValueData
             |> Some
         let variableMeasureds =
             match variableMeasured, fragmentDescriptors with

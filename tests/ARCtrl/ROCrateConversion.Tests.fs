@@ -3599,6 +3599,21 @@ let tests_ArcRun =
             Expect.isTrue (LDDataset.validate(url, ?context = context)) "The remote directory is a Dataset."
             Expect.isTrue (List.contains "s3://bucket/folder" rootParts) "The root lists the remote directory."
         )
+        testCase "FileValuesInListsAndRecords_AreInTheRoot" (fun () ->
+            let run = create_run_full()
+            run.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  single: File\n  maybe: File?\n  many: File[]\n  pair:\n    type:\n      type: record\n      fields:\n        left: File\n        right: string\noutputs: []\n")
+            run.CWLInput <- CWL.DecodeParameters.decodeYAMLParameterFile "single:\n  class: File\n  path: ../../assays/MyAssay/a.txt\nmaybe:\n  class: File\n  path: ../../assays/MyAssay/b.txt\nmany:\n  - class: File\n    path: ../../assays/MyAssay/a.txt\n  - class: File\n    path: ../../assays/MyAssay/c.txt\npair:\n  left:\n    class: File\n    path: ../../assays/MyAssay/d.txt\n  right: x\n"
+            let fs = FileSystem.fromFilePaths [| "runs/MyRun/run.cwl"; "assays/MyAssay/a.txt"; "assays/MyAssay/b.txt"; "assays/MyAssay/c.txt"; "assays/MyAssay/d.txt" |]
+            let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(run, fs, License(contentType = LicenseContentType.Fulltext, content = "MIT", path = "LICENSE")))
+            let context = graph.TryGetContext()
+            let root = Expect.wantSome (graph.TryGetNode "./") "The crate has a root."
+            let rootParts = LDDataset.getHasParts(root, graph = graph, ?context = context) |> Seq.map (fun part -> part.Id) |> List.ofSeq
+            for name in [ "a"; "b"; "c"; "d" ] do
+                let id = $"./assays/MyAssay/{name}.txt"
+                Expect.equal (rootParts |> List.filter (fun part -> part = id)) [id] $"The root lists {id} once."
+                let file = Expect.wantSome (graph.TryGetNode id) $"The crate has an entity {id}."
+                Expect.isTrue (LDFile.validate(file, ?context = context)) $"The entity {id} is a File."
+        )
         testCase "DirectoryValues_ReadBackFromTheRunAndAreNoFilesOfTheArc" (fun () ->
             let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  input_dir: Directory\noutputs: []\n"
             let input = CWL.DecodeParameters.decodeYAMLParameterFile "input_dir:\n  class: Directory\n  path: ../../assays/MyAssay/dataset\n"
