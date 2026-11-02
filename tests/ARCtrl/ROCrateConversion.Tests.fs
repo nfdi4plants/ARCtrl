@@ -3629,6 +3629,48 @@ let tests_ArcRun =
             Expect.isFalse (paths |> Array.exists (fun path -> path.TrimEnd('/') = "assays/MyAssay/dataset")) $"The directory is no file of the ARC, but the paths are %A{paths}."
             Expect.equal (directoryOf arc'.Runs.[0]) "../../assays/MyAssay/dataset" "The directory reads back from the crate of the ARC."
         )
+        testCase "DirectoryValues_TheRunFolderIsNoPartOfTheRun" (fun () ->
+            let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  d: Directory\noutputs: []\n"
+            let input = CWL.DecodeParameters.decodeYAMLParameterFile "d:\n  class: Directory\n  path: .\n"
+            let run = ArcRun.create(identifier = "MyRun", title = "t", description = "d", cwlDescription = tool, cwlInput = input)
+            let arc = ARC("I", title = "T", description = "D", runs = ResizeArray [run])
+            let json = arc.ToROCrateJsonString()
+            let graph = JsonController.LDGraph.fromROCrateJsonString json
+            let runNode = Expect.wantSome (graph.TryGetNode "./runs/MyRun/") "The run is in the crate."
+            let partIds = LDDataset.getHasParts(runNode, graph = graph, ?context = graph.TryGetContext()) |> Seq.map (fun part -> part.Id) |> List.ofSeq
+            Expect.isFalse (List.contains runNode.Id partIds) $"The run is no part of itself, but its parts are %A{partIds}."
+            let arc' = ARC.fromROCrateJsonString json
+            let run' = Expect.wantSome (arc'.Runs |> Seq.tryExactlyOne) "The run reads back."
+            Expect.equal run'.Identifier "MyRun" "The run keeps its identifier."
+            Expect.isSome run'.CWLDescription "The run keeps its CWL description."
+            match (Seq.exactlyOne run'.CWLInput).Value with
+            | Some (CWL.CWLParameterValue.Directory directory) -> Expect.equal (CWL.DirectoryInstance.pathOrLocation directory) "." "The input d reads back as the run folder."
+            | other -> failwithf "Expected a Directory value but got %A" other
+        )
+        testCase "DirectoryValues_TheRunFolderIsAPartOfTheRunCrate" (fun () ->
+            let run = create_run_full()
+            run.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  d: Directory\noutputs: []\n")
+            run.CWLInput <- CWL.DecodeParameters.decodeYAMLParameterFile "d:\n  class: Directory\n  path: .\n"
+            let fs = FileSystem.fromFilePaths [| "runs/MyRun/run.cwl"; "runs/MyRun/x.txt" |]
+            let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(run, fs, License(contentType = LicenseContentType.Fulltext, content = "MIT", path = "LICENSE")))
+            let context = graph.TryGetContext()
+            let root = Expect.wantSome (graph.TryGetNode "./") "The crate has a root."
+            let rootParts = LDDataset.getHasParts(root, graph = graph, ?context = context) |> Seq.map (fun part -> part.Id) |> List.ofSeq
+            Expect.isTrue (List.contains "./runs/MyRun/" rootParts) $"The root lists the run folder, but its parts are %A{rootParts}."
+            let folder = Expect.wantSome (graph.TryGetNode "./runs/MyRun/") "The run folder is an entity."
+            Expect.isTrue (LDDataset.validate(folder, ?context = context)) "The run folder is a Dataset."
+            let folderParts = LDDataset.getHasParts(folder, graph = graph, ?context = context) |> Seq.map (fun part -> part.Id) |> List.ofSeq
+            Expect.isTrue (List.contains "./runs/MyRun/x.txt" folderParts) $"The run folder lists its file, but its parts are %A{folderParts}."
+        )
+        testCase "DirectoryValues_TheFolderOfAnotherRunLeavesBothRunsReadable" (fun () ->
+            let runA = ArcRun.create(identifier = "A", title = "t", description = "d", cwlDescription = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  n: int\noutputs: []\n", cwlInput = CWL.DecodeParameters.decodeYAMLParameterFile "n: 1\n")
+            let runB = ArcRun.create(identifier = "B", title = "t", description = "d", cwlDescription = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  d: Directory\noutputs: []\n", cwlInput = CWL.DecodeParameters.decodeYAMLParameterFile "d:\n  class: Directory\n  path: ../A\n")
+            for runs in [ [ runB; runA ]; [ runA; runB ] ] do
+                let order = runs |> List.map (fun run -> run.Identifier) |> String.concat ","
+                let arc = ARC("I", title = "T", description = "D", runs = ResizeArray runs)
+                let arc' = ARC.fromROCrateJsonString (arc.ToROCrateJsonString())
+                Expect.sequenceEqual (arc'.Runs |> Seq.map (fun run -> run.Identifier) |> Seq.sort) ["A"; "B"] $"Both runs read back for the order {order}."
+        )
         testCase "Defaults_AnInputWithoutAValueTakesTheDefaultOfTheCWLFile" (fun () ->
             let run = create_run_full()
             run.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  input_dir:\n    type: Directory\n    default:\n      class: Directory\n      location: ../../assays/MyAssay/dataset\n  n:\n    type: int\n    default: 3\n  given:\n    type: int\n    default: 3\n  o: File?\noutputs: []\n")

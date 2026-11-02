@@ -437,8 +437,10 @@ type RunConversion =
                 LDPropertyValue.tryGetValueObject(parameter) |> Option.iter collect
         entities
 
-    /// The dataset of a run. Its workflow is created at the given time, and now when none is given.
-    static member composeRun (run : ArcRun, ?fs : FileSystem, ?dateCreated : System.DateTime) =
+    /// The dataset of a run. Its workflow is created at the given time, and now when none is given. When the run is the
+    /// root of its crate, its folder is a part like any other folder.
+    static member composeRun (run : ArcRun, ?fs : FileSystem, ?dateCreated : System.DateTime, ?isCrateRoot : bool) =
+        let isCrateRoot = defaultArg isCrateRoot false
         BaseTypes.warnIfTitleEmpty("Run", run.Identifier, run.Title)
         let workflowProtocol =
             let workflowFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
@@ -469,7 +471,13 @@ type RunConversion =
             workflowInvocations
             |> Option.map (fun ps -> AssayConversion.getDataFilesFromProcesses(ps, ?fragmentDescriptors = fragmentDescriptors))
         let parameterValueData =
-            let knownIds = dataFiles |> Option.defaultValue (ResizeArray()) |> Seq.map (fun file -> file.Id)
+            // A Directory value can name the run folder itself (path "." or no path). In the crate of the ARC the run
+            // dataset is that folder, so it is no part of itself.
+            let knownIds =
+                dataFiles
+                |> Option.defaultValue (ResizeArray())
+                |> Seq.map (fun file -> file.Id)
+                |> fun ids -> if isCrateRoot then ids else Seq.append [ LDDataset.genIDARCRun run.Identifier ] ids
             workflowInvocations
             |> Option.map (fun invocations -> RunConversion.getDataEntitiesOfParameterValues(invocations, knownIds))
             |> Option.defaultValue (ResizeArray())
