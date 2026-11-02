@@ -331,7 +331,10 @@ type RunConversion =
             failwithf "Input value %s of run %s is neither a CWL File nor a CWL Parameter." inputValue.Id runName
 
 
-    static member composeWorkflowInvocationFromArcRun (run : ArcRun, ?fs : FileSystem) =
+    /// The invocations of a run. With useDefaults, an input without a value or with a null value in the job file takes its CWL
+    /// default, because the run crate shows the values a run runs with and the ARC crate keeps the job file as written.
+    static member composeWorkflowInvocationFromArcRun (run : ArcRun, ?fs : FileSystem, ?useDefaults : bool) =
+        let useDefaults = defaultArg useDefaults false
         let workflowProtocol =
             let workflowFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
             match run.CWLDescription with
@@ -342,24 +345,32 @@ type RunConversion =
             |> ResizeArray.zip (WorkflowConversion.getInputParametersFromProcessingUnit run.CWLDescription.Value)
             |> ResizeArray.choose (fun (i, ldI) ->
                 let name = LDFormalParameter.getNameAsString(ldI, ?context = workflowProtocol.TryGetContext())
-                // An input without a value in the job file takes the default of the CWL file. The default is a value of
-                // the same shape as a value of the job file, and both files lie in the run folder. An optional input
-                // without either has no value in the invocation.
-                let paramRef =
+                // The default is a value of the same shape as a value of the job file, and both files lie in the run folder.
+                // An input that stays without a value is left out when it is optional or has a default. Only a required
+                // input without a default fails.
+                let given =
                     run.CWLInput
                     |> Seq.tryPick (fun i ->
                         if i.Key = name then Some i
                         else None
                     )
-                    |> Option.orElseWith (fun () ->
+                let hasValue =
+                    match given |> Option.bind (fun reference -> reference.Value) with
+                    | None
+                    | Some CWL.CWLParameterValue.Null -> false
+                    | Some _ -> true
+                let paramRef =
+                    if useDefaults && not hasValue then
                         i.DefaultValue
                         |> Option.map (fun defaultValue -> CWL.CWLParameterReference(key = name, value = CWL.DecodeParameters.decodeParameterValue defaultValue.Node))
-                    )
+                        |> Option.orElse given
+                    else
+                        given
                 match paramRef with
                 | Some pr ->
                     RunConversion.composeCWLInputValue(pr, exampleOfWork = ldI, inputParam = i, runName = run.Identifier, ?fs = fs)
                     |> Some
-                | None when i.Optional ->
+                | None when i.Optional || i.DefaultValue.IsSome ->
                     None
                 | None ->
                     failwith $"Could not create workflow invocation for run \"{run.Identifier}\": Workflow parameter \"{name}\" had no assigned value."
@@ -437,9 +448,11 @@ type RunConversion =
                 LDPropertyValue.tryGetValueObject(parameter) |> Option.iter collect
         entities
 
-    /// The dataset of a run. Its workflow is created at the given time, and now when none is given. When the run is the
-    /// root of its crate, its folder is a part like any other folder.
-    static member composeRun (run : ArcRun, ?fs : FileSystem, ?dateCreated : System.DateTime, ?isCrateRoot : bool) =
+    /// The dataset of a run. Its workflow is created at the given time, and now when none is given. With useDefaults, an
+    /// input without a value or with a null value in the job file takes its CWL default, because the run crate shows the
+    /// values a run runs with and the ARC crate keeps the job file as written. When the run is the root of its crate, its
+    /// folder is a part like any other folder.
+    static member composeRun (run : ArcRun, ?fs : FileSystem, ?dateCreated : System.DateTime, ?useDefaults : bool, ?isCrateRoot : bool) =
         let isCrateRoot = defaultArg isCrateRoot false
         BaseTypes.warnIfTitleEmpty("Run", run.Identifier, run.Title)
         let workflowProtocol =
@@ -448,7 +461,7 @@ type RunConversion =
             | Some pu -> WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(workflowFilePath, pu, runName = run.Identifier)
             | None -> failwithf "Run %s must have a CWL description" run.Identifier
         let workflowInvocations =
-            RunConversion.composeWorkflowInvocationFromArcRun(run, ?fs = fs)
+            RunConversion.composeWorkflowInvocationFromArcRun(run, ?fs = fs, ?useDefaults = useDefaults)
             |> Option.fromSeq
         let measurementMethod = run.TechnologyType |> Option.map BaseTypes.composeDefinedTerm
         let measurementTechnique = run.TechnologyPlatform |> Option.map BaseTypes.composeDefinedTerm

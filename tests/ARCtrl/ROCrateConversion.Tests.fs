@@ -3676,8 +3676,9 @@ let tests_ArcRun =
             run.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  input_dir:\n    type: Directory\n    default:\n      class: Directory\n      location: ../../assays/MyAssay/dataset\n  n:\n    type: int\n    default: 3\n  given:\n    type: int\n    default: 3\n  o: File?\noutputs: []\n")
             run.CWLInput <- CWL.DecodeParameters.decodeYAMLParameterFile "given: 5\n"
             let fs = FileSystem.fromFilePaths [| "runs/MyRun/run.cwl"; "assays/MyAssay/dataset/a.txt" |]
+            let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(run, fs, License(contentType = LicenseContentType.Fulltext, content = "MIT", path = "LICENSE")))
             let valueOf (key : string) =
-                let run' = RunConversion.decomposeRun(RunConversion.composeRun(run, fs = fs))
+                let run' = RunConversion.decomposeRun(Expect.wantSome (graph.TryGetNode "./") "The crate has a root.", graph = graph, ?context = graph.TryGetContext())
                 run'.CWLInput |> Seq.tryFind (fun input -> input.Key = key) |> Option.bind (fun input -> input.Value)
             match valueOf "input_dir" with
             | Some (CWL.CWLParameterValue.Directory directory) -> Expect.equal (CWL.DirectoryInstance.pathOrLocation directory) "../../assays/MyAssay/dataset" "The Directory default is the value, relative to the run folder."
@@ -3685,18 +3686,37 @@ let tests_ArcRun =
             Expect.equal (valueOf "n") (Some (CWL.CWLParameterValue.Int 3L)) "The scalar default is the value."
             Expect.equal (valueOf "given") (Some (CWL.CWLParameterValue.Int 5L)) "A value of the job file goes before the default."
             Expect.isNone (valueOf "o") "An optional input without a value and without a default has no value in the invocation."
-            let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(run, fs, License(contentType = LicenseContentType.Fulltext, content = "MIT", path = "LICENSE")))
             let root = Expect.wantSome (graph.TryGetNode "./") "The crate has a root."
             let rootParts = LDDataset.getHasParts(root, graph = graph, ?context = graph.TryGetContext()) |> Seq.map (fun part -> part.Id) |> List.ofSeq
             Expect.isTrue (List.contains "./assays/MyAssay/dataset/" rootParts) "The root lists the directory of the default."
             let dataset = Expect.wantSome (graph.TryGetNode "./assays/MyAssay/dataset/") "The directory of the default is in the crate."
             Expect.equal (LDDataset.getHasParts(dataset, graph = graph, ?context = graph.TryGetContext()) |> Seq.map (fun file -> file.Id) |> List.ofSeq) ["./assays/MyAssay/dataset/a.txt"] "The Dataset of the default lists its files."
         )
+        testCase "Defaults_TheCrateOfTheArcKeepsTheJobFileAsWritten" (fun () ->
+            let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  n:\n    type: int\n    default: 3\noutputs: []\n"
+            let run = ArcRun.create(identifier = "MyRun", title = "t", description = "d", cwlDescription = tool, cwlInput = CWL.DecodeParameters.decodeYAMLParameterFile "")
+            let arc = ARC("I", title = "T", description = "D", runs = ResizeArray [run])
+            let arc' = ARC.fromROCrateJsonString (arc.ToROCrateJsonString())
+            Expect.isEmpty arc'.Runs.[0].CWLInput "The default of the CWL file is no input of the job file."
+        )
+        testCase "Defaults_ANullValueTakesTheDefaultInTheRunCrate" (fun () ->
+            let run = create_run_full()
+            run.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  n:\n    type: int?\n    default: 3\noutputs: []\n")
+            run.CWLInput <- CWL.DecodeParameters.decodeYAMLParameterFile "n: null\n"
+            let fs = FileSystem.fromFilePaths [| "runs/MyRun/run.cwl" |]
+            let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(run, fs, License(contentType = LicenseContentType.Fulltext, content = "MIT", path = "LICENSE")))
+            let run' = RunConversion.decomposeRun(Expect.wantSome (graph.TryGetNode "./") "The crate has a root.", graph = graph, ?context = graph.TryGetContext())
+            let value = (run'.CWLInput |> Seq.find (fun input -> input.Key = "n")).Value
+            Expect.equal value (Some (CWL.CWLParameterValue.Int 3L)) "The null value takes the default."
+        )
         testCase "Defaults_ARequiredInputWithoutAValueAndADefaultFails" (fun () ->
             let run = create_run_full()
             run.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  r: File\noutputs: []\n")
             run.CWLInput <- ResizeArray()
-            Expect.throws (fun () -> RunConversion.composeRun run |> ignore) "A required input needs a value of the job file or a default."
+            for useDefaults in [ false; true ] do
+                match (try RunConversion.composeRun(run, useDefaults = useDefaults) |> ignore; None with e -> Some e.Message) with
+                | Some message -> Expect.stringContains message "Workflow parameter \"r\" had no assigned value" $"The error names the input (useDefaults = {useDefaults})."
+                | None -> failwith $"A required input needs a value of the job file or a default (useDefaults = {useDefaults})."
         )
         testCase "TypeCheck_AValueOfTheJobFileHasToFitTheTypeOfItsInput" (fun () ->
             let compose (inputs : string) (yml : string) =

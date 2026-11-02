@@ -148,7 +148,7 @@ module ARC =
         /// same crate.
         static member writeRunAsCrate(arcRun:ArcRun, fileSystem: FileSystem, license : License, ?timestamp : System.DateTime) =
             let timestamp = ROCrate.utcTimestamp timestamp
-            let runDataset = RunConversion.composeRun(arcRun, fs = fileSystem, dateCreated = timestamp, isCrateRoot = true)
+            let runDataset = RunConversion.composeRun(arcRun, fs = fileSystem, dateCreated = timestamp, useDefaults = true, isCrateRoot = true)
             ROCrate.addReferencedFiles(runDataset, Identifier.Run.cwlFileNameFromIdentifier arcRun.Identifier, arcRun.CWLDescription.Value, fileSystem)
             
             // Validate required dataset properties
