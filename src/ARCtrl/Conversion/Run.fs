@@ -106,10 +106,38 @@ type RunConversion =
             |> CWL.CWLParameterValue.Array
         )
 
+    /// True when the type of a parameter admits a value of the type that the value shows. A union admits what one of
+    /// its members admits, so File? admits a File, and the items of an array type admit the items of an array. Any admits
+    /// every value, and a type that stays unresolved, as a reference to a SchemaDefRequirement or a directive, admits
+    /// every value too, because the type it stands for is unknown.
+    static member private parameterTypeAdmits (parameterType : CWL.CWLType, valueType : CWL.CWLType) : bool =
+        match parameterType with
+        | CWL.CWLType.Any
+        | CWL.CWLType.Reference _
+        | CWL.CWLType.ImportedType _
+        | CWL.CWLType.IncludedType _
+        | CWL.CWLType.MixedType _
+        | CWL.CWLType.RawType _ -> true
+        | CWL.CWLType.Union members -> members |> Seq.exists (fun item -> RunConversion.parameterTypeAdmits(item, valueType))
+        | CWL.CWLType.Array parameterArray ->
+            match valueType with
+            | CWL.CWLType.Array valueArray -> RunConversion.parameterTypeAdmits(parameterArray.Items, valueArray.Items)
+            | _ -> false
+        | _ -> CWL.CWLType.typesEqual parameterType valueType
+
+    /// The entity of the value of a job file for an input. A File, a Directory or a list of them in the job file has to
+    /// fit the type of the input, and the error names the run.
     static member composeCWLInputValue (inputValue : CWL.CWLParameterReference, exampleOfWork : LDNode, inputParam : CWL.CWLInput, runName : string, ?fs : FileSystem) =
         if inputParam.Type_.IsNone then
             failwith $"Cannot convert param values \"{inputValue.Values}\" as Input parameter \"{inputParam.Name}\" has no type."
         let type_ = inputParam.Type_.Value
+        inputValue.Type
+        |> Option.iter (fun valueType ->
+            if not (RunConversion.parameterTypeAdmits(type_, valueType)) then
+                let typeStr = CWL.Encode.formatCWLType valueType
+                let paramTypeStr = CWL.Encode.formatCWLType type_
+                failwith $"Could not create workflow invocation for run \"{runName}\": Type ({typeStr}) of yml input value \"{inputValue.Key}\" does not match type of workflow input parameter ({paramTypeStr})."
+        )
         match type_ with
         | CWL.CWLType.File when inputValue.Values.Count = 1 ->
             let path = RunConversion.composeCWLInputFilePath(inputValue.Values[0], runName)

@@ -3641,6 +3641,41 @@ let tests_ArcRun =
             run.CWLInput <- ResizeArray()
             Expect.throws (fun () -> RunConversion.composeRun run |> ignore) "A required input needs a value of the job file or a default."
         )
+        testCase "TypeCheck_AValueOfTheJobFileHasToFitTheTypeOfItsInput" (fun () ->
+            let compose (inputs : string) (yml : string) =
+                let run = create_run_full()
+                run.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit ("cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n" + inputs + "outputs: []\n"))
+                run.CWLInput <- CWL.DecodeParameters.decodeYAMLParameterFile yml
+                try
+                    RunConversion.composeRun run |> ignore
+                    None
+                with e -> Some e.Message
+            let directory = "\n  class: Directory\n  location: ../../assays/A/dataset\n"
+            let file = "\n  class: File\n  location: ../../assays/A/dataset/a.txt\n"
+            Expect.equal (compose "  f: File\n" ("f:" + directory)) (Some "Could not create workflow invocation for run \"MyRun\": Type (Directory) of yml input value \"f\" does not match type of workflow input parameter (File).") "A Directory for a File input fails with a message that names the run."
+            Expect.equal (compose "  f: File\n" ("f:" + file)) None "A File for a File input passes."
+            Expect.equal (compose "  d: Directory\n" ("d:" + directory)) None "A Directory for a Directory input passes."
+            Expect.equal (compose "  f: File?\n" ("f:" + file)) None "A File for an optional File input passes."
+            Expect.equal (compose "  f: File?\n" "f: null\n") None "Null for an optional File input passes."
+            match compose "  f: File?\n" ("f:" + directory) with
+            | Some message -> Expect.stringContains message "Could not create workflow invocation for run \"MyRun\": Type (Directory) of yml input value \"f\" does not match type of workflow input parameter (" "A Directory for an optional File input fails."
+            | None -> failwith "A Directory for an optional File input fails."
+            Expect.equal (compose "  fs: File[]\n" "fs:\n  - class: File\n    location: a.txt\n  - class: File\n    location: b.txt\n") None "A list of Files for a File array passes."
+            Expect.isSome (compose "  fs: File[]\n" "fs:\n  - class: Directory\n    location: d\n") "A list of Directories for a File array fails."
+            Expect.equal (compose "  x:\n    type: [File, Directory]\n" ("x:" + directory)) None "A union admits a value of one of its members."
+            Expect.equal (compose "  x: Any\n" ("x:" + directory)) None "Any admits a Directory."
+            Expect.equal (compose "  s: string\n" "s: text\n") None "A scalar shows no type and is not compared."
+        )
+        testCase "TypeCheck_TheTypeOfAJobFileValueComesFromTheValue" (fun () ->
+            let typeOf (yml : string) = (Seq.exactlyOne (CWL.DecodeParameters.decodeYAMLParameterFile yml)).Type
+            Expect.equal (typeOf "f:\n  class: File\n  path: a.txt\n") (Some CWLType.File) "A File shows the type File."
+            Expect.equal (typeOf "d:\n  class: Directory\n  path: d\n") (Some CWLType.Directory) "A Directory shows the type Directory."
+            match typeOf "fs:\n  - {class: File, path: a.txt}\n  - {class: File, path: b.txt}\n" with
+            | Some (CWLType.Array schema) -> Expect.equal schema.Items CWLType.File "A list of Files shows the type of an array of Files."
+            | other -> failwithf "Expected an array type but got %A" other
+            Expect.isNone (typeOf "x:\n  - {class: File, path: a.txt}\n  - {class: Directory, path: d}\n") "A list of Files and Directories shows no type."
+            Expect.isNone (typeOf "s: text\n") "A scalar shows no type."
+        )
         testCaseCrossAsync "RelativeWorkflowRunReference_ResolvesToWorkflow" (crossAsync {
             let sampleArcDirectory = TestObjects.IO.testSimpleARCWithCWL
             let runFixturePath =
