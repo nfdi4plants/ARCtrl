@@ -96,9 +96,14 @@ module ARC =
                     failwith "RO-Crate graph did not contain root data Entity"
             )
 
-        /// Packs a dataset as the root of a crate. The root is created now and published at the given date, and now when
-        /// none is given. Both dates are local time.
-        static member packDatasetAsCrate (dataset : LDNode, datasetName:string, datasetDescription:string, metadataFileDescriptor: option<LDNode>, license : License, ?datePublished : System.DateTime) =
+        /// The time that a crate writer gives each date it sets, in UTC: the given time, and now when none is given.
+        static member private utcTimestamp (timestamp : System.DateTime option) =
+            (defaultArg timestamp System.DateTime.UtcNow).ToUniversalTime()
+
+        /// Packs a dataset as the root of a crate. The root is created and published at the given time, and now when none
+        /// is given. Both dates are in UTC.
+        static member packDatasetAsCrate (dataset : LDNode, datasetName:string, datasetDescription:string, metadataFileDescriptor: option<LDNode>, license : License, ?timestamp : System.DateTime) =
+            let timestamp = ROCrate.utcTimestamp timestamp
             let metadataFileDescriptor = defaultArg metadataFileDescriptor ROCrate.metadataFileDescriptor
             let license = ROCrate.createLicenseNode(Some license)
             // Create the main entity node with all properties from the dataset, but with @id "./"
@@ -108,8 +113,8 @@ module ARC =
                 mainEntity.SetProperty(kv.Key, kv.Value)
             )
             // Set additional properties
-            LDDataset.setDateCreatedAsDateTime(mainEntity, System.DateTime.Now)
-            LDDataset.setDatePublishedAsDateTime(mainEntity, defaultArg datePublished System.DateTime.Now)
+            LDDataset.setDateCreatedAsDateTime(mainEntity, timestamp)
+            LDDataset.setDatePublishedAsDateTime(mainEntity, timestamp)
             LDDataset.setLicenseAsCreativeWork(mainEntity, license)
             // LDDataset.setHasParts(mainEntity,(dataset.GetPropertyValues"http://schema.org/mainEntity") |> Seq.map (fun x -> x :?> LDNode) |> ResizeArray)
             // Flatten the dataset into a graph
@@ -138,10 +143,12 @@ module ARC =
             if files.Count > 0 then
                 LDDataset.setHasParts(dataset, ResizeArray.append parts files)
 
-        /// Writes a run as a Workflow Run Crate. A license is required. The crate is published at the given date, and now in
-        /// local time when none is given.
-        static member writeRunAsCrate(arcRun:ArcRun, fileSystem: FileSystem, license : License, ?datePublished : System.DateTime) =
-            let runDataset = arcRun.ToROCrateRun(fs = fileSystem)
+        /// Writes a run as a Workflow Run Crate. A license is required. The crate and its workflow are created and the crate
+        /// is published at the given time, and now when none is given. The dates are in UTC, so the same time gives the
+        /// same crate.
+        static member writeRunAsCrate(arcRun:ArcRun, fileSystem: FileSystem, license : License, ?timestamp : System.DateTime) =
+            let timestamp = ROCrate.utcTimestamp timestamp
+            let runDataset = RunConversion.composeRun(arcRun, fs = fileSystem, dateCreated = timestamp)
             ROCrate.addReferencedFiles(runDataset, Identifier.Run.cwlFileNameFromIdentifier arcRun.Identifier, arcRun.CWLDescription.Value, fileSystem)
             
             // Validate required dataset properties
@@ -191,13 +198,15 @@ module ARC =
                     |> String.concat ", "
                 failwithf "WorkflowInvocation is missing required properties: %s" missingPropsStr
             
-            ROCrate.packDatasetAsCrate(runDataset, arcRun.Title.Value, arcRun.Description.Value, Some ROCrate.metadataFileDescriptorWfRun, license, ?datePublished = datePublished)
+            ROCrate.packDatasetAsCrate(runDataset, arcRun.Title.Value, arcRun.Description.Value, Some ROCrate.metadataFileDescriptorWfRun, license, timestamp = timestamp)
             |> LDGraph.toROCrateJsonString(2)
 
-        /// Writes a workflow as a Workflow RO-Crate. A license is required. The crate is published at the given date, and now
-        /// in local time when none is given.
-        static member writeWorkflowAsCrate(arcWorkflow:ArcWorkflow, fileSystem: FileSystem, license : License, ?datePublished : System.DateTime) =
-            let workflowDataset = arcWorkflow.ToROCrateWorkflow(fs = fileSystem)
+        /// Writes a workflow as a Workflow RO-Crate. A license is required. The crate and its workflow are created and the
+        /// crate is published at the given time, and now when none is given. The dates are in UTC, so the same time gives
+        /// the same crate.
+        static member writeWorkflowAsCrate(arcWorkflow:ArcWorkflow, fileSystem: FileSystem, license : License, ?timestamp : System.DateTime) =
+            let timestamp = ROCrate.utcTimestamp timestamp
+            let workflowDataset = WorkflowConversion.composeWorkflow(arcWorkflow, fs = fileSystem, dateCreated = timestamp)
             ROCrate.addReferencedFiles(workflowDataset, Identifier.Workflow.cwlFileNameFromIdentifier arcWorkflow.Identifier, arcWorkflow.CWLDescription.Value, fileSystem)
             
             // Validate required dataset properties
@@ -249,7 +258,7 @@ module ARC =
                     |> String.concat ", "
                 failwithf "Workflow protocol is missing required properties: %s" missingPropsStr
             
-            ROCrate.packDatasetAsCrate(workflowDataset, arcWorkflow.Title.Value, arcWorkflow.Description.Value, Some ROCrate.metadataFileDescriptorWfRun, license, ?datePublished = datePublished)
+            ROCrate.packDatasetAsCrate(workflowDataset, arcWorkflow.Title.Value, arcWorkflow.Description.Value, Some ROCrate.metadataFileDescriptorWfRun, license, timestamp = timestamp)
             |> LDGraph.toROCrateJsonString(2)
             
         static member decoderDeprecated : Decoder<ArcInvestigation> =

@@ -3947,6 +3947,13 @@ module WorkflowCrate =
 
     let license = License(contentType = LicenseContentType.Fulltext, content = "MIT", path = "LICENSE")
 
+    /// The dates of a crate in the order of the text, each with its key.
+    let dateValues (json : string) =
+        System.Text.RegularExpressions.Regex.Matches(json, "\"(dateCreated|datePublished)\": \"([^\"]*)\"")
+        |> Seq.cast<System.Text.RegularExpressions.Match>
+        |> Seq.map (fun m -> m.Groups.[1].Value, m.Groups.[2].Value)
+        |> List.ofSeq
+
     let hasPartIds (json : string) =
         let graph = JsonController.LDGraph.fromROCrateJsonString json
         let root = Expect.wantSome (graph.TryGetNode "./") "The crate has a root."
@@ -4052,27 +4059,37 @@ let tests_WorkflowCrate =
                 Expect.isTrue (List.contains id ids) $"The run crate holds {id}."
             Expect.equal (ids |> List.distinct |> List.length) ids.Length "Each part is listed once."
         )
-        testCase "Crates_RootIsPublishedAtTheGivenDate" (fun () ->
-            let workflow = create_workflow_full()
+        testCase "Crates_TheTimestampPinsEveryDateInUTC" (fun () ->
             let date = System.DateTime(2026, 1, 2, 3, 4, 5, System.DateTimeKind.Utc)
-            let json = ARCtrl.Json.ARC.ROCrate.writeWorkflowAsCrate(workflow, WorkflowCrate.fileSystemOf [], WorkflowCrate.license, datePublished = date)
-            Expect.stringContains json "\"datePublished\": \"2026-01-02T03:04:05" "The root of the workflow crate is published at the given date."
-            let run = create_run_full()
-            let json = ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(run, WorkflowCrate.fileSystemOf [], WorkflowCrate.license, datePublished = date)
-            Expect.stringContains json "\"datePublished\": \"2026-01-02T03:04:05" "The root of the run crate is published at the given date."
+            let workflowJson = ARCtrl.Json.ARC.ROCrate.writeWorkflowAsCrate(create_workflow_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license, timestamp = date)
+            let runJson = ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(create_run_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license, timestamp = date)
+            for json in [ workflowJson; runJson ] do
+                let dates = WorkflowCrate.dateValues json
+                Expect.equal (dates |> List.map fst) [ "dateCreated"; "dateCreated"; "datePublished" ] "The workflow is created, and the root is created and published."
+                for (key, value) in dates do
+                    Expect.isTrue (value.StartsWith "2026-01-02T03:04:05" && value.EndsWith "Z") $"The {key} {value} is the timestamp in UTC."
         )
-        testCase "Crates_RootIsPublishedNowWithoutADate" (fun () ->
-            let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeWorkflowAsCrate(create_workflow_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license))
-            let root = Expect.wantSome (graph.TryGetNode "./") "The crate has a root."
-            Expect.isSome (LDDataset.tryGetDatePublished(root, ?context = graph.TryGetContext())) "The root has a date of publication."
-            let before = System.DateTime.Now
+        testCase "Crates_ThePinnedTimestampGivesTheSameCrate" (fun () ->
+            let date = System.DateTime(2026, 1, 2, 3, 4, 5, System.DateTimeKind.Utc)
+            let writeWorkflow () = ARCtrl.Json.ARC.ROCrate.writeWorkflowAsCrate(create_workflow_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license, timestamp = date)
+            let writeRun () = ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(create_run_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license, timestamp = date)
+            Expect.equal (writeWorkflow ()) (writeWorkflow ()) "Two workflow crates of the same timestamp are equal."
+            Expect.equal (writeRun ()) (writeRun ()) "Two run crates of the same timestamp are equal."
+        )
+        testCase "Crates_EveryDateIsNowInUTCWithoutATimestamp" (fun () ->
+            for json in [ ARCtrl.Json.ARC.ROCrate.writeWorkflowAsCrate(create_workflow_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license); ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(create_run_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license) ] do
+                let dates = WorkflowCrate.dateValues json
+                Expect.equal dates.Length 3 "The workflow is created, and the root is created and published."
+                for (key, value) in dates do
+                    Expect.isTrue (value.EndsWith "Z") $"The {key} {value} is in UTC."
+            let before = System.DateTime.UtcNow
             let graph = ARCtrl.Json.ARC.ROCrate.packDatasetAsCrate(WorkflowConversion.composeWorkflow(create_workflow_full()), "name", "description", None, WorkflowCrate.license)
-            let after = System.DateTime.Now
+            let after = System.DateTime.UtcNow
             let root = Expect.wantSome (graph.TryGetNode "./") "The packed crate has a root."
             let datePublished = Expect.wantSome (LDDataset.tryGetDatePublishedAsDateTime(root, ?context = graph.TryGetContext())) "The root has a date of publication."
             let dateCreated = Expect.wantSome (LDDataset.tryGetDateCreatedAsDateTime(root, ?context = graph.TryGetContext())) "The root has a date of creation."
             for date in [ datePublished; dateCreated ] do
-                Expect.isTrue (before.AddSeconds(-1.) <= date && date <= after.AddSeconds(1.)) $"The date {date} is now in local time, between {before} and {after}."
+                Expect.isTrue (before.AddSeconds(-1.) <= date && date <= after.AddSeconds(1.)) $"The date {date} is now, between {before} and {after}."
         )
         testCase "RunCrate_NamesItsProfilesAsEntities" (fun () ->
             let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(create_run_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license))

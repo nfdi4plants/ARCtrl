@@ -436,7 +436,8 @@ type RunConversion =
                 LDPropertyValue.tryGetValueObject(parameter) |> Option.iter collect
         directories
 
-    static member composeRun (run : ArcRun, ?fs : FileSystem) =
+    /// The dataset of a run. Its workflow is created at the given time, and now when none is given.
+    static member composeRun (run : ArcRun, ?fs : FileSystem, ?dateCreated : System.DateTime) =
         BaseTypes.warnIfTitleEmpty("Run", run.Identifier, run.Title)
         let workflowProtocol =
             let workflowFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
@@ -455,7 +456,7 @@ type RunConversion =
             |> ResizeArray.map (fun c -> PersonConversion.composePerson(c, ?persons = persons))
             |> Option.fromSeq
         let publisher = LDOrganization.create("DataPLANT")
-        let dateCreated = System.DateTime.UtcNow
+        let dateCreated = defaultArg dateCreated System.DateTime.UtcNow
         if creators.IsSome then
             LDComputationalWorkflow.setCreators(workflowProtocol, creators.Value)
         LDComputationalWorkflow.setSdPublisher(workflowProtocol, publisher)
