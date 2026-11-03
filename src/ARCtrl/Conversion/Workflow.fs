@@ -744,14 +744,14 @@ type WorkflowConversion =
         fragmentDescriptors |> Option.iter (fun fds -> LDDataset.setVariableMeasuredAsPropertyValues(arcWorkflow, fds))
         arcWorkflow
 
+    /// Reads a workflow from its dataset. The crate does not hold the CWL file of the workflow, so the workflow comes
+    /// back with no CWL description.
     static member decomposeWorkflow (workflow : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let workflowProtocol =
             LDDataset.getMainEntities(workflow, ?graph = graph, ?context = context)
             |> Seq.find (fun me ->
                 LDComputationalWorkflow.validate(me, ?context = context)
             )
-        let cwlDescription = 
-            WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(workflowProtocol, ?context = context, ?graph = graph)
         let version =
             LDLabProtocol.tryGetVersionAsString(workflowProtocol, ?context = context)
         let uri =
@@ -780,7 +780,6 @@ type WorkflowConversion =
             ?version = version,
             ?uri = uri,
             ?workflowType = workflowType,
-            cwlDescription = cwlDescription,
             components = components,
             ?datamap = datamap,
             contacts = contacts,

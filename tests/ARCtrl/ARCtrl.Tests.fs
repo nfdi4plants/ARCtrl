@@ -3072,6 +3072,17 @@ let tests_ROCrate =
                 let arcExpected = ARC.fromArcInvestigation(investigation, license = License.initFulltext "CC-BY-4.0")
                 let json = arcExpected.ToROCrateJsonString()
                 let arcActual = ARC.fromROCrateJsonString(json)
+                // A crate does not give back the CWL of workflows and runs. This test reads it from the written
+                // graph with the standalone decomposition.
+                let graph = JsonController.LDGraph.fromROCrateJsonString(json)
+                for workflow in arcActual.Workflows do
+                    let dataset = Expect.wantSome (graph.TryGetNode $"./workflows/{workflow.Identifier}/") "The workflow is in the crate."
+                    workflow.CWLDescription <- Some (ROCrateConversion.Tests.Helper.ReadWithCwl.workflowCwl(dataset, graph = graph, ?context = graph.TryGetContext()))
+                for run in arcActual.Runs do
+                    let dataset = Expect.wantSome (graph.TryGetNode $"./runs/{run.Identifier}/") "The run is in the crate."
+                    let cwlDescription, cwlInput = ROCrateConversion.Tests.Helper.ReadWithCwl.runCwl(dataset, graph = graph, ?context = graph.TryGetContext())
+                    run.CWLDescription <- Some cwlDescription
+                    run.CWLInput <- cwlInput
                 // Data paths are read with leading ./, see https://github.com/nfdi4plants/ARCtrl/issues/615
                 for datamap in [study.Datamap; assay.Datamap; workflow.Datamap; run.Datamap] do
                     datamap.Value.DataContexts |> Seq.iter (fun dc -> dc.FilePath <- Some ("./" + dc.FilePath.Value))

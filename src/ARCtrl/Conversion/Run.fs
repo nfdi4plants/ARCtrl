@@ -506,8 +506,10 @@ type RunConversion =
             ?comments = comments
         )
 
+    /// Reads a run from its dataset. The crate holds neither the CWL file nor the job file of the run, so the run comes
+    /// back with no CWL description and no job values. The tables skip the main workflow invocation, which stands for
+    /// the CWL run.
     static member decomposeRun (run : LDNode, ?graph : LDGraph, ?context : LDContext) : ArcRun=
-        let workflowProtocol = LDDataset.tryGetMainEntityAsWorkflowProtocol(run, ?graph = graph, ?context = context)
         let mainWorkflowInvocation =
             LDDataset.getAboutsAsWorkflowInvocation(run, ?graph = graph, ?context = context)
             |> Seq.find (fun wi ->
@@ -515,16 +517,6 @@ type RunConversion =
                 | Some lp when LDWorkflowProtocol.validate(lp, ?context = context) -> true
                 | _ -> false
             )
-        let cwlDescription, parameterRefs =
-            match workflowProtocol with
-            | Some wp ->
-                WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(wp, ?context = context, ?graph = graph),
-                LDLabProcess.getObjects(mainWorkflowInvocation, ?graph = graph, ?context = context)
-                |> ResizeArray.map (fun iv ->
-                    RunConversion.decomposeCWLInputValue(iv, runName = LDDataset.getIdentifierAsString(run, ?context = context), ?context = context, ?graph = graph)
-                )
-            | None ->
-                RunConversion.decomposeMainWorkflowInvocation(mainWorkflowInvocation, LDDataset.getIdentifierAsString(run, ?context = context), ?context = context, ?graph = graph)
         let measurementMethod = 
             LDDataset.tryGetMeasurementMethodAsDefinedTerm(run, ?graph = graph, ?context = context)
             |> Option.map (fun m -> BaseTypes.decomposeDefinedTerm(m, ?context = context))
@@ -552,8 +544,6 @@ type RunConversion =
             identifier = LDDataset.getIdentifierAsString(run, ?context = context),
             ?title = LDDataset.tryGetNameAsString(run, ?context = context),
             ?description = LDDataset.tryGetDescriptionAsString(run, ?context = context),
-            cwlDescription = cwlDescription,
-            cwlInput = parameterRefs,
             ?measurementType = variableMeasured,
             ?technologyType = measurementMethod,
             ?technologyPlatform = measurementTechnique,

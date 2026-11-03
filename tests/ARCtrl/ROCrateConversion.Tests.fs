@@ -347,6 +347,52 @@ module Helper =
             )
         p
 
+    /// Reads workflow and run datasets as the conversion does, then adds the CWL that the conversion leaves empty. The
+    /// description of a workflow comes from the standalone decomposition of its protocol. The description and the job
+    /// values of a run come from the standalone decomposition of its main workflow invocation. The investigation member
+    /// does this for each workflow and run dataset of an investigation.
+    type ReadWithCwl =
+
+        static member workflowCwl (workflow : LDNode, ?graph : LDGraph, ?context : LDContext) =
+            LDDataset.getMainEntities(workflow, ?graph = graph, ?context = context)
+            |> Seq.find (fun mainEntity -> LDComputationalWorkflow.validate(mainEntity, ?context = context))
+            |> fun protocol -> WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(protocol, ?context = context, ?graph = graph)
+
+        static member runCwl (run : LDNode, ?graph : LDGraph, ?context : LDContext) =
+            let mainInvocation =
+                LDDataset.getAboutsAsWorkflowInvocation(run, ?graph = graph, ?context = context)
+                |> Seq.find (fun invocation ->
+                    match LDLabProcess.tryGetExecutesLabProtocol(invocation, ?graph = graph, ?context = context) with
+                    | Some protocol -> LDWorkflowProtocol.validate(protocol, ?context = context)
+                    | None -> false
+                )
+            RunConversion.decomposeMainWorkflowInvocation(mainInvocation, LDDataset.getIdentifierAsString(run, ?context = context), ?context = context, ?graph = graph)
+
+        static member workflow (workflow : LDNode, ?graph : LDGraph, ?context : LDContext) =
+            let arcWorkflow = WorkflowConversion.decomposeWorkflow(workflow, ?graph = graph, ?context = context)
+            arcWorkflow.CWLDescription <- Some (ReadWithCwl.workflowCwl(workflow, ?graph = graph, ?context = context))
+            arcWorkflow
+
+        static member run (run : LDNode, ?graph : LDGraph, ?context : LDContext) =
+            let arcRun = RunConversion.decomposeRun(run, ?graph = graph, ?context = context)
+            let cwlDescription, cwlInput = ReadWithCwl.runCwl(run, ?graph = graph, ?context = context)
+            arcRun.CWLDescription <- Some cwlDescription
+            arcRun.CWLInput <- cwlInput
+            arcRun
+
+        static member investigation (investigation : LDNode, ?graph : LDGraph, ?context : LDContext) =
+            let arcInvestigation = InvestigationConversion.decomposeInvestigation(investigation, ?graph = graph, ?context = context)
+            let datasets = LDDataset.getHasPartsAsDataset(investigation, ?graph = graph, ?context = context)
+            for dataset in datasets |> ResizeArray.filter (fun d -> LDDataset.validateARCWorkflow(d, ?graph = graph, ?context = context)) do
+                let workflow = arcInvestigation.GetWorkflow(LDDataset.getIdentifierAsString(dataset, ?context = context))
+                workflow.CWLDescription <- Some (ReadWithCwl.workflowCwl(dataset, ?graph = graph, ?context = context))
+            for dataset in datasets |> ResizeArray.filter (fun d -> LDDataset.validateARCRun(d, ?context = context)) do
+                let run = arcInvestigation.GetRun(LDDataset.getIdentifierAsString(dataset, ?context = context))
+                let cwlDescription, cwlInput = ReadWithCwl.runCwl(dataset, ?graph = graph, ?context = context)
+                run.CWLDescription <- Some cwlDescription
+                run.CWLInput <- cwlInput
+            arcInvestigation
+
 open Helper
 
 
@@ -2767,13 +2813,13 @@ let tests_ProcessOfUnknownClass =
         testCase "ArcRun_ComposesAndDecomposesWithoutThePorts" (fun () ->
             let run = ArcRun(identifier = "UnknownRun", cwlDescription = unknown ())
             let roRun = RunConversion.composeRun run
-            match (RunConversion.decomposeRun roRun).CWLDescription with
+            match (ReadWithCwl.run roRun).CWLDescription with
             | Some (CWL.CommandLineTool tool) -> Expect.equal (CWL.CWLToolDescription.getOutputValues tool).Count 0 "The run reads back with a tool without ports."
             | other -> failwith $"Expected a tool but got %A{other}"
         )
         testCase "ArcWorkflow_ComposesAndDecomposesWithoutThePorts" (fun () ->
             let workflow = ArcWorkflow(identifier = "UnknownWorkflow", cwlDescription = unknown ())
-            match (WorkflowConversion.decomposeWorkflow (WorkflowConversion.composeWorkflow workflow)).CWLDescription with
+            match (ReadWithCwl.workflow (WorkflowConversion.composeWorkflow workflow)).CWLDescription with
             | Some (CWL.CommandLineTool tool) -> Expect.equal (CWL.CWLToolDescription.getOutputValues tool).Count 0 "The workflow reads back with a tool without ports."
             | other -> failwith $"Expected a tool but got %A{other}"
         )
@@ -2810,7 +2856,7 @@ let tests_OperationDescription =
                     cwlDescription = CWL.Operation operation
                 )
             let roWorkflow = WorkflowConversion.composeWorkflow workflow
-            let roundTripped = WorkflowConversion.decomposeWorkflow roWorkflow
+            let roundTripped = ReadWithCwl.workflow roWorkflow
             match roundTripped.CWLDescription with
             | Some (CWL.Operation rt) ->
                 Expect.equal rt.Inputs.Count operation.Inputs.Count "Operation inputs should survive ArcWorkflow roundtrip"
@@ -2832,7 +2878,7 @@ let tests_OperationDescription =
                     cwlInput = ResizeArray [ runInput ]
                 )
             let roRun = RunConversion.composeRun run
-            let roundTripped = RunConversion.decomposeRun roRun
+            let roundTripped = ReadWithCwl.run roRun
             match roundTripped.CWLDescription with
             | Some (CWL.Operation rt) ->
                 Expect.equal rt.Inputs.Count operation.Inputs.Count "Operation inputs should survive ArcRun roundtrip"
@@ -2896,7 +2942,7 @@ let tests_ArcWorkflow =
         testCase "Full_FromScaffold" (fun () ->
             let workflow = create_workflow_full()
             let ro_Workflow = WorkflowConversion.composeWorkflow workflow
-            let workflow' = WorkflowConversion.decomposeWorkflow ro_Workflow
+            let workflow' = ReadWithCwl.workflow ro_Workflow
             Expect.equal workflow' workflow "Workflow should match"
         )
         // https://github.com/nfdi4plants/ARCtrl/issues/651
@@ -2906,7 +2952,7 @@ let tests_ArcWorkflow =
             let dc2 = create_dataContextOfRow "MyFile" 2
             workflow.Datamap <- Some (Datamap(ResizeArray[dc1;dc2]))
             let ro_Workflow = WorkflowConversion.composeWorkflow workflow
-            let workflow' = WorkflowConversion.decomposeWorkflow ro_Workflow
+            let workflow' = ReadWithCwl.workflow ro_Workflow
             let dm' = Expect.wantSome workflow'.Datamap "Workflow should have a data map"
             Expect.equal dm' workflow.Datamap.Value "Data map should match"
             Expect.equal workflow' workflow "Workflow should match"
@@ -2920,7 +2966,7 @@ let tests_ArcWorkflow =
             let wf = Expect.wantSome (ro_Workflow.TryGetPropertyAsSingleton(LDDataset.mainEntity)) "ArcWorkflow should still have main workflow"
             Expect.isTrue (wf :? LDRef) "Workflow should be flattened correctly"
             //
-            let workflow' = WorkflowConversion.decomposeWorkflow(ro_Workflow, graph = graph)
+            let workflow' = ReadWithCwl.workflow(ro_Workflow, graph = graph)
             Expect.equal workflow' workflow "Workflow should match"
         )
         testCaseCrossAsync "FullWorkflow_File_StepsParsedIntoDatamodel" (crossAsync {
@@ -2951,7 +2997,7 @@ let tests_ArcWorkflow =
                 )
 
             let ro_Workflow = WorkflowConversion.composeWorkflow workflow
-            let workflow' = WorkflowConversion.decomposeWorkflow ro_Workflow
+            let workflow' = ReadWithCwl.workflow ro_Workflow
 
             let parsedWorkflow =
                 let parsedWorkflowOpt =
@@ -3085,7 +3131,7 @@ let tests_ArcWorkflow =
                 graph.AddNode runNode
                 expectedToolByRunPath <- expectedToolByRunPath.Add(runPath, expectedTool)
 
-            let workflow' = WorkflowConversion.decomposeWorkflow(ro_Workflow, graph = graph)
+            let workflow' = ReadWithCwl.workflow(ro_Workflow, graph = graph)
 
             let parsedWorkflow =
                 let parsedWorkflowOpt =
@@ -3254,7 +3300,7 @@ let tests_ArcWorkflow =
             let graph = JsonController.LDGraph.fromROCrateJsonString json
             let step = Expect.wantSome (graph.TryGetNode "WorkflowStep_workflows/MyWorkflow/workflow.cwl_s") "The step is in the crate."
             Expect.equal (LDDataset.tryGetIdentifierAsString(step, ?context = graph.TryGetContext())) (Some "./workflows/MyWorkflow/tool.cwl") "The crate holds the path of the tool from its root."
-            let workflow' = WorkflowConversion.decomposeWorkflow(Expect.wantSome (graph.TryGetNode "./workflows/MyWorkflow/") "The workflow is in the crate.", graph = graph)
+            let workflow' = ReadWithCwl.workflow(Expect.wantSome (graph.TryGetNode "./workflows/MyWorkflow/") "The workflow is in the crate.", graph = graph)
             match workflow'.CWLDescription with
             | Some (CWL.Workflow workflow') ->
                 Expect.equal ((CWL.ListEntry.values workflow'.Steps).[0].Run) (CWL.RunString "tool.cwl") "The workflow runs tool.cwl again."
@@ -3263,7 +3309,7 @@ let tests_ArcWorkflow =
             run.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: Workflow\ninputs: {}\noutputs: {}\nsteps:\n  main: {run: ../../workflows/W/workflow.cwl, in: {}, out: []}\n")
             let json = (RunConversion.composeRun run).Flatten() |> JsonController.LDGraph.toROCrateJsonString()
             let graph = JsonController.LDGraph.fromROCrateJsonString json
-            let run' = RunConversion.decomposeRun(Expect.wantSome (graph.TryGetNode "./runs/MyRun/") "The run is in the crate.", graph = graph)
+            let run' = ReadWithCwl.run(Expect.wantSome (graph.TryGetNode "./runs/MyRun/") "The run is in the crate.", graph = graph)
             match run'.CWLDescription with
             | Some (CWL.Workflow runWorkflow) ->
                 Expect.equal ((CWL.ListEntry.values runWorkflow.Steps).[0].Run) (CWL.RunString "../../workflows/W/workflow.cwl") "The run runs the workflow by the same relative path again."
@@ -3291,7 +3337,7 @@ let tests_ArcRun =
         testCase "Full_FromScaffold" (fun () ->
             let run = create_run_full()
             let ro_Run = RunConversion.composeRun run
-            let run' = RunConversion.decomposeRun ro_Run
+            let run' = ReadWithCwl.run ro_Run
             Expect.equal run' run "Run should match"
         )
         testCase "Full_FromScaffold_Flattened" (fun () ->
@@ -3303,7 +3349,7 @@ let tests_ArcRun =
             let r = Expect.wantSome (ro_Run.TryGetPropertyAsSingleton(LDDataset.mentions)) "ArcRun should still have associated workflow"
             Expect.isTrue (r :? LDRef) "Run should be flattened correctly"
             //
-            let run' = RunConversion.decomposeRun(ro_Run, graph = graph)
+            let run' = ReadWithCwl.run(ro_Run, graph = graph)
             Expect.equal run' run "Run should match"
         )
         // File ids are normalized to start with ./, see https://github.com/nfdi4plants/ARCtrl/issues/615
@@ -3313,7 +3359,7 @@ let tests_ArcRun =
             let json = ro_Run.Flatten() |> JsonController.LDGraph.toROCrateJsonString()
             let graph = JsonController.LDGraph.fromROCrateJsonString json
             let ro_Run' = Expect.wantSome (graph.TryGetNode "./runs/MyRun/") "Run should have normalized id"
-            let run' = RunConversion.decomposeRun(ro_Run', graph = graph)
+            let run' = ReadWithCwl.run(ro_Run', graph = graph)
             Expect.sequenceEqual run'.CWLInput run.CWLInput "CWL inputs should match"
             Expect.equal run' run "Run should match"
         )
@@ -3346,7 +3392,7 @@ let tests_ArcRun =
                 )
             let ro_Run = RunConversion.composeRun run
             let graph = ro_Run.Flatten()
-            let run' = RunConversion.decomposeRun(ro_Run,graph)
+            let run' = ReadWithCwl.run(ro_Run,graph)
             Expect.equal run' run "Run should match"
         )
         testCase "WorkflowProtocolAsMainEntity" (fun () ->
@@ -3392,7 +3438,7 @@ let tests_ArcRun =
             Expect.isSome (Some dateCreated) "DateCreated should exist"
             
             // Test decomposition works with mainEntity
-            let run' = RunConversion.decomposeRun ro_Run
+            let run' = ReadWithCwl.run ro_Run
             Expect.equal run' run "Run should match after decomposition"
         )
         testCase "WorkflowProtocolAsMainEntity_Flattened" (fun () ->
@@ -3435,7 +3481,7 @@ let tests_ArcRun =
             Expect.isSome (Some dateCreated) "DateCreated should exist"
             
             // Test decomposition works with mainEntity and graph
-            let run' = RunConversion.decomposeRun(ro_Run, graph = graph)
+            let run' = ReadWithCwl.run(ro_Run, graph = graph)
             Expect.equal run' run "Run should match after decomposition with graph"
         )
         testCase "NestedFileArrayInput_Roundtrip" (fun () ->
@@ -3465,7 +3511,7 @@ let tests_ArcRun =
                 )
             let ro_Run = RunConversion.composeRun run
             let graph = ro_Run.Flatten()
-            let run' = RunConversion.decomposeRun(ro_Run, graph = graph)
+            let run' = ReadWithCwl.run(ro_Run, graph = graph)
             Expect.equal run'.Identifier run.Identifier "Run identifier should roundtrip."
             let expectedInput = Expect.wantExactlyOne run.CWLInput "Expected one source input."
             let actualInput = Expect.wantExactlyOne run'.CWLInput "Expected one roundtripped input."
@@ -3500,7 +3546,7 @@ let tests_ArcRun =
             Expect.isSome (graph.TryGetNode "./runs/DilutionSeries/quantalignresult/AlignmentBasedQuantificationParams.json") "The id of a file in the run folder has no . segment."
             Expect.isSome (graph.TryGetNode "./assays/A/dataset/table.csv") "The id of a file outside the run folder has no . or .. segment."
             let ro_Run = Expect.wantSome (graph.TryGetNode "./runs/DilutionSeries/") "The run is in the crate."
-            let run' = RunConversion.decomposeRun(ro_Run, graph = graph)
+            let run' = ReadWithCwl.run(ro_Run, graph = graph)
             let pathOf (key : string) =
                 run'.CWLInput
                 |> Seq.find (fun input -> input.Key = key)
@@ -3529,7 +3575,7 @@ let tests_ArcRun =
                 )
             let graph = (RunConversion.composeRun run).Flatten() |> JsonController.LDGraph.toROCrateJsonString() |> JsonController.LDGraph.fromROCrateJsonString
             Expect.isSome (graph.TryGetNode "https://example.org/data/p.json") "The id of the file is the URL."
-            let run' = RunConversion.decomposeRun(Expect.wantSome (graph.TryGetNode "./runs/R/") "The run is in the crate.", graph = graph)
+            let run' = ReadWithCwl.run(Expect.wantSome (graph.TryGetNode "./runs/R/") "The run is in the crate.", graph = graph)
             match (Seq.exactlyOne run'.CWLInput).Value with
             | Some (CWL.CWLParameterValue.File file) -> Expect.equal (CWL.FileInstance.pathOrLocation file) "https://example.org/data/p.json" "The value reads back as the URL."
             | other -> failwithf "Expected a File value but got %A" other
@@ -3539,11 +3585,14 @@ let tests_ArcRun =
             let input = CWL.DecodeParameters.decodeYAMLParameterFile "a:\n  class: File\n  location: file:///data/p.json\nb:\n  class: File\n  location: s3://bucket/x.csv\n"
             let run = ArcRun.create(identifier = "R", title = "t", description = "d", cwlDescription = tool, cwlInput = input)
             let arc = ARC("I", title = "T", description = "D", runs = ResizeArray [run])
-            let arc' = ARC.fromROCrateJsonString (arc.ToROCrateJsonString())
+            let json = arc.ToROCrateJsonString()
+            let arc' = ARC.fromROCrateJsonString json
             let paths = arc'.FileSystem.Tree.ToFilePaths()
-            Expect.isFalse (paths |> Array.exists (fun path -> path.Contains "p.json" || path.Contains "x.csv")) $"No URL becomes a file of the ARC, but the paths are %A{paths}."
+            Expect.equal (List.ofArray paths) [ "isa.investigation.xlsx"; "assays/.gitkeep"; "studies/.gitkeep"; "workflows/.gitkeep"; "runs/.gitkeep"; "runs/R/isa.run.xlsx"; "runs/R/README.md"; "runs/R/run.cwl" ] "The files of the ARC are the files of the crate, and the URLs of the job file add none."
+            let graph = JsonController.LDGraph.fromROCrateJsonString json
+            let run' = ReadWithCwl.run(Expect.wantSome (graph.TryGetNode "./runs/R/") "The run is in the crate.", graph = graph, ?context = graph.TryGetContext())
             let pathOf (key : string) =
-                match (arc'.Runs.[0].CWLInput |> Seq.find (fun input -> input.Key = key)).Value with
+                match (run'.CWLInput |> Seq.find (fun input -> input.Key = key)).Value with
                 | Some (CWL.CWLParameterValue.File file) -> CWL.FileInstance.pathOrLocation file
                 | other -> failwithf "Expected a File value for %s but got %A" key other
             Expect.equal (pathOf "a") "file:///data/p.json" "The file URI reads back as it is."
@@ -3572,7 +3621,7 @@ let tests_ArcRun =
                     cwlDescription = CWL.Workflow workflow,
                     cwlInput = CWL.DecodeParameters.decodeYAMLParameterFile "here:\n  class: Directory\n  location: .\n"
                 )
-            let run' = RunConversion.decomposeRun(RunConversion.composeRun run)
+            let run' = ReadWithCwl.run(RunConversion.composeRun run)
             match (Seq.exactlyOne run'.CWLInput).Value with
             | Some (CWL.CWLParameterValue.Directory directory) -> Expect.equal (CWL.DirectoryInstance.pathOrLocation directory) "." "The directory reads back as the run folder."
             | other -> failwithf "Expected a Directory value but got %A" other
@@ -3632,12 +3681,15 @@ let tests_ArcRun =
                 match (Seq.exactlyOne run.CWLInput).Value with
                 | Some (CWL.CWLParameterValue.Directory directory) -> CWL.DirectoryInstance.pathOrLocation directory
                 | other -> failwithf "Expected a Directory value but got %A" other
-            Expect.equal (directoryOf (RunConversion.decomposeRun(RunConversion.composeRun run))) "../../assays/MyAssay/dataset" "The Dataset reads back as the directory."
+            Expect.equal (directoryOf (ReadWithCwl.run(RunConversion.composeRun run))) "../../assays/MyAssay/dataset" "The Dataset reads back as the directory."
             let arc = ARC("I", title = "T", description = "D", runs = ResizeArray [run])
-            let arc' = ARC.fromROCrateJsonString (arc.ToROCrateJsonString())
+            let json = arc.ToROCrateJsonString()
+            let arc' = ARC.fromROCrateJsonString json
             let paths = arc'.FileSystem.Tree.ToFilePaths()
-            Expect.isFalse (paths |> Array.exists (fun path -> path.TrimEnd('/') = "assays/MyAssay/dataset")) $"The directory is no file of the ARC, but the paths are %A{paths}."
-            Expect.equal (directoryOf arc'.Runs.[0]) "../../assays/MyAssay/dataset" "The directory reads back from the crate of the ARC."
+            Expect.equal (List.ofArray paths) [ "isa.investigation.xlsx"; "assays/.gitkeep"; "studies/.gitkeep"; "workflows/.gitkeep"; "runs/.gitkeep"; "runs/MyRun/isa.run.xlsx"; "runs/MyRun/README.md"; "runs/MyRun/run.cwl" ] "The files of the ARC are the files of the crate, and the directory of the job file adds none."
+            let graph = JsonController.LDGraph.fromROCrateJsonString json
+            let run' = ReadWithCwl.run(Expect.wantSome (graph.TryGetNode "./runs/MyRun/") "The run is in the crate.", graph = graph, ?context = graph.TryGetContext())
+            Expect.equal (directoryOf run') "../../assays/MyAssay/dataset" "The directory reads back from the crate of the ARC."
         )
         testCase "DirectoryValues_TheRunFolderIsNoPartOfTheRun" (fun () ->
             let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  d: Directory\noutputs: []\n"
@@ -3648,12 +3700,14 @@ let tests_ArcRun =
             let graph = JsonController.LDGraph.fromROCrateJsonString json
             let runNode = Expect.wantSome (graph.TryGetNode "./runs/MyRun/") "The run is in the crate."
             let partIds = LDDataset.getHasParts(runNode, graph = graph, ?context = graph.TryGetContext()) |> Seq.map (fun part -> part.Id) |> List.ofSeq
-            Expect.isFalse (List.contains runNode.Id partIds) $"The run is no part of itself, but its parts are %A{partIds}."
+            Expect.equal partIds [ "./runs/MyRun/isa.run.xlsx"; "./runs/MyRun/README.md"; "./runs/MyRun/run.cwl"; "./runs/MyRun/run.yml" ] "The run lists the files of its folder, and its own folder is no part."
             let arc' = ARC.fromROCrateJsonString json
-            let run' = Expect.wantSome (arc'.Runs |> Seq.tryExactlyOne) "The run reads back."
-            Expect.equal run'.Identifier "MyRun" "The run keeps its identifier."
-            Expect.isSome run'.CWLDescription "The run keeps its CWL description."
-            match (Seq.exactlyOne run'.CWLInput).Value with
+            Expect.equal (arc'.Runs |> Seq.map (fun run -> run.Identifier) |> List.ofSeq) [ "MyRun" ] "The run reads back from the crate of the ARC."
+            let cwlDescription, cwlInput = ReadWithCwl.runCwl(runNode, graph = graph, ?context = graph.TryGetContext())
+            match cwlDescription with
+            | CWL.CommandLineTool readTool -> Expect.equal (CWL.CWLToolDescription.getInputValuesOrEmpty readTool |> Seq.map (fun input -> input.Name) |> List.ofSeq) [ "d" ] "The run keeps the input of its CWL description."
+            | other -> failwithf "Expected a tool but got %A" other
+            match (Seq.exactlyOne cwlInput).Value with
             | Some (CWL.CWLParameterValue.Directory directory) -> Expect.equal (CWL.DirectoryInstance.pathOrLocation directory) "." "The input d reads back as the run folder."
             | other -> failwithf "Expected a Directory value but got %A" other
         )
@@ -3688,7 +3742,7 @@ let tests_ArcRun =
             let fs = FileSystem.fromFilePaths [| "runs/MyRun/run.cwl"; "assays/MyAssay/dataset/a.txt" |]
             let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(run, fs, License(contentType = LicenseContentType.Fulltext, content = "MIT", path = "LICENSE")))
             let valueOf (key : string) =
-                let run' = RunConversion.decomposeRun(Expect.wantSome (graph.TryGetNode "./") "The crate has a root.", graph = graph, ?context = graph.TryGetContext())
+                let run' = ReadWithCwl.run(Expect.wantSome (graph.TryGetNode "./") "The crate has a root.", graph = graph, ?context = graph.TryGetContext())
                 run'.CWLInput |> Seq.tryFind (fun input -> input.Key = key) |> Option.bind (fun input -> input.Value)
             match valueOf "input_dir" with
             | Some (CWL.CWLParameterValue.Directory directory) -> Expect.equal (CWL.DirectoryInstance.pathOrLocation directory) "../../assays/MyAssay/dataset" "The Directory default is the value, relative to the run folder."
@@ -3703,11 +3757,12 @@ let tests_ArcRun =
             Expect.equal (LDDataset.getHasParts(dataset, graph = graph, ?context = graph.TryGetContext()) |> Seq.map (fun file -> file.Id) |> List.ofSeq) ["./assays/MyAssay/dataset/a.txt"] "The Dataset of the default lists its files."
         )
         testCase "Defaults_TheCrateOfTheArcKeepsTheJobFileAsWritten" (fun () ->
-            let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  n:\n    type: int\n    default: 3\noutputs: []\n"
-            let run = ArcRun.create(identifier = "MyRun", title = "t", description = "d", cwlDescription = tool, cwlInput = CWL.DecodeParameters.decodeYAMLParameterFile "")
+            let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  n:\n    type: int\n    default: 3\n  g: int\noutputs: []\n"
+            let run = ArcRun.create(identifier = "MyRun", title = "t", description = "d", cwlDescription = tool, cwlInput = CWL.DecodeParameters.decodeYAMLParameterFile "g: 5\n")
             let arc = ARC("I", title = "T", description = "D", runs = ResizeArray [run])
-            let arc' = ARC.fromROCrateJsonString (arc.ToROCrateJsonString())
-            Expect.isEmpty arc'.Runs.[0].CWLInput "The default of the CWL file is no input of the job file."
+            let graph = JsonController.LDGraph.fromROCrateJsonString (arc.ToROCrateJsonString())
+            let run' = ReadWithCwl.run(Expect.wantSome (graph.TryGetNode "./runs/MyRun/") "The run is in the crate.", graph = graph, ?context = graph.TryGetContext())
+            Expect.equal (run'.CWLInput |> Seq.map (fun input -> input.Key) |> List.ofSeq) [ "g" ] "The job file has the value g, and the default of n is no value of it."
         )
         testCase "Defaults_ANullValueTakesTheDefaultInTheRunCrate" (fun () ->
             let run = create_run_full()
@@ -3715,7 +3770,7 @@ let tests_ArcRun =
             run.CWLInput <- CWL.DecodeParameters.decodeYAMLParameterFile "n: null\n"
             let fs = FileSystem.fromFilePaths [| "runs/MyRun/run.cwl" |]
             let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(run, fs, License(contentType = LicenseContentType.Fulltext, content = "MIT", path = "LICENSE")))
-            let run' = RunConversion.decomposeRun(Expect.wantSome (graph.TryGetNode "./") "The crate has a root.", graph = graph, ?context = graph.TryGetContext())
+            let run' = ReadWithCwl.run(Expect.wantSome (graph.TryGetNode "./") "The crate has a root.", graph = graph, ?context = graph.TryGetContext())
             let value = (run'.CWLInput |> Seq.find (fun input -> input.Key = "n")).Value
             Expect.equal value (Some (CWL.CWLParameterValue.Int 3L)) "The null value takes the default."
         )
@@ -3903,7 +3958,7 @@ let tests_ArcRun =
                     |> Seq.toList
                 inputSignatures, outputSignatures
 
-            let run' = RunConversion.decomposeRun(ro_Run, graph = graph)
+            let run' = ReadWithCwl.run(ro_Run, graph = graph)
             let parsedRunWorkflow =
                 let parsedRunWorkflowOpt =
                     match run'.CWLDescription with
@@ -4475,7 +4530,7 @@ let tests_Investigation =
                 runs = ResizeArray [run]
                 )
             let ro_Investigation = InvestigationConversion.composeInvestigation p
-            let p' = InvestigationConversion.decomposeInvestigation ro_Investigation
+            let p' = ReadWithCwl.investigation ro_Investigation
             Expect.isSome p'.PublicReleaseDate "PublicReleaseDate default value should be set"
             p'.PublicReleaseDate <- None // As a default value is used otherwise
             Expect.equal p' p "Investigation should match"
@@ -4500,7 +4555,7 @@ let tests_Investigation =
             let datasetRef = Expect.wantSome (ro_Investigation.TryGetPropertyAsSingleton(LDDataset.hasPart)) "Investigation should still have sub datasets"
             Expect.isTrue (datasetRef :? LDRef) "Investigation should be flattened correctly"
             //
-            let p' = InvestigationConversion.decomposeInvestigation(ro_Investigation, graph = graph)
+            let p' = ReadWithCwl.investigation(ro_Investigation, graph = graph)
             Expect.isSome p'.PublicReleaseDate "PublicReleaseDate default value should be set"
             p'.PublicReleaseDate <- None // As a default value is used otherwise
             Expect.equal p' p "Investigation should match"
