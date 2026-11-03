@@ -18,8 +18,8 @@ type RunConversion =
     /// File paths in CWL files are relative to the file itself. In RO-Crate, we use relative paths from the root of the crate.
     ///
     /// This function replaces the relative paths in the CWL input file with paths relative to the root of the crate.
-    /// The path is joined to the run folder, and its "." and ".." segments are resolved. A path with a URI scheme is a URL
-    /// and stays as it is.
+    /// The path is joined to the run folder, and its "." and ".." segments are resolved. A path that names the root of
+    /// the ARC is ".". A path with a URI scheme is a URL and stays as it is.
     static member composeCWLInputFilePath (path : string, runName : string) =
         if ArcPathHelper.hasUriScheme path then
             path
@@ -79,7 +79,12 @@ type RunConversion =
                 directory
                 |> CWL.DirectoryInstance.pathOrLocation
                 |> fun path -> RunConversion.composeCWLInputFilePath(path, runName)
-            RunConversion.composeDirectoryDataset(path, ?fs = fs, ?context = context) :> obj
+            // The root of the ARC is the root of the crate, so the value refers to it. A Dataset for it would merge its
+            // parts into the root.
+            if path = "." then
+                LDRef(LDDataset.genIDInvesigation()) :> obj
+            else
+                RunConversion.composeDirectoryDataset(path, ?fs = fs, ?context = context) :> obj
         | CWL.CWLParameterValue.Array values ->
             values
             |> ResizeArray.map (fun value -> RunConversion.composeCWLParameterValue(value, runName, ?context = context, ?fs = fs))
@@ -196,6 +201,9 @@ type RunConversion =
                 let path = RunConversion.decomposeCWLInputFilePath(node.Id, runName)
                 let format = LDFile.tryGetEncodingFormatAsString node |> Option.map CWL.SchemaSaladString.Literal
                 CWL.CWLParameterValue.File (CWL.FileInstance(path = CWL.SchemaSaladString.Literal path, ?format = format))
+            | :? LDRef as reference ->
+                let path = RunConversion.decomposeCWLInputFilePath(reference.Id, runName)
+                CWL.CWLParameterValue.File (CWL.FileInstance(path = CWL.SchemaSaladString.Literal path))
             | :? string as path ->
                 let path = RunConversion.decomposeCWLInputFilePath(path, runName)
                 CWL.CWLParameterValue.File (CWL.FileInstance(path = CWL.SchemaSaladString.Literal path))
@@ -204,6 +212,9 @@ type RunConversion =
             match value with
             | :? LDNode as node when isDirectory node || LDFile.validate(node) ->
                 let path = RunConversion.decomposeCWLInputFilePath(node.Id, runName)
+                CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = CWL.SchemaSaladString.Literal path))
+            | :? LDRef as reference ->
+                let path = RunConversion.decomposeCWLInputFilePath(reference.Id, runName)
                 CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = CWL.SchemaSaladString.Literal path))
             | :? string as path ->
                 let path = RunConversion.decomposeCWLInputFilePath(path, runName)

@@ -3332,6 +3332,20 @@ let tests_ArcWorkflow =
         )
     ]
 
+/// The id of the value of the job parameter arcPath in a crate.
+let private arcPathValueId (graph : LDGraph) =
+    let context = graph.TryGetContext()
+    let parameter =
+        graph.Nodes
+        |> Seq.find (fun node -> LDPropertyValue.validateCWLParameter(node, ?context = context) && LDPropertyValue.tryGetNameAsString(node, ?context = context) = Some "arcPath")
+    match LDPropertyValue.getValueObject(parameter, ?context = context) with
+    | :? LDRef as reference -> reference.Id
+    | other -> failwithf "Expected a reference but got %A" other
+
+/// The ids of the parts of an entity in a crate.
+let private partIds (graph : LDGraph) (entity : LDNode) =
+    LDDataset.getHasParts(entity, graph = graph, ?context = graph.TryGetContext()) |> Seq.map (fun part -> part.Id) |> List.ofSeq
+
 let tests_ArcRun =
     testList "Run" [
         testCase "Full_FromScaffold" (fun () ->
@@ -3725,6 +3739,53 @@ let tests_ArcRun =
             Expect.isTrue (LDDataset.validate(folder, ?context = context)) "The run folder is a Dataset."
             let folderParts = LDDataset.getHasParts(folder, graph = graph, ?context = context) |> Seq.map (fun part -> part.Id) |> List.ofSeq
             Expect.isTrue (List.contains "./runs/MyRun/x.txt" folderParts) $"The run folder lists its file, but its parts are %A{folderParts}."
+        )
+        testCase "DirectoryValues_TheRootOfTheArcIsTheRootOfTheArcCrate" (fun () ->
+            for path in [ "../../"; "../.." ] do
+                let run = create_run_full()
+                run.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  arcPath: Directory\noutputs: []\n")
+                run.CWLInput <- CWL.DecodeParameters.decodeYAMLParameterFile $"arcPath:\n  class: Directory\n  path: {path}\n"
+                let arc = ARC("I", title = "T", description = "D", runs = ResizeArray [run])
+                let graph = JsonController.LDGraph.fromROCrateJsonString (arc.ToROCrateJsonString())
+                let context = graph.TryGetContext()
+                Expect.equal (arcPathValueId graph) "./" $"The value of the path {path} names the root of the crate"
+                let root = Expect.wantSome (graph.TryGetNode "./") "The crate has a root."
+                Expect.isTrue (LDDataset.validate(root, ?context = context)) "The root is a Dataset."
+                Expect.equal (LDDataset.tryGetNameAsString(root, ?context = context)) (Some "T") "The root keeps its name."
+                Expect.equal (partIds graph root) [ "./runs/MyRun/" ] "The root lists the run folder."
+                let runFolder = Expect.wantSome (graph.TryGetNode "./runs/MyRun/") "The run folder is an entity."
+                Expect.equal (partIds graph runFolder) [ "./runs/MyRun/run.cwl" ] "The run folder lists its CWL file."
+        )
+        testCase "DirectoryValues_TheRootOfTheArcIsTheRootOfTheRunCrate" (fun () ->
+            for path in [ "../../"; "../.." ] do
+                let run = create_run_full()
+                run.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  arcPath: Directory\noutputs: []\n")
+                run.CWLInput <- CWL.DecodeParameters.decodeYAMLParameterFile $"arcPath:\n  class: Directory\n  path: {path}\n"
+                let fs = FileSystem.fromFilePaths [| "runs/MyRun/run.cwl"; "runs/MyRun/x.txt"; "assays/MyAssay/dataset/a.txt" |]
+                let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(run, fs, License(contentType = LicenseContentType.Fulltext, content = "MIT", path = "LICENSE")))
+                let context = graph.TryGetContext()
+                Expect.equal (arcPathValueId graph) "./" $"The value of the path {path} names the root of the crate"
+                let root = Expect.wantSome (graph.TryGetNode "./") "The crate has a root."
+                Expect.isTrue (LDDataset.validate(root, ?context = context)) "The root is a Dataset."
+                Expect.equal (LDDataset.tryGetNameAsString(root, ?context = context)) (Some "My Run Title") "The root keeps its name."
+                Expect.equal (partIds graph root) [ "./runs/MyRun/run.cwl" ] "The root lists the CWL file of the run."
+        )
+        testCase "DirectoryValues_TheRootOfTheArcReadsBackWithAndWithoutAGraph" (fun () ->
+            let directoryOf (cwlInput : ResizeArray<CWL.CWLParameterReference>) =
+                match (Seq.exactlyOne cwlInput).Value with
+                | Some (CWL.CWLParameterValue.Directory directory) -> CWL.DirectoryInstance.pathOrLocation directory
+                | other -> failwithf "Expected a Directory value but got %A" other
+            for path in [ "../../"; "../.." ] do
+                let run = create_run_full()
+                run.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  arcPath: Directory\noutputs: []\n")
+                run.CWLInput <- CWL.DecodeParameters.decodeYAMLParameterFile $"arcPath:\n  class: Directory\n  path: {path}\n"
+                let _, cwlInputWithoutGraph = ReadWithCwl.runCwl(RunConversion.composeRun run)
+                Expect.equal (directoryOf cwlInputWithoutGraph) "../../" $"The root of the crate reads back as the folder two levels above the run without a graph (path {path})."
+                let fs = FileSystem.fromFilePaths [| "runs/MyRun/run.cwl" |]
+                let graph = JsonController.LDGraph.fromROCrateJsonString (ARCtrl.Json.ARC.ROCrate.writeRunAsCrate(run, fs, License(contentType = LicenseContentType.Fulltext, content = "MIT", path = "LICENSE")))
+                let root = Expect.wantSome (graph.TryGetNode "./") "The crate has a root."
+                let _, cwlInputWithGraph = ReadWithCwl.runCwl(root, graph = graph, ?context = graph.TryGetContext())
+                Expect.equal (directoryOf cwlInputWithGraph) "../../" $"The root of the crate reads back as the folder two levels above the run with a graph (path {path})."
         )
         testCase "DirectoryValues_TheFolderOfAnotherRunLeavesBothRunsReadable" (fun () ->
             let runA = ArcRun.create(identifier = "A", title = "t", description = "d", cwlDescription = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  n: int\noutputs: []\n", cwlInput = CWL.DecodeParameters.decodeYAMLParameterFile "n: 1\n")

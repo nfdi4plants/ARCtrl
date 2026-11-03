@@ -130,8 +130,9 @@ let normalizeSegments (segments: string []) : string [] =
     resolved.ToArray()
 
 /// Normalize a path by resolving "." and ".." segments.
-/// Note: If normalization yields no segments, the trimmed original path is returned
-/// to preserve relative markers used by existing callers (e.g. "." or "./").
+/// Note: A path without segments, such as "." or "./", keeps its trimmed form so that the relative markers used by
+/// existing callers survive. If ".." segments cancel every segment, the path names the directory it starts from and
+/// the result is ".".
 let normalize (path: string) : string =
     let trimmedPath = path.Trim()
     let prefixOpt, pathSegments = splitWithPrefix trimmedPath
@@ -141,6 +142,7 @@ let normalize (path: string) : string =
     if normalizedSegments.Length = 0 then
         match prefixOpt with
         | Some prefix -> normalizeRootPrefix prefix
+        | None when pathSegments.Length > 0 -> "."
         | None -> trimmedPath
     else
         buildPathFromPrefixAndSegments prefixOpt normalizedSegments

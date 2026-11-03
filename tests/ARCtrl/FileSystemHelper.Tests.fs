@@ -268,6 +268,14 @@ let resolvePathFromFileTests =
             Expect.equal resolved "/tmp/tool.cwl" ""
         testCase "normalize preserves linux absolute root" <| fun _ ->
             Expect.equal (ArcPathHelper.normalize "/home/runner/work") "/home/runner/work" ""
+        testCase "normalize gives . when the .. segments cancel every segment" <| fun _ ->
+            Expect.equal (ArcPathHelper.normalize "a/..") "." "A segment and its parent leave the starting directory."
+            Expect.equal (ArcPathHelper.normalize "runs/R/../../") "." "Two segments and two parents leave the starting directory."
+        testCase "normalize keeps the .. segments that leave the path" <| fun _ ->
+            Expect.equal (ArcPathHelper.normalize "runs/R/../../..") ".." "The third parent stays."
+            Expect.equal (ArcPathHelper.normalize "a/../../b") "../b" "The parent of the starting directory stays in front of b."
+        testCase "normalize keeps the marker of the current directory" <| fun _ ->
+            Expect.equal (ArcPathHelper.normalize "./") "./" "A path without segments keeps its trimmed form."
     ]
 
 let main = 
