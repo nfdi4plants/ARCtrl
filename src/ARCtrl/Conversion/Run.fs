@@ -323,10 +323,8 @@ type RunConversion =
             failwithf "Input value %s of run %s is neither a CWL File nor a CWL Parameter." inputValue.Id runName
 
 
-    /// The invocations of a run. With useDefaults, an input without a value or with a null value in the job file takes its CWL
-    /// default, because the run crate shows the values a run runs with and the ARC crate keeps the job file as written.
-    static member composeWorkflowInvocationFromArcRun (run : ArcRun, ?fs : FileSystem, ?useDefaults : bool) =
-        let useDefaults = defaultArg useDefaults false
+    /// The invocations of a run. An input without a value or with a null value in the job file takes its CWL default.
+    static member composeWorkflowInvocationFromArcRun (run : ArcRun, ?fs : FileSystem) =
         let workflowProtocol =
             let workflowFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
             match run.CWLDescription with
@@ -352,12 +350,12 @@ type RunConversion =
                     | Some CWL.CWLParameterValue.Null -> false
                     | Some _ -> true
                 let paramRef =
-                    if useDefaults && not hasValue then
+                    if hasValue then
+                        given
+                    else
                         i.DefaultValue
                         |> Option.map (fun defaultValue -> CWL.CWLParameterReference(key = name, value = CWL.DecodeParameters.decodeParameterValue defaultValue.Node))
                         |> Option.orElse given
-                    else
-                        given
                 match paramRef with
                 | Some pr ->
                     RunConversion.composeCWLInputValue(pr, exampleOfWork = ldI, inputParam = i, runName = run.Identifier, ?fs = fs)
@@ -441,11 +439,10 @@ type RunConversion =
         entities
 
     /// The dataset of a run. Its workflow is created at the given time, in UTC, and now when none is given. A time of kind
-    /// Unspecified counts as local time, as in .NET. With useDefaults, an input without a value or with a null value in
-    /// the job file takes its CWL default, because the run crate shows the values a run runs with and the ARC crate keeps
-    /// the job file as written. With a file system, the local files that the CWL file of the run needs are parts of the
-    /// dataset. When the run is the root of its crate, its folder is a part like any other folder.
-    static member composeRun (run : ArcRun, ?fs : FileSystem, ?dateCreated : System.DateTime, ?useDefaults : bool, ?isCrateRoot : bool) =
+    /// Unspecified counts as local time, as in .NET. An input without a value or with a null value in the job file takes
+    /// its CWL default. With a file system, the local files that the CWL file of the run needs are parts of the dataset.
+    /// When the run is the root of its crate, its folder is a part like any other folder.
+    static member composeRun (run : ArcRun, ?fs : FileSystem, ?dateCreated : System.DateTime, ?isCrateRoot : bool) =
         let isCrateRoot = defaultArg isCrateRoot false
         BaseTypes.warnIfTitleEmpty("Run", run.Identifier, run.Title)
         let workflowFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
@@ -454,7 +451,7 @@ type RunConversion =
             | Some pu -> WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(workflowFilePath, pu, runName = run.Identifier)
             | None -> failwithf "Run %s must have a CWL description" run.Identifier
         let workflowInvocations =
-            RunConversion.composeWorkflowInvocationFromArcRun(run, ?fs = fs, ?useDefaults = useDefaults)
+            RunConversion.composeWorkflowInvocationFromArcRun(run, ?fs = fs)
             |> Option.fromSeq
         let measurementMethod = run.TechnologyType |> Option.map BaseTypes.composeDefinedTerm
         let measurementTechnique = run.TechnologyPlatform |> Option.map BaseTypes.composeDefinedTerm

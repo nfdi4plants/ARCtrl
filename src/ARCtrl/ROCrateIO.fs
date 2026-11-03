@@ -133,7 +133,7 @@ module ARC =
         /// same crate. A time of kind Unspecified counts as local time, as in .NET.
         static member writeRunAsCrate(arcRun:ArcRun, fileSystem: FileSystem, license : License, ?timestamp : System.DateTime) =
             let timestamp = ROCrate.utcTimestamp timestamp
-            let runDataset = RunConversion.composeRun(arcRun, fs = fileSystem, dateCreated = timestamp, useDefaults = true, isCrateRoot = true)
+            let runDataset = RunConversion.composeRun(arcRun, fs = fileSystem, dateCreated = timestamp, isCrateRoot = true)
             
             // Validate required dataset properties
             let requiredDatasetProperties = [

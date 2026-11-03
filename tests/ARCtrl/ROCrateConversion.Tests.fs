@@ -3817,13 +3817,14 @@ let tests_ArcRun =
             let dataset = Expect.wantSome (graph.TryGetNode "./assays/MyAssay/dataset/") "The directory of the default is in the crate."
             Expect.equal (LDDataset.getHasParts(dataset, graph = graph, ?context = graph.TryGetContext()) |> Seq.map (fun file -> file.Id) |> List.ofSeq) ["./assays/MyAssay/dataset/a.txt"] "The Dataset of the default lists its files."
         )
-        testCase "Defaults_TheCrateOfTheArcKeepsTheJobFileAsWritten" (fun () ->
-            let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  n:\n    type: int\n    default: 3\n  g: int\noutputs: []\n"
+        testCase "Defaults_TheCrateOfTheArcTakesTheDefaultOfTheCWLFile" (fun () ->
+            let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  g: int\n  n:\n    type: int\n    default: 3\noutputs: []\n"
             let run = ArcRun.create(identifier = "MyRun", title = "t", description = "d", cwlDescription = tool, cwlInput = CWL.DecodeParameters.decodeYAMLParameterFile "g: 5\n")
             let arc = ARC("I", title = "T", description = "D", runs = ResizeArray [run])
             let graph = JsonController.LDGraph.fromROCrateJsonString (arc.ToROCrateJsonString())
             let run' = ReadWithCwl.run(Expect.wantSome (graph.TryGetNode "./runs/MyRun/") "The run is in the crate.", graph = graph, ?context = graph.TryGetContext())
-            Expect.equal (run'.CWLInput |> Seq.map (fun input -> input.Key) |> List.ofSeq) [ "g" ] "The job file has the value g, and the default of n is no value of it."
+            Expect.equal (run'.CWLInput |> Seq.map (fun input -> input.Key) |> List.ofSeq) [ "g"; "n" ] "The job file has the value g, and n takes its default."
+            Expect.equal (run'.CWLInput |> Seq.find (fun input -> input.Key = "n")).Value (Some (CWL.CWLParameterValue.Int 3L)) "The default of n is its value."
         )
         testCase "Defaults_ANullValueTakesTheDefaultInTheRunCrate" (fun () ->
             let run = create_run_full()
@@ -3839,10 +3840,9 @@ let tests_ArcRun =
             let run = create_run_full()
             run.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  r: File\noutputs: []\n")
             run.CWLInput <- ResizeArray()
-            for useDefaults in [ false; true ] do
-                match (try RunConversion.composeRun(run, useDefaults = useDefaults) |> ignore; None with e -> Some e.Message) with
-                | Some message -> Expect.stringContains message "Workflow parameter \"r\" had no assigned value" $"The error names the input (useDefaults = {useDefaults})."
-                | None -> failwith $"A required input needs a value of the job file or a default (useDefaults = {useDefaults})."
+            match (try RunConversion.composeRun(run) |> ignore; None with e -> Some e.Message) with
+            | Some message -> Expect.stringContains message "Workflow parameter \"r\" had no assigned value" "The error names the input."
+            | None -> failwith "A required input needs a value of the job file or a default."
         )
         testCase "TypeCheck_AValueOfTheJobFileHasToFitTheTypeOfItsInput" (fun () ->
             let compose (inputs : string) (yml : string) =
