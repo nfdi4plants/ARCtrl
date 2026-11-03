@@ -21,6 +21,7 @@
     <Compile Include="TestObjects.CWL\Metadata.fs" />
     <Compile Include="TestObjects.ROCrate\ArcPrototype_ed123499.fs" />
     <Compile Include="TestObjects.ROCrate\ArcPrototype_ed123499_deprecated.fs" />
+    <Compile Include="TestObjects.ROCrate\ArcWithWorkflowAndRun_a472772c.fs" />
     <Compile Include="TestObjects.Json\Study.fs" />
     <Compile Include="TestObjects.Json\ROCrate.fs" />
     <Content Include="TestObjects.Json\MinimalJson.json" />

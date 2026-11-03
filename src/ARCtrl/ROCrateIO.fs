@@ -128,28 +128,12 @@ module ARC =
             graph.Compact_InPlace()
             graph
 
-        /// Adds the local files that the CWL file of a workflow or a run needs to the parts of its dataset, as File
-        /// entities, so that the crate holds every file that its main workflow reads. A file that is a part already stays
-        /// one part.
-        static member private addReferencedFiles (dataset : LDNode, cwlFilePath : string, processingUnit : CWL.CWLProcessingUnit, fileSystem : FileSystem) =
-            let parts = LDDataset.getHasParts(dataset)
-            let partPaths = System.Collections.Generic.HashSet<string>()
-            for part in parts do
-                partPaths.Add(ArcPathHelper.normalize part.Id) |> ignore
-            let files =
-                WorkflowConversion.getReferencedFilePaths(cwlFilePath, processingUnit, fileSystem)
-                |> ResizeArray.filter (fun path -> not (partPaths.Contains path))
-                |> ResizeArray.map (fun path -> LDFile.create(name = path))
-            if files.Count > 0 then
-                LDDataset.setHasParts(dataset, ResizeArray.append parts files)
-
         /// Writes a run as a Workflow Run Crate. A license is required. The crate and its workflow are created and the crate
         /// is published at the given time, and now when none is given. The dates are in UTC, so the same time gives the
         /// same crate. A time of kind Unspecified counts as local time, as in .NET.
         static member writeRunAsCrate(arcRun:ArcRun, fileSystem: FileSystem, license : License, ?timestamp : System.DateTime) =
             let timestamp = ROCrate.utcTimestamp timestamp
             let runDataset = RunConversion.composeRun(arcRun, fs = fileSystem, dateCreated = timestamp, useDefaults = true, isCrateRoot = true)
-            ROCrate.addReferencedFiles(runDataset, Identifier.Run.cwlFileNameFromIdentifier arcRun.Identifier, arcRun.CWLDescription.Value, fileSystem)
             
             // Validate required dataset properties
             let requiredDatasetProperties = [
@@ -207,7 +191,6 @@ module ARC =
         static member writeWorkflowAsCrate(arcWorkflow:ArcWorkflow, fileSystem: FileSystem, license : License, ?timestamp : System.DateTime) =
             let timestamp = ROCrate.utcTimestamp timestamp
             let workflowDataset = WorkflowConversion.composeWorkflow(arcWorkflow, fs = fileSystem, dateCreated = timestamp)
-            ROCrate.addReferencedFiles(workflowDataset, Identifier.Workflow.cwlFileNameFromIdentifier arcWorkflow.Identifier, arcWorkflow.CWLDescription.Value, fileSystem)
             
             // Validate required dataset properties
             let requiredDatasetProperties = [

@@ -4262,6 +4262,66 @@ let tests_WorkflowCrate =
                 Expect.isTrue (List.contains id ids) $"The run crate holds {id}."
             Expect.equal (ids |> List.distinct |> List.length) ids.Length "Each part is listed once."
         )
+        testCase "ReferencedFiles_TheCrateOfTheArcListsTheStepFilesOfAWorkflow" (fun () ->
+            let workflow = create_workflow_full()
+            workflow.CWLDescription <-
+                WorkflowCrate.resolve "workflows/MyWorkflow/workflow.cwl" [
+                    "workflows/MyWorkflow/workflow.cwl", WorkflowCrate.workflowText
+                    "workflows/MyWorkflow/tool.cwl", WorkflowCrate.toolText
+                ]
+                |> Some
+            let arc = ARC("I", title = "T", description = "D", workflows = ResizeArray [workflow], fs = WorkflowCrate.fileSystemOf ["workflows/MyWorkflow/tool.cwl"])
+            let graph = JsonController.LDGraph.fromROCrateJsonString (arc.ToROCrateJsonString())
+            let dataset = Expect.wantSome (graph.TryGetNode "./workflows/MyWorkflow/") "The workflow is in the crate."
+            Expect.sequenceEqual (partIds graph dataset) ["./workflows/MyWorkflow/workflow.cwl"; "./workflows/MyWorkflow/tool.cwl"] "The workflow lists its CWL file and the file that its step runs, and no file that is missing."
+        )
+        testCase "ReferencedFiles_TheCrateOfTheArcListsTheWorkflowOfARunAndItsFiles" (fun () ->
+            let run =
+                ArcRun.create(
+                    identifier = "MyRun",
+                    title = "t",
+                    description = "d",
+                    cwlDescription =
+                        WorkflowCrate.resolve "runs/MyRun/run.cwl" [
+                            "runs/MyRun/run.cwl", WorkflowCrate.runText
+                            "workflows/W/workflow.cwl", WorkflowCrate.workflowText
+                            "workflows/W/tool.cwl", WorkflowCrate.toolText
+                        ]
+                )
+            let fs = WorkflowCrate.fileSystemOf ["workflows/W/workflow.cwl"; "workflows/W/tool.cwl"; "workflows/W/Dockerfile"; "workflows/W/types.yml"]
+            let arc = ARC("I", title = "T", description = "D", runs = ResizeArray [run], fs = fs)
+            let graph = JsonController.LDGraph.fromROCrateJsonString (arc.ToROCrateJsonString())
+            let dataset = Expect.wantSome (graph.TryGetNode "./runs/MyRun/") "The run is in the crate."
+            Expect.sequenceEqual (partIds graph dataset) ["./runs/MyRun/run.cwl"; "./workflows/W/workflow.cwl"; "./workflows/W/Dockerfile"; "./workflows/W/tool.cwl"; "./workflows/W/types.yml"] "The run lists its CWL file once, the workflow that it runs and every file of the workflow."
+        )
+        testCase "ReferencedFiles_TheCrateOfTheArcListsTheFilesOnceForAWorkflowAndItsRun" (fun () ->
+            let files = [
+                "runs/R/run.cwl", WorkflowCrate.runText
+                "workflows/W/workflow.cwl", WorkflowCrate.workflowText
+                "workflows/W/tool.cwl", WorkflowCrate.toolText
+            ]
+            let workflow = ArcWorkflow.create(identifier = "W", title = "t", description = "d", cwlDescription = WorkflowCrate.resolve "workflows/W/workflow.cwl" files)
+            let run = ArcRun.create(identifier = "R", title = "t", description = "d", cwlDescription = WorkflowCrate.resolve "runs/R/run.cwl" files)
+            let fs = WorkflowCrate.fileSystemOf ["workflows/W/workflow.cwl"; "workflows/W/tool.cwl"; "workflows/W/Dockerfile"; "workflows/W/types.yml"]
+            let arc = ARC("I", title = "T", description = "D", workflows = ResizeArray [workflow], runs = ResizeArray [run], fs = fs)
+            let graph = JsonController.LDGraph.fromROCrateJsonString (arc.ToROCrateJsonString())
+            let partsOf (id : string) = partIds graph (Expect.wantSome (graph.TryGetNode id) $"The crate has {id}.")
+            Expect.equal (partsOf "./workflows/W/") ["./workflows/W/workflow.cwl"; "./workflows/W/Dockerfile"; "./workflows/W/tool.cwl"; "./workflows/W/types.yml"] "The workflow lists its CWL file and the files that it needs."
+            Expect.equal (partsOf "./runs/R/") ["./runs/R/run.cwl"; "./workflows/W/workflow.cwl"; "./workflows/W/Dockerfile"; "./workflows/W/tool.cwl"; "./workflows/W/types.yml"] "The run lists its CWL file, the workflow that it runs and the files of the workflow."
+            let main = Expect.wantSome (graph.TryGetNode "./workflows/W/workflow.cwl") "The CWL file of the workflow is one entity in the crate."
+            Expect.equal (List.ofSeq main.SchemaType) ["File"; "ComputationalWorkflow"; "SoftwareSourceCode"; "LabProtocol"] "The entity of the workflow keeps its types when the run lists it as a file."
+            Expect.equal (LDFile.tryGetNameAsString(main, ?context = graph.TryGetContext())) (Some "./workflows/W/workflow.cwl") "The entity has the name of the file once."
+        )
+        testCase "OldCrate_AnArcCrateWithoutTheReferencedFilesReadsBack" (fun () ->
+            let arc = ARC.fromROCrateJsonString TestObjects.ROCrate.ArcWithWorkflowAndRun.a472772c
+            Expect.sequenceEqual (arc.Workflows |> Seq.map (fun workflow -> workflow.Identifier)) ["W"] "The crate of an older version reads back its workflow."
+            Expect.sequenceEqual (arc.Runs |> Seq.map (fun run -> run.Identifier)) ["R"] "The crate of an older version reads back its run."
+            let workflow = Seq.exactlyOne arc.Workflows
+            Expect.equal (workflow.Title, workflow.Description) (Some "Old Workflow", Some "A workflow of an old crate") "The workflow keeps its title and description."
+            let run = Seq.exactlyOne arc.Runs
+            Expect.equal (run.Title, run.Description) (Some "Old Run", Some "A run of an old crate") "The run keeps its title and description."
+            Expect.equal (List.ofArray (arc.FileSystem.Tree.ToFilePaths())) ["isa.investigation.xlsx"; "assays/.gitkeep"; "assays/A/dataset"; "studies/.gitkeep"; "workflows/.gitkeep"; "workflows/W/isa.workflow.xlsx"; "workflows/W/README.md"; "workflows/W/workflow.cwl"; "runs/.gitkeep"; "runs/R/isa.run.xlsx"; "runs/R/README.md"; "runs/R/run.cwl"] "The file system holds the files of the crate and the files of the ARC objects."
+        )
         testCase "Crates_TheTimestampPinsEveryDateInUTC" (fun () ->
             let date = System.DateTime(2026, 1, 2, 3, 4, 5, System.DateTimeKind.Utc)
             let workflowJson = ARCtrl.Json.ARC.ROCrate.writeWorkflowAsCrate(create_workflow_full(), WorkflowCrate.fileSystemOf [], WorkflowCrate.license, timestamp = date)

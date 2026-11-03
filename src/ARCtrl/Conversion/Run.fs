@@ -443,12 +443,13 @@ type RunConversion =
     /// The dataset of a run. Its workflow is created at the given time, in UTC, and now when none is given. A time of kind
     /// Unspecified counts as local time, as in .NET. With useDefaults, an input without a value or with a null value in
     /// the job file takes its CWL default, because the run crate shows the values a run runs with and the ARC crate keeps
-    /// the job file as written. When the run is the root of its crate, its folder is a part like any other folder.
+    /// the job file as written. With a file system, the local files that the CWL file of the run needs are parts of the
+    /// dataset. When the run is the root of its crate, its folder is a part like any other folder.
     static member composeRun (run : ArcRun, ?fs : FileSystem, ?dateCreated : System.DateTime, ?useDefaults : bool, ?isCrateRoot : bool) =
         let isCrateRoot = defaultArg isCrateRoot false
         BaseTypes.warnIfTitleEmpty("Run", run.Identifier, run.Title)
+        let workflowFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
         let workflowProtocol =
-            let workflowFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
             match run.CWLDescription with
             | Some pu -> WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(workflowFilePath, pu, runName = run.Identifier)
             | None -> failwithf "Run %s must have a CWL description" run.Identifier
@@ -486,12 +487,16 @@ type RunConversion =
             workflowInvocations
             |> Option.map (fun invocations -> RunConversion.getDataEntitiesOfParameterValues(invocations, knownIds))
             |> Option.defaultValue (ResizeArray())
-        let hasParts =
+        let ownParts =
             match dataFiles with
             | Some df -> ResizeArray.appendSingleton workflowProtocol df
             | None -> ResizeArray.singleton workflowProtocol
             |> fun parts -> ResizeArray.append parts parameterValueData
-            |> Some
+        let referencedFiles =
+            fs
+            |> Option.map (fun fs -> WorkflowConversion.composeReferencedFiles(workflowFilePath, run.CWLDescription.Value, fs, ownParts))
+            |> Option.defaultValue (ResizeArray())
+        let hasParts = ResizeArray.append ownParts referencedFiles |> Some
         let variableMeasureds =
             match variableMeasured, fragmentDescriptors with
             | Some vm, Some fds -> ResizeArray.appendSingleton vm fds |> Some

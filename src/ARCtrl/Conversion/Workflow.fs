@@ -412,6 +412,17 @@ type WorkflowConversion =
         visit mainPath processingUnit
         paths
 
+    /// The File entities of the local files that a CWL file needs, which the dataset of its workflow or run holds as
+    /// parts. A file that is one of the given parts of the dataset is left out, so it stays one part. The files come in
+    /// the order of getReferencedFilePaths.
+    static member internal composeReferencedFiles (cwlFilePath: string, processingUnit: CWL.CWLProcessingUnit, fs: FileSystem, parts: seq<LDNode>) : ResizeArray<LDNode> =
+        let partPaths = System.Collections.Generic.HashSet<string>()
+        for part in parts do
+            partPaths.Add(ArcPathHelper.normalize part.Id) |> ignore
+        WorkflowConversion.getReferencedFilePaths(cwlFilePath, processingUnit, fs)
+        |> ResizeArray.filter (fun path -> not (partPaths.Contains path))
+        |> ResizeArray.map (fun path -> LDFile.create(name = path))
+
     static member composeWorkflowProtocolFromToolDescription (filePath : string, workflow : CWL.CWLToolDescription, ?workflowName : string, ?runName : string) =
         let inputs =
             workflow.Inputs
@@ -677,11 +688,12 @@ type WorkflowConversion =
             |> CWL.CommandLineTool              
 
     /// The dataset of a workflow. Its workflow is created at the given time, in UTC, and now when none is given. A time of
-    /// kind Unspecified counts as local time, as in .NET.
+    /// kind Unspecified counts as local time, as in .NET. With a file system, the local files that the CWL file of the
+    /// workflow needs are parts of the dataset.
     static member composeWorkflow (workflow : ArcWorkflow, ?fs : FileSystem, ?dateCreated : System.DateTime) =
         BaseTypes.warnIfTitleEmpty("Workflow", workflow.Identifier, workflow.Title)
+        let workflowFilePath = Identifier.Workflow.cwlFileNameFromIdentifier workflow.Identifier
         let workflowProtocol =
-            let workflowFilePath = Identifier.Workflow.cwlFileNameFromIdentifier workflow.Identifier
             match workflow.CWLDescription with
             | Some pu -> WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(workflowFilePath, pu, workflowName = workflow.Identifier)
             | None -> failwithf "Workflow %s must have a CWL description" workflow.Identifier
@@ -722,11 +734,16 @@ type WorkflowConversion =
                 workflow.Components
                 |> ResizeArray.map WorkflowConversion.composeComputationalTool
             LDLabProtocol.setComputationalTools(workflowProtocol, softwareTools)
-        let hasParts =
+        let ownParts =
             if dataFiles.Count = 0 then
-                ResizeArray.singleton workflowProtocol |> Some
+                ResizeArray.singleton workflowProtocol
             else
-                ResizeArray.appendSingleton workflowProtocol dataFiles |> Some
+                ResizeArray.appendSingleton workflowProtocol dataFiles
+        let referencedFiles =
+            fs
+            |> Option.map (fun fs -> WorkflowConversion.composeReferencedFiles(workflowFilePath, workflow.CWLDescription.Value, fs, ownParts))
+            |> Option.defaultValue (ResizeArray())
+        let hasParts = ResizeArray.append ownParts referencedFiles |> Some
         let comments =
             workflow.Comments
             |> ResizeArray.map (fun c -> BaseTypes.composeComment c)
