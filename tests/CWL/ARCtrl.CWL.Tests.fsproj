@@ -6,15 +6,27 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Kit.fs" />
+    <Compile Include="Positions.fs" />
     <Compile Include="Descriptions.Tests.fs" />
     <Compile Include="YAMLParameterFile.Tests.fs" />
     <Compile Include="CWLWorkflow.Tests.fs" />
     <Compile Include="CWLObject.Tests.fs" />
+    <Compile Include="Types.Tests.fs" />
+    <Compile Include="Layout.Tests.fs" />
+    <Compile Include="Equality.Tests.fs" />
+    <Compile Include="SchemaSalad.Tests.fs" />
     <Compile Include="Metadata.Tests.fs" />
     <Compile Include="Outputs.Tests.fs" />
     <Compile Include="Inputs.Tests.fs" />
     <Compile Include="Requirements.Tests.fs" />
     <Compile Include="WorkflowSteps.Tests.fs" />
+    <Compile Include="Directives.Tests.fs" />
+    <Compile Include="Scalars.Tests.fs" />
+    <Compile Include="Messages.Tests.fs" />
+    <Compile Include="Quoting.Tests.fs" />
+    <Compile Include="Shapes.Tests.fs" />
+    <Compile Include="Keys.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>

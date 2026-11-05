@@ -29,18 +29,18 @@ export { License } from './ts/License.js'
 
 /// CWL
 import { CWLProcessingUnit } from './ts/CWL/CWLProcessingUnit.js'
-import { CWLType, SchemaSaladString, FileInstance, DirectoryInstance, DirentInstance, InputEnumSchema, InputRecordField, InputRecordSchema, InputArraySchema, SchemaDefRequirementType, SoftwarePackage } from './ts/CWL/CWLTypes.js'
+import { CWLType, SchemaSaladString, SchemaSaladBool, FileSize, DocText, ListEntry$1 as ListEntry, FileInstance, DirectoryInstance, DirentInstance, InputEnumSchema, InputRecordField, InputRecordSchema, InputArraySchema, SchemaDefinition, SoftwarePackage } from './ts/CWL/CWLTypes.js'
 import { CWLParameterValue, CWLParameterRecordField } from './ts/CWL/ParameterValue.js'
 import { CWLParameterReference } from './ts/CWL/ParameterReference.js'
-import { CWLInput, InputBinding } from './ts/CWL/Inputs.js'
-import { CWLOutput, OutputBinding, OutputSource } from './ts/CWL/Outputs.js'
+import { CWLInput, InputBinding, InputFormat, BindingPosition } from './ts/CWL/Inputs.js'
+import { CWLOutput, OutputBinding, OutputSource, OutputGlob } from './ts/CWL/Outputs.js'
 import { CWLToolDescription } from './ts/CWL/ToolDescription.js'
 import { CWLWorkflowDescription } from './ts/CWL/WorkflowDescription.js'
 import { CWLExpressionToolDescription } from './ts/CWL/ExpressionToolDescription.js'
 import { CWLOperationDescription } from './ts/CWL/OperationDescription.js'
-import { WorkflowStep, StepInput, StepOutput, StepOutputParameter, WorkflowStepRun, LinkMergeMethod, PickValueMethod, ScatterMethod } from './ts/CWL/WorkflowSteps.js'
+import { WorkflowStep, ResolvedRun, StepInput, StepOutput, StepOutputParameter, WorkflowStepRun, LinkMergeMethod, PickValueMethod, ScatterMethod } from './ts/CWL/WorkflowSteps.js'
 import {
-    Requirement, DockerRequirement, EnvironmentDef, ResourceRequirementInstance,
+    Requirement, SchemaDefEntry, DockerRequirement, EnvironmentDef, ResourceRequirementInstance,
     HintEntry, HintUnknownValue, InitialWorkDirEntry, InlineJavascriptRequirementValue,
     InplaceUpdateRequirementValue, LoadListingEnum, LoadListingRequirementValue,
     NetworkAccessRequirementValue, ToolTimeLimitValue, WorkReuseRequirementValue,
@@ -50,6 +50,10 @@ export const CWL = {
     CWLProcessingUnit,
     CWLType,
     SchemaSaladString,
+    SchemaSaladBool,
+    FileSize,
+    DocText,
+    ListEntry,
     FileInstance,
     DirectoryInstance,
     DirentInstance,
@@ -57,21 +61,25 @@ export const CWL = {
     InputRecordField,
     InputRecordSchema,
     InputArraySchema,
-    SchemaDefRequirementType,
+    SchemaDefinition,
     SoftwarePackage,
     CWLParameterValue,
     CWLParameterRecordField,
     CWLParameterReference,
     CWLInput,
     InputBinding,
+    InputFormat,
+    BindingPosition,
     CWLOutput,
     OutputBinding,
     OutputSource,
+    OutputGlob,
     CWLToolDescription,
     CWLWorkflowDescription,
     CWLExpressionToolDescription,
     CWLOperationDescription,
     WorkflowStep,
+    ResolvedRun,
     StepInput,
     StepOutput,
     StepOutputParameter,
@@ -80,6 +88,7 @@ export const CWL = {
     PickValueMethod,
     ScatterMethod,
     Requirement,
+    SchemaDefEntry,
     DockerRequirement,
     EnvironmentDef,
     ResourceRequirementInstance,

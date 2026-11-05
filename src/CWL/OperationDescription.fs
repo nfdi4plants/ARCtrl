@@ -5,29 +5,30 @@ open Fable.Core
 
 [<AttachMembers>]
 type CWLOperationDescription(
-    inputs: ResizeArray<CWLInput>,
-    outputs: ResizeArray<CWLOutput>,
+    inputs: ResizeArray<ListEntry<CWLInput>>,
+    outputs: ResizeArray<ListEntry<CWLOutput>>,
     ?cwlVersion: string,
     ?requirements: ResizeArray<Requirement>,
     ?hints: ResizeArray<HintEntry>,
-    ?intent: ResizeArray<string>,
+    ?intent: ResizeArray<SchemaSaladString>,
     ?metadata: DynamicObj,
-    ?label: string,
-    ?doc: string,
+    ?label: SchemaSaladString,
+    ?doc: DocText,
     ?id: string
 ) =
     inherit DynamicObj()
 
     let mutable _id: string option = id
     let mutable _cwlVersion: string = cwlVersion |> Option.defaultValue "v1.2"
-    let mutable _inputs: ResizeArray<CWLInput> = inputs
-    let mutable _outputs: ResizeArray<CWLOutput> = outputs
+    let mutable _inputs: ResizeArray<ListEntry<CWLInput>> = inputs
+    let mutable _outputs: ResizeArray<ListEntry<CWLOutput>> = outputs
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<HintEntry> option = hints
-    let mutable _intent: ResizeArray<string> option = intent
+    let mutable _intent: ResizeArray<SchemaSaladString> option = intent
     let mutable _metadata: DynamicObj option = metadata
-    let mutable _label: string option = label
-    let mutable _doc: string option = doc
+    let mutable _label: SchemaSaladString option = label
+    let mutable _doc: DocText option = doc
+    let mutable _sourceNodes = SourceNodes.Empty
 
     member this.Id
         with get() = _id
@@ -69,14 +70,24 @@ type CWLOperationDescription(
         with get() = _doc
         and set(value) = _doc <- value
 
+    /// The nodes that the doc and the label were read from. The encoder writes the layout of the author from them.
+    /// They stay out of the equality and the hash of the object.
+    member internal this.SourceNodes
+        with get() = _sourceNodes
+        and set(value) = _sourceNodes <- value
+
     static member KnownFieldNames =
         CWLKnownFieldNames.operationDescription
 
-    static member getInputs (operation: CWLOperationDescription) =
-        operation.Inputs
+    /// Returns a new list of the inputs of the operation that are objects. The imports and the mixins are left out, so a
+    /// change of the list changes nothing in the operation. The entries of the operation are in Inputs.
+    static member getInputValues (operation: CWLOperationDescription) : ResizeArray<CWLInput> =
+        ListEntry.values operation.Inputs
 
-    static member getOutputs (operation: CWLOperationDescription) =
-        operation.Outputs
+    /// Returns a new list of the outputs of the operation that are objects. The imports and the mixins are left out, so a
+    /// change of the list changes nothing in the operation. The entries of the operation are in Outputs.
+    static member getOutputValues (operation: CWLOperationDescription) : ResizeArray<CWLOutput> =
+        ListEntry.values operation.Outputs
 
     static member getRequirementsOrEmpty (operation: CWLOperationDescription) =
         operation.Requirements |> Option.defaultValue (ResizeArray())

@@ -8,6 +8,7 @@
   <Import Project="../Package.Metadata.props" />
   
   <ItemGroup> 
+    <Compile Include="ScalarQuoting.fs" />
     <Compile Include="HashHelpers.fs" /> 
     <Compile Include="CWLKnownFieldNames.fs" />
     <Compile Include="DynamicObjHelpers.fs" />

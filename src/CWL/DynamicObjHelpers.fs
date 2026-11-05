@@ -77,12 +77,53 @@ let dynamicPropertiesSnapshotExcept (knownFieldNames: Set<string>) (dynObj: Dyna
 let dynamicPropertiesSnapshot (dynObj: DynamicObj) =
     dynamicPropertiesSnapshotExcept Set.empty dynObj
 
+/// The items of the value of a dynamic property when it is a list. The decoder builds a ResizeArray of objects and a
+/// program may store a ResizeArray of any element type. A string is no list. On .NET the list interface finds every
+/// kind of list. Python holds a ResizeArray as a native list, which its generated type test never finds, and
+/// JavaScript holds it as an array whatever the element type.
+let private tryItems (value: obj) : ResizeArray<obj> option =
+#if FABLE_COMPILER_PYTHON
+    if emitPyExpr value "isinstance($0, list)" then Some (value :?> ResizeArray<obj>) else None
+#else
+#if FABLE_COMPILER
+    match value with
+    | :? ResizeArray<obj> as items -> Some items
+    | _ -> None
+#else
+    match value with
+    | :? System.Collections.IList as items -> Some (ResizeArray (Seq.cast<obj> items))
+    | _ -> None
+#endif
+#endif
+
+/// The values of two dynamic properties are equal when they are equal objects. A ResizeArray compares references, so
+/// lists compare by their elements, down to the lists inside them.
+let rec dynamicValuesEqual (left: obj) (right: obj) : bool =
+    match tryItems left, tryItems right with
+    | Some leftItems, Some rightItems ->
+        leftItems.Count = rightItems.Count && Seq.forall2 dynamicValuesEqual leftItems rightItems
+    | _ -> left = right
+
+/// A hash of the value of a dynamic property that goes with dynamicValuesEqual.
+let rec hashDynamicValue (value: obj) : int =
+    match tryItems value with
+    | Some items -> items |> Seq.fold (fun acc item -> HashHelpers.mergeHashes acc (hashDynamicValue item)) 0
+    | None -> Operators.hash value
+
 /// Compare only preserved dynamic extension properties between two CWL objects.
 let dynamicPropertiesEqual (left: DynamicObj) (right: DynamicObj) =
-    dynamicPropertiesSnapshot left = dynamicPropertiesSnapshot right
+    let leftProperties = dynamicPropertiesSnapshot left
+    let rightProperties = dynamicPropertiesSnapshot right
+    leftProperties.Length = rightProperties.Length
+    && List.forall2
+        (fun (leftName: string, leftValue: obj) (rightName: string, rightValue: obj) ->
+            leftName = rightName && dynamicValuesEqual leftValue rightValue)
+        leftProperties
+        rightProperties
 
 /// Hash preserved dynamic extension properties in the same stable order used
 /// by dynamicPropertiesEqual.
 let hashDynamicProperties (dynObj: DynamicObj) =
     dynamicPropertiesSnapshot dynObj
+    |> List.map (fun (name, value) -> name, hashDynamicValue value)
     |> Operators.hash

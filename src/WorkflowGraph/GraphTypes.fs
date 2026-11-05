@@ -186,6 +186,12 @@ module GraphId =
         let normalizedStepId = normalizeSegment stepId
         $"step:{normalizeSegment scope}/{normalizedStepId}"
 
+    /// Creates the node ID of a step without an id, with the format "anonymous-step:{scope}/{position}". The position is the
+    /// place of the step among the entries of the steps of its workflow. The ID stands apart from the IDs of the steps
+    /// with an id, and no source can name it.
+    let anonymousStepNodeId (scope: string) (position: int) : WorkflowGraphNodeId =
+        $"anonymous-step:{normalizeSegment scope}/{position}"
+
     /// Creates a port node ID with the format "port:{ownerNodeId}/{in|out}/{portId}".
     let portNodeId (ownerNodeId: WorkflowGraphNodeId) (direction: PortDirection) (portId: string) : WorkflowGraphNodeId =
         let normalizedPortId = normalizeSegment portId

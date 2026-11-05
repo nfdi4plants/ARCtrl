@@ -14,6 +14,41 @@ open ARCtrl.WorkflowGraph
 
 module ARCAux =
 
+    /// The contract for a file that an object keeps beside its xlsx file, such as run.cwl. The static hash is the hash of
+    /// the file at the last read or write, and 0 when the file was not there. The hash is the one of the file now, and
+    /// 0 when the object has no such file anymore. A new file is created, a changed file is updated, and a file that the
+    /// object lost is deleted.
+    let fileContract (path: string) (staticHash: int) (hash: int) (contractOf: Operation -> Contract option) : Contract option =
+        if staticHash = hash then None
+        elif hash = 0 then Some (Contract.createDelete path)
+        elif staticHash = 0 then contractOf Operation.CREATE
+        else contractOf Operation.UPDATE
+
+    /// The contracts for the changes of the CWL file and of the parameter file of a run since the last read or write.
+    /// The hashes of the files are the new static hashes afterwards.
+    let runFileContracts (run: ArcRun) : Contract [] =
+        let cwlHash = run.GetCWLHashCode()
+        let ymlHash = run.GetCWLInputHashCode()
+        let contracts =
+            [|
+                fileContract (Identifier.Run.cwlFileNameFromIdentifier run.Identifier) run.CWLStaticHash cwlHash run.TryToCWLContract
+                fileContract (Identifier.Run.ymlFileNameFromIdentifier run.Identifier) run.CWLInputStaticHash ymlHash run.TryToYMLContract
+            |]
+            |> Array.choose id
+        run.CWLStaticHash <- cwlHash
+        run.CWLInputStaticHash <- ymlHash
+        contracts
+
+    /// The contracts for the changes of the CWL file of a workflow since the last read or write.
+    /// The hash of the file is the new static hash afterwards.
+    let workflowFileContracts (workflow: ArcWorkflow) : Contract [] =
+        let cwlHash = workflow.GetCWLHashCode()
+        let contracts =
+            fileContract (Identifier.Workflow.cwlFileNameFromIdentifier workflow.Identifier) workflow.CWLStaticHash cwlHash workflow.TryToCWLContract
+            |> Option.toArray
+        workflow.CWLStaticHash <- cwlHash
+        contracts
+
     // No idea where to move this
     let getArcAssaysFromContracts (contracts: Contract []) = 
         contracts 
@@ -66,8 +101,7 @@ module ARCAux =
         |> Array.choose (fun c ->
             match c with
             | {Operation = READ; DTOType = Some DTOType.CWL; DTO = Some (DTO.Text text)} ->
-                let cwl = CWL.Decode.decodeCWLProcessingUnit text
-                Some (ArcPathHelper.normalizePathKey c.Path, cwl)
+                Some (ArcPathHelper.normalizePathKey c.Path, decodeCWLFile c.Path text)
             | _ ->
                 None
         )
@@ -727,6 +761,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             workflow.CWLDescription <- resolvedCwl
             this.AddWorkflow(workflow)
             workflow.StaticHash <- workflow.GetLightHashCode()
+            workflow.CWLStaticHash <- workflow.GetCWLHashCode()
         )
         runs |> Array.iter (fun run ->
             let datamap = ARCAux.getRunDatamapFromContracts run.Identifier contracts
@@ -744,6 +779,8 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             run.CWLDescription <- resolvedCwl
             this.AddRun(run)
             run.StaticHash <- run.GetLightHashCode()
+            run.CWLStaticHash <- run.GetCWLHashCode()
+            run.CWLInputStaticHash <- run.GetCWLInputHashCode()
         )
         this.Assays |> Seq.iter (fun a -> a.StaticHash <- a.GetLightHashCode())
         this.Studies |> Seq.iter (fun s -> s.StaticHash <- s.GetLightHashCode())
@@ -785,6 +822,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                     yield dm.ToCreateContractForAssay(a.Identifier)
             for w in this.Workflows do
                 w.StaticHash <- w.GetLightHashCode()
+                w.CWLStaticHash <- w.GetCWLHashCode()
                 yield! w.ToCreateContract(WithFolder = true)
                 if w.Datamap.IsSome then
                     let dm = w.Datamap.Value
@@ -792,6 +830,8 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                     yield dm.ToCreateContractForWorkflow(w.Identifier)
             for r in this.Runs do
                 r.StaticHash <- r.GetLightHashCode()
+                r.CWLStaticHash <- r.GetCWLHashCode()
+                r.CWLInputStaticHash <- r.GetCWLInputHashCode()
                 yield! r.ToCreateContract(WithFolder = true)
                 if r.Datamap.IsSome then
                     let dm = r.Datamap.Value
@@ -872,9 +912,11 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                     let hash = w.GetLightHashCode()
                     if w.StaticHash = 0 then 
                         yield! w.ToCreateContract(WithFolder = true)
+                        w.CWLStaticHash <- w.GetCWLHashCode()
                     elif w.StaticHash <> hash then 
                         yield w.ToUpdateContract()
                     w.StaticHash <- hash
+                    yield! ARCAux.workflowFileContracts w
                     match w.Datamap with
                     | Some dm when dm.StaticHash = 0 -> 
                         yield dm.ToCreateContractForWorkflow(w.Identifier)
@@ -888,9 +930,12 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
                     let hash = r.GetLightHashCode()
                     if r.StaticHash = 0 then 
                         yield! r.ToCreateContract(WithFolder = true)
+                        r.CWLStaticHash <- r.GetCWLHashCode()
+                        r.CWLInputStaticHash <- r.GetCWLInputHashCode()
                     elif r.StaticHash <> hash then 
                         yield r.ToUpdateContract()
                     r.StaticHash <- hash
+                    yield! ARCAux.runFileContracts r
                     match r.Datamap with
                     | Some dm when dm.StaticHash = 0 -> 
                         yield dm.ToCreateContractForRun(r.Identifier)

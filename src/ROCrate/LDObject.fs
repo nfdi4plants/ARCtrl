@@ -426,6 +426,10 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
             | :? LDNode as n -> n.Id
             | :? LDRef as r -> r.Id
             | _ -> o
+        // JSON-LD treats node objects of one @id as one node whose @type values are united.
+        // GetPropertyNames does not list the types, so the loop below cannot carry them over.
+        other.SchemaType <- Seq.append other.SchemaType this.SchemaType |> Seq.distinct |> ResizeArray
+        other.AdditionalType <- Seq.append other.AdditionalType this.AdditionalType |> Seq.distinct |> ResizeArray
         this.GetPropertyNames()
         |> Seq.iter (fun pn -> 
             match other.TryGetProperty(pn) with

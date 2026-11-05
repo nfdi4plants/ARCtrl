@@ -43,6 +43,11 @@ let split(path: string) =
     path.Split(seperators, enum<StringSplitOptions>(3))
     |> Array.filter (fun p -> p <> "" && p <> ".")
 
+/// True when a path starts with a URI scheme, as in https://example.org/data.csv or file:///data.csv. A drive letter, as
+/// in C:/data.csv, is no scheme.
+let hasUriScheme (path: string) : bool =
+    System.Text.RegularExpressions.Regex.IsMatch(path.Trim(), "^[A-Za-z][A-Za-z0-9+.\\-]+:")
+
 let hasLeadingSeparator (path: string) =
     path.Length > 0 && (path.[0] = PathSeperator || path.[0] = PathSeperatorWindows)
 
@@ -125,8 +130,9 @@ let normalizeSegments (segments: string []) : string [] =
     resolved.ToArray()
 
 /// Normalize a path by resolving "." and ".." segments.
-/// Note: If normalization yields no segments, the trimmed original path is returned
-/// to preserve relative markers used by existing callers (e.g. "." or "./").
+/// Note: A path without segments, such as "." or "./", keeps its trimmed form so that the relative markers used by
+/// existing callers survive. If ".." segments cancel every segment, the path names the directory it starts from and
+/// the result is ".".
 let normalize (path: string) : string =
     let trimmedPath = path.Trim()
     let prefixOpt, pathSegments = splitWithPrefix trimmedPath
@@ -136,6 +142,7 @@ let normalize (path: string) : string =
     if normalizedSegments.Length = 0 then
         match prefixOpt with
         | Some prefix -> normalizeRootPrefix prefix
+        | None when pathSegments.Length > 0 -> "."
         | None -> trimmedPath
     else
         buildPathFromPrefixAndSegments prefixOpt normalizedSegments
@@ -170,6 +177,20 @@ let resolvePathFromFile (filePath: string) (path: string) : string =
                 | None -> trimmedPath
             else
                 buildPathFromPrefixAndSegments filePrefixOpt resolvedSegments
+
+/// The path of a file relative to the directory of another file, where both paths start at the same root. This is the
+/// inverse of resolvePathFromFile for a relative path.
+let getRelativePathFromFile (filePath: string) (path: string) : string =
+    let fileSegments = split filePath |> normalizeSegments
+    let directorySegments =
+        if fileSegments.Length <= 1 then [||]
+        else fileSegments[0..fileSegments.Length - 2]
+    let pathSegments = split path |> normalizeSegments
+    let mutable common = 0
+    while common < directorySegments.Length && common < pathSegments.Length - 1 && directorySegments[common] = pathSegments[common] do
+        common <- common + 1
+    Array.append (Array.create (directorySegments.Length - common) "..") pathSegments[common..]
+    |> String.concat (string PathSeperator)
 
 let getFileName (path: string) : string =
     split path |> Array.last

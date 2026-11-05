@@ -28,13 +28,13 @@ module CSV =
 
     let outputCSVName = "output"
 
-    let outputCSVType = CWLType.file()
+    let outputCSVType = CWLType.File
 
     let outputCSVGlobStr = "*.csv"
 
-    let outputCSVGlob = OutputBinding.create(glob = outputCSVGlobStr)
+    let outputCSVGlob = OutputBinding.create(glob = OutputGlob.Single (SchemaSaladString.Literal outputCSVGlobStr))
 
-    let outputCSV = CWLOutput(outputCSVName, outputCSVType, outputBinding = outputCSVGlob)
+    let outputCSV = CWLOutput(outputCSVName, outputCSVType, outputBinding = ListEntry.Value outputCSVGlob)
 
 
 let specOutputFieldsDecodeFileContent = """outputs:
@@ -51,3 +51,33 @@ let specOutputFieldsDecodeFileContent = """outputs:
     doc: Result docs
     streamable: true
     format: edam:format_2330"""
+
+/// A tool and a workflow with one output that sets every field of an output, for the tests of equality and hash.
+module AllFields =
+
+    let toolFile = """cwlVersion: v1.2
+class: CommandLineTool
+baseCommand: echo
+inputs: {}
+outputs:
+  o:
+    type: File
+    outputBinding:
+      glob: "*.txt"
+    label: lab
+    secondaryFiles: .idx
+    streamable: true
+    doc: first
+    format: edam:format_1
+    arc:note: n1
+"""
+
+    let workflowFile = """cwlVersion: v1.2
+class: Workflow
+inputs: {}
+outputs:
+  o:
+    type: File
+    outputSource: step/out
+steps: {}
+"""

@@ -44,6 +44,8 @@ type LDCreativeWork =
 
     static member about = "http://schema.org/about"
 
+    static member version = "http://schema.org/version"
+
 
     static member tryGetIdentifierAsString(lp : LDNode, ?context : LDContext) =
         match lp.TryGetPropertyAsSingleton(LDCreativeWork.identifier, ?context = context) with

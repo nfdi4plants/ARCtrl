@@ -89,7 +89,7 @@ let tests_edgeCases =
             let assertRunString () =
                 match processingUnit with
                 | Workflow wf ->
-                    match wf.Steps.[0].Run with
+                    match (ListEntry.values wf.Steps).[0].Run with
                     | RunString runPath -> Expect.equal runPath "./tool.cwl" ""
                     | other -> Expect.isTrue false $"Expected RunString but got %A{other}"
                 | _ ->

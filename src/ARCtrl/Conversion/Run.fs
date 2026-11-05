@@ -18,45 +18,82 @@ type RunConversion =
     /// File paths in CWL files are relative to the file itself. In RO-Crate, we use relative paths from the root of the crate.
     ///
     /// This function replaces the relative paths in the CWL input file with paths relative to the root of the crate.
+    /// The path is joined to the run folder, and its "." and ".." segments are resolved. A path that names the root of
+    /// the ARC is ".". A path with a URI scheme is a URL and stays as it is.
     static member composeCWLInputFilePath (path : string, runName : string) =
-        if path.StartsWith("../..") then
-            path.Replace("../../","").Replace("../..","")
+        if ArcPathHelper.hasUriScheme path then
+            path
         else
             ArcPathHelper.combineMany [| "runs"; runName ; path|]
+            |> ArcPathHelper.normalize
 
+    /// Turns the id of a file in the crate back into a path relative to the run folder. The run folder is compared by
+    /// whole segments, so runs/R does not contain runs/R2, and the run folder itself is ".". An id with a URI scheme is a
+    /// URL and stays as it is.
     static member decomposeCWLInputFilePath (path : string, runName : string) =
-        let prefix = ArcPathHelper.combineMany [| "runs"; runName|]
-        // File ids in RO-Crate start with ./
-        let path = if path.StartsWith("./") then path.Substring(2) else path
-        if path.StartsWith(prefix) then
-            path.Replace(prefix, "").TrimStart('/')
+        if ArcPathHelper.hasUriScheme path then
+            path
         else
-            ArcPathHelper.combine "../.." path
+            let runFolder = ArcPathHelper.split (ArcPathHelper.combineMany [| "runs"; runName|])
+            // File ids in RO-Crate start with ./, which split drops with every other "." segment.
+            let segments = ArcPathHelper.split path
+            let isInRunFolder =
+                segments.Length >= runFolder.Length
+                && (runFolder |> Array.mapi (fun index segment -> segments.[index] = segment) |> Array.forall id)
+            if isInRunFolder && segments.Length = runFolder.Length then
+                "."
+            elif isInRunFolder then
+                String.concat (string ArcPathHelper.PathSeperator) segments.[runFolder.Length..]
+            else
+                ArcPathHelper.combine "../.." (String.concat (string ArcPathHelper.PathSeperator) segments)
 
-    static member composeCWLParameterValue(value: CWL.CWLParameterValue, runName: string, ?context: LDContext) : obj =
+    /// The Dataset entity of a directory that a job value names. The id of a local directory ends with "/", and its
+    /// files in the file system are its parts. A directory with a URI scheme keeps the URL as its id.
+    static member composeDirectoryDataset(path : string, ?fs : FileSystem, ?context : LDContext) =
+        if ArcPathHelper.hasUriScheme path then
+            LDDataset.create(path, ?context = context)
+        else
+            let id = if path.EndsWith "/" then path else path + "/"
+            let files =
+                match fs |> Option.bind (fun fs -> fs.Tree.TryGetPath path) with
+                | Some (FileSystemTree.Folder _ as folder) ->
+                    folder.ToFilePaths(true)
+                    |> Array.map (fun file -> LDFile.create(name = ArcPathHelper.combine path file, ?context = context))
+                    |> ResizeArray
+                    |> Option.fromSeq
+                | _ -> None
+            LDDataset.create(id, ?hasParts = files, ?context = context)
+
+    static member composeCWLParameterValue(value: CWL.CWLParameterValue, runName: string, ?context: LDContext, ?fs: FileSystem) : obj =
         match value with
         | CWL.CWLParameterValue.File file ->
             let path =
                 file
                 |> CWL.FileInstance.pathOrLocation
                 |> fun path -> RunConversion.composeCWLInputFilePath(path, runName)
-            let encodingFormat = file.Format
+            // A format given by a directive has no text to write into the crate, so it counts as absent.
+            let encodingFormat = file.Format |> Option.bind CWL.SchemaSaladString.tryLiteral
             LDFile.create(path, ?encodingFormat = encodingFormat, ?context = context) :> obj
         | CWL.CWLParameterValue.Directory directory ->
             let path =
                 directory
                 |> CWL.DirectoryInstance.pathOrLocation
                 |> fun path -> RunConversion.composeCWLInputFilePath(path, runName)
-            LDFile.create(path, ?context = context) :> obj
+            // The root of the ARC is the root of the crate, so the value refers to it. A Dataset for it would merge its
+            // parts into the root.
+            if path = "." then
+                LDRef(LDDataset.genIDInvesigation()) :> obj
+            else
+                RunConversion.composeDirectoryDataset(path, ?fs = fs, ?context = context) :> obj
         | CWL.CWLParameterValue.Array values ->
             values
-            |> ResizeArray.map (fun value -> RunConversion.composeCWLParameterValue(value, runName, ?context = context))
+            |> ResizeArray.map (fun value -> RunConversion.composeCWLParameterValue(value, runName, ?context = context, ?fs = fs))
             :> obj
         | CWL.CWLParameterValue.Record fields ->
             let record = DynamicObj()
             fields
             |> Seq.iter (fun field ->
-                DynObj.setProperty field.Name (RunConversion.composeCWLParameterValue(field.Value, runName, ?context = context)) record
+                DynObj.setProperty field.Name (RunConversion.composeCWLParameterValue(field.Value, runName, ?context = context, ?fs = fs)) record
             )
             record :> obj
         | CWL.CWLParameterValue.String value -> value :> obj
@@ -74,22 +111,28 @@ type RunConversion =
             |> CWL.CWLParameterValue.Array
         )
 
-    static member composeCWLInputValue (inputValue : CWL.CWLParameterReference, exampleOfWork : LDNode, inputParam : CWL.CWLInput, runName : string) =
+    /// The entity of the value of a job file for an input. A File or a Directory, alone or in a list, has to fit the type
+    /// of the input, and the error names the run.
+    static member composeCWLInputValue (inputValue : CWL.CWLParameterReference, exampleOfWork : LDNode, inputParam : CWL.CWLInput, runName : string, ?fs : FileSystem) =
         if inputParam.Type_.IsNone then
             failwith $"Cannot convert param values \"{inputValue.Values}\" as Input parameter \"{inputParam.Name}\" has no type."
         let type_ = inputParam.Type_.Value
-        if inputValue.Type.IsSome then
-            if not (CWL.CWLType.typesEqual inputValue.Type.Value type_) then
-                let typeStr = CWL.Encode.formatCWLType inputValue.Type.Value
+        inputValue.Type
+        |> Option.iter (fun valueType ->
+            if not (CWL.CWLType.admits type_ valueType) then
+                let typeStr = CWL.Encode.formatCWLType valueType
                 let paramTypeStr = CWL.Encode.formatCWLType type_
-                failwith $"Type ({typeStr}) of yml input value \"{inputValue.Key}\" does not match type of workflow input parameter ({paramTypeStr})."
+                failwith $"Could not create workflow invocation for run \"{runName}\": Type ({typeStr}) of yml input value \"{inputValue.Key}\" does not match type of workflow input parameter ({paramTypeStr})."
+        )
         match type_ with
-        | CWL.CWLType.File _ when inputValue.Values.Count = 1 ->
+        | CWL.CWLType.File when inputValue.Values.Count = 1 ->
             let path = RunConversion.composeCWLInputFilePath(inputValue.Values[0], runName)
             let file = LDFile.createCWLParameter(path, exampleOfWork = exampleOfWork)
             match inputValue.Value with
             | Some (CWL.CWLParameterValue.File fileValue) ->
+                // A format given by a directive has no text to write into the crate, so it counts as absent.
                 fileValue.Format
+                |> Option.bind CWL.SchemaSaladString.tryLiteral
                 |> Option.iter (fun format -> LDFile.setEncodingFormatAsString(file, format))
             | _ -> ()
             file
@@ -102,7 +145,7 @@ type RunConversion =
             |> fun pv ->
                 inputValue.Value
                 |> Option.defaultValue (RunConversion.composeLegacyValue inputValue)
-                |> fun value -> RunConversion.composeCWLParameterValue(value, runName)
+                |> fun value -> RunConversion.composeCWLParameterValue(value, runName, ?fs = fs)
                 |> fun value -> LDPropertyValue.setValueObjects(pv, value)
                 pv
         | _ ->
@@ -120,7 +163,7 @@ type RunConversion =
                     | 1 -> CWL.CWLParameterValue.String inputValue.Values.[0]
                     | _ -> inputValue.Values |> ResizeArray.map CWL.CWLParameterValue.String |> CWL.CWLParameterValue.Array
                 )
-                |> fun value -> RunConversion.composeCWLParameterValue(value, runName)
+                |> fun value -> RunConversion.composeCWLParameterValue(value, runName, ?fs = fs)
             LDPropertyValue.setValueObjects(pv, value)
             pv
 
@@ -134,6 +177,7 @@ type RunConversion =
 
     static member decomposeCWLParameterValue(value: obj, runName: string, ?expectedType: CWL.CWLType, ?graph: LDGraph) : CWL.CWLParameterValue =
         let value = RunConversion.resolveLDValue(value, ?graph = graph)
+        let isDirectory (node: LDNode) = LDDataset.validate(node, ?context = (graph |> Option.bind (fun graph -> graph.TryGetContext())))
         let expectedType = expectedType |> Option.bind CWL.CWLType.tryGetNonNullUnionType
 
         match expectedType with
@@ -151,24 +195,30 @@ type RunConversion =
                 |> CWL.CWLParameterValue.Array
             | _ ->
                 CWL.CWLParameterValue.Array (ResizeArray [RunConversion.decomposeCWLParameterValue(value, runName, expectedType = arraySchema.Items, ?graph = graph)])
-        | Some (CWL.CWLType.File _) ->
+        | Some CWL.CWLType.File ->
             match value with
             | :? LDNode as node when LDFile.validate(node) ->
                 let path = RunConversion.decomposeCWLInputFilePath(node.Id, runName)
-                let format = LDFile.tryGetEncodingFormatAsString node
-                CWL.CWLParameterValue.File (CWL.FileInstance(path = path, ?format = format))
+                let format = LDFile.tryGetEncodingFormatAsString node |> Option.map CWL.SchemaSaladString.Literal
+                CWL.CWLParameterValue.File (CWL.FileInstance(path = CWL.SchemaSaladString.Literal path, ?format = format))
+            | :? LDRef as reference ->
+                let path = RunConversion.decomposeCWLInputFilePath(reference.Id, runName)
+                CWL.CWLParameterValue.File (CWL.FileInstance(path = CWL.SchemaSaladString.Literal path))
             | :? string as path ->
                 let path = RunConversion.decomposeCWLInputFilePath(path, runName)
-                CWL.CWLParameterValue.File (CWL.FileInstance(path = path))
+                CWL.CWLParameterValue.File (CWL.FileInstance(path = CWL.SchemaSaladString.Literal path))
             | _ -> CWL.CWLParameterValue.String (string value)
-        | Some (CWL.CWLType.Directory _) ->
+        | Some CWL.CWLType.Directory ->
             match value with
-            | :? LDNode as node when LDFile.validate(node) ->
+            | :? LDNode as node when isDirectory node || LDFile.validate(node) ->
                 let path = RunConversion.decomposeCWLInputFilePath(node.Id, runName)
-                CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = path))
+                CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = CWL.SchemaSaladString.Literal path))
+            | :? LDRef as reference ->
+                let path = RunConversion.decomposeCWLInputFilePath(reference.Id, runName)
+                CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = CWL.SchemaSaladString.Literal path))
             | :? string as path ->
                 let path = RunConversion.decomposeCWLInputFilePath(path, runName)
-                CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = path))
+                CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = CWL.SchemaSaladString.Literal path))
             | _ -> CWL.CWLParameterValue.String (string value)
         | Some CWL.CWLType.String ->
             match value with
@@ -222,8 +272,11 @@ type RunConversion =
             | :? bool as value -> CWL.CWLParameterValue.Boolean value
             | :? LDNode as node when LDFile.validate(node) ->
                 let path = RunConversion.decomposeCWLInputFilePath(node.Id, runName)
-                let format = LDFile.tryGetEncodingFormatAsString node
-                CWL.CWLParameterValue.File (CWL.FileInstance(path = path, ?format = format))
+                let format = LDFile.tryGetEncodingFormatAsString node |> Option.map CWL.SchemaSaladString.Literal
+                CWL.CWLParameterValue.File (CWL.FileInstance(path = CWL.SchemaSaladString.Literal path, ?format = format))
+            | :? LDNode as node when isDirectory node ->
+                let path = RunConversion.decomposeCWLInputFilePath(node.Id, runName)
+                CWL.CWLParameterValue.Directory (CWL.DirectoryInstance(path = CWL.SchemaSaladString.Literal path))
             | :? System.Collections.IEnumerable as values ->
                 values
                 |> Seq.cast<obj>
@@ -256,8 +309,7 @@ type RunConversion =
             let path = RunConversion.decomposeCWLInputFilePath(inputValue.Id, runName)
             CWL.CWLParameterReference(
                 key = key,
-                values = ResizeArray [path],
-                type_ = CWL.CWLType.file()
+                value = CWL.CWLParameterValue.File (CWL.FileInstance(path = CWL.SchemaSaladString.Literal path))
             )
         else if LDPropertyValue.validateCWLParameter(inputValue, ?context = context) then
             let valueObject = LDPropertyValue.getValueObject(inputValue, ?context = context)
@@ -271,6 +323,7 @@ type RunConversion =
             failwithf "Input value %s of run %s is neither a CWL File nor a CWL Parameter." inputValue.Id runName
 
 
+    /// The invocations of a run. An input without a value or with a null value in the job file takes its CWL default.
     static member composeWorkflowInvocationFromArcRun (run : ArcRun, ?fs : FileSystem) =
         let workflowProtocol =
             let workflowFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
@@ -280,17 +333,35 @@ type RunConversion =
         let inputParams =
             LDComputationalWorkflow.getInputsAsFormalParameters(workflowProtocol, ?context = workflowProtocol.TryGetContext())
             |> ResizeArray.zip (WorkflowConversion.getInputParametersFromProcessingUnit run.CWLDescription.Value)
-            |> ResizeArray.map (fun (i, ldI) ->
+            |> ResizeArray.choose (fun (i, ldI) ->
                 let name = LDFormalParameter.getNameAsString(ldI, ?context = workflowProtocol.TryGetContext())
-                let paramRef =
+                // The default is a value of the same shape as a value of the job file, and both files lie in the run folder.
+                // An input that stays without a value is left out when it is optional or has a default. Only a required
+                // input without a default fails.
+                let given =
                     run.CWLInput
                     |> Seq.tryPick (fun i ->
                         if i.Key = name then Some i
                         else None
                     )
+                let hasValue =
+                    match given |> Option.bind (fun reference -> reference.Value) with
+                    | None
+                    | Some CWL.CWLParameterValue.Null -> false
+                    | Some _ -> true
+                let paramRef =
+                    if hasValue then
+                        given
+                    else
+                        i.DefaultValue
+                        |> Option.map (fun defaultValue -> CWL.CWLParameterReference(key = name, value = CWL.DecodeParameters.decodeParameterValue defaultValue.Node))
+                        |> Option.orElse given
                 match paramRef with
                 | Some pr ->
-                    RunConversion.composeCWLInputValue(pr, exampleOfWork = ldI, inputParam = i, runName = run.Identifier)
+                    RunConversion.composeCWLInputValue(pr, exampleOfWork = ldI, inputParam = i, runName = run.Identifier, ?fs = fs)
+                    |> Some
+                | None when i.Optional || i.DefaultValue.IsSome ->
+                    None
                 | None ->
                     failwith $"Could not create workflow invocation for run \"{run.Identifier}\": Workflow parameter \"{name}\" had no assigned value."
             )
@@ -345,10 +416,37 @@ type RunConversion =
             )
         cwlDescription, parameterRefs
 
-    static member composeRun (run : ArcRun, ?fs : FileSystem) =
+    /// The File and Dataset entities that the parameter values of the invocations name, each once, without the entities
+    /// of the given ids. A value of a parameter that is no single File is the value of a PropertyValue, where a file or a
+    /// directory can stand in a list or a record.
+    static member private getDataEntitiesOfParameterValues (invocations : ResizeArray<LDNode>, knownIds : seq<string>) =
+        let entities = ResizeArray<LDNode>()
+        let ids = HashSet<string>(knownIds)
+        let rec collect (value : obj) =
+            match value with
+            | :? LDNode as node when LDDataset.validate(node) || LDFile.validate(node) ->
+                if ids.Add node.Id then entities.Add node
+            | :? LDNode
+            | :? string -> ()
+            | :? DynamicObj as record ->
+                for property in record.GetProperties(false) do collect property.Value
+            | :? System.Collections.IEnumerable as values ->
+                for value in values do collect value
+            | _ -> ()
+        for invocation in invocations do
+            for parameter in LDLabProcess.getObjects(invocation) do
+                LDPropertyValue.tryGetValueObject(parameter) |> Option.iter collect
+        entities
+
+    /// The dataset of a run. Its workflow is created at the given time, in UTC, and now when none is given. A time of kind
+    /// Unspecified counts as local time, as in .NET. An input without a value or with a null value in the job file takes
+    /// its CWL default. With a file system, the local files that the CWL file of the run needs are parts of the dataset.
+    /// When the run is the root of its crate, its folder is a part like any other folder.
+    static member composeRun (run : ArcRun, ?fs : FileSystem, ?dateCreated : System.DateTime, ?isCrateRoot : bool) =
+        let isCrateRoot = defaultArg isCrateRoot false
         BaseTypes.warnIfTitleEmpty("Run", run.Identifier, run.Title)
+        let workflowFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
         let workflowProtocol =
-            let workflowFilePath = Identifier.Run.cwlFileNameFromIdentifier run.Identifier
             match run.CWLDescription with
             | Some pu -> WorkflowConversion.composeWorkflowProtocolFromProcessingUnit(workflowFilePath, pu, runName = run.Identifier)
             | None -> failwithf "Run %s must have a CWL description" run.Identifier
@@ -364,7 +462,7 @@ type RunConversion =
             |> ResizeArray.map (fun c -> PersonConversion.composePerson(c, ?persons = persons))
             |> Option.fromSeq
         let publisher = LDOrganization.create("DataPLANT")
-        let dateCreated = System.DateTime.UtcNow
+        let dateCreated = (defaultArg dateCreated System.DateTime.UtcNow).ToUniversalTime()
         if creators.IsSome then
             LDComputationalWorkflow.setCreators(workflowProtocol, creators.Value)
         LDComputationalWorkflow.setSdPublisher(workflowProtocol, publisher)
@@ -375,10 +473,27 @@ type RunConversion =
         let dataFiles = 
             workflowInvocations
             |> Option.map (fun ps -> AssayConversion.getDataFilesFromProcesses(ps, ?fragmentDescriptors = fragmentDescriptors))
-        let hasParts =
+        let parameterValueData =
+            // A Directory value can name the run folder itself (path "." or no path). In the crate of the ARC the run
+            // dataset is that folder, so it is no part of itself.
+            let knownIds =
+                dataFiles
+                |> Option.defaultValue (ResizeArray())
+                |> Seq.map (fun file -> file.Id)
+                |> fun ids -> if isCrateRoot then ids else Seq.append [ LDDataset.genIDARCRun run.Identifier ] ids
+            workflowInvocations
+            |> Option.map (fun invocations -> RunConversion.getDataEntitiesOfParameterValues(invocations, knownIds))
+            |> Option.defaultValue (ResizeArray())
+        let ownParts =
             match dataFiles with
-            | Some df -> ResizeArray.appendSingleton workflowProtocol df |> Some
-            | None -> ResizeArray.singleton workflowProtocol |> Some
+            | Some df -> ResizeArray.appendSingleton workflowProtocol df
+            | None -> ResizeArray.singleton workflowProtocol
+            |> fun parts -> ResizeArray.append parts parameterValueData
+        let referencedFiles =
+            fs
+            |> Option.map (fun fs -> WorkflowConversion.composeReferencedFiles(workflowFilePath, run.CWLDescription.Value, fs, ownParts))
+            |> Option.defaultValue (ResizeArray())
+        let hasParts = ResizeArray.append ownParts referencedFiles |> Some
         let variableMeasureds =
             match variableMeasured, fragmentDescriptors with
             | Some vm, Some fds -> ResizeArray.appendSingleton vm fds |> Some
@@ -404,8 +519,10 @@ type RunConversion =
             ?comments = comments
         )
 
+    /// Reads a run from its dataset. The crate holds neither the CWL file nor the job file of the run, so the run comes
+    /// back with no CWL description and no job values. The tables skip the main workflow invocation, which stands for
+    /// the CWL run.
     static member decomposeRun (run : LDNode, ?graph : LDGraph, ?context : LDContext) : ArcRun=
-        let workflowProtocol = LDDataset.tryGetMainEntityAsWorkflowProtocol(run, ?graph = graph, ?context = context)
         let mainWorkflowInvocation =
             LDDataset.getAboutsAsWorkflowInvocation(run, ?graph = graph, ?context = context)
             |> Seq.find (fun wi ->
@@ -413,16 +530,6 @@ type RunConversion =
                 | Some lp when LDWorkflowProtocol.validate(lp, ?context = context) -> true
                 | _ -> false
             )
-        let cwlDescription, parameterRefs =
-            match workflowProtocol with
-            | Some wp ->
-                WorkflowConversion.decomposeWorkflowProtocolToProcessingUnit(wp, ?context = context, ?graph = graph),
-                LDLabProcess.getObjects(mainWorkflowInvocation, ?graph = graph, ?context = context)
-                |> ResizeArray.map (fun iv ->
-                    RunConversion.decomposeCWLInputValue(iv, runName = LDDataset.getIdentifierAsString(run, ?context = context), ?context = context, ?graph = graph)
-                )
-            | None ->
-                RunConversion.decomposeMainWorkflowInvocation(mainWorkflowInvocation, LDDataset.getIdentifierAsString(run, ?context = context), ?context = context, ?graph = graph)
         let measurementMethod = 
             LDDataset.tryGetMeasurementMethodAsDefinedTerm(run, ?graph = graph, ?context = context)
             |> Option.map (fun m -> BaseTypes.decomposeDefinedTerm(m, ?context = context))
@@ -450,8 +557,6 @@ type RunConversion =
             identifier = LDDataset.getIdentifierAsString(run, ?context = context),
             ?title = LDDataset.tryGetNameAsString(run, ?context = context),
             ?description = LDDataset.tryGetDescriptionAsString(run, ?context = context),
-            cwlDescription = cwlDescription,
-            cwlInput = parameterRefs,
             ?measurementType = variableMeasured,
             ?technologyType = measurementMethod,
             ?technologyPlatform = measurementTechnique,

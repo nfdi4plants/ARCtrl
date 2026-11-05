@@ -13,6 +13,9 @@ module Builder =
         mutable NodeIds: Set<WorkflowGraphNodeId>
         mutable EdgeIds: Set<WorkflowGraphEdgeId>
         mutable RunResolutionStack: Set<string>
+        /// The workflows whose steps are being built, innermost first. A workflow that runs one of them, inline or
+        /// through a resolved run, would build without end.
+        mutable ActiveWorkflows: CWLProcessingUnit list
         mutable RunResolutionCache: Map<string, WorkflowStepRun>
         mutable RunNodeCache: Map<string, WorkflowGraphNodeId>
         Options: WorkflowGraphBuildOptions
@@ -37,6 +40,7 @@ module Builder =
             NodeIds = Set.empty
             EdgeIds = Set.empty
             RunResolutionStack = Set.empty
+            ActiveWorkflows = []
             RunResolutionCache = Map.empty
             RunNodeCache = Map.empty
             Options = options
@@ -114,64 +118,91 @@ module Builder =
         addNode state node
         nodeId
 
+    /// How the graph names a step. A step with an id is named by its id, read against the id of the workflow, as the step
+    /// #main/first of a document that writes its ids in full is first. A step without an id is named by its position among
+    /// the entries of the steps of the workflow, in a namespace apart from the ids of the other steps. The name is a place
+    /// in the graph and no id of the step.
+    type StepIdentity = {
+        /// The ID of the node of the step.
+        NodeId: WorkflowGraphNodeId
+        /// The name that the node shows when the step has no label, and that the diagnostics use.
+        Name: string
+        /// The segment that the scope of the process of the step ends in.
+        RunSegment: string
+    }
+
+    /// The identity of a step in the graph. The position is that of the entry among the steps of the workflow.
+    let stepIdentity (scope: string) (workflowId: string option) (position: int) (step: WorkflowStep) : StepIdentity =
+        match step.Id with
+        | Some id ->
+            let name = ReferenceParsing.relativeId workflowId id
+            { NodeId = GraphId.stepNodeId scope name; Name = name; RunSegment = $"{name}/run" }
+        | None ->
+            { NodeId = GraphId.anonymousStepNodeId scope position; Name = $"steps[{position}]"; RunSegment = $"anonymous:{position}/run" }
+
     /// Creates a step node for a CWL workflow step, adds a Contains edge from the workflow. Returns the step node ID.
     let addStepNode
         (state: BuildState)
-        (scope: string)
         (workflowNodeId: WorkflowGraphNodeId)
+        (identity: StepIdentity)
         (step: WorkflowStep)
         =
-        let stepNodeId = GraphId.stepNodeId scope step.Id
+        let stepName = identity.Name
+        let stepNodeId = identity.NodeId
         let metadata =
             createMetadata [
-                "when", step.When_ |> Option.map box
+                "when", step.When_ |> Option.map (fun expression -> box expression.AsDirectiveString)
                 "scatterMethod", step.ScatterMethod |> Option.map (fun sm -> sm.AsCwlString |> box)
-                "scatter", step.Scatter |> Option.map (fun values -> values |> Seq.toArray |> box)
+                "scatter", step.Scatter |> Option.map (fun values -> values |> Seq.map (fun value -> value.AsDirectiveString) |> Seq.toArray |> box)
             ]
         let node =
             WorkflowGraphNode.create
-                (stepNodeId, NodeKind.StepNode, defaultArg step.Label step.Id, ownerNodeId = workflowNodeId, ?metadata = metadata)
+                (stepNodeId, NodeKind.StepNode, defaultArg (step.Label |> Option.bind SchemaSaladString.tryLiteral) stepName, ownerNodeId = workflowNodeId, ?metadata = metadata)
         addNode state node
         addEdgeByType state EdgeKind.Contains workflowNodeId stepNodeId None
         stepNodeId
 
     /// Adds all input and output port nodes for a CWL workflow.
     let addWorkflowPorts (state: BuildState) (workflowNodeId: WorkflowGraphNodeId) (workflow: CWLWorkflowDescription) =
-        workflow.Inputs
-        |> Seq.iter (fun input -> addPortNode state workflowNodeId PortDirection.Input input.Name input.Name |> ignore)
-        workflow.Outputs
-        |> Seq.iter (fun output -> addPortNode state workflowNodeId PortDirection.Output output.Name output.Name |> ignore)
+        let relative = ReferenceParsing.relativeId workflow.Id
+        // An import stands for the ports of a file that the decoder does not read, so it gets no node.
+        CWLWorkflowDescription.getInputValues workflow
+        |> Seq.iter (fun input -> addPortNode state workflowNodeId PortDirection.Input (relative input.Name) (relative input.Name) |> ignore)
+        CWLWorkflowDescription.getOutputValues workflow
+        |> Seq.iter (fun output -> addPortNode state workflowNodeId PortDirection.Output (relative output.Name) (relative output.Name) |> ignore)
 
     /// Adds all input and output port nodes for a CWL CommandLineTool.
     let addToolPorts (state: BuildState) (toolNodeId: WorkflowGraphNodeId) (tool: CWLToolDescription) =
-        tool.Inputs
-        |> Option.defaultValue (ResizeArray())
+        CWLToolDescription.getInputValuesOrEmpty tool
         |> Seq.iter (fun input -> addPortNode state toolNodeId PortDirection.Input input.Name input.Name |> ignore)
-        tool.Outputs
+        CWLToolDescription.getOutputValues tool
         |> Seq.iter (fun output -> addPortNode state toolNodeId PortDirection.Output output.Name output.Name |> ignore)
 
     /// Adds all input and output port nodes for a CWL ExpressionTool.
     let addExpressionToolPorts (state: BuildState) (toolNodeId: WorkflowGraphNodeId) (tool: CWLExpressionToolDescription) =
-        tool.Inputs
-        |> Option.defaultValue (ResizeArray())
+        CWLExpressionToolDescription.getInputValuesOrEmpty tool
         |> Seq.iter (fun input -> addPortNode state toolNodeId PortDirection.Input input.Name input.Name |> ignore)
-        tool.Outputs
+        CWLExpressionToolDescription.getOutputValues tool
         |> Seq.iter (fun output -> addPortNode state toolNodeId PortDirection.Output output.Name output.Name |> ignore)
 
     /// Adds all input and output port nodes for a CWL Operation.
     let addOperationPorts (state: BuildState) (operationNodeId: WorkflowGraphNodeId) (operation: CWLOperationDescription) =
-        operation.Inputs
+        CWLOperationDescription.getInputValues operation
         |> Seq.iter (fun input -> addPortNode state operationNodeId PortDirection.Input input.Name input.Name |> ignore)
-        operation.Outputs
+        CWLOperationDescription.getOutputValues operation
         |> Seq.iter (fun output -> addPortNode state operationNodeId PortDirection.Output output.Name output.Name |> ignore)
 
     /// Adds all input and output port nodes for a workflow step.
     let addStepPorts (state: BuildState) (stepNodeId: WorkflowGraphNodeId) (step: WorkflowStep) =
-        step.In
-        |> Seq.iter (fun input -> addPortNode state stepNodeId PortDirection.Input input.Id input.Id |> ignore)
+        let relative = ReferenceParsing.relativeId step.Id
+        // An import or a mixin stands for ports of a file that the decoder does not read, and an include for the id of an output
+        // of a file, so none of them gets a node.
+        WorkflowStep.getInputValues step
+        |> Seq.iter (fun input -> addPortNode state stepNodeId PortDirection.Input (relative input.Id) (relative input.Id) |> ignore)
         step.Out
-        |> Seq.iter (fun output ->
-            let outputId = ReferenceParsing.extractStepOutputId output
+        |> Seq.choose StepOutput.tryId
+        |> Seq.iter (fun id ->
+            let outputId = relative id
             addPortNode state stepNodeId PortDirection.Output outputId outputId |> ignore
         )
 
@@ -337,6 +368,8 @@ module Builder =
                                 for key in candidateKeys do
                                     state.RunResolutionCache <- state.RunResolutionCache.Add(key, run)
                                 resolvedRun <- Some (run, candidate)
+                            // A step has no run for a process whose class is a directive, so the reference stays unresolved.
+                            | Some (RawProcess _)
                             | None ->
                                 ()
 
@@ -379,8 +412,8 @@ module Builder =
                     "CommandLineTool"
                     [
                         tryGetProcessingUnitName tool
-                        tool.Label |> Option.bind tryBasenameNoCwlExtension
-                        tool.BaseCommand |> Option.bind Seq.tryHead |> Option.bind tryBasenameNoCwlExtension
+                        tool.Label |> Option.bind SchemaSaladString.tryLiteral |> Option.bind tryBasenameNoCwlExtension
+                        tool.BaseCommand |> Option.bind Seq.tryHead |> Option.bind SchemaSaladString.tryLiteral |> Option.bind tryBasenameNoCwlExtension
                         workflowFilePath |> Option.bind tryBasenameNoCwlExtension
                     ]
             let metadata = createMetadata [ "cwlVersion", Some (box tool.CWLVersion) ]
@@ -401,13 +434,13 @@ module Builder =
                     "ExpressionTool"
                     [
                         tryGetProcessingUnitName expressionTool
-                        expressionTool.Label |> Option.bind tryBasenameNoCwlExtension
+                        expressionTool.Label |> Option.bind SchemaSaladString.tryLiteral |> Option.bind tryBasenameNoCwlExtension
                         workflowFilePath |> Option.bind tryBasenameNoCwlExtension
                     ]
             let metadata =
                 createMetadata [
                     "cwlVersion", Some (box expressionTool.CWLVersion)
-                    "expression", Some (box expressionTool.Expression)
+                    "expression", Some (box expressionTool.Expression.AsDirectiveString)
                 ]
             let nodeId =
                 addProcessingUnitNode
@@ -426,7 +459,7 @@ module Builder =
                     "Operation"
                     [
                         tryGetProcessingUnitName operation
-                        operation.Label |> Option.bind tryBasenameNoCwlExtension
+                        operation.Label |> Option.bind SchemaSaladString.tryLiteral |> Option.bind tryBasenameNoCwlExtension
                         workflowFilePath |> Option.bind tryBasenameNoCwlExtension
                     ]
             let metadata =
@@ -450,7 +483,7 @@ module Builder =
                     "Workflow"
                     [
                         tryGetProcessingUnitName workflow
-                        workflow.Label |> Option.bind tryBasenameNoCwlExtension
+                        workflow.Label |> Option.bind SchemaSaladString.tryLiteral |> Option.bind tryBasenameNoCwlExtension
                         workflowFilePath |> Option.bind tryBasenameNoCwlExtension
                     ]
             let metadata = createMetadata [ "cwlVersion", Some (box workflow.CWLVersion) ]
@@ -465,8 +498,32 @@ module Builder =
                     metadata
             addWorkflowPorts state nodeId workflow
             if isRoot || state.Options.ExpandNestedWorkflows then
-                buildWorkflowSteps state scope workflowFilePath nodeId workflow
+                if state.ActiveWorkflows |> List.exists (CWLProcessingUnit.isSameObject processingUnit) then
+                    // The workflow runs itself, so the second node shows its ports and leaves its steps to the first one.
+                    addDiagnostic
+                        state
+                        GraphIssueKind.CycleDetected
+                        $"Cycle detected: the workflow '{label}' runs itself through its steps."
+                        workflowFilePath
+                        None
+                else
+                    let previousWorkflows = state.ActiveWorkflows
+                    state.ActiveWorkflows <- processingUnit :: previousWorkflows
+                    try
+                        buildWorkflowSteps state scope workflowFilePath nodeId workflow
+                    finally
+                        state.ActiveWorkflows <- previousWorkflows
             nodeId
+        | RawProcess raw ->
+            // A file decides the class of the process and the decoder reads no file, so the graph shows one node without ports.
+            let label =
+                chooseLabel
+                    "Process with a directive as its class"
+                    [
+                        raw.TryScalarField "id" |> Option.bind tryBasenameNoCwlExtension
+                        workflowFilePath |> Option.bind tryBasenameNoCwlExtension
+                    ]
+            addProcessingUnitNode state scope ProcessingUnitKind.ExternalReference label ownerNodeId None None
 
     /// Resolves and builds the graph representation of a workflow step's run field.
     and buildRunNode
@@ -478,7 +535,8 @@ module Builder =
         : WorkflowStepRun * WorkflowGraphNodeId
         =
         match run with
-        | RunString runPath ->
+        | RunString runPath
+        | RunImport runPath ->
             let resolution = resolveRunString state workflowFilePath runPath
             match resolution.ResolvedRun with
             | RunString unresolvedPath ->
@@ -529,6 +587,16 @@ module Builder =
                     for key in resolution.ResolutionPathKeys do
                         state.RunNodeCache <- state.RunNodeCache.Add(key, builtNodeId)
                     builtRun, builtNodeId
+        | RunMixed _ ->
+            // A file completes the process through $mixin and the decoder reads no file, so the graph cannot follow it.
+            let nodeId =
+                addProcessingUnitNode state runScope ProcessingUnitKind.ExternalReference "Process with a mixin" (Some stepNodeId) None None
+            run, nodeId
+        | RunRaw raw ->
+            // A file decides the class of the process and the decoder reads no file, so the graph cannot follow it.
+            let label = chooseLabel "Process with a directive as its class" [ raw.TryScalarField "id" |> Option.bind tryBasenameNoCwlExtension ]
+            let nodeId = addProcessingUnitNode state runScope ProcessingUnitKind.ExternalReference label (Some stepNodeId) None None
+            run, nodeId
         | RunCommandLineTool _ ->
             match WorkflowStepRunOps.tryGetTool run with
             | Some tool ->
@@ -656,23 +724,26 @@ module Builder =
         (state: BuildState)
         (scope: string)
         (workflowNodeId: WorkflowGraphNodeId)
+        (workflowId: string option)
+        (identity: StepIdentity)
         (step: WorkflowStep)
         =
-        let stepNodeId = GraphId.stepNodeId scope step.Id
+        let stepNodeId = identity.NodeId
 
-        for stepInput in step.In do
-            let targetInputPortId = GraphId.portNodeId stepNodeId PortDirection.Input stepInput.Id
+        for stepInput in WorkflowStep.getInputValues step do
+            let targetInputPortId = GraphId.portNodeId stepNodeId PortDirection.Input (ReferenceParsing.relativeId step.Id stepInput.Id)
             match stepInput.Source with
             | None ->
                 ()
             | Some sources ->
-                for source in sources do
-                    let sourceRef = ReferenceParsing.parseSourceReference source
+                // A directive names a file that the decoder does not read, so it gets no edge.
+                for source in sources.AsValues() |> Seq.choose SchemaSaladString.tryLiteral do
+                    let sourceRef = ReferenceParsing.parseSourceReference (ReferenceParsing.relativeId workflowId source)
                     if System.String.IsNullOrWhiteSpace sourceRef.PortId then
                         addDiagnostic
                             state
                             GraphIssueKind.InvalidReference
-                            $"Step '{step.Id}' input '{stepInput.Id}' has invalid source '{source}'."
+                            $"Step '{identity.Name}' input '{stepInput.Id}' has invalid source '{source}'."
                             (Some scope)
                             (Some source)
                     else
@@ -696,7 +767,7 @@ module Builder =
                             addDiagnostic
                                 state
                                 GraphIssueKind.MissingReference
-                                $"Unable to wire source '{source}' to step input '{step.Id}/{stepInput.Id}'."
+                                $"Unable to wire source '{source}' to step input '{identity.Name}/{stepInput.Id}'."
                                 (Some scope)
                                 (Some source)
 
@@ -707,10 +778,11 @@ module Builder =
         (workflowNodeId: WorkflowGraphNodeId)
         (workflow: CWLWorkflowDescription)
         =
-        for output in workflow.Outputs do
+        for output in CWLWorkflowDescription.getOutputValues workflow do
+            let outputName = ReferenceParsing.relativeId workflow.Id output.Name
             let outputSources = output.GetOutputSources()
             for outputSource in outputSources do
-                let parsedSource = ReferenceParsing.parseSourceReference outputSource
+                let parsedSource = ReferenceParsing.parseSourceReference (ReferenceParsing.relativeId workflow.Id outputSource)
                 if System.String.IsNullOrWhiteSpace parsedSource.PortId then
                     addDiagnostic
                         state
@@ -729,7 +801,7 @@ module Builder =
                         | None ->
                             GraphId.portNodeId workflowNodeId PortDirection.Input parsedSource.PortId
 
-                    let targetPortId = GraphId.portNodeId workflowNodeId PortDirection.Output output.Name
+                    let targetPortId = GraphId.portNodeId workflowNodeId PortDirection.Output outputName
                     if hasNode state sourcePortId && hasNode state targetPortId then
                         addEdgeByType state EdgeKind.BindsWorkflowOutput sourcePortId targetPortId None
                     else
@@ -748,16 +820,23 @@ module Builder =
         (workflowNodeId: WorkflowGraphNodeId)
         (workflow: CWLWorkflowDescription)
         =
-        for step in workflow.Steps do
-            let stepNodeId = addStepNode state scope workflowNodeId step
+        // The identity of a step comes from its place among the entries, so an import or a mixin between the steps keeps the
+        // places of the others.
+        let steps =
+            workflow.Steps
+            |> Seq.indexed
+            |> Seq.choose (fun (position, entry) -> ListEntry.tryValue entry |> Option.map (fun step -> step, stepIdentity scope workflow.Id position step))
+            |> Seq.toList
+        for step, identity in steps do
+            let stepNodeId = addStepNode state workflowNodeId identity step
             addStepPorts state stepNodeId step
 
-            let runScope = GraphId.childScope scope $"{step.Id}/run"
-            let _, runNodeId = buildRunNode state runScope stepNodeId workflowFilePath step.Run
+            let runScope = GraphId.childScope scope identity.RunSegment
+            let _, runNodeId = buildRunNode state runScope stepNodeId workflowFilePath (WorkflowStep.getResolvedRun step)
             addEdgeByType state EdgeKind.Calls stepNodeId runNodeId (Some "calls")
 
-        workflow.Steps
-        |> Seq.iter (wireStepInputs state scope workflowNodeId)
+        steps
+        |> List.iter (fun (step, identity) -> wireStepInputs state scope workflowNodeId workflow.Id identity step)
 
         wireWorkflowOutputs state scope workflowNodeId workflow
 

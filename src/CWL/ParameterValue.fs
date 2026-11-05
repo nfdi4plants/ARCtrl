@@ -94,7 +94,7 @@ module CWLParameterValue =
         let tryConvert (convert: unit -> int64) =
             try Some (convert()) with _ -> None
         match value with
-        | :? int as value -> Some (int64 value)
+        | :? int as value -> IntegerOf.tryNumber (float value)
         | :? int64 as value -> Some value
         | :? decimal as value ->
             tryConvert (fun () ->
@@ -147,6 +147,21 @@ module CWLParameterValue =
             |> Seq.collect (fun field -> toFlatStrings field.Value :> seq<string>)
             |> ResizeArray
 
+    /// The type that a value shows by itself. A File shows File and a Directory shows Directory. A list whose items all
+    /// show the same type shows an array of that type. Any other value shows no type, because a job file gives scalars
+    /// and records without one.
+    let rec tryInferType (value: CWLParameterValue) : CWLType option =
+        match value with
+        | CWLParameterValue.File _ -> Some CWLType.File
+        | CWLParameterValue.Directory _ -> Some CWLType.Directory
+        | CWLParameterValue.Array values when values.Count > 0 ->
+            let itemTypes = values |> Seq.map tryInferType |> Seq.toArray
+            match itemTypes.[0] with
+            | Some firstType when itemTypes |> Array.forall (function Some itemType -> CWLType.typesEqual firstType itemType | None -> false) ->
+                Some (CWLType.Array (InputArraySchema(firstType)))
+            | _ -> None
+        | _ -> None
+
     let fromFlatStrings (values: ResizeArray<string>) =
         match values.Count with
         | 0 -> None
@@ -157,23 +172,3 @@ module CWLParameterValue =
             |> ResizeArray
             |> CWLParameterValue.Array
             |> Some
-
-    let rec tryInferType value =
-        match value with
-        | CWLParameterValue.File _ -> Some (CWLType.file())
-        | CWLParameterValue.Directory _ -> Some (CWLType.directory())
-        | CWLParameterValue.Array values when values.Count > 0 ->
-            let inferredItemTypes =
-                values
-                |> Seq.map tryInferType
-                |> Seq.toArray
-
-            match inferredItemTypes.[0] with
-            | Some firstType
-                when inferredItemTypes
-                     |> Array.forall (function
-                         | Some itemType -> CWLType.typesEqual firstType itemType
-                         | None -> false) ->
-                Some (CWLType.Array (InputArraySchema(firstType)))
-            | _ -> None
-        | _ -> None

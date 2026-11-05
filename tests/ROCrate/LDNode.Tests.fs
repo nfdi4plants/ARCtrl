@@ -868,6 +868,24 @@ let tests_mergeAppendInto_InPlace = testList "mergeAppendInto_InPlace" [
             let refs = (refs :?> System.Collections.IEnumerable)
             Expect.genericSequenceEqual refs [LDRef("MyInternalNode3");LDRef("MyInternalNode1");LDRef("MyInternalNode2")] "Property value should have been modified"
     ]
+    testList "Types" [
+        let getFirst() = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"; "https://schema.org/Dataset"], additionalType = ResizeArray ["First"; "Shared"])
+        let getSecond() = new LDNode("MyNode", ResizeArray ["https://schema.org/Dataset"; "https://schema.org/Person"], additionalType = ResizeArray ["Shared"; "Second"])
+        testCase "AddNode_KeepsTypesOfBothNodes" <| fun _ ->
+            let graph = new LDGraph()
+            graph.AddNode(getFirst())
+            graph.AddNode(getSecond())
+            let node = graph.GetNode("MyNode")
+            Expect.sequenceEqual node.SchemaType ["https://schema.org/Thing"; "https://schema.org/Dataset"; "https://schema.org/Person"] "SchemaType should be the union, graph node first"
+            Expect.sequenceEqual node.AdditionalType ["First"; "Shared"; "Second"] "AdditionalType should be the union, graph node first"
+        testCase "AddNode_KeepsTypesOfBothNodes_ReverseOrder" <| fun _ ->
+            let graph = new LDGraph()
+            graph.AddNode(getSecond())
+            graph.AddNode(getFirst())
+            let node = graph.GetNode("MyNode")
+            Expect.sequenceEqual node.SchemaType ["https://schema.org/Dataset"; "https://schema.org/Person"; "https://schema.org/Thing"] "SchemaType should be the union, graph node first"
+            Expect.sequenceEqual node.AdditionalType ["Shared"; "Second"; "First"] "AdditionalType should be the union, graph node first"
+    ]
     ]
 
 let main = testList "LDNode" [

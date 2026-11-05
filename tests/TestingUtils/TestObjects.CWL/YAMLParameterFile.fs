@@ -18,11 +18,8 @@ exampleList:
 module File =
     let filePath = "data/examplePath"
     let fileClass = "File"
-    let fileType = CWLType.file()
 
-    let fileParameterReference = CWLParameterReference(key = Inputs.File.inputFileName, values = ResizeArray [filePath])
-
-    let fileParameterReferenceWithType = CWLParameterReference(key = Inputs.File.inputFileName, values = ResizeArray [filePath], type_ = fileType)
+    let fileParameterReference = CWLParameterReference(key = Inputs.File.inputFileName, value = CWLParameterValue.File (FileInstance(path = SchemaSaladString.Literal filePath)))
 
 module String =
 
@@ -50,3 +47,22 @@ module Structured =
         path: ../../assays/RNASeq/dataset/DB_163.fastq.gz"""
 
     let emptyArray = """sampleRecordFiles: []"""
+
+module CoreSchemaScalars =
+
+    let quotedAndPlainScalars = """quotedBool: "true"
+plainBool: true
+quotedInt: '12'
+plainInt: 12
+quotedNull: "null"
+plainNull: null
+quotedFloat: "1.5"
+plainFloat: 1.5
+plainInfinity: .inf
+capitalBool: True
+upperBool: FALSE
+tilde: ~
+capitalNull: Null
+nanWord: NaN
+infinityWord: Infinity
+"""
