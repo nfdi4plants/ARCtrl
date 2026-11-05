@@ -45,6 +45,33 @@ let private test_read = testList "Read" [
         let rootParts = root.GetPropertyValues(LDDataset.hasPart, ?context = context) |> Seq.map (fun r -> (r :?> LDRef).Id) |> List.ofSeq
         Expect.equal rootParts ["./studies/MyStudy/"; "https://example.org/data.txt"] "Root should reference the normalized study and the unchanged url"
         Expect.isSome (graph.TryGetNode "https://example.org/data.txt") "Url should not be changed"
+    testCase "NormalizeDataEntityIds_ReferencesInRecordValues" <| fun _ ->
+        let graph = LDGraph.fromROCrateJsonString roCrate_recordValueWithUnnormalizedReferences
+        let context = graph.TryGetContext()
+        let parameter = Expect.wantSome (graph.TryGetNode "#nested") "The parameter should exist"
+        let record = LDPropertyValue.getValueObject(parameter, ?context = context)
+        let field (name : string) (value : obj) = Expect.wantSome ((value :?> DynamicObj).TryGetPropertyValue name) $"The record should have the field {name}"
+        let referenceId (value : obj) = (value :?> LDRef).Id
+        let elementsOf (value : obj) = [ for element in (value :?> System.Collections.IEnumerable) -> element ]
+        Expect.equal (referenceId (field "f" record)) "./assays/A/dataset/a.txt" "File of the record should be referenced by its normalized id"
+        Expect.equal (field "n" record) (box "sample-a") "String of the record should not be changed"
+        Expect.equal (elementsOf (field "many" record) |> List.map referenceId) ["./assays/A/dataset/b.txt"; "./assays/A/dataset/c.txt"] "Files of a list in the record should be referenced by their normalized ids"
+        Expect.equal (referenceId (field "g" (field "inner" record))) "./assays/A/dataset/d.txt" "File of a record in the record should be referenced by its normalized id"
+        Expect.equal (elementsOf (field "list" record) |> List.map (field "h" >> referenceId)) ["./assays/A/dataset/e.txt"; "./assays/A/dataset/f.txt"] "Files of the records in a list of the record should be referenced by their normalized ids"
+        for name in ["a"; "b"; "c"; "d"; "e"; "f"] do
+            let id = $"./assays/A/dataset/{name}.txt"
+            let file = Expect.wantSome (graph.TryGetNode id) $"File {id} should exist"
+            Expect.isTrue (LDFile.validate(file, ?context = context)) $"Entity {id} should be a File"
+    testCase "NormalizeDataEntityIds_RepeatedReferenceInListValue" <| fun _ ->
+        let graph = LDGraph.fromROCrateJsonString roCrate_repeatedReferenceInListValue
+        let context = graph.TryGetContext()
+        let parameter = Expect.wantSome (graph.TryGetNode "#files") "The parameter should exist"
+        let ids = LDPropertyValue.getValueObjects(parameter, ?context = context) |> Seq.map (fun value -> (value :?> LDRef).Id) |> List.ofSeq
+        Expect.equal ids ["./assays/A/dataset/a.txt"; "./assays/A/dataset/a.txt"] "A file that the list names twice should be referenced twice"
+        let mixed = Expect.wantSome (graph.TryGetNode "#mixed") "The mixed parameter should exist"
+        let mixedIds = LDPropertyValue.getValueObjects(mixed, ?context = context) |> Seq.map (fun value -> (value :?> LDRef).Id) |> List.ofSeq
+        Expect.equal mixedIds ["./assays/A/dataset/a.txt"; "./assays/A/dataset/a.txt"] "The list a.txt, ./a.txt, a.txt should merge ./a.txt into the first a.txt and keep the repeated a.txt"
+        Expect.isSome (graph.TryGetNode "./assays/A/dataset/a.txt") "File with leading ./ should exist"
 ]
 
 let private test_write = testList "Write" [

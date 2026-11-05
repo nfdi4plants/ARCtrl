@@ -3346,6 +3346,35 @@ let private arcPathValueId (graph : LDGraph) =
 let private partIds (graph : LDGraph) (entity : LDNode) =
     LDDataset.getHasParts(entity, graph = graph, ?context = graph.TryGetContext()) |> Seq.map (fun part -> part.Id) |> List.ofSeq
 
+/// The value of a field of a record value.
+let private recordField (name : string) (record : obj) =
+    match record with
+    | :? DynamicObj as dyn -> Expect.wantSome (dyn.TryGetPropertyValue name) $"The record has the field {name}."
+    | other -> failwithf "Expected a record but got %A" other
+
+/// The id of a reference.
+let private referenceId (value : obj) =
+    match value with
+    | :? LDRef as reference -> reference.Id
+    | other -> failwithf "Expected a reference but got %A" other
+
+/// The ids of the references in a value, which is a reference or a list of references.
+let private referenceIds (value : obj) =
+    match value with
+    | :? System.Collections.IEnumerable as elements -> [ for element in elements -> referenceId element ]
+    | single -> [ referenceId single ]
+
+/// The crate of an ARC with the run R and its file assays/A/dataset/a.txt, decoded without the normalization of the
+/// ids so that the ids are the written ones, and the PropertyValue of the parameter of the run with the given name.
+let private writtenParameter (toolYaml : string) (jobYaml : string) (name : string) =
+    let run = ArcRun.create(identifier = "R", title = "t", description = "d", cwlDescription = CWL.Decode.decodeCWLProcessingUnit toolYaml, cwlInput = CWL.DecodeParameters.decodeYAMLParameterFile jobYaml)
+    let arc = ARC("I", title = "T", description = "D", runs = ResizeArray [run], fs = FileSystem.fromFilePaths [| "runs/R/run.cwl"; "assays/A/dataset/a.txt" |])
+    let graph = ARCtrl.Json.Decode.fromJsonString ARCtrl.Json.LDGraph.decoder (arc.ToROCrateJsonString())
+    let context = graph.TryGetContext()
+    graph.Nodes
+    |> Seq.find (fun node -> LDPropertyValue.validateCWLParameter(node, ?context = context) && LDPropertyValue.tryGetNameAsString(node, ?context = context) = Some name)
+    |> fun parameter -> parameter, context
+
 let tests_ArcRun =
     testList "Run" [
         testCase "Full_FromScaffold" (fun () ->
@@ -3676,6 +3705,40 @@ let tests_ArcRun =
                 Expect.equal (rootParts |> List.filter (fun part -> part = id)) [id] $"The root lists {id} once."
                 let file = Expect.wantSome (graph.TryGetNode id) $"The crate has an entity {id}."
                 Expect.isTrue (LDFile.validate(file, ?context = context)) $"The entity {id} is a File."
+        )
+        testCase "RecordValues_NestedFilesAreReferencedByTheNormalizedIds" (fun () ->
+            let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  nested:\n    type:\n      type: record\n      fields:\n        f: File\n        n: string\n        many: File[]\n        inner:\n          type:\n            type: record\n            fields:\n              g: File\n        list:\n          type:\n            type: array\n            items:\n              type: record\n              fields:\n                h: File\noutputs: []\n"
+            let input = CWL.DecodeParameters.decodeYAMLParameterFile "nested:\n  f:\n    class: File\n    path: ../../assays/A/dataset/a.txt\n  n: sample-a\n  many:\n    - class: File\n      path: ../../assays/A/dataset/e.txt\n    - class: File\n      path: ../../assays/A/dataset/f.txt\n  inner:\n    g:\n      class: File\n      path: ../../assays/A/dataset/b.txt\n  list:\n    - h:\n        class: File\n        path: ../../assays/A/dataset/c.txt\n    - h:\n        class: File\n        path: ../../assays/A/dataset/d.txt\n"
+            let run = ArcRun.create(identifier = "R", title = "t", description = "d", cwlDescription = tool, cwlInput = input)
+            let names = [ "a"; "b"; "c"; "d"; "e"; "f" ]
+            let fs = FileSystem.fromFilePaths (Array.ofList ("runs/R/run.cwl" :: (names |> List.map (fun name -> $"assays/A/dataset/{name}.txt"))))
+            let arc = ARC("I", title = "T", description = "D", runs = ResizeArray [run], fs = fs)
+            // Decoding without the normalization of the ids shows the ids as they are written.
+            let graph = ARCtrl.Json.Decode.fromJsonString ARCtrl.Json.LDGraph.decoder (arc.ToROCrateJsonString())
+            let context = graph.TryGetContext()
+            let parameter =
+                graph.Nodes
+                |> Seq.find (fun node -> LDPropertyValue.validateCWLParameter(node, ?context = context) && LDPropertyValue.tryGetNameAsString(node, ?context = context) = Some "nested")
+            let record = LDPropertyValue.getValueObject(parameter, ?context = context)
+            let elementsOf (value : obj) = [ for element in (value :?> System.Collections.IEnumerable) -> element ]
+            Expect.equal (referenceId (recordField "f" record)) "./assays/A/dataset/a.txt" "A file of the record is referenced by its normalized id."
+            Expect.equal (recordField "n" record) (box "sample-a") "A string of the record is unchanged."
+            Expect.equal (elementsOf (recordField "many" record) |> List.map referenceId) [ "./assays/A/dataset/e.txt"; "./assays/A/dataset/f.txt" ] "The files of a list in the record are referenced by their normalized ids."
+            Expect.equal (referenceId (recordField "g" (recordField "inner" record))) "./assays/A/dataset/b.txt" "A file of a record in the record is referenced by its normalized id."
+            Expect.equal (elementsOf (recordField "list" record) |> List.map (recordField "h" >> referenceId)) [ "./assays/A/dataset/c.txt"; "./assays/A/dataset/d.txt" ] "The files of the records in a list of the record are referenced by their normalized ids."
+            for name in names do
+                let id = $"./assays/A/dataset/{name}.txt"
+                let file = Expect.wantSome (graph.TryGetNode id) $"The crate has an entity {id}."
+                Expect.isTrue (LDFile.validate(file, ?context = context)) $"The entity {id} is a File."
+        )
+        testCase "FileArrayValues_ARepeatedFileStaysInTheList" (fun () ->
+            let parameter, context = writtenParameter "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  files: File[]\noutputs: []\n" "files:\n  - class: File\n    path: ../../assays/A/dataset/a.txt\n  - class: File\n    path: ../../assays/A/dataset/a.txt\n" "files"
+            Expect.equal (LDPropertyValue.getValueObjects(parameter, ?context = context) |> Seq.map referenceId |> List.ofSeq) [ "./assays/A/dataset/a.txt"; "./assays/A/dataset/a.txt" ] "A file that the array names twice is referenced twice."
+        )
+        testCase "RecordValues_ARepeatedFileStaysInTheListOfTheRecord" (fun () ->
+            let parameter, context = writtenParameter "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  pair:\n    type:\n      type: record\n      fields:\n        many: File[]\noutputs: []\n" "pair:\n  many:\n    - class: File\n      path: ../../assays/A/dataset/a.txt\n    - class: File\n      path: ../../assays/A/dataset/a.txt\n" "pair"
+            let many = recordField "many" (LDPropertyValue.getValueObject(parameter, ?context = context))
+            Expect.equal (referenceIds many) [ "./assays/A/dataset/a.txt"; "./assays/A/dataset/a.txt" ] "A file that the array of the record names twice is referenced twice."
         )
         testCase "FileValues_AFileFitsAnInputOfTypeStdin" (fun () ->
             let run = create_run_full()

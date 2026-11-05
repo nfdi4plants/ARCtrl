@@ -27,7 +27,11 @@ type AssayConversion =
                 ResizeArray.append inputs outputs
             )
             |> ResizeArray.append dataFromFragmentDescriptors
-            |> ResizeArray.distinct
+            // The datamap and the tables compose separate nodes for the same file or fragment. The dataset and a file
+            // list each entity once, so only the first node of an id stays. The graph merges the nodes of one id when
+            // it is flattened, so the dropped node still adds its properties through its process or its descriptor.
+            |> Seq.distinctBy (fun d -> d.Id)
+            |> ResizeArray
         let files =
             data
             |> ResizeArray.filter (fun d -> 

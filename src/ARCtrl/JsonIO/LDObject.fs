@@ -59,11 +59,31 @@ module LDGraphExtensions =
                 let rec updateRefs (o : obj) : obj =
                     match o with
                     | :? LDRef as r when newIds.ContainsKey r.Id -> LDRef(newIds.[r.Id])
+                    | :? LDNode -> o
+                    | :? DynamicObj as record ->
+                        // A record, such as the value of a CWL parameter, holds its references in its fields.
+                        // A renamed node shares its value objects with the node it replaces, so the record is copied.
+                        let rewritten = DynamicObj()
+                        record.GetProperties(false)
+                        |> Seq.iter (fun kv -> rewritten.SetProperty(kv.Key, updateRefs kv.Value))
+                        rewritten :> obj
                     | ActivePattern.NonStringEnumerable e ->
-                        // References that point to the same entity after normalization are only kept once
-                        let refIds = System.Collections.Generic.HashSet<string>()
-                        [for v in e do updateRefs v]
-                        |> List.filter (fun v -> match v with | :? LDRef as r -> refIds.Add r.Id | _ -> true)
+                        // CWL arrays are ordered and may repeat an item, so a repeated reference stays in the list.
+                        // The normalization only merges references whose ids differ and become equal, as "a.txt" and
+                        // "./a.txt" do. The first reference to a new id claims it, and a later reference to the same
+                        // new id is dropped when its original id is another one.
+                        let claimedBy = System.Collections.Generic.Dictionary<string, string>()
+                        [for v in e do
+                            match v with
+                            | :? LDRef as r ->
+                                let newId = match newIds.TryGetValue r.Id with | true, newId -> newId | _ -> r.Id
+                                match claimedBy.TryGetValue newId with
+                                | true, originalId when originalId <> r.Id -> ()
+                                | true, _ -> yield updateRefs v
+                                | _ ->
+                                    claimedBy.Add(newId, r.Id)
+                                    yield updateRefs v
+                            | _ -> yield updateRefs v]
                         |> ResizeArray
                         |> box
                     | _ -> o

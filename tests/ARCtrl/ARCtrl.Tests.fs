@@ -3260,6 +3260,32 @@ let tests_ROCrate =
             Expect.isNone (graph.TryGetNode "assays/MyAssay/") "Assay dataset without leading ./ should not be written"
             let assayNode = Expect.wantSome (graph.TryGetNode "./assays/MyAssay/") "Assay dataset should be written with leading ./"
             Expect.equal (ROCrate.LDDataset.getNameAsString(assayNode, ?context = context)) "My Assay" "Assay name should not be changed"
+        testCase "FragmentsOfAFileAreListedOnce" <| fun _ ->
+            let arc = ARC("MyARC", title = "MyTitle")
+            let assay = arc.InitAssay("MyAssay")
+            assay.Title <- Some "My Assay"
+            let fragmentName (column : int) = $"assays/MyAssay/dataset/MyData.csv#col={column}"
+            let fragmentId (column : int) = $"./assays/MyAssay/dataset/MyData.csv#col={column}"
+            // The datamap and the table of the assay describe the same fragments, so each fragment is composed twice
+            assay.Datamap <-
+                Datamap(ResizeArray [ for column in 1 .. 3 -> DataContext(name = fragmentName column, format = "text/csv", objectType = OntologyAnnotation.create(name = "float", tsr = "TO", tan = "TO:987")) ])
+                |> Some
+            let table = assay.InitTable("MyTable")
+            table.AddColumn(
+                CompositeHeader.Input IOType.Data,
+                ResizeArray [ for column in 1 .. 3 -> CompositeCell.createDataFromString(fragmentName column, format = "text/csv") ]
+            ) |> ignore
+            let roCrate = arc.ToROCrateJsonString()
+            // Decode without normalization, to check the written lists
+            let graph = Json.Decode.fromJsonString Json.LDGraph.decoder roCrate
+            let context = graph.TryGetContext()
+            let file = Expect.wantSome (graph.TryGetNode "./assays/MyAssay/dataset/MyData.csv") "File should be written"
+            let partIds = ROCrate.LDDataset.getHasParts(file, graph = graph, ?context = context) |> Seq.map (fun part -> part.Id) |> List.ofSeq
+            Expect.equal partIds [ fragmentId 1; fragmentId 2; fragmentId 3 ] "File should list each fragment once, in order"
+            // The fragment is one entity that holds the properties of both compositions
+            let fragment = Expect.wantSome (graph.TryGetNode (fragmentId 1)) "Fragment should be written"
+            let aboutIds = fragment.GetPropertyValues(ROCrate.LDFile.about, ?context = context) |> Seq.map (fun about -> (about :?> ROCrate.LDRef).Id) |> List.ofSeq
+            Expect.equal aboutIds [ "#Descriptor_assays/MyAssay/dataset/MyData.csv#col=1" ] "Fragment should refer to its descriptor"
         testCase "PersonGetsMergedOneORCID" <| fun _ ->
             let pWithORCID = Person(firstName = "John", lastName = "Doe", orcid = "0000-0003-3925-6778", email = "john.doe@example.com")
             let pWithoutORCID = Person(firstName = "John", lastName = "Doe", phone = "123456")

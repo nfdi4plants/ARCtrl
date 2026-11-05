@@ -81,6 +81,102 @@ let roCrate_unnormalizedDataEntityIds = """{
       ]
     }"""
 
+/// A record value that references files without the leading "./" at several depths, as ARCtrl 3.2.3 wrote it
+let roCrate_recordValueWithUnnormalizedReferences = """{
+      "@context": "https://w3id.org/ro/crate/1.2/context",
+      "@graph": [
+        {
+            "@id": "ro-crate-metadata.json",
+            "@type": "CreativeWork",
+            "about": {"@id": "./"},
+            "conformsTo": {"@id": "https://w3id.org/ro/crate/1.2"}
+        },
+        {
+          "@id": "./",
+          "@type": "Dataset",
+          "hasPart": [{"@id": "assays/A/dataset/a.txt"}]
+        },
+        {
+          "@id": "#nested",
+          "@type": "PropertyValue",
+          "name": "nested",
+          "value": {
+            "f": {"@id": "assays/A/dataset/a.txt"},
+            "n": "sample-a",
+            "many": [{"@id": "assays/A/dataset/b.txt"}, {"@id": "assays/A/dataset/c.txt"}],
+            "inner": {"g": {"@id": "assays/A/dataset/d.txt"}},
+            "list": [{"h": {"@id": "assays/A/dataset/e.txt"}}, {"h": {"@id": "assays/A/dataset/f.txt"}}]
+          }
+        },
+        {
+          "@id": "assays/A/dataset/a.txt",
+          "@type": "File",
+          "name": "assays/A/dataset/a.txt"
+        },
+        {
+          "@id": "assays/A/dataset/b.txt",
+          "@type": "File",
+          "name": "assays/A/dataset/b.txt"
+        },
+        {
+          "@id": "assays/A/dataset/c.txt",
+          "@type": "File",
+          "name": "assays/A/dataset/c.txt"
+        },
+        {
+          "@id": "assays/A/dataset/d.txt",
+          "@type": "File",
+          "name": "assays/A/dataset/d.txt"
+        },
+        {
+          "@id": "assays/A/dataset/e.txt",
+          "@type": "File",
+          "name": "assays/A/dataset/e.txt"
+        },
+        {
+          "@id": "assays/A/dataset/f.txt",
+          "@type": "File",
+          "name": "assays/A/dataset/f.txt"
+        }
+      ]
+    }"""
+
+/// A list value that names the same file twice without the leading "./", as ARCtrl 3.2.3 wrote it, and a list value
+/// that names it once more with the leading "./" in between
+let roCrate_repeatedReferenceInListValue = """{
+      "@context": "https://w3id.org/ro/crate/1.2/context",
+      "@graph": [
+        {
+            "@id": "ro-crate-metadata.json",
+            "@type": "CreativeWork",
+            "about": {"@id": "./"},
+            "conformsTo": {"@id": "https://w3id.org/ro/crate/1.2"}
+        },
+        {
+          "@id": "./",
+          "@type": "Dataset",
+          "hasPart": [{"@id": "assays/A/dataset/a.txt"}]
+        },
+        {
+          "@id": "#files",
+          "@type": "PropertyValue",
+          "name": "files",
+          "value": [{"@id": "assays/A/dataset/a.txt"}, {"@id": "assays/A/dataset/a.txt"}]
+        },
+        {
+          "@id": "#mixed",
+          "@type": "PropertyValue",
+          "name": "mixed",
+          "value": [{"@id": "assays/A/dataset/a.txt"}, {"@id": "./assays/A/dataset/a.txt"}, {"@id": "assays/A/dataset/a.txt"}]
+        },
+        {
+          "@id": "assays/A/dataset/a.txt",
+          "@type": "File",
+          "name": "assays/A/dataset/a.txt"
+        }
+      ]
+    }"""
+
 
 
 
