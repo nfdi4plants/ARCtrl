@@ -1,3 +1,75 @@
+### 3.3.0+5013a338 (Released 2026-11-6)
+* Rework of CWL handling and RO-Crate conversion to support CWL 1.2 and 1.3 features #654
+* Various small fixes, including RO-Crate and XLSX parsing #653
+
+* Additions:
+    * [[#59c9a783](https://github.com/nfdi4plants/ARCtrl/commit/59c9a783937a347caa11b9f5506cd89a329029e1)] Rewrite references in record values when the ids of data entities are normalized
+    * [[#d87535c1](https://github.com/nfdi4plants/ARCtrl/commit/d87535c1ded48a674c1dec42bae3bed2052697e2)] Take CWL defaults into the crate of the ARC as well
+    * [[#39ff089e](https://github.com/nfdi4plants/ARCtrl/commit/39ff089edef99a129353bb0cbb7fda79d0ed1f4e)] Link the files a workflow or run needs in the crate of the ARC as well
+    * [[#347e7af8](https://github.com/nfdi4plants/ARCtrl/commit/347e7af8921660f448cf5f74d1d9ec96207d3274)] Write a run value that names the ARC root as a reference to the crate root
+    * [[#8c7b285e](https://github.com/nfdi4plants/ARCtrl/commit/8c7b285e9d813116a74041d30a560b8cff4192e9)] Leave the CWL of workflows and runs empty when reading a crate
+    * [[#b8d7328a](https://github.com/nfdi4plants/ARCtrl/commit/b8d7328a24f7606184a1b2b890947d12c739fb01)] Make the type rule of run values public as CWLType.admits
+    * [[#f449c346](https://github.com/nfdi4plants/ARCtrl/commit/f449c34644f8de04be08ac754ef2043cfdb574ac)] Convert the dates of composed workflows and runs to UTC
+    * [[#fa6c8d6e](https://github.com/nfdi4plants/ARCtrl/commit/fa6c8d6efafb9de1949f46a113f709588fa1609b)] Take CWL defaults only into the run crate and for null run values
+    * [[#0f6fd539](https://github.com/nfdi4plants/ARCtrl/commit/0f6fd53927262345699c40ffc69937e0d9ae12b9)] Keep a run out of its own parts when a run value names its folder
+    * [[#e3344c95](https://github.com/nfdi4plants/ARCtrl/commit/e3344c95c74c1fdfe9d89a5b282e8ebe6af71157)] Keep the types of both nodes when a graph merges nodes of one id
+    * [[#e2f4e153](https://github.com/nfdi4plants/ARCtrl/commit/e2f4e153f9c0d3d4a8d6bc91c588247e103e2e70)] List files in lists and records of run values in the root of the crate
+    * [[#96a8bb45](https://github.com/nfdi4plants/ARCtrl/commit/96a8bb45f7eefeee83fcf7664f3c9edd59e12ae8)] Write crate dates in UTC and pin them with one timestamp
+    * [[#a181273f](https://github.com/nfdi4plants/ARCtrl/commit/a181273f0f198a177121571c79da88c36b45c624)] Check run values against the types of their inputs again
+    * [[#e3438a91](https://github.com/nfdi4plants/ARCtrl/commit/e3438a91b9bb04b610531a9e89927c8a0855cf56)] Use the CWL default of an input without a run value
+    * [[#04073e27](https://github.com/nfdi4plants/ARCtrl/commit/04073e2716ccff711659ec338ba49db3a91832c7)] Write directory values of runs as datasets with their files
+    * [[#e36657a3](https://github.com/nfdi4plants/ARCtrl/commit/e36657a337a2671eb0f217b98856168e90204cb6)] Report the JavaScript speed tests as JavaScript and write the Python report in UTF-8
+    * [[#8af3cdc6](https://github.com/nfdi4plants/ARCtrl/commit/8af3cdc60f711e9c6bc4a22cc2996add16c186b7)] Update Fable to 5.26.0
+    * [[#48be8c60](https://github.com/nfdi4plants/ARCtrl/commit/48be8c6088da4f95c3ba4d9463a8020cce3f1297)] Add CWL decode and encode to the speed tests
+    * [[#22053a28](https://github.com/nfdi4plants/ARCtrl/commit/22053a28b30277eea7d616d117005f32ebc787cc)] Merge origin/main into cwl_yamlicious_2
+    * [[#170d1927](https://github.com/nfdi4plants/ARCtrl/commit/170d1927336e48848ad860cee0f64adcad83bcb6)] Add multiple alternative constructors to DU types. Mirror native js tests to native python
+    * [[#69db61c1](https://github.com/nfdi4plants/ARCtrl/commit/69db61c141360947fdc139d9057e53efcbaf3f5b)] update tests further with correct imports from index and more helpers
+    * [[#5feb9d92](https://github.com/nfdi4plants/ARCtrl/commit/5feb9d9290f55a989832667e119af2c798e4f2b7)] Add primary constructor tests for js native
+    * [[#33193f9b](https://github.com/nfdi4plants/ARCtrl/commit/33193f9b526b509008244bb7d6de1e0a81656d13)] Publish crate roots at the local time when no date is given
+    * [[#8d7ddf76](https://github.com/nfdi4plants/ARCtrl/commit/8d7ddf76c9a60997ce825fa5b5e2d133169ef853)] Walk steps only in a mapping whose class is workflow
+    * [[#f66705ce](https://github.com/nfdi4plants/ARCtrl/commit/f66705cee80dcff14c7e7354fc0b77dabe6a62f6)] Leave out a directory literal that names the arc root explicitly
+    * [[#62bcba49](https://github.com/nfdi4plants/ARCtrl/commit/62bcba49bbb45960e6ac5d3d85d169871221428b)] Read the run folder itself back as a dot
+    * [[#ac4b5864](https://github.com/nfdi4plants/ARCtrl/commit/ac4b5864c52f57e5eaf57745f147a9b5c74e3c98)] Check referenced and part paths for duplicates with hash sets
+    * [[#ef5bded7](https://github.com/nfdi4plants/ARCtrl/commit/ef5bded7c513d1bb929c09d9dce60e82892c6b27)] Read every crate id with a uri scheme as a url and not as a file of the arc
+    * [[#779394ef](https://github.com/nfdi4plants/ARCtrl/commit/779394ef42002ef5714efbf719572872e8cb4a05)] Keep URLs in job files and compare run folders by segments
+    * [[#a674c384](https://github.com/nfdi4plants/ARCtrl/commit/a674c38476497543018458995ebf4b88296b552f)] List the files that CWL file and directory literals name
+    * [[#371a1dff](https://github.com/nfdi4plants/ARCtrl/commit/371a1dff376eb0eec80a393da4fff49f64c4f00e)] Publish crate roots with a date and their profiles as entities
+    * [[#af72ac6b](https://github.com/nfdi4plants/ARCtrl/commit/af72ac6b41309511b7e2a98a8a9404b9bb5f5227)] Write step runs as paths from the crate root
+    * [[#f3e7349f](https://github.com/nfdi4plants/ARCtrl/commit/f3e7349f0ae04c7e9a53e47f5ce23d87eda62cbd)] List the files a workflow needs in its crate
+    * [[#b2ee7cd9](https://github.com/nfdi4plants/ARCtrl/commit/b2ee7cd91b9c75a27d87944b506ea08661499d73)] Resolve dot segments in job file paths
+    * [[#b10c10dd](https://github.com/nfdi4plants/ARCtrl/commit/b10c10dd12949b7a0128a40c3c1eedeec0cbadf3)] Restructure the CWL tests as shared tables
+    * [[#01b75245](https://github.com/nfdi4plants/ARCtrl/commit/01b7524563d5dfdc611cb3ffedd5660dc0c62c61)] Drop packed documents and stop on cyclic runs
+    * [[#aee40192](https://github.com/nfdi4plants/ARCtrl/commit/aee4019278dcc8502a2d12358a99fda368fe6364)] Read type names and step outputs without validating them
+    * [[#cf74cceb](https://github.com/nfdi4plants/ARCtrl/commit/cf74cceb5f0e6b0307c1b6b7546426ca25f0fa4b)] Update Fable to 5.24
+    * [[#186223f0](https://github.com/nfdi4plants/ARCtrl/commit/186223f09c8129b0ef43c73a21bd8f13d96b0845)] Apply the repeated-key rule to every mapping
+    * [[#41081cef](https://github.com/nfdi4plants/ARCtrl/commit/41081cef6b64efd2813b04a49f0412f574b9f36e)] Make the step id optional and quote YAML 1.1 lookalikes
+    * [[#3e9f3b4a](https://github.com/nfdi4plants/ARCtrl/commit/3e9f3b4a99fb4b4c9d0f5d2cf01d8bb2b48e4b82)] improve speed of identifier validation by creating the regex only once (#303)
+    * [[#b59aadbf](https://github.com/nfdi4plants/ARCtrl/commit/b59aadbf89e60f981e18412c20070d645c70f12f)] Reject prohibited YAML features and report error locations
+    * [[#c923aed8](https://github.com/nfdi4plants/ARCtrl/commit/c923aed873ca4e327f6914669ddfb5b0c0013c26)] make SetAssay, SetStudy, SetWorkflow and SetRun add the entity if no entity with the identifier exists (#565)
+    * [[#62eea1d0](https://github.com/nfdi4plants/ARCtrl/commit/62eea1d0b6ef745a8e3df369c109cce4fb27c53d)] Read directives and numbers in scalar fields like cwltool
+    * [[#f9f073b3](https://github.com/nfdi4plants/ARCtrl/commit/f9f073b3263375b59903f72bf4e281c95c13bd6a)] Read Schema Salad directives
+    * [[#e3e2c505](https://github.com/nfdi4plants/ARCtrl/commit/e3e2c505b131b324288d06f678d6846081dc730a)] Decode every string field strictly
+    * [[#903fe369](https://github.com/nfdi4plants/ARCtrl/commit/903fe369a6a5316de930017c5a0f4f9208d12bc6)] Keep run references and job files of an ARC
+    * [[#139ecb63](https://github.com/nfdi4plants/ARCtrl/commit/139ecb6370f3f32ee496ec0a0a3788a06c594f1c)] Report decode errors with path and span
+    * [[#6df6e1b6](https://github.com/nfdi4plants/ARCtrl/commit/6df6e1b6d533d69cb121a7c9dc2a462aa0a9a48d)] Write port schemas under type and drop the Dirent type
+    * [[#26408cd5](https://github.com/nfdi4plants/ARCtrl/commit/26408cd5abc512c75b2b908cd2bab8a5fbeb7d6d)] Read packed documents and SchemaDefRequirement types
+    * [[#e2ba052d](https://github.com/nfdi4plants/ARCtrl/commit/e2ba052d44a5a3fa4e06e013f65c4fd100917566)] add full arc ro-crate roundtrip test (#651)
+    * [[#f98cdb21](https://github.com/nfdi4plants/ARCtrl/commit/f98cdb2166d05a5609e42083c5c34e308d896245)] Read the type Any, input formats and stream types
+    * [[#db7f8c9c](https://github.com/nfdi4plants/ARCtrl/commit/db7f8c9c97774561b30a2d218d89db654baf932d)] normalize ro-crate file and dataset ids to leading ./ on write and read (#615, #607)
+    * [[#ffed0c99](https://github.com/nfdi4plants/ARCtrl/commit/ffed0c994be721c0dca4b7dca9b83055295b3860)] add warning for empty study, assay, run and workflow titles in ro-crate export (#613)
+* Bugfixes:
+    * [[#f79d49b7](https://github.com/nfdi4plants/ARCtrl/commit/f79d49b78bcf5db130755f782b6a8d3235ab63c2)] fix semver comparison not following the spec and parsing failing for versions without minor or patch (#639)
+    * [[#197f11aa](https://github.com/nfdi4plants/ARCtrl/commit/197f11aa022c5fe5a3d300ad2746e5b8cba22585)] fix ms, po and ro term accessions being written as ols urls instead of obo purls (#551, #391)
+    * [[#cc8ece38](https://github.com/nfdi4plants/ARCtrl/commit/cc8ece38aee55369a19bf3a87c06ac8359bdc25f)] fix empty data file paths being resolved to assay and study folders (#593)
+    * [[#1d5640e2](https://github.com/nfdi4plants/ARCtrl/commit/1d5640e2b978399445e75e33831e6f048dabffd5)] fix external files being added to filesystem when reading ro-crate (#650)
+    * [[#1eaff364](https://github.com/nfdi4plants/ARCtrl/commit/1eaff3643c22958cab392731619e215c334491f5)] fix assay registrations of studies being lost in ro-crate (#651)
+    * [[#ee3b5a53](https://github.com/nfdi4plants/ARCtrl/commit/ee3b5a53ede2eb6f8b39929a7406ebb11381f36a)] fix workflow datamap not being written to ro-crate (#651)
+    * [[#4d8a789f](https://github.com/nfdi4plants/ARCtrl/commit/4d8a789f36e33b71f0ef3dd72262a14b4f45fba4)] fix datamap fields not being read from compacted ro-crate (#651)
+    * [[#acc94df3](https://github.com/nfdi4plants/ARCtrl/commit/acc94df36e31cf8455e4caca25b56dad96c3171f)] fix cwl input file paths of runs not being read with normalized ro-crate ids (#615)
+    * [[#e355d58a](https://github.com/nfdi4plants/ARCtrl/commit/e355d58ac95dda7b343b83524817162f73b87e46)] fix empty input and output cells resulting in ro-crate entities (#585)
+    * [[#f6a4df9d](https://github.com/nfdi4plants/ARCtrl/commit/f6a4df9dd905c36692971f8f6c1b1fa94cedc114)] fix ro-crate citations using local identifiers instead of doi or pubmed urls (#627)
+    * [[#ad2532a9](https://github.com/nfdi4plants/ARCtrl/commit/ad2532a9893794f403fe8e838b0d7a46f3a59b8c)] update exceljs to 0.5.0 to fix reading tables with totals row formulas (#508)
+
 ### 3.2.3+5fd259c2 (Released 2026-10-23)
 * Additions:
     * [[#2b927d1a](https://github.com/nfdi4plants/ARCtrl/commit/2b927d1aed13e5b80fca94a96a3e71c3da2d7698)] add isEmpty to CompositeCell and Data, counting blank values as empty (#531, #630)
