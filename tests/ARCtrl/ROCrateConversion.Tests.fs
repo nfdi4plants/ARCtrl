@@ -3859,6 +3859,31 @@ let tests_ArcRun =
                 let arc' = ARC.fromROCrateJsonString (arc.ToROCrateJsonString())
                 Expect.sequenceEqual (arc'.Runs |> Seq.map (fun run -> run.Identifier) |> Seq.sort) ["A"; "B"] $"Both runs read back for the order {order}."
         )
+        testCase "ParameterValues_RunsWithTheSameInputNameKeepOneParameterValueEach" (fun () ->
+            let tool = CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  n: int\n  m: int[]\noutputs: []\n"
+            for (valueA, valueB) in [ ("1", "2"); ("1", "1") ] do
+                let runA = ArcRun.create(identifier = "A", title = "t", description = "d", cwlDescription = tool, cwlInput = CWL.DecodeParameters.decodeYAMLParameterFile $"n: {valueA}\nm:\n  - 1\n  - 2\n")
+                let runB = ArcRun.create(identifier = "B", title = "t", description = "d", cwlDescription = tool, cwlInput = CWL.DecodeParameters.decodeYAMLParameterFile $"n: {valueB}\nm:\n  - 1\n  - 2\n")
+                let arc = ARC("I", title = "T", description = "D", runs = ResizeArray [runA; runB])
+                let graph = ARCtrl.Json.Decode.fromJsonString ARCtrl.Json.LDGraph.decoder (arc.ToROCrateJsonString())
+                let context = graph.TryGetContext()
+                let parameterIds (name : string) =
+                    graph.Nodes
+                    |> Seq.filter (fun node -> LDPropertyValue.validateCWLParameter(node, ?context = context) && LDPropertyValue.tryGetNameAsString(node, ?context = context) = Some name)
+                    |> Seq.map (fun node -> node.Id)
+                    |> Seq.sort
+                    |> List.ofSeq
+                let label = $"the values {valueA} and {valueB}"
+                for name in [ "n"; "m" ] do
+                    Expect.equal (parameterIds name) [ $"#WorkflowParameter_R_A_{name}"; $"#WorkflowParameter_R_B_{name}" ] $"Each run has its own PropertyValue for {name} with {label}."
+                for (runName, value) in [ ("A", valueA); ("B", valueB) ] do
+                    for (name, expectedValues) in [ ("n", [ value ]); ("m", [ "1"; "2" ]) ] do
+                        let parameter = Expect.wantSome (graph.TryGetNode $"#WorkflowParameter_R_{runName}_{name}") $"The crate has the PropertyValue of {name} of run {runName}."
+                        Expect.equal (LDPropertyValue.getValueObjects(parameter, ?context = context) |> Seq.map string |> List.ofSeq) expectedValues $"The PropertyValue of {name} of run {runName} has only its own value for {label}."
+                        Expect.equal (referenceIds (box (parameter.GetPropertyValues(LDPropertyValue.exampleOfWork, ?context = context)))) [ $"#FormalParameter_R_{runName}_{name}" ] $"The PropertyValue of {name} of run {runName} realizes only its own FormalParameter for {label}."
+                    let invocation = Expect.wantSome (graph.TryGetNode $"#WorkflowInvocation_{runName}") $"The crate has the invocation of run {runName}."
+                    Expect.equal (LDLabProcess.getObjects(invocation, graph = graph, ?context = context) |> Seq.map (fun node -> node.Id) |> Seq.sort |> List.ofSeq) [ $"#WorkflowParameter_R_{runName}_m"; $"#WorkflowParameter_R_{runName}_n" ] $"The invocation of run {runName} names only its own PropertyValues for {label}."
+        )
         testCase "Defaults_AnInputWithoutAValueTakesTheDefaultOfTheCWLFile" (fun () ->
             let run = create_run_full()
             run.CWLDescription <- Some (CWL.Decode.decodeCWLProcessingUnit "cwlVersion: v1.2\nclass: CommandLineTool\nbaseCommand: ls\ninputs:\n  input_dir:\n    type: Directory\n    default:\n      class: Directory\n      location: ../../assays/MyAssay/dataset\n  n:\n    type: int\n    default: 3\n  given:\n    type: int\n    default: 3\n  o: File?\noutputs: []\n")

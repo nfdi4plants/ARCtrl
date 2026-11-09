@@ -301,6 +301,21 @@ type LDPropertyValue =
             else ""
         $"#WorkflowParameter_{name}_{valuesIdString}"
 
+    /// The PropertyValue id repeats the id of the FormalParameter that the value realizes, as the Workflow Run Crate
+    /// examples do. Two PropertyValues of the same FormalParameter get the same id and merge in a flattened crate,
+    /// whatever their values. ARCtrl gives every run its own FormalParameters (LDFormalParameter.genID with a run name),
+    /// so runs with an input of the same name keep separate PropertyValues as long as their FormalParameter ids differ.
+    /// An id without the FormalParameter prefix keeps everything after its leading "#", or the whole id when it has none.
+    static member genIdCWLParameterFromFormalParameter(formalParameter : LDNode) =
+        let formalParameterPrefix = "#FormalParameter_"
+        let id = formalParameter.Id
+        if id.StartsWith(formalParameterPrefix) then
+            $"#WorkflowParameter_{id.Substring(formalParameterPrefix.Length)}"
+        elif id.StartsWith("#") then
+            $"#WorkflowParameter_{id.Substring(1)}"
+        else
+            $"#WorkflowParameter_{id}"
+
     static member genIdPrefix(prefix : string) =
         $"#Prefix_{prefix}"
 
@@ -371,8 +386,9 @@ type LDPropertyValue =
         if subjectOf.IsSome then LDPropertyValue.setSubjectOf(fd, subjectOf.Value, ?context = context)
         fd
 
+    /// The id comes from exampleOfWork, and the values do not change it.
     static member createCWLParameter(exampleOfWork : LDNode, name : string, values : string ResizeArray, ?context : LDContext) =
-        let id = LDPropertyValue.genIdCWLParameter(name, values)
+        let id = LDPropertyValue.genIdCWLParameterFromFormalParameter(exampleOfWork)
         let pv = 
             LDPropertyValue.create(
                 name = name,

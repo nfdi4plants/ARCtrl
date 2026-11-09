@@ -888,6 +888,19 @@ let tests_mergeAppendInto_InPlace = testList "mergeAppendInto_InPlace" [
     ]
     ]
 
+let tests_CWLParameterId = testList "CWLParameterId" [
+    testCase "PropertyValue id repeats the FormalParameter id" <| fun _ ->
+        let formalParameter (id : string) = LDNode(id, ResizeArray [LDFormalParameter.schemaType])
+        let idOf (id : string) = LDPropertyValue.genIdCWLParameterFromFormalParameter(formalParameter id)
+        Expect.equal (idOf "#FormalParameter_R_A_n") "#WorkflowParameter_R_A_n" "The FormalParameter prefix is replaced."
+        Expect.equal (idOf "#other") "#WorkflowParameter_other" "The leading # of another id is dropped."
+        Expect.equal (idOf "other") "#WorkflowParameter_other" "An id without a leading # is kept."
+        let pv = LDPropertyValue.createCWLParameter(formalParameter "#FormalParameter_R_A_n", "n", ResizeArray())
+        Expect.equal pv.Id "#WorkflowParameter_R_A_n" "createCWLParameter without values takes its id from the FormalParameter."
+        let pvWithValues = LDPropertyValue.createCWLParameter(formalParameter "#FormalParameter_R_A_n", "n", ResizeArray ["1"])
+        Expect.equal pvWithValues.Id "#WorkflowParameter_R_A_n" "createCWLParameter with values takes its id from the FormalParameter."
+]
+
 let main = testList "LDNode" [
     tests_profile_object_is_valid
     //tests_interface_members
@@ -904,4 +917,5 @@ let main = testList "LDNode" [
     tests_Flatten
     tests_getPropertyNames
     tests_mergeAppendInto_InPlace
+    tests_CWLParameterId
 ]
