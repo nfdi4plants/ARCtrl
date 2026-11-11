@@ -1,7 +1,11 @@
-### 3.3.0+5013a338 (Released 2026-11-6)
-* Rework of CWL handling and RO-Crate conversion to support CWL 1.2 and 1.3 features #654
-* Various small fixes, including RO-Crate and XLSX parsing #653
+### 3.3.1+f9b5ad0c (Released 2026-11-10)
+* Additions:
+    * [[#ea3f5fb5](https://github.com/nfdi4plants/ARCtrl/commit/ea3f5fb561654800171f220b31718f264c1e19e1)] Build run parameter value ids from their FormalParameter so runs keep separate values
+    * [[#af684c13](https://github.com/nfdi4plants/ARCtrl/commit/af684c134ebccf90f466ed1b78fd1fecfde2719f)] bump to 3.3.0
 
+### 3.3.0+5013a338 (Released 2026-11-6)
+    * Rework of CWL handling and RO-Crate conversion to support CWL 1.2 and 1.3 features #654
+    * Various small fixes, including RO-Crate and XLSX parsing #653
 * Additions:
     * [[#59c9a783](https://github.com/nfdi4plants/ARCtrl/commit/59c9a783937a347caa11b9f5506cd89a329029e1)] Rewrite references in record values when the ids of data entities are normalized
     * [[#d87535c1](https://github.com/nfdi4plants/ARCtrl/commit/d87535c1ded48a674c1dec42bae3bed2052697e2)] Take CWL defaults into the crate of the ARC as well
