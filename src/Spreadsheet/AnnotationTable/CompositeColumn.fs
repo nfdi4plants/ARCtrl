@@ -110,8 +110,9 @@ module ColumnValueRefs =
 
     let fromStringCellColumns (valueMap : Dictionary<int, CompositeCell>) (columns : string [][]) : CompositeHeader*ColumnValueRefs =
         // This hashmap is only for internal performance improvements and is supposed to check whether a new cell value has to be created
-        // Maps from the hash of the row strings to the cell hash
-        let hashMap = Dictionary<int, int>()
+        // Maps from the hash of the row strings to the row strings and the cell hash.
+        // The strings are kept so a hit can be checked, because different rows can share a hash.
+        let hashMap = Dictionary<int, string [] * int>()
         // This represents a potential sparse column,
         // Only filled if constant is set to false
         // Maps from row index to cell hash
@@ -135,7 +136,11 @@ module ColumnValueRefs =
                     strings
                     |> Seq.map (fun s -> s.GetHashCode())
                     |> Seq.reduce HashCodes.mergeHashes
-                match IntDictionary.tryFind hash hashMap with
+                let cached =
+                    match IntDictionary.tryFind hash hashMap with
+                    | Some (cachedStrings, cellHash) -> if cachedStrings = strings then Some cellHash else None
+                    | None -> None
+                match cached with
                 | Some cellHash when constant->
                     ()
                 | Some cellHash ->
@@ -144,7 +149,7 @@ module ColumnValueRefs =
                 | None when i = 1 ->
                     let cell = cellParser strings
                     let cellHash = ArcTableAux.ensureCellHashInValueMap cell valueMap 
-                    hashMap.[hash] <- cellHash
+                    hashMap.[hash] <- (strings, cellHash)
                     cells.[i - 1] <- cellHash
                 | None ->
                     if constant then
@@ -156,7 +161,7 @@ module ColumnValueRefs =
                             cells.[j] <- cellHash
                     let cell = cellParser strings
                     let cellHash = ArcTableAux.ensureCellHashInValueMap cell valueMap
-                    hashMap.[hash] <- cellHash
+                    hashMap.[hash] <- (strings, cellHash)
                     cells.[i - 1] <- cellHash                  
             if constant then
                 header, ColumnValueRefs.Constant cells.[0]           
