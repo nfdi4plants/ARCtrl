@@ -2980,6 +2980,30 @@ let tests_CompositeCellHashClash = testList "CompositeCellHashClash" [
             |> Seq.toArray
         printfn "Row keys: %A" hashes
         Expect.equal (Seq.length hashes) 2 "There should only be 2 distinct keys in the column"
+    // Data cells are compared by name, because cell equality would hide the bug.
+    testCase "HashClash_Data" <| fun _ ->
+        let cc1 = CompositeCell.createDataFromString("VBT04P")
+        let cc2 = CompositeCell.createDataFromString("VBT07s")
+        let t = ArcTable.init("dawd")
+        t.AddColumn(CompositeHeader.Output (IOType.Data), ResizeArray [cc1; cc2])
+        let outputs = t.GetOutputColumn().Cells
+        Expect.equal outputs.[0].AsData.NameText "VBT04P" "First cell should be cc1"
+        Expect.equal outputs.[1].AsData.NameText "VBT07s" "Second cell should be cc2"
+    testCase "NoHashDuplication_Data" <| fun _ ->
+        let cc1 = CompositeCell.createDataFromString("VBT04P")
+        let cc2 = CompositeCell.createDataFromString("VBT07s")
+        let t = ArcTable.init("dawd")
+        t.AddColumn(CompositeHeader.Output (IOType.Data), ResizeArray [cc1; cc2; cc1])
+        let outputs = t.GetOutputColumn().Cells
+        Expect.equal outputs.[0].AsData.NameText "VBT04P" "First cell should be cc1"
+        Expect.equal outputs.[1].AsData.NameText "VBT07s" "Second cell should be cc2"
+        Expect.equal outputs.[2].AsData.NameText "VBT04P" "Third cell should be cc1"
+        let col = t.Values.Columns.[0].AsSparse()
+        let hashes =
+            col.Values
+            |> Seq.distinct
+            |> Seq.toArray
+        Expect.equal (Seq.length hashes) 2 "There should only be 2 distinct keys in the column"
 ]
 
 

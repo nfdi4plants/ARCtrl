@@ -19,6 +19,11 @@ let private tests_GetHashCode = testList "GetHashCode" [
         let hash2 = d2.GetHashCode()
         Expect.notEqual d1 d2 "Should not be equal"
         Expect.notEqual hash1 hash2 "HashCode should not be equal"
+    testCase "unequal, same hash" <| fun _ ->
+        let d1 = Data(name = "VBT04P")
+        let d2 = Data(name = "VBT07s")
+        Expect.equal (d1.GetHashCode()) (d2.GetHashCode()) "Test needs two Data with clashing hashes"
+        Expect.notEqual d1 d2 "Should not be equal"
     ]
 
 let private tests_AbsoluteFilePath = testList "AbsoluteFilePath" [

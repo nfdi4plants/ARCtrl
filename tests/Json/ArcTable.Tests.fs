@@ -124,6 +124,14 @@ let private tests_dataColumns =
             let encoded = testTable.ToJsonString()
             let decoded = ArcTable.fromJsonString encoded
             Expect.arcTableEqual decoded testTable "decompressed table should be equal to original table"
+        // "VBT04P" and "VBT07s" share a hash. Compare names, as cell equality could hide the bug.
+        testCase "compressed WriteRead, clashing hashes" <| fun _ ->
+            let names = ["VBT04P"; "VBT07s"; "VBT04P"]
+            let testTable = ArcTable.init("Test")
+            testTable.AddColumn (CompositeHeader.Output IOType.Data, ResizeArray [| for n in names -> CompositeCell.createDataFromString n |])
+            let decoded = ArcTable.fromCompressedJsonString (testTable.ToCompressedJsonString())
+            let decodedNames = [ for c in decoded.GetOutputColumn().Cells -> c.AsData.NameText ]
+            Expect.equal decodedNames names "Data names should survive the round trip"
     ]
  
 let private tests_commentColumns = 
