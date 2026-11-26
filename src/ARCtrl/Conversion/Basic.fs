@@ -141,7 +141,8 @@ type BaseTypes =
         let dataType = LDFile.tryGetDisambiguatingDescriptionAsString(f, ?context = context) |> Option.map DataFile.fromString
         let format = LDFile.tryGetEncodingFormatAsString(f, ?context = context)
         let selectorFormat = LDFile.tryGetUsageInfoAsString(f, ?context = context)
-        let data = Data((*id = f.Id, *)name = LDFile.getNameAsString(f, ?context = context), ?dataType = dataType, ?format = format, ?selectorFormat = selectorFormat)
+        // The id of a file is its path or URL. Its name may be any text or missing, so the data is named by the id.
+        let data = Data(name = f.Id, ?dataType = dataType, ?format = format, ?selectorFormat = selectorFormat)
         data
 
 
@@ -176,7 +177,8 @@ type BaseTypes =
 
     static member decomposeFragmentDescriptor (fd : LDNode, ?graph : LDGraph, ?context : LDContext)  =
         let file = LDPropertyValue.tryGetSubjectOf(fd, ?graph = graph, ?context = context)
-        let name = match file with | Some f -> LDFile.getNameAsString(f, ?context = context) | None -> failwith "RO-Crate parsing of DataContext failed: Cannot decompose a fragment descriptor without a name."
+        // The fragment is named by its id, as a file is.
+        let name = match file with | Some f -> f.Id | None -> failwith "RO-Crate parsing of DataContext failed: Cannot decompose a fragment descriptor without a name."
         let objectType =
             file
             |> Option.bind (fun f -> LDFile.tryGetPatternAsDefinedTerm(f, ?graph = graph, ?context = context))

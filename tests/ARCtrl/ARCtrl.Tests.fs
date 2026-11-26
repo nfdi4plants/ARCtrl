@@ -3117,7 +3117,48 @@ let tests_ROCrate =
                 let names = actualAssay.Tables |> Seq.map (fun t -> t.Name) |> List.ofSeq
                 Expect.equal names ["my-sheet"; "my-sheet-2rows"; "my-sheet_1"; "two-rows"; "step_2"] "Table names should survive the round trip"
         ]
-                
+
+        // The metadata descriptor names the root data entity, see https://www.researchobject.org/ro-crate/specification/1.2/root-data-entity.html
+        testList "RootDataEntity" [
+            testCase "NamedByDescriptor" <| fun _ ->
+                let rootId = "https://example.org/arcs/my-arc/"
+                let descriptor = TestObjects.Json.ROCrate.ArcCrate.descriptor "ro-crate-metadata.json" rootId
+                let json = TestObjects.Json.ROCrate.ArcCrate.create TestObjects.Json.ROCrate.ArcCrate.context_V1_2 descriptor rootId
+                let arc = ARC.fromROCrateJsonString(json)
+                Expect.equal arc.Identifier "MyInvestigation" "Identifier should be read from the entity the descriptor names"
+                Expect.equal arc.Title (Some "My Investigation") "Title should be read from the entity the descriptor names"
+                Expect.equal arc.StudyCount 1 "ARC should contain 1 study"
+            testCase "NamedByLegacyDescriptor" <| fun _ ->
+                let rootId = "https://example.org/arcs/my-arc/"
+                let descriptor = TestObjects.Json.ROCrate.ArcCrate.descriptor "ro-crate-metadata.jsonld" rootId
+                let json = TestObjects.Json.ROCrate.ArcCrate.create TestObjects.Json.ROCrate.ArcCrate.context_V1_2 descriptor rootId
+                let arc = ARC.fromROCrateJsonString(json)
+                Expect.equal arc.Identifier "MyInvestigation" "Identifier should be read from the entity the descriptor names"
+                Expect.equal arc.StudyCount 1 "ARC should contain 1 study"
+            testCase "NamedByDescriptorNextToDotSlash" <| fun _ ->
+                let rootId = "https://example.org/arcs/my-arc/"
+                let descriptor = TestObjects.Json.ROCrate.ArcCrate.descriptor "ro-crate-metadata.json" rootId
+                let entities = descriptor + TestObjects.Json.ROCrate.ArcCrate.otherDotSlashDataset
+                let json = TestObjects.Json.ROCrate.ArcCrate.create TestObjects.Json.ROCrate.ArcCrate.context_V1_2 entities rootId
+                let arc = ARC.fromROCrateJsonString(json)
+                Expect.equal arc.Identifier "MyInvestigation" "The entity the descriptor names should be read, not the entity ./"
+                Expect.equal arc.StudyCount 1 "ARC should contain 1 study"
+            testCase "DotSlashWithoutDescriptor" <| fun _ ->
+                let json = TestObjects.Json.ROCrate.ArcCrate.create TestObjects.Json.ROCrate.ArcCrate.context_V1_2 "" "./"
+                let arc = ARC.fromROCrateJsonString(json)
+                Expect.equal arc.Identifier "MyInvestigation" "The entity ./ should be read when no descriptor names a root"
+                Expect.equal arc.StudyCount 1 "ARC should contain 1 study"
+        ]
+
+        testCase "UnknownContext" <| fun _ ->
+            let descriptor = TestObjects.Json.ROCrate.ArcCrate.descriptor "ro-crate-metadata.json" "./"
+            let json = TestObjects.Json.ROCrate.ArcCrate.create "\"https://example.org/context.jsonld\"" descriptor "./"
+            let arc = ARC.fromROCrateJsonString(json)
+            Expect.equal arc.Identifier "MyInvestigation" "Identifier should be read with the terms ARCtrl writes"
+            Expect.equal arc.Title (Some "My Investigation") "Title should be read with the terms ARCtrl writes"
+            Expect.equal arc.StudyCount 1 "ARC should contain 1 study"
+            Expect.equal arc.Studies.[0].Identifier "MyStudy" "Study should be read with the terms ARCtrl writes"
+
         testCase "CanRead_Deprecated" <| fun _ ->
             let arc = ARC.fromDeprecatedROCrateJsonString(TestObjects.ROCrate.ArcPrototypeDeprecated.ed123499)
             let nonDeprecatedARC = ARC.fromROCrateJsonString(TestObjects.ROCrate.ArcPrototype.ed123499)

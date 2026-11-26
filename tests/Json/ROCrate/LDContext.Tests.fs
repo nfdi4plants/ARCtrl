@@ -49,6 +49,15 @@ let private test_read = testList "Read" [
         let resolvedName = Expect.wantSome (context.TryResolveTerm("name")) "Could not resolve term name"
         Expect.equal resolvedName "http://schema.org/name" "term next to the expanded term definition was not resolved correctly"
         Expect.hasLength context.Mappings 2 "context was not read correctly"
+    testCase "Unknown_Proxy" <| fun _ ->
+        let context = Decode.fromJsonString LDContext.decoder "\"https://example.org/context.jsonld\""
+        Expect.equal context.Name (Some "https://example.org/context.jsonld") "context name was not set correctly"
+        Expect.hasLength context.Mappings 0 "a context that is not known should have no terms"
+        Expect.isNone (context.TryResolveTerm("Dataset")) "a context that is not known should resolve no term"
+    testCase "ArrayWithUnknown_Proxy" <| fun _ ->
+        let context = Decode.fromJsonString LDContext.decoder context_unknownProxyAndInlineContext
+        Expect.hasLength context.BaseContexts 2 "context does not contain both contexts"
+        Expect.equal (context.TryResolveTerm("Sample")) (Some "https://bioschemas.org/Sample") "term of the inline context was not resolved correctly"
     ]
 
 let private test_write = testList "Write" [
@@ -63,6 +72,14 @@ let private test_write = testList "Write" [
         let context = Decode.fromJsonString LDContext.decoder context_roCrateWithARCContext
         let json = LDContext.encoder context |> Encode.toJsonString 0
         Expect.stringEqual json context_roCrateWithARCContext "context was not written correctly"
+    testCase "Unknown_Proxy" <| fun _ ->
+        let context = Decode.fromJsonString LDContext.decoder "\"https://example.org/context.jsonld\""
+        let json = LDContext.encoder context |> Encode.toJsonString 0
+        Expect.equal json "\"https://example.org/context.jsonld\"" "context was not written as proxy"
+    testCase "ArrayWithUnknown_Proxy" <| fun _ ->
+        let context = Decode.fromJsonString LDContext.decoder context_unknownProxyAndInlineContext
+        let json = LDContext.encoder context |> Encode.toJsonString 0
+        Expect.stringEqual json context_unknownProxyAndInlineContext "context was not written correctly"
     ]
 
 let main = testList "LDContext" [

@@ -69,12 +69,39 @@ module ARC =
             let graph = ROCrate.getAsGraph(isa, ?license = license, ?fs = fs, ?ignoreBrokenWR = ignoreBrokenWR)
             LDGraph.encoder graph
 
+        /// Sets the context that a crate is read with. The context of the crate comes first. A term that it does not
+        /// define, as any term of a context that is not known, is read as ARCtrl writes it.
+        static member private setReadContext (graph : LDGraph) =
+            let defaultContexts = [Context.initV1_2(); Context.initBioschemasContext()]
+            let contexts =
+                match graph.TryGetContext() with
+                | Some context -> context :: defaultContexts
+                | None -> defaultContexts
+            graph.SetContext(LDContext(baseContexts = ResizeArray contexts))
+            graph
+
+        /// Returns the root data entity of a crate. The RO-Crate specification finds it through the metadata descriptor,
+        /// which names it in its about property. The descriptor has the id ro-crate-metadata.json, or
+        /// ro-crate-metadata.jsonld in a crate of RO-Crate 1.0.
+        ///
+        /// The specification names no other root. A crate without a descriptor was read by its entity "./" before, so
+        /// this entity is read when no descriptor names a root.
+        static member tryGetRootDataEntity (graph : LDGraph) : LDNode option =
+            let context = graph.TryGetContext()
+            let tryGetAbout (descriptorId : string) =
+                graph.TryGetNode descriptorId
+                |> Option.bind (fun descriptor -> LDDataset.getAbouts(descriptor, graph = graph, ?context = context) |> Seq.tryHead)
+            tryGetAbout "ro-crate-metadata.json"
+            |> Option.orElseWith (fun () -> tryGetAbout "ro-crate-metadata.jsonld")
+            |> Option.orElseWith (fun () -> graph.TryGetNode "./")
+
         /// Returns ArcInvestigation, list of file Ids, and optional License
         static member decoder : Decoder<ArcInvestigation*string ResizeArray * License option> =
             LDGraph.decoder
+            |> Decode.map ROCrate.setReadContext
             |> Decode.map LDGraph.normalizeDataEntityIds
             |> Decode.map (fun graph ->
-                match graph.TryGetNode("./") with
+                match ROCrate.tryGetRootDataEntity graph with
                 | Some node ->
                     // A file whose id has a URI scheme, as in https:, file: or s3:, is a URL and no part of the ARC file system
                     let files =

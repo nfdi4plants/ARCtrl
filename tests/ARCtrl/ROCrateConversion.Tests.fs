@@ -461,6 +461,24 @@ let private tests_ProcessInput =
             Expect.equal header header' "Header should match"
             Expect.equal expectedCell cell' "Cell should match"
         )
+        testCase "Data_WithoutName" (fun () ->
+            let input = LDNode("./assays/MyAssay/dataset/MyData.csv", ResizeArray [LDFile.schemaType])
+
+            Expect.isTrue (LDFile.validate input) "Should be a valid data"
+
+            let header',cell' = BaseTypes.decomposeProcessInput input
+            let expectedCell = CompositeCell.createData (Data (name = "./assays/MyAssay/dataset/MyData.csv"))
+            Expect.equal header' (CompositeHeader.Input(IOType.Data)) "Header should match"
+            Expect.equal cell' expectedCell "Cell should hold the id of the file"
+        )
+        testCase "Data_NameDifferentFromId" (fun () ->
+            let input = LDFile.create(name = "My data", id = "./assays/MyAssay/dataset/MyData.csv")
+
+            let header',cell' = BaseTypes.decomposeProcessInput input
+            let expectedCell = CompositeCell.createData (Data (name = "./assays/MyAssay/dataset/MyData.csv"))
+            Expect.equal header' (CompositeHeader.Input(IOType.Data)) "Header should match"
+            Expect.equal cell' expectedCell "Cell should hold the id of the file, not its name"
+        )
         testCase "Material" (fun () ->
             let header = CompositeHeader.Input(IOType.Material)
             let cell = CompositeCell.createFreeText "MyMaterial"
@@ -534,6 +552,16 @@ let private tests_ProcessOutput =
             let expectedCell = CompositeCell.createData (Data ((*id = output.Id, *)name = "MyData"))
             Expect.equal header header' "Header should match"
             Expect.equal expectedCell cell' "Cell should match"
+        )
+        testCase "Data_WithoutName" (fun () ->
+            let output = LDNode("./assays/MyAssay/dataset/MyData.csv", ResizeArray [LDFile.schemaType])
+
+            Expect.isTrue (LDFile.validate output) "Should be a valid data"
+
+            let header',cell' = BaseTypes.decomposeProcessOutput output
+            let expectedCell = CompositeCell.createData (Data (name = "./assays/MyAssay/dataset/MyData.csv"))
+            Expect.equal header' (CompositeHeader.Output(IOType.Data)) "Header should match"
+            Expect.equal cell' expectedCell "Cell should hold the id of the file"
         )
         testCase "Material" (fun () ->
             let header = CompositeHeader.Output(IOType.Material)
@@ -1194,6 +1222,18 @@ let private tests_DataContext =
             let fd' = graph.GetNode(fd.Id)
             let dc' = BaseTypes.decomposeFragmentDescriptor(fd', graph = graph, context = context)
             Expect.equal dc' dc "Data context should match"
+        )
+        testCase "FragmentWithoutName" (fun () ->
+            let fragment = LDNode("MyFile#col=1", ResizeArray [LDFile.schemaType])
+            let fd = LDPropertyValue.createFragmentDescriptor("MyFile#col=1", subjectOf = fragment)
+            let dc' = BaseTypes.decomposeFragmentDescriptor(fd)
+            Expect.equal dc' (DataContext(name = "MyFile#col=1")) "Data context should take its name from the id of the fragment"
+        )
+        testCase "FragmentNameDifferentFromId" (fun () ->
+            let fragment = LDFile.create(name = "First column of my file", id = "MyFile#col=1")
+            let fd = LDPropertyValue.createFragmentDescriptor("MyFile#col=1", subjectOf = fragment)
+            let dc' = BaseTypes.decomposeFragmentDescriptor(fd)
+            Expect.equal dc' (DataContext(name = "MyFile#col=1")) "Data context should take its name from the id of the fragment, not from its name"
         )
     ]
 

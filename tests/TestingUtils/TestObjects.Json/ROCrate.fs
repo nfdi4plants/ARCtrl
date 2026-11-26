@@ -38,6 +38,13 @@ let context_roCrateWithARCContext =
         "https://www.researchobject.org/ro-terms/arc/context.jsonld"
     ]"""
 
+/// A context that ARCtrl does not know and an inline context, as the context of a crate
+let context_unknownProxyAndInlineContext =
+    """[
+        "https://example.org/context.jsonld",
+        {"Sample": "https://bioschemas.org/Sample"}
+    ]"""
+
 let definedTerm =
     context_DefinedTerm
     |> sprintf """{
@@ -94,6 +101,53 @@ let roCrate_arcContextAndAdditionalTypeReference = """{
         }
       ]
     }"""
+
+/// The crate of an investigation with one study, in the parts that a writer other than ARCtrl may write differently
+module ArcCrate =
+
+    let context_V1_2 = "\"https://w3id.org/ro/crate/1.2/context\""
+
+    /// The metadata descriptor of the given id, which names the entity of the given id as the root data entity
+    let descriptor (id : string) (rootId : string) =
+        sprintf """{
+            "@id": "%s",
+            "@type": "CreativeWork",
+            "about": {"@id": "%s"},
+            "conformsTo": {"@id": "https://w3id.org/ro/crate/1.2"}
+        },""" id rootId
+
+    /// A dataset of the id "./" that is not the investigation
+    let otherDotSlashDataset =
+        """{
+          "@id": "./",
+          "@type": "Dataset",
+          "identifier": "Other",
+          "name": "Other"
+        },"""
+
+    /// The crate with the given context, the given entities ahead of the investigation, and the given id of the investigation
+    let create (context : string) (entities : string) (rootId : string) =
+        sprintf """{
+      "@context": %s,
+      "@graph": [
+        %s
+        {
+          "@id": "%s",
+          "@type": "Dataset",
+          "additionalType": "Investigation",
+          "identifier": "MyInvestigation",
+          "name": "My Investigation",
+          "hasPart": [{"@id": "studies/MyStudy/"}]
+        },
+        {
+          "@id": "studies/MyStudy/",
+          "@type": "Dataset",
+          "additionalType": "Study",
+          "identifier": "MyStudy",
+          "name": "My Study"
+        }
+      ]
+    }""" context entities rootId
 
 /// Contains the same file once with and once without leading "./", see https://github.com/nfdi4plants/ARCtrl/issues/607
 let roCrate_unnormalizedDataEntityIds = """{

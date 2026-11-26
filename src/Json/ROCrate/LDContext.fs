@@ -51,7 +51,11 @@ module LDContext =
                     elif s = Context.proxy_ARC then
                         Ok (Context.initArcContext())
                     else
-                        ("", BadPrimitive("an object", value)) |> Error
+                        // The terms of a context that is not known cannot be resolved. The context keeps the URL as
+                        // its name, so that it is written as it was read.
+                        let unknownContext = LDContext()
+                        unknownContext.Name <- Some s
+                        Ok unknownContext
                 elif helpers.isArray value then
                     match Decode.resizeArray(this).Decode(helpers,value) with
                     | Ok baseContexts -> Ok (LDContext(baseContexts = baseContexts))
@@ -67,7 +71,9 @@ module LDContext =
         | Some Context.proxy_V1_2 -> Encode.string Context.proxy_V1_2
         | Some Context.proxy_V1_1 -> Encode.string Context.proxy_V1_1
         | Some Context.proxy_ARC -> Encode.string Context.proxy_ARC
-        | _ ->           
+        // A context that was read from a URL that is not known
+        | Some name when ctx.Mappings.Count = 0 && ctx.BaseContexts.Count = 0 -> Encode.string name
+        | _ ->
             let mappings = 
                 ctx.Mappings
                 |> Seq.map (fun kv -> kv.Key, kv.Value |> string |> Encode.string )
