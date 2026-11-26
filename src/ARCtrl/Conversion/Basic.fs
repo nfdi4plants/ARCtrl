@@ -175,31 +175,37 @@ type BaseTypes =
             subjectOf = dataFragment
         )
 
-    static member decomposeFragmentDescriptor (fd : LDNode, ?graph : LDGraph, ?context : LDContext)  =
-        let file = LDPropertyValue.tryGetSubjectOf(fd, ?graph = graph, ?context = context)
+    /// Reads a data context from the file or fragment that it is about, and from the PropertyValue that states its
+    /// explication, its unit and what else is known about the data. The data context has none of these if no
+    /// statement is given.
+    static member decomposeDataContext (file : LDNode, ?statement : LDNode, ?graph : LDGraph, ?context : LDContext) =
         // The fragment is named by its id, as a file is.
-        let name = match file with | Some f -> f.Id | None -> failwith "RO-Crate parsing of DataContext failed: Cannot decompose a fragment descriptor without a name."
+        let name = file.Id
         let objectType =
-            file
-            |> Option.bind (fun f -> LDFile.tryGetPatternAsDefinedTerm(f, ?graph = graph, ?context = context))
+            LDFile.tryGetPatternAsDefinedTerm(file, ?graph = graph, ?context = context)
             |> Option.map (fun pa -> BaseTypes.decomposeDefinedTerm(pa, ?context = context))
-        let format =
-            file
-            |> Option.bind (fun f -> LDFile.tryGetEncodingFormatAsString(f, ?context = context))
-        let selectorFormat =
-            file
-            |> Option.bind (fun f -> LDFile.tryGetUsageInfoAsString(f, ?context = context))
-        let explicationName = LDPropertyValue.tryGetValueAsString(fd, ?context = context)
-        let explicationID = LDPropertyValue.tryGetValueReferenceAsString(fd, ?context = context)
+        let format = LDFile.tryGetEncodingFormatAsString(file, ?context = context)
+        let selectorFormat = LDFile.tryGetUsageInfoAsString(file, ?context = context)
+        let ofStatement (tryGet : LDNode -> string option) = statement |> Option.bind tryGet
+        let explicationName = ofStatement (fun s -> LDPropertyValue.tryGetValueAsString(s, ?context = context))
+        let explicationID = ofStatement (fun s -> LDPropertyValue.tryGetValueReferenceAsString(s, ?context = context))
         let explication = BaseTypes.tryOntologyTermFromNameAndID(?name = explicationName, ?id = explicationID)
-        let unitName = LDPropertyValue.tryGetUnitTextAsString(fd, ?context = context)
-        let unitID = LDPropertyValue.tryGetUnitCodeAsString(fd, ?context = context)
+        let unitName = ofStatement (fun s -> LDPropertyValue.tryGetUnitTextAsString(s, ?context = context))
+        let unitID = ofStatement (fun s -> LDPropertyValue.tryGetUnitCodeAsString(s, ?context = context))
         let unit = BaseTypes.tryOntologyTermFromNameAndID(?name = unitName, ?id = unitID)
-        let generatedBy = LDPropertyValue.tryGetMeasurementMethodAsString(fd, ?context = context)
-        let description = LDPropertyValue.tryGetDescriptionAsString(fd, ?context = context)
-        let label = LDPropertyValue.tryGetAlternateNameAsString(fd, ?context = context)
-        let comments = LDPropertyValue.getDisambiguatingDescriptionsAsString(fd, ?context = context) |> ResizeArray.map Comment.fromString
+        let generatedBy = ofStatement (fun s -> LDPropertyValue.tryGetMeasurementMethodAsString(s, ?context = context))
+        let description = ofStatement (fun s -> LDPropertyValue.tryGetDescriptionAsString(s, ?context = context))
+        let label = ofStatement (fun s -> LDPropertyValue.tryGetAlternateNameAsString(s, ?context = context))
+        let comments =
+            match statement with
+            | Some s -> LDPropertyValue.getDisambiguatingDescriptionsAsString(s, ?context = context) |> ResizeArray.map Comment.fromString
+            | None -> ResizeArray()
         DataContext(name = name, ?format = format, ?selectorFormat = selectorFormat, ?explication = explication, ?unit = unit, ?objectType = objectType, ?generatedBy = generatedBy, ?description = description, ?label = label, comments = comments)
+
+    static member decomposeFragmentDescriptor (fd : LDNode, ?graph : LDGraph, ?context : LDContext)  =
+        match LDPropertyValue.tryGetSubjectOf(fd, ?graph = graph, ?context = context) with
+        | Some file -> BaseTypes.decomposeDataContext(file, statement = fd, ?graph = graph, ?context = context)
+        | None -> failwith "RO-Crate parsing of DataContext failed: Cannot decompose a fragment descriptor without a name."
 
     /// Convert a CompositeHeader and Cell tuple to a ISA ProcessInput
     static member composeProcessInput (header : CompositeHeader) (value : CompositeCell) (fs : FileSystem option) : LDNode =

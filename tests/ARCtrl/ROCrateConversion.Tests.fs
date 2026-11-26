@@ -700,10 +700,41 @@ let private tests_PropertyValue =
             Expect.equal header header' "Header should match"
             Expect.equal cell cell' "Cell should match"
         )
+        // The value of a PropertyValue is a text, a number or a boolean, see https://schema.org/value
+        testCase "Value_Integer" (fun () ->
+            let pv = JsonController.LDNode.fromROCrateJsonString(TestObjects.Json.ROCrate.GenericObjects.propertyValueWithValue "10")
+
+            let value = Expect.wantSome (LDPropertyValue.tryGetValueAsString pv) "Should have value"
+            Expect.equal value "10" "Value should match"
+            Expect.equal (LDPropertyValue.getValueAsString pv) "10" "Value should match"
+
+            let _,cell' = BaseTypes.decomposeParameterValue pv
+            Expect.equal cell' (CompositeCell.createUnitized ("10", OntologyAnnotation(name = "MyUnit"))) "Cell should hold the number"
+        )
+        testCase "Value_Decimal" (fun () ->
+            let pv = JsonController.LDNode.fromROCrateJsonString(TestObjects.Json.ROCrate.GenericObjects.propertyValueWithValue "2.3")
+
+            let value = Expect.wantSome (LDPropertyValue.tryGetValueAsString pv) "Should have value"
+            Expect.equal value "2.3" "Value should match"
+            Expect.equal (LDPropertyValue.getValueAsString pv) "2.3" "Value should match"
+
+            let _,cell' = BaseTypes.decomposeParameterValue pv
+            Expect.equal cell' (CompositeCell.createUnitized ("2.3", OntologyAnnotation(name = "MyUnit"))) "Cell should hold the number"
+        )
+        testCase "Value_Boolean" (fun () ->
+            let pv = JsonController.LDNode.fromROCrateJsonString(TestObjects.Json.ROCrate.GenericObjects.propertyValueWithValue "true")
+
+            let value = Expect.wantSome (LDPropertyValue.tryGetValueAsString pv) "Should have value"
+            Expect.equal value "true" "Value should match"
+            Expect.equal (LDPropertyValue.getValueAsString pv) "true" "Value should match"
+
+            let _,cell' = BaseTypes.decomposeParameterValue pv
+            Expect.equal cell' (CompositeCell.createUnitized ("true", OntologyAnnotation(name = "MyUnit"))) "Cell should hold the boolean"
+        )
     ]
 
 
-let private tests_ArcTableProcess = 
+let private tests_ArcTableProcess =
     testList "ARCTableProcess" [
         testCase "SingleRowSingleParam GetProcesses" (fun () ->
             let t = singleRowSingleParam.Copy()
@@ -1259,6 +1290,97 @@ let private tests_Datamap =
             let fds = DatamapConversion.composeFragmentDescriptors dm
             let dm' = DatamapConversion.decomposeFragmentDescriptors fds
             Expect.equal dm dm' "Data map should match"
+        )
+    ]
+
+/// An entry of the datamap as the ARC Datamap profile defines it, see https://w3id.org/arc/ro-crate/datamap/0.1:
+/// the descriptor is a Statement and ItemList, is about the fragment and lists the PropertyValue of the explication.
+///
+/// Returns the descriptor, the fragment and the PropertyValue. The descriptor is not about the fragment if aboutFragment is false.
+let private create_profileDescriptor (aboutFragment : bool) (dc : DataContext) =
+    let fd = BaseTypes.composeFragmentDescriptor dc
+    let fragment = Expect.wantSome (LDPropertyValue.tryGetSubjectOf fd) "Fragment should exist"
+    let item =
+        LDPropertyValue.create(
+            "Explication",
+            id = fd.Id.Replace("#Descriptor_", "#Explication_"),
+            propertyID = "https://purl.org/nfdi4plants/ontology/dpbo/DPBO_0000111",
+            ?value = LDPropertyValue.tryGetValueAsString fd,
+            ?valueReference = LDPropertyValue.tryGetValueReferenceAsString fd,
+            ?unitText = LDPropertyValue.tryGetUnitTextAsString fd,
+            ?unitCode = LDPropertyValue.tryGetUnitCodeAsString fd
+        )
+    item.AdditionalType <- ResizeArray ["Interpretation"]
+    LDPropertyValue.tryGetMeasurementMethodAsString fd |> Option.iter (fun m -> LDPropertyValue.setMeasurementMethodAsString(item, m))
+    LDPropertyValue.tryGetDescriptionAsString fd |> Option.iter (fun d -> LDPropertyValue.setDescriptionAsString(item, d))
+    LDPropertyValue.tryGetAlternateNameAsString fd |> Option.iter (fun a -> LDPropertyValue.setAlternateNameAsString(item, a))
+    let descriptor = LDNode(fd.Id, ResizeArray ["http://schema.org/Statement"; "http://schema.org/ItemList"])
+    descriptor.AdditionalType <- ResizeArray ["DataContext"]
+    if aboutFragment then descriptor.SetProperty("http://schema.org/about", fragment)
+    descriptor.SetProperty("http://schema.org/itemListElement", ResizeArray [item])
+    fragment.AdditionalType <- ResizeArray ["DataFragment"]
+    fragment.SetProperty("http://schema.org/subjectOf", LDRef(descriptor.Id))
+    descriptor, fragment, item
+
+let private tests_DatamapOfProfile =
+    testList "DatamapOfProfile" [
+        testCase "Descriptor" (fun () ->
+            let dc = create_dataContextOfRow "MyFile" 1
+            let descriptor, _, _ = create_profileDescriptor true dc
+            let assay = LDDataset.createAssay("MyAssay")
+            assay.SetProperty(LDDataset.mentions, ResizeArray [descriptor])
+            let assay' = AssayConversion.decomposeAssay(assay)
+            Expect.equal assay'.Datamap (Some (Datamap(ResizeArray [dc]))) "Datamap should be read from the descriptor"
+        )
+        testCase "Descriptor_OfStudy" (fun () ->
+            let dc = create_dataContextOfRow "MyFile" 1
+            let descriptor, _, _ = create_profileDescriptor true dc
+            let study = LDDataset.createStudy("MyStudy")
+            study.SetProperty(LDDataset.mentions, ResizeArray [descriptor])
+            let study' = StudyConversion.decomposeStudy(study)
+            Expect.equal study'.Datamap (Some (Datamap(ResizeArray [dc]))) "Datamap should be read from the descriptor"
+        )
+        testCase "Descriptor_ItemKnownByPropertyID" (fun () ->
+            let dc = create_dataContextOfRow "MyFile" 1
+            let descriptor, _, item = create_profileDescriptor true dc
+            LDPropertyValue.setNameAsString(item, "Content of the row")
+            LDPropertyValue.setPropertyIDAsString(item, "http://purl.org/nfdi4plants/ontology/dpbo/DPBO_0000111")
+            let assay = LDDataset.createAssay("MyAssay")
+            assay.SetProperty(LDDataset.mentions, ResizeArray [descriptor])
+            let assay' = AssayConversion.decomposeAssay(assay)
+            Expect.equal assay'.Datamap (Some (Datamap(ResizeArray [dc]))) "Datamap should be read from the item with the propertyID of the explication"
+        )
+        testCase "Descriptor_AmongOtherMentionsAndItems" (fun () ->
+            let dc = create_dataContextOfRow "MyFile" 1
+            let descriptor, _, item = create_profileDescriptor true dc
+            let designation = LDPropertyValue.create("Designation", value = "MyDesignation", id = "#Designation_MyFile")
+            descriptor.SetProperty("http://schema.org/itemListElement", ResizeArray [designation; item])
+            let term = LDDefinedTerm.create("MyTerm")
+            let assay = LDDataset.createAssay("MyAssay")
+            assay.SetProperty(LDDataset.mentions, ResizeArray [term; descriptor])
+            let assay' = AssayConversion.decomposeAssay(assay)
+            Expect.equal assay'.Datamap (Some (Datamap(ResizeArray [dc]))) "Only the descriptor and its explication should be read"
+        )
+        testCase "Descriptor_FragmentKnownBySubjectOf" (fun () ->
+            let dc = create_dataContextOfRow "MyFile" 1
+            let descriptor, fragment, _ = create_profileDescriptor false dc
+            let assay = LDDataset.createAssay("MyAssay")
+            assay.SetProperty(LDDataset.mentions, ResizeArray [descriptor])
+            let graph = LDGraph()
+            graph.AddNode assay
+            graph.AddNode fragment
+            let assay' = AssayConversion.decomposeAssay(assay, graph = graph)
+            Expect.equal assay'.Datamap (Some (Datamap(ResizeArray [dc]))) "The fragment should be found by its subjectOf"
+        )
+        testCase "FragmentDescriptorAndDescriptor" (fun () ->
+            let dc1 = create_dataContextOfRow "MyFile" 1
+            let dc2 = create_dataContextOfRow "MyFile" 2
+            let fragmentDescriptor = BaseTypes.composeFragmentDescriptor dc1
+            let descriptor, _, _ = create_profileDescriptor true dc2
+            let assay = LDDataset.createAssay("MyAssay", variableMeasureds = ResizeArray [fragmentDescriptor])
+            assay.SetProperty(LDDataset.mentions, ResizeArray [descriptor])
+            let assay' = AssayConversion.decomposeAssay(assay)
+            Expect.equal assay'.Datamap (Some (Datamap(ResizeArray [dc1; dc2]))) "Both entries should be read"
         )
     ]
 
@@ -4978,6 +5100,7 @@ let main =
         tests_Data
         tests_DataContext
         tests_Datamap
+        tests_DatamapOfProfile
         tests_FormalParameter
         tests_AdditionalTypeDecoding
         tests_AdditionalTypeEncoding

@@ -75,6 +75,20 @@ type InvestigationConversion =
             ?comments = comments
         )
 
+    /// Returns the datasets of an investigation: those that it names as parts, followed by the other datasets of the
+    /// graph. A crate may name a dataset only as a part of another dataset, as an assay of a study, or as no part at all.
+    static member private getDatasets (investigation : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        let datasets = ResizeArray (LDDataset.getHasPartsAsDataset(investigation, ?graph = graph, ?context = context))
+        match graph with
+        | Some graph ->
+            let ids = HashSet<string>(datasets |> Seq.map (fun d -> d.Id))
+            ids.Add investigation.Id |> ignore
+            for node in graph.Nodes do
+                if LDDataset.validate(node, ?context = context) && ids.Add node.Id then
+                    datasets.Add node
+        | None -> ()
+        datasets
+
     static member decomposeInvestigation (investigation : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let title =
             match LDDataset.tryGetNameAsString(investigation, ?context = context) with
@@ -96,7 +110,7 @@ type InvestigationConversion =
             LDDataset.getCreators(investigation, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> PersonConversion.decomposePerson(c, ?graph = graph, ?context = context))
         let datasets = 
-            LDDataset.getHasPartsAsDataset  (investigation, ?graph = graph, ?context = context)
+            InvestigationConversion.getDatasets(investigation, ?graph = graph, ?context = context)
         let studies = 
             datasets
             |> ResizeArray.filter (fun d -> LDDataset.validateStudy(d, ?context = context))

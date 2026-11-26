@@ -3150,6 +3150,66 @@ let tests_ROCrate =
                 Expect.equal arc.StudyCount 1 "ARC should contain 1 study"
         ]
 
+        // A crate may name a dataset only as a part of another dataset, or not as a part at all
+        testList "Datasets" [
+            testCase "AssayOnlyPartOfStudy" <| fun _ ->
+                let json =
+                    TestObjects.Json.ROCrate.DatamapCrate.create
+                        """, "hasPart": [{"@id": "studies/MyStudy/"}]"""
+                        """, "hasPart": [{"@id": "assays/MyAssay/"}]"""
+                        ""
+                let arc = ARC.fromROCrateJsonString(json)
+                Expect.equal arc.StudyCount 1 "ARC should contain 1 study"
+                Expect.equal arc.AssayCount 1 "ARC should contain the assay that only the study names as a part"
+                Expect.equal arc.Assays.[0].Identifier "MyAssay" "Assay should be read"
+                Expect.sequenceEqual arc.Studies.[0].RegisteredAssayIdentifiers ["MyAssay"] "Study should register the assay"
+            testCase "NotPartOfInvestigation" <| fun _ ->
+                let json = TestObjects.Json.ROCrate.DatamapCrate.create "" "" ""
+                let arc = ARC.fromROCrateJsonString(json)
+                Expect.equal arc.StudyCount 1 "ARC should contain the study that the investigation does not name as a part"
+                Expect.equal arc.Studies.[0].Identifier "MyStudy" "Study should be read"
+                Expect.equal arc.AssayCount 1 "ARC should contain the assay that the investigation does not name as a part"
+                Expect.equal arc.Assays.[0].Identifier "MyAssay" "Assay should be read"
+        ]
+
+        // The datamap as the ARC Datamap profile defines it, see https://w3id.org/arc/ro-crate/datamap/0.1
+        testList "DatamapOfProfile" [
+            testCase "NamedByAssay" <| fun _ ->
+                let json =
+                    TestObjects.Json.ROCrate.DatamapCrate.create
+                        """, "hasPart": [{"@id": "studies/MyStudy/"}, {"@id": "assays/MyAssay/"}]"""
+                        ""
+                        (sprintf """, "mentions": [%s]""" TestObjects.Json.ROCrate.DatamapCrate.descriptorRef)
+                let arc = ARC.fromROCrateJsonString(json)
+                let datamap = Expect.wantSome (arc.GetAssay("MyAssay").Datamap) "Assay should have a datamap"
+                Expect.hasLength datamap.DataContexts 1 "Datamap should have 1 entry"
+                let dc = datamap.DataContexts.[0]
+                Expect.equal dc.NameText "./assays/MyAssay/dataset/data.csv#col=1" "Entry should be named by the id of the fragment"
+                Expect.equal dc.Format (Some "text/csv") "Format should be read from the fragment"
+                Expect.equal dc.SelectorFormat (Some "https://datatracker.ietf.org/doc/html/rfc7111") "Selector format should be read from the fragment"
+                let objectType = Expect.wantSome dc.ObjectType "Object type should be read from the fragment"
+                Expect.equal objectType.NameText "float" "Object type should match"
+                let explication = Expect.wantSome dc.Explication "Explication should be read from the descriptor item"
+                Expect.equal explication.NameText "molecule count" "Explication should match"
+                Expect.equal explication.TermAccessionShort "UO:0000192" "Explication reference should match"
+                let unit = Expect.wantSome dc.Unit "Unit should be read from the descriptor item"
+                Expect.equal unit.NameText "Millimole per Kilogram" "Unit should match"
+                Expect.equal unit.TermAccessionShort "NCIT:C68892" "Unit reference should match"
+                Expect.equal dc.Label (Some "quant1") "Label should be read from the descriptor item"
+                Expect.equal dc.GeneratedBy (Some "MyTool") "GeneratedBy should be read from the descriptor item"
+                Expect.equal dc.Description (Some "My description") "Description should be read from the descriptor item"
+            testCase "NamedByInvestigationAndAssay" <| fun _ ->
+                let mentions = sprintf """, "mentions": [%s]""" TestObjects.Json.ROCrate.DatamapCrate.descriptorRef
+                let json =
+                    TestObjects.Json.ROCrate.DatamapCrate.create
+                        (""", "hasPart": [{"@id": "studies/MyStudy/"}, {"@id": "assays/MyAssay/"}]""" + mentions)
+                        ""
+                        mentions
+                let arc = ARC.fromROCrateJsonString(json)
+                let datamap = Expect.wantSome (arc.GetAssay("MyAssay").Datamap) "Assay should have a datamap"
+                Expect.hasLength datamap.DataContexts 1 "The entry should be read once"
+        ]
+
         testCase "UnknownContext" <| fun _ ->
             let descriptor = TestObjects.Json.ROCrate.ArcCrate.descriptor "ro-crate-metadata.json" "./"
             let json = TestObjects.Json.ROCrate.ArcCrate.create "\"https://example.org/context.jsonld\"" descriptor "./"

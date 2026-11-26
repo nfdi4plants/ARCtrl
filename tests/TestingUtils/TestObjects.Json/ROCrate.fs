@@ -149,6 +149,92 @@ module ArcCrate =
       ]
     }""" context entities rootId
 
+/// The crate of an investigation with a study and an assay. The assay has a data file, of which one column is described
+/// as the ARC Datamap profile defines it, see https://w3id.org/arc/ro-crate/datamap/0.1
+module DatamapCrate =
+
+    /// The descriptor of the column, as a reference
+    let descriptorRef = """{"@id": "#Descriptor_data.csv#col=1"}"""
+
+    /// The crate. Each of the texts is added to the properties of the investigation, the study and the assay, so that
+    /// a crate can name their parts and the descriptor where a writer other than ARCtrl may name them.
+    let create (investigationProperties : string) (studyProperties : string) (assayProperties : string) =
+        sprintf """{
+      "@context": "https://w3id.org/ro/crate/1.2/context",
+      "@graph": [
+        {
+          "@id": "ro-crate-metadata.json",
+          "@type": "CreativeWork",
+          "about": {"@id": "./"},
+          "conformsTo": {"@id": "https://w3id.org/ro/crate/1.2"}
+        },
+        {
+          "@id": "./",
+          "@type": "Dataset",
+          "additionalType": "Investigation",
+          "identifier": "MyInvestigation",
+          "name": "My Investigation"%s
+        },
+        {
+          "@id": "studies/MyStudy/",
+          "@type": "Dataset",
+          "additionalType": "Study",
+          "identifier": "MyStudy",
+          "name": "My Study"%s
+        },
+        {
+          "@id": "assays/MyAssay/",
+          "@type": "Dataset",
+          "additionalType": ["Assay", "Datamap"],
+          "identifier": "MyAssay",
+          "name": "My Assay"%s
+        },
+        {
+          "@id": "assays/MyAssay/dataset/data.csv",
+          "@type": "File",
+          "name": "data.csv",
+          "encodingFormat": "text/csv",
+          "hasPart": [{"@id": "assays/MyAssay/dataset/data.csv#col=1"}]
+        },
+        {
+          "@id": "assays/MyAssay/dataset/data.csv#col=1",
+          "@type": "File",
+          "additionalType": "DataFragment",
+          "encodingFormat": "text/csv",
+          "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
+          "pattern": {"@id": "http://purl.obolibrary.org/obo/NCIT_C48150"},
+          "subjectOf": {"@id": "#Descriptor_data.csv#col=1"}
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/NCIT_C48150",
+          "@type": "DefinedTerm",
+          "name": "float",
+          "termCode": "http://purl.obolibrary.org/obo/NCIT_C48150"
+        },
+        {
+          "@id": "#Descriptor_data.csv#col=1",
+          "@type": ["Statement", "ItemList"],
+          "additionalType": "DataContext",
+          "about": {"@id": "assays/MyAssay/dataset/data.csv#col=1"},
+          "itemListElement": [{"@id": "#Explication_data.csv#col=1"}]
+        },
+        {
+          "@id": "#Explication_data.csv#col=1",
+          "@type": "PropertyValue",
+          "additionalType": "Interpretation",
+          "name": "Explication",
+          "propertyID": "https://purl.org/nfdi4plants/ontology/dpbo/DPBO_0000111",
+          "value": "molecule count",
+          "valueReference": "http://purl.obolibrary.org/obo/UO_0000192",
+          "unitText": "Millimole per Kilogram",
+          "unitCode": "http://purl.obolibrary.org/obo/NCIT_C68892",
+          "alternateName": "quant1",
+          "measurementMethod": "MyTool",
+          "description": "My description"
+        }
+      ]
+    }""" investigationProperties studyProperties assayProperties
+
 /// Contains the same file once with and once without leading "./", see https://github.com/nfdi4plants/ARCtrl/issues/607
 let roCrate_unnormalizedDataEntityIds = """{
       "@context": "https://w3id.org/ro/crate/1.2/context",
@@ -658,6 +744,15 @@ module GenericObjects =
             "@type": "MyType",
             "additionalType": ["additionalType1", {"@id": "http://example.org/additionalType2"}]
         }"""
+    /// A PropertyValue with the given JSON as its value
+    let propertyValueWithValue (value : string) =
+        sprintf """{
+            "@id": "#MyParameter",
+            "@type": "http://schema.org/PropertyValue",
+            "http://schema.org/name": "MyParameter",
+            "http://schema.org/value": %s,
+            "http://schema.org/unitText": "MyUnit"
+        }""" value
     let withNullValue =
         """{
             "@id": "MyIdentifier",
