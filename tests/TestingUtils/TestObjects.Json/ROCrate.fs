@@ -125,8 +125,19 @@ module ArcCrate =
           "name": "Other"
         },"""
 
-    /// The crate with the given context, the given entities ahead of the investigation, and the given id of the investigation
-    let create (context : string) (entities : string) (rootId : string) =
+    /// The term of the JERM ontology for a study, described in the crate as RO-Crate recommends for a term that
+    /// the context does not define
+    let jermStudyTerm =
+        """{
+          "@id": "https://jermontology.org/ontology/JERMOntology#Study",
+          "@type": "DefinedTerm",
+          "name": "Study",
+          "description": "An ISA Study: a unit of research within an Investigation, grouping the assays that share a design and subjects."
+        },"""
+
+    /// The crate with the given context, the given entities ahead of the investigation, the given id of the
+    /// investigation and the given additionalType of the study, which is given as JSON
+    let createWithStudyAdditionalType (context : string) (entities : string) (rootId : string) (studyAdditionalType : string) =
         sprintf """{
       "@context": %s,
       "@graph": [
@@ -142,12 +153,16 @@ module ArcCrate =
         {
           "@id": "studies/MyStudy/",
           "@type": "Dataset",
-          "additionalType": "Study",
+          "additionalType": %s,
           "identifier": "MyStudy",
           "name": "My Study"
         }
       ]
-    }""" context entities rootId
+    }""" context entities rootId studyAdditionalType
+
+    /// The crate with the given context, the given entities ahead of the investigation, and the given id of the investigation
+    let create (context : string) (entities : string) (rootId : string) =
+        createWithStudyAdditionalType context entities rootId "\"Study\""
 
 /// The crate of an investigation with a study and an assay. The assay has a data file, of which one column is described
 /// as the ARC Datamap profile defines it, see https://w3id.org/arc/ro-crate/datamap/0.1

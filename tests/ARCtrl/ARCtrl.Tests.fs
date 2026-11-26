@@ -3219,6 +3219,18 @@ let tests_ROCrate =
             Expect.equal arc.StudyCount 1 "ARC should contain 1 study"
             Expect.equal arc.Studies.[0].Identifier "MyStudy" "Study should be read with the terms ARCtrl writes"
 
+        // https://github.com/nfdi4plants/ARCtrl/issues/662
+        testCase "AdditionalTypeReferenceNextToText" <| fun _ ->
+            let descriptor = TestObjects.Json.ROCrate.ArcCrate.descriptor "ro-crate-metadata.json" "./"
+            let entities = descriptor + TestObjects.Json.ROCrate.ArcCrate.jermStudyTerm
+            let additionalType = """[{"@id": "https://jermontology.org/ontology/JERMOntology#Study"}, "Study"]"""
+            let json = TestObjects.Json.ROCrate.ArcCrate.createWithStudyAdditionalType TestObjects.Json.ROCrate.ArcCrate.context_V1_2 entities "./" additionalType
+            let arc = ARC.fromROCrateJsonString(json)
+            Expect.equal arc.Identifier "MyInvestigation" "Investigation should be read"
+            Expect.equal arc.StudyCount 1 "ARC should contain the study that names a term next to the text Study"
+            Expect.equal arc.Studies.[0].Identifier "MyStudy" "Study should be read"
+            Expect.equal arc.Studies.[0].Title (Some "My Study") "Title of the study should be read"
+
         testCase "CanRead_Deprecated" <| fun _ ->
             let arc = ARC.fromDeprecatedROCrateJsonString(TestObjects.ROCrate.ArcPrototypeDeprecated.ed123499)
             let nonDeprecatedARC = ARC.fromROCrateJsonString(TestObjects.ROCrate.ArcPrototype.ed123499)
