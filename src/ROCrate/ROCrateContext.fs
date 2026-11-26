@@ -8621,6 +8621,10 @@ module Context =
     [<Literal>]
     let proxy_V1_3 = "https://w3id.org/ro/crate/1.3/context"
 
+    /// The context that the ARC RO-Crate profiles name
+    [<Literal>]
+    let proxy_ARC = "https://www.researchobject.org/ro-terms/arc/context.jsonld"
+
     //let initDeprecatedBioschemasContext() =
     //    let terms =
     //        [
@@ -8659,6 +8663,15 @@ module Context =
                 "columnIndex", "https://w3id.org/ro/terms/arc#columnIndex"
             ]
         let c = LDContext.fromMappingSeq terms
+        c
+
+    let initArcContext() =
+        let terms =
+            [
+                ("columnIndex", "https://w3id.org/ro/terms/arc#columnIndex")
+            ]
+        let c = LDContext.fromMappingSeq terms
+        c.Name <- Some proxy_ARC
         c
 
     let initV1_1 () =

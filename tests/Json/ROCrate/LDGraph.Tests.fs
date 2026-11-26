@@ -20,6 +20,15 @@ let private test_read = testList "Read" [
         let secondExpectedObject = LDNode("./", ResizeArray ["Dataset"])
         Expect.equal graph.Nodes.[0] firstExpectedObject "first node should be the metadata"
         Expect.equal graph.Nodes.[1] secondExpectedObject "second node should be the dataset"
+    testCase "ARCContextAndAdditionalTypeReference" <| fun _ ->
+        let graph = LDGraph.fromROCrateJsonString roCrate_arcContextAndAdditionalTypeReference
+        let context = Expect.wantSome (graph.TryGetContext()) "context should exist"
+        Expect.equal (context.TryResolveTerm "columnIndex") (Some "https://w3id.org/ro/terms/arc#columnIndex") "term of the ARC context should be resolved"
+        Expect.equal (context.TryResolveTerm "Sample") (Some "https://bioschemas.org/Sample") "term of the expanded term definition should be resolved"
+        Expect.equal (context.TryResolveTerm "Dataset") (Some "http://schema.org/Dataset") "term of the RO-Crate context should be resolved"
+        Expect.hasLength graph.Nodes 2 "should have 2 nodes"
+        let root = Expect.wantSome (graph.TryGetNode "./") "Root dataset should exist"
+        Expect.sequenceEqual root.AdditionalType (ResizeArray ["http://example.org/Investigation"]) "additionalType should be the id of the reference"
     testCase "LargeNodeCount (issue #545)" <| fun _ ->
         let graph = LDGraph()
         for i in 1 .. 1000 do

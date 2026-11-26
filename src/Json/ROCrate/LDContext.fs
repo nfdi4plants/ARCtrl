@@ -8,6 +8,15 @@ open DynamicObj
 
 module LDContext =
 
+    /// The IRI of a term, given as a string or as the @id of an expanded term definition.
+    /// Any other entry of a context maps no term to an IRI, as the keyword @version does, and gives None.
+    let private termDefinitionDecoder : Decoder<string option> =
+        Decode.oneOf [
+            Decode.map Some Decode.string
+            Decode.map Some (Decode.field "@id" Decode.string)
+            Decode.succeed None
+        ]
+
     let decoder : Decoder<LDContext> =
         { new Decoder<LDContext> with
             member this.Decode(helpers, value) =     
@@ -19,7 +28,9 @@ module LDContext =
                             let o = LDContext()
                             for property in properties do
                                 if property <> "@id" && property <> "@type" then
-                                    o.AddMapping(property,get.Required.Field property Decode.string)
+                                    match get.Required.Field property termDefinitionDecoder with
+                                    | Some definition -> o.AddMapping(property,definition)
+                                    | None -> ()
                             o
                     let result = builder getters               
                     match getters.Errors with
@@ -37,6 +48,8 @@ module LDContext =
                         Ok (Context.initV1_2())
                     elif s = Context.proxy_V1_1 then
                         Ok (Context.initV1_1())
+                    elif s = Context.proxy_ARC then
+                        Ok (Context.initArcContext())
                     else
                         ("", BadPrimitive("an object", value)) |> Error
                 elif helpers.isArray value then
@@ -53,6 +66,7 @@ module LDContext =
         | Some Context.proxy_V1_2DRAFT -> Encode.string Context.proxy_V1_2DRAFT
         | Some Context.proxy_V1_2 -> Encode.string Context.proxy_V1_2
         | Some Context.proxy_V1_1 -> Encode.string Context.proxy_V1_1
+        | Some Context.proxy_ARC -> Encode.string Context.proxy_ARC
         | _ ->           
             let mappings = 
                 ctx.Mappings

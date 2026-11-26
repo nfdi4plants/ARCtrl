@@ -11,6 +11,33 @@ let context_DefinedTerm =
         "comments": "sdo:disambiguatingDescription"
     }"""
 
+/// An inline context with keywords that define no term
+let context_withKeywords =
+    """{
+        "@version": 1.1,
+        "@protected": true,
+        "sdo": "http://schema.org/",
+        "name": "sdo:name"
+    }"""
+
+/// An inline context that defines a term through an expanded term definition
+let context_expandedTermDefinition =
+    """{
+        "columnIndex": {
+            "@id": "https://w3id.org/ro/terms/arc#columnIndex",
+            "@type": "http://www.w3.org/2001/XMLSchema#integer"
+        },
+        "name": "http://schema.org/name"
+    }"""
+
+/// The RO-Crate context, an inline context and the ARC context, as the context of a crate
+let context_roCrateWithARCContext =
+    """[
+        "https://w3id.org/ro/crate/1.2/context",
+        {"Sample": "https://bioschemas.org/Sample"},
+        "https://www.researchobject.org/ro-terms/arc/context.jsonld"
+    ]"""
+
 let definedTerm =
     context_DefinedTerm
     |> sprintf """{
@@ -38,6 +65,32 @@ let roCrate_minimal = """{
         {
           "@id": "./",
           "@type": "Dataset"
+        }
+      ]
+    }"""
+
+/// A crate that names the ARC context, has an inline context with a keyword and an expanded term definition,
+/// and gives an additionalType as a reference
+let roCrate_arcContextAndAdditionalTypeReference = """{
+      "@context": [
+        "https://w3id.org/ro/crate/1.2/context",
+        "https://www.researchobject.org/ro-terms/arc/context.jsonld",
+        {
+          "@version": 1.1,
+          "Sample": {"@id": "https://bioschemas.org/Sample"}
+        }
+      ],
+      "@graph": [
+        {
+            "@id": "ro-crate-metadata.json",
+            "@type": "CreativeWork",
+            "about": {"@id": "./"},
+            "conformsTo": {"@id": "https://w3id.org/ro/crate/1.2"}
+        },
+        {
+          "@id": "./",
+          "@type": "Dataset",
+          "additionalType": {"@id": "http://example.org/Investigation"}
         }
       ]
     }"""
@@ -538,6 +591,18 @@ module GenericObjects =
             "@id": "MyIdentifier",
             "@type": "MyType",
             "additionalType": ["additionalType1", "additionalType2"]
+        }"""
+    let withAdditionalTypeReference =
+        """{
+            "@id": "MyIdentifier",
+            "@type": "MyType",
+            "additionalType": {"@id": "http://example.org/additionalType"}
+        }"""
+    let withAdditionalTypeArrayOfStringAndReference =
+        """{
+            "@id": "MyIdentifier",
+            "@type": "MyType",
+            "additionalType": ["additionalType1", {"@id": "http://example.org/additionalType2"}]
         }"""
     let withNullValue =
         """{

@@ -95,6 +95,22 @@ module rec LDNode =
                     ("", BadPrimitive("null", value)) |> Error
         }
 
+    /// An additional type is a text or a URL. A URL may be given as a reference, of which the id is taken.
+    let private additionalTypeDecoder : Decoder<string> =
+        Decode.oneOf [
+            Decode.string
+            LDRef.decoder |> Decode.map (fun r -> r.Id)
+        ]
+
+    /// Decodes the property additionalType with the ids of references in place of the references, as the
+    /// AdditionalType of the node has them. Any other value is decoded as the value of any other property.
+    let private additionalTypePropertyDecoder (propertyDecoder : Decoder<obj>) : Decoder<obj> =
+        Decode.oneOf [
+            Decode.map box additionalTypeDecoder
+            Decode.map box (Decode.resizeArray (Decode.map box additionalTypeDecoder))
+            propertyDecoder
+        ]
+
     /// Returns a decoder
     ///
     /// If expectObject is set to true, decoder fails if top-level value is not an ROCrate object
@@ -111,11 +127,12 @@ module rec LDNode =
                                     let t = get.Required.Field "@type" (Decode.resizeArrayOrSingleton Decode.string)
                                     let id = get.Required.Field "@id" Decode.string
                                     let context = get.Optional.Field "@context" LDContext.decoder
-                                    let at = get.Optional.Field "additionalType" (Decode.resizeArrayOrSingleton Decode.string)
+                                    let at = get.Optional.Field "additionalType" (Decode.resizeArrayOrSingleton additionalTypeDecoder)
                                     let o = LDNode(id, t, ?additionalType = at)
                                     for property in properties do
                                         if property <> "@id" && property <> "@type" && property <> "@context" then
-                                            let r = get.Required.Field property (decode(false))
+                                            let propertyDecoder = if property = "additionalType" then additionalTypePropertyDecoder (decode(false)) else decode(false)
+                                            let r = get.Required.Field property propertyDecoder
                                             if r <> null then o.SetProperty(property,r)
                                     if context.IsSome then o.SetContext context.Value
                                     o

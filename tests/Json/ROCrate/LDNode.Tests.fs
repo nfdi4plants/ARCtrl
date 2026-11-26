@@ -121,6 +121,18 @@ let private test_read = testList "Read" [
         Expect.equal json.Id "MyIdentifier" "id was not parsed correctly"
         Expect.sequenceEqual json.SchemaType ResizeArray["MyType"] "type was not parsed correctly"
         Expect.sequenceEqual json.AdditionalType ResizeArray["additionalType1"; "additionalType2"] "additionalType was not parsed correctly"
+    testCase "withAdditionalTypeReference" <| fun _ ->
+        let json = LDNode.fromROCrateJsonString(GenericObjects.withAdditionalTypeReference)
+        Expect.equal json.Id "MyIdentifier" "id was not parsed correctly"
+        Expect.sequenceEqual json.SchemaType ResizeArray["MyType"] "type was not parsed correctly"
+        Expect.sequenceEqual json.AdditionalType ResizeArray["http://example.org/additionalType"] "additionalType was not parsed correctly"
+        let property = Expect.wantSome (json.TryGetProperty "additionalType") "property additionalType was not parsed"
+        Expect.equal property (box "http://example.org/additionalType") "property additionalType should hold the id of the reference"
+    testCase "withAdditionalTypeArrayOfStringAndReference" <| fun _ ->
+        let json = LDNode.fromROCrateJsonString(GenericObjects.withAdditionalTypeArrayOfStringAndReference)
+        Expect.equal json.Id "MyIdentifier" "id was not parsed correctly"
+        Expect.sequenceEqual json.SchemaType ResizeArray["MyType"] "type was not parsed correctly"
+        Expect.sequenceEqual json.AdditionalType ResizeArray["additionalType1"; "http://example.org/additionalType2"] "additionalType was not parsed correctly"
     testCase "nullValue" <| fun _ ->
         let json = LDNode.fromROCrateJsonString(GenericObjects.withNullValue)
         Expect.equal json.Id "MyIdentifier" "id was not parsed correctly"
