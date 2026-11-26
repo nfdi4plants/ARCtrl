@@ -156,8 +156,18 @@ type Data(?id,?name : string,?dataType,?format,?selectorFormat,?comments) =
         |> HashCodes.boxHashArray
         |> fun x -> x :?> int
 
+    // Compare fields, not hashes: different Data can share a hash, and table value maps rely on Equals to tell them apart.
     override this.Equals(obj) =
-        HashCodes.hash this = HashCodes.hash obj
+        match obj with
+        | :? Data as d ->
+            this.ID = d.ID
+            && this.Name = d.Name
+            && this.DataType = d.DataType
+            && this.Format = d.Format
+            && this.SelectorFormat = d.SelectorFormat
+            && this.Comments.Count = d.Comments.Count
+            && Seq.forall2 (=) this.Comments d.Comments
+        | _ -> false
 
     interface IISAPrintable with
         member this.Print() = 

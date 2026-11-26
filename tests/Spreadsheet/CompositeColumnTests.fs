@@ -277,6 +277,21 @@ let columnValueRefs_Tests =
                 | _ -> failwith "Expected Sparse column type"
             )
         ]
+        // "VBT04P" and "VBT07s" share a hash in JavaScript and Python. Assert on the cell text, as cell equality could hide the bug.
+        testList "HashClash" [
+            let testClash (header : string) =
+                let valueMap = Dictionary<int, CompositeCell>()
+                let cols = [| [| header; "VBT04P"; "VBT07s"; "VBT04P" |] |]
+                let _, col = CompositeColumn.ColumnValueRefs.fromStringCellColumns valueMap cols
+                match col with
+                | Sparse s ->
+                    let values = [ for i in 0 .. 2 -> string valueMap.[s.[i]] ]
+                    Expect.equal values ["VBT04P"; "VBT07s"; "VBT04P"] "Cell values did not match"
+                    Expect.equal (s.Values |> Seq.distinct |> Seq.length) 2 "There should be 2 distinct keys in the column"
+                | _ -> failwith "Expected Sparse column type"
+            testCase "FreeText" (fun () -> testClash "Input [Sample Name]")
+            testCase "Data" (fun () -> testClash "Output [Data]")
+        ]
 
     ]
 
