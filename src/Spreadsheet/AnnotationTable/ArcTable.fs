@@ -146,10 +146,9 @@ let toFsWorksheet (index : int option) (table : ArcTable) =
         |> List.ofSeq
         |> List.sortBy classifyColumnOrder
         |> List.collect CompositeColumn.toStringCellColumns
-    let tableRowCount =
-        let maxRow = columns |> Seq.fold (fun acc c -> max acc c.Length) 0
-        if maxRow = 1 then 2
-        else maxRow
+        // Excel can not open a table consisting only of headers, so an empty row is written in this case
+        |> List.map (fun c -> if c.Length = 1 then c @ [""] else c)
+    let tableRowCount = columns |> Seq.fold (fun acc c -> max acc c.Length) 0
     let tableColumnCount = columns.Length
     let name =
         match index with

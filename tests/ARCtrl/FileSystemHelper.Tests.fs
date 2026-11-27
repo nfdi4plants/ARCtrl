@@ -131,6 +131,20 @@ let writeFileXlsx =
             let! result = FileSystemHelper.readFileXlsxAsync p
             Expect.workBookEqual wb result "Workbook was not read correctly."
         })
+        // https://github.com/nfdi4plants/ARCtrl/issues/525
+        testCaseCrossAsync "tableWithoutRows" (crossAsync {
+            do! ARCtrl.FileSystemHelper.ensureDirectoryAsync TestObjects.IO.testResultsFolder
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "TableWithoutRows.xlsx"
+            let assay = ArcAssay.init("MyAssay")
+            let table = assay.InitTable("MyTable")
+            table.AddColumn(CompositeHeader.Input IOType.Sample)
+            do! FileSystemHelper.writeFileXlsxAsync p (ArcAssay.toFsWorkbook assay)
+            let! result = FileSystemHelper.readFileXlsxAsync p
+            let ws = Expect.wantSome (result.TryGetWorksheetByName "MyTable") "Workbook does not contain the worksheet of the table"
+            let fsTable = Expect.wantSome (ArcTable.tryAnnotationTable ws) "Worksheet does not contain the annotation table"
+            let rowCount = fsTable.RangeAddress.LastAddress.RowNumber - fsTable.RangeAddress.FirstAddress.RowNumber + 1
+            Expect.equal rowCount 2 "Excel can not open a table consisting only of headers, so the written table should contain a row besides them"
+        })
     ]
 
 let getSubFiles = 

@@ -226,6 +226,20 @@ let private valuelessTable =
             Expect.equal inAgain.Columns.[0].Header header "Header was not parsed correctly"
            
         )
+        // https://github.com/nfdi4plants/ARCtrl/issues/525
+        testCase "Write TableBodyHasCells" (fun () ->
+            let table = ArcTable.init("MyTable")
+            table.AddColumn(CompositeHeader.Input IOType.Sample)
+            table.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter")))
+            let out = ArcTable.toFsWorksheet None table
+            let fsTable = out.Tables.[0]
+            let bodyCells =
+                [
+                    for c = fsTable.RangeAddress.FirstAddress.ColumnNumber to fsTable.RangeAddress.LastAddress.ColumnNumber do
+                        out.CellCollection.TryGetCell(2, c) |> Option.map (fun cell -> cell.ValueAsString())
+                ]
+            Expect.sequenceEqual bodyCells [Some ""; Some ""; Some ""; Some ""] "Row below the headers should consist of empty cells"
+        )
     ]
 
 let private mixedTable = 
