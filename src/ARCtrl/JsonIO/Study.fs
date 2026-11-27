@@ -51,7 +51,7 @@ module StudyExtensions =
             let useIDReferencing = Option.defaultValue false useIDReferencing
             let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None
             fun (obj:ArcStudy) ->
-                Study.ISAJson.encoder idMap assays obj
+                Study.ISAJson.encoder idMap None assays obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
         member this.ToISAJsonString(?assays,?spaces, ?useIDReferencing) = 

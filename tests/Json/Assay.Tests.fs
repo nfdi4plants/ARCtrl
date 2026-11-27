@@ -32,6 +32,31 @@ module Helper =
             comments = ResizeArray [|Comment.create("Hello", "World")|]
         )
 
+    /// Table with the given sample as output
+    let create_sampleOutputTable (tableName : string) (sampleName : string) =
+        let table = ArcTable.init(tableName)
+        table.AddColumn(CompositeHeader.Input IOType.Source, ResizeArray [CompositeCell.FreeText $"{sampleName}_Source"])
+        table.AddColumn(CompositeHeader.Output IOType.Sample, ResizeArray [CompositeCell.FreeText sampleName])
+        table
+
+    /// Table with the given sample as input, which is annotated with the given characteristic
+    let create_sampleInputTable (tableName : string) (sampleName : string) (characteristic : string) (value : string) =
+        let table = ArcTable.init(tableName)
+        table.AddColumn(CompositeHeader.Input IOType.Sample, ResizeArray [CompositeCell.FreeText sampleName])
+        table.AddColumn(CompositeHeader.Characteristic (OntologyAnnotation(characteristic)), ResizeArray [CompositeCell.Term (OntologyAnnotation(value))])
+        table.AddColumn(CompositeHeader.Output IOType.Sample, ResizeArray [CompositeCell.FreeText $"{sampleName}_{tableName}"])
+        table
+
+    /// Decodes the characteristic values the given sample is written with in the materials of an ISA-Json study or assay
+    let isaSampleCharacteristicsDecoder (sampleName : string) =
+        Thoth.Json.Core.Decode.at ["materials"; "samples"] (Thoth.Json.Core.Decode.list Sample.ISAJson.decoder)
+        |> Thoth.Json.Core.Decode.map (fun samples ->
+            samples
+            |> List.filter (fun s -> s.Name = Some sampleName)
+            |> List.collect (fun s -> s.Characteristics |> Option.defaultValue [])
+            |> List.map (fun c -> c.ValueText)
+        )
+
     let compare =
         fun (a1: ArcAssay) (a2: ArcAssay) ->
             Expect.equal a1.Identifier a2.Identifier "Identifier"
@@ -124,6 +149,18 @@ let private test_isa =
         #endif
         compare
 
+// https://github.com/nfdi4plants/ARCtrl/issues/492
+let private test_isaIDTable =
+    testCase "isa-UseIDTable_SampleAnnotatedInSecondTable" <| fun _ ->
+        let assay = ArcAssay.init("Assay1")
+        assay.AddTable (create_sampleOutputTable "Extraction" "Sample1")
+        assay.AddTable (create_sampleInputTable "Measurement" "Sample1" "organism" "Arabidopsis thaliana")
+
+        let json = ArcAssay.toISAJsonString(useIDReferencing = true) assay
+
+        let characteristics = Decode.fromJsonString (isaSampleCharacteristicsDecoder "Sample1") json
+        Expect.sequenceEqual characteristics ["Arabidopsis thaliana"] "Sample should be written with the characteristic it is annotated with in the second table"
+
 let private test_roCrate = testList "ROCrate" [
     // Wait for some issues to be resolved: https://github.com/nfdi4plants/isa-ro-crate-profile/issues
     // Mainly: #12, #9, #10, #13
@@ -148,5 +185,6 @@ let main = testList "Assay" [
     test_core
     test_compressed
     test_isa
+    test_isaIDTable
     test_roCrate
 ]

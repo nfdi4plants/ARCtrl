@@ -122,6 +122,63 @@ let private test_isa =
         #endif
         compareFields
 
+// https://github.com/nfdi4plants/ARCtrl/issues/492
+let private test_isaIDTable = testList "isa-UseIDTable" [
+
+    let studyDecoder i decoder = Thoth.Json.Core.Decode.field "studies" (Thoth.Json.Core.Decode.index i decoder)
+    let assayDecoder i decoder = Thoth.Json.Core.Decode.field "assays" (Thoth.Json.Core.Decode.index i decoder)
+
+    testCase "SampleAnnotatedInAssay" <| fun _ ->
+        let inv = ArcInvestigation.init("Inv")
+        let study = ArcStudy.init("Study1")
+        study.AddTable (Assay.Helper.create_sampleOutputTable "Growth" "Sample1")
+        let assay = ArcAssay.init("Assay1")
+        assay.AddTable (Assay.Helper.create_sampleInputTable "Extraction" "Sample1" "organism" "Arabidopsis thaliana")
+        inv.AddAssay assay
+        inv.AddRegisteredStudy study
+        study.RegisterAssay "Assay1"
+
+        let json = ArcInvestigation.toISAJsonString(useIDReferencing = true) inv
+
+        let characteristics = Decode.fromJsonString (studyDecoder 0 (Assay.Helper.isaSampleCharacteristicsDecoder "Sample1")) json
+        Expect.sequenceEqual characteristics ["Arabidopsis thaliana"] "Sample should be written with the characteristic it is annotated with in the assay"
+        let categories =
+            Decode.fromJsonString (studyDecoder 0 (Thoth.Json.Core.Decode.field "characteristicCategories" (Thoth.Json.Core.Decode.list MaterialAttribute.ISAJson.decoder))) json
+            |> List.choose (fun c -> c.CharacteristicType |> Option.map (fun t -> t.NameText))
+        Expect.sequenceEqual categories ["organism"] "Category of the characteristic should be listed in the study the sample is written in"
+
+    testCase "SampleAnnotatedInTwoAssays" <| fun _ ->
+        let inv = ArcInvestigation.init("Inv")
+        let study = ArcStudy.init("Study1")
+        let assay1 = ArcAssay.init("Assay1")
+        assay1.AddTable (Assay.Helper.create_sampleInputTable "Extraction" "Sample1" "organism" "Arabidopsis thaliana")
+        let assay2 = ArcAssay.init("Assay2")
+        assay2.AddTable (Assay.Helper.create_sampleInputTable "Measurement" "Sample1" "genotype" "Col-0")
+        inv.AddAssay assay1
+        inv.AddAssay assay2
+        inv.AddRegisteredStudy study
+        study.RegisterAssay "Assay1"
+        study.RegisterAssay "Assay2"
+
+        let json = ArcInvestigation.toISAJsonString(useIDReferencing = true) inv
+
+        let characteristics = Decode.fromJsonString (studyDecoder 0 (assayDecoder 0 (Assay.Helper.isaSampleCharacteristicsDecoder "Sample1"))) json
+        Expect.sequenceEqual characteristics ["Arabidopsis thaliana"; "Col-0"] "Sample should be written with the characteristics it is annotated with in both assays"
+
+    testCase "SampleAnnotatedInSecondStudy" <| fun _ ->
+        let inv = ArcInvestigation.init("Inv")
+        let study1 = ArcStudy.init("Study1")
+        study1.AddTable (Assay.Helper.create_sampleOutputTable "Growth" "Sample1")
+        let study2 = ArcStudy.init("Study2")
+        study2.AddTable (Assay.Helper.create_sampleInputTable "Extraction" "Sample1" "organism" "Arabidopsis thaliana")
+        inv.AddRegisteredStudy study1
+        inv.AddRegisteredStudy study2
+
+        let json = ArcInvestigation.toISAJsonString(useIDReferencing = true) inv
+
+        let characteristics = Decode.fromJsonString (studyDecoder 0 (Assay.Helper.isaSampleCharacteristicsDecoder "Sample1")) json
+        Expect.sequenceEqual characteristics ["Arabidopsis thaliana"] "Sample should be written with the characteristic it is annotated with in the second study"
+]
 
 let main = testList "Investigation" [
     test_coreEmpty
@@ -130,4 +187,5 @@ let main = testList "Investigation" [
     test_compressed
     test_isaEmpty
     test_isa
+    test_isaIDTable
 ]

@@ -4,6 +4,7 @@ open Thoth.Json.Core
 
 open ARCtrl
 open ARCtrl.Helper
+open ARCtrl.Process.Conversion
 
 module Investigation =
     
@@ -166,6 +167,17 @@ module Investigation =
         let allowedFields = ["@id";"filename";"identifier";"title";"description";"submissionDate";"publicReleaseDate";"ontologySourceReferences";"publications";"people";"studies";"comments";"@type";"@context"]
 
         let encoder idMap (inv: ArcInvestigation) = 
+            // When using an idMap, the sources, samples and materials have to be merged across all studies and assays
+            let mergeMaterials =
+                idMap
+                |> Option.map (fun _ ->
+                    inv.Studies
+                    |> Seq.toList
+                    |> List.collect (fun s ->
+                        s.GetProcesses() @ (Study.Helper.getAssayInformation None s |> Seq.toList |> List.collect (fun a -> a.GetProcesses()))
+                    )
+                    |> Process.ISAJson.mergeMaterials
+                )
             [
                 "@id", Encode.string (inv |> ROCrate.genID) |> Some
                 "filename", Encode.string ArcInvestigation.FileName |> Some
@@ -177,7 +189,7 @@ module Investigation =
                 Encode.tryIncludeSeq "ontologySourceReferences" (OntologySourceReference.ISAJson.encoder idMap) inv.OntologySourceReferences
                 Encode.tryIncludeSeq "publications" (Publication.ISAJson.encoder idMap) inv.Publications
                 Encode.tryIncludeSeq "people" (Person.ISAJson.encoder idMap) inv.Contacts
-                Encode.tryIncludeSeq "studies" (Study.ISAJson.encoder idMap None) inv.Studies 
+                Encode.tryIncludeSeq "studies" (Study.ISAJson.encoder idMap mergeMaterials None) inv.Studies
                 Encode.tryIncludeSeq "comments" (Comment.ISAJson.encoder idMap) inv.Comments
             ]
             |> Encode.choose

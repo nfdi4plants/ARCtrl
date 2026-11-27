@@ -47,7 +47,7 @@ module AssayExtensions =
             let useIDReferencing = Option.defaultValue false useIDReferencing
             let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None
             fun (obj:ArcAssay) ->
-                Assay.ISAJson.encoder None idMap obj
+                Assay.ISAJson.encoder None idMap None obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
         static member fromISAJsonString (s:string) = 

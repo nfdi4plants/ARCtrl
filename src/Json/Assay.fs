@@ -134,10 +134,22 @@ module Assay =
             
     module ISAJson = 
 
-        let encoder (studyName:string Option) idMap (a : ArcAssay) = 
+        /// <summary>
+        /// If mergeMaterials.IsSome, it is used to merge the sources, samples and materials of the assay with the ones of the study it is written in. Otherwise, they are merged within the assay if an idMap is used.
+        /// </summary>
+        /// <param name="studyName"></param>
+        /// <param name="idMap"></param>
+        /// <param name="mergeMaterials"></param>
+        /// <param name="a"></param>
+        let encoder (studyName:string Option) idMap (mergeMaterials : (Process list -> Process list) option) (a : ArcAssay) =
             let f (a : ArcAssay) =
                 let fileName = Identifier.Assay.fileNameFromIdentifier a.Identifier
-                let processes = a.GetProcesses()
+                let processes =
+                    let processes = a.GetProcesses()
+                    match idMap, mergeMaterials with
+                    | _, Some mergeMaterials -> mergeMaterials processes
+                    | Some _, None -> Process.ISAJson.mergeMaterials processes processes
+                    | None, None -> processes
                 let encodedUnits = 
                     ProcessSequence.getUnits processes
                     |> Encode.tryIncludeList "unitCategories" (OntologyAnnotation.ISAJson.encoder idMap)

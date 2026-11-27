@@ -217,6 +217,17 @@ let private test_isa = testList "ISA" [
         //let expectedString = TestObjects.Json.Study.studyWithIDTable.Replace("\s","")
 
         Expect.stringEqual json TestObjects.Json.Study.studyWithIDTable "json"
+
+    // https://github.com/nfdi4plants/ARCtrl/issues/492
+    testCase "UseIDTable_SampleAnnotatedInSecondTable" <| fun _ ->
+        let study = ArcStudy.init("Study1")
+        study.AddTable (Assay.Helper.create_sampleOutputTable "Growth" "Sample1")
+        study.AddTable (Assay.Helper.create_sampleInputTable "Extraction" "Sample1" "organism" "Arabidopsis thaliana")
+
+        let json = ArcStudy.toISAJsonString(useIDReferencing = true) study
+
+        let characteristics = Decode.fromJsonString (Assay.Helper.isaSampleCharacteristicsDecoder "Sample1") json
+        Expect.sequenceEqual characteristics ["Arabidopsis thaliana"] "Sample should be written with the characteristic it is annotated with in the second table"
      ]
 
 let private test_roCrate =

@@ -170,10 +170,14 @@ module Study =
 
         /// <summary>
         /// If assays.IsSome then try to get registered assays from external list, otherwise try to access investigation or create empty defaults.
+        ///
+        /// If mergeMaterials.IsSome, it is used to merge the sources, samples and materials of the study with the ones of the investigation it is written in. Otherwise, they are merged within the study and its assays if an idMap is used.
         /// </summary>
-        /// <param name="s"></param>
+        /// <param name="idMap"></param>
+        /// <param name="mergeMaterials"></param>
         /// <param name="assays"></param>
-        let encoder idMap (assays: ArcAssay list option) (s : ArcStudy) = 
+        /// <param name="s"></param>
+        let encoder idMap (mergeMaterials : (Process list -> Process list) option) (assays: ArcAssay list option) (s : ArcStudy) =
             let f (s : ArcStudy) =
                 let study = s.Copy(true)
                 let fileName = Identifier.Study.fileNameFromIdentifier study.Identifier
@@ -191,6 +195,17 @@ module Study =
                         n.Add(assay)
                     n
                 let processes = study.GetProcesses()
+                let mergeMaterials =
+                    match idMap, mergeMaterials with
+                    | Some _, None ->
+                        processes @ (assays |> Seq.toList |> List.collect (fun a -> a.GetProcesses()))
+                        |> Process.ISAJson.mergeMaterials
+                        |> Some
+                    | _ -> mergeMaterials
+                let processes =
+                    match mergeMaterials with
+                    | Some mergeMaterials -> mergeMaterials processes
+                    | None -> processes
                 let encodedUnits = 
                     ProcessSequence.getUnits processes
                     |> Encode.tryIncludeList "unitCategories" (OntologyAnnotation.ISAJson.encoder idMap) 
@@ -219,7 +234,7 @@ module Study =
                     encodedProtocols
                     encodedMaterials
                     Encode.tryIncludeList "processSequence" (Process.ISAJson.encoder (Some s.Identifier) None idMap) processes
-                    Encode.tryIncludeSeq "assays" (Assay.ISAJson.encoder (Some s.Identifier) idMap) assays
+                    Encode.tryIncludeSeq "assays" (Assay.ISAJson.encoder (Some s.Identifier) idMap mergeMaterials) assays
                     encodedFactors
                     encodedCharacteristics
                     encodedUnits
