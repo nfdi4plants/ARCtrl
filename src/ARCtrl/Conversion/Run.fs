@@ -545,10 +545,7 @@ type RunConversion =
         let comments =
             LDDataset.getComments(run, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
-        let datamap = 
-            LDDataset.getVariableMeasuredAsFragmentDescriptors(run, ?graph = graph, ?context = context)
-            |> fun fds -> DatamapConversion.decomposeFragmentDescriptors(fds, ?graph = graph, ?context = context)
-            |> Option.fromValueWithDefault (Datamap.init())
+        let datamap = DatamapConversion.decomposeDatamap(run, ?graph = graph, ?context = context)
         let tables = 
             LDDataset.getAboutsAsLabProcess(run, ?graph = graph, ?context = context)
             |> ResizeArray.filter (fun wi -> wi.Id <> mainWorkflowInvocation.Id)

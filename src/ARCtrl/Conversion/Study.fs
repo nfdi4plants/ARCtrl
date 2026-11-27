@@ -90,10 +90,7 @@ type StudyConversion =
         let creators = 
             LDDataset.getCreators(study, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> PersonConversion.decomposePerson(c, ?graph = graph, ?context = context))
-        let datamap = 
-            LDDataset.getVariableMeasuredAsFragmentDescriptors(study, ?graph = graph, ?context = context)
-            |> fun fds -> DatamapConversion.decomposeFragmentDescriptors(fds, ?graph = graph, ?context = context)
-            |> Option.fromValueWithDefault (Datamap.init())
+        let datamap = DatamapConversion.decomposeDatamap(study, ?graph = graph, ?context = context)
         let tables = 
             LDDataset.getAboutsAsLabProcess(study, ?graph = graph, ?context = context)
             |> fun ps -> ArcTables.fromProcesses(List.ofSeq ps, ?graph = graph, ?context = context)

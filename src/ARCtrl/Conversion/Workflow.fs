@@ -785,10 +785,7 @@ type WorkflowConversion =
         let comments =
             LDDataset.getComments(workflow, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
-        let datamap = 
-            LDDataset.getVariableMeasuredAsFragmentDescriptors(workflow, ?graph = graph, ?context = context)
-            |> fun fds -> DatamapConversion.decomposeFragmentDescriptors(fds, ?graph = graph, ?context = context)
-            |> Option.fromValueWithDefault (Datamap.init())
+        let datamap = DatamapConversion.decomposeDatamap(workflow, ?graph = graph, ?context = context)
 
         ArcWorkflow.create(
             identifier = LDDataset.getIdentifierAsString(workflow, ?context = context),

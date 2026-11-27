@@ -8,6 +8,15 @@ open DynamicObj
 
 module LDContext =
 
+    /// The IRI of a term, given as a string or as the @id of an expanded term definition.
+    /// Any other entry of a context maps no term to an IRI, as the keyword @version does, and gives None.
+    let private termDefinitionDecoder : Decoder<string option> =
+        Decode.oneOf [
+            Decode.map Some Decode.string
+            Decode.map Some (Decode.field "@id" Decode.string)
+            Decode.succeed None
+        ]
+
     let decoder : Decoder<LDContext> =
         { new Decoder<LDContext> with
             member this.Decode(helpers, value) =     
@@ -19,7 +28,9 @@ module LDContext =
                             let o = LDContext()
                             for property in properties do
                                 if property <> "@id" && property <> "@type" then
-                                    o.AddMapping(property,get.Required.Field property Decode.string)
+                                    match get.Required.Field property termDefinitionDecoder with
+                                    | Some definition -> o.AddMapping(property,definition)
+                                    | None -> ()
                             o
                     let result = builder getters               
                     match getters.Errors with
@@ -31,12 +42,20 @@ module LDContext =
                             Error fst
                 elif helpers.isString value then
                     let s = helpers.asString value
-                    if s = Context.proxy_V1_2DRAFT || s = Context.proxy_V1_2 then
+                    if s = Context.proxy_V1_3 then
+                        Ok (Context.initV1_3())
+                    elif s = Context.proxy_V1_2DRAFT || s = Context.proxy_V1_2 then
                         Ok (Context.initV1_2())
                     elif s = Context.proxy_V1_1 then
                         Ok (Context.initV1_1())
+                    elif s = Context.proxy_ARC then
+                        Ok (Context.initArcContext())
                     else
-                        ("", BadPrimitive("an object", value)) |> Error
+                        // The terms of a context that is not known cannot be resolved. The context keeps the URL as
+                        // its name, so that it is written as it was read.
+                        let unknownContext = LDContext()
+                        unknownContext.Name <- Some s
+                        Ok unknownContext
                 elif helpers.isArray value then
                     match Decode.resizeArray(this).Decode(helpers,value) with
                     | Ok baseContexts -> Ok (LDContext(baseContexts = baseContexts))
@@ -47,10 +66,14 @@ module LDContext =
 
     let rec encoder (ctx: LDContext) =
         match ctx.Name with
+        | Some Context.proxy_V1_3 -> Encode.string Context.proxy_V1_3
         | Some Context.proxy_V1_2DRAFT -> Encode.string Context.proxy_V1_2DRAFT
         | Some Context.proxy_V1_2 -> Encode.string Context.proxy_V1_2
         | Some Context.proxy_V1_1 -> Encode.string Context.proxy_V1_1
-        | _ ->           
+        | Some Context.proxy_ARC -> Encode.string Context.proxy_ARC
+        // A context that was read from a URL that is not known
+        | Some name when ctx.Mappings.Count = 0 && ctx.BaseContexts.Count = 0 -> Encode.string name
+        | _ ->
             let mappings = 
                 ctx.Mappings
                 |> Seq.map (fun kv -> kv.Key, kv.Value |> string |> Encode.string )

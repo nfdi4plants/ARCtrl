@@ -11,6 +11,40 @@ let context_DefinedTerm =
         "comments": "sdo:disambiguatingDescription"
     }"""
 
+/// An inline context with keywords that define no term
+let context_withKeywords =
+    """{
+        "@version": 1.1,
+        "@protected": true,
+        "sdo": "http://schema.org/",
+        "name": "sdo:name"
+    }"""
+
+/// An inline context that defines a term through an expanded term definition
+let context_expandedTermDefinition =
+    """{
+        "columnIndex": {
+            "@id": "https://w3id.org/ro/terms/arc#columnIndex",
+            "@type": "http://www.w3.org/2001/XMLSchema#integer"
+        },
+        "name": "http://schema.org/name"
+    }"""
+
+/// The RO-Crate context, an inline context and the ARC context, as the context of a crate
+let context_roCrateWithARCContext =
+    """[
+        "https://w3id.org/ro/crate/1.2/context",
+        {"Sample": "https://bioschemas.org/Sample"},
+        "https://www.researchobject.org/ro-terms/arc/context.jsonld"
+    ]"""
+
+/// A context that ARCtrl does not know and an inline context, as the context of a crate
+let context_unknownProxyAndInlineContext =
+    """[
+        "https://example.org/context.jsonld",
+        {"Sample": "https://bioschemas.org/Sample"}
+    ]"""
+
 let definedTerm =
     context_DefinedTerm
     |> sprintf """{
@@ -41,6 +75,180 @@ let roCrate_minimal = """{
         }
       ]
     }"""
+
+/// A crate that names the ARC context, has an inline context with a keyword and an expanded term definition,
+/// and gives an additionalType as a reference
+let roCrate_arcContextAndAdditionalTypeReference = """{
+      "@context": [
+        "https://w3id.org/ro/crate/1.2/context",
+        "https://www.researchobject.org/ro-terms/arc/context.jsonld",
+        {
+          "@version": 1.1,
+          "Sample": {"@id": "https://bioschemas.org/Sample"}
+        }
+      ],
+      "@graph": [
+        {
+            "@id": "ro-crate-metadata.json",
+            "@type": "CreativeWork",
+            "about": {"@id": "./"},
+            "conformsTo": {"@id": "https://w3id.org/ro/crate/1.2"}
+        },
+        {
+          "@id": "./",
+          "@type": "Dataset",
+          "additionalType": {"@id": "http://example.org/Investigation"}
+        }
+      ]
+    }"""
+
+/// The crate of an investigation with one study, in the parts that a writer other than ARCtrl may write differently
+module ArcCrate =
+
+    let context_V1_2 = "\"https://w3id.org/ro/crate/1.2/context\""
+
+    /// The metadata descriptor of the given id, which names the entity of the given id as the root data entity
+    let descriptor (id : string) (rootId : string) =
+        sprintf """{
+            "@id": "%s",
+            "@type": "CreativeWork",
+            "about": {"@id": "%s"},
+            "conformsTo": {"@id": "https://w3id.org/ro/crate/1.2"}
+        },""" id rootId
+
+    /// A dataset of the id "./" that is not the investigation
+    let otherDotSlashDataset =
+        """{
+          "@id": "./",
+          "@type": "Dataset",
+          "identifier": "Other",
+          "name": "Other"
+        },"""
+
+    /// The term of the JERM ontology for a study, described in the crate as RO-Crate recommends for a term that
+    /// the context does not define
+    let jermStudyTerm =
+        """{
+          "@id": "https://jermontology.org/ontology/JERMOntology#Study",
+          "@type": "DefinedTerm",
+          "name": "Study",
+          "description": "An ISA Study: a unit of research within an Investigation, grouping the assays that share a design and subjects."
+        },"""
+
+    /// The crate with the given context, the given entities ahead of the investigation, the given id of the
+    /// investigation and the given additionalType of the study, which is given as JSON
+    let createWithStudyAdditionalType (context : string) (entities : string) (rootId : string) (studyAdditionalType : string) =
+        sprintf """{
+      "@context": %s,
+      "@graph": [
+        %s
+        {
+          "@id": "%s",
+          "@type": "Dataset",
+          "additionalType": "Investigation",
+          "identifier": "MyInvestigation",
+          "name": "My Investigation",
+          "hasPart": [{"@id": "studies/MyStudy/"}]
+        },
+        {
+          "@id": "studies/MyStudy/",
+          "@type": "Dataset",
+          "additionalType": %s,
+          "identifier": "MyStudy",
+          "name": "My Study"
+        }
+      ]
+    }""" context entities rootId studyAdditionalType
+
+    /// The crate with the given context, the given entities ahead of the investigation, and the given id of the investigation
+    let create (context : string) (entities : string) (rootId : string) =
+        createWithStudyAdditionalType context entities rootId "\"Study\""
+
+/// The crate of an investigation with a study and an assay. The assay has a data file, of which one column is described
+/// as the ARC Datamap profile defines it, see https://w3id.org/arc/ro-crate/datamap/0.1
+module DatamapCrate =
+
+    /// The descriptor of the column, as a reference
+    let descriptorRef = """{"@id": "#Descriptor_data.csv#col=1"}"""
+
+    /// The crate. Each of the texts is added to the properties of the investigation, the study and the assay, so that
+    /// a crate can name their parts and the descriptor where a writer other than ARCtrl may name them.
+    let create (investigationProperties : string) (studyProperties : string) (assayProperties : string) =
+        sprintf """{
+      "@context": "https://w3id.org/ro/crate/1.2/context",
+      "@graph": [
+        {
+          "@id": "ro-crate-metadata.json",
+          "@type": "CreativeWork",
+          "about": {"@id": "./"},
+          "conformsTo": {"@id": "https://w3id.org/ro/crate/1.2"}
+        },
+        {
+          "@id": "./",
+          "@type": "Dataset",
+          "additionalType": "Investigation",
+          "identifier": "MyInvestigation",
+          "name": "My Investigation"%s
+        },
+        {
+          "@id": "studies/MyStudy/",
+          "@type": "Dataset",
+          "additionalType": "Study",
+          "identifier": "MyStudy",
+          "name": "My Study"%s
+        },
+        {
+          "@id": "assays/MyAssay/",
+          "@type": "Dataset",
+          "additionalType": ["Assay", "Datamap"],
+          "identifier": "MyAssay",
+          "name": "My Assay"%s
+        },
+        {
+          "@id": "assays/MyAssay/dataset/data.csv",
+          "@type": "File",
+          "name": "data.csv",
+          "encodingFormat": "text/csv",
+          "hasPart": [{"@id": "assays/MyAssay/dataset/data.csv#col=1"}]
+        },
+        {
+          "@id": "assays/MyAssay/dataset/data.csv#col=1",
+          "@type": "File",
+          "additionalType": "DataFragment",
+          "encodingFormat": "text/csv",
+          "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
+          "pattern": {"@id": "http://purl.obolibrary.org/obo/NCIT_C48150"},
+          "subjectOf": {"@id": "#Descriptor_data.csv#col=1"}
+        },
+        {
+          "@id": "http://purl.obolibrary.org/obo/NCIT_C48150",
+          "@type": "DefinedTerm",
+          "name": "float",
+          "termCode": "http://purl.obolibrary.org/obo/NCIT_C48150"
+        },
+        {
+          "@id": "#Descriptor_data.csv#col=1",
+          "@type": ["Statement", "ItemList"],
+          "additionalType": "DataContext",
+          "about": {"@id": "assays/MyAssay/dataset/data.csv#col=1"},
+          "itemListElement": [{"@id": "#Explication_data.csv#col=1"}]
+        },
+        {
+          "@id": "#Explication_data.csv#col=1",
+          "@type": "PropertyValue",
+          "additionalType": "Interpretation",
+          "name": "Explication",
+          "propertyID": "https://purl.org/nfdi4plants/ontology/dpbo/DPBO_0000111",
+          "value": "molecule count",
+          "valueReference": "http://purl.obolibrary.org/obo/UO_0000192",
+          "unitText": "Millimole per Kilogram",
+          "unitCode": "http://purl.obolibrary.org/obo/NCIT_C68892",
+          "alternateName": "quant1",
+          "measurementMethod": "MyTool",
+          "description": "My description"
+        }
+      ]
+    }""" investigationProperties studyProperties assayProperties
 
 /// Contains the same file once with and once without leading "./", see https://github.com/nfdi4plants/ARCtrl/issues/607
 let roCrate_unnormalizedDataEntityIds = """{
@@ -539,6 +747,27 @@ module GenericObjects =
             "@type": "MyType",
             "additionalType": ["additionalType1", "additionalType2"]
         }"""
+    let withAdditionalTypeReference =
+        """{
+            "@id": "MyIdentifier",
+            "@type": "MyType",
+            "additionalType": {"@id": "http://example.org/additionalType"}
+        }"""
+    let withAdditionalTypeArrayOfStringAndReference =
+        """{
+            "@id": "MyIdentifier",
+            "@type": "MyType",
+            "additionalType": ["additionalType1", {"@id": "http://example.org/additionalType2"}]
+        }"""
+    /// A PropertyValue with the given JSON as its value
+    let propertyValueWithValue (value : string) =
+        sprintf """{
+            "@id": "#MyParameter",
+            "@type": "http://schema.org/PropertyValue",
+            "http://schema.org/name": "MyParameter",
+            "http://schema.org/value": %s,
+            "http://schema.org/unitText": "MyUnit"
+        }""" value
     let withNullValue =
         """{
             "@id": "MyIdentifier",

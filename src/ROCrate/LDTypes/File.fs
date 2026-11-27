@@ -101,9 +101,9 @@ type LDFile =
     static member genId(name : string) =
         $"{name}"
 
+    /// A file is identified by its id, which is its path or URL, so it needs no name.
     static member validate(dt : LDNode, ?context : LDContext) =
         dt.HasType(LDFile.schemaType, ?context = context)
-        && dt.HasProperty(LDFile.name, ?context = context)
 
     static member validateCWLParameter(dt : LDNode, ?context : LDContext) =
         LDFile.validate(dt, ?context = context)

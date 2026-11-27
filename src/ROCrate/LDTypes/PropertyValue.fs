@@ -82,16 +82,23 @@ type LDPropertyValue =
     static member setValueObjects(pv : LDNode, values : obj, ?context : LDContext) =
         pv.SetProperty(LDPropertyValue.value, values, ?context = context)
 
+    /// The value of a PropertyValue is a text, a number or a boolean. A number or a boolean is returned as the text
+    /// that stands for it in JSON.
     static member tryGetValueAsString(pv : LDNode, ?context : LDContext) =
         match pv.TryGetPropertyAsSingleton(LDPropertyValue.value, ?context = context) with
         | Some (:? string as v) -> Some v
+        | Some (:? bool as b) -> Some (if b then "true" else "false")
+        | Some (:? int as i) -> Some (string i)
+        | Some (:? int64 as i) -> Some (string i)
+        | Some (:? decimal as d) -> Some (string d)
+        | Some (:? float as f) -> Some (string f)
         | _ -> None
 
     static member getValueAsString(pv : LDNode, ?context : LDContext) =
-        match pv.TryGetPropertyAsSingleton(LDPropertyValue.value, ?context = context) with
-        | Some (:? string as v) -> v
-        | Some _ -> failwith $"Property of `value` of object with @id `{pv.Id}` was not a string"
-        | _ -> failwith $"Could not access property `value` of object with @id `{pv.Id}`"
+        match LDPropertyValue.tryGetValueAsString(pv, ?context = context) with
+        | Some v -> v
+        | None when pv.HasProperty(LDPropertyValue.value, ?context = context) -> failwith $"Property of `value` of object with @id `{pv.Id}` was not a string, a number or a boolean"
+        | None -> failwith $"Could not access property `value` of object with @id `{pv.Id}`"
 
     static member setValueAsString(pv : LDNode, value : string, ?context : LDContext) =
         pv.SetProperty(LDPropertyValue.value, value, ?context = context)

@@ -107,7 +107,7 @@ export const CWL = {
 /// RO-Crate
 import { LDNode, LDGraph, LDRef, LDValue} from './ts/ROCrate/LDObject.js'
 import { LDContext } from './ts/ROCrate/LDContext.js'
-import { initV1_1, initV1_2, initBioschemasContext } from './ts/ROCrate/ROCrateContext.js'
+import { initV1_1, initV1_2, initV1_3, initBioschemasContext, initArcContext } from './ts/ROCrate/ROCrateContext.js'
 import { LDComment } from './ts/ROCrate/LDTypes/Comment.js'
 import { LDDefinedTerm } from './ts/ROCrate/LDTypes/DefinedTerm.js'
 import { LDFile } from './ts/ROCrate/LDTypes/File.js'
@@ -132,7 +132,9 @@ export const ROCrate = {
     LDContext,
     initV1_1,
     initV1_2,
+    initV1_3,
     initBioschemasContext,
+    initArcContext,
     LDComment,
     LDDefinedTerm,
     LDFile,
