@@ -1,3 +1,14 @@
+### 3.4.0+7ddfd5a1 (Released 2026-11-27)
+* Additions:
+    * [[#44239ca6](https://github.com/nfdi4plants/ARCtrl/commit/44239ca681a9f81c36d74a4ca13009d7eeb150a8)] add test for ro-crate reading of an additionalType reference next to a text (#662)
+    * [[#d4123ab7](https://github.com/nfdi4plants/ARCtrl/commit/d4123ab7f285b003959a97d16eccc06d90a3104c)] add ro-crate 1.3 context
+    * [[#c036e2f0](https://github.com/nfdi4plants/ARCtrl/commit/c036e2f0b3d477c02fed05afac926104de12f197)] Check row strings on xlsx reader cache hits instead of trusting the hash
+    * [[#f2e0af15](https://github.com/nfdi4plants/ARCtrl/commit/f2e0af1580ac6c3a2610aaa74272cf5a4717780c)] Compare Data fields in Equals instead of hashes
+* Bugfixes:
+    * [[#70de2b8f](https://github.com/nfdi4plants/ARCtrl/commit/70de2b8f337258d3f0f0e11bcd460d2a1ea9236b)] fix ro-crate reading losing numeric property values, datasets not listed in root hasPart and datamaps of the arc datamap profile
+    * [[#447cb1e5](https://github.com/nfdi4plants/ARCtrl/commit/447cb1e5933e2c6c3744f41ee9b90455d4a184d7)] fix ro-crate reading failing on unknown contexts, root data entities not named ./ and files without name
+    * [[#c3c09509](https://github.com/nfdi4plants/ARCtrl/commit/c3c09509ac07970b49e63ebbfdcd7fa016cb2b69)] add arc ro-crate context and fix ro-crate reading failing on context keywords, expanded term definitions and additionalType references
+
 ### 3.3.1+f9b5ad0c (Released 2026-11-10)
 * Additions:
     * [[#ea3f5fb5](https://github.com/nfdi4plants/ARCtrl/commit/ea3f5fb561654800171f220b31718f264c1e19e1)] Build run parameter value ids from their FormalParameter so runs keep separate values

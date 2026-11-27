@@ -48,10 +48,8 @@ let publishNPM = BuildTask.create "PublishNPM" [clean; build; runTests; packJS] 
     let tag = versionController.NPMTag
     let msg = sprintf "[NPM] release package with version %s?" tag 
     if promptYesNo msg then
-        let apikey =  Environment.environVarOrNone "NPM_KEY"    
-        let otp = if apikey.IsSome then $" --otp {apikey.Value}" else ""
         let tag = if versionController.IsPrerelease then $" --tag next" else ""
-        Fake.JavaScript.Npm.exec $"publish {target} --access public {tag}{otp}" (fun o ->
+        Fake.JavaScript.Npm.exec $"publish {target} --access public {tag}" (fun o ->
             { o with
                 WorkingDirectory = "./dist/ts/"
             })      
